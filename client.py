@@ -13,7 +13,6 @@ class Client(requests.Session):
     def _result(self, response, json=False):
         # FIXME
         if response.status_code != 200:
-            print response.text
             response.raise_for_status()
         if json:
             return response.json()
