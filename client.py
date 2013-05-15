@@ -177,7 +177,7 @@ class Client(requests.Session):
 
     def remove_container(self, *args, **kwargs):
         params = {
-            'v': kwargs.get('v', False)
+            'v': 1 if kwargs.get('v', False) else 0
         }
         for container in args:
             self.delete(self._url("/containers/" + container), params=params)
@@ -215,7 +215,7 @@ class Client(requests.Session):
         params = {
             'tag': tag,
             'repo': repository,
-            'force': force
+            'force': 1 if force else 0
         }
         url = self._url("/images/{0}/tag".format(image))
         return self._result(self.post(url, None, params=params))
