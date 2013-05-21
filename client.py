@@ -1,6 +1,9 @@
+import logging
 import string
+from StringIO import StringIO
 
 import requests
+
 
 class Client(requests.Session):
     def __init__(self, base_url="http://localhost:4243"):
@@ -19,8 +22,14 @@ class Client(requests.Session):
         return response
 
     def build(self, dockerfile):
-        url = self._url("/build")
-        return self._result(self.post(url, dockerfile))
+        bc = BuilderClient(self)
+        img_id = None
+        try:
+            img_id = bc.build(dockerfile)
+        except Exception as e:
+            bc.done()
+            raise e
+        return img_id, bc.done()
 
     def commit(self, container, repository=None, tag=None, message=None, author=None, conf=None):
         params = {
@@ -31,7 +40,7 @@ class Client(requests.Session):
             'author': author
         }
         u = self._url("/commit")
-        return self._result(self.post(u, conf, params=params))
+        return self._result(self.post(u, conf, params=params), json=True)
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False, since=None, before=None, limit=-1):
         params = {
@@ -232,3 +241,102 @@ class Client(requests.Session):
             if 'StatusCode' in json:
                 result.append(json['StatusCode'])
         return result
+
+
+class BuilderClient(object):
+    def __init__(self, client):
+        self.client = client
+        self.tmp_containers = {}
+        self.tmp_images = {}
+        self.image = None
+        self.maintainer = None
+        self.need_commit = False
+        self.config = {}
+
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
+                    level='INFO')
+        self.logs = StringIO()
+        self.logger.addHandler(logging.StreamHandler(self.logs))
+
+    def done(self):
+        self.client.remove_container(*self.tmp_containers)
+        self.client.remove_image(*self.tmp_images)
+        self.logs.flush()
+        res = self.logs.getvalue()
+        self.logs.close()
+        return res
+
+    def build(self, dockerfile):
+        for line in dockerfile:
+            line = line.strip().replace("\t", " ", 1)
+            if len(line) == 0 or line[0] == '#':
+                continue
+            instr, sep, args = line.partition(' ')
+            if sep == '':
+                self.logger.error('Invalid Dockerfile format: "{0}"'.format(line))
+                return
+            self.logger.info('{0} {1} ({2})'.format(instr.upper(), args, self.image))
+            try:
+                method = getattr(self, 'cmd_{0}'.format(instr.lower()))
+                try:
+                    method(args)
+                except Exception as e:
+                    self.logger.exception(str(e))
+                    return
+            except Exception as e:
+                self.logger.warning("Skipping unknown instruction {0}".format(instr.upper()))
+            self.logger.info('===> {0}'.format(self.image))
+        if self.need_commit:
+            try:
+                self.commit()
+            except Exception as e:
+                self.logger.exception(str(e))
+                return
+        if self.image is not None:
+            self.logger.info("Build finished, image id: {0}".format(self.image))
+            return self.image
+        self.logger.error("An error has occured during the build.")
+        return
+
+    def commit(self, id=None):
+        if self.image is None:
+            raise Exception("Please provide a source image with `from` prior to run")
+        self.config['Image'] = self.image
+        if id is None:
+            cmd = self.config['Cmd']
+            self.config.Cmd = ['true']
+            id = self.run()
+            self.config.Cmd = cmd
+
+        res = self.client.commit(id, author=self.maintainer)
+        if 'Id' not in res:
+            raise Exception('No ID returned by commit operation: {0}'.format(res))
+
+        self.tmp_images[res['Id']] = {}
+        self.image = res['Id']
+        self.need_commit = False
+
+    def cmd_from(self, args):
+        pass
+
+    def cmd_run(self, args):
+        pass
+
+    def cmd_maintainer(self, args):
+        pass
+
+    def cmd_env(self, args):
+        pass
+
+    def cmd_cmd(self, args):
+        pass
+
+    def cmd_expose(self, args):
+        pass
+
+    def cmd_insert(self, args):
+        pass
+
+
+
