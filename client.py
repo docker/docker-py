@@ -1,5 +1,5 @@
+import json
 import logging
-import string
 from StringIO import StringIO
 
 import requests
@@ -21,6 +21,38 @@ class Client(requests.Session):
             return response.json()
         return response
 
+    def _container_config(self, image, command, hostname=None, user=None, detach=False,
+        stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
+        volumes=None, volumes_from=None):
+        return {
+            'Hostname':     hostname,
+            'PortSpecs':    ports,
+            'User':         user,
+            'Tty':          tty,
+            'OpenStdin':    stdin_open,
+            'Memory':       mem_limit,
+            'AttachStdin':  0,
+            'AttachStdout': 0,
+            'AttachStderr': 0,
+            'Env':          environment,
+            'Cmd':          command,
+            'Dns':          dns,
+            'Image':        image,
+            'Volumes':      volumes,
+            'VolumesFrom':  volumes_from,
+        }
+
+    def post_json(self, url, data, **kwargs):
+        # Go <1.1 can't unserialize null to a string
+        # so we do this disgusting thing here.
+        data2 = {}
+        if data is not None:
+            for k, v in data.iteritems():
+                if v is not None:
+                    data2[k] = v
+
+        return self.post(url, json.dumps(data2), **kwargs)
+
     def build(self, dockerfile):
         bc = BuilderClient(self)
         img_id = None
@@ -40,7 +72,7 @@ class Client(requests.Session):
             'author': author
         }
         u = self._url("/commit")
-        return self._result(self.post(u, conf, params=params), json=True)
+        return self._result(self.post_json(u, conf, params=params), json=True)
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False, since=None, before=None, limit=-1):
         params = {
@@ -57,29 +89,18 @@ class Client(requests.Session):
     def create_container(self, image, command, hostname=None, user=None, detach=False,
         stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
         volumes=None, volumes_from=None):
-        config = {
-            'Hostname':     hostname,
-            'PortSpecs':    ports,
-            'User':         user,
-            'Tty':          tty,
-            'OpenStdin':    stdin_open,
-            'Memory':       mem_limit,
-            'AttachStdin':  0,
-            'AttachStdout': 0,
-            'AttachStderr': 0,
-            'Env':          environment,
-            'Cmd':          command,
-            'Dns':          dns,
-            'Image':        image,
-            'Volumes':      volumes,
-            'VolumesFrom':  volumes_from,
-        }
+        config = self._container_config(image, command, hostname, user,
+            detach, stdin_open, tty, mem_limit, ports, environment, dns,
+            volumes, volumes_from)
+        return self.create_container_from_config(config)
+
+    def create_container_from_config(self, config):
         u = self._url("/containers/create")
-        res = self.post(u, config)
+        res = self.post_json(u, config)
         if res.status_code == 404:
             raise ValueError("{0} is an unrecognized image. Please pull the image first.".
-                format(image))
-        return self._result(res)
+                format(config['Image']))
+        return self._result(res, True)
 
     def diff(self, container):
         return self._result(self.get(self._url("/containers/{0}/changes".format(container))), True)
@@ -90,7 +111,7 @@ class Client(requests.Session):
 
     def history(self, image):
         res = self.get(self._url("/images/{0}/history".format(image)))
-        if res.status_code == 500 and string.count(res.text, "Image does not exist") == 1:
+        if res.status_code == 500 and res.text.find("Image does not exist") != -1:
             raise KeyError(res.text)
         return self._result(res)
 
@@ -141,15 +162,15 @@ class Client(requests.Session):
     def login(self, username, password=None, email=None):
         url = self._url("/auth")
         res = self.get(url)
-        json = res.json()
-        if 'username' in json and json['username'] == username:
-            return json
+        json_ = res.json()
+        if 'username' in json_ and json_['username'] == username:
+            return json_
         req_data = {
             'username': username,
-            'password': password if password is not None else json['password'],
-            'email': email if email is not None else json['email']
+            'password': password if password is not None else json_['password'],
+            'email': email if email is not None else json_['email']
         }
-        return self._result(self.post(url, req_data), True)
+        return self._result(self.post_json(url, req_data), True)
 
     def logs(self, container):
         params = {
@@ -163,12 +184,12 @@ class Client(requests.Session):
 
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
-        json = res.json()
-        return json['NetworkSettings']['PortMapping'][private_port]
+        json_ = res.json()
+        return json_['NetworkSettings']['PortMapping'][private_port]
 
     def pull(self, repository, tag=None, registry=None):
-        if string.count(repository, ":") == 1:
-            tag, repository = string.split(repository, ":")
+        if repository.count(":") == 1:
+            repository, tag = repository.split(":")
 
         params = {
             'tag': tag,
@@ -179,7 +200,7 @@ class Client(requests.Session):
         return self._result(self.post(u, None, params=params))
 
     def push(self, repository, registry=None):
-        if string.count(repository, "/") != 1:
+        if repository.count("/") != 1:
             raise ValueError("Impossible to push a \"root\" repository. Please rename your repository in <user>/<repo>")
         u = self._url("/images/{0}/push".format(repository))
         return self._result(self.post(u, None, params={'registry': registry}))
@@ -237,9 +258,11 @@ class Client(requests.Session):
         for name in args:
             url = self._url("/containers/{0}/wait".format(name))
             res = self.post(url, None, timeout=None)
-            json = res.json()
-            if 'StatusCode' in json:
-                result.append(json['StatusCode'])
+            json_ = res.json()
+            if 'StatusCode' in json_:
+                result.append(json_['StatusCode'])
+        if len(result) == 1:
+            return result[0]
         return result
 
 
@@ -264,7 +287,7 @@ class BuilderClient(object):
         self.client.remove_image(*self.tmp_images)
         self.logs.flush()
         res = self.logs.getvalue()
-        self.logs.close()
+        #self.logs.close()
         return res
 
     def build(self, dockerfile):
@@ -317,26 +340,116 @@ class BuilderClient(object):
         self.image = res['Id']
         self.need_commit = False
 
-    def cmd_from(self, args):
-        pass
+    def run(self):
+        if self.image is None:
+            raise Exception("Please provide a source image with `from` prior to run")
+        self.config['Image'] = self.image
+        container = self.client.create_container_from_config(self.config)
+        if container.get('Warnings', None):
+            for warning in container['Warnings']:
+                self.logger.warning(warning)
+        self.client.start(container['Id'])
+        self.tmp_containers[container['Id']] = {}
+        status = self.client.wait(container['Id'])
+        if status != 0:
+            raise Exception("The command `{0}` returned a non-zero status: {1}".format(
+                self.config['Cmd'], status))
+        return container['Id']
+
+    def merge_config(self, a, b):
+        if not a.get('Hostname'):
+            a['Hostname'] = b.get('Hostname')
+        if not a.get('User'):
+            a['User'] = b.get('User')
+        if not a.get('Memory'):
+            a['Memory'] = b.get('Memory')
+        if not a.get('MemorySwap'):
+            a['MemorySwap'] = b.get('MemorySwap')
+        if not a.get('CpuShares'):
+            a['CpuShares'] = b.get('CpuShares')
+        if not a.get('PortSpecs') or len(a.get('PortSpecs')) == 0:
+            a['PortSpecs'] = b.get('PortSpecs')
+
+        a['Tty'] = a.get('Tty') or b.get('Tty')
+        a['OpenStdin'] = a.get('OpenStdin') or b.get('OpenStdin')
+        a['StdinOnce'] = a.get('StdinOnce') or b.get('StdinOnce')
+
+        if not a.get('Env') or len(a.get('Env')) == 0:
+            a['Env'] = b.get('Env')
+        if not a.get('Cmd') or len(a.get('Cmd')) == 0:
+            a['Cmd'] = b.get('Cmd')
+        if not a.get('Dns') or len(a.get('Dns')) == 0:
+            a['Dns'] = b.get('Dns')
+
+    def cmd_from(self, name):
+        img = None
+        try:
+            img = self.client.inspect_image(name)
+        except:
+            self.client.pull(name)
+            img = self.client.inspect_image(name)
+
+        self.image = img['id']
+        self.logger.debug("Using image {0}".format(self.image))
 
     def cmd_run(self, args):
-        pass
+        if self.image is None:
+            raise Exception("Please provide a source image with `from` prior to run")
+        config = self.client._container_config(self.image, ['/bin/sh', '-c', args])
+        cmd = self.config.get('Cmd', None)
+        env = self.config.get('Env', None)
 
-    def cmd_maintainer(self, args):
-        pass
+        self.config['Cmd'] = None
+        self.merge_config(self.config, config)
+        # res = self.client.post(self.client._url('/images/getCache'), {
+        #     'Id': self.image,
+        #     'Config': config
+        # })
+        # if res.status_code != 200 and res.status_code != 404:
+        #     res.raise_for_status()
+        # elif res.status_code != 404:
+        #     self.image = res.json().get('Id', self.image)
+        container = self.run()
+
+        self.config['Cmd'] = cmd
+        self.config['Env'] = env
+        self.commit(container)
+
+    def cmd_maintainer(self, name):
+        self.need_commit = True
+        self.maintainer = name
 
     def cmd_env(self, args):
-        pass
+        self.need_commit = True
+        try:
+            k, v = args.split(None, 1)
+            if 'Env' not in self.config:
+                self.config['Env'] = { k: v }
+                return
+            env = self.config['Env']
+            for line in env:
+                if line.startswith(k):
+                    env[env.index(line)] = '{0}={1}'.format(k, v)
+                    return
+            env.extend('{0}={1}'.format(k, v))
+        except ValueError:
+            raise Exception("Invalid ENV format")
 
     def cmd_cmd(self, args):
-        pass
+        self.need_commit = True
+        try:
+            self.config.Cmd = json.loads(args)
+        except:
+            self.logger.debug("Error decoding json, using /bin/sh -c")
+            self.config.Cmd = ['/bin/sh', '-c', args]
+
 
     def cmd_expose(self, args):
-        pass
+        ports = args.split()
+        if 'PortSpecs' not in self.config or self.config['PortSpecs'] is None:
+            self.config['PortSpecs'] = ports
+            return
+        self.config['PortSpecs'].append(ports)
 
     def cmd_insert(self, args):
-        pass
-
-
-
+        raise NotImplemented("INSERT not implemented")
