@@ -14,7 +14,7 @@ class Client(requests.Session):
         return self.base_url + path
 
     def _result(self, response, json=False):
-        if response.status_code != 200:
+        if response.status_code != 200 and response.status_code != 201:
             response.raise_for_status()
         if json:
             return response.json()
@@ -247,7 +247,9 @@ class Client(requests.Session):
             'force': 1 if force else 0
         }
         url = self._url("/images/{0}/tag".format(image))
-        return self._result(self.post(url, None, params=params))
+        res = self.post(url, None, params=params)
+        res.raise_for_status()
+        return res.status_code == 201
 
     def version(self):
         return self._result(self.get(self._url("/version")), True)
