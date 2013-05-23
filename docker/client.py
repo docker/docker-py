@@ -14,12 +14,11 @@ class Client(requests.Session):
         return self.base_url + path
 
     def _result(self, response, json=False):
-        # FIXME
         if response.status_code != 200:
             response.raise_for_status()
         if json:
             return response.json()
-        return response
+        return response.text
 
     def _container_config(self, image, command, hostname=None, user=None, detach=False,
         stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
@@ -401,14 +400,6 @@ class BuilderClient(object):
 
         self.config['Cmd'] = None
         self.merge_config(self.config, config)
-        # res = self.client.post(self.client._url('/images/getCache'), {
-        #     'Id': self.image,
-        #     'Config': config
-        # })
-        # if res.status_code != 200 and res.status_code != 404:
-        #     res.raise_for_status()
-        # elif res.status_code != 404:
-        #     self.image = res.json().get('Id', self.image)
         container = self.run()
 
         self.config['Cmd'] = cmd

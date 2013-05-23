@@ -1,6 +1,6 @@
 #/usr/bin/env python
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
@@ -8,10 +8,10 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 test_requirements = []
 setup(
     name="docker-py",
-    version='0.0.1',
+    version='0.0.2',
     description="Python client for Docker.",
-    packages=find_packages(),
-    install_requires=[] + test_requirements,
+    packages=['docker'],
+    install_requires=['requests'] + test_requirements,
     zip_safe=False,
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Other Environment',
