@@ -284,8 +284,10 @@ class BuilderClient(object):
         self.logger.addHandler(logging.StreamHandler(self.logs))
 
     def done(self):
-        self.client.remove_container(*self.tmp_containers)
-        self.client.remove_image(*self.tmp_images)
+        if self.image is None:
+            # The build is unsuccessful, remove temporary containers and images
+            self.client.remove_container(*self.tmp_containers)
+            self.client.remove_image(*self.tmp_images)
         self.logs.flush()
         res = self.logs.getvalue()
         #self.logs.close()
