@@ -302,6 +302,7 @@ class BuilderClient(object):
             if sep == '':
                 self.logger.error('Invalid Dockerfile format: "{0}"'.format(line))
                 return
+            args = args.strip()
             self.logger.info('{0} {1} ({2})'.format(instr.upper(), args, self.image))
             try:
                 method = getattr(self, 'cmd_{0}'.format(instr.lower()))
