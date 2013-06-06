@@ -3,6 +3,7 @@ import logging
 from StringIO import StringIO
 
 import requests
+from requests.exceptions import HTTPError
 
 
 class Client(requests.Session):
@@ -13,33 +14,50 @@ class Client(requests.Session):
     def _url(self, path):
         return self.base_url + path
 
+    def _raise_for_status(self, response):
+        """Raises stored :class:`HTTPError`, if one occurred."""
+        http_error_msg = ''
+
+        if 400 <= response.status_code < 500:
+            http_error_msg = '%s Client Error: %s' % (
+                response.status_code, response.reason)
+
+        elif 500 <= response.status_code < 600:
+            http_error_msg = '%s Server Error: %s' % (
+                response.status_code, response.reason)
+            if response.content and len(response.content) > 0:
+                http_error_msg += ' "%s"' % response.content
+
+        if http_error_msg:
+            raise HTTPError(http_error_msg, response=response)
+
     def _result(self, response, json=False):
         if response.status_code != 200 and response.status_code != 201:
-            response.raise_for_status()
+            self._raise_for_status(response)
         if json:
             return response.json()
         return response.text
 
-    def _container_config(self, image, command, hostname=None, user=None, detach=False,
-        stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
-        volumes=None, volumes_from=None):
-        return {
-            'Hostname':     hostname,
-            'PortSpecs':    [ports],
-            'User':         user,
-            'Tty':          tty,
-            'OpenStdin':    stdin_open,
-            'Memory':       mem_limit,
-            'AttachStdin':  False,
-            'AttachStdout': False,
-            'AttachStderr': False,
-            'Env':          environment,
-            'Cmd':          [command],
-            'Dns':          dns,
-            'Image':        image,
-            'Volumes':      volumes,
-            'VolumesFrom':  volumes_from,
-        }
+    def _container_config(
+            self, image, command, hostname=None, user=None, stdin_open=False,
+            stdin_once=False, tty=False, mem_limit=0, mem_swap=0, ports=None,
+            environment=None, dns=None, volumes=None, volumes_from=None):
+        config = {
+            'Image': image, 'Cmd': [command], 'AttachStdin': False,
+            'AttachStdout': False, 'AttachStderr': False}
+        config.update({'Hostname': hostname}) if hostname else None
+        config.update({'PortSpecs': [ports]}) if ports else None
+        config.update({'User': user}) if user else None
+        config.update({'Tty': tty}) if tty else None
+        config.update({'OpenStdin': stdin_open}) if stdin_open else None
+        config.update({'StdinOnce': stdin_once}) if stdin_once else None
+        config.update({'Memory': mem_limit}) if mem_limit else None
+        config.update({'MemorySwap': mem_swap}) if mem_limit else None
+        config.update({'Env': environment}) if environment else None
+        config.update({'Dns': dns}) if dns else None
+        config.update({'Volumes': volumes}) if volumes else None
+        config.update({'VolumesFrom': volumes_from}) if volumes_from else None
+        return config
 
     def post_json(self, url, data, **kwargs):
         # Go <1.1 can't unserialize null to a string
