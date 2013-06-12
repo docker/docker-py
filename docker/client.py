@@ -41,6 +41,8 @@ class Client(requests.Session):
     def _container_config(self, image, command, hostname=None, user=None, detach=False,
         stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
         volumes=None, volumes_from=None):
+        if isinstance(command, basestring):
+            command = [command]
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
@@ -52,7 +54,7 @@ class Client(requests.Session):
             'AttachStdout': False,
             'AttachStderr': False,
             'Env':          environment,
-            'Cmd':          [command],
+            'Cmd':          command,
             'Dns':          dns,
             'Image':        image,
             'Volumes':      volumes,
@@ -452,10 +454,10 @@ class BuilderClient(object):
     def cmd_cmd(self, args):
         self.need_commit = True
         try:
-            self.config.Cmd = json.loads(args)
+            self.config['Cmd'] = json.loads(args)
         except:
             self.logger.debug("Error decoding json, using /bin/sh -c")
-            self.config.Cmd = ['/bin/sh', '-c', args]
+            self.config['Cmd'] = ['/bin/sh', '-c', args]
 
 
     def cmd_expose(self, args):
