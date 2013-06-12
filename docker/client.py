@@ -3,6 +3,7 @@ import logging
 from StringIO import StringIO
 
 import requests
+from requests.exceptions import HTTPError
 
 
 class Client(requests.Session):
@@ -13,9 +14,26 @@ class Client(requests.Session):
     def _url(self, path):
         return self.base_url + path
 
+    def _raise_for_status(self, response):
+        """Raises stored :class:`HTTPError`, if one occurred."""
+        http_error_msg = ''
+
+        if 400 <= response.status_code < 500:
+            http_error_msg = '%s Client Error: %s' % (
+                response.status_code, response.reason)
+
+        elif 500 <= response.status_code < 600:
+            http_error_msg = '%s Server Error: %s' % (
+                response.status_code, response.reason)
+            if response.content and len(response.content) > 0:
+                http_error_msg += ' "%s"' % response.content
+
+        if http_error_msg:
+            raise HTTPError(http_error_msg, response=response)
+
     def _result(self, response, json=False):
         if response.status_code != 200 and response.status_code != 201:
-            response.raise_for_status()
+            self._raise_for_status(response)
         if json:
             return response.json()
         return response.text
@@ -25,7 +43,7 @@ class Client(requests.Session):
         volumes=None, volumes_from=None):
         return {
             'Hostname':     hostname,
-            'PortSpecs':    [ports],
+            'PortSpecs':    ports,
             'User':         user,
             'Tty':          tty,
             'OpenStdin':    stdin_open,
