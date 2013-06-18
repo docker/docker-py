@@ -219,7 +219,7 @@ class Client(requests.Session):
         return self._result(self.post(u, None, params=params))
 
     def push(self, repository, registry=None):
-        if repository.count("/") != 1:
+        if repository.count("/") < 1:
             raise ValueError("Impossible to push a \"root\" repository. Please rename your repository in <user>/<repo>")
         u = self._url("/images/{0}/push".format(repository))
         return self._result(self.post(u, None, params={'registry': registry}))
@@ -468,4 +468,4 @@ class BuilderClient(object):
         self.config['PortSpecs'].append(ports)
 
     def cmd_insert(self, args):
-        raise NotImplemented("INSERT not implemented")
+        raise NotImplementedError("INSERT not implemented")
