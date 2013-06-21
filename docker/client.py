@@ -142,7 +142,10 @@ class Client(requests.Session):
             'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
         }
-        return self._result(self.get(self._url("/images/json"), params=params), True)
+        res = self._result(self.get(self._url("/images/json"), params=params), True)
+        if quiet:
+            return [x['Id'] for x in res]
+        return res
 
     def import_image(self, src, repository=None, tag=None):
         u = self._url("/images/create")
