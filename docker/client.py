@@ -352,9 +352,9 @@ class BuilderClient(object):
         self.config['Image'] = self.image
         if id is None:
             cmd = self.config['Cmd']
-            self.config.Cmd = ['true']
+            self.config['Cmd'] = ['true']
             id = self.run()
-            self.config.Cmd = cmd
+            self.config['Cmd'] = cmd
 
         res = self.client.commit(id, author=self.maintainer)
         if 'Id' not in res:
