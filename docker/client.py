@@ -72,11 +72,11 @@ class Client(requests.Session):
 
         return self.post(url, json.dumps(data2), **kwargs)
 
-    def build(self, dockerfile):
+    def build(self, dockerfile, tag=None):
         bc = BuilderClient(self)
         img_id = None
         try:
-            img_id = bc.build(dockerfile)
+            img_id = bc.build(dockerfile, tag=tag)
         except Exception as e:
             bc.done()
             raise e
@@ -297,6 +297,7 @@ class BuilderClient(object):
         self.tmp_images = {}
         self.image = None
         self.maintainer = None
+        self.tag = None
         self.need_commit = False
         self.config = {}
 
@@ -316,7 +317,9 @@ class BuilderClient(object):
         #self.logs.close()
         return res
 
-    def build(self, dockerfile):
+    def build(self, dockerfile, tag=None):
+        if tag:
+            self.tag = tag
         for line in dockerfile:
             line = line.strip().replace("\t", " ", 1)
             if len(line) == 0 or line[0] == '#':
@@ -359,7 +362,8 @@ class BuilderClient(object):
             id = self.run()
             self.config['Cmd'] = cmd
 
-        res = self.client.commit(id, author=self.maintainer)
+        res = self.client.commit(id, author=self.maintainer,
+            repository=self.tag)
         if 'Id' not in res:
             raise Exception('No ID returned by commit operation: {0}'.format(res))
 
