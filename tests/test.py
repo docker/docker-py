@@ -1,11 +1,11 @@
 import unittest
+import time
 
 import docker
 
 # FIXME: missing tests for
-# build; commit; export; history; import_image; insert; inspect_image;
-# kill; port; push; remove_container; remove_image; restart; stop; tag;
-# kill/stop/start/wait/restart (multi)
+# build; export; history; import_image; insert; port; push;
+# remove_image; tag; kill/stop/start/wait/restart (multi)
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
@@ -20,6 +20,10 @@ class BaseTestCase(unittest.TestCase):
             self.client.remove_image(*self.tmp_imgs)
         if len(self.tmp_containers) > 0:
             self.client.remove_container(*self.tmp_containers)
+
+#########################
+##  INFORMATION TESTS  ##
+#########################
 
 class TestVersion(BaseTestCase):
     def runTest(self):
@@ -43,11 +47,9 @@ class TestSearch(BaseTestCase):
         self.assertEqual(len(base_img), 1)
         self.assertIn('Description', base_img[0])
 
-class TestPull(BaseTestCase):
-    def runTest(self):
-        info = self.client.info()
-        self.assertIn('Images', info)
-        # FIXME
+###################
+## LISTING TESTS ##
+###################
 
 class TestImages(BaseTestCase):
     def runTest(self):
@@ -65,6 +67,29 @@ class TestImageIds(BaseTestCase):
     def runTest(self):
         res1 = self.client.images(quiet=True)
         self.assertEqual(type(res1[0]), unicode)
+
+class TestListContainers(BaseTestCase):
+    def runTest(self):
+        res0 = self.client.containers(all=True)
+        size = len(res0)
+        res1 = self.client.create_container('busybox', 'true')
+        self.assertIn('Id', res1)
+        self.client.start(res1['Id'])
+        self.tmp_containers.append(res1['Id'])
+        res2 = self.client.containers(all=True)
+        self.assertEqual(size + 1, len(res2))
+        retrieved = [x for x in res2 if x['Id'].startswith(res1['Id'])]
+        self.assertEqual(len(retrieved), 1)
+        retrieved = retrieved[0]
+        self.assertIn('Command', retrieved)
+        self.assertEqual(retrieved['Command'], 'true ')
+        self.assertIn('Image', retrieved)
+        self.assertEqual(retrieved['Image'], 'busybox:latest')
+        self.assertIn('Status', retrieved)
+
+#####################
+## CONTAINER TESTS ##
+#####################
 
 class TestCreateContainer(BaseTestCase):
     def runTest(self):
@@ -103,26 +128,6 @@ class TestWait(BaseTestCase):
         self.assertIn('ExitCode', inspect['State'])
         self.assertEqual(inspect['State']['ExitCode'], exitcode)
 
-
-class TestListContainers(BaseTestCase):
-    def runTest(self):
-        res0 = self.client.containers(all=True)
-        size = len(res0)
-        res1 = self.client.create_container('busybox', 'true')
-        self.assertIn('Id', res1)
-        self.client.start(res1['Id'])
-        self.tmp_containers.append(res1['Id'])
-        res2 = self.client.containers(all=True)
-        self.assertEqual(size + 1, len(res2))
-        retrieved = [x for x in res2 if x['Id'].startswith(res1['Id'])]
-        self.assertEqual(len(retrieved), 1)
-        retrieved = retrieved[0]
-        self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], 'true ')
-        self.assertIn('Image', retrieved)
-        self.assertEqual(retrieved['Image'], 'busybox:latest')
-        self.assertIn('Status', retrieved)
-
 class TestLogs(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -151,6 +156,144 @@ class TestDiff(BaseTestCase):
         self.assertEqual(test_diff[0]['Kind'], 1)
         # FIXME also test remove/modify
         # (need testcommit first)
+
+class TestStop(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.stop(id, timeout=2)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False)
+
+class TestKill(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False)
+
+class TestRestart(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        info = self.client.inspect_container(id)
+        self.assertIn('State', info)
+        self.assertIn('StartedAt', info['State'])
+        start_time1 = info['State']['StartedAt']
+        self.client.restart(id, timeout=2)
+        info2 = self.client.inspect_container(id)
+        self.assertIn('State', info2)
+        self.assertIn('StartedAt', info2['State'])
+        start_time2 = info2['State']['StartedAt']
+        self.assertNotEqual(start_time1, start_time2)
+        self.assertIn('Running', info2['State'])
+        self.assertEqual(info2['State']['Running'], True)
+        self.client.kill(id)
+
+class TestRemoveContainer(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['true'])
+        id = container['Id']
+        self.client.start(id)
+        self.client.wait(id)
+        self.tmp_containers.append(id)
+        self.client.remove_container(id)
+        containers = self.client.containers(all=True)
+        res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
+        self.assertEqual(len(res), 0)
+
+##################
+## IMAGES TESTS ##
+##################
+
+class TestPull(BaseTestCase):
+    def runTest(self):
+        self.client.remove_image('joffrey/test001')
+        info = self.client.info()
+        self.assertIn('Images', info)
+        img_count = info['Images']
+        res = self.client.pull('joffrey/test001')
+        self.assertEqual(type(res), unicode)
+        self.assertEqual(img_count + 1, self.client.info()['Images'])
+        img_info = self.client.inspect_image('joffrey/test001')
+        self.assertIn('id', img_info)
+        self.tmp_imgs.append('joffrey/test001')
+
+class TestCommit(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['touch', '/test'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        res = self.client.commit(id)
+        self.assertIn('Id', res)
+        img_id = res['Id']
+        self.tmp_imgs.append(img_id)
+        img = self.client.inspect_image(img_id)
+        self.assertIn('container', img)
+        self.assertTrue(img['container'].startswith(id))
+        self.assertIn('container_config', img)
+        self.assertIn('Image', img['container_config'])
+        self.assertEqual('busybox', img['container_config']['Image'])
+        busybox_id = self.client.inspect_image('busybox')['id']
+        self.assertIn('parent', img)
+        self.assertEqual(img['parent'], busybox_id)
+
+
+class TestRemoveImage(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['touch', '/test'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        res = self.client.commit(id)
+        self.assertIn('Id', res)
+        img_id = res['Id']
+        self.tmp_imgs.append(img_id)
+        self.client.remove_image(img_id)
+        images = self.client.images(all=True)
+        res = [x for x in images if x['Id'].startswith(img_id)]
+        self.assertEqual(len(res), 0)
+
+#######################
+## PY SPECIFIC TESTS ##
+#######################
+
+class TestRunShlex(BaseTestCase):
+    def runTest(self):
+        commands = [
+            'true',
+            'echo "The Young Descendant of Tepes & Septette for the Dead Princess"',
+            'echo -n "The Young Descendant of Tepes & Septette for the Dead Princess"',
+            '/bin/sh -c "echo Hello World"',
+            '/bin/sh -c \'echo "Hello World"\'',
+            'echo "\"Night of Nights\""',
+            'true && echo "Night of Nights"'
+        ]
+        for cmd in commands:
+            container = self.client.create_container('busybox', cmd)
+            id = container['Id']
+            self.client.start(id)
+            self.tmp_containers.append(id)
+            exitcode = self.client.wait(id)
+            self.assertEqual(exitcode, 0, msg=cmd)
 
 
 if __name__ == '__main__':
