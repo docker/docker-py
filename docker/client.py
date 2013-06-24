@@ -1,5 +1,6 @@
 import json
 import logging
+import shlex
 from StringIO import StringIO
 
 import requests
@@ -42,7 +43,7 @@ class Client(requests.Session):
         stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
         volumes=None, volumes_from=None):
         if isinstance(command, basestring):
-            command = [command]
+            command = shlex.split(command)
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
