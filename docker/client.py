@@ -380,6 +380,8 @@ class BuilderClient(object):
         if container.get('Warnings', None):
             for warning in container['Warnings']:
                 self.logger.warning(warning)
+        if self.config.get('Memory'):
+            self.config.update({'Memory': str(self.config.get('Memory'))})
         self.client.start(container['Id'])
         self.tmp_containers[container['Id']] = {}
         status = self.client.wait(container['Id'])
