@@ -73,8 +73,8 @@ class Client(requests.Session):
 
         return self.post(url, json.dumps(data2), **kwargs)
 
-    def build(self, dockerfile, tag=None):
-        bc = BuilderClient(self)
+    def build(self, dockerfile, tag=None, logger=None):
+        bc = BuilderClient(self, logger)
         img_id = None
         try:
             img_id = bc.build(dockerfile, tag=tag)
@@ -292,7 +292,7 @@ class Client(requests.Session):
 
 
 class BuilderClient(object):
-    def __init__(self, client):
+    def __init__(self, client, logger=None):
         self.client = client
         self.tmp_containers = {}
         self.tmp_images = {}
@@ -302,20 +302,29 @@ class BuilderClient(object):
         self.need_commit = False
         self.config = {}
 
-        self.logger = logging.getLogger(__name__)
-        logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                    level='INFO')
-        self.logs = StringIO()
-        self.logger.addHandler(logging.StreamHandler(self.logs))
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger(__name__)
+            logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
+                        level='INFO')
+            self.logs = StringIO()
+            self.logger.addHandler(logging.StreamHandler(self.logs))
 
     def done(self):
         if self.image is None:
             # The build is unsuccessful, remove temporary containers and images
             self.client.remove_container(*self.tmp_containers)
             self.client.remove_image(*self.tmp_images)
-        self.logs.flush()
-        res = self.logs.getvalue()
-        #self.logs.close()
+        
+        res = ''
+        try:
+            self.logs.flush()
+            res = self.logs.getvalue()
+            #self.logs.close()
+        except AttributeError:
+            pass    
+        
         return res
 
     def build(self, dockerfile, tag=None):
