@@ -53,7 +53,7 @@ class TestSearch(BaseTestCase):
 
 class TestImages(BaseTestCase):
     def runTest(self):
-        res1 = self.client.images()
+        res1 = self.client.images(all=True)
         self.assertEqual(len(res1), self.client.info()['Images'])
         res10 = res1[0]
         self.assertIn('Created', res10)
@@ -231,7 +231,7 @@ class TestPull(BaseTestCase):
         img_count = info['Images']
         res = self.client.pull('joffrey/test001')
         self.assertEqual(type(res), unicode)
-        self.assertEqual(img_count + 1, self.client.info()['Images'])
+        self.assertEqual(img_count + 2, self.client.info()['Images'])
         img_info = self.client.inspect_image('joffrey/test001')
         self.assertIn('id', img_info)
         self.tmp_imgs.append('joffrey/test001')
