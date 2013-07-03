@@ -74,6 +74,26 @@ class Client(requests.Session):
 
         return self.post(url, json.dumps(data2), **kwargs)
 
+    def attach(self, container):
+        params = {
+            'stdout': 1,
+            'stderr': 1,
+            'stream': 1
+        }
+        u = self._url("/containers/{0}/attach".format(container))
+        res = self.post(u, None, params=params, stream=True)
+        # hijack the underlying socket from requests, icky
+        # but for some reason requests.iter_contents and ilk
+        # eventually block
+        socket = res.raw._fp.fp._sock
+
+        while True:
+            chunk = socket.recv(4096)
+            if chunk:
+                yield chunk
+            else:
+                break
+
     def build(self, dockerfile, tag=None, logger=None):
         bc = BuilderClient(self, logger)
         img_id = None
@@ -202,27 +222,6 @@ class Client(requests.Session):
             'email': email if email is not None else json_['email']
         }
         return self._result(self.post_json(url, req_data), True)
-
-    def attach(self, container):
-        params = {
-            'stdout': 1,
-            'stderr': 1,
-            'stream': 1
-        }
-        u = self._url("/containers/{0}/attach".format(container))
-        res = self.post(u, None, params=params, stream=True)
-        # hijack the underlying socket from requests, icky
-        # but for some reason requests.iter_contents and ilk
-        # eventually block
-        socket = res.raw._fp.fp._sock
-
-        while True:
-            chunk = socket.recv(4096)
-            if chunk:
-                yield chunk
-            else:
-                break
-
 
     def logs(self, container):
         params = {
