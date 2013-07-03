@@ -197,7 +197,6 @@ class Client(requests.Session):
 
     def attach(self, container):
         params = {
-            'stdin': 1,
             'stdout': 1,
             'stderr': 1,
             'stream': 1
