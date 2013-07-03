@@ -132,14 +132,14 @@ class TestLogs(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container('busybox',
-            ['echo', '-n', '"{0}"'.format(snippet)])
+            ['echo', '-n', '{0}'.format(snippet)])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(id)
-        self.assertEqual(logs.read(), snippet)
+        self.assertEqual(logs, snippet)
 
 class TestDiff(BaseTestCase):
     def runTest(self):

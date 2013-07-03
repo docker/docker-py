@@ -231,7 +231,7 @@ class Client(requests.Session):
         }
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params)
-        return res.raw
+        return res.text
 
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
