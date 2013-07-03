@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import shlex
 from StringIO import StringIO
 
@@ -39,9 +40,9 @@ class Client(requests.Session):
             return response.json()
         return response.text
 
-    def _container_config(self, image, command, hostname=None, user=None, detach=False,
-        stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
-        volumes=None, volumes_from=None):
+    def _container_config(self, image, command, hostname=None, user=None,
+        detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
+        environment=None, dns=None, volumes=None, volumes_from=None):
         if isinstance(command, basestring):
             command = shlex.split(command)
         return {
@@ -83,7 +84,8 @@ class Client(requests.Session):
             raise e
         return img_id, bc.done()
 
-    def commit(self, container, repository=None, tag=None, message=None, author=None, conf=None):
+    def commit(self, container, repository=None, tag=None, message=None,
+        author=None, conf=None):
         params = {
             'container': container,
             'repo': repository,
@@ -94,7 +96,8 @@ class Client(requests.Session):
         u = self._url("/commit")
         return self._result(self.post_json(u, conf, params=params), json=True)
 
-    def containers(self, quiet=False, all=False, trunc=True, latest=False, since=None, before=None, limit=-1):
+    def containers(self, quiet=False, all=False, trunc=True, latest=False,
+        since=None, before=None, limit=-1):
         params = {
             'limit': 1 if latest else limit,
             'only_ids': 1 if quiet else 0,
@@ -106,9 +109,9 @@ class Client(requests.Session):
         u = self._url("/containers/ps")
         return self._result(self.get(u, params=params), True)
 
-    def create_container(self, image, command, hostname=None, user=None, detach=False,
-        stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,
-        volumes=None, volumes_from=None):
+    def create_container(self, image, command, hostname=None, user=None,
+        detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
+        environment=None, dns=None, volumes=None, volumes_from=None):
         config = self._container_config(image, command, hostname, user,
             detach, stdin_open, tty, mem_limit, ports, environment, dns,
             volumes, volumes_from)
@@ -118,15 +121,17 @@ class Client(requests.Session):
         u = self._url("/containers/create")
         res = self.post_json(u, config)
         if res.status_code == 404:
-            raise ValueError("{0} is an unrecognized image. Please pull the image first.".
-                format(config['Image']))
+            raise ValueError("{0} is an unrecognized image. Please pull the "
+                "image first.".format(config['Image']))
         return self._result(res, True)
 
     def diff(self, container):
-        return self._result(self.get(self._url("/containers/{0}/changes".format(container))), True)
+        return self._result(self.get(self._url("/containers/{0}/changes".
+            format(container))), True)
 
     def export(self, container):
-        res = self.get(self._url("/containers/{0}/export".format(container)), stream=True)
+        res = self.get(self._url("/containers/{0}/export".format(container)),
+            stream=True)
         return res.raw
 
     def history(self, image):
@@ -143,7 +148,8 @@ class Client(requests.Session):
             'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
         }
-        res = self._result(self.get(self._url("/images/json"), params=params), True)
+        res = self._result(self.get(self._url("/images/json"), params=params),
+            True)
         if quiet:
             return [x['Id'] for x in res]
         return res
@@ -164,18 +170,20 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/info")), True)
 
     def insert(self, image, url, path):
-        url = self._url("/images/" + image)
+        api_url = self._url("/images/" + image + "/insert")
         params = {
             'url': url,
             'path': path
         }
-        return self._result(self.post(url, None, params=params))
+        return self._result(self.post(api_url, None, params=params))
 
     def inspect_container(self, container_id):
-        return self._result(self.get(self._url("/containers/{0}/json".format(container_id))), True)
+        return self._result(self.get(self._url("/containers/{0}/json".
+            format(container_id))), True)
 
     def inspect_image(self, image_id):
-        return self._result(self.get(self._url("/images/{0}/json".format(image_id))), True)
+        return self._result(self.get(self._url("/images/{0}/json".
+            format(image_id))), True)
 
     def kill(self, *args):
         for name in args:
@@ -224,7 +232,8 @@ class Client(requests.Session):
 
     def push(self, repository, registry=None):
         if repository.count("/") < 1:
-            raise ValueError("Impossible to push a \"root\" repository. Please rename your repository in <user>/<repo>")
+            raise ValueError("""Impossible to push a \"root\" repository.
+                Please rename your repository in <user>/<repo>""")
         u = self._url("/images/{0}/push".format(repository))
         return self._result(self.post(u, None, params={'registry': registry}))
 
@@ -248,8 +257,8 @@ class Client(requests.Session):
             self.post(url, None, params=params)
 
     def search(self, term):
-        return self._result(self.get(self._url("/images/search"), params={'term': term}),
-            True)
+        return self._result(self.get(self._url("/images/search"),
+            params={'term': term}), True)
 
     def start(self, *args):
         for name in args:
@@ -316,15 +325,15 @@ class BuilderClient(object):
             # The build is unsuccessful, remove temporary containers and images
             self.client.remove_container(*self.tmp_containers)
             self.client.remove_image(*self.tmp_images)
-        
+
         res = ''
         try:
             self.logs.flush()
             res = self.logs.getvalue()
             #self.logs.close()
         except AttributeError:
-            pass    
-        
+            pass
+
         return res
 
     def build(self, dockerfile, tag=None):
@@ -339,7 +348,8 @@ class BuilderClient(object):
                 self.logger.error('Invalid Dockerfile format: "{0}"'.format(line))
                 return
             args = args.strip()
-            self.logger.info('{0} {1} ({2})'.format(instr.upper(), args, self.image))
+            self.logger.info('{0} {1} ({2})'.format(instr.upper(), args,
+                self.image))
             try:
                 method = getattr(self, 'cmd_{0}'.format(instr.lower()))
                 try:
@@ -348,7 +358,8 @@ class BuilderClient(object):
                     self.logger.exception(str(e))
                     return
             except Exception as e:
-                self.logger.warning("Skipping unknown instruction {0}".format(instr.upper()))
+                self.logger.warning("Skipping unknown instruction {0}".
+                    format(instr.upper()))
             self.logger.info('===> {0}'.format(self.image))
         if self.need_commit:
             try:
@@ -364,7 +375,8 @@ class BuilderClient(object):
 
     def commit(self, id=None):
         if self.image is None:
-            raise Exception("Please provide a source image with `from` prior to run")
+            raise Exception("Please provide a source image with `from` prior to"
+                "run")
         self.config['Image'] = self.image
         if id is None:
             cmd = self.config['Cmd']
@@ -383,7 +395,8 @@ class BuilderClient(object):
 
     def run(self):
         if self.image is None:
-            raise Exception("Please provide a source image with `from` prior to run")
+            raise Exception("Please provide a source image with `from` prior to"
+                "run")
         self.config['Image'] = self.image
         container = self.client.create_container_from_config(self.config)
         if container.get('Warnings', None):
@@ -393,8 +406,8 @@ class BuilderClient(object):
         self.tmp_containers[container['Id']] = {}
         status = self.client.wait(container['Id'])
         if status != 0:
-            raise Exception("The command `{0}` returned a non-zero status: {1}".format(
-                self.config['Cmd'], status))
+            raise Exception("The command `{0}` returned a non-zero status: {1}".
+                format(self.config['Cmd'], status))
         return container['Id']
 
     def merge_config(self, a, b):
@@ -435,8 +448,10 @@ class BuilderClient(object):
 
     def cmd_run(self, args):
         if self.image is None:
-            raise Exception("Please provide a source image with `from` prior to run")
-        config = self.client._container_config(self.image, ['/bin/sh', '-c', args])
+            raise Exception("Please provide a source image with `from` prior to"
+                "run")
+        config = self.client._container_config(self.image,
+            ['/bin/sh', '-c', args])
         cmd = self.config.get('Cmd', None)
         env = self.config.get('Env', None)
 
@@ -476,7 +491,6 @@ class BuilderClient(object):
             self.logger.debug("Error decoding json, using /bin/sh -c")
             self.config['Cmd'] = ['/bin/sh', '-c', args]
 
-
     def cmd_expose(self, args):
         ports = args.split()
         if 'PortSpecs' not in self.config or self.config['PortSpecs'] is None:
@@ -485,4 +499,19 @@ class BuilderClient(object):
         self.config['PortSpecs'].append(ports)
 
     def cmd_insert(self, args):
-        raise NotImplementedError("INSERT not implemented")
+        raise NotImplementedError("INSERT is deprecated, please use ADD instead")
+
+    def cmd_add(self, args):
+        src, dst = args.split()
+        if not (src.startswith('http://') or src.startswith('https://')):
+            raise NotImplementedError("Contextual build is not supported")
+        output = self.client.insert(self.image, src, dst)
+        srch = r'\{"Id":"(.*)"}'
+        match = re.search(srch, output)
+        if not match:
+            raise Exception("ADD failed to retrieve the new image ID in API"
+                "output")
+        self.image = match.group(1)
+        if self.image == "":
+            raise Exception("ADD failed to retrieve the new image ID in API"
+                "output")
