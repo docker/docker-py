@@ -195,6 +195,28 @@ class Client(requests.Session):
         }
         return self._result(self.post_json(url, req_data), True)
 
+    def attach(self, container):
+        params = {
+            'stdin': 1,
+            'stdout': 1,
+            'stderr': 1,
+            'stream': 1
+        }
+        u = self._url("/containers/{0}/attach".format(container))
+        res = self.post(u, None, params=params, stream=True)
+        # hijack the underlying socket from requests, icky
+        # but for some reason requests.iter_contents and ilk
+        # eventually block
+        socket = res.raw._fp.fp._sock
+
+        while True:
+            chunk = socket.recv(4096)
+            if chunk:
+                yield chunk
+            else:
+                break
+
+
     def logs(self, container):
         params = {
             'logs': 1,
