@@ -1,5 +1,6 @@
 import os
 import six
+import os
 import unittest
 
 import docker
