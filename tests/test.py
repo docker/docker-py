@@ -1,5 +1,5 @@
+import os
 import unittest
-import time
 
 import docker
 
@@ -96,6 +96,27 @@ class TestCreateContainer(BaseTestCase):
         res = self.client.create_container('busybox', 'true')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
+
+class TestCreateContainerWithBinds(BaseTestCase):
+    def runTest(self):
+        mount_dest = '/mnt'
+        mount_origin = os.getcwd()
+
+        filename = 'shared.txt'
+        shared_file = os.path.join(mount_origin, filename)
+
+        with open(shared_file, 'w'):
+            container = self.client.create_container('busybox',
+                ['ls', mount_dest], volumes={mount_dest: {}})
+            container_id = container['Id']
+            self.client.start(container_id, binds={mount_origin: mount_dest})
+            self.tmp_containers.append(container_id)
+            exitcode = self.client.wait(container_id)
+            self.assertEqual(exitcode, 0)
+            logs = self.client.logs(container_id)
+
+        os.unlink(shared_file)
+        self.assertIn(filename, logs)
 
 class TestStartContainer(BaseTestCase):
     def runTest(self):

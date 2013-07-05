@@ -280,10 +280,19 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/search"),
             params={'term': term}), True)
 
-    def start(self, *args):
+    def start(self, *args, **kwargs):
+        start_config = {}
+        binds = kwargs.pop('binds', '')
+        if binds:
+            bind_pairs = ['{0}:{1}'.format(host, dest) for host, dest in binds.items()]
+            start_config = {
+                'Binds': bind_pairs,
+            }
+
         for name in args:
             url = self._url("/containers/{0}/start".format(name))
-            self.post(url, None)
+            self.post_json(
+                url, start_config, headers={"Content-Type":"application/json"})
 
     def stop(self, *args, **kwargs):
         params = {
