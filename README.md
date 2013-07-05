@@ -85,6 +85,12 @@ Identical to the `docker search` command.
 Identical to the `docker start` command, but doesn't support attach options. Use `docker logs` to
 recover `stdout`/`stderr`
 
+* `c.start(container, binds={'/host': '/mnt'})`
+Allows to bind a directory in the host to the container.
+Similar to the `docker run` command with the `-b="/host:/mnt"`.
+Requires the container to be created with the volumes argument:
+`c.create_container(..., volumes={'/mnt': {}})`
+
 * `c.stop(containers..., t=10)`
 Identical to the `docker stop` command.
 
