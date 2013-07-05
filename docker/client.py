@@ -1,8 +1,13 @@
 import json
 import logging
 import re
+import six
 import shlex
-from StringIO import StringIO
+
+if six.PY3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 import requests
 from requests.exceptions import HTTPError
@@ -43,7 +48,7 @@ class Client(requests.Session):
     def _container_config(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
         environment=None, dns=None, volumes=None, volumes_from=None):
-        if isinstance(command, basestring):
+        if isinstance(command, six.string_types):
             command = shlex.split(command)
         return {
             'Hostname':     hostname,
@@ -68,7 +73,7 @@ class Client(requests.Session):
         # so we do this disgusting thing here.
         data2 = {}
         if data is not None:
-            for k, v in data.iteritems():
+            for k, v in six.iteritems(data):
                 if v is not None:
                     data2[k] = v
 
@@ -180,7 +185,7 @@ class Client(requests.Session):
             'repo': repository,
             'tag': tag
         }
-        if type(src) == str or type(src) == unicode:
+        if isinstance(src, six.string_types):
             params['fromSrc'] = src
             return self._result(self.post(u, None, params=params))
 

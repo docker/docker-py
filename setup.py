@@ -11,7 +11,7 @@ setup(
     version='0.0.6',
     description="Python client for Docker.",
     packages=['docker'],
-    install_requires=['requests'] + test_requirements,
+    install_requires=['requests', 'six'] + test_requirements,
     zip_safe=False,
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Other Environment',
