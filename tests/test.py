@@ -4,8 +4,8 @@ import time
 import docker
 
 # FIXME: missing tests for
-# build; export; history; import_image; insert; port; push;
-# remove_image; tag; kill/stop/start/wait/restart (multi)
+# export; history; import_image; insert; port; push;
+# tag; kill/stop/start/wait/restart (multi)
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
@@ -271,6 +271,37 @@ class TestRemoveImage(BaseTestCase):
         images = self.client.images(all=True)
         res = [x for x in images if x['Id'].startswith(img_id)]
         self.assertEqual(len(res), 0)
+
+#################
+# BUILDER TESTS #
+#################
+
+class TestBuild(BaseTestCase):
+    def runTest(self):
+        script = [
+            'MAINTAINER docker-py',
+            'FROM busybox',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz /tmp/silence.tar.gz'
+        ]
+        img, logs = self.client.build(script)
+        self.assertNotEqual(img, None)
+        self.assertNotEqual(img, '')
+        self.assertNotEqual(logs, '')
+        container1 = self.client.create_container(img, 'test -d /tmp/test')
+        id1 = container1['Id']
+        self.client.start(id1)
+        self.tmp_containers.append(id1)
+        exitcode1 = self.client.wait(id1)
+        self.assertEqual(exitcode1, 0)
+        container2 = self.client.create_container(img, 'test -d /tmp/test')
+        id2 = container2['Id']
+        self.client.start(id2)
+        self.tmp_containers.append(id2)
+        exitcode2 = self.client.wait(id2)
+        self.assertEqual(exitcode2, 0)
+        self.tmp_imgs.append(img)
 
 #######################
 ## PY SPECIFIC TESTS ##
