@@ -72,6 +72,9 @@ class Client(requests.Session):
                 if v is not None:
                     data2[k] = v
 
+        if 'headers' not in kwargs:
+            kwargs['headers'] = {}
+        kwargs['headers']["Content-Type"] = "application/json"
         return self.post(url, json.dumps(data2), **kwargs)
 
     def attach(self, container):
@@ -291,8 +294,7 @@ class Client(requests.Session):
 
         for name in args:
             url = self._url("/containers/{0}/start".format(name))
-            self.post_json(
-                url, start_config, headers={"Content-Type":"application/json"})
+            self.post_json(url, start_config)
 
     def stop(self, *args, **kwargs):
         params = {
