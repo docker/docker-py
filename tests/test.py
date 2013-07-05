@@ -1,5 +1,5 @@
+import six
 import unittest
-import time
 
 import docker
 
@@ -66,7 +66,7 @@ class TestImages(BaseTestCase):
 class TestImageIds(BaseTestCase):
     def runTest(self):
         res1 = self.client.images(quiet=True)
-        self.assertEqual(type(res1[0]), unicode)
+        self.assertEqual(type(res1[0]), six.text_type)
 
 class TestListContainers(BaseTestCase):
     def runTest(self):
@@ -230,7 +230,7 @@ class TestPull(BaseTestCase):
         self.assertIn('Images', info)
         img_count = info['Images']
         res = self.client.pull('joffrey/test001')
-        self.assertEqual(type(res), unicode)
+        self.assertEqual(type(res), six.text_type)
         self.assertEqual(img_count + 2, self.client.info()['Images'])
         img_info = self.client.inspect_image('joffrey/test001')
         self.assertIn('id', img_info)
