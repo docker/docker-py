@@ -241,7 +241,7 @@ class Client(requests.Session):
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
         json_ = res.json()
-        return json_['NetworkSettings']['PortMapping'][private_port]
+        return json_['NetworkSettings']['PortMapping'][str(private_port)]
 
     def pull(self, repository, tag=None, registry=None):
         if repository.count(":") == 1:
