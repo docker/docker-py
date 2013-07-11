@@ -102,8 +102,8 @@ class Client(requests.Session):
             else:
                 break
 
-    def build(self, dockerfile, tag=None, logger=None):
-        bc = BuilderClient(self, logger)
+    def build(self, dockerfile, tag=None, logger=None, follow_build_steps=False):
+        bc = BuilderClient(self, follow_build_steps, logger)
         img_id = None
         try:
             img_id = bc.build(dockerfile, tag=tag)
@@ -337,8 +337,9 @@ class Client(requests.Session):
 
 
 class BuilderClient(object):
-    def __init__(self, client, logger=None):
+    def __init__(self, client, follow_build_steps=False, logger=None):
         self.client = client
+        self.follow_build_steps = follow_build_steps
         self.tmp_containers = {}
         self.tmp_images = {}
         self.image = None
@@ -439,6 +440,9 @@ class BuilderClient(object):
             for warning in container['Warnings']:
                 self.logger.warning(warning)
         self.client.start(container['Id'])
+        if self.follow_build_steps:
+            for log_line in self.client.attach(container['Id']):
+                self.logger.info(" {0}".format(log_line))
         self.tmp_containers[container['Id']] = {}
         status = self.client.wait(container['Id'])
         if status != 0:
