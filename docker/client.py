@@ -77,6 +77,9 @@ class Client(requests.Session):
                 if v is not None:
                     data2[k] = v
 
+        if 'headers' not in kwargs:
+            kwargs['headers'] = {}
+        kwargs['headers']["Content-Type"] = "application/json"
         return self.post(url, json.dumps(data2), **kwargs)
 
     def attach(self, container):
@@ -99,8 +102,8 @@ class Client(requests.Session):
             else:
                 break
 
-    def build(self, dockerfile, tag=None, logger=None):
-        bc = BuilderClient(self, logger)
+    def build(self, dockerfile, tag=None, logger=None, follow_build_steps=False):
+        bc = BuilderClient(self, follow_build_steps, logger)
         img_id = None
         try:
             img_id = bc.build(dockerfile, tag=tag)
@@ -285,10 +288,18 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/search"),
             params={'term': term}), True)
 
-    def start(self, *args):
+    def start(self, *args, **kwargs):
+        start_config = {}
+        binds = kwargs.pop('binds', '')
+        if binds:
+            bind_pairs = ['{0}:{1}'.format(host, dest) for host, dest in binds.items()]
+            start_config = {
+                'Binds': bind_pairs,
+            }
+
         for name in args:
             url = self._url("/containers/{0}/start".format(name))
-            self.post(url, None)
+            self.post_json(url, start_config)
 
     def stop(self, *args, **kwargs):
         params = {
@@ -326,8 +337,9 @@ class Client(requests.Session):
 
 
 class BuilderClient(object):
-    def __init__(self, client, logger=None):
+    def __init__(self, client, follow_build_steps=False, logger=None):
         self.client = client
+        self.follow_build_steps = follow_build_steps
         self.tmp_containers = {}
         self.tmp_images = {}
         self.image = None
@@ -428,6 +440,9 @@ class BuilderClient(object):
             for warning in container['Warnings']:
                 self.logger.warning(warning)
         self.client.start(container['Id'])
+        if self.follow_build_steps:
+            for log_line in self.client.attach(container['Id']):
+                self.logger.info(" {0}".format(log_line))
         self.tmp_containers[container['Id']] = {}
         status = self.client.wait(container['Id'])
         if status != 0:
