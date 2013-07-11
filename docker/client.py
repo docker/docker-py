@@ -3,7 +3,7 @@ import logging
 import re
 import six
 import shlex
-
+import tarfile
 if six.PY3:
     from io import StringIO
 else:
@@ -67,6 +67,25 @@ class Client(requests.Session):
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
         }
+    def _mkbuildcontext(self, dockerfile):
+        memfile = StringIO()
+        try:
+            t = tarfile.open(mode='w', fileobj=memfile)
+            dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
+            t.addfile(dfinfo, dockerfile)
+            return memfile.getvalue()
+        finally:
+            memfile.close()
+
+    def _tar(self, path):
+        memfile = StringIO()
+        try:
+            t = tarfile.open(mode='w', fileobj=memfile)
+            t.add(path, arcname='.')
+            t.list()
+            return memfile.getvalue()
+        finally:
+            memfile.close()
 
     def post_json(self, url, data, **kwargs):
         # Go <1.1 can't unserialize null to a string
@@ -102,15 +121,34 @@ class Client(requests.Session):
             else:
                 break
 
-    def build(self, dockerfile, tag=None, logger=None, follow_build_steps=False):
-        bc = BuilderClient(self, follow_build_steps, logger)
-        img_id = None
-        try:
-            img_id = bc.build(dockerfile, tag=tag)
-        except Exception as e:
-            bc.done()
-            raise e
-        return img_id, bc.done()
+    def build(self, dockerfile, tag=None, logger=None):
+        return build_context(fileobj=dockerfile, tag=tag)
+
+    def build_context(self, path=None, tag=None, fileobj=None):
+        remote = context = headers = None
+        if path is None and fileobj is None:
+            raise Exception("Either path or fileobj needs to be provided.")
+
+        if fileobj is not None:
+            context = self._mkbuildcontext(fileobj)
+        elif (path.startswith('http://') or path.startswith('https://') or
+        path.startswith('git://') or path.startswith('github.com/')):
+            remote = path
+        else:
+            context = self._tar(path)
+
+        u = self._url('/build')
+        params = { 'tag': tag, 'remote': remote }
+        if context is not None:
+            headers = { 'Content-Type': 'application/tar' }
+
+        res = self._result(self.post(u, context, params=params,
+            headers=headers))
+        srch = r'Successfully built ([0-9a-f]+)'
+        match = re.search(srch, res)
+        if not match:
+            return None, res
+        return match.group(1), res
 
     def commit(self, container, repository=None, tag=None, message=None,
         author=None, conf=None):
@@ -334,224 +372,3 @@ class Client(requests.Session):
         if len(result) == 1:
             return result[0]
         return result
-
-
-class BuilderClient(object):
-    def __init__(self, client, follow_build_steps=False, logger=None):
-        self.client = client
-        self.follow_build_steps = follow_build_steps
-        self.tmp_containers = {}
-        self.tmp_images = {}
-        self.image = None
-        self.maintainer = None
-        self.tag = None
-        self.need_commit = False
-        self.config = {}
-
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger(__name__)
-            logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                        level='INFO')
-            self.logs = StringIO()
-            self.logger.addHandler(logging.StreamHandler(self.logs))
-
-    def done(self):
-        if self.image is None:
-            # The build is unsuccessful, remove temporary containers and images
-            self.client.remove_container(*self.tmp_containers)
-            self.client.remove_image(*self.tmp_images)
-
-        res = ''
-        try:
-            self.logs.flush()
-            res = self.logs.getvalue()
-            #self.logs.close()
-        except AttributeError:
-            pass
-
-        return res
-
-    def build(self, dockerfile, tag=None):
-        if tag:
-            self.tag = tag
-        for line in dockerfile:
-            line = line.strip().replace("\t", " ", 1)
-            if len(line) == 0 or line[0] == '#':
-                continue
-            instr, sep, args = line.partition(' ')
-            if sep == '':
-                self.logger.error('Invalid Dockerfile format: "{0}"'.format(line))
-                return
-            args = args.strip()
-            self.logger.info('{0} {1} ({2})'.format(instr.upper(), args,
-                self.image))
-            try:
-                method = getattr(self, 'cmd_{0}'.format(instr.lower()))
-                try:
-                    method(args)
-                except Exception as e:
-                    self.logger.exception(str(e))
-                    return
-            except Exception as e:
-                self.logger.warning("Skipping unknown instruction {0}".
-                    format(instr.upper()))
-            self.logger.info('===> {0}'.format(self.image))
-        if self.need_commit:
-            try:
-                self.commit()
-            except Exception as e:
-                self.logger.exception(str(e))
-                return
-        if self.image is not None:
-            self.logger.info("Build finished, image id: {0}".format(self.image))
-            return self.image
-        self.logger.error("An error has occured during the build.")
-        return
-
-    def commit(self, id=None):
-        if self.image is None:
-            raise Exception("Please provide a source image with `from` prior to"
-                "run")
-        self.config['Image'] = self.image
-        if id is None:
-            cmd = self.config['Cmd']
-            self.config['Cmd'] = ['true']
-            id = self.run()
-            self.config['Cmd'] = cmd
-
-        res = self.client.commit(id, author=self.maintainer,
-            repository=self.tag)
-        if 'Id' not in res:
-            raise Exception('No ID returned by commit operation: {0}'.format(res))
-
-        self.tmp_images[res['Id']] = {}
-        self.image = res['Id']
-        self.need_commit = False
-
-    def run(self):
-        if self.image is None:
-            raise Exception("Please provide a source image with `from` prior to"
-                "run")
-        self.config['Image'] = self.image
-        container = self.client.create_container_from_config(self.config)
-        if container.get('Warnings', None):
-            for warning in container['Warnings']:
-                self.logger.warning(warning)
-        self.client.start(container['Id'])
-        if self.follow_build_steps:
-            for log_line in self.client.attach(container['Id']):
-                self.logger.info(" {0}".format(log_line))
-        self.tmp_containers[container['Id']] = {}
-        status = self.client.wait(container['Id'])
-        if status != 0:
-            raise Exception("The command `{0}` returned a non-zero status: {1}".
-                format(self.config['Cmd'], status))
-        return container['Id']
-
-    def merge_config(self, a, b):
-        if not a.get('Hostname'):
-            a['Hostname'] = b.get('Hostname')
-        if not a.get('User'):
-            a['User'] = b.get('User')
-        if not a.get('Memory'):
-            a['Memory'] = b.get('Memory')
-        if not a.get('MemorySwap'):
-            a['MemorySwap'] = b.get('MemorySwap')
-        if not a.get('CpuShares'):
-            a['CpuShares'] = b.get('CpuShares')
-        if not a.get('PortSpecs') or len(a.get('PortSpecs')) == 0:
-            a['PortSpecs'] = b.get('PortSpecs')
-
-        a['Tty'] = a.get('Tty') or b.get('Tty')
-        a['OpenStdin'] = a.get('OpenStdin') or b.get('OpenStdin')
-        a['StdinOnce'] = a.get('StdinOnce') or b.get('StdinOnce')
-
-        if not a.get('Env') or len(a.get('Env')) == 0:
-            a['Env'] = b.get('Env')
-        if not a.get('Cmd') or len(a.get('Cmd')) == 0:
-            a['Cmd'] = b.get('Cmd')
-        if not a.get('Dns') or len(a.get('Dns')) == 0:
-            a['Dns'] = b.get('Dns')
-
-    def cmd_from(self, name):
-        img = None
-        try:
-            img = self.client.inspect_image(name)
-        except:
-            self.client.pull(name)
-            img = self.client.inspect_image(name)
-
-        self.image = img['id']
-        self.logger.debug("Using image {0}".format(self.image))
-
-    def cmd_run(self, args):
-        if self.image is None:
-            raise Exception("Please provide a source image with `from` prior to"
-                "run")
-        config = self.client._container_config(self.image,
-            ['/bin/sh', '-c', args])
-        cmd = self.config.get('Cmd', None)
-        env = self.config.get('Env', None)
-
-        self.config['Cmd'] = None
-        self.merge_config(self.config, config)
-        container = self.run()
-
-        self.config['Cmd'] = cmd
-        self.config['Env'] = env
-        self.commit(container)
-
-    def cmd_maintainer(self, name):
-        self.need_commit = True
-        self.maintainer = name
-
-    def cmd_env(self, args):
-        self.need_commit = True
-        try:
-            k, v = args.split(None, 1)
-            if 'Env' not in self.config:
-                self.config['Env'] = { k: v }
-                return
-            env = self.config['Env']
-            for line in env:
-                if line.startswith(k):
-                    env[env.index(line)] = '{0}={1}'.format(k, v)
-                    return
-            env.extend('{0}={1}'.format(k, v))
-        except ValueError:
-            raise Exception("Invalid ENV format")
-
-    def cmd_cmd(self, args):
-        self.need_commit = True
-        try:
-            self.config['Cmd'] = json.loads(args)
-        except:
-            self.logger.debug("Error decoding json, using /bin/sh -c")
-            self.config['Cmd'] = ['/bin/sh', '-c', args]
-
-    def cmd_expose(self, args):
-        ports = args.split()
-        if 'PortSpecs' not in self.config or self.config['PortSpecs'] is None:
-            self.config['PortSpecs'] = ports
-            return
-        self.config['PortSpecs'].append(ports)
-
-    def cmd_insert(self, args):
-        raise NotImplementedError("INSERT is deprecated, please use ADD instead")
-
-    def cmd_add(self, args):
-        src, dst = args.split()
-        if not (src.startswith('http://') or src.startswith('https://')):
-            raise NotImplementedError("Contextual build is not supported")
-        output = self.client.insert(self.image, src, dst)
-        srch = r'\{"Id":"(.*)"}'
-        match = re.search(srch, output)
-        if not match:
-            raise Exception("ADD failed to retrieve the new image ID in API"
-                "output")
-        self.image = match.group(1)
-        if self.image == "":
-            raise Exception("ADD failed to retrieve the new image ID in API"
-                "output")
