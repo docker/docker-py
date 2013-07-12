@@ -66,7 +66,7 @@ Identical to the `docker port` command.
 * `c.pull(repository, tag=None, registry=None)`  
 Identical to the `docker pull` command.
 
-* `c.push(repository, registry=None)`
+* `c.push(repository, registry=None)`  
 Identical to the `docker push` command.
 
 * `c.remove_container(containers..., v=False)`  
@@ -85,7 +85,13 @@ Identical to the `docker search` command.
 Identical to the `docker start` command, but doesn't support attach options. Use `docker logs` to 
 recover `stdout`/`stderr`
 
-* `c.stop(containers..., t=10)`  
+* `c.start(container, binds={'/host': '/mnt'})`  
+Allows to bind a directory in the host to the container.
+Similar to the `docker run` command with the `-b="/host:/mnt"`.
+Requires the container to be created with the volumes argument:
+`c.create_container(..., volumes={'/mnt': {}})`  
+
+* `c.stop(containers..., t=10)`
 Identical to the `docker stop` command.
 
 * `c.tag(image, repository, tag=None, force=False)`  
@@ -96,3 +102,4 @@ Identical to the `docker version` command.
 
 * `c.wait(containers...)`  
 Identical to the `docker wait` command.
+
