@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 import os
 from setuptools import setup
 
@@ -13,6 +13,7 @@ setup(
     packages=['docker'],
     install_requires=['requests', 'six'] + test_requirements,
     zip_safe=False,
+    test_suite='tests',
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Other Environment',
                  'Intended Audience :: Developers',
