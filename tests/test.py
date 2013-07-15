@@ -1,6 +1,11 @@
 import os
 import six
 import unittest
+<<<<<<< HEAD
+=======
+import time
+from StringIO import StringIO
+>>>>>>> Fixed tests
 
 import docker
 
@@ -55,7 +60,6 @@ class TestSearch(BaseTestCase):
 class TestImages(BaseTestCase):
     def runTest(self):
         res1 = self.client.images(all=True)
-        self.assertEqual(len(res1), self.client.info()['Images'])
         res10 = res1[0]
         self.assertIn('Created', res10)
         self.assertIn('Id', res10)
@@ -63,6 +67,11 @@ class TestImages(BaseTestCase):
         self.assertIn('Tag', res10)
         self.assertEqual(res10['Tag'], 'latest')
         self.assertEqual(res10['Repository'], 'busybox')
+        distinct = []
+        for img in res1:
+            if img['Id'] not in distinct:
+                distinct.append(img['Id'])
+        self.assertEqual(len(distinct), self.client.info()['Images'])
 
 class TestImageIds(BaseTestCase):
     def runTest(self):
@@ -300,14 +309,14 @@ class TestRemoveImage(BaseTestCase):
 
 class TestBuild(BaseTestCase):
     def runTest(self):
-        script = [
-            'MAINTAINER docker-py',
+        script = StringIO('\n'.join([
             'FROM busybox',
+            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz /tmp/silence.tar.gz'
-        ]
-        img, logs = self.client.build(script)
+        ]))
+        img, logs = self.client.build(fileobj=script)
         self.assertNotEqual(img, None)
         self.assertNotEqual(img, '')
         self.assertNotEqual(logs, '')
