@@ -1,11 +1,9 @@
 import os
 import six
-import unittest
-<<<<<<< HEAD
-=======
-import time
 from StringIO import StringIO
->>>>>>> Fixed tests
+import time
+import unittest
+
 
 import docker
 
