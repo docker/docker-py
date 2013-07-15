@@ -71,7 +71,11 @@ class Client(requests.Session):
         memfile = StringIO()
         try:
             t = tarfile.open(mode='w', fileobj=memfile)
-            dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
+            if isinstance(dockerfile, StringIO):
+                dfinfo = tarfile.TarInfo('Dockerfile')
+                dfinfo.size = dockerfile.len
+            else:
+                dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
             t.addfile(dfinfo, dockerfile)
             return memfile.getvalue()
         finally:
@@ -121,10 +125,7 @@ class Client(requests.Session):
             else:
                 break
 
-    def build(self, dockerfile, tag=None, logger=None):
-        return build_context(fileobj=dockerfile, tag=tag)
-
-    def build_context(self, path=None, tag=None, fileobj=None):
+    def build(self, path=None, tag=None, fileobj=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise Exception("Either path or fileobj needs to be provided.")
