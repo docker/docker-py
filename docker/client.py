@@ -14,12 +14,13 @@ from requests.exceptions import HTTPError
 
 
 class Client(requests.Session):
-    def __init__(self, base_url="http://localhost:4243"):
+    def __init__(self, base_url="http://localhost:4243", version="1.3"):
         super(Client, self).__init__()
         self.base_url = base_url
+        self._version = version
 
     def _url(self, path):
-        return self.base_url + path
+        return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
 
     def _raise_for_status(self, response):
         """Raises stored :class:`HTTPError`, if one occurred."""
@@ -103,7 +104,7 @@ class Client(requests.Session):
 
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
-        kwargs['headers']["Content-Type"] = "application/json"
+        kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
 
     def attach(self, container):
