@@ -67,6 +67,7 @@ class Client(requests.Session):
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
         }
+
     def _mkbuildcontext(self, dockerfile):
         memfile = StringIO()
         try:
@@ -91,7 +92,7 @@ class Client(requests.Session):
         finally:
             memfile.close()
 
-    def post_json(self, url, data, **kwargs):
+    def _post_json(self, url, data, **kwargs):
         # Go <1.1 can't unserialize null to a string
         # so we do this disgusting thing here.
         data2 = {}
