@@ -6,11 +6,14 @@ An API client for docker written in Python
 API
 ===
 
-`client.Client(base_url='http://localhost:4243')`  
-Client class. `base_url` refers to the protocol+hostname+port where the docker server is hosted.
+`client.Client(base_url='http://localhost:4243', version="1.3")`  
+Client class. `base_url` refers to the protocol+hostname+port where the docker
+server is hosted. Version is the version of the API the client will use.
 
-* `c.build(dockerfile)`  
-Identical to the `docker build` command. `dockerfile` is a file-like object or a bytes collection.
+* `c.build(path=None, tag=None, fileobj=None)`  
+Similar to the `docker build` command. Either `path` or `fileobj` needs to be
+set. `path` can be a local path (to a directory containing a Dockerfile) or a
+remote URL. `fileobj` must be a readable file-like object to a Dockerfile.
 
 * `c.commit(container, repository=None, tag=None, message=None, author=None, conf=None)`  
 Identical to the `docker commit` command.
@@ -19,8 +22,9 @@ Identical to the `docker commit` command.
 Identical to the `docker ps` command.
 
 * `c.create_container(image, command, hostname=None, user=None, detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None, volumes=None, volumes_from=None)`  
-Creates a container that can then be `start`ed. Parameters are similar to those for the `docker run` command
-except it doesn't support the attach options (`-a`)
+Creates a container that can then be `start`ed. Parameters are similar to those
+for the `docker run` command except it doesn't support the attach options
+(`-a`)
 
 * `c.diff(container)`  
 Identical to the `docker diff` command.
@@ -35,9 +39,10 @@ Identical to the `docker history` command.
 Identical to the `docker images` command.
 
 * `c.import_image(src, repository=None, tag=None)`  
-Identical to the `docker import` command. If `src` is a string or unicode string, it will be treated as a URL
-to fetch the image from. To import an image from the local machine, `src` needs to be a file-like object or 
-bytes collection.
+Identical to the `docker import` command. If `src` is a string or unicode
+string, it will be treated as a URL to fetch the image from. To import an image
+from the local machine, `src` needs to be a file-like object or bytes
+collection.
 
 * `c.info()`  
 Identical to the `docker info` command.
@@ -82,14 +87,14 @@ Identical to the `docker restart` command.
 Identical to the `docker search` command.
 
 * `c.start(container)`  
-Identical to the `docker start` command, but doesn't support attach options. Use `docker logs` to 
-recover `stdout`/`stderr`
+Identical to the `docker start` command, but doesn't support attach options.
+Use `docker logs` to recover `stdout`/`stderr`
 
 * `c.start(container, binds={'/host': '/mnt'})`  
 Allows to bind a directory in the host to the container.
 Similar to the `docker run` command with the `-b="/host:/mnt"`.
 Requires the container to be created with the volumes argument:
-`c.create_container(..., volumes={'/mnt': {}})`  
+`c.create_container(..., volumes={'/mnt': {}})`
 
 * `c.stop(containers..., t=10)`  
 Identical to the `docker stop` command.
