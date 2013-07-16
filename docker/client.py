@@ -162,7 +162,7 @@ class Client(requests.Session):
             'author': author
         }
         u = self._url("/commit")
-        return self._result(self.post_json(u, conf, params=params), json=True)
+        return self._result(self._post_json(u, conf, params=params), json=True)
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False,
         since=None, before=None, limit=-1):
@@ -187,7 +187,7 @@ class Client(requests.Session):
 
     def create_container_from_config(self, config):
         u = self._url("/containers/create")
-        res = self.post_json(u, config)
+        res = self._post_json(u, config)
         if res.status_code == 404:
             raise ValueError("{0} is an unrecognized image. Please pull the "
                 "image first.".format(config['Image']))
@@ -269,7 +269,7 @@ class Client(requests.Session):
             'password': password if password is not None else json_['password'],
             'email': email if email is not None else json_['email']
         }
-        return self._result(self.post_json(url, req_data), True)
+        return self._result(self._post_json(url, req_data), True)
 
     def logs(self, container):
         params = {
@@ -339,7 +339,7 @@ class Client(requests.Session):
 
         for name in args:
             url = self._url("/containers/{0}/start".format(name))
-            self.post_json(url, start_config)
+            self._post_json(url, start_config)
 
     def stop(self, *args, **kwargs):
         params = {
