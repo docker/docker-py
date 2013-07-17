@@ -88,7 +88,6 @@ class Client(requests.Session):
         try:
             t = tarfile.open(mode='w', fileobj=memfile)
             t.add(path, arcname='.')
-            t.list()
             return memfile.getvalue()
         finally:
             memfile.close()
