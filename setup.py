@@ -8,7 +8,7 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 test_requirements = []
 setup(
     name="docker-py",
-    version='0.1.0',
+    version='0.1.1',
     description="Python client for Docker.",
     packages=['docker'],
     install_requires=['requests', 'six'] + test_requirements,
