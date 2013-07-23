@@ -284,8 +284,15 @@ class Client(requests.Session):
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
         json_ = res.json()
-        return json_['NetworkSettings']['PortMapping'][str(private_port)]
+        s_port = str(private_port)
+        f_port = None
+        if s_port in json_['NetworkSettings']['PortMapping']['Udp']:
+            f_port = json_['NetworkSettings']['PortMapping']['Udp'][s_port]
+        elif s_port in json_['NetworkSettings']['PortMapping']['Tcp']:
+            f_port = json_['NetworkSettings']['PortMapping']['Tcp'][s_port]
 
+        return f_port
+        
     def pull(self, repository, tag=None, registry=None):
         if repository.count(":") == 1:
             repository, tag = repository.split(":")
