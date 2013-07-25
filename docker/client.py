@@ -277,8 +277,7 @@ class Client(requests.Session):
             'stderr': 1
         }
         u = self._url("/containers/{0}/attach".format(container))
-        res = self.post(u, None, params=params)
-        return res.text
+        return self._result(self.post(u, None, params=params))
 
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
@@ -291,7 +290,7 @@ class Client(requests.Session):
             f_port = json_['NetworkSettings']['PortMapping']['Tcp'][s_port]
 
         return f_port
-        
+
     def pull(self, repository, tag=None, registry=None):
         if repository.count(":") == 1:
             repository, tag = repository.split(":")

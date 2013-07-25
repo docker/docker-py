@@ -58,9 +58,9 @@ class TestSearch(BaseTestCase):
 class TestImages(BaseTestCase):
     def runTest(self):
         res1 = self.client.images(all=True)
-        res10 = res1[0]
+        self.assertIn('Id', res1[0])
+        res10 = [x for x in res1 if x['Id'].startswith('e9aa60c60128')][0]
         self.assertIn('Created', res10)
-        self.assertIn('Id', res10)
         self.assertIn('Repository', res10)
         self.assertIn('Tag', res10)
         self.assertEqual(res10['Tag'], 'latest')
@@ -161,14 +161,14 @@ class TestLogs(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container('busybox',
-            ['echo', '-n', '{0}'.format(snippet)])
+            'echo {0}'.format(snippet))
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(id)
-        self.assertEqual(logs, snippet)
+        self.assertEqual(logs, snippet + '\n')
 
 class TestDiff(BaseTestCase):
     def runTest(self):
@@ -255,6 +255,7 @@ class TestRemoveContainer(BaseTestCase):
 class TestPull(BaseTestCase):
     def runTest(self):
         self.client.remove_image('joffrey/test001')
+        self.client.remove_image('376968a23351')
         info = self.client.info()
         self.assertIn('Images', info)
         img_count = info['Images']
@@ -264,6 +265,7 @@ class TestPull(BaseTestCase):
         img_info = self.client.inspect_image('joffrey/test001')
         self.assertIn('id', img_info)
         self.tmp_imgs.append('joffrey/test001')
+        self.tmp_imgs.append('376968a23351')
 
 class TestCommit(BaseTestCase):
     def runTest(self):
