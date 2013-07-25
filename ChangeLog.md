@@ -1,6 +1,18 @@
 ChangeLog
 =========
 
+0.1.2
+-----
+
+* Added a `quiet parameter` to `Client.build` (mirrors the `q` parameter in the API)
+
+0.1.1
+-----
+
+* Fixed a bug where the build command would list tar contents before sending the request
+* Fixed a bug in `Client.port`
+
+
 0.1.0
 -----
 * **This version introduces breaking changes!**
