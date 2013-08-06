@@ -1,23 +1,30 @@
+import base64
 import json
 import logging
+import os
 import re
 import six
 import shlex
 import tarfile
+
+import requests
+from requests.exceptions import HTTPError
+import six
+
 if six.PY3:
     from io import StringIO
 else:
     from StringIO import StringIO
-
-import requests
-from requests.exceptions import HTTPError
-
 
 class Client(requests.Session):
     def __init__(self, base_url="http://localhost:4243", version="1.3"):
         super(Client, self).__init__()
         self.base_url = base_url
         self._version = version
+        try:
+            self._cfg = self._load_config()
+        except:
+            pass
 
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
@@ -105,6 +112,43 @@ class Client(requests.Session):
             kwargs['headers'] = {}
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
+
+    def _decode_auth(self, auth):
+        s = base64.b64decode(auth)
+        login, pwd = s.split(':')
+        return login, pwd
+
+    def _load_config(self, root=None):
+        if root is None:
+            root = os.environ['HOME']
+        config_file = {
+            'Configs': {},
+            'rootPath': root
+        }
+        f = open(os.path.join(root, '.dockercfg'))
+        try:
+            config_file['Configs'] = json.load(f)
+            for k, conf in six.iteritems(config_file['Configs']):
+                conf['Username'], conf['Password'] = self._decode_auth(conf['Auth'])
+                del conf['Auth']
+                config_file['Configs'][k] = conf
+        except:
+            f.seek(0)
+            buf = []
+            for line in f:
+                k, v = line.split(' = ')
+                buf.append(v)
+            if len(buf) < 2:
+                raise Exception("The Auth config file is empty")
+            user, pwd = self._decode_auth(buf[0])
+            config_file['Configs']['index.docker.io'] = {
+                'Username': user,
+                'Password': pwd,
+                'Email': buf[1]
+            }
+        finally:
+            f.close()
+        return config_file
 
     def attach(self, container):
         params = {
@@ -268,7 +312,11 @@ class Client(requests.Session):
             'password': password if password is not None else json_['password'],
             'email': email if email is not None else json_['email']
         }
-        return self._result(self._post_json(url, req_data), True)
+        res = self._result(self._post_json(url, req_data), True)
+        try:
+            self._cfg = self._load_config()
+        finally:
+            return res
 
     def logs(self, container):
         params = {
@@ -303,12 +351,15 @@ class Client(requests.Session):
         u = self._url("/images/create")
         return self._result(self.post(u, None, params=params))
 
-    def push(self, repository, registry=None):
+    def push(self, repository):
         if repository.count("/") < 1:
             raise ValueError("""Impossible to push a \"root\" repository.
                 Please rename your repository in <user>/<repo>""")
+        if self._cfg is None:
+            self._cfg = self._load_config()
         u = self._url("/images/{0}/push".format(repository))
-        return self._result(self.post(u, None, params={'registry': registry}))
+        return self._result(
+            self._post_json(u, self._cfg['Configs']['index.docker.io']))
 
     def remove_container(self, *args, **kwargs):
         params = {

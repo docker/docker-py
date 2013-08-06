@@ -1,11 +1,13 @@
+import base64
 import os
-import six
 from StringIO import StringIO
+import tempfile
 import time
 import unittest
 
 
 import docker
+import six
 
 # FIXME: missing tests for
 # export; history; import_image; insert; port; push;
@@ -356,6 +358,23 @@ class TestRunShlex(BaseTestCase):
             self.tmp_containers.append(id)
             exitcode = self.client.wait(id)
             self.assertEqual(exitcode, 0, msg=cmd)
+
+class TestLoadConfig(BaseTestCase):
+    def runTest(self):
+        folder = tempfile.mkdtemp()
+        f = open(os.path.join(folder, '.dockercfg'), 'w')
+        auth = base64.b64encode('sakuya:izayoi')
+        f.write('auth = {0}\n'.format(auth))
+        f.write('email = sakuya@scarlet.net')
+        f.close()
+        cfg = self.client._load_config(folder)
+        self.assertNotEqual(cfg['Configs']['index.docker.io'], None)
+        cfg = cfg['Configs']['index.docker.io']
+        self.assertEqual(cfg['Username'], 'sakuya')
+        self.assertEqual(cfg['Password'], 'izayoi')
+        self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('Auth'), None)
+
 
 
 if __name__ == '__main__':
