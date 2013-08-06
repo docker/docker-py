@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.1.3
+-----
+
+* The client now tries to load the auth config from `~/.dockercfg`. This is necessary to use the push command if API version is >1.0
+
 0.1.2
 -----
 

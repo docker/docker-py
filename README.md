@@ -71,7 +71,7 @@ Identical to the `docker port` command.
 * `c.pull(repository, tag=None, registry=None)`  
 Identical to the `docker pull` command.
 
-* `c.push(repository, registry=None)`  
+* `c.push(repository)`  
 Identical to the `docker push` command.
 
 * `c.remove_container(containers..., v=False)`  
