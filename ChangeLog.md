@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.1.4
+-----
+
+* Added support for API connection through UNIX socket (default for docker 0.5.2+)
+
 0.1.3
 -----
 

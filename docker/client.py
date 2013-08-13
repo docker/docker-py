@@ -31,7 +31,6 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
         sock.connect(self.base_url.replace("unix:/",""))
         self.sock = sock
 
-
     def _extract_path(self, url):
         #remove the base_url entirely..
         return url.replace(self.base_url, "")
@@ -49,6 +48,7 @@ class UnixHTTPConnectionPool(HTTPConnectionPool):
 
     def _new_conn(self):
         return UnixHTTPConnection(self.base_url, self.socket_path)
+
 
 class UnixAdapter(HTTPAdapter):
     def __init__(self, base_url):
@@ -72,7 +72,6 @@ class Client(requests.Session):
 
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
-
 
     def _raise_for_status(self, response):
         """Raises stored :class:`HTTPError`, if one occurred."""
