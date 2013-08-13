@@ -6,19 +6,63 @@ import re
 import six
 import shlex
 import tarfile
+import six
+import httplib
+import socket
 
 import requests
 from requests.exceptions import HTTPError
-import six
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.connectionpool import HTTPConnectionPool
 
 if six.PY3:
     from io import StringIO
 else:
     from StringIO import StringIO
 
+class UnixHTTPConnection(httplib.HTTPConnection, object):
+    def __init__(self, base_url, unix_socket):
+        httplib.HTTPConnection.__init__(self, 'localhost')
+        self.base_url = base_url
+        self.unix_socket = unix_socket
+
+    def connect(self):
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.connect(self.base_url.replace("unix:/",""))
+        self.sock = sock
+
+
+    def _extract_path(self, url):
+        #remove the base_url entirely..
+        return url.replace(self.base_url, "")
+        
+    def request(self, method, url, **kwargs):
+        url = self._extract_path(self.unix_socket)
+        super(UnixHTTPConnection, self).request(method, url, **kwargs)
+
+
+class UnixHTTPConnectionPool(HTTPConnectionPool):
+    def __init__(self, base_url, socket_path):
+        self.socket_path = socket_path
+        self.base_url = base_url
+        super(UnixHTTPConnectionPool, self).__init__(self, 'localhost')
+
+    def _new_conn(self):
+        return UnixHTTPConnection(self.base_url, self.socket_path)
+
+class UnixAdapter(HTTPAdapter):
+    def __init__(self, base_url):
+        self.base_url = base_url
+        super(UnixAdapter, self).__init__()
+
+    def get_connection(self, socket_path, proxies=None):
+        return UnixHTTPConnectionPool(self.base_url, socket_path)
+
+
 class Client(requests.Session):
-    def __init__(self, base_url="http://localhost:4243", version="1.3"):
+    def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
         super(Client, self).__init__()
+        self.mount('unix://', UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
         try:
@@ -28,6 +72,7 @@ class Client(requests.Session):
 
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
+
 
     def _raise_for_status(self, response):
         """Raises stored :class:`HTTPError`, if one occurred."""
