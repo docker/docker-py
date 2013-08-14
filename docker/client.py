@@ -6,6 +6,7 @@ import re
 import six
 import shlex
 import tarfile
+import tempfile
 import six
 import httplib
 import socket
@@ -121,27 +122,25 @@ class Client(requests.Session):
         }
 
     def _mkbuildcontext(self, dockerfile):
-        memfile = StringIO()
-        try:
-            t = tarfile.open(mode='w', fileobj=memfile)
-            if isinstance(dockerfile, StringIO):
-                dfinfo = tarfile.TarInfo('Dockerfile')
-                dfinfo.size = dockerfile.len
-            else:
-                dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
-            t.addfile(dfinfo, dockerfile)
-            return memfile.getvalue()
-        finally:
-            memfile.close()
+        f = tempfile.TemporaryFile()
+        t = tarfile.open(mode='w', fileobj=f)
+        if isinstance(dockerfile, StringIO):
+            dfinfo = tarfile.TarInfo('Dockerfile')
+            dfinfo.size = dockerfile.len
+        else:
+            dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
+        t.addfile(dfinfo, dockerfile)
+        t.close()
+        f.seek(0)
+        return f
 
     def _tar(self, path):
-        memfile = StringIO()
-        try:
-            t = tarfile.open(mode='w', fileobj=memfile)
-            t.add(path, arcname='.')
-            return memfile.getvalue()
-        finally:
-            memfile.close()
+        f = tempfile.TemporaryFile()
+        t = tarfile.open(mode='w', fileobj=f)
+        t.add(path, arcname='.')
+        t.close()
+        f.seek(0)
+        return f
 
     def _post_json(self, url, data, **kwargs):
         # Go <1.1 can't unserialize null to a string
@@ -233,6 +232,8 @@ class Client(requests.Session):
             headers = { 'Content-Type': 'application/tar' }
         res = self._result(self.post(u, context, params=params,
             headers=headers, stream=True))
+        if context is not None:
+            context.close()
         srch = r'Successfully built ([0-9a-f]+)'
         match = re.search(srch, res)
         if not match:
