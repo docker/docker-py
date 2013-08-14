@@ -34,7 +34,7 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
     def _extract_path(self, url):
         #remove the base_url entirely..
         return url.replace(self.base_url, "")
-        
+
     def request(self, method, url, **kwargs):
         url = self._extract_path(self.unix_socket)
         super(UnixHTTPConnection, self).request(method, url, **kwargs)
@@ -101,7 +101,7 @@ class Client(requests.Session):
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
         environment=None, dns=None, volumes=None, volumes_from=None):
         if isinstance(command, six.string_types):
-            command = shlex.split(command)
+            command = shlex.split(str(command))
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
