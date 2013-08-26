@@ -227,7 +227,7 @@ class Client(requests.Session):
             context = self._tar(path)
 
         u = self._url('/build')
-        params = { 'tag': tag, 'remote': remote, 'q': quiet, 'nocache': nocache }
+        params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache }
         if context is not None:
             headers = { 'Content-Type': 'application/tar' }
         res = self._result(self.post(u, context, params=params,
