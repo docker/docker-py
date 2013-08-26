@@ -411,7 +411,9 @@ class Client(requests.Session):
             'v': 1 if kwargs.get('v', False) else 0
         }
         for container in args:
-            self.delete(self._url("/containers/" + container), params=params)
+            res = self.delete(self._url("/containers/" + container), params=params)
+            if res.status_code >= 400:
+                raise RuntimeError(res.text)
 
     def remove_image(self, *args):
         for image in args:
