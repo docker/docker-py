@@ -103,6 +103,8 @@ class Client(requests.Session):
         environment=None, dns=None, volumes=None, volumes_from=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
+        if isinstance(environment, dict):
+            environment = ['{0}={1}'.format(k, v) for k, v in environment.items()]
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
