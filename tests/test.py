@@ -20,11 +20,14 @@ class BaseTestCase(unittest.TestCase):
     def setUp(self):
         self.client = docker.Client()
         self.client.pull('busybox')
+        self.tmp_imgs = []
+        self.tmp_containers = []
 
     def tearDown(self):
         if len(self.tmp_imgs) > 0:
             self.client.remove_image(*self.tmp_imgs)
         if len(self.tmp_containers) > 0:
+            self.client.stop(*self.tmp_containers, t=1)
             self.client.remove_container(*self.tmp_containers)
 
 #########################
@@ -244,7 +247,6 @@ class TestRemoveContainer(BaseTestCase):
         id = container['Id']
         self.client.start(id)
         self.client.wait(id)
-        self.tmp_containers.append(id)
         self.client.remove_container(id)
         containers = self.client.containers(all=True)
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
