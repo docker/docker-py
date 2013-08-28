@@ -1,6 +1,23 @@
 ChangeLog
 =========
 
+0.1.5
+-----
+
+* `Client.build` now uses tempfiles to store build context instead of storing
+it in memory
+* Added `nocache` option to `Client.build`
+* `Client.remove_container` now raises an exception when trying to remove a
+running container
+* `Client.create_container` now accepts dicts for the `environment` parameter
+
+### Bugfixes
+
+* Fixed a bug in `Client.create_container` on Python 2.6 where unicode 
+commands would fail to be parsed
+* Fixed a bug in `Client.build` where the `tag` parameter would not be taken
+into account
+
 0.1.4
 -----
 
