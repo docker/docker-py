@@ -100,7 +100,8 @@ class Client(requests.Session):
 
     def _container_config(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
-        environment=None, dns=None, volumes=None, volumes_from=None):
+        environment=None, dns=None, volumes=None, volumes_from=None,
+        privileged=False):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -121,6 +122,7 @@ class Client(requests.Session):
             'Image':        image,
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
+            'Privileged': privileged,
         }
 
     def _mkbuildcontext(self, dockerfile):
@@ -269,10 +271,11 @@ class Client(requests.Session):
 
     def create_container(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
-        environment=None, dns=None, volumes=None, volumes_from=None):
+        environment=None, dns=None, volumes=None, volumes_from=None,
+        privileged=False):
         config = self._container_config(image, command, hostname, user,
             detach, stdin_open, tty, mem_limit, ports, environment, dns,
-            volumes, volumes_from)
+            volumes, volumes_from, privileged)
         return self.create_container_from_config(config)
 
     def create_container_from_config(self, config):
