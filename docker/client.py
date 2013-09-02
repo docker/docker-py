@@ -22,13 +22,13 @@ else:
     from StringIO import StringIO
 
 class APIError(HTTPError):
-    def __init__(self, message, response):
+    def __init__(self, message, response, explanation=None):
         super(APIError, self).__init__(message, response=response)
 
-        if self.is_server_error() and response.content and len(response.content) > 0:
+        self.explanation = explanation
+
+        if self.explanation is None and response.content and len(response.content) > 0:
             self.explanation = response.content.strip()
-        else:
-            self.explanation = None
 
     def __str__(self):
         message = super(APIError, self).__str__()
@@ -106,12 +106,12 @@ class Client(requests.Session):
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
 
-    def _raise_for_status(self, response):
+    def _raise_for_status(self, response, explanation=None):
         """Raises stored :class:`APIError`, if one occurred."""
         try:
             response.raise_for_status()
         except HTTPError, e:
-            raise APIError(e, response=response)
+            raise APIError(e, response=response, explanation=explanation)
 
     def _result(self, response, json=False):
         if response.status_code != 200 and response.status_code != 201:
@@ -306,7 +306,7 @@ class Client(requests.Session):
         u = self._url("/containers/create")
         res = self._post_json(u, config)
         if res.status_code == 404:
-            raise ValueError("{0} is an unrecognized image. Please pull the "
+            self._raise_for_status(res, explanation="{0} is an unrecognized image. Please pull the "
                 "image first.".format(config['Image']))
         return self._result(res, True)
 
