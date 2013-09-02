@@ -468,6 +468,9 @@ class Client(requests.Session):
         res.raise_for_status()
         return res.status_code == 201
 
+    def top(self, container):
+        return self._result(self.get(self._url("/containers/{0}/top".format(container))), True)
+
     def version(self):
         return self._result(self.get(self._url("/version")), True)
 
