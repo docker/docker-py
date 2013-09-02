@@ -322,8 +322,6 @@ class Client(requests.Session):
 
     def history(self, image):
         res = self.get(self._url("/images/{0}/history".format(image)))
-        if res.status_code == 500 and res.text.find("Image does not exist") != -1:
-            raise KeyError(res.text)
         self._raise_for_status(res)
         return self._result(res)
 
@@ -445,8 +443,6 @@ class Client(requests.Session):
         }
         for container in args:
             res = self.delete(self._url("/containers/" + container), params=params)
-            if res.status_code >= 400:
-                raise RuntimeError(res.text)
             self._raise_for_status(res)
 
     def remove_image(self, *args):
