@@ -227,6 +227,7 @@ class Client(requests.Session):
         }
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params, stream=True)
+        self._raise_for_status(res)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
         # eventually block
@@ -258,6 +259,7 @@ class Client(requests.Session):
             headers = { 'Content-Type': 'application/tar' }
         res = self._result(self.post(u, context, params=params,
             headers=headers, stream=True))
+        res._raise_for_status()
         if context is not None:
             context.close()
         srch = r'Successfully built ([0-9a-f]+)'
@@ -315,12 +317,14 @@ class Client(requests.Session):
     def export(self, container):
         res = self.get(self._url("/containers/{0}/export".format(container)),
             stream=True)
+        self._raise_for_status(res)
         return res.raw
 
     def history(self, image):
         res = self.get(self._url("/images/{0}/history".format(image)))
         if res.status_code == 500 and res.text.find("Image does not exist") != -1:
             raise KeyError(res.text)
+        self._raise_for_status(res)
         return self._result(res)
 
     def images(self, name=None, quiet=False, all=False, viz=False):
@@ -371,7 +375,8 @@ class Client(requests.Session):
     def kill(self, *args):
         for name in args:
             url = self._url("/containers/{0}/kill".format(name))
-            self.post(url, None)
+            res = self.post(url, None)
+            self._raise_for_status(res)
 
     def login(self, username, password=None, email=None):
         url = self._url("/auth")
@@ -401,6 +406,7 @@ class Client(requests.Session):
 
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
+        self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
         f_port = None
@@ -441,10 +447,12 @@ class Client(requests.Session):
             res = self.delete(self._url("/containers/" + container), params=params)
             if res.status_code >= 400:
                 raise RuntimeError(res.text)
+            self._raise_for_status(res)
 
     def remove_image(self, *args):
         for image in args:
-            self.delete(self._url("/images/" + image))
+            res = self.delete(self._url("/images/" + image))
+            self._raise_for_status(res)
 
     def restart(self, *args, **kwargs):
         params = {
@@ -452,7 +460,8 @@ class Client(requests.Session):
         }
         for name in args:
             url = self._url("/containers/{0}/restart".format(name))
-            self.post(url, None, params=params)
+            res = self.post(url, None, params=params)
+            self._raise_for_status(res)
 
     def search(self, term):
         return self._result(self.get(self._url("/images/search"),
@@ -469,7 +478,8 @@ class Client(requests.Session):
 
         for name in args:
             url = self._url("/containers/{0}/start".format(name))
-            self._post_json(url, start_config)
+            res = self._post_json(url, start_config)
+            self._raise_for_status(res)
 
     def stop(self, *args, **kwargs):
         params = {
@@ -477,7 +487,8 @@ class Client(requests.Session):
         }
         for name in args:
             url = self._url("/containers/{0}/stop".format(name))
-            self.post(url, None, params=params)
+            res = self.post(url, None, params=params)
+            self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
         params = {
@@ -487,7 +498,7 @@ class Client(requests.Session):
         }
         url = self._url("/images/{0}/tag".format(image))
         res = self.post(url, None, params=params)
-        res.raise_for_status()
+        self._raise_for_status(res)
         return res.status_code == 201
 
     def version(self):
@@ -498,6 +509,7 @@ class Client(requests.Session):
         for name in args:
             url = self._url("/containers/{0}/wait".format(name))
             res = self.post(url, None, timeout=None)
+            self._raise_for_status(res)
             json_ = res.json()
             if 'StatusCode' in json_:
                 result.append(json_['StatusCode'])
