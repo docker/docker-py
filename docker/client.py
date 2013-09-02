@@ -114,8 +114,8 @@ class Client(requests.Session):
             raise APIError(e, response=response, explanation=explanation)
 
     def _result(self, response, json=False):
-        if response.status_code != 200 and response.status_code != 201:
-            self._raise_for_status(response)
+        self._raise_for_status(response)
+
         if json:
             return response.json()
         return response.text
