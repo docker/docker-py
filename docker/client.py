@@ -21,6 +21,38 @@ if six.PY3:
 else:
     from StringIO import StringIO
 
+class APIError(HTTPError):
+    def __init__(self, message, response):
+        super(APIError, self).__init__(message, response=response)
+
+        if self.is_server_error() and response.content and len(response.content) > 0:
+            self.explanation = response.content.strip()
+        else:
+            self.explanation = None
+
+    def __str__(self):
+        message = super(APIError, self).__str__()
+
+        if self.is_client_error():
+            message = '%s Client Error: %s' % (
+                self.response.status_code, self.response.reason)
+
+        elif self.is_server_error():
+            message = '%s Server Error: %s' % (
+                self.response.status_code, self.response.reason)
+
+        if self.explanation:
+            message = '%s ("%s")' % (message, self.explanation)
+
+        return message
+
+    def is_client_error(self):
+        return 400 <= self.response.status_code < 500
+
+    def is_server_error(self):
+        return 500 <= self.response.status_code < 600
+
+
 class UnixHTTPConnection(httplib.HTTPConnection, object):
     def __init__(self, base_url, unix_socket):
         httplib.HTTPConnection.__init__(self, 'localhost')
@@ -75,21 +107,11 @@ class Client(requests.Session):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
 
     def _raise_for_status(self, response):
-        """Raises stored :class:`HTTPError`, if one occurred."""
-        http_error_msg = ''
-
-        if 400 <= response.status_code < 500:
-            http_error_msg = '%s Client Error: %s' % (
-                response.status_code, response.reason)
-
-        elif 500 <= response.status_code < 600:
-            http_error_msg = '%s Server Error: %s' % (
-                response.status_code, response.reason)
-            if response.content and len(response.content) > 0:
-                http_error_msg += ' "%s"' % response.content
-
-        if http_error_msg:
-            raise HTTPError(http_error_msg, response=response)
+        """Raises stored :class:`APIError`, if one occurred."""
+        try:
+            response.raise_for_status()
+        except HTTPError, e:
+            raise APIError(e, response=response)
 
     def _result(self, response, json=False):
         if response.status_code != 200 and response.status_code != 201:
