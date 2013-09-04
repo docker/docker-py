@@ -203,6 +203,8 @@ class Client(requests.Session):
             'stderr': 1,
             'stream': 1
         }
+        if isinstance(container, dict):
+            container = container.get('Id')
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params, stream=True)
         # hijack the underlying socket from requests, icky
@@ -287,10 +289,14 @@ class Client(requests.Session):
         return self._result(res, True)
 
     def diff(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         return self._result(self.get(self._url("/containers/{0}/changes".
             format(container))), True)
 
     def export(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self.get(self._url("/containers/{0}/export".format(container)),
             stream=True)
         return res.raw
@@ -338,9 +344,11 @@ class Client(requests.Session):
         }
         return self._result(self.post(api_url, None, params=params))
 
-    def inspect_container(self, container_id):
+    def inspect_container(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         return self._result(self.get(self._url("/containers/{0}/json".
-            format(container_id))), True)
+            format(container))), True)
 
     def inspect_image(self, image_id):
         return self._result(self.get(self._url("/images/{0}/json".
@@ -348,6 +356,8 @@ class Client(requests.Session):
 
     def kill(self, *args):
         for name in args:
+            if isinstance(name, dict):
+                name = name.get('Id')
             url = self._url("/containers/{0}/kill".format(name))
             self.post(url, None)
 
@@ -369,6 +379,8 @@ class Client(requests.Session):
             return res
 
     def logs(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {
             'logs': 1,
             'stdout': 1,
@@ -378,6 +390,8 @@ class Client(requests.Session):
         return self._result(self.post(u, None, params=params))
 
     def port(self, container, private_port):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self.get(self._url("/containers/{0}/json".format(container)))
         json_ = res.json()
         s_port = str(private_port)
@@ -416,6 +430,8 @@ class Client(requests.Session):
             'v': 1 if kwargs.get('v', False) else 0
         }
         for container in args:
+            if isinstance(container, dict):
+                container = container.get('Id')
             res = self.delete(self._url("/containers/" + container), params=params)
             if res.status_code >= 400:
                 raise RuntimeError(res.text)
@@ -429,6 +445,8 @@ class Client(requests.Session):
             't': kwargs.get('timeout', 10)
         }
         for name in args:
+            if isinstance(name, dict):
+                name = name.get('Id')
             url = self._url("/containers/{0}/restart".format(name))
             self.post(url, None, params=params)
 
@@ -446,6 +464,8 @@ class Client(requests.Session):
             }
 
         for name in args:
+            if isinstance(name, dict):
+                name = name.get('Id')
             url = self._url("/containers/{0}/start".format(name))
             self._post_json(url, start_config)
 
@@ -454,6 +474,8 @@ class Client(requests.Session):
             't': kwargs.get('timeout', 10)
         }
         for name in args:
+            if isinstance(name, dict):
+                name = name.get('Id')
             url = self._url("/containers/{0}/stop".format(name))
             self.post(url, None, params=params)
 
@@ -474,6 +496,8 @@ class Client(requests.Session):
     def wait(self, *args):
         result = []
         for name in args:
+            if isinstance(name, dict):
+                name = name.get('Id')
             url = self._url("/containers/{0}/wait".format(name))
             res = self.post(url, None, timeout=None)
             json_ = res.json()
