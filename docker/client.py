@@ -106,6 +106,18 @@ class Client(requests.Session):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
             environment = ['{0}={1}'.format(k, v) for k, v in environment.items()]
+
+        attach_stdin = False
+        attach_stdout = False
+        attach_stderr = False
+
+        if not detach:
+            attach_stdout = True
+            attach_stderr = True
+
+            if stdin_open:
+                attach_stdin = True
+
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
@@ -113,9 +125,9 @@ class Client(requests.Session):
             'Tty':          tty,
             'OpenStdin':    stdin_open,
             'Memory':       mem_limit,
-            'AttachStdin':  False,
-            'AttachStdout': False,
-            'AttachStderr': False,
+            'AttachStdin':  attach_stdin,
+            'AttachStdout': attach_stdout,
+            'AttachStderr': attach_stderr,
             'Env':          environment,
             'Cmd':          command,
             'Dns':          dns,
