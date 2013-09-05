@@ -106,6 +106,18 @@ class Client(requests.Session):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
             environment = ['{0}={1}'.format(k, v) for k, v in environment.items()]
+
+        attach_stdin = False
+        attach_stdout = False
+        attach_stderr = False
+
+        if not detach:
+            attach_stdout = True
+            attach_stderr = True
+
+            if stdin_open:
+                attach_stdin = True
+
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
@@ -113,9 +125,9 @@ class Client(requests.Session):
             'Tty':          tty,
             'OpenStdin':    stdin_open,
             'Memory':       mem_limit,
-            'AttachStdin':  False,
-            'AttachStdout': False,
-            'AttachStderr': False,
+            'AttachStdin':  attach_stdin,
+            'AttachStdout': attach_stdout,
+            'AttachStderr': attach_stderr,
             'Env':          environment,
             'Cmd':          command,
             'Dns':          dns,
@@ -197,20 +209,25 @@ class Client(requests.Session):
             f.close()
         return config_file
 
-    def attach(self, container):
-        params = {
-            'stdout': 1,
-            'stderr': 1,
-            'stream': 1
-        }
+    def attach_socket(self, container, params=None):
+        if params is None:
+            params = {
+                'stdout': 1,
+                'stderr': 1,
+                'stream': 1
+            }
         if isinstance(container, dict):
             container = container.get('Id')
+
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params, stream=True)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
         # eventually block
-        socket = res.raw._fp.fp._sock
+        return res.raw._fp.fp._sock
+
+    def attach(self, container):
+        socket = self.attach_socket(container)
 
         while True:
             chunk = socket.recv(4096)
