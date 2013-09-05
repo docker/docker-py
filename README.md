@@ -50,10 +50,10 @@ Identical to the `docker info` command.
 * `c.insert(url, path)`  
 Identical to the `docker insert` command.
 
-* `c.inspect_container(container_id)`  
-Identical to the `docker inspect` command, but can only be used with a container ID.
+* `c.inspect_container(container)`  
+Identical to the `docker inspect` command.
 
-* `c.inspect_image(container_id)`  
+* `c.inspect_image(image_id)`  
 Identical to the `docker inspect` command, but can only be used with an image ID.
 
 * `c.kill(containers...)`  
@@ -86,11 +86,11 @@ Identical to the `docker restart` command.
 * `c.search(term)`  
 Identical to the `docker search` command.
 
-* `c.start(container)`  
+* `c.start(containers)`  
 Identical to the `docker start` command, but doesn't support attach options.
 Use `docker logs` to recover `stdout`/`stderr`
 
-* `c.start(container, binds={'/host': '/mnt'})`  
+* `c.start(containers, binds={'/host': '/mnt'})`  
 Allows to bind a directory in the host to the container.
 Similar to the `docker run` command with the `-b="/host:/mnt"`.
 Requires the container to be created with the volumes argument:
