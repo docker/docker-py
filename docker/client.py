@@ -24,6 +24,8 @@ import auth
 import unixconn
 import utils
 
+import websocket
+
 
 class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
@@ -139,22 +141,22 @@ class Client(requests.Session):
         return self.post(url, json.dumps(data2), **kwargs)
 
     def attach_socket(self, container, params=None):
-        if params is None:
-            params = {
-                'stdout': 1,
-                'stderr': 1,
-                'stream': 1
-            }
         if isinstance(container, dict):
             container = container.get('Id')
-
         u = self._url("/containers/{0}/attach".format(container))
-        res = self.post(u, None, params=params, stream=True)
+        res = self.post(u, None, params=self._attach_params(params), stream=True)
         self._raise_for_status(res)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
         # eventually block
         return res.raw._fp.fp._sock
+
+    def attach_websocket(self, container, params=None):
+        url = self._url("/containers/{0}/attach/ws".format(container))
+        req = requests.Request("POST", url, params=self._attach_params(params))
+        full_url = req.prepare().url.replace("http://", "ws://", 1)
+        print full_url
+        return websocket.create_connection(full_url)
 
     def attach(self, container):
         socket = self.attach_socket(container)
@@ -165,6 +167,13 @@ class Client(requests.Session):
                 yield chunk
             else:
                 break
+
+    def _attach_params(self, override=None):
+        return override or {
+            'stdout': 1,
+            'stderr': 1,
+            'stream': 1
+        }
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None, nocache=False):
         remote = context = headers = None
