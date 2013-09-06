@@ -155,6 +155,23 @@ class TestStartContainer(BaseTestCase):
             self.assertIn('ExitCode', inspect['State'])
             self.assertEqual(inspect['State']['ExitCode'], 0)
 
+class TestStartContainerWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        res = self.client.create_container('busybox', 'true')
+        self.assertIn('Id', res)
+        self.tmp_containers.append(res['Id'])
+        self.client.start(res)
+        inspect = self.client.inspect_container(res['Id'])
+        self.assertIn('Config', inspect)
+        self.assertIn('ID', inspect)
+        self.assertTrue(inspect['ID'].startswith(res['Id']))
+        self.assertIn('Image', inspect)
+        self.assertIn('State', inspect)
+        self.assertIn('Running', inspect['State'])
+        if not inspect['State']['Running']:
+            self.assertIn('ExitCode', inspect['State'])
+            self.assertEqual(inspect['State']['ExitCode'], 0)
+
 class TestWait(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', ['sleep', '10'])
@@ -164,6 +181,20 @@ class TestWait(BaseTestCase):
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         inspect = self.client.inspect_container(id)
+        self.assertIn('Running', inspect['State'])
+        self.assertEqual(inspect['State']['Running'], False)
+        self.assertIn('ExitCode', inspect['State'])
+        self.assertEqual(inspect['State']['ExitCode'], exitcode)
+
+class TestWaitWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        res = self.client.create_container('busybox', ['sleep', '10'])
+        id = res['Id']
+        self.tmp_containers.append(id)
+        self.client.start(res)
+        exitcode = self.client.wait(res)
+        self.assertEqual(exitcode, 0)
+        inspect = self.client.inspect_container(res)
         self.assertIn('Running', inspect['State'])
         self.assertEqual(inspect['State']['Running'], False)
         self.assertIn('ExitCode', inspect['State'])
@@ -182,6 +213,19 @@ class TestLogs(BaseTestCase):
         logs = self.client.logs(id)
         self.assertEqual(logs, snippet + '\n')
 
+class TestLogsWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        snippet = 'Flowering Nights (Sakuya Iyazoi)'
+        container = self.client.create_container('busybox',
+            'echo {0}'.format(snippet))
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        exitcode = self.client.wait(id)
+        self.assertEqual(exitcode, 0)
+        logs = self.client.logs(container)
+        self.assertEqual(logs, snippet + '\n')
+
 class TestDiff(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['touch', '/test'])
@@ -198,6 +242,20 @@ class TestDiff(BaseTestCase):
         # FIXME also test remove/modify
         # (need testcommit first)
 
+class TestDiffWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['touch', '/test'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        exitcode = self.client.wait(id)
+        self.assertEqual(exitcode, 0)
+        diff = self.client.diff(container)
+        test_diff = [x for x in diff if x.get('Path', None) == '/test']
+        self.assertEqual(len(test_diff), 1)
+        self.assertIn('Kind', test_diff[0])
+        self.assertEqual(test_diff[0]['Kind'], 1)
+
 class TestStop(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
@@ -213,6 +271,22 @@ class TestStop(BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
+class TestStopWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        self.assertIn('Id', container)
+        id = container['Id']
+        self.client.start(container)
+        self.tmp_containers.append(id)
+        self.client.stop(container, timeout=2)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False)
+
 class TestKill(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
@@ -220,6 +294,21 @@ class TestKill(BaseTestCase):
         self.client.start(id)
         self.tmp_containers.append(id)
         self.client.kill(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False)
+
+class TestKillWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(container)
         container_info = self.client.inspect_container(id)
         self.assertIn('State', container_info)
         state = container_info['State']
@@ -248,6 +337,27 @@ class TestRestart(BaseTestCase):
         self.assertEqual(info2['State']['Running'], True)
         self.client.kill(id)
 
+class TestRestartWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        self.assertIn('Id', container)
+        id = container['Id']
+        self.client.start(container)
+        self.tmp_containers.append(id)
+        info = self.client.inspect_container(id)
+        self.assertIn('State', info)
+        self.assertIn('StartedAt', info['State'])
+        start_time1 = info['State']['StartedAt']
+        self.client.restart(container, timeout=2)
+        info2 = self.client.inspect_container(id)
+        self.assertIn('State', info2)
+        self.assertIn('StartedAt', info2['State'])
+        start_time2 = info2['State']['StartedAt']
+        self.assertNotEqual(start_time1, start_time2)
+        self.assertIn('Running', info2['State'])
+        self.assertEqual(info2['State']['Running'], True)
+        self.client.kill(id)
+
 class TestRemoveContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['true'])
@@ -255,6 +365,17 @@ class TestRemoveContainer(BaseTestCase):
         self.client.start(id)
         self.client.wait(id)
         self.client.remove_container(id)
+        containers = self.client.containers(all=True)
+        res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
+        self.assertEqual(len(res), 0)
+
+class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['true'])
+        id = container['Id']
+        self.client.start(id)
+        self.client.wait(id)
+        self.client.remove_container(container)
         containers = self.client.containers(all=True)
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
