@@ -155,8 +155,10 @@ class Client(requests.Session):
         url = self._url("/containers/{0}/attach/ws".format(container))
         req = requests.Request("POST", url, params=self._attach_params(params))
         full_url = req.prepare().url.replace("http://", "ws://", 1)
-        print full_url
-        return websocket.create_connection(full_url)
+        return self._create_websocket_connection(full_url)
+
+    def _create_websocket_connection(self, url):
+        return websocket.create_connection(url)
 
     def attach(self, container):
         socket = self.attach_socket(container)
