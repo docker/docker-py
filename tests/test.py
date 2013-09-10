@@ -383,8 +383,8 @@ class TestLoadConfig(BaseTestCase):
         f.write('email = sakuya@scarlet.net')
         f.close()
         cfg = docker.auth.load_config(folder)
-        self.assertNotEqual(cfg['Configs']['https://index.docker.io/v1/'], None)
-        cfg = cfg['Configs']['https://index.docker.io/v1/']
+        self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
+        cfg = cfg['Configs'][docker.auth.INDEX_URL]
         self.assertEqual(cfg['Username'], 'sakuya')
         self.assertEqual(cfg['Password'], 'izayoi')
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')

@@ -18,6 +18,7 @@ import os
 
 import six
 
+INDEX_URL = 'https://index.docker.io/v1/'
 
 def swap_protocol(url):
     if url.startswith('http://'):
@@ -43,7 +44,7 @@ def resolve_repository_name(repo_name):
     parts = repo_name.split('/', 1)
     if not '.' in parts[0] and not ':' in parts[0] and parts[0] != 'localhost':
         # This is a docker index repo (ex: foo/bar or ubuntu)
-        return 'https://index.docker.io/v1/', repo_name
+        return INDEX_URL, repo_name
     if len(parts) < 2:
         raise ValueError('Invalid repository name ({0})'.format(repo_name))
 
@@ -55,9 +56,9 @@ def resolve_repository_name(repo_name):
 
 
 def resolve_authconfig(authconfig, registry):
-    if registry == 'https://index.docker.io/v1/' or registry == '':
+    if registry == INDEX_URL or registry == '':
         # default to the index server
-        return authconfig['Configs']['https://index.docker.io/v1/']
+        return authconfig['Configs'][INDEX_URL]
     # if its not the index server there are three cases:
     #
     # 1. this is a full config url -> it should be used as is
@@ -112,7 +113,7 @@ def load_config(root=None):
         if len(buf) < 2:
             raise Exception("The Auth config file is empty")
         user, pwd = decode_auth(buf[0])
-        config_file['Configs']['https://index.docker.io/v1/'] = {
+        config_file['Configs'][INDEX_URL] = {
             'Username': user,
             'Password': pwd,
             'Email': buf[1]
