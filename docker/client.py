@@ -174,8 +174,8 @@ class Client(requests.Session):
         try:
             config_file['Configs'] = json.load(f)
             for k, conf in six.iteritems(config_file['Configs']):
-                conf['Username'], conf['Password'] = self._decode_auth(conf['Auth'])
-                del conf['Auth']
+                conf['Username'], conf['Password'] = self._decode_auth(conf['auth'])
+                del conf['auth']
                 config_file['Configs'][k] = conf
         except:
             f.seek(0)
@@ -186,7 +186,7 @@ class Client(requests.Session):
             if len(buf) < 2:
                 raise Exception("The Auth config file is empty")
             user, pwd = self._decode_auth(buf[0])
-            config_file['Configs']['index.docker.io'] = {
+            config_file['Configs']['https://index.docker.io/v1/'] = {
                 'Username': user,
                 'Password': pwd,
                 'Email': buf[1]
@@ -402,11 +402,11 @@ class Client(requests.Session):
         if repository.count("/") < 1:
             raise ValueError("""Impossible to push a \"root\" repository.
                 Please rename your repository in <user>/<repo>""")
-        if self._cfg is None:
+        if getattr(self, '_cfg', None) is None:
             self._cfg = self._load_config()
         u = self._url("/images/{0}/push".format(repository))
         return self._result(
-            self._post_json(u, self._cfg['Configs']['index.docker.io']))
+            self._post_json(u, self._cfg['Configs']['https://index.docker.io/v1/']))
 
     def remove_container(self, *args, **kwargs):
         params = {
