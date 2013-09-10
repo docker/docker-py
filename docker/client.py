@@ -1,74 +1,26 @@
-import base64
 import json
 import logging
-import os
 import re
-import six
 import shlex
-import tarfile
-import tempfile
-import six
-import httplib
-import socket
 
 import requests
-from requests.exceptions import HTTPError
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.connectionpool import HTTPConnectionPool
+import requests.exceptions
+import six
 
-if six.PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
-class UnixHTTPConnection(httplib.HTTPConnection, object):
-    def __init__(self, base_url, unix_socket):
-        httplib.HTTPConnection.__init__(self, 'localhost')
-        self.base_url = base_url
-        self.unix_socket = unix_socket
-
-    def connect(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self.base_url.replace("unix:/",""))
-        self.sock = sock
-
-    def _extract_path(self, url):
-        #remove the base_url entirely..
-        return url.replace(self.base_url, "")
-
-    def request(self, method, url, **kwargs):
-        url = self._extract_path(self.unix_socket)
-        super(UnixHTTPConnection, self).request(method, url, **kwargs)
-
-
-class UnixHTTPConnectionPool(HTTPConnectionPool):
-    def __init__(self, base_url, socket_path):
-        self.socket_path = socket_path
-        self.base_url = base_url
-        super(UnixHTTPConnectionPool, self).__init__(self, 'localhost')
-
-    def _new_conn(self):
-        return UnixHTTPConnection(self.base_url, self.socket_path)
-
-
-class UnixAdapter(HTTPAdapter):
-    def __init__(self, base_url):
-        self.base_url = base_url
-        super(UnixAdapter, self).__init__()
-
-    def get_connection(self, socket_path, proxies=None):
-        return UnixHTTPConnectionPool(self.base_url, socket_path)
+import auth
+import unixconn
+import utils
 
 
 class Client(requests.Session):
     def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
         super(Client, self).__init__()
-        self.mount('unix://', UnixAdapter(base_url))
+        self.mount('unix://', unixconn.UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
         try:
-            self._cfg = self._load_config()
-        except:
+            self._cfg = auth.load_config()
+        except Exception:
             pass
 
     def _url(self, path):
@@ -89,7 +41,7 @@ class Client(requests.Session):
                 http_error_msg += ' "%s"' % response.content
 
         if http_error_msg:
-            raise HTTPError(http_error_msg, response=response)
+            raise requests.exceptions.HTTPError(http_error_msg, response=response)
 
     def _result(self, response, json=False):
         if response.status_code != 200 and response.status_code != 201:
@@ -123,27 +75,6 @@ class Client(requests.Session):
             'VolumesFrom':  volumes_from,
         }
 
-    def _mkbuildcontext(self, dockerfile):
-        f = tempfile.TemporaryFile()
-        t = tarfile.open(mode='w', fileobj=f)
-        if isinstance(dockerfile, StringIO):
-            dfinfo = tarfile.TarInfo('Dockerfile')
-            dfinfo.size = dockerfile.len
-        else:
-            dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
-        t.addfile(dfinfo, dockerfile)
-        t.close()
-        f.seek(0)
-        return f
-
-    def _tar(self, path):
-        f = tempfile.TemporaryFile()
-        t = tarfile.open(mode='w', fileobj=f)
-        t.add(path, arcname='.')
-        t.close()
-        f.seek(0)
-        return f
-
     def _post_json(self, url, data, **kwargs):
         # Go <1.1 can't unserialize null to a string
         # so we do this disgusting thing here.
@@ -157,43 +88,6 @@ class Client(requests.Session):
             kwargs['headers'] = {}
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
-
-    def _decode_auth(self, auth):
-        s = base64.b64decode(auth)
-        login, pwd = s.split(':')
-        return login, pwd
-
-    def _load_config(self, root=None):
-        if root is None:
-            root = os.environ['HOME']
-        config_file = {
-            'Configs': {},
-            'rootPath': root
-        }
-        f = open(os.path.join(root, '.dockercfg'))
-        try:
-            config_file['Configs'] = json.load(f)
-            for k, conf in six.iteritems(config_file['Configs']):
-                conf['Username'], conf['Password'] = self._decode_auth(conf['auth'])
-                del conf['auth']
-                config_file['Configs'][k] = conf
-        except:
-            f.seek(0)
-            buf = []
-            for line in f:
-                k, v = line.split(' = ')
-                buf.append(v)
-            if len(buf) < 2:
-                raise Exception("The Auth config file is empty")
-            user, pwd = self._decode_auth(buf[0])
-            config_file['Configs']['https://index.docker.io/v1/'] = {
-                'Username': user,
-                'Password': pwd,
-                'Email': buf[1]
-            }
-        finally:
-            f.close()
-        return config_file
 
     def attach(self, container):
         params = {
@@ -221,12 +115,12 @@ class Client(requests.Session):
             raise Exception("Either path or fileobj needs to be provided.")
 
         if fileobj is not None:
-            context = self._mkbuildcontext(fileobj)
+            context = utils.mkbuildcontext(fileobj)
         elif (path.startswith('http://') or path.startswith('https://') or
         path.startswith('git://') or path.startswith('github.com/')):
             remote = path
         else:
-            context = self._tar(path)
+            context = utils.tar(path)
 
         u = self._url('/build')
         params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache }
@@ -361,7 +255,7 @@ class Client(requests.Session):
         }
         res = self._result(self._post_json(url, req_data), True)
         try:
-            self._cfg = self._load_config()
+            self._cfg = auth.load_config()
         finally:
             return res
 
@@ -399,14 +293,15 @@ class Client(requests.Session):
         return self._result(self.post(u, None, params=params))
 
     def push(self, repository):
-        if repository.count("/") < 1:
-            raise ValueError("""Impossible to push a \"root\" repository.
-                Please rename your repository in <user>/<repo>""")
+        registry, repository = auth.resolve_repository_name(repository)
         if getattr(self, '_cfg', None) is None:
-            self._cfg = self._load_config()
+            self._cfg = auth.load_config()
+        authcfg = auth.resolve_authconfig(self._cfg, registry)
         u = self._url("/images/{0}/push".format(repository))
-        return self._result(
-            self._post_json(u, self._cfg['Configs']['https://index.docker.io/v1/']))
+        if utils.compare_version('1.5', self._version) >= 0:
+            headers = { 'X-Registry-Auth': auth.encode_header(authcfg) }
+            return self._result(self._post_json(u, None, headers=headers))
+        return self._result(self._post_json(u, authcfg))
 
     def remove_container(self, *args, **kwargs):
         params = {

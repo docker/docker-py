@@ -5,7 +5,6 @@ import tempfile
 import time
 import unittest
 
-
 import docker
 import six
 
@@ -365,19 +364,17 @@ class TestLoadConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
         f = open(os.path.join(folder, '.dockercfg'), 'w')
-        auth = base64.b64encode('sakuya:izayoi')
-        f.write('auth = {0}\n'.format(auth))
+        auth_ = base64.b64encode('sakuya:izayoi')
+        f.write('auth = {0}\n'.format(auth_))
         f.write('email = sakuya@scarlet.net')
         f.close()
-        cfg = self.client._load_config(folder)
-        self.assertNotEqual(cfg['Configs']['index.docker.io'], None)
-        cfg = cfg['Configs']['index.docker.io']
+        cfg = docker.auth.load_config(folder)
+        self.assertNotEqual(cfg['Configs']['https://index.docker.io/v1/'], None)
+        cfg = cfg['Configs']['https://index.docker.io/v1/']
         self.assertEqual(cfg['Username'], 'sakuya')
         self.assertEqual(cfg['Password'], 'izayoi')
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
-
-
 
 if __name__ == '__main__':
     unittest.main()
