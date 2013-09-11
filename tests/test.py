@@ -23,8 +23,7 @@ import docker
 import six
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push;
-# tag; kill/stop/start/wait/restart (multi)
+# export; history; import_image; insert; port; push; tag
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
@@ -37,15 +36,15 @@ class BaseTestCase(unittest.TestCase):
         self.tmp_containers = []
 
     def tearDown(self):
-        if len(self.tmp_imgs) > 0:
+        for img in self.tmp_imgs:
             try:
-                self.client.remove_image(*self.tmp_imgs)
+                self.client.remove_image(img)
             except docker.APIError:
                 pass
-        if len(self.tmp_containers) > 0:
+        for container in self.tmp_containers:
             try:
-                self.client.stop(*self.tmp_containers, t=1)
-                self.client.remove_container(*self.tmp_containers)
+                self.client.stop(container, timeout=1)
+                self.client.remove_container(container)
             except docker.APIError:
                 pass
 
@@ -214,8 +213,6 @@ class TestDiff(BaseTestCase):
         self.assertEqual(len(test_diff), 1)
         self.assertIn('Kind', test_diff[0])
         self.assertEqual(test_diff[0]['Kind'], 1)
-        # FIXME also test remove/modify
-        # (need testcommit first)
 
 class TestStop(BaseTestCase):
     def runTest(self):

@@ -200,6 +200,13 @@ class Client(requests.Session):
         u = self._url("/containers/ps")
         return self._result(self.get(u, params=params), True)
 
+    def copy(self, container, resource):
+        res = self._post_json(self._url("/containers/{0}/copy".format(container)),
+            {"Resource": resource},
+            stream=True)
+        self._raise_for_status(res)
+        return res.raw
+
     def create_container(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
         environment=None, dns=None, volumes=None, volumes_from=None,
@@ -216,13 +223,6 @@ class Client(requests.Session):
             self._raise_for_status(res, explanation="{0} is an unrecognized image. Please pull the "
                 "image first.".format(config['Image']))
         return self._result(res, True)
-
-    def copy(self, container, resource):
-        res = self._post_json(self._url("/containers/{0}/copy".format(container)),
-            {"Resource": resource},
-            stream=True)
-        self._raise_for_status(res)
-        return res.raw
 
     def diff(self, container):
         return self._result(self.get(self._url("/containers/{0}/changes".
@@ -284,11 +284,10 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/{0}/json".
             format(image_id))), True)
 
-    def kill(self, *args):
-        for name in args:
-            url = self._url("/containers/{0}/kill".format(name))
-            res = self.post(url, None)
-            self._raise_for_status(res)
+    def kill(self, container):
+        url = self._url("/containers/{0}/kill".format(container))
+        res = self.post(url, None)
+        self._raise_for_status(res)
 
     def login(self, username, password=None, email=None):
         url = self._url("/auth")
@@ -360,54 +359,42 @@ class Client(requests.Session):
             return self._result(self._post_json(u, None, headers=headers))
         return self._result(self._post_json(u, authcfg))
 
-    def remove_container(self, *args, **kwargs):
-        params = {
-            'v': 1 if kwargs.get('v', False) else 0
-        }
-        for container in args:
-            res = self.delete(self._url("/containers/" + container), params=params)
-            self._raise_for_status(res)
+    def remove_container(self, container, v=False):
+        params = { 'v': v }
+        res = self.delete(self._url("/containers/" + container), params=params)
+        self._raise_for_status(res)
 
-    def remove_image(self, *args):
-        for image in args:
-            res = self.delete(self._url("/images/" + image))
-            self._raise_for_status(res)
+    def remove_image(self, image):
+        res = self.delete(self._url("/images/" + image))
+        self._raise_for_status(res)
 
-    def restart(self, *args, **kwargs):
-        params = {
-            't': kwargs.get('timeout', 10)
-        }
-        for name in args:
-            url = self._url("/containers/{0}/restart".format(name))
-            res = self.post(url, None, params=params)
-            self._raise_for_status(res)
+    def restart(self, container, timeout=10):
+        params = { 't': timeout }
+        url = self._url("/containers/{0}/restart".format(container))
+        res = self.post(url, None, params=params)
+        self._raise_for_status(res)
 
     def search(self, term):
         return self._result(self.get(self._url("/images/search"),
             params={'term': term}), True)
 
-    def start(self, *args, **kwargs):
+    def start(self, container, binds=None):
         start_config = {}
-        binds = kwargs.pop('binds', '')
         if binds:
             bind_pairs = ['{0}:{1}'.format(host, dest) for host, dest in binds.items()]
             start_config = {
                 'Binds': bind_pairs,
             }
 
-        for name in args:
-            url = self._url("/containers/{0}/start".format(name))
-            res = self._post_json(url, start_config)
-            self._raise_for_status(res)
+        url = self._url("/containers/{0}/start".format(container))
+        res = self._post_json(url, start_config)
+        self._raise_for_status(res)
 
-    def stop(self, *args, **kwargs):
-        params = {
-            't': kwargs.get('timeout', 10)
-        }
-        for name in args:
-            url = self._url("/containers/{0}/stop".format(name))
-            res = self.post(url, None, params=params)
-            self._raise_for_status(res)
+    def stop(self, container, timeout=10):
+        params = { 't': timeout }
+        url = self._url("/containers/{0}/stop".format(container))
+        res = self.post(url, None, params=params)
+        self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
         params = {
@@ -421,20 +408,17 @@ class Client(requests.Session):
         return res.status_code == 201
 
     def top(self, container):
-        return self._result(self.get(self._url("/containers/{0}/top".format(container))), True)
+        u = self._url("/containers/{0}/top".format(container)
+        return self._result(self.get(u)), True)
 
     def version(self):
         return self._result(self.get(self._url("/version")), True)
 
-    def wait(self, *args):
-        result = []
-        for name in args:
-            url = self._url("/containers/{0}/wait".format(name))
-            res = self.post(url, None, timeout=None)
-            self._raise_for_status(res)
-            json_ = res.json()
-            if 'StatusCode' in json_:
-                result.append(json_['StatusCode'])
-        if len(result) == 1:
-            return result[0]
-        return result
+    def wait(self, container):
+        url = self._url("/containers/{0}/wait".format(container))
+        res = self.post(url, None, timeout=None)
+        self._raise_for_status(res)
+        json_ = res.json()
+        if 'StatusCode' in json_:
+            return json_['StatusCode']
+        return -1
