@@ -294,17 +294,25 @@ class Client(requests.Session):
 
         return f_port
 
-    def pull(self, repository, tag=None, registry=None):
-        if repository.count(":") == 1:
-            repository, tag = repository.split(":")
+    def pull(self, repository, tag=None):
+        registry, repo_name = auth.resolve_repository_name(repository)
+        if repo_name.count(":") == 1:
+            repository, tag = repository.rsplit(":", 1)
 
         params = {
             'tag': tag,
-            'fromImage': repository,
-            'registry': registry
+            'fromImage': repository
         }
+        headers = {}
+
+        if utils.compare_version('1.5', self._version) >= 0:
+            if getattr(self, '_cfg', None) is None:
+                self._cfg = auth.load_config()
+            authcfg = auth.resolve_authconfig(self._cfg, registry)
+            headers = { 'X-Registry-Auth': auth.encode_header(authcfg) }
+
         u = self._url("/images/create")
-        return self._result(self.post(u, None, params=params))
+        return self._result(self.post(u, params=params, headers=headers))
 
     def push(self, repository):
         registry, repository = auth.resolve_repository_name(repository)
