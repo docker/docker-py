@@ -38,10 +38,16 @@ class BaseTestCase(unittest.TestCase):
 
     def tearDown(self):
         if len(self.tmp_imgs) > 0:
-            self.client.remove_image(*self.tmp_imgs)
+            try:
+                self.client.remove_image(*self.tmp_imgs)
+            except docker.APIError:
+                pass
         if len(self.tmp_containers) > 0:
-            self.client.stop(*self.tmp_containers, t=1)
-            self.client.remove_container(*self.tmp_containers)
+            try:
+                self.client.stop(*self.tmp_containers, t=1)
+                self.client.remove_container(*self.tmp_containers)
+            except docker.APIError:
+                pass
 
 #########################
 ##  INFORMATION TESTS  ##
@@ -278,8 +284,11 @@ class TestRemoveContainer(BaseTestCase):
 
 class TestPull(BaseTestCase):
     def runTest(self):
-        self.client.remove_image('joffrey/test001')
-        self.client.remove_image('376968a23351')
+        try:
+            self.client.remove_image('joffrey/test001')
+            self.client.remove_image('376968a23351')
+        except docker.APIError:
+            pass
         info = self.client.info()
         self.assertIn('Images', info)
         img_count = info['Images']
