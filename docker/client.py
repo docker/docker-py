@@ -217,6 +217,13 @@ class Client(requests.Session):
                 "image first.".format(config['Image']))
         return self._result(res, True)
 
+    def copy(self, container, resource):
+        res = self._post_json(self._url("/containers/{0}/copy".format(container)),
+            {"Resource": resource},
+            stream=True)
+        self._raise_for_status(res)
+        return res.raw
+
     def diff(self, container):
         return self._result(self.get(self._url("/containers/{0}/changes".
             format(container))), True)
@@ -412,6 +419,9 @@ class Client(requests.Session):
         res = self.post(url, None, params=params)
         self._raise_for_status(res)
         return res.status_code == 201
+
+    def top(self, container):
+        return self._result(self.get(self._url("/containers/{0}/top".format(container))), True)
 
     def version(self):
         return self._result(self.get(self._url("/version")), True)
