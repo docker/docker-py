@@ -144,6 +144,13 @@ class TestCreateContainerWithBinds(BaseTestCase):
         os.unlink(shared_file)
         self.assertIn(filename, logs)
 
+class TestCreateContainerPrivileged(BaseTestCase):
+    def runTest(self):
+        res = self.client.create_container('busybox', 'true', privileged=True)
+        inspect = self.client.inspect_container(res['Id'])
+        self.assertIn('Config', inspect)
+        self.assertEqual(inspect['Config']['Privileged'], True)
+
 class TestStartContainer(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', 'true')

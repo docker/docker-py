@@ -26,6 +26,38 @@ import unixconn
 import utils
 
 
+class APIError(requests.exceptions.HTTPError):
+    def __init__(self, message, response, explanation=None):
+        super(APIError, self).__init__(message, response=response)
+
+        self.explanation = explanation
+
+        if self.explanation is None and response.content and len(response.content) > 0:
+            self.explanation = response.content.strip()
+
+    def __str__(self):
+        message = super(APIError, self).__str__()
+
+        if self.is_client_error():
+            message = '%s Client Error: %s' % (
+                self.response.status_code, self.response.reason)
+
+        elif self.is_server_error():
+            message = '%s Server Error: %s' % (
+                self.response.status_code, self.response.reason)
+
+        if self.explanation:
+            message = '%s ("%s")' % (message, self.explanation)
+
+        return message
+
+    def is_client_error(self):
+        return 400 <= self.response.status_code < 500
+
+    def is_server_error(self):
+        return 500 <= self.response.status_code < 600
+
+
 class Client(requests.Session):
     def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
         super(Client, self).__init__()
@@ -40,33 +72,24 @@ class Client(requests.Session):
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
 
-    def _raise_for_status(self, response):
-        """Raises stored :class:`HTTPError`, if one occurred."""
-        http_error_msg = ''
-
-        if 400 <= response.status_code < 500:
-            http_error_msg = '%s Client Error: %s' % (
-                response.status_code, response.reason)
-
-        elif 500 <= response.status_code < 600:
-            http_error_msg = '%s Server Error: %s' % (
-                response.status_code, response.reason)
-            if response.content and len(response.content) > 0:
-                http_error_msg += ' "%s"' % response.content
-
-        if http_error_msg:
-            raise requests.exceptions.HTTPError(http_error_msg, response=response)
+    def _raise_for_status(self, response, explanation=None):
+        """Raises stored :class:`APIError`, if one occurred."""
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError, e:
+            raise APIError(e, response=response, explanation=explanation)
 
     def _result(self, response, json=False):
-        if response.status_code != 200 and response.status_code != 201:
-            self._raise_for_status(response)
+        self._raise_for_status(response)
+
         if json:
             return response.json()
         return response.text
 
     def _container_config(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
-        environment=None, dns=None, volumes=None, volumes_from=None):
+        environment=None, dns=None, volumes=None, volumes_from=None,
+        privileged=False):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -87,6 +110,7 @@ class Client(requests.Session):
             'Image':        image,
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
+            'Privileged': privileged,
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -111,6 +135,7 @@ class Client(requests.Session):
         }
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params, stream=True)
+        self._raise_for_status(res)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
         # eventually block
@@ -177,17 +202,18 @@ class Client(requests.Session):
 
     def create_container(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
-        environment=None, dns=None, volumes=None, volumes_from=None):
+        environment=None, dns=None, volumes=None, volumes_from=None,
+        privileged=False):
         config = self._container_config(image, command, hostname, user,
             detach, stdin_open, tty, mem_limit, ports, environment, dns,
-            volumes, volumes_from)
+            volumes, volumes_from, privileged)
         return self.create_container_from_config(config)
 
     def create_container_from_config(self, config):
         u = self._url("/containers/create")
         res = self._post_json(u, config)
         if res.status_code == 404:
-            raise ValueError("{0} is an unrecognized image. Please pull the "
+            self._raise_for_status(res, explanation="{0} is an unrecognized image. Please pull the "
                 "image first.".format(config['Image']))
         return self._result(res, True)
 
@@ -198,12 +224,12 @@ class Client(requests.Session):
     def export(self, container):
         res = self.get(self._url("/containers/{0}/export".format(container)),
             stream=True)
+        self._raise_for_status(res)
         return res.raw
 
     def history(self, image):
         res = self.get(self._url("/images/{0}/history".format(image)))
-        if res.status_code == 500 and res.text.find("Image does not exist") != -1:
-            raise KeyError(res.text)
+        self._raise_for_status(res)
         return self._result(res)
 
     def images(self, name=None, quiet=False, all=False, viz=False):
@@ -254,7 +280,8 @@ class Client(requests.Session):
     def kill(self, *args):
         for name in args:
             url = self._url("/containers/{0}/kill".format(name))
-            self.post(url, None)
+            res = self.post(url, None)
+            self._raise_for_status(res)
 
     def login(self, username, password=None, email=None):
         url = self._url("/auth")
@@ -284,6 +311,7 @@ class Client(requests.Session):
 
     def port(self, container, private_port):
         res = self.get(self._url("/containers/{0}/json".format(container)))
+        self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
         f_port = None
@@ -331,12 +359,12 @@ class Client(requests.Session):
         }
         for container in args:
             res = self.delete(self._url("/containers/" + container), params=params)
-            if res.status_code >= 400:
-                raise RuntimeError(res.text)
+            self._raise_for_status(res)
 
     def remove_image(self, *args):
         for image in args:
-            self.delete(self._url("/images/" + image))
+            res = self.delete(self._url("/images/" + image))
+            self._raise_for_status(res)
 
     def restart(self, *args, **kwargs):
         params = {
@@ -344,7 +372,8 @@ class Client(requests.Session):
         }
         for name in args:
             url = self._url("/containers/{0}/restart".format(name))
-            self.post(url, None, params=params)
+            res = self.post(url, None, params=params)
+            self._raise_for_status(res)
 
     def search(self, term):
         return self._result(self.get(self._url("/images/search"),
@@ -361,7 +390,8 @@ class Client(requests.Session):
 
         for name in args:
             url = self._url("/containers/{0}/start".format(name))
-            self._post_json(url, start_config)
+            res = self._post_json(url, start_config)
+            self._raise_for_status(res)
 
     def stop(self, *args, **kwargs):
         params = {
@@ -369,7 +399,8 @@ class Client(requests.Session):
         }
         for name in args:
             url = self._url("/containers/{0}/stop".format(name))
-            self.post(url, None, params=params)
+            res = self.post(url, None, params=params)
+            self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
         params = {
@@ -379,7 +410,7 @@ class Client(requests.Session):
         }
         url = self._url("/images/{0}/tag".format(image))
         res = self.post(url, None, params=params)
-        res.raise_for_status()
+        self._raise_for_status(res)
         return res.status_code == 201
 
     def version(self):
@@ -390,6 +421,7 @@ class Client(requests.Session):
         for name in args:
             url = self._url("/containers/{0}/wait".format(name))
             res = self.post(url, None, timeout=None)
+            self._raise_for_status(res)
             json_ = res.json()
             if 'StatusCode' in json_:
                 result.append(json_['StatusCode'])
