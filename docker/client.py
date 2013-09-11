@@ -94,6 +94,18 @@ class Client(requests.Session):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
             environment = ['{0}={1}'.format(k, v) for k, v in environment.items()]
+
+        attach_stdin = False
+        attach_stdout = False
+        attach_stderr = False
+
+        if not detach:
+            attach_stdout = True
+            attach_stderr = True
+
+            if stdin_open:
+                attach_stdin = True
+
         return {
             'Hostname':     hostname,
             'PortSpecs':    ports,
@@ -101,9 +113,9 @@ class Client(requests.Session):
             'Tty':          tty,
             'OpenStdin':    stdin_open,
             'Memory':       mem_limit,
-            'AttachStdin':  False,
-            'AttachStdout': False,
-            'AttachStderr': False,
+            'AttachStdin':  attach_stdin,
+            'AttachStdout': attach_stdout,
+            'AttachStderr': attach_stderr,
             'Env':          environment,
             'Cmd':          command,
             'Dns':          dns,
@@ -127,19 +139,26 @@ class Client(requests.Session):
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
 
-    def attach(self, container):
-        params = {
-            'stdout': 1,
-            'stderr': 1,
-            'stream': 1
-        }
+    def attach_socket(self, container, params=None):
+        if params is None:
+            params = {
+                'stdout': 1,
+                'stderr': 1,
+                'stream': 1
+            }
+        if isinstance(container, dict):
+            container = container.get('Id')
+
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params, stream=True)
         self._raise_for_status(res)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
         # eventually block
-        socket = res.raw._fp.fp._sock
+        return res.raw._fp.fp._sock
+
+    def attach(self, container):
+        socket = self.attach_socket(container)
 
         while True:
             chunk = socket.recv(4096)
@@ -225,10 +244,14 @@ class Client(requests.Session):
         return self._result(res, True)
 
     def diff(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         return self._result(self.get(self._url("/containers/{0}/changes".
             format(container))), True)
 
     def export(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self.get(self._url("/containers/{0}/export".format(container)),
             stream=True)
         self._raise_for_status(res)
@@ -276,15 +299,19 @@ class Client(requests.Session):
         }
         return self._result(self.post(api_url, None, params=params))
 
-    def inspect_container(self, container_id):
+    def inspect_container(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         return self._result(self.get(self._url("/containers/{0}/json".
-            format(container_id))), True)
+            format(container))), True)
 
     def inspect_image(self, image_id):
         return self._result(self.get(self._url("/images/{0}/json".
             format(image_id))), True)
 
     def kill(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url("/containers/{0}/kill".format(container))
         res = self.post(url, None)
         self._raise_for_status(res)
@@ -307,6 +334,8 @@ class Client(requests.Session):
             return res
 
     def logs(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {
             'logs': 1,
             'stdout': 1,
@@ -316,6 +345,8 @@ class Client(requests.Session):
         return self._result(self.post(u, None, params=params))
 
     def port(self, container, private_port):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self.get(self._url("/containers/{0}/json".format(container)))
         self._raise_for_status(res)
         json_ = res.json()
@@ -360,6 +391,8 @@ class Client(requests.Session):
         return self._result(self._post_json(u, authcfg))
 
     def remove_container(self, container, v=False):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = { 'v': v }
         res = self.delete(self._url("/containers/" + container), params=params)
         self._raise_for_status(res)
@@ -369,6 +402,8 @@ class Client(requests.Session):
         self._raise_for_status(res)
 
     def restart(self, container, timeout=10):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = { 't': timeout }
         url = self._url("/containers/{0}/restart".format(container))
         res = self.post(url, None, params=params)
@@ -379,18 +414,21 @@ class Client(requests.Session):
             params={'term': term}), True)
 
     def start(self, container, binds=None):
+        if isinstance(container, dict):
+            container = container.get('Id')
         start_config = {}
         if binds:
             bind_pairs = ['{0}:{1}'.format(host, dest) for host, dest in binds.items()]
             start_config = {
                 'Binds': bind_pairs,
             }
-
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, start_config)
         self._raise_for_status(res)
 
     def stop(self, container, timeout=10):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = { 't': timeout }
         url = self._url("/containers/{0}/stop".format(container))
         res = self.post(url, None, params=params)
@@ -408,13 +446,15 @@ class Client(requests.Session):
         return res.status_code == 201
 
     def top(self, container):
-        u = self._url("/containers/{0}/top".format(container)
-        return self._result(self.get(u)), True)
+        u = self._url("/containers/{0}/top".format(container))
+        return self._result(self.get(u), True)
 
     def version(self):
         return self._result(self.get(self._url("/version")), True)
 
     def wait(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url("/containers/{0}/wait".format(container))
         res = self.post(url, None, timeout=None)
         self._raise_for_status(res)

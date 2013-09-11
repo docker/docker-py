@@ -53,13 +53,11 @@ Identical to the `docker info` command.
 * `c.insert(url, path)`  
 Identical to the `docker insert` command.
 
-* `c.inspect_container(container_id)`  
-Identical to the `docker inspect` command, but can only be used with a
-container ID.
+* `c.inspect_container(container)`  
+Identical to the `docker inspect` command, but only for containers.
 
-* `c.inspect_image(container_id)`  
-Identical to the `docker inspect` command, but can only be used with an
-image ID.
+* `c.inspect_image(image_id)`  
+Identical to the `docker inspect` command, but only for images.
 
 * `c.kill(container)`  
 Kill a container. Similar to the `docker kill` command.
