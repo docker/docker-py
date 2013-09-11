@@ -413,15 +413,16 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/search"),
             params={'term': term}), True)
 
-    def start(self, container, binds=None):
+    def start(self, container, binds=None, lxc_conf=None):
         if isinstance(container, dict):
             container = container.get('Id')
-        start_config = {}
+        start_config = {
+            'LxcConf': lxc_conf
+        }
         if binds:
             bind_pairs = ['{0}:{1}'.format(host, dest) for host, dest in binds.items()]
-            start_config = {
-                'Binds': bind_pairs,
-            }
+            start_config['Binds'] = bind_pairs
+
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, start_config)
         self._raise_for_status(res)
