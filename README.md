@@ -98,7 +98,7 @@ Requires the container to be created with the volumes argument:
 `c.create_container(..., volumes={'/mnt': {}})`  
 `lxc_conf` allows to pass LXC configuration options in dict form.
 
-* `c.stop(containers, timeout=10)`  
+* `c.stop(container, timeout=10)`  
 Stops a container. Similar to the `docker stop` command.
 
 * `c.tag(image, repository, tag=None, force=False)`  
@@ -110,7 +110,7 @@ Identical to the `docker top` command.
 * `c.version()`  
 Identical to the `docker version` command.
 
-* `c.wait(containers)`  
+* `c.wait(container)`  
 Wait for a container and return its exit code. Similar to the `docker wait`
 command.
 
