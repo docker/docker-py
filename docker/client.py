@@ -154,7 +154,9 @@ class Client(requests.Session):
     def attach_websocket(self, container, params=None):
         url = self._url("/containers/{0}/attach/ws".format(container))
         req = requests.Request("POST", url, params=self._attach_params(params))
-        full_url = req.prepare().url.replace("http://", "ws://", 1)
+        full_url = req.prepare().url
+        full_url = full_url.replace("http://", "ws://", 1)
+        full_url = full_url.replace("https://", "wss://", 1)
         return self._create_websocket_connection(full_url)
 
     def _create_websocket_connection(self, url):
