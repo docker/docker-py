@@ -18,6 +18,8 @@ import os
 
 import six
 
+import utils
+
 INDEX_URL = 'https://index.docker.io/v1/'
 
 def swap_protocol(url):
@@ -33,7 +35,8 @@ def expand_registry_url(hostname):
         if '/' not in hostname[9:]:
             hostname = hostname + '/v1/'
         return hostname
-    #FIXME: ping https then fallback to http
+    if utils.ping('https://' + hostname + '_ping'):
+        return 'https://' + hostname + '/v1/'
     return 'http://' + hostname + '/v1/'
 
 

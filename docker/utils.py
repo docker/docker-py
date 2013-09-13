@@ -12,9 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
 import tarfile
 import tempfile
+
+import requests
+import six
 
 if six.PY3:
     from io import StringIO
@@ -44,5 +46,14 @@ def tar(self, path):
     f.seek(0)
     return f
 
+
 def compare_version(v1, v2):
     return float(v2) - float(v1)
+
+
+def ping(url):
+    try:
+        res = requests.get(url)
+        return res.status >= 400
+    except Exception:
+        return False
