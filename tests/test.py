@@ -1,3 +1,17 @@
+# Copyright 2013 dotCloud inc.
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import base64
 import os
 from StringIO import StringIO
@@ -5,13 +19,11 @@ import tempfile
 import time
 import unittest
 
-
 import docker
 import six
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push;
-# tag; kill/stop/start/wait/restart (multi)
+# export; history; import_image; insert; port; push; tag
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
@@ -24,11 +36,17 @@ class BaseTestCase(unittest.TestCase):
         self.tmp_containers = []
 
     def tearDown(self):
-        if len(self.tmp_imgs) > 0:
-            self.client.remove_image(*self.tmp_imgs)
-        if len(self.tmp_containers) > 0:
-            self.client.stop(*self.tmp_containers, t=1)
-            self.client.remove_container(*self.tmp_containers)
+        for img in self.tmp_imgs:
+            try:
+                self.client.remove_image(img)
+            except docker.APIError:
+                pass
+        for container in self.tmp_containers:
+            try:
+                self.client.stop(container, timeout=1)
+                self.client.remove_container(container)
+            except docker.APIError:
+                pass
 
 #########################
 ##  INFORMATION TESTS  ##
@@ -239,8 +257,6 @@ class TestDiff(BaseTestCase):
         self.assertEqual(len(test_diff), 1)
         self.assertIn('Kind', test_diff[0])
         self.assertEqual(test_diff[0]['Kind'], 1)
-        # FIXME also test remove/modify
-        # (need testcommit first)
 
 class TestDiffWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
@@ -386,8 +402,11 @@ class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
 
 class TestPull(BaseTestCase):
     def runTest(self):
-        self.client.remove_image('joffrey/test001')
-        self.client.remove_image('376968a23351')
+        try:
+            self.client.remove_image('joffrey/test001')
+            self.client.remove_image('376968a23351')
+        except docker.APIError:
+            pass
         info = self.client.info()
         self.assertIn('Images', info)
         img_count = info['Images']
@@ -493,19 +512,17 @@ class TestLoadConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
         f = open(os.path.join(folder, '.dockercfg'), 'w')
-        auth = base64.b64encode('sakuya:izayoi')
-        f.write('auth = {0}\n'.format(auth))
+        auth_ = base64.b64encode('sakuya:izayoi')
+        f.write('auth = {0}\n'.format(auth_))
         f.write('email = sakuya@scarlet.net')
         f.close()
-        cfg = self.client._load_config(folder)
-        self.assertNotEqual(cfg['Configs']['index.docker.io'], None)
-        cfg = cfg['Configs']['index.docker.io']
+        cfg = docker.auth.load_config(folder)
+        self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
+        cfg = cfg['Configs'][docker.auth.INDEX_URL]
         self.assertEqual(cfg['Username'], 'sakuya')
         self.assertEqual(cfg['Password'], 'izayoi')
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
-
-
 
 if __name__ == '__main__':
     unittest.main()

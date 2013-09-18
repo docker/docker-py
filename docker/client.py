@@ -1,99 +1,86 @@
-import base64
+# Copyright 2013 dotCloud inc.
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import json
-import logging
-import os
 import re
-import six
 import shlex
-import tarfile
-import tempfile
-import six
-import httplib
-import socket
 
 import requests
-from requests.exceptions import HTTPError
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.connectionpool import HTTPConnectionPool
+import requests.exceptions
+import six
 
-if six.PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
-class UnixHTTPConnection(httplib.HTTPConnection, object):
-    def __init__(self, base_url, unix_socket):
-        httplib.HTTPConnection.__init__(self, 'localhost')
-        self.base_url = base_url
-        self.unix_socket = unix_socket
-
-    def connect(self):
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.connect(self.base_url.replace("unix:/",""))
-        self.sock = sock
-
-    def _extract_path(self, url):
-        #remove the base_url entirely..
-        return url.replace(self.base_url, "")
-
-    def request(self, method, url, **kwargs):
-        url = self._extract_path(self.unix_socket)
-        super(UnixHTTPConnection, self).request(method, url, **kwargs)
+import auth
+import unixconn
+import utils
 
 
-class UnixHTTPConnectionPool(HTTPConnectionPool):
-    def __init__(self, base_url, socket_path):
-        self.socket_path = socket_path
-        self.base_url = base_url
-        super(UnixHTTPConnectionPool, self).__init__(self, 'localhost')
+class APIError(requests.exceptions.HTTPError):
+    def __init__(self, message, response, explanation=None):
+        super(APIError, self).__init__(message, response=response)
 
-    def _new_conn(self):
-        return UnixHTTPConnection(self.base_url, self.socket_path)
+        self.explanation = explanation
 
+        if self.explanation is None and response.content and len(response.content) > 0:
+            self.explanation = response.content.strip()
 
-class UnixAdapter(HTTPAdapter):
-    def __init__(self, base_url):
-        self.base_url = base_url
-        super(UnixAdapter, self).__init__()
+    def __str__(self):
+        message = super(APIError, self).__str__()
 
-    def get_connection(self, socket_path, proxies=None):
-        return UnixHTTPConnectionPool(self.base_url, socket_path)
+        if self.is_client_error():
+            message = '%s Client Error: %s' % (
+                self.response.status_code, self.response.reason)
+
+        elif self.is_server_error():
+            message = '%s Server Error: %s' % (
+                self.response.status_code, self.response.reason)
+
+        if self.explanation:
+            message = '%s ("%s")' % (message, self.explanation)
+
+        return message
+
+    def is_client_error(self):
+        return 400 <= self.response.status_code < 500
+
+    def is_server_error(self):
+        return 500 <= self.response.status_code < 600
 
 
 class Client(requests.Session):
     def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
         super(Client, self).__init__()
-        self.mount('unix://', UnixAdapter(base_url))
+        self.mount('unix://', unixconn.UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
         try:
-            self._cfg = self._load_config()
-        except:
+            self._cfg = auth.load_config()
+        except Exception:
             pass
 
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
 
-    def _raise_for_status(self, response):
-        """Raises stored :class:`HTTPError`, if one occurred."""
-        http_error_msg = ''
-
-        if 400 <= response.status_code < 500:
-            http_error_msg = '%s Client Error: %s' % (
-                response.status_code, response.reason)
-
-        elif 500 <= response.status_code < 600:
-            http_error_msg = '%s Server Error: %s' % (
-                response.status_code, response.reason)
-            if response.content and len(response.content) > 0:
-                http_error_msg += ' "%s"' % response.content
-
-        if http_error_msg:
-            raise HTTPError(http_error_msg, response=response)
+    def _raise_for_status(self, response, explanation=None):
+        """Raises stored :class:`APIError`, if one occurred."""
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError, e:
+            raise APIError(e, response=response, explanation=explanation)
 
     def _result(self, response, json=False):
-        if response.status_code != 200 and response.status_code != 201:
-            self._raise_for_status(response)
+        self._raise_for_status(response)
+
         if json:
             return response.json()
         return response.text
@@ -137,27 +124,6 @@ class Client(requests.Session):
             'Privileged': privileged,
         }
 
-    def _mkbuildcontext(self, dockerfile):
-        f = tempfile.TemporaryFile()
-        t = tarfile.open(mode='w', fileobj=f)
-        if isinstance(dockerfile, StringIO):
-            dfinfo = tarfile.TarInfo('Dockerfile')
-            dfinfo.size = dockerfile.len
-        else:
-            dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
-        t.addfile(dfinfo, dockerfile)
-        t.close()
-        f.seek(0)
-        return f
-
-    def _tar(self, path):
-        f = tempfile.TemporaryFile()
-        t = tarfile.open(mode='w', fileobj=f)
-        t.add(path, arcname='.')
-        t.close()
-        f.seek(0)
-        return f
-
     def _post_json(self, url, data, **kwargs):
         # Go <1.1 can't unserialize null to a string
         # so we do this disgusting thing here.
@@ -172,43 +138,6 @@ class Client(requests.Session):
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
 
-    def _decode_auth(self, auth):
-        s = base64.b64decode(auth)
-        login, pwd = s.split(':')
-        return login, pwd
-
-    def _load_config(self, root=None):
-        if root is None:
-            root = os.environ['HOME']
-        config_file = {
-            'Configs': {},
-            'rootPath': root
-        }
-        f = open(os.path.join(root, '.dockercfg'))
-        try:
-            config_file['Configs'] = json.load(f)
-            for k, conf in six.iteritems(config_file['Configs']):
-                conf['Username'], conf['Password'] = self._decode_auth(conf['Auth'])
-                del conf['Auth']
-                config_file['Configs'][k] = conf
-        except:
-            f.seek(0)
-            buf = []
-            for line in f:
-                k, v = line.split(' = ')
-                buf.append(v)
-            if len(buf) < 2:
-                raise Exception("The Auth config file is empty")
-            user, pwd = self._decode_auth(buf[0])
-            config_file['Configs']['index.docker.io'] = {
-                'Username': user,
-                'Password': pwd,
-                'Email': buf[1]
-            }
-        finally:
-            f.close()
-        return config_file
-
     def attach_socket(self, container, params=None):
         if params is None:
             params = {
@@ -221,6 +150,7 @@ class Client(requests.Session):
 
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=params, stream=True)
+        self._raise_for_status(res)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
         # eventually block
@@ -242,12 +172,12 @@ class Client(requests.Session):
             raise Exception("Either path or fileobj needs to be provided.")
 
         if fileobj is not None:
-            context = self._mkbuildcontext(fileobj)
+            context = utils.mkbuildcontext(fileobj)
         elif (path.startswith('http://') or path.startswith('https://') or
         path.startswith('git://') or path.startswith('github.com/')):
             remote = path
         else:
-            context = self._tar(path)
+            context = utils.tar(path)
 
         u = self._url('/build')
         params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache }
@@ -288,6 +218,13 @@ class Client(requests.Session):
         u = self._url("/containers/ps")
         return self._result(self.get(u, params=params), True)
 
+    def copy(self, container, resource):
+        res = self._post_json(self._url("/containers/{0}/copy".format(container)),
+            {"Resource": resource},
+            stream=True)
+        self._raise_for_status(res)
+        return res.raw
+
     def create_container(self, image, command, hostname=None, user=None,
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
         environment=None, dns=None, volumes=None, volumes_from=None,
@@ -301,7 +238,7 @@ class Client(requests.Session):
         u = self._url("/containers/create")
         res = self._post_json(u, config)
         if res.status_code == 404:
-            raise ValueError("{0} is an unrecognized image. Please pull the "
+            self._raise_for_status(res, explanation="{0} is an unrecognized image. Please pull the "
                 "image first.".format(config['Image']))
         return self._result(res, True)
 
@@ -316,12 +253,12 @@ class Client(requests.Session):
             container = container.get('Id')
         res = self.get(self._url("/containers/{0}/export".format(container)),
             stream=True)
+        self._raise_for_status(res)
         return res.raw
 
     def history(self, image):
         res = self.get(self._url("/images/{0}/history".format(image)))
-        if res.status_code == 500 and res.text.find("Image does not exist") != -1:
-            raise KeyError(res.text)
+        self._raise_for_status(res)
         return self._result(res)
 
     def images(self, name=None, quiet=False, all=False, viz=False):
@@ -371,12 +308,12 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/{0}/json".
             format(image_id))), True)
 
-    def kill(self, *args):
-        for name in args:
-            if isinstance(name, dict):
-                name = name.get('Id')
-            url = self._url("/containers/{0}/kill".format(name))
-            self.post(url, None)
+    def kill(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/kill".format(container))
+        res = self.post(url, None)
+        self._raise_for_status(res)
 
     def login(self, username, password=None, email=None):
         url = self._url("/auth")
@@ -391,7 +328,7 @@ class Client(requests.Session):
         }
         res = self._result(self._post_json(url, req_data), True)
         try:
-            self._cfg = self._load_config()
+            self._cfg = auth.load_config()
         finally:
             return res
 
@@ -410,6 +347,7 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
         res = self.get(self._url("/containers/{0}/json".format(container)))
+        self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
         f_port = None
@@ -420,81 +358,81 @@ class Client(requests.Session):
 
         return f_port
 
-    def pull(self, repository, tag=None, registry=None):
-        if repository.count(":") == 1:
-            repository, tag = repository.split(":")
+    def pull(self, repository, tag=None):
+        registry, repo_name = auth.resolve_repository_name(repository)
+        if repo_name.count(":") == 1:
+            repository, tag = repository.rsplit(":", 1)
 
         params = {
             'tag': tag,
-            'fromImage': repository,
-            'registry': registry
+            'fromImage': repository
         }
+        headers = {}
+
+        if utils.compare_version('1.5', self._version) >= 0:
+            if getattr(self, '_cfg', None) is None:
+                self._cfg = auth.load_config()
+            authcfg = auth.resolve_authconfig(self._cfg, registry)
+            headers = { 'X-Registry-Auth': auth.encode_header(authcfg) }
+
         u = self._url("/images/create")
-        return self._result(self.post(u, None, params=params))
+        return self._result(self.post(u, params=params, headers=headers))
 
     def push(self, repository):
-        if repository.count("/") < 1:
-            raise ValueError("""Impossible to push a \"root\" repository.
-                Please rename your repository in <user>/<repo>""")
-        if self._cfg is None:
-            self._cfg = self._load_config()
+        registry, repository = auth.resolve_repository_name(repository)
+        if getattr(self, '_cfg', None) is None:
+            self._cfg = auth.load_config()
+        authcfg = auth.resolve_authconfig(self._cfg, registry)
         u = self._url("/images/{0}/push".format(repository))
-        return self._result(
-            self._post_json(u, self._cfg['Configs']['index.docker.io']))
+        if utils.compare_version('1.5', self._version) >= 0:
+            headers = { 'X-Registry-Auth': auth.encode_header(authcfg) }
+            return self._result(self._post_json(u, None, headers=headers))
+        return self._result(self._post_json(u, authcfg))
 
-    def remove_container(self, *args, **kwargs):
-        params = {
-            'v': 1 if kwargs.get('v', False) else 0
-        }
-        for container in args:
-            if isinstance(container, dict):
-                container = container.get('Id')
-            res = self.delete(self._url("/containers/" + container), params=params)
-            if res.status_code >= 400:
-                raise RuntimeError(res.text)
+    def remove_container(self, container, v=False):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        params = { 'v': v }
+        res = self.delete(self._url("/containers/" + container), params=params)
+        self._raise_for_status(res)
 
-    def remove_image(self, *args):
-        for image in args:
-            self.delete(self._url("/images/" + image))
+    def remove_image(self, image):
+        res = self.delete(self._url("/images/" + image))
+        self._raise_for_status(res)
 
-    def restart(self, *args, **kwargs):
-        params = {
-            't': kwargs.get('timeout', 10)
-        }
-        for name in args:
-            if isinstance(name, dict):
-                name = name.get('Id')
-            url = self._url("/containers/{0}/restart".format(name))
-            self.post(url, None, params=params)
+    def restart(self, container, timeout=10):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        params = { 't': timeout }
+        url = self._url("/containers/{0}/restart".format(container))
+        res = self.post(url, None, params=params)
+        self._raise_for_status(res)
 
     def search(self, term):
         return self._result(self.get(self._url("/images/search"),
             params={'term': term}), True)
 
-    def start(self, *args, **kwargs):
-        start_config = {}
-        binds = kwargs.pop('binds', '')
+    def start(self, container, binds=None, lxc_conf=None):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        start_config = {
+            'LxcConf': lxc_conf
+        }
         if binds:
             bind_pairs = ['{0}:{1}'.format(host, dest) for host, dest in binds.items()]
-            start_config = {
-                'Binds': bind_pairs,
-            }
+            start_config['Binds'] = bind_pairs
 
-        for name in args:
-            if isinstance(name, dict):
-                name = name.get('Id')
-            url = self._url("/containers/{0}/start".format(name))
-            self._post_json(url, start_config)
+        url = self._url("/containers/{0}/start".format(container))
+        res = self._post_json(url, start_config)
+        self._raise_for_status(res)
 
-    def stop(self, *args, **kwargs):
-        params = {
-            't': kwargs.get('timeout', 10)
-        }
-        for name in args:
-            if isinstance(name, dict):
-                name = name.get('Id')
-            url = self._url("/containers/{0}/stop".format(name))
-            self.post(url, None, params=params)
+    def stop(self, container, timeout=10):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        params = { 't': timeout }
+        url = self._url("/containers/{0}/stop".format(container))
+        res = self.post(url, None, params=params)
+        self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
         params = {
@@ -504,22 +442,23 @@ class Client(requests.Session):
         }
         url = self._url("/images/{0}/tag".format(image))
         res = self.post(url, None, params=params)
-        res.raise_for_status()
+        self._raise_for_status(res)
         return res.status_code == 201
+
+    def top(self, container):
+        u = self._url("/containers/{0}/top".format(container))
+        return self._result(self.get(u), True)
 
     def version(self):
         return self._result(self.get(self._url("/version")), True)
 
-    def wait(self, *args):
-        result = []
-        for name in args:
-            if isinstance(name, dict):
-                name = name.get('Id')
-            url = self._url("/containers/{0}/wait".format(name))
-            res = self.post(url, None, timeout=None)
-            json_ = res.json()
-            if 'StatusCode' in json_:
-                result.append(json_['StatusCode'])
-        if len(result) == 1:
-            return result[0]
-        return result
+    def wait(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/wait".format(container))
+        res = self.post(url, None, timeout=None)
+        self._raise_for_status(res)
+        json_ = res.json()
+        if 'StatusCode' in json_:
+            return json_['StatusCode']
+        return -1

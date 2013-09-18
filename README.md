@@ -21,6 +21,9 @@ Identical to the `docker commit` command.
 * `c.containers(quiet=False, all=False, trunc=True, latest=False, since=None, before=None, limit=-1)`  
 Identical to the `docker ps` command.
 
+* `c.copy(container, resource)`  
+Identical to the `docker cp` command.
+
 * `c.create_container(image, command, hostname=None, user=None, detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None, volumes=None, volumes_from=None, privileged=False)`  
 Creates a container that can then be `start`ed. Parameters are similar to those
 for the `docker run` command except it doesn't support the attach options
@@ -51,13 +54,13 @@ Identical to the `docker info` command.
 Identical to the `docker insert` command.
 
 * `c.inspect_container(container)`  
-Identical to the `docker inspect` command.
+Identical to the `docker inspect` command, but only for containers.
 
 * `c.inspect_image(image_id)`  
-Identical to the `docker inspect` command, but can only be used with an image ID.
+Identical to the `docker inspect` command, but only for images.
 
-* `c.kill(containers...)`  
-Identical to the `docker kill` command.
+* `c.kill(container)`  
+Kill a container. Similar to the `docker kill` command.
 
 * `c.login(username, password=None, email=None)`  
 Identical to the `docker login` command (but non-interactive, obviously).
@@ -74,37 +77,40 @@ Identical to the `docker pull` command.
 * `c.push(repository)`  
 Identical to the `docker push` command.
 
-* `c.remove_container(containers..., v=False)`  
-Identical to the `docker rm` command.
+* `c.remove_container(container, v=False)`  
+Remove a container. Similar to the `docker rm` command.
 
-* `c.remove_image(images...)`  
-Identical to the `docker rmi` command.
+* `c.remove_image(image)`  
+Remove an image. Similar to the `docker rmi` command.
 
-* `c.restart(containers..., t=10)`  
-Identical to the `docker restart` command.
+* `c.restart(container, timeout=10)`  
+Restart a container. Similar to the `docker restart` command.
 
 * `c.search(term)`  
 Identical to the `docker search` command.
 
-* `c.start(containers)`  
-Identical to the `docker start` command, but doesn't support attach options.
-Use `docker logs` to recover `stdout`/`stderr`
-
-* `c.start(containers, binds={'/host': '/mnt'})`  
-Allows to bind a directory in the host to the container.
-Similar to the `docker run` command with the `-b="/host:/mnt"`.
+* `c.start(container, binds=None, lxc_conf=None)`  
+Similar to the `docker start` command, but doesn't support attach options.
+Use `docker logs` to recover `stdout`/`stderr`  
+`binds` Allows to bind a directory in the host to the container.
+ Similar to the `docker run` command with option `-v="/host:/mnt"`.
 Requires the container to be created with the volumes argument:
-`c.create_container(..., volumes={'/mnt': {}})`
+`c.create_container(..., volumes={'/mnt': {}})`  
+`lxc_conf` allows to pass LXC configuration options in dict form.
 
-* `c.stop(containers..., t=10)`  
-Identical to the `docker stop` command.
+* `c.stop(container, timeout=10)`  
+Stops a container. Similar to the `docker stop` command.
 
 * `c.tag(image, repository, tag=None, force=False)`  
 Identical to the `docker tag` command.
 
+* `c.top(container_id)`  
+Identical to the `docker top` command.
+
 * `c.version()`  
 Identical to the `docker version` command.
 
-* `c.wait(containers...)`  
-Identical to the `docker wait` command.
+* `c.wait(container)`  
+Wait for a container and return its exit code. Similar to the `docker wait`
+command.
 
