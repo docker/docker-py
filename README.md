@@ -93,7 +93,7 @@ Identical to the `docker search` command.
 Similar to the `docker start` command, but doesn't support attach options.
 Use `docker logs` to recover `stdout`/`stderr`  
 `binds` Allows to bind a directory in the host to the container.
- Similar to the `docker run` command with option `-b="/host:/mnt"`.
+ Similar to the `docker run` command with option `-v="/host:/mnt"`.
 Requires the container to be created with the volumes argument:
 `c.create_container(..., volumes={'/mnt': {}})`  
 `lxc_conf` allows to pass LXC configuration options in dict form.
