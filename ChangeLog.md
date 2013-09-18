@@ -1,6 +1,32 @@
 ChangeLog
 =========
 
+0.2.0
+-----
+
+* **This version introduces breaking changes!**
+* `Client.kill`, `Client.remove_container`, `Client.remove_image`,
+`Client.restart`, `Client.start`, `Client.stop` and `Client.wait` don't support
+varargs anymore.
+* Added commands `Client.top` and `Client.copy`
+* Added `lxc_conf` parameter to `Client.start`
+* Added support for authentication in `Client.pull` (API version >=1.5)
+* Added support for privileged containers.
+* Error management overhaul. The new version should be more consistent and 
+* All methods that expected a container ID as argument now also support a dict
+containing an `Id` key.
+* Added license header to python files.
+* Several `README.md` updates.
+
+### Bugfixes
+
+* Fixed several bugs with auth config parsing.
+* Fixed a bug in `Client.push` where it would raise an exception if
+the auth config wasn't loaded.
+* Fixed a bug in `Client.pull` where private registry images wouldn't be parsed
+properly if it contained port information.
+
+
 0.1.5
 -----
 
