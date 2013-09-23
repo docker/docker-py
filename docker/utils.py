@@ -38,7 +38,7 @@ def mkbuildcontext(dockerfile):
     return f
 
 
-def tar(self, path):
+def tar(path):
     f = tempfile.TemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
     t.add(path, arcname='.')
