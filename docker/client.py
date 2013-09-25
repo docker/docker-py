@@ -315,22 +315,24 @@ class Client(requests.Session):
         res = self.post(url, None)
         self._raise_for_status(res)
 
-    def login(self, username, password=None, email=None):
+    def login(self, username, password=None, email=None, registry=None):
         url = self._url("/auth")
-        res = self.get(url)
-        json_ = res.json()
-        if 'username' in json_ and json_['username'] == username:
-            return json_
+        if registry is None:
+            registry = auth.INDEX_URL
+        if getattr(self, '_cfg', None) is None:
+            self._cfg = auth.load_config()
+        authcfg = auth.resolve_authconfig(self._cfg, registry)
+        if 'username' in authcfg and authcfg['username'] == username:
+            return authcfg
         req_data = {
             'username': username,
-            'password': password if password is not None else json_['password'],
-            'email': email if email is not None else json_['email']
+            'password': password,
+            'email': email
         }
         res = self._result(self._post_json(url, req_data), True)
-        try:
-            self._cfg = auth.load_config()
-        finally:
-            return res
+        if res['Status'] == 'Login Succeeded':
+            self._cfg['Configs'][registry] = req_data
+        return res
 
     def logs(self, container):
         if isinstance(container, dict):
