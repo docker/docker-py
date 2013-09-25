@@ -1,0 +1,231 @@
+import json
+
+CURRENT_VERSION = 'v1.4'
+
+FAKE_CONTAINER_ID = '3cc2351ab11b'
+FAKE_IMAGE_ID = 'e9aa60c60128'
+
+FAKE_INSPECT_DATA = {
+    "ID": "3cc2351ab11bca2e319f49b547834f550eb0c0505a636dc4d24c5b5e03845927",
+    "Created": "2013-09-25T14:01:18.867354259+02:00",
+    "Path": "/bin/sh",
+    "Args": [
+        "-c",
+        "mkdir -p /tmp/test"
+    ],
+    "Config": {
+        "Hostname": FAKE_CONTAINER_ID,
+        "Domainname": "",
+        "User": "",
+        "Memory": 0,
+        "MemorySwap": 0,
+        "CpuShares": 0,
+        "AttachStdin": False,
+        "AttachStdout": False,
+        "AttachStderr": False,
+        "PortSpecs": [
+            "8080"
+        ],
+        "Tty": False,
+        "OpenStdin": False,
+        "StdinOnce": False,
+        "Env": [
+            "HOME=/",
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ],
+        "Cmd": None,
+        "Dns": None,
+        "Image": "b9517f6e2d833745eb5f893ea901abe5ea8247fab8e569e1d3280881ab84284b",
+        "Volumes": None,
+        "VolumesFrom": "",
+        "WorkingDir": "",
+        "Entrypoint": None,
+        "NetworkDisabled": False,
+        "Privileged": False
+    },
+    "State": {
+        "Running": False,
+        "Pid": 0,
+        "ExitCode": 0,
+        "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
+        "Ghost": False
+    },
+    "Image": "9330a90e5753f16df757d865700365263946bd7e6b6439e44622e5952bb5033e",
+    "NetworkSettings": {
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "Gateway": "",
+        "Bridge": "",
+        "PortMapping": None
+    },
+    "SysInitPath": "/opt/docker/docker",
+    "ResolvConfPath": "/etc/resolv.conf",
+    "HostnamePath": "/var/lib/docker/containers/800680f2e4ccca2e319f49b547834f550eb0c0505a636dc4d24c5b5e03845927/hostname",
+    "HostsPath": "/var/lib/docker/containers/800680f2e4ccca2e319f49b547834f550eb0c0505a636dc4d24c5b5e03845927/hosts",
+    "Volumes": {},
+    "VolumesRW": {}
+}
+
+
+### Each method is prefixed with HTTP method (get, post...)
+### for clarity and readability
+
+
+def get_fake_version():
+    status_code = 200
+    response = json.dumps({'GoVersion': '1', 'Version': '1.1.1'})
+    return status_code, response
+
+
+def get_fake_info():
+    status_code = 200
+    response = json.dumps({'Containers': 1, 'Images': 1, 'Debug': ''})
+    return status_code, response
+
+
+def get_fake_search():
+    status_code = 200
+    response = json.dumps([{'Name': 'busybox', 'Description': 'Fake Description'}])
+    return status_code, response
+
+
+def get_fake_images():
+    status_code = 200
+    response = json.dumps([
+        {'Id': FAKE_IMAGE_ID, 'Created': '2 days ago', 'Repository': 'busybox', 'Tag': 'latest'}
+    ])
+    return status_code, response
+
+
+def get_fake_containers():
+    status_code = 200
+    response = json.dumps([
+        {'Id': FAKE_CONTAINER_ID,
+        'Image': 'busybox:latest',
+        'Created': '2 days ago',
+        'Command': 'true',
+        'Status': 'fake status'}
+    ])
+    return status_code, response
+
+
+def post_fake_start_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def post_fake_create_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def get_fake_inspect_container():
+    status_code = 200
+    response = json.dumps({
+        'Id': FAKE_CONTAINER_ID,
+        'Config': {'Privileged': True},
+        'ID': FAKE_CONTAINER_ID,
+        'Image': 'busybox:latest',
+            "State": {
+            "Running": True,
+            "Pid": 0,
+            "ExitCode": 0,
+            "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
+            "Ghost": False
+        },
+
+
+    })
+    return status_code, response
+
+
+def get_fake_wait():
+    status_code = 200
+    response = json.dumps({'StatusCode': 0})
+    return status_code, response
+
+
+def get_fake_logs():
+    status_code = 200
+    response = 'Flowering Nights (Sakuya Iyazoi)'
+    return status_code, response
+
+
+def get_fake_diff():
+    status_code = 200
+    response = json.dumps([{'Path': '/test', 'Kind': 1}])
+    return status_code, response
+
+
+def post_fake_stop_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def post_fake_kill_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def post_fake_restart_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def delete_fake_remove_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def post_fake_image_create():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_IMAGE_ID})
+    return status_code, response
+
+
+def delete_fake_remove_image():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_IMAGE_ID})
+    return status_code, response
+
+
+def post_fake_commit():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+def post_fake_build_container():
+    status_code = 200
+    response = json.dumps({'Id': FAKE_CONTAINER_ID})
+    return status_code, response
+
+
+## maps real api url to fake response callback
+fake_responses = {
+    'unix://var/run/docker.sock/{0}/version'.format(CURRENT_VERSION): get_fake_version,
+    'unix://var/run/docker.sock/{0}/info'.format(CURRENT_VERSION): get_fake_info,
+    'unix://var/run/docker.sock/{0}/images/search'.format(CURRENT_VERSION): get_fake_search,
+    'unix://var/run/docker.sock/{0}/images/json'.format(CURRENT_VERSION): get_fake_images,
+    'unix://var/run/docker.sock/{0}/containers/ps'.format(CURRENT_VERSION): get_fake_containers,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION): post_fake_start_container,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION): get_fake_inspect_container,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION): get_fake_wait,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/attach'.format(CURRENT_VERSION): get_fake_logs,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION): get_fake_diff,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION): post_fake_stop_container,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION): post_fake_kill_container,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION): post_fake_restart_container,
+    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION): delete_fake_remove_container,
+    'unix://var/run/docker.sock/{0}/images/create'.format(CURRENT_VERSION): post_fake_image_create,
+    'unix://var/run/docker.sock/{0}/images/e9aa60c60128'.format(CURRENT_VERSION): delete_fake_remove_image,
+    'unix://var/run/docker.sock/{0}/commit'.format(CURRENT_VERSION): post_fake_commit,
+    'unix://var/run/docker.sock/{0}/containers/create'.format(CURRENT_VERSION): post_fake_create_container,
+    'unix://var/run/docker.sock/{0}/build'.format(CURRENT_VERSION): post_fake_build_container
+}
