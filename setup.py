@@ -6,12 +6,15 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 test_requirements = []
+with requirements_txt = open('./requirements.txt'):
+    requirements = [line for line in requirements_txt]
+
 setup(
     name="docker-py",
     version='0.2.0',
     description="Python client for Docker.",
     packages=['docker'],
-    install_requires=['requests', 'six'] + test_requirements,
+    install_requires=requirements + test_requirements,
     zip_safe=False,
     test_suite='tests',
     classifiers=['Development Status :: 4 - Beta',
