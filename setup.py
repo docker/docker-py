@@ -6,7 +6,7 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 test_requirements = []
-with requirements_txt = open('./requirements.txt'):
+with open('./requirements.txt') as requirements_txt:
     requirements = [line for line in requirements_txt]
 
 setup(
