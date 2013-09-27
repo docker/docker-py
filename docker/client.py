@@ -169,15 +169,13 @@ class Client(requests.Session):
     def build(self, path=None, tag=None, quiet=False, fileobj=None, nocache=False):
         remote = context = headers = None
         if path is None and fileobj is None:
-            raise Exception("Either path or fileobj needs to be provided.")
+            raise Exception("path or fileobj needs to be provided.")
 
-        if fileobj is not None:
-            context = utils.mkbuildcontext(fileobj)
-        elif (path.startswith('http://') or path.startswith('https://') or
-        path.startswith('git://') or path.startswith('github.com/')):
+        if path and any([path.startswith(s) for s in ('http://', 'https://',
+                                                      'git://', 'github.com/')]):
             remote = path
         else:
-            context = utils.tar(path)
+            context = utils.mkbuildcontext(fileobj, path)
 
         u = self._url('/build')
         params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache }

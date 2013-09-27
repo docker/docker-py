@@ -24,24 +24,21 @@ else:
     from StringIO import StringIO
 
 
-def mkbuildcontext(dockerfile):
+def mkbuildcontext(dockerfile=None, path=None):
     f = tempfile.TemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
-    if isinstance(dockerfile, StringIO):
-        dfinfo = tarfile.TarInfo('Dockerfile')
-        dfinfo.size = dockerfile.len
-    else:
-        dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
-    t.addfile(dfinfo, dockerfile)
-    t.close()
-    f.seek(0)
-    return f
 
+    if path:
+        t.add(path, arcname='.')
 
-def tar(path):
-    f = tempfile.TemporaryFile()
-    t = tarfile.open(mode='w', fileobj=f)
-    t.add(path, arcname='.')
+    if dockerfile:
+        if isinstance(dockerfile, StringIO):
+            dfinfo = tarfile.TarInfo('Dockerfile')
+            dfinfo.size = dockerfile.len
+        else:
+            dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
+        t.addfile(dfinfo, dockerfile)
+
     t.close()
     f.seek(0)
     return f
