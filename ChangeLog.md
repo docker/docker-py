@@ -1,6 +1,18 @@
 ChangeLog
 =========
 
+0.2.1
+-----
+
+* Fixed a bug where the package would fail with an `ImportError` if requests 
+  was installed using `apt-get`
+* Fixed a bug where `Client.build` would fail if given a `path` parameter.
+* Fixed several bugs in `Client.login`. It should now work with API versions 
+  1.4, 1.5. 
+* Please note that `Client.login` currently doesn't write auth to the
+  `.dockercfg` file, thus **auth is not persistent when using this method.**
+* Improvements to the `tox.ini` file
+
 0.2.0
 -----
 
