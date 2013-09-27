@@ -5,67 +5,6 @@ CURRENT_VERSION = 'v1.4'
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
 
-FAKE_INSPECT_DATA = {
-    "ID": "3cc2351ab11bca2e319f49b547834f550eb0c0505a636dc4d24c5b5e03845927",
-    "Created": "2013-09-25T14:01:18.867354259+02:00",
-    "Path": "/bin/sh",
-    "Args": [
-        "-c",
-        "mkdir -p /tmp/test"
-    ],
-    "Config": {
-        "Hostname": FAKE_CONTAINER_ID,
-        "Domainname": "",
-        "User": "",
-        "Memory": 0,
-        "MemorySwap": 0,
-        "CpuShares": 0,
-        "AttachStdin": False,
-        "AttachStdout": False,
-        "AttachStderr": False,
-        "PortSpecs": [
-            "8080"
-        ],
-        "Tty": False,
-        "OpenStdin": False,
-        "StdinOnce": False,
-        "Env": [
-            "HOME=/",
-            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-        ],
-        "Cmd": None,
-        "Dns": None,
-        "Image": "b9517f6e2d833745eb5f893ea901abe5ea8247fab8e569e1d3280881ab84284b",
-        "Volumes": None,
-        "VolumesFrom": "",
-        "WorkingDir": "",
-        "Entrypoint": None,
-        "NetworkDisabled": False,
-        "Privileged": False
-    },
-    "State": {
-        "Running": False,
-        "Pid": 0,
-        "ExitCode": 0,
-        "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
-        "Ghost": False
-    },
-    "Image": "9330a90e5753f16df757d865700365263946bd7e6b6439e44622e5952bb5033e",
-    "NetworkSettings": {
-        "IPAddress": "",
-        "IPPrefixLen": 0,
-        "Gateway": "",
-        "Bridge": "",
-        "PortMapping": None
-    },
-    "SysInitPath": "/opt/docker/docker",
-    "ResolvConfPath": "/etc/resolv.conf",
-    "HostnamePath": "/var/lib/docker/containers/800680f2e4ccca2e319f49b547834f550eb0c0505a636dc4d24c5b5e03845927/hostname",
-    "HostsPath": "/var/lib/docker/containers/800680f2e4ccca2e319f49b547834f550eb0c0505a636dc4d24c5b5e03845927/hosts",
-    "Volumes": {},
-    "VolumesRW": {}
-}
-
 
 ### Each method is prefixed with HTTP method (get, post...)
 ### for clarity and readability
