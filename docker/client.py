@@ -75,7 +75,7 @@ class Client(requests.Session):
         """Raises stored :class:`APIError`, if one occurred."""
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError, e:
+        except requests.exceptions.HTTPError as e:
             raise APIError(e, response=response, explanation=explanation)
 
     def _result(self, response, json=False):
