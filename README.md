@@ -11,9 +11,11 @@ Client class. `base_url` refers to the protocol+hostname+port where the docker
 server is hosted. Version is the version of the API the client will use.
 
 * `c.build(path=None, tag=None, quiet=False, fileobj=None, nocache=False)`  
-Similar to the `docker build` command. Either `path` or `fileobj` needs to be
-set. `path` can be a local path (to a directory containing a Dockerfile) or a
-remote URL. `fileobj` must be a readable file-like object to a Dockerfile.
+Similar to the `docker build` command. `path` or `fileobj` needs to be set.
+If both `path` and `fileobj` are set, `fileobj` will override the Dockerfile
+found in `path` only if `path` is a local path. `path` can be a local path
+(to a directory containing a Dockerfile) or a remote URL. `fileobj` must be a
+readable file-like object to a Dockerfile.
 
 * `c.commit(container, repository=None, tag=None, message=None, author=None, conf=None)`  
 Identical to the `docker commit` command.
