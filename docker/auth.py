@@ -59,9 +59,10 @@ def resolve_repository_name(repo_name):
 
 
 def resolve_authconfig(authconfig, registry):
+    default = {}
     if registry == INDEX_URL or registry == '':
         # default to the index server
-        return authconfig['Configs'][INDEX_URL]
+        return authconfig['Configs'].get(INDEX_URL, default)
     # if its not the index server there are three cases:
     #
     # 1. this is a full config url -> it should be used as is
@@ -79,7 +80,7 @@ def resolve_authconfig(authconfig, registry):
         return authconfig['Configs'][registry]
     elif swap_protocol(registry) in authconfig['Configs']:
         return authconfig['Configs'][swap_protocol(registry)]
-    return {}
+    return default
 
 
 def decode_auth(auth):

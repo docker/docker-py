@@ -1,14 +1,18 @@
 ChangeLog
 =========
 
+0.2.2
+-----
+* Authorize but warn anonym push/pull
+
 0.2.1
 -----
 
-* Fixed a bug where the package would fail with an `ImportError` if requests 
+* Fixed a bug where the package would fail with an `ImportError` if requests
   was installed using `apt-get`
 * Fixed a bug where `Client.build` would fail if given a `path` parameter.
-* Fixed several bugs in `Client.login`. It should now work with API versions 
-  1.4, 1.5. 
+* Fixed several bugs in `Client.login`. It should now work with API versions
+  1.4, 1.5.
 * Please note that `Client.login` currently doesn't write auth to the
   `.dockercfg` file, thus **auth is not persistent when using this method.**
 * Improvements to the `tox.ini` file
@@ -24,7 +28,7 @@ varargs anymore.
 * Added `lxc_conf` parameter to `Client.start`
 * Added support for authentication in `Client.pull` (API version >=1.5)
 * Added support for privileged containers.
-* Error management overhaul. The new version should be more consistent and 
+* Error management overhaul. The new version should be more consistent and
 * All methods that expected a container ID as argument now also support a dict
 containing an `Id` key.
 * Added license header to python files.
@@ -51,7 +55,7 @@ running container
 
 ### Bugfixes
 
-* Fixed a bug in `Client.create_container` on Python 2.6 where unicode 
+* Fixed a bug in `Client.create_container` on Python 2.6 where unicode
 commands would fail to be parsed
 * Fixed a bug in `Client.build` where the `tag` parameter would not be taken
 into account

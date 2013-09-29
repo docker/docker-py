@@ -19,10 +19,14 @@ import shlex
 import requests
 import requests.exceptions
 import six
+import logging
 
 import auth
 import unixconn
 import utils
+
+
+logger = logging.getLogger('docker-py')
 
 
 class APIError(requests.exceptions.HTTPError):
@@ -383,26 +387,38 @@ class Client(requests.Session):
             'fromImage': repository
         }
         headers = {}
-
         if utils.compare_version('1.5', self._version) >= 0:
             if getattr(self, '_cfg', None) is None:
                 self._cfg = auth.load_config()
             authcfg = auth.resolve_authconfig(self._cfg, registry)
-            headers = { 'X-Registry-Auth': auth.encode_header(authcfg) }
-
+            # do not fail if no atuhentication exists
+            # for this specific registry as we can have a readonly pull
+            if not authcfg:
+                logger.warn(
+                    'No authentication bits found for {0}'.format(
+                        registry))
+            else:
+                headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
         return self._result(self.post(u, params=params, headers=headers))
 
     def push(self, repository):
         registry, repository = auth.resolve_repository_name(repository)
-        if getattr(self, '_cfg', None) is None:
-            self._cfg = auth.load_config()
-        authcfg = auth.resolve_authconfig(self._cfg, registry)
         u = self._url("/images/{0}/push".format(repository))
+        headers = {}
         if utils.compare_version('1.5', self._version) >= 0:
-            headers = { 'X-Registry-Auth': auth.encode_header(authcfg) }
-            return self._result(self._post_json(u, None, headers=headers))
-        return self._result(self._post_json(u, authcfg))
+            if getattr(self, '_cfg', None) is None:
+                self._cfg = auth.load_config()
+            authcfg = auth.resolve_authconfig(self._cfg, registry)
+            # do not fail if no atuhentication exists
+            # for this specific registry as we can have an anon push
+            if not authcfg:
+                logger.warn(
+                    'No authentication bits found for {0}'.format(
+                        registry))
+            else:
+                headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+        return self._result(self._post_json(u, None, headers=headers))
 
     def remove_container(self, container, v=False):
         if isinstance(container, dict):
