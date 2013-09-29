@@ -71,7 +71,7 @@ Identical to the `docker logs` command.
 * `c.port(container, private_port)`  
 Identical to the `docker port` command.
 
-* `c.pull(repository, tag=None, registry=None)`  
+* `c.pull(repository, tag=None)`
 Identical to the `docker pull` command.
 
 * `c.push(repository)`  
