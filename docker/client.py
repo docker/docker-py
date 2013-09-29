@@ -31,7 +31,7 @@ logger = logging.getLogger('docker-py')
 
 class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
-        super(APIError, self).__init__(message, response=response)
+        super(APIError, self).__init__(message, **{'response': response})
 
         self.explanation = explanation
 
