@@ -3,7 +3,7 @@ ChangeLog
 
 0.2.2
 -----
-* Authorize but warn anonym push/pull
+* Allow anonymous push/pull (no authconfig detected)
 
 0.2.1
 -----
