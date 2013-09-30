@@ -209,14 +209,16 @@ class Client(requests.Session):
         since=None, before=None, limit=-1):
         params = {
             'limit': 1 if latest else limit,
-            'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
             'trunc_cmd': 1 if trunc else 0,
             'since': since,
             'before': before
         }
         u = self._url("/containers/ps")
-        return self._result(self.get(u, params=params), True)
+        res = self._result(self.get(u, params=params), True)
+        if quiet:
+            return [{ 'Id': x['Id'] } for x in res]
+        return res
 
     def copy(self, container, resource):
         res = self._post_json(self._url("/containers/{0}/copy".format(container)),
