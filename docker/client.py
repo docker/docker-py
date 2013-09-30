@@ -275,15 +275,28 @@ class Client(requests.Session):
             return [x['Id'] for x in res]
         return res
 
-    def import_image(self, src, repository=None, tag=None):
+    def import_image(self, src, data=None, repository=None, tag=None):
+        '''
+        To import from a local tarball, use the absolute path to the file
+        '''
         u = self._url("/images/create")
         params = {
             'repo': repository,
             'tag': tag
         }
+        try:
+            # XXX: this is ways not optimal but the only way
+            # for now to import tarballs through the API
+            fic = open(src)
+            data = fic.read()
+            fic.close()
+            src = "-"
+        except IOError:
+            # file does not exists or not a file (URL)
+            data = None
         if isinstance(src, six.string_types):
             params['fromSrc'] = src
-            return self._result(self.post(u, None, params=params))
+            return self._result(self.post(u, data, params=params))
 
         return self._result(self.post(u, src, params=params))
 

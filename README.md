@@ -46,6 +46,8 @@ Identical to the `docker import` command. If `src` is a string or unicode
 string, it will be treated as a URL to fetch the image from. To import an image
 from the local machine, `src` needs to be a file-like object or bytes
 collection.
+To import from a tarball use your absolute path to your tarball.
+To load arbitrary data as tarball use whatever you want as src and your tarball content in data.
 
 * `c.info()`  
 Identical to the `docker info` command.
