@@ -166,7 +166,7 @@ class Client(requests.Session):
             else:
                 break
 
-    def build(self, path=None, tag=None, quiet=False, fileobj=None, nocache=False):
+    def build(self, path=None, tag=None, quiet=False, fileobj=None, nocache=False, rm=False):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise Exception("Either path or fileobj needs to be provided.")
@@ -180,7 +180,7 @@ class Client(requests.Session):
             context = utils.tar(path)
 
         u = self._url('/build')
-        params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache }
+        params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache, 'rm': rm }
         if context is not None:
             headers = { 'Content-Type': 'application/tar' }
         res = self._result(self.post(u, context, params=params,
