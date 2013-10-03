@@ -20,9 +20,11 @@ import requests
 import requests.exceptions
 import six
 
-import auth
-import unixconn
-import utils
+from .auth import (load_config, resolve_repository_name,
+                    resolve_authconfig, encode_header)
+
+from .unixconn import UnixAdapter
+from .utils import tar, compare_version, mkbuildcontext
 
 
 class APIError(requests.exceptions.HTTPError):
@@ -60,11 +62,11 @@ class APIError(requests.exceptions.HTTPError):
 class Client(requests.Session):
     def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
         super(Client, self).__init__()
-        self.mount('unix://', unixconn.UnixAdapter(base_url))
+        self.mount('unix://', UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
         try:
-            self._cfg = auth.load_config()
+            self._cfg = load_config()
         except Exception:
             pass
 
@@ -172,12 +174,12 @@ class Client(requests.Session):
             raise Exception("Either path or fileobj needs to be provided.")
 
         if fileobj is not None:
-            context = utils.mkbuildcontext(fileobj)
+            context = mkbuildcontext(fileobj)
         elif (path.startswith('http://') or path.startswith('https://') or
         path.startswith('git://') or path.startswith('github.com/')):
             remote = path
         else:
-            context = utils.tar(path)
+            context = tar(path)
 
         u = self._url('/build')
         params = { 't': tag, 'remote': remote, 'q': quiet, 'nocache': nocache, 'rm': rm }
@@ -336,7 +338,7 @@ class Client(requests.Session):
             registry = auth.INDEX_URL
         if getattr(self, '_cfg', None) is None:
             self._cfg = auth.load_config()
-        authcfg = auth.resolve_authconfig(self._cfg, registry)
+        authcfg = resolve_authconfig(self._cfg, registry)
         if 'username' in authcfg and authcfg['username'] == username:
             return authcfg
         req_data = {
@@ -376,7 +378,7 @@ class Client(requests.Session):
         return f_port
 
     def pull(self, repository, tag=None):
-        registry, repo_name = auth.resolve_repository_name(repository)
+        registry, repo_name = resolve_repository_name(repository)
         if repo_name.count(":") == 1:
             repository, tag = repository.rsplit(":", 1)
 
@@ -385,29 +387,30 @@ class Client(requests.Session):
             'fromImage': repository
         }
         headers = {}
-        if utils.compare_version('1.5', self._version) >= 0:
+
+        if compare_version('1.5', self._version) >= 0:
             if getattr(self, '_cfg', None) is None:
-                self._cfg = auth.load_config()
-            authcfg = auth.resolve_authconfig(self._cfg, registry)
+                self._cfg = load_config()
+            authcfg = resolve_authconfig(self._cfg, registry)
             # do not fail if no atuhentication exists
             # for this specific registry as we can have a readonly pull
             if authcfg:
-                headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+                headers['X-Registry-Auth'] = encode_header(authcfg)
         u = self._url("/images/create")
         return self._result(self.post(u, params=params, headers=headers))
 
     def push(self, repository):
-        registry, repository = auth.resolve_repository_name(repository)
+        registry, repository = resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         headers = {}
         if getattr(self, '_cfg', None) is None:
-            self._cfg = auth.load_config()
-        authcfg = auth.resolve_authconfig(self._cfg, registry)
-        if utils.compare_version('1.5', self._version) >= 0:
+            self._cfg = load_config()
+        authcfg = resolve_authconfig(self._cfg, registry)
+        if compare_version('1.5', self._version) >= 0:
             # do not fail if no atuhentication exists
             # for this specific registry as we can have an anon push
             if authcfg:
-                headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+                headers['X-Registry-Auth'] = encode_header(authcfg)
             return self._result(self._post_json(u, None, headers=headers))
         return self._result(self._post_json(u, authcfg))
 
