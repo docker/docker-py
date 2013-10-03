@@ -18,7 +18,7 @@ import os
 
 import six
 
-import utils
+from .utils import ping
 
 INDEX_URL = 'https://index.docker.io/v1/'
 
@@ -35,7 +35,7 @@ def expand_registry_url(hostname):
         if '/' not in hostname[9:]:
             hostname = hostname + '/v1/'
         return hostname
-    if utils.ping('https://' + hostname + '_ping'):
+    if ping('https://' + hostname + '_ping'):
         return 'https://' + hostname + '/v1/'
     return 'http://' + hostname + '/v1/'
 

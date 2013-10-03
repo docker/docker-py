@@ -13,4 +13,3 @@
 #    limitations under the License.
 
 from .client import Client, APIError
-import auth
