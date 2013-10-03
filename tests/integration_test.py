@@ -131,7 +131,7 @@ class TestCreateContainer(BaseTestCase):
 class TestCreateContainerWithBinds(BaseTestCase):
     def runTest(self):
         mount_dest = '/mnt'
-        mount_origin = os.getcwd()
+        mount_origin = '/tmp'
 
         filename = 'shared.txt'
         shared_file = os.path.join(mount_origin, filename)
