@@ -125,7 +125,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/containers/ps',
             params={
-                'only_ids': 0,
                 'all': 1,
                 'since': None,
                 'limit': -1,
