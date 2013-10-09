@@ -397,7 +397,7 @@ class Client(requests.Session):
         return self._result(self.post(u, params=params, headers=headers))
 
     def push(self, repository):
-        registry, repository = auth.resolve_repository_name(repository)
+        registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         headers = {}
         if getattr(self, '_cfg', None) is None:
