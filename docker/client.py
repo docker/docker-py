@@ -241,9 +241,6 @@ class Client(requests.Session):
     def create_container_from_config(self, config):
         u = self._url("/containers/create")
         res = self._post_json(u, config)
-        if res.status_code == 404:
-            self._raise_for_status(res, explanation="{0} is an unrecognized image. Please pull the "
-                "image first.".format(config['Image']))
         return self._result(res, True)
 
     def diff(self, container):
