@@ -3,6 +3,9 @@ docker-py
 
 An API client for docker written in Python
 
+Install the latest version using pip:
+```pip install https://github.com/dotcloud/docker-py/zipball/master```
+
 API
 ===
 
