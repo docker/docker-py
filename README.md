@@ -27,7 +27,8 @@ Identical to the `docker cp` command.
 * `c.create_container(image, command, hostname=None, user=None, detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None, volumes=None, volumes_from=None, privileged=False)`  
 Creates a container that can then be `start`ed. Parameters are similar to those
 for the `docker run` command except it doesn't support the attach options
-(`-a`)
+(`-a`)  
+In order to create volumes that can be rebinded at start time, use the following syntax: `volumes={"/srv": "" }`
 
 * `c.diff(container)`  
 Identical to the `docker diff` command.
@@ -96,8 +97,8 @@ Similar to the `docker start` command, but doesn't support attach options.
 Use `docker logs` to recover `stdout`/`stderr`  
 `binds` Allows to bind a directory in the host to the container.
  Similar to the `docker run` command with option `-v="/host:/mnt"`.
-Requires the container to be created with the volumes argument:
-`c.create_container(..., volumes={'/mnt': {}})`  
+Note that you must declare "blank" volumes at container creation to use binds.  
+Example of binds mapping from host to container: `{'/mnt/srv/': '/srv'}`  
 `lxc_conf` allows to pass LXC configuration options in dict form.
 
 * `c.stop(container, timeout=10)`  

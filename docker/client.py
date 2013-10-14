@@ -231,14 +231,7 @@ class Client(requests.Session):
         detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None,
         environment=None, dns=None, volumes=None, volumes_from=None,
         privileged=False):
-        '''
-        NOTES:
 
-            - To create modifiable volumes at start time, use::
-
-                volumes={"/srv": "" }
-
-        '''
 
         config = self._container_config(image, command, hostname, user,
             detach, stdin_open, tty, mem_limit, ports, environment, dns,
@@ -287,9 +280,6 @@ class Client(requests.Session):
         return res
 
     def import_image(self, src, data=None, repository=None, tag=None):
-        '''
-        To import from a local tarball, use the absolute path to the file
-        '''
         u = self._url("/images/create")
         params = {
             'repo': repository,
@@ -444,16 +434,6 @@ class Client(requests.Session):
             params={'term': term}), True)
 
     def start(self, container, binds=None, lxc_conf=None):
-        '''
-
-        NOTES:
-            - Remember that you must declare "blank" volumes
-              at container creation to use binds
-            - An example of binds mapping from host to container::
-
-                {'/mnt/srv/': '/srv'}
-
-        '''
         if isinstance(container, dict):
             container = container.get('Id')
         start_config = {
