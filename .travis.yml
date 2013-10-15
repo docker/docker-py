@@ -1,0 +1,8 @@
+language: python
+python:
+  - "2.7"
+install: pip install tox
+script: tox
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install build-essential python-dev python-pip
