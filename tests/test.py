@@ -60,7 +60,8 @@ def fake_resp(url, data=None, **kwargs):
 fake_request = mock.Mock(side_effect=fake_resp)
 
 
-@mock.patch.multiple('docker.Client', get=fake_request, post=fake_request, put=fake_request, delete=fake_request)
+@mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
+                     put=fake_request, delete=fake_request)
 class DockerClientTest(unittest.TestCase):
     def setUp(self):
         self.client = docker.Client()
@@ -74,7 +75,9 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/version')
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/version'
+        )
 
     def test_info(self):
         try:
@@ -90,8 +93,10 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/search',
-            params={'term': 'busybox'})
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/images/search',
+            params={'term': 'busybox'}
+        )
 
     ###################
     ## LISTING TESTS ##
@@ -102,8 +107,10 @@ class DockerClientTest(unittest.TestCase):
             self.client.images(all=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/json',
-            params={'filter': None, 'only_ids': 0, 'all': 1})
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/images/json',
+            params={'filter': None, 'only_ids': 0, 'all': 1}
+        )
 
     def test_image_ids(self):
         try:
@@ -111,8 +118,10 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/json',
-            params={'filter': None, 'only_ids': 1, 'all': 0})
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/images/json',
+            params={'filter': None, 'only_ids': 1, 'all': 0}
+        )
 
     def test_list_containers(self):
         try:
@@ -120,7 +129,8 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/containers/ps',
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/ps',
             params={
                 'all': 1,
                 'since': None,
@@ -141,35 +151,57 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]), json.loads('{"Tty": false, "Image": "busybox", "Cmd": ["true"], "AttachStdin": false, "Memory": 0, "AttachStderr": true, "Privileged": false, "AttachStdout": true, "OpenStdin": false}'))
-        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+                             "AttachStdin": false, "Memory": 0,
+                             "AttachStderr": true, "Privileged": false,
+                             "AttachStdout": true, "OpenStdin": false}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
 
     def test_create_container_with_binds(self):
         mount_dest = '/mnt'
-        mount_origin = '/tmp'
+        #mount_origin = '/tmp'
 
         try:
-            self.client.create_container('busybox',
-                ['ls', mount_dest], volumes={mount_dest: {}})
+            self.client.create_container('busybox', ['ls', mount_dest],
+                                         volumes={mount_dest: {}})
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]), json.loads('{"Tty": false, "Image": "busybox", "Cmd": ["ls", "/mnt"], "AttachStdin": false, "Volumes": {"/mnt": {}}, "Memory": 0, "AttachStderr": true, "Privileged": false, "AttachStdout": true, "OpenStdin": false}'))
-        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls", "/mnt"], "AttachStdin": false,
+                             "Volumes": {"/mnt": {}}, "Memory": 0,
+                             "AttachStderr": true, "Privileged": false,
+                             "AttachStdout": true, "OpenStdin": false}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
 
     def test_create_container_privileged(self):
         try:
             self.client.create_container('busybox', 'true', privileged=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
-        
+
         args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]), json.loads('{"Tty": false, "Image": "busybox", "Cmd": ["true"], "AttachStdin": false, "Memory": 0, "AttachStderr": true, "Privileged": true, "AttachStdout": true, "OpenStdin": false}'))
-        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+                             "AttachStdin": false, "Memory": 0,
+                             "AttachStderr": true, "Privileged": true,
+                             "AttachStdout": true, "OpenStdin": false}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
 
     def test_start_container(self):
         try:
@@ -187,7 +219,8 @@ class DockerClientTest(unittest.TestCase):
         try:
             mount_dest = '/mnt'
             mount_origin = '/tmp'
-            self.client.start(fake_api.FAKE_CONTAINER_ID, binds={mount_origin: mount_dest})
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              binds={mount_origin: mount_dest})
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -375,7 +408,8 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/create',
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/images/create',
             headers={},
             params={'tag': None, 'fromImage': 'joffrey/test001'}
         )
@@ -405,7 +439,9 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/e9aa60c60128')
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/images/e9aa60c60128'
+        )
 
     #################
     # BUILDER TESTS #
@@ -417,7 +453,8 @@ class DockerClientTest(unittest.TestCase):
             'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
-            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz /tmp/silence.tar.gz'
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
         try:
             self.client.build(fileobj=script)

@@ -1,1 +1,1 @@
-from .unixconn import UnixAdapter
+from .unixconn import UnixAdapter  # flake8: noqa

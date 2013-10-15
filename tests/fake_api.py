@@ -1,4 +1,16 @@
-import json
+# Copyright 2013 dotCloud inc.
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
 
 CURRENT_VERSION = 'v1.4'
 
@@ -30,21 +42,24 @@ def get_fake_search():
 
 def get_fake_images():
     status_code = 200
-    response = [
-        {'Id': FAKE_IMAGE_ID, 'Created': '2 days ago', 'Repository': 'busybox', 'Tag': 'latest'}
-    ]
+    response = [{
+        'Id': FAKE_IMAGE_ID,
+        'Created': '2 days ago',
+        'Repository': 'busybox',
+        'Tag': 'latest'
+    }]
     return status_code, response
 
 
 def get_fake_containers():
     status_code = 200
-    response = [
-        {'Id': FAKE_CONTAINER_ID,
+    response = [{
+        'Id': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
         'Created': '2 days ago',
         'Command': 'true',
-        'Status': 'fake status'}
-    ]
+        'Status': 'fake status'
+    }]
     return status_code, response
 
 
@@ -67,7 +82,7 @@ def get_fake_inspect_container():
         'Config': {'Privileged': True},
         'ID': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
-            "State": {
+        "State": {
             "Running": True,
             "Pid": 0,
             "ExitCode": 0,
@@ -145,24 +160,44 @@ def post_fake_build_container():
 
 
 ## maps real api url to fake response callback
+prefix = 'unix://var/run/docker.sock'
 fake_responses = {
-    'unix://var/run/docker.sock/{0}/version'.format(CURRENT_VERSION): get_fake_version,
-    'unix://var/run/docker.sock/{0}/info'.format(CURRENT_VERSION): get_fake_info,
-    'unix://var/run/docker.sock/{0}/images/search'.format(CURRENT_VERSION): get_fake_search,
-    'unix://var/run/docker.sock/{0}/images/json'.format(CURRENT_VERSION): get_fake_images,
-    'unix://var/run/docker.sock/{0}/containers/ps'.format(CURRENT_VERSION): get_fake_containers,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION): post_fake_start_container,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION): get_fake_inspect_container,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION): get_fake_wait,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/attach'.format(CURRENT_VERSION): get_fake_logs,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION): get_fake_diff,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION): post_fake_stop_container,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION): post_fake_kill_container,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION): post_fake_restart_container,
-    'unix://var/run/docker.sock/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION): delete_fake_remove_container,
-    'unix://var/run/docker.sock/{0}/images/create'.format(CURRENT_VERSION): post_fake_image_create,
-    'unix://var/run/docker.sock/{0}/images/e9aa60c60128'.format(CURRENT_VERSION): delete_fake_remove_image,
-    'unix://var/run/docker.sock/{0}/commit'.format(CURRENT_VERSION): post_fake_commit,
-    'unix://var/run/docker.sock/{0}/containers/create'.format(CURRENT_VERSION): post_fake_create_container,
-    'unix://var/run/docker.sock/{0}/build'.format(CURRENT_VERSION): post_fake_build_container
+    '{1}/{0}/version'.format(CURRENT_VERSION, prefix):
+    get_fake_version,
+    '{1}/{0}/info'.format(CURRENT_VERSION, prefix):
+    get_fake_info,
+    '{1}/{0}/images/search'.format(CURRENT_VERSION, prefix):
+    get_fake_search,
+    '{1}/{0}/images/json'.format(CURRENT_VERSION, prefix):
+    get_fake_images,
+    '{1}/{0}/containers/ps'.format(CURRENT_VERSION, prefix):
+    get_fake_containers,
+    '{1}/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
+    post_fake_start_container,
+    '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
+    get_fake_inspect_container,
+    '{1}/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION, prefix):
+    get_fake_wait,
+    '{1}/{0}/containers/3cc2351ab11b/attach'.format(CURRENT_VERSION, prefix):
+    get_fake_logs,
+    '{1}/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION, prefix):
+    get_fake_diff,
+    '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):
+    post_fake_stop_container,
+    '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):
+    post_fake_kill_container,
+    '{1}/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION, prefix):
+    post_fake_restart_container,
+    '{1}/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION, prefix):
+    delete_fake_remove_container,
+    '{1}/{0}/images/create'.format(CURRENT_VERSION, prefix):
+    post_fake_image_create,
+    '{1}/{0}/images/e9aa60c60128'.format(CURRENT_VERSION, prefix):
+    delete_fake_remove_image,
+    '{1}/{0}/commit'.format(CURRENT_VERSION, prefix):
+    post_fake_commit,
+    '{1}/{0}/containers/create'.format(CURRENT_VERSION, prefix):
+    post_fake_create_container,
+    '{1}/{0}/build'.format(CURRENT_VERSION, prefix):
+    post_fake_build_container
 }

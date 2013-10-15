@@ -13,8 +13,8 @@
 #    limitations under the License.
 
 import base64
-import os
 import io
+import os
 import tempfile
 import unittest
 
@@ -52,6 +52,7 @@ class BaseTestCase(unittest.TestCase):
 ##  INFORMATION TESTS  ##
 #########################
 
+
 class TestVersion(BaseTestCase):
     def runTest(self):
         res = self.client.version()
@@ -59,12 +60,14 @@ class TestVersion(BaseTestCase):
         self.assertIn('Version', res)
         self.assertEqual(len(res['Version'].split('.')), 3)
 
+
 class TestInfo(BaseTestCase):
     def runTest(self):
         res = self.client.info()
         self.assertIn('Containers', res)
         self.assertIn('Images', res)
         self.assertIn('Debug', res)
+
 
 class TestSearch(BaseTestCase):
     def runTest(self):
@@ -77,6 +80,7 @@ class TestSearch(BaseTestCase):
 ###################
 ## LISTING TESTS ##
 ###################
+
 
 class TestImages(BaseTestCase):
     def runTest(self):
@@ -94,10 +98,12 @@ class TestImages(BaseTestCase):
                 distinct.append(img['Id'])
         self.assertEqual(len(distinct), self.client.info()['Images'])
 
+
 class TestImageIds(BaseTestCase):
     def runTest(self):
         res1 = self.client.images(quiet=True)
         self.assertEqual(type(res1[0]), six.text_type)
+
 
 class TestListContainers(BaseTestCase):
     def runTest(self):
@@ -122,11 +128,13 @@ class TestListContainers(BaseTestCase):
 ## CONTAINER TESTS ##
 #####################
 
+
 class TestCreateContainer(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', 'true')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
+
 
 class TestCreateContainerWithBinds(BaseTestCase):
     def runTest(self):
@@ -137,8 +145,10 @@ class TestCreateContainerWithBinds(BaseTestCase):
         shared_file = os.path.join(mount_origin, filename)
 
         with open(shared_file, 'w'):
-            container = self.client.create_container('busybox',
-                ['ls', mount_dest], volumes={mount_dest: {}})
+            container = self.client.create_container(
+                'busybox',
+                ['ls', mount_dest], volumes={mount_dest: {}}
+            )
             container_id = container['Id']
             self.client.start(container_id, binds={mount_origin: mount_dest})
             self.tmp_containers.append(container_id)
@@ -149,12 +159,14 @@ class TestCreateContainerWithBinds(BaseTestCase):
         os.unlink(shared_file)
         self.assertIn(filename, logs)
 
+
 class TestCreateContainerPrivileged(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', 'true', privileged=True)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
         self.assertEqual(inspect['Config']['Privileged'], True)
+
 
 class TestStartContainer(BaseTestCase):
     def runTest(self):
@@ -173,6 +185,7 @@ class TestStartContainer(BaseTestCase):
             self.assertIn('ExitCode', inspect['State'])
             self.assertEqual(inspect['State']['ExitCode'], 0)
 
+
 class TestStartContainerWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', 'true')
@@ -190,6 +203,7 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
             self.assertIn('ExitCode', inspect['State'])
             self.assertEqual(inspect['State']['ExitCode'], 0)
 
+
 class TestWait(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', ['sleep', '10'])
@@ -203,6 +217,7 @@ class TestWait(BaseTestCase):
         self.assertEqual(inspect['State']['Running'], False)
         self.assertIn('ExitCode', inspect['State'])
         self.assertEqual(inspect['State']['ExitCode'], exitcode)
+
 
 class TestWaitWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
@@ -218,11 +233,13 @@ class TestWaitWithDictInsteadOfId(BaseTestCase):
         self.assertIn('ExitCode', inspect['State'])
         self.assertEqual(inspect['State']['ExitCode'], exitcode)
 
+
 class TestLogs(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
-        container = self.client.create_container('busybox',
-            'echo {0}'.format(snippet))
+        container = self.client.create_container(
+            'busybox', 'echo {0}'.format(snippet)
+        )
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -231,11 +248,13 @@ class TestLogs(BaseTestCase):
         logs = self.client.logs(id)
         self.assertEqual(logs, snippet + '\n')
 
+
 class TestLogsWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
-        container = self.client.create_container('busybox',
-            'echo {0}'.format(snippet))
+        container = self.client.create_container(
+            'busybox', 'echo {0}'.format(snippet)
+        )
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -243,6 +262,7 @@ class TestLogsWithDictInsteadOfId(BaseTestCase):
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(container)
         self.assertEqual(logs, snippet + '\n')
+
 
 class TestDiff(BaseTestCase):
     def runTest(self):
@@ -258,6 +278,7 @@ class TestDiff(BaseTestCase):
         self.assertIn('Kind', test_diff[0])
         self.assertEqual(test_diff[0]['Kind'], 1)
 
+
 class TestDiffWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['touch', '/test'])
@@ -271,6 +292,7 @@ class TestDiffWithDictInsteadOfId(BaseTestCase):
         self.assertEqual(len(test_diff), 1)
         self.assertIn('Kind', test_diff[0])
         self.assertEqual(test_diff[0]['Kind'], 1)
+
 
 class TestStop(BaseTestCase):
     def runTest(self):
@@ -286,6 +308,7 @@ class TestStop(BaseTestCase):
         self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
+
 
 class TestStopWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
@@ -303,6 +326,7 @@ class TestStopWithDictInsteadOfId(BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
+
 class TestKill(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
@@ -318,6 +342,7 @@ class TestKill(BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
+
 class TestKillWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
@@ -332,6 +357,7 @@ class TestKillWithDictInsteadOfId(BaseTestCase):
         self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
+
 
 class TestRestart(BaseTestCase):
     def runTest(self):
@@ -352,6 +378,7 @@ class TestRestart(BaseTestCase):
         self.assertIn('Running', info2['State'])
         self.assertEqual(info2['State']['Running'], True)
         self.client.kill(id)
+
 
 class TestRestartWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
@@ -374,6 +401,7 @@ class TestRestartWithDictInsteadOfId(BaseTestCase):
         self.assertEqual(info2['State']['Running'], True)
         self.client.kill(id)
 
+
 class TestRemoveContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['true'])
@@ -384,6 +412,7 @@ class TestRemoveContainer(BaseTestCase):
         containers = self.client.containers(all=True)
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
+
 
 class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
@@ -399,6 +428,7 @@ class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
 ##################
 ## IMAGES TESTS ##
 ##################
+
 
 class TestPull(BaseTestCase):
     def runTest(self):
@@ -417,6 +447,7 @@ class TestPull(BaseTestCase):
         self.assertIn('id', img_info)
         self.tmp_imgs.append('joffrey/test001')
         self.tmp_imgs.append('376968a23351')
+
 
 class TestCommit(BaseTestCase):
     def runTest(self):
@@ -458,6 +489,7 @@ class TestRemoveImage(BaseTestCase):
 # BUILDER TESTS #
 #################
 
+
 class TestBuild(BaseTestCase):
     def runTest(self):
         script = io.BytesIO('\n'.join([
@@ -465,7 +497,8 @@ class TestBuild(BaseTestCase):
             'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
-            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz /tmp/silence.tar.gz'
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
         img, logs = self.client.build(fileobj=script)
         self.assertNotEqual(img, None)
@@ -495,7 +528,8 @@ class TestBuildFromStringIO(BaseTestCase):
             'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
-            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz /tmp/silence.tar.gz'
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
         ]))
         img, logs = self.client.build(fileobj=script)
         self.assertNotEqual(img, None)
@@ -519,12 +553,15 @@ class TestBuildFromStringIO(BaseTestCase):
 ## PY SPECIFIC TESTS ##
 #######################
 
+
 class TestRunShlex(BaseTestCase):
     def runTest(self):
         commands = [
             'true',
-            'echo "The Young Descendant of Tepes & Septette for the Dead Princess"',
-            'echo -n "The Young Descendant of Tepes & Septette for the Dead Princess"',
+            'echo "The Young Descendant of Tepes & Septette for the '
+            'Dead Princess"',
+            'echo -n "The Young Descendant of Tepes & Septette for the '
+            'Dead Princess"',
             '/bin/sh -c "echo Hello World"',
             '/bin/sh -c \'echo "Hello World"\'',
             'echo "\"Night of Nights\""',
@@ -537,6 +574,7 @@ class TestRunShlex(BaseTestCase):
             self.tmp_containers.append(id)
             exitcode = self.client.wait(id)
             self.assertEqual(exitcode, 0, msg=cmd)
+
 
 class TestLoadConfig(BaseTestCase):
     def runTest(self):
