@@ -18,9 +18,10 @@ import os
 
 import six
 
-import utils
+import docker.utils as utils
 
 INDEX_URL = 'https://index.docker.io/v1/'
+
 
 def swap_protocol(url):
     if url.startswith('http://'):
@@ -84,8 +85,10 @@ def resolve_authconfig(authconfig, registry):
 
 
 def decode_auth(auth):
+    if isinstance(auth, six.string_types):
+        auth = auth.encode('ascii')
     s = base64.b64decode(auth)
-    login, pwd = s.split(':')
+    login, pwd = s.split(b':')
     return login, pwd
 
 

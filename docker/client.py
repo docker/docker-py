@@ -20,9 +20,9 @@ import requests
 import requests.exceptions
 import six
 
-import auth
-import unixconn
-import utils
+import docker.auth as auth
+import docker.unixconn as unixconn
+import docker.utils as utils
 
 
 class APIError(requests.exceptions.HTTPError):
@@ -75,7 +75,7 @@ class Client(requests.Session):
         """Raises stored :class:`APIError`, if one occurred."""
         try:
             response.raise_for_status()
-        except requests.exceptions.HTTPError, e:
+        except requests.exceptions.HTTPError as e:
             raise APIError(e, response=response, explanation=explanation)
 
     def _result(self, response, json=False):
@@ -384,6 +384,7 @@ class Client(requests.Session):
             'fromImage': repository
         }
         headers = {}
+
         if utils.compare_version('1.5', self._version) >= 0:
             if getattr(self, '_cfg', None) is None:
                 self._cfg = auth.load_config()

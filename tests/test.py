@@ -13,516 +13,436 @@
 #    limitations under the License.
 
 import base64
+import datetime
+import io
+import json
 import os
-from StringIO import StringIO
 import tempfile
-import time
 import unittest
 
 import docker
+import requests
 import six
+
+import fake_api
+
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 
 # FIXME: missing tests for
 # export; history; import_image; insert; port; push; tag
 
-class BaseTestCase(unittest.TestCase):
-    tmp_imgs = []
-    tmp_containers = []
 
+def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
+             request=None):
+    res = requests.Response()
+    res.status_code = status_code
+    if not isinstance(content, six.string_types):
+        content = json.dumps(content)
+    if six.PY3:
+        content = content.encode('ascii')
+    res._content = content
+    res.headers = requests.structures.CaseInsensitiveDict(headers or {})
+    res.reason = reason
+    res.elapsed = datetime.timedelta(elapsed)
+    res.request = request
+    return res
+
+
+def fake_resp(url, data=None, **kwargs):
+    status_code, content = fake_api.fake_responses[url]()
+    return response(status_code=status_code, content=content)
+
+fake_request = mock.Mock(side_effect=fake_resp)
+
+
+@mock.patch.multiple('docker.Client', get=fake_request, post=fake_request, put=fake_request, delete=fake_request)
+class DockerClientTest(unittest.TestCase):
     def setUp(self):
         self.client = docker.Client()
-        self.client.pull('busybox')
-        self.tmp_imgs = []
-        self.tmp_containers = []
 
-    def tearDown(self):
-        for img in self.tmp_imgs:
-            try:
-                self.client.remove_image(img)
-            except docker.APIError:
-                pass
-        for container in self.tmp_containers:
-            try:
-                self.client.stop(container, timeout=1)
-                self.client.remove_container(container)
-            except docker.APIError:
-                pass
-
-#########################
-##  INFORMATION TESTS  ##
-#########################
-
-class TestVersion(BaseTestCase):
-    def runTest(self):
-        res = self.client.version()
-        self.assertIn('GoVersion', res)
-        self.assertIn('Version', res)
-        self.assertEqual(len(res['Version'].split('.')), 3)
-
-class TestInfo(BaseTestCase):
-    def runTest(self):
-        res = self.client.info()
-        self.assertIn('Containers', res)
-        self.assertIn('Images', res)
-        self.assertIn('Debug', res)
-
-class TestSearch(BaseTestCase):
-    def runTest(self):
-        res = self.client.search('busybox')
-        self.assertTrue(len(res) >= 1)
-        base_img = [x for x in res if x['Name'] == 'busybox']
-        self.assertEqual(len(base_img), 1)
-        self.assertIn('Description', base_img[0])
-
-###################
-## LISTING TESTS ##
-###################
-
-class TestImages(BaseTestCase):
-    def runTest(self):
-        res1 = self.client.images(all=True)
-        self.assertIn('Id', res1[0])
-        res10 = [x for x in res1 if x['Id'].startswith('e9aa60c60128')][0]
-        self.assertIn('Created', res10)
-        self.assertIn('Repository', res10)
-        self.assertIn('Tag', res10)
-        self.assertEqual(res10['Tag'], 'latest')
-        self.assertEqual(res10['Repository'], 'busybox')
-        distinct = []
-        for img in res1:
-            if img['Id'] not in distinct:
-                distinct.append(img['Id'])
-        self.assertEqual(len(distinct), self.client.info()['Images'])
-
-class TestImageIds(BaseTestCase):
-    def runTest(self):
-        res1 = self.client.images(quiet=True)
-        self.assertEqual(type(res1[0]), six.text_type)
-
-class TestListContainers(BaseTestCase):
-    def runTest(self):
-        res0 = self.client.containers(all=True)
-        size = len(res0)
-        res1 = self.client.create_container('busybox', 'true')
-        self.assertIn('Id', res1)
-        self.client.start(res1['Id'])
-        self.tmp_containers.append(res1['Id'])
-        res2 = self.client.containers(all=True)
-        self.assertEqual(size + 1, len(res2))
-        retrieved = [x for x in res2 if x['Id'].startswith(res1['Id'])]
-        self.assertEqual(len(retrieved), 1)
-        retrieved = retrieved[0]
-        self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], 'true ')
-        self.assertIn('Image', retrieved)
-        self.assertEqual(retrieved['Image'], 'busybox:latest')
-        self.assertIn('Status', retrieved)
-
-#####################
-## CONTAINER TESTS ##
-#####################
-
-class TestCreateContainer(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', 'true')
-        self.assertIn('Id', res)
-        self.tmp_containers.append(res['Id'])
-
-class TestCreateContainerWithBinds(BaseTestCase):
-    def runTest(self):
-        mount_dest = '/mnt'
-        mount_origin = os.getcwd()
-
-        filename = 'shared.txt'
-        shared_file = os.path.join(mount_origin, filename)
-
-        with open(shared_file, 'w'):
-            container = self.client.create_container('busybox',
-                ['ls', mount_dest], volumes={mount_dest: {}})
-            container_id = container['Id']
-            self.client.start(container_id, binds={mount_origin: mount_dest})
-            self.tmp_containers.append(container_id)
-            exitcode = self.client.wait(container_id)
-            self.assertEqual(exitcode, 0)
-            logs = self.client.logs(container_id)
-
-        os.unlink(shared_file)
-        self.assertIn(filename, logs)
-
-class TestCreateContainerPrivileged(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', 'true', privileged=True)
-        inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertEqual(inspect['Config']['Privileged'], True)
-
-class TestStartContainer(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', 'true')
-        self.assertIn('Id', res)
-        self.tmp_containers.append(res['Id'])
-        self.client.start(res['Id'])
-        inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertIn('ID', inspect)
-        self.assertTrue(inspect['ID'].startswith(res['Id']))
-        self.assertIn('Image', inspect)
-        self.assertIn('State', inspect)
-        self.assertIn('Running', inspect['State'])
-        if not inspect['State']['Running']:
-            self.assertIn('ExitCode', inspect['State'])
-            self.assertEqual(inspect['State']['ExitCode'], 0)
-
-class TestStartContainerWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', 'true')
-        self.assertIn('Id', res)
-        self.tmp_containers.append(res['Id'])
-        self.client.start(res)
-        inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertIn('ID', inspect)
-        self.assertTrue(inspect['ID'].startswith(res['Id']))
-        self.assertIn('Image', inspect)
-        self.assertIn('State', inspect)
-        self.assertIn('Running', inspect['State'])
-        if not inspect['State']['Running']:
-            self.assertIn('ExitCode', inspect['State'])
-            self.assertEqual(inspect['State']['ExitCode'], 0)
-
-class TestWait(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', ['sleep', '10'])
-        id = res['Id']
-        self.tmp_containers.append(id)
-        self.client.start(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
-        inspect = self.client.inspect_container(id)
-        self.assertIn('Running', inspect['State'])
-        self.assertEqual(inspect['State']['Running'], False)
-        self.assertIn('ExitCode', inspect['State'])
-        self.assertEqual(inspect['State']['ExitCode'], exitcode)
-
-class TestWaitWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', ['sleep', '10'])
-        id = res['Id']
-        self.tmp_containers.append(id)
-        self.client.start(res)
-        exitcode = self.client.wait(res)
-        self.assertEqual(exitcode, 0)
-        inspect = self.client.inspect_container(res)
-        self.assertIn('Running', inspect['State'])
-        self.assertEqual(inspect['State']['Running'], False)
-        self.assertIn('ExitCode', inspect['State'])
-        self.assertEqual(inspect['State']['ExitCode'], exitcode)
-
-class TestLogs(BaseTestCase):
-    def runTest(self):
-        snippet = 'Flowering Nights (Sakuya Iyazoi)'
-        container = self.client.create_container('busybox',
-            'echo {0}'.format(snippet))
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
-        logs = self.client.logs(id)
-        self.assertEqual(logs, snippet + '\n')
-
-class TestLogsWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        snippet = 'Flowering Nights (Sakuya Iyazoi)'
-        container = self.client.create_container('busybox',
-            'echo {0}'.format(snippet))
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
-        logs = self.client.logs(container)
-        self.assertEqual(logs, snippet + '\n')
-
-class TestDiff(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
-        diff = self.client.diff(id)
-        test_diff = [x for x in diff if x.get('Path', None) == '/test']
-        self.assertEqual(len(test_diff), 1)
-        self.assertIn('Kind', test_diff[0])
-        self.assertEqual(test_diff[0]['Kind'], 1)
-
-class TestDiffWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
-        diff = self.client.diff(container)
-        test_diff = [x for x in diff if x.get('Path', None) == '/test']
-        self.assertEqual(len(test_diff), 1)
-        self.assertIn('Kind', test_diff[0])
-        self.assertEqual(test_diff[0]['Kind'], 1)
-
-class TestStop(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        self.client.stop(id, timeout=2)
-        container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
-        state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
-
-class TestStopWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
-        self.assertIn('Id', container)
-        id = container['Id']
-        self.client.start(container)
-        self.tmp_containers.append(id)
-        self.client.stop(container, timeout=2)
-        container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
-        state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
-
-class TestKill(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        self.client.kill(id)
-        container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
-        state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
-
-class TestKillWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        self.client.kill(container)
-        container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
-        state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
-
-class TestRestart(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        info = self.client.inspect_container(id)
-        self.assertIn('State', info)
-        self.assertIn('StartedAt', info['State'])
-        start_time1 = info['State']['StartedAt']
-        self.client.restart(id, timeout=2)
-        info2 = self.client.inspect_container(id)
-        self.assertIn('State', info2)
-        self.assertIn('StartedAt', info2['State'])
-        start_time2 = info2['State']['StartedAt']
-        self.assertNotEqual(start_time1, start_time2)
-        self.assertIn('Running', info2['State'])
-        self.assertEqual(info2['State']['Running'], True)
-        self.client.kill(id)
-
-class TestRestartWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
-        self.assertIn('Id', container)
-        id = container['Id']
-        self.client.start(container)
-        self.tmp_containers.append(id)
-        info = self.client.inspect_container(id)
-        self.assertIn('State', info)
-        self.assertIn('StartedAt', info['State'])
-        start_time1 = info['State']['StartedAt']
-        self.client.restart(container, timeout=2)
-        info2 = self.client.inspect_container(id)
-        self.assertIn('State', info2)
-        self.assertIn('StartedAt', info2['State'])
-        start_time2 = info2['State']['StartedAt']
-        self.assertNotEqual(start_time1, start_time2)
-        self.assertIn('Running', info2['State'])
-        self.assertEqual(info2['State']['Running'], True)
-        self.client.kill(id)
-
-class TestRemoveContainer(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['true'])
-        id = container['Id']
-        self.client.start(id)
-        self.client.wait(id)
-        self.client.remove_container(id)
-        containers = self.client.containers(all=True)
-        res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
-        self.assertEqual(len(res), 0)
-
-class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['true'])
-        id = container['Id']
-        self.client.start(id)
-        self.client.wait(id)
-        self.client.remove_container(container)
-        containers = self.client.containers(all=True)
-        res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
-        self.assertEqual(len(res), 0)
-
-##################
-## IMAGES TESTS ##
-##################
-
-class TestPull(BaseTestCase):
-    def runTest(self):
+    #########################
+    ##  INFORMATION TESTS  ##
+    #########################
+    def test_version(self):
         try:
-            self.client.remove_image('joffrey/test001')
-            self.client.remove_image('376968a23351')
-        except docker.APIError:
-            pass
-        info = self.client.info()
-        self.assertIn('Images', info)
-        img_count = info['Images']
-        res = self.client.pull('joffrey/test001')
-        self.assertEqual(type(res), six.text_type)
-        self.assertEqual(img_count + 2, self.client.info()['Images'])
-        img_info = self.client.inspect_image('joffrey/test001')
-        self.assertIn('id', img_info)
-        self.tmp_imgs.append('joffrey/test001')
-        self.tmp_imgs.append('376968a23351')
+            self.client.version()
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
 
-class TestCommit(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        res = self.client.commit(id)
-        self.assertIn('Id', res)
-        img_id = res['Id']
-        self.tmp_imgs.append(img_id)
-        img = self.client.inspect_image(img_id)
-        self.assertIn('container', img)
-        self.assertTrue(img['container'].startswith(id))
-        self.assertIn('container_config', img)
-        self.assertIn('Image', img['container_config'])
-        self.assertEqual('busybox', img['container_config']['Image'])
-        busybox_id = self.client.inspect_image('busybox')['id']
-        self.assertIn('parent', img)
-        self.assertEqual(img['parent'], busybox_id)
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/version')
 
+    def test_info(self):
+        try:
+            self.client.info()
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
 
-class TestRemoveImage(BaseTestCase):
-    def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        res = self.client.commit(id)
-        self.assertIn('Id', res)
-        img_id = res['Id']
-        self.tmp_imgs.append(img_id)
-        self.client.remove_image(img_id)
-        images = self.client.images(all=True)
-        res = [x for x in images if x['Id'].startswith(img_id)]
-        self.assertEqual(len(res), 0)
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/info')
 
-#################
-# BUILDER TESTS #
-#################
+    def test_search(self):
+        try:
+            self.client.search('busybox')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
 
-class TestBuild(BaseTestCase):
-    def runTest(self):
-        script = StringIO('\n'.join([
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/search',
+            params={'term': 'busybox'})
+
+    ###################
+    ## LISTING TESTS ##
+    ###################
+
+    def test_images(self):
+        try:
+            self.client.images(all=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/json',
+            params={'filter': None, 'only_ids': 0, 'all': 1})
+
+    def test_image_ids(self):
+        try:
+            self.client.images(quiet=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/json',
+            params={'filter': None, 'only_ids': 1, 'all': 0})
+
+    def test_list_containers(self):
+        try:
+            self.client.containers(all=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/containers/ps',
+            params={
+                'all': 1,
+                'since': None,
+                'limit': -1,
+                'trunc_cmd': 1,
+                'before': None
+            }
+        )
+
+    #####################
+    ## CONTAINER TESTS ##
+    #####################
+
+    def test_create_container(self):
+        try:
+            self.client.create_container('busybox', 'true')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]), json.loads('{"Tty": false, "Image": "busybox", "Cmd": ["true"], "AttachStdin": false, "Memory": 0, "AttachStderr": true, "Privileged": false, "AttachStdout": true, "OpenStdin": false}'))
+        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+
+    def test_create_container_with_binds(self):
+        mount_dest = '/mnt'
+        mount_origin = '/tmp'
+
+        try:
+            self.client.create_container('busybox',
+                ['ls', mount_dest], volumes={mount_dest: {}})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]), json.loads('{"Tty": false, "Image": "busybox", "Cmd": ["ls", "/mnt"], "AttachStdin": false, "Volumes": {"/mnt": {}}, "Memory": 0, "AttachStderr": true, "Privileged": false, "AttachStdout": true, "OpenStdin": false}'))
+        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+
+    def test_create_container_privileged(self):
+        try:
+            self.client.create_container('busybox', 'true', privileged=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]), json.loads('{"Tty": false, "Image": "busybox", "Cmd": ["true"], "AttachStdin": false, "Memory": 0, "AttachStderr": true, "Privileged": true, "AttachStdout": true, "OpenStdin": false}'))
+        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+
+    def test_start_container(self):
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
+            '{}',
+            headers={'Content-Type': 'application/json'}
+        )
+
+    def test_start_container_with_binds(self):
+        try:
+            mount_dest = '/mnt'
+            mount_origin = '/tmp'
+            self.client.start(fake_api.FAKE_CONTAINER_ID, binds={mount_origin: mount_dest})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
+            '{"Binds": ["/tmp:/mnt"]}',
+            headers={'Content-Type': 'application/json'}
+        )
+
+    def test_start_container_with_dict_instead_of_id(self):
+        try:
+            self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
+            '{}', headers={'Content-Type': 'application/json'}
+        )
+
+    def test_wait(self):
+        try:
+            self.client.wait(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/wait',
+            None,
+            timeout=None
+        )
+
+    def test_wait_with_dict_instead_of_id(self):
+        try:
+            self.client.wait({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/wait',
+            None,
+            timeout=None
+        )
+
+    def test_logs(self):
+        try:
+            self.client.logs(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
+            None,
+            params={'logs': 1, 'stderr': 1, 'stdout': 1}
+        )
+
+    def test_logs_with_dict_instead_of_id(self):
+        try:
+            self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
+            None,
+            params={'logs': 1, 'stderr': 1, 'stdout': 1}
+        )
+
+    def test_diff(self):
+        try:
+            self.client.diff(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes')
+
+    def test_diff_with_dict_instead_of_id(self):
+        try:
+            self.client.diff({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes')
+
+    def test_stop_container(self):
+        try:
+            self.client.stop(fake_api.FAKE_CONTAINER_ID, timeout=2)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
+            None,
+            params={'t': 2}
+        )
+
+    def test_stop_container_with_dict_instead_of_id(self):
+        try:
+            self.client.stop({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=2)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
+            None,
+            params={'t': 2}
+        )
+
+    def test_kill_container(self):
+        try:
+            self.client.kill(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
+            None
+        )
+
+    def test_kill_container_with_dict_instead_of_id(self):
+        try:
+            self.client.kill({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
+            None
+        )
+
+    def test_restart_container(self):
+        try:
+            self.client.restart(fake_api.FAKE_CONTAINER_ID, timeout=2)
+        except Exception as e:
+            self.fail('Command should not raise exception : {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
+            None,
+            params={'t': 2}
+        )
+
+    def test_restart_container_with_dict_instead_of_id(self):
+        try:
+            self.client.restart({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=2)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
+            None,
+            params={'t': 2}
+        )
+
+    def test_remove_container(self):
+        try:
+            self.client.remove_container(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b',
+            params={'v': False}
+        )
+
+    def test_remove_container_with_dict_instead_of_id(self):
+        try:
+            self.client.remove_container({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b',
+            params={'v': False}
+        )
+
+    ##################
+    ## IMAGES TESTS ##
+    ##################
+
+    def test_pull(self):
+        try:
+            self.client.pull('joffrey/test001')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/create',
+            headers={},
+            params={'tag': None, 'fromImage': 'joffrey/test001'}
+        )
+
+    def test_commit(self):
+        try:
+            self.client.commit(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/commit',
+            '{}',
+            headers={'Content-Type': 'application/json'},
+            params={
+                'repo': None,
+                'comment': None,
+                'tag': None,
+                'container': '3cc2351ab11b',
+                'author': None
+            }
+        )
+
+    def test_remove_image(self):
+        try:
+            self.client.remove_image(fake_api.FAKE_IMAGE_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/images/e9aa60c60128')
+
+    #################
+    # BUILDER TESTS #
+    #################
+
+    def test_build_container(self):
+        script = io.BytesIO('\n'.join([
             'FROM busybox',
             'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz /tmp/silence.tar.gz'
-        ]))
-        img, logs = self.client.build(fileobj=script)
-        self.assertNotEqual(img, None)
-        self.assertNotEqual(img, '')
-        self.assertNotEqual(logs, '')
-        container1 = self.client.create_container(img, 'test -d /tmp/test')
-        id1 = container1['Id']
-        self.client.start(id1)
-        self.tmp_containers.append(id1)
-        exitcode1 = self.client.wait(id1)
-        self.assertEqual(exitcode1, 0)
-        container2 = self.client.create_container(img, 'test -d /tmp/test')
-        id2 = container2['Id']
-        self.client.start(id2)
-        self.tmp_containers.append(id2)
-        exitcode2 = self.client.wait(id2)
-        self.assertEqual(exitcode2, 0)
-        self.tmp_imgs.append(img)
+        ]).encode('ascii'))
+        try:
+            self.client.build(fileobj=script)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
 
-#######################
-## PY SPECIFIC TESTS ##
-#######################
+    #######################
+    ## PY SPECIFIC TESTS ##
+    #######################
 
-class TestRunShlex(BaseTestCase):
-    def runTest(self):
-        commands = [
-            'true',
-            'echo "The Young Descendant of Tepes & Septette for the Dead Princess"',
-            'echo -n "The Young Descendant of Tepes & Septette for the Dead Princess"',
-            '/bin/sh -c "echo Hello World"',
-            '/bin/sh -c \'echo "Hello World"\'',
-            'echo "\"Night of Nights\""',
-            'true && echo "Night of Nights"'
-        ]
-        for cmd in commands:
-            container = self.client.create_container('busybox', cmd)
-            id = container['Id']
-            self.client.start(id)
-            self.tmp_containers.append(id)
-            exitcode = self.client.wait(id)
-            self.assertEqual(exitcode, 0, msg=cmd)
-
-class TestLoadConfig(BaseTestCase):
-    def runTest(self):
+    def test_load_config(self):
         folder = tempfile.mkdtemp()
         f = open(os.path.join(folder, '.dockercfg'), 'w')
-        auth_ = base64.b64encode('sakuya:izayoi')
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         f.write('auth = {0}\n'.format(auth_))
         f.write('email = sakuya@scarlet.net')
         f.close()
         cfg = docker.auth.load_config(folder)
         self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
         cfg = cfg['Configs'][docker.auth.INDEX_URL]
-        self.assertEqual(cfg['Username'], 'sakuya')
-        self.assertEqual(cfg['Password'], 'izayoi')
+        self.assertEqual(cfg['Username'], b'sakuya')
+        self.assertEqual(cfg['Password'], b'izayoi')
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
+
 
 if __name__ == '__main__':
     unittest.main()

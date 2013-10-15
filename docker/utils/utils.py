@@ -12,24 +12,27 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import io
 import tarfile
 import tempfile
 
 import requests
 import six
 
-if six.PY3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
-
 
 def mkbuildcontext(dockerfile):
-    f = tempfile.TemporaryFile()
+    f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
-    if isinstance(dockerfile, StringIO):
+    if isinstance(dockerfile, io.StringIO):
         dfinfo = tarfile.TarInfo('Dockerfile')
-        dfinfo.size = dockerfile.len
+        if six.PY3:
+            raise TypeError('Please use io.BytesIO to create in-memory '
+                            'Dockerfiles with Python 3')
+        else:
+            dfinfo.size = len(dockerfile.getvalue())
+    elif isinstance(dockerfile, io.BytesIO):
+        dfinfo = tarfile.TarInfo('Dockerfile')
+        dfinfo.size = len(dockerfile.getvalue())
     else:
         dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
     t.addfile(dfinfo, dockerfile)
@@ -39,7 +42,7 @@ def mkbuildcontext(dockerfile):
 
 
 def tar(path):
-    f = tempfile.TemporaryFile()
+    f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
     t.add(path, arcname='.')
     t.close()
