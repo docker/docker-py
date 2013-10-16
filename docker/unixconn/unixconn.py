@@ -14,7 +14,7 @@
 import six
 
 if six.PY3:
-    from http import client as httplib
+    import http.client as httplib
 else:
     import httplib
 import requests.adapters

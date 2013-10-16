@@ -60,6 +60,8 @@ class APIError(requests.exceptions.HTTPError):
 class Client(requests.Session):
     def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
         super(Client, self).__init__()
+        if base_url.startswith('unix:///'):
+            base_url = base_url.replace('unix:/', 'unix:')
         self.mount('unix://', unixconn.UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
