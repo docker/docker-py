@@ -239,7 +239,7 @@ class Client(requests.Session):
         self._raise_for_status(res)
         return res.raw
 
-    def create_container(self, image, command, hostname=None, user=None,
+    def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
                          mem_limit=0, ports=None, environment=None, dns=None,
                          volumes=None, volumes_from=None, privileged=False):
