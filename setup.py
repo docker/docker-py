@@ -13,7 +13,7 @@ setup(
     name="docker-py",
     version='0.2.1',
     description="Python client for Docker.",
-    packages=['docker'],
+    packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils'],
     install_requires=requirements + test_requirements,
     zip_safe=False,
     test_suite='tests',
@@ -24,5 +24,5 @@ setup(
                  'Programming Language :: Python',
                  'Topic :: Utilities',
                  'License :: OSI Approved :: Apache Software License'
-],
-    )
+    ],
+)

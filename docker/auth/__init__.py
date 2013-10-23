@@ -1,5 +1,3 @@
-
-
 from .auth import (
     INDEX_URL,
     encode_header,

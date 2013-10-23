@@ -1,1 +1,1 @@
-from .utils import mkbuildcontext, tar, compare_version  # flake8: noqa
+from .utils import compare_version, mkbuildcontext, ping, tar  # flake8: noqa
