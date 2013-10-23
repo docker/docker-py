@@ -13,3 +13,4 @@
 #    limitations under the License.
 
 from .client import Client, APIError  # flake8: noqa
+from .link import * # flake8: noqa
