@@ -3,10 +3,36 @@ ChangeLog
 
 0.2.2
 -----
-* Allow anonymous push/pull (no authconfig detected)
+
+* Added support for the `rm` parameter in `Client.build`
+* Added support for tarball imports in `Client.import_image` through `data`
+  parameter.
+* The `command` parameter in `Client.create_container` is now optional (for
+  containers that include a default run command)
+
+### Bugfixes
+
+* Fixed Python 3 support
+* Fixed a bug where anonymous push/pull would break when no authconfig is
+  present
+* Fixed a bug where the `quiet` parameter wouldn't be taken into account in
+  `Client.containers`
+* Fixed a bug where `Client.push` would break when pushing to private
+  registries.
+* Removed unused `registry` parameter in `Client.pull`.
+* Removed obsolete custom error message in `Client.create_container`.
+
+### Miscellaneous
+
+* docker-py is now unit-tested, and Travis-CI has been enabled on the
+  source repository.
 
 0.2.1
 -----
+
+* Improvements to the `tox.ini` file
+
+### Bugfixes
 
 * Fixed a bug where the package would fail with an `ImportError` if requests
   was installed using `apt-get`
@@ -15,7 +41,6 @@ ChangeLog
   1.4, 1.5.
 * Please note that `Client.login` currently doesn't write auth to the
   `.dockercfg` file, thus **auth is not persistent when using this method.**
-* Improvements to the `tox.ini` file
 
 0.2.0
 -----

@@ -20,13 +20,13 @@ remote URL. `fileobj` must be a readable file-like object to a Dockerfile.
 * `c.commit(container, repository=None, tag=None, message=None, author=None, conf=None)`  
 Identical to the `docker commit` command.
 
-* `c.containers(quiet=False, all=False, trunc=True, latest=False, since=None, before=None, limit=-1)`  
+* `c.containers(quiet=False, all=False, trunc=True, latest=False, since=None,before=None, limit=-1)`  
 Identical to the `docker ps` command.
 
 * `c.copy(container, resource)`  
 Identical to the `docker cp` command.
 
-* `c.create_container(image, command, hostname=None, user=None, detach=False, stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None, volumes=None, volumes_from=None, privileged=False)`  
+* `c.create_container(image, command=None, hostname=None, user=None, detach=False,stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,volumes=None, volumes_from=None, privileged=False)`  
 Creates a container that can then be `start`ed. Parameters are similar to those
 for the `docker run` command except it doesn't support the attach options
 (`-a`)  
