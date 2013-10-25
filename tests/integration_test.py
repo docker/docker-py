@@ -449,6 +449,28 @@ class TestPull(BaseTestCase):
         self.tmp_imgs.append('376968a23351')
 
 
+class TestPullStream(BaseTestCase):
+    def runTest(self):
+        try:
+            self.client.remove_image('joffrey/test001')
+            self.client.remove_image('376968a23351')
+        except docker.APIError:
+            pass
+        info = self.client.info()
+        self.assertIn('Images', info)
+        img_count = info['Images']
+        stream = self.client.pull('joffrey/test001', stream=True)
+        res = u''
+        for chunk in stream:
+            res += chunk
+        self.assertEqual(type(res), six.text_type)
+        self.assertEqual(img_count + 2, self.client.info()['Images'])
+        img_info = self.client.inspect_image('joffrey/test001')
+        self.assertIn('id', img_info)
+        self.tmp_imgs.append('joffrey/test001')
+        self.tmp_imgs.append('376968a23351')
+
+
 class TestCommit(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['touch', '/test'])
@@ -517,6 +539,23 @@ class TestBuild(BaseTestCase):
         exitcode2 = self.client.wait(id2)
         self.assertEqual(exitcode2, 0)
         self.tmp_imgs.append(img)
+
+
+class TestBuildStream(BaseTestCase):
+    def runTest(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+        stream = self.client.build(fileobj=script, stream=True)
+        logs = ''
+        for chunk in stream:
+            logs += chunk
+        self.assertNotEqual(logs, '')
 
 
 class TestBuildFromStringIO(BaseTestCase):
