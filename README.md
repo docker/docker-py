@@ -33,7 +33,7 @@ for the `docker run` command except it doesn't support the attach options
 In order to create volumes that can be rebinded at start time, use the
 following syntax: `volumes={"/srv": "" }`.   The `ports` parameter is a
 dictionary whose key is the port to expose and the value is an empty
-dictionary: `ports={"2181": {}}`.  Note, this will simply expose the ports in
+dictionary: `ports={"2181/tcp": {}}`.  Note, this will simply expose the ports in
 the container, but does not make them available on the host.  See `start`
 below.
 
@@ -110,7 +110,7 @@ Example of binds mapping from host to container: `{'/mnt/srv/': '/srv'}`
 dictionary whose key is the container's port and the value is a `[{'HostIp': ''
 'HostPort': ''}]` list.  Leaving `HostIp` blank will expose the port on
 all host interfaces.  By leaving the `HostPort` blank, Docker will
-automatically assign a port.  For example: `port_bindings={"2181": [{'HostIp': ''
+automatically assign a port.  For example: `port_bindings={"2181/tcp": [{'HostIp': ''
 'HostPort': ''}]}`.
 `lxc_conf` allows to pass LXC configuration options in dict form.
 
