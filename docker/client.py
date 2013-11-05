@@ -111,7 +111,7 @@ class Client(requests.Session):
 
         return {
             'Hostname':     hostname,
-            'PortSpecs':    ports,
+            'ExposedPorts': ports,
             'User':         user,
             'Tty':          tty,
             'OpenStdin':    stdin_open,
@@ -445,7 +445,7 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/search"),
                             params={'term': term}), True)
 
-    def start(self, container, binds=None, lxc_conf=None):
+    def start(self, container, binds=None, port_bindings=None, lxc_conf=None):
         if isinstance(container, dict):
             container = container.get('Id')
         start_config = {
@@ -456,6 +456,9 @@ class Client(requests.Session):
                 '{0}:{1}'.format(host, dest) for host, dest in binds.items()
             ]
             start_config['Binds'] = bind_pairs
+
+        if port_bindings:
+            start_config['PortBindings'] = port_bindings
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, start_config)
