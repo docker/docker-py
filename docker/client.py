@@ -142,6 +142,19 @@ class Client(requests.Session):
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
 
+    def _socket_connection(self, url, method='post', *args, **kwargs):
+        try:
+            handler = {
+                "post": self.post,
+                "get": self.get
+            }[method.lower()]
+        except KeyError:
+            raise KeyError("No such method: `%s`" % (method))
+
+        res = handler(url, *args, **kwargs)
+        self._raise_for_status(res)
+        return res.raw._fp.fp._sock
+
     def attach_socket(self, container, params=None):
         if params is None:
             params = {
@@ -153,12 +166,23 @@ class Client(requests.Session):
             container = container.get('Id')
 
         u = self._url("/containers/{0}/attach".format(container))
-        res = self.post(u, None, params=params, stream=True)
-        self._raise_for_status(res)
-        # hijack the underlying socket from requests, icky
-        # but for some reason requests.iter_contents and ilk
-        # eventually block
-        return res.raw._fp.fp._sock
+        return self._socket_connection(
+            u, None, method='post', params=params, stream=True)
+
+    def events(self):
+        u = self._url("/events")
+
+        socket = self._socket_connection(u, method='get', stream=True)
+
+        while True:
+            chunk = socket.recv(4096)
+            if chunk:
+                # Messages come in the format of length, data, newline.
+                length, data = chunk.split("\n", 1)
+                # XXX: Verify data length.
+                yield json.loads(data)
+            else:
+                break
 
     def attach(self, container):
         socket = self.attach_socket(container)
