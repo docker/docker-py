@@ -140,7 +140,10 @@ class Client(requests.Session):
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
 
-    def attach_socket(self, container, params=None):
+    def attach_socket(self, container, params=None, ws=False):
+        if ws:
+            return self._attach_websocket(container, params)
+
         if isinstance(container, dict):
             container = container.get('Id')
         u = self._url("/containers/{0}/attach".format(container))
@@ -151,7 +154,7 @@ class Client(requests.Session):
         # eventually block
         return res.raw._fp.fp._sock
 
-    def attach_websocket(self, container, params=None):
+    def _attach_websocket(self, container, params=None):
         url = self._url("/containers/{0}/attach/ws".format(container))
         req = requests.Request("POST", url, params=self._attach_params(params))
         full_url = req.prepare().url
