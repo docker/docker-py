@@ -465,6 +465,15 @@ class DockerClientTest(unittest.TestCase):
     ## PY SPECIFIC TESTS ##
     #######################
 
+    def test_load_config_no_file(self):
+        folder = tempfile.mkdtemp()
+        cfg = docker.auth.load_config(folder)
+        self.assertTrue(cfg is not None)
+        self.assertIn('Configs', cfg)
+        self.assertEquals(cfg['Configs'], {})
+        self.assertIn('rootPath', cfg)
+        self.assertEquals(cfg['rootPath'], folder)
+
     def test_load_config(self):
         folder = tempfile.mkdtemp()
         f = open(os.path.join(folder, '.dockercfg'), 'w')
