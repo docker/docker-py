@@ -30,7 +30,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_containers = []
 
     def setUp(self):
-        self.client = docker.Client(version="1.6")
+        self.client = docker.Client()
         self.client.pull('busybox')
         self.tmp_imgs = []
         self.tmp_containers = []
