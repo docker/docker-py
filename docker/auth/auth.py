@@ -98,33 +98,36 @@ def encode_header(auth):
 
 
 def load_config(root=None):
-    if root is None:
-        root = os.environ['HOME']
-    config_file = {
+    root = root or os.environ['HOME']
+    config = {
         'Configs': {},
         'rootPath': root
     }
-    f = open(os.path.join(root, '.dockercfg'))
-    try:
-        config_file['Configs'] = json.load(f)
-        for k, conf in six.iteritems(config_file['Configs']):
-            conf['Username'], conf['Password'] = decode_auth(conf['auth'])
-            del conf['auth']
-            config_file['Configs'][k] = conf
-    except Exception:
-        f.seek(0)
-        buf = []
-        for line in f:
-            k, v = line.split(' = ')
-            buf.append(v)
-        if len(buf) < 2:
-            raise Exception("The Auth config file is empty")
-        user, pwd = decode_auth(buf[0])
-        config_file['Configs'][INDEX_URL] = {
-            'Username': user,
-            'Password': pwd,
-            'Email': buf[1]
-        }
-    finally:
-        f.close()
-    return config_file
+
+    config_file = os.path.join(root, '.dockercfg')
+    if not os.path.exists(config_file):
+        return config
+
+    with open(config_file) as f:
+        try:
+            config['Configs'] = json.load(f)
+            for k, conf in six.iteritems(config['Configs']):
+                conf['Username'], conf['Password'] = decode_auth(conf['auth'])
+                del conf['auth']
+                config['Configs'][k] = conf
+        except Exception:
+            f.seek(0)
+            buf = []
+            for line in f:
+                k, v = line.split(' = ')
+                buf.append(v)
+            if len(buf) < 2:
+                raise Exception("The Auth config file is empty")
+            user, pwd = decode_auth(buf[0])
+            config['Configs'][INDEX_URL] = {
+                'Username': user,
+                'Password': pwd,
+                'Email': buf[1]
+            }
+
+    return config
