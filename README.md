@@ -112,8 +112,7 @@ dictionary whose key is the container's port and the value is a `[{'HostIp': ''
 all host interfaces.  By leaving the `HostPort` blank, Docker will
 automatically assign a port.  For example: `port_bindings={"2181/tcp": [{'HostIp': ''
 'HostPort': ''}]}`.
-`lxc_conf` allows to pass LXC configuration options using a dictionary in the form of Key Value pairs.
-For example: `lxc_conf=[{"Key":"lxc.cgroup.cpu.shares","Value":"1"}, {"Key": ..., "Value": }]`.
+`lxc_conf` allows to pass LXC configuration options using a dictionary.
 
 * `c.stop(container, timeout=10)`  
 Stops a container. Similar to the `docker stop` command.

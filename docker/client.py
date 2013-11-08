@@ -448,6 +448,13 @@ class Client(requests.Session):
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None):
         if isinstance(container, dict):
             container = container.get('Id')
+
+        if isinstance(lxc_conf, dict):
+            formatted = []
+            for k, v in six.iteritems(lxc_conf):
+                formatted.append({'Key': k, 'Value': str(v)})
+            lxc_conf = formatted
+
         start_config = {
             'LxcConf': lxc_conf
         }

@@ -215,6 +215,42 @@ class DockerClientTest(unittest.TestCase):
             headers={'Content-Type': 'application/json'}
         )
 
+    def test_start_container_with_lxc_conf(self):
+        try:
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID,
+                lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+                                     'containers/3cc2351ab11b/start')
+        self.assertEqual(
+            json.loads(args[0][1]),
+            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
+        )
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    def test_start_container_with_lxc_conf_compat(self):
+        try:
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID,
+                lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+                                     'containers/3cc2351ab11b/start')
+        self.assertEqual(
+            json.loads(args[0][1]),
+            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
+        )
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_start_container_with_binds(self):
         try:
             mount_dest = '/mnt'
