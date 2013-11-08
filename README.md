@@ -26,7 +26,9 @@ Identical to the `docker ps` command.
 * `c.copy(container, resource)`  
 Identical to the `docker cp` command.
 
-* `c.create_container(image, command=None, hostname=None, user=None, detach=False,stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None, dns=None,volumes=None, volumes_from=None, privileged=False)`  
+* <code>c.create_container(image, command=None, hostname=None, user=None, detach=False,  
+        stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None,  
+        dns=None, volumes=None, volumes_from=None, privileged=False, name=None)</code>  
 Creates a container that can then be `start`ed. Parameters are similar to those
 for the `docker run` command except it doesn't support the attach options
 (`-a`)  
