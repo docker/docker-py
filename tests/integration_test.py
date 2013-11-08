@@ -30,7 +30,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_containers = []
 
     def setUp(self):
-        self.client = docker.Client()
+        self.client = docker.Client(version="1.6")
         self.client.pull('busybox')
         self.tmp_imgs = []
         self.tmp_containers = []
@@ -166,6 +166,16 @@ class TestCreateContainerPrivileged(BaseTestCase):
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
         self.assertEqual(inspect['Config']['Privileged'], True)
+
+
+class TestCreateContainerWithName(BaseTestCase):
+    def runTest(self):
+        res = self.client.create_container('busybox', 'true', name='foobar')
+        self.assertIn('Id', res)
+        self.tmp_containers.append(res['Id'])
+        inspect = self.client.inspect_container(res['Id'])
+        self.assertIn('Name', inspect)
+        self.assertEqual('/foobar', inspect['Name'])
 
 
 class TestStartContainer(BaseTestCase):

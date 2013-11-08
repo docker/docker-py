@@ -128,7 +128,7 @@ class Client(requests.Session):
             'Image':        image,
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
-            'Privileged': privileged,
+            'Privileged':   privileged,
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -263,17 +263,21 @@ class Client(requests.Session):
     def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
                          mem_limit=0, ports=None, environment=None, dns=None,
-                         volumes=None, volumes_from=None, privileged=False):
+                         volumes=None, volumes_from=None, privileged=False,
+                         name=None):
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, privileged
         )
-        return self.create_container_from_config(config)
+        return self.create_container_from_config(config, name)
 
-    def create_container_from_config(self, config):
+    def create_container_from_config(self, config, name=None):
         u = self._url("/containers/create")
-        res = self._post_json(u, config)
+        params = {
+            'name': name
+        }
+        res = self._post_json(u, config, params=params)
         return self._result(res, True)
 
     def diff(self, container):
