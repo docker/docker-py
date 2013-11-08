@@ -470,7 +470,8 @@ class Client(requests.Session):
         return self._result(self.get(self._url("/images/search"),
                             params={'term': term}), True)
 
-    def start(self, container, binds=None, port_bindings=None, lxc_conf=None):
+    def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
+              publish_all_ports=False):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -491,6 +492,8 @@ class Client(requests.Session):
 
         if port_bindings:
             start_config['PortBindings'] = port_bindings
+
+        start_config['PublishAllPorts'] = publish_all_ports
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, start_config)
