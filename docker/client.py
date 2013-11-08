@@ -24,7 +24,8 @@ import docker.auth as auth
 import docker.unixconn as unixconn
 import docker.utils as utils
 
-import websocket
+if not six.PY3:
+    import websocket
 
 
 class APIError(requests.exceptions.HTTPError):
@@ -160,6 +161,9 @@ class Client(requests.Session):
         return res.raw._fp.fp._sock
 
     def _attach_websocket(self, container, params=None):
+        if six.PY3:
+            raise NotImplementedError("This method is not currently supported "
+                                      "under python 3")
         url = self._url("/containers/{0}/attach/ws".format(container))
         req = requests.Request("POST", url, params=self._attach_params(params))
         full_url = req.prepare().url
