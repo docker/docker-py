@@ -203,6 +203,26 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_named_container(self):
+        try:
+            self.client.create_container('busybox', 'true',
+                                         name='marisa-kirisame')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.4/containers/create')
+        self.assertEqual(json.loads(args[0][1]),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+                             "AttachStdin": false, "Memory": 0,
+                             "AttachStderr": true, "Privileged": false,
+                             "AttachStdout": true, "OpenStdin": false}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
+
     def test_start_container(self):
         try:
             self.client.start(fake_api.FAKE_CONTAINER_ID)
