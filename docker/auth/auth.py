@@ -108,26 +108,28 @@ def load_config(root=None):
     if not os.path.exists(config_file):
         return config
 
-    with open(config_file) as f:
-        try:
-            config['Configs'] = json.load(f)
-            for k, conf in six.iteritems(config['Configs']):
-                conf['Username'], conf['Password'] = decode_auth(conf['auth'])
-                del conf['auth']
-                config['Configs'][k] = conf
-        except Exception:
-            f.seek(0)
-            buf = []
-            for line in f:
-                k, v = line.split(' = ')
-                buf.append(v)
-            if len(buf) < 2:
-                raise Exception("The Auth config file is empty")
-            user, pwd = decode_auth(buf[0])
-            config['Configs'][INDEX_URL] = {
-                'Username': user,
-                'Password': pwd,
-                'Email': buf[1]
-            }
+    f = open(config_file)
+    try:
+        config['Configs'] = json.load(f)
+        for k, conf in six.iteritems(config['Configs']):
+            conf['Username'], conf['Password'] = decode_auth(conf['auth'])
+            del conf['auth']
+            config['Configs'][k] = conf
+    except Exception:
+        f.seek(0)
+        buf = []
+        for line in f:
+            k, v = line.split(' = ')
+            buf.append(v)
+        if len(buf) < 2:
+            raise Exception("The Auth config file is empty")
+        user, pwd = decode_auth(buf[0])
+        config['Configs'][INDEX_URL] = {
+            'Username': user,
+            'Password': pwd,
+            'Email': buf[1]
+        }
+    finally:
+        f.close()
 
     return config
