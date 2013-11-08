@@ -525,9 +525,9 @@ class DockerClientTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         cfg = docker.auth.load_config(folder)
         self.assertTrue(cfg is not None)
-        self.assertIn('Configs', cfg)
+        self.assertTrue('Configs' in cfg)
         self.assertEquals(cfg['Configs'], {})
-        self.assertIn('rootPath', cfg)
+        self.assertTrue('rootPath' in cfg)
         self.assertEquals(cfg['rootPath'], folder)
 
     def test_load_config(self):
