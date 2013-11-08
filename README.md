@@ -8,7 +8,8 @@ An API client for docker written in Python
 API
 ===
 
-`docker.Client(base_url='unix://var/run/docker.sock', version="1.4")`  
+`docker.Client(base_url='unix://var/run/docker.sock', version="1.4",
+timeout=60)`  
 Client class. `base_url` refers to the protocol+hostname+port where the docker
 server is hosted. Version is the version of the API the client will use.
 

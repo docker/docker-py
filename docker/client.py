@@ -27,6 +27,7 @@ import docker.utils as utils
 if not six.PY3:
     import websocket
 
+DEFAULT_TIMEOUT_SECONDS = 60
 
 class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
@@ -61,13 +62,17 @@ class APIError(requests.exceptions.HTTPError):
 
 
 class Client(requests.Session):
-    def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
+
+    def __init__(self, base_url="unix://var/run/docker.sock", version="1.4",
+                 timeout=DEFAULT_TIMEOUT_SECONDS):
         super(Client, self).__init__()
         if base_url.startswith('unix:///'):
             base_url = base_url.replace('unix:/', 'unix:')
-        self.mount('unix://', unixconn.UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
+        self._timeout = timeout
+
+        self.mount('unix://', unixconn.UnixAdapter(base_url, timeout))
         try:
             self._cfg = auth.load_config()
         except Exception:
@@ -143,7 +148,8 @@ class Client(requests.Session):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
         kwargs['headers']['Content-Type'] = 'application/json'
-        return self.post(url, json.dumps(data2), **kwargs)
+        return self.post(url, json.dumps(data2),
+                         timeout=self._timeout, **kwargs)
 
     def attach_socket(self, container, params=None, ws=False):
         if ws:
@@ -153,7 +159,7 @@ class Client(requests.Session):
             container = container.get('Id')
         u = self._url("/containers/{0}/attach".format(container))
         res = self.post(u, None, params=self._attach_params(params),
-                        stream=True)
+                        stream=True, timeout=self._timeout)
         self._raise_for_status(res)
         # hijack the underlying socket from requests, icky
         # but for some reason requests.iter_contents and ilk
@@ -215,7 +221,8 @@ class Client(requests.Session):
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
         res = self._result(self.post(u, context, params=params,
-                           headers=headers, stream=True))
+                                     headers=headers, stream=True,
+                                     timeout=self._timeout))
         if context is not None:
             context.close()
         srch = r'Successfully built ([0-9a-f]+)'
@@ -246,7 +253,8 @@ class Client(requests.Session):
             'before': before
         }
         u = self._url("/containers/ps")
-        res = self._result(self.get(u, params=params), True)
+        res = self._result(self.get(u, params=params, timeout=self._timeout),
+                           True)
         if quiet:
             return [{'Id': x['Id']} for x in res]
         return res
@@ -284,30 +292,33 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
         return self._result(self.get(self._url("/containers/{0}/changes".
-                            format(container))), True)
+                            format(container)), timeout=self._timeout), True)
 
     def export(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
         res = self.get(self._url("/containers/{0}/export".format(container)),
-                       stream=True)
+                       stream=True, timeout=self._timeout)
         self._raise_for_status(res)
         return res.raw
 
     def history(self, image):
-        res = self.get(self._url("/images/{0}/history".format(image)))
+        res = self.get(self._url("/images/{0}/history".format(image)),
+                       timeout=self._timeout)
         self._raise_for_status(res)
         return self._result(res)
 
     def images(self, name=None, quiet=False, all=False, viz=False):
         if viz:
-            return self._result(self.get(self._url("images/viz")))
+            return self._result(self.get(self._url("images/viz"),
+                                         timeout=self._timeout))
         params = {
             'filter': name,
             'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
         }
-        res = self._result(self.get(self._url("/images/json"), params=params),
+        res = self._result(self.get(self._url("/images/json"), params=params,
+                                    timeout=self._timeout),
                            True)
         if quiet:
             return [x['Id'] for x in res]
@@ -331,12 +342,16 @@ class Client(requests.Session):
             data = None
         if isinstance(src, six.string_types):
             params['fromSrc'] = src
-            return self._result(self.post(u, data, params=params))
+            return self._result(self.post(u, data, params=params,
+                                          timeout=self._timeout))
 
-        return self._result(self.post(u, src, params=params))
+        return self._result(self.post(u, src, params=params,
+                                      timeout=self._timeout))
 
     def info(self):
-        return self._result(self.get(self._url("/info")), True)
+        return self._result(self.get(self._url("/info"),
+                                     timeout=self._timeout),
+                            True)
 
     def insert(self, image, url, path):
         api_url = self._url("/images/" + image + "/insert")
@@ -344,25 +359,26 @@ class Client(requests.Session):
             'url': url,
             'path': path
         }
-        return self._result(self.post(api_url, None, params=params))
+        return self._result(self.post(api_url, None, params=params,
+                                      timeout=self._timeout))
 
     def inspect_container(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
-        return self._result(self.get(
-            self._url("/containers/{0}/json".format(container))
-        ), True)
+        return self._result(self.get(self._url("/containers/{0}/json".format(container)),
+                                     timeout=self._timeout),
+                            True)
 
     def inspect_image(self, image_id):
-        return self._result(self.get(
-            self._url("/images/{0}/json".format(image_id))
-        ), True)
+        return self._result(self.get(self._url("/images/{0}/json".format(image_id)),
+                                     timeout=self._timeout),
+                            True)
 
     def kill(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
         url = self._url("/containers/{0}/kill".format(container))
-        res = self.post(url, None)
+        res = self.post(url, None, timeout=self._timeout)
         self._raise_for_status(res)
 
     def login(self, username, password=None, email=None, registry=None):
@@ -393,12 +409,14 @@ class Client(requests.Session):
             'stderr': 1
         }
         u = self._url("/containers/{0}/attach".format(container))
-        return self._result(self.post(u, None, params=params))
+        return self._result(self.post(u, None, params=params,
+                                      timeout=self._timeout))
 
     def port(self, container, private_port):
         if isinstance(container, dict):
             container = container.get('Id')
-        res = self.get(self._url("/containers/{0}/json".format(container)))
+        res = self.get(self._url("/containers/{0}/json".format(container)),
+                       timeout=self._timeout)
         self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
@@ -430,7 +448,8 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
-        return self._result(self.post(u, params=params, headers=headers))
+        return self._result(self.post(u, params=params, headers=headers,
+                                      timeout=self._timeout))
 
     def push(self, repository):
         registry, repo_name = auth.resolve_repository_name(repository)
@@ -451,11 +470,12 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
         params = {'v': v}
-        res = self.delete(self._url("/containers/" + container), params=params)
+        res = self.delete(self._url("/containers/" + container), params=params,
+                          timeout=self._timeout)
         self._raise_for_status(res)
 
     def remove_image(self, image):
-        res = self.delete(self._url("/images/" + image))
+        res = self.delete(self._url("/images/" + image), timeout=self._timeout)
         self._raise_for_status(res)
 
     def restart(self, container, timeout=10):
@@ -463,12 +483,14 @@ class Client(requests.Session):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart".format(container))
-        res = self.post(url, None, params=params)
+        res = self.post(url, None, params=params, timeout=self._timeout)
         self._raise_for_status(res)
 
     def search(self, term):
         return self._result(self.get(self._url("/images/search"),
-                            params={'term': term}), True)
+                                     params={'term': term},
+                                     timeout=self._timeout),
+                            True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None):
         if isinstance(container, dict):
@@ -501,7 +523,7 @@ class Client(requests.Session):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
-        res = self.post(url, None, params=params)
+        res = self.post(url, None, params=params, timeout=self._timeout)
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
@@ -511,16 +533,18 @@ class Client(requests.Session):
             'force': 1 if force else 0
         }
         url = self._url("/images/{0}/tag".format(image))
-        res = self.post(url, None, params=params)
+        res = self.post(url, None, params=params, timeout=self._timeout)
         self._raise_for_status(res)
         return res.status_code == 201
 
     def top(self, container):
         u = self._url("/containers/{0}/top".format(container))
-        return self._result(self.get(u), True)
+        return self._result(self.get(u, timeout=self._timeout), True)
 
     def version(self):
-        return self._result(self.get(self._url("/version")), True)
+        return self._result(self.get(self._url("/version"),
+                                     timeout=self._timeout),
+                            True)
 
     def wait(self, container):
         if isinstance(container, dict):

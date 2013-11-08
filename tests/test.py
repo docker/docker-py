@@ -76,7 +76,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/version'
+            'unix://var/run/docker.sock/v1.4/version',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_info(self):
@@ -85,7 +86,8 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/info')
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/info',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS)
 
     def test_search(self):
         try:
@@ -95,7 +97,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/images/search',
-            params={'term': 'busybox'}
+            params={'term': 'busybox'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     ###################
@@ -109,7 +112,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/images/json',
-            params={'filter': None, 'only_ids': 0, 'all': 1}
+            params={'filter': None, 'only_ids': 0, 'all': 1},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_image_ids(self):
@@ -120,7 +124,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/images/json',
-            params={'filter': None, 'only_ids': 1, 'all': 0}
+            params={'filter': None, 'only_ids': 1, 'all': 0},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_list_containers(self):
@@ -137,7 +142,8 @@ class DockerClientTest(unittest.TestCase):
                 'limit': -1,
                 'trunc_cmd': 1,
                 'before': None
-            }
+            },
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     #####################
@@ -232,7 +238,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
             '{}',
-            headers={'Content-Type': 'application/json'}
+            headers={'Content-Type': 'application/json'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_lxc_conf(self):
@@ -283,7 +290,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
             '{"Binds": ["/tmp:/mnt"]}',
-            headers={'Content-Type': 'application/json'}
+            headers={'Content-Type': 'application/json'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_dict_instead_of_id(self):
@@ -293,7 +301,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{}', headers={'Content-Type': 'application/json'}
+            '{}', headers={'Content-Type': 'application/json'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_wait(self):
@@ -329,7 +338,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
             None,
-            params={'logs': 1, 'stderr': 1, 'stdout': 1}
+            params={'logs': 1, 'stderr': 1, 'stdout': 1},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_logs_with_dict_instead_of_id(self):
@@ -341,7 +351,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
             None,
-            params={'logs': 1, 'stderr': 1, 'stdout': 1}
+            params={'logs': 1, 'stderr': 1, 'stdout': 1},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_diff(self):
@@ -351,7 +362,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes')
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS)
 
     def test_diff_with_dict_instead_of_id(self):
         try:
@@ -360,7 +372,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes')
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS)
 
     def test_stop_container(self):
         try:
@@ -371,7 +384,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
             None,
-            params={'t': 2}
+            params={'t': 2},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_stop_container_with_dict_instead_of_id(self):
@@ -383,7 +397,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
             None,
-            params={'t': 2}
+            params={'t': 2},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_kill_container(self):
@@ -394,7 +409,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
-            None
+            None,
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_kill_container_with_dict_instead_of_id(self):
@@ -405,7 +421,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
-            None
+            None,
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_restart_container(self):
@@ -417,7 +434,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
             None,
-            params={'t': 2}
+            params={'t': 2},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_restart_container_with_dict_instead_of_id(self):
@@ -429,7 +447,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
             None,
-            params={'t': 2}
+            params={'t': 2},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_container(self):
@@ -440,7 +459,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b',
-            params={'v': False}
+            params={'v': False},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_container_with_dict_instead_of_id(self):
@@ -451,7 +471,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b',
-            params={'v': False}
+            params={'v': False},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     ##################
@@ -467,7 +488,8 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/images/create',
             headers={},
-            params={'tag': None, 'fromImage': 'joffrey/test001'}
+            params={'tag': None, 'fromImage': 'joffrey/test001'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_commit(self):
@@ -486,7 +508,8 @@ class DockerClientTest(unittest.TestCase):
                 'tag': None,
                 'container': '3cc2351ab11b',
                 'author': None
-            }
+            },
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_image(self):
@@ -496,7 +519,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/e9aa60c60128'
+            'unix://var/run/docker.sock/v1.4/images/e9aa60c60128',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     #################
