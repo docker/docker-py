@@ -435,6 +435,75 @@ class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
 
+
+class TestStartContainerWithLinks(BaseTestCase):
+    def runTest(self):
+        res0 = self.client.create_container(
+            'busybox', 'cat',
+            detach=True, stdin_open=True,
+            environment={'FOO': '1'})
+
+        container1_id = res0['Id']
+        self.tmp_containers.append(container1_id)
+
+        self.client.start(container1_id)
+
+        # we don't want the first /
+        link_path = self.client.inspect_container(container1_id)['Name'][1:]
+        link_alias = 'mylink'
+        link_env_prefix = link_alias.upper()
+
+        res1 = self.client.create_container('busybox', 'env')
+        container2_id = res1['Id']
+        self.tmp_containers.append(container2_id)
+        self.client.start(container2_id, links={link_path: link_alias})
+        self.assertEqual(self.client.wait(container2_id), 0)
+
+        logs = self.client.logs(container2_id)
+        self.assertIn('{0}_NAME='.format(link_env_prefix), logs)
+        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix), logs)
+
+#################
+## LINKS TESTS ##
+#################
+
+
+class TestRemoveLink(BaseTestCase):
+    def runTest(self):
+        # Create containers
+        container1 = self.client.create_container(
+            'busybox', 'cat', detach=True, stdin_open=True)
+        container1_id = container1['Id']
+        self.tmp_containers.append(container1_id)
+        self.client.start(container1_id)
+
+        # Create Link
+        # we don't want the first /
+        link_path = self.client.inspect_container(container1_id)['Name'][1:]
+        link_alias = 'mylink'
+
+        container2 = self.client.create_container('busybox', 'cat')
+        container2_id = container2['Id']
+        self.tmp_containers.append(container2_id)
+        self.client.start(container2_id, links={link_path: link_alias})
+
+        # Remove link
+        linked_name = self.client.inspect_container(container2_id)['Name'][1:]
+        link_name = '%s/%s' % (linked_name, link_alias)
+        self.client.remove_container(link_name, link=True)
+
+        # Link is gone
+        containers = self.client.containers(all=True)
+        retrieved = [x for x in containers if link_name in x['Names']]
+        self.assertEqual(len(retrieved), 0)
+
+        # Containers are still there
+        retrieved = [
+            x for x in containers if x['Id'].startswith(container1_id)
+            or x['Id'].startswith(container2_id)
+        ]
+        self.assertEqual(len(retrieved), 2)
+
 ##################
 ## IMAGES TESTS ##
 ##################

@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-CURRENT_VERSION = 'v1.4'
+CURRENT_VERSION = 'v1.6'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -170,7 +170,7 @@ fake_responses = {
     get_fake_search,
     '{1}/{0}/images/json'.format(CURRENT_VERSION, prefix):
     get_fake_images,
-    '{1}/{0}/containers/ps'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/json'.format(CURRENT_VERSION, prefix):
     get_fake_containers,
     '{1}/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
     post_fake_start_container,
