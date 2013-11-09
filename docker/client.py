@@ -62,7 +62,7 @@ class APIError(requests.exceptions.HTTPError):
 
 
 class Client(requests.Session):
-    def __init__(self, base_url="unix://var/run/docker.sock", version="1.4"):
+    def __init__(self, base_url="unix://var/run/docker.sock", version="1.6"):
         super(Client, self).__init__()
         if base_url.startswith('unix:///'):
             base_url = base_url.replace('unix:/', 'unix:')
@@ -278,7 +278,7 @@ class Client(requests.Session):
             'since': since,
             'before': before
         }
-        u = self._url("/containers/ps")
+        u = self._url("/containers/json")
         res = self._result(self.get(u, params=params), True)
         if quiet:
             return [{'Id': x['Id']} for x in res]
@@ -524,10 +524,10 @@ class Client(requests.Session):
         else:
             return self._result(self._post_json(u, authcfg, stream=False))
 
-    def remove_container(self, container, v=False):
+    def remove_container(self, container, v=False, link=False):
         if isinstance(container, dict):
             container = container.get('Id')
-        params = {'v': v}
+        params = {'v': v, 'link': link}
         res = self.delete(self._url("/containers/" + container), params=params)
         self._raise_for_status(res)
 
@@ -548,7 +548,7 @@ class Client(requests.Session):
                             params={'term': term}), True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=False):
+              publish_all_ports=False, links=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -571,6 +571,12 @@ class Client(requests.Session):
             start_config['PortBindings'] = port_bindings
 
         start_config['PublishAllPorts'] = publish_all_ports
+
+        if links:
+            formatted_links = [
+                '{0}:{1}'.format(path, alias) for path, alias in links.items()
+            ]
+            start_config['Links'] = formatted_links
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, start_config)
