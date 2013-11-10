@@ -30,7 +30,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_containers = []
 
     def setUp(self):
-        self.client = docker.Client(version="1.6")
+        self.client = docker.Client()
         self.client.pull('busybox')
         self.tmp_imgs = []
         self.tmp_containers = []
@@ -435,6 +435,75 @@ class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
 
+
+class TestStartContainerWithLinks(BaseTestCase):
+    def runTest(self):
+        res0 = self.client.create_container(
+            'busybox', 'cat',
+            detach=True, stdin_open=True,
+            environment={'FOO': '1'})
+
+        container1_id = res0['Id']
+        self.tmp_containers.append(container1_id)
+
+        self.client.start(container1_id)
+
+        # we don't want the first /
+        link_path = self.client.inspect_container(container1_id)['Name'][1:]
+        link_alias = 'mylink'
+        link_env_prefix = link_alias.upper()
+
+        res1 = self.client.create_container('busybox', 'env')
+        container2_id = res1['Id']
+        self.tmp_containers.append(container2_id)
+        self.client.start(container2_id, links={link_path: link_alias})
+        self.assertEqual(self.client.wait(container2_id), 0)
+
+        logs = self.client.logs(container2_id)
+        self.assertIn('{0}_NAME='.format(link_env_prefix), logs)
+        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix), logs)
+
+#################
+## LINKS TESTS ##
+#################
+
+
+class TestRemoveLink(BaseTestCase):
+    def runTest(self):
+        # Create containers
+        container1 = self.client.create_container(
+            'busybox', 'cat', detach=True, stdin_open=True)
+        container1_id = container1['Id']
+        self.tmp_containers.append(container1_id)
+        self.client.start(container1_id)
+
+        # Create Link
+        # we don't want the first /
+        link_path = self.client.inspect_container(container1_id)['Name'][1:]
+        link_alias = 'mylink'
+
+        container2 = self.client.create_container('busybox', 'cat')
+        container2_id = container2['Id']
+        self.tmp_containers.append(container2_id)
+        self.client.start(container2_id, links={link_path: link_alias})
+
+        # Remove link
+        linked_name = self.client.inspect_container(container2_id)['Name'][1:]
+        link_name = '%s/%s' % (linked_name, link_alias)
+        self.client.remove_container(link_name, link=True)
+
+        # Link is gone
+        containers = self.client.containers(all=True)
+        retrieved = [x for x in containers if link_name in x['Names']]
+        self.assertEqual(len(retrieved), 0)
+
+        # Containers are still there
+        retrieved = [
+            x for x in containers if x['Id'].startswith(container1_id)
+            or x['Id'].startswith(container2_id)
+        ]
+        self.assertEqual(len(retrieved), 2)
+
 ##################
 ## IMAGES TESTS ##
 ##################
@@ -451,6 +520,28 @@ class TestPull(BaseTestCase):
         self.assertIn('Images', info)
         img_count = info['Images']
         res = self.client.pull('joffrey/test001')
+        self.assertEqual(type(res), six.text_type)
+        self.assertEqual(img_count + 2, self.client.info()['Images'])
+        img_info = self.client.inspect_image('joffrey/test001')
+        self.assertIn('id', img_info)
+        self.tmp_imgs.append('joffrey/test001')
+        self.tmp_imgs.append('376968a23351')
+
+
+class TestPullStream(BaseTestCase):
+    def runTest(self):
+        try:
+            self.client.remove_image('joffrey/test001')
+            self.client.remove_image('376968a23351')
+        except docker.APIError:
+            pass
+        info = self.client.info()
+        self.assertIn('Images', info)
+        img_count = info['Images']
+        stream = self.client.pull('joffrey/test001', stream=True)
+        res = u''
+        for chunk in stream:
+            res += chunk
         self.assertEqual(type(res), six.text_type)
         self.assertEqual(img_count + 2, self.client.info()['Images'])
         img_info = self.client.inspect_image('joffrey/test001')
@@ -527,6 +618,23 @@ class TestBuild(BaseTestCase):
         exitcode2 = self.client.wait(id2)
         self.assertEqual(exitcode2, 0)
         self.tmp_imgs.append(img)
+
+
+class TestBuildStream(BaseTestCase):
+    def runTest(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+        stream = self.client.build(fileobj=script, stream=True)
+        logs = ''
+        for chunk in stream:
+            logs += chunk
+        self.assertNotEqual(logs, '')
 
 
 class TestBuildFromStringIO(BaseTestCase):
