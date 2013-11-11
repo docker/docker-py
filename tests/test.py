@@ -282,11 +282,13 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{"Binds": ["/tmp:/mnt"], "PublishAllPorts": false}',
-            headers={'Content-Type': 'application/json'}
-        )
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+                                     'containers/3cc2351ab11b/start')
+        self.assertEqual(json.loads(args[0][1]),
+                         {"Binds": ["/tmp:/mnt"], "PublishAllPorts": False})
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
 
     def test_start_container_with_dict_instead_of_id(self):
         try:
