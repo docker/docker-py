@@ -30,7 +30,7 @@ if not six.PY3:
 
 class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
-        super(APIError, self).__init__(message, response=response)
+        super(APIError, self).__init__(message, response)
 
         self.explanation = explanation
 
@@ -81,7 +81,18 @@ class Client(requests.Session):
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise APIError(e, response=response, explanation=explanation)
+            raise APIError(e, response, explanation=explanation)
+
+    def _stream_result(self, response):
+        self._raise_for_status(response)
+        for line in response.iter_lines(chunk_size=1):
+            # filter out keep-alive new lines
+            if line:
+                yield line + '\n'
+
+    def _stream_result_socket(self, response):
+        self._raise_for_status(response)
+        return response.raw._fp.fp._sock
 
     def _result(self, response, json=False):
         self._raise_for_status(response)
@@ -206,7 +217,7 @@ class Client(requests.Session):
             u, None, params=self._attach_params(params), stream=True)
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
-              nocache=False, rm=False):
+              nocache=False, rm=False, stream=False):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise Exception("Either path or fileobj needs to be provided.")
@@ -228,15 +239,19 @@ class Client(requests.Session):
         }
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
-        res = self._result(self.post(u, context, params=params,
-                           headers=headers, stream=True))
+        response = self.post(
+            u, context, params=params, headers=headers, stream=stream)
         if context is not None:
             context.close()
-        srch = r'Successfully built ([0-9a-f]+)'
-        match = re.search(srch, res)
-        if not match:
-            return None, res
-        return match.group(1), res
+        if stream:
+            return self._stream_result(response)
+        else:
+            output = self._result(response)
+            srch = r'Successfully built ([0-9a-f]+)'
+            match = re.search(srch, output)
+            if not match:
+                return None, output
+            return match.group(1), output
 
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, conf=None):
@@ -441,7 +456,7 @@ class Client(requests.Session):
 
         return f_port
 
-    def pull(self, repository, tag=None):
+    def pull(self, repository, tag=None, stream=False):
         registry, repo_name = auth.resolve_repository_name(repository)
         if repo_name.count(":") == 1:
             repository, tag = repository.rsplit(":", 1)
@@ -461,9 +476,30 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
-        return self._result(self.post(u, params=params, headers=headers))
+        response = self.post(u, params=params, headers=headers, stream=stream)
 
-    def push(self, repository):
+        if stream:
+            return self.stream_helper(response)
+        else:
+            return self._result(response)
+
+    def stream_helper(self, response):
+        socket = self._stream_result_socket(response)
+        while True:
+            chunk = socket.recv(4096)
+            if chunk:
+                parts = chunk.strip().split('\r\n')
+                for i in range(len(parts)):
+                    if i % 2 != 0:
+                        yield parts[i] + '\n'
+                    else:
+                        size = int(parts[i], 16)
+                if size <= 0:
+                    break
+            else:
+                break
+
+    def push(self, repository, stream=False):
         registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         headers = {}
@@ -475,8 +511,17 @@ class Client(requests.Session):
             # for this specific registry as we can have an anon push
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
-            return self._result(self._post_json(u, None, headers=headers))
-        return self._result(self._post_json(u, authcfg))
+            if stream:
+                return self.stream_helper(
+                    self._post_json(u, None, headers=headers, stream=True))
+            else:
+                return self._result(
+                    self._post_json(u, None, headers=headers, stream=False))
+        if stream:
+            return self.stream_helper(
+                self._post_json(u, authcfg, stream=True))
+        else:
+            return self._result(self._post_json(u, authcfg, stream=False))
 
     def remove_container(self, container, v=False):
         if isinstance(container, dict):

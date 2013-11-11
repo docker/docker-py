@@ -470,7 +470,21 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/images/create',
             headers={},
-            params={'tag': None, 'fromImage': 'joffrey/test001'}
+            params={'tag': None, 'fromImage': 'joffrey/test001'},
+            stream=False
+        )
+
+    def test_pull_stream(self):
+        try:
+            self.client.pull('joffrey/test001', stream=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/images/create',
+            headers={},
+            params={'tag': None, 'fromImage': 'joffrey/test001'},
+            stream=True
         )
 
     def test_commit(self):
@@ -517,6 +531,20 @@ class DockerClientTest(unittest.TestCase):
         ]).encode('ascii'))
         try:
             self.client.build(fileobj=script)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_stream(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+        try:
+            self.client.build(fileobj=script, stream=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
