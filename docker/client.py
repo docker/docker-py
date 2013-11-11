@@ -15,6 +15,7 @@
 import json
 import re
 import shlex
+import struct
 
 import requests
 import requests.exceptions
@@ -442,7 +443,18 @@ class Client(requests.Session):
             'stderr': 1
         }
         u = self._url("/containers/{0}/attach".format(container))
-        return self._result(self.post(u, None, params=params))
+        res = ''
+        response = self._result(self.post(u, None, params=params))
+        walker = 0
+        while walker < len(response):
+            header = response[walker:walker+8]
+            walker += 8
+            # we don't care about the type of stream since we want both
+            # stdout and stderr
+            length = struct.unpack(">L", header[4:].encode())[0]
+            res += response[walker:walker+length]
+            walker += length
+        return res
 
     def port(self, container, private_port):
         if isinstance(container, dict):
