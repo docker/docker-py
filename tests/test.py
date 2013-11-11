@@ -156,16 +156,16 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        args, kwargs = fake_request.call_args
+        self.assertEqual(args[0],
                          'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]),
+        self.assertEqual(json.loads(kwargs['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "Privileged": false,
                              "AttachStdout": true, "OpenStdin": false}'''))
-        self.assertEqual(args[1]['headers'],
+        self.assertEqual(kwargs['headers'],
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_binds(self):
@@ -178,17 +178,17 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        args, kwargs = fake_request.call_args
+        self.assertEqual(args[0],
                          'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]),
+        self.assertEqual(json.loads(kwargs['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
                              "Volumes": {"/mnt": {}}, "Memory": 0,
                              "AttachStderr": true, "Privileged": false,
                              "AttachStdout": true, "OpenStdin": false}'''))
-        self.assertEqual(args[1]['headers'],
+        self.assertEqual(kwargs['headers'],
                          {'Content-Type': 'application/json'})
 
     def test_create_container_privileged(self):
@@ -197,16 +197,16 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        args, kwargs = fake_request.call_args
+        self.assertEqual(args[0],
                          'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]),
+        self.assertEqual(json.loads(kwargs['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "Privileged": true,
                              "AttachStdout": true, "OpenStdin": false}'''))
-        self.assertEqual(args[1]['headers'],
+        self.assertEqual(kwargs['headers'],
                          {'Content-Type': 'application/json'})
 
     def test_create_named_container(self):
@@ -216,18 +216,18 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        args, kwargs = fake_request.call_args
+        self.assertEqual(args[0],
                          'unix://var/run/docker.sock/v1.4/containers/create')
-        self.assertEqual(json.loads(args[0][1]),
+        self.assertEqual(json.loads(kwargs['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "Privileged": false,
                              "AttachStdout": true, "OpenStdin": false}'''))
-        self.assertEqual(args[1]['headers'],
+        self.assertEqual(kwargs['headers'],
                          {'Content-Type': 'application/json'})
-        self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
+        self.assertEqual(kwargs['params'], {'name': 'marisa-kirisame'})
 
     def test_start_container(self):
         try:
@@ -237,7 +237,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{}',
+            data='{}',
             headers={'Content-Type': 'application/json'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -250,14 +250,14 @@ class DockerClientTest(unittest.TestCase):
             )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
-        args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+        args, kwargs = fake_request.call_args
+        self.assertEqual(args[0], 'unix://var/run/docker.sock/v1.4/'
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(
-            json.loads(args[0][1]),
+            json.loads(kwargs['data']),
             {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
         )
-        self.assertEqual(args[1]['headers'],
+        self.assertEqual(kwargs['headers'],
                          {'Content-Type': 'application/json'})
 
     def test_start_container_with_lxc_conf_compat(self):
@@ -268,14 +268,14 @@ class DockerClientTest(unittest.TestCase):
             )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
-        args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+        args, kwargs = fake_request.call_args
+        self.assertEqual(args[0], 'unix://var/run/docker.sock/v1.4/'
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(
-            json.loads(args[0][1]),
+            json.loads(kwargs['data']),
             {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
         )
-        self.assertEqual(args[1]['headers'],
+        self.assertEqual(kwargs['headers'],
                          {'Content-Type': 'application/json'})
 
     def test_start_container_with_binds(self):
@@ -289,7 +289,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{"Binds": ["/tmp:/mnt"]}',
+            data='{"Binds": ["/tmp:/mnt"]}',
             headers={'Content-Type': 'application/json'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -301,7 +301,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{}', headers={'Content-Type': 'application/json'},
+            data='{}',
+            headers={'Content-Type': 'application/json'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -313,7 +314,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/wait',
-            None,
             timeout=None
         )
 
@@ -325,7 +325,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/wait',
-            None,
             timeout=None
         )
 
@@ -337,7 +336,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
-            None,
             params={'logs': 1, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -350,7 +348,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
-            None,
             params={'logs': 1, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -383,7 +380,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
-            None,
             params={'t': 2},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -396,7 +392,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
-            None,
             params={'t': 2},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -409,7 +404,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
-            None,
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -421,7 +415,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
-            None,
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -433,7 +426,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
-            None,
             params={'t': 2},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -446,7 +438,6 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
-            None,
             params={'t': 2},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -500,7 +491,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/commit',
-            '{}',
+            data='{}',
             headers={'Content-Type': 'application/json'},
             params={
                 'repo': None,
