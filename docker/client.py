@@ -145,20 +145,12 @@ class Client(requests.Session):
         kwargs['headers']['Content-Type'] = 'application/json'
         return self.post(url, json.dumps(data2), **kwargs)
 
-    def attach_socket(self, container, params=None, ws=False):
-        if ws:
-            return self._attach_websocket(container, params)
-
-        if isinstance(container, dict):
-            container = container.get('Id')
-        u = self._url("/containers/{0}/attach".format(container))
-        res = self.post(u, None, params=self._attach_params(params),
-                        stream=True)
-        self._raise_for_status(res)
-        # hijack the underlying socket from requests, icky
-        # but for some reason requests.iter_contents and ilk
-        # eventually block
-        return res.raw._fp.fp._sock
+    def _attach_params(self, override=None):
+        return override or {
+            'stdout': 1,
+            'stderr': 1,
+            'stream': 1
+        }
 
     def _attach_websocket(self, container, params=None):
         if six.PY3:
@@ -174,6 +166,19 @@ class Client(requests.Session):
     def _create_websocket_connection(self, url):
         return websocket.create_connection(url)
 
+    def _socket_connection(self, url, method='post', *args, **kwargs):
+        try:
+            handler = {
+                "post": self.post,
+                "get": self.get
+            }[method.lower()]
+        except KeyError:
+            raise KeyError("No such method: `%s`" % (method))
+
+        res = handler(url, *args, **kwargs)
+        self._raise_for_status(res)
+        return res.raw._fp.fp._sock
+
     def attach(self, container):
         socket = self.attach_socket(container)
 
@@ -184,12 +189,21 @@ class Client(requests.Session):
             else:
                 break
 
-    def _attach_params(self, override=None):
-        return override or {
-            'stdout': 1,
-            'stderr': 1,
-            'stream': 1
-        }
+    def attach_socket(self, container, params=None, ws=False):
+        if params is None:
+            params = {
+                'stdout': 1,
+                'stderr': 1,
+                'stream': 1
+            }
+        if ws:
+            return self._attach_websocket(container, params)
+
+        if isinstance(container, dict):
+            container = container.get('Id')
+        u = self._url("/containers/{0}/attach".format(container))
+        return self._socket_connection(
+            u, None, params=self._attach_params(params), stream=True)
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False):
@@ -285,6 +299,23 @@ class Client(requests.Session):
             container = container.get('Id')
         return self._result(self.get(self._url("/containers/{0}/changes".
                             format(container))), True)
+
+    def events(self):
+        u = self._url("/events")
+
+        socket = self._socket_connection(u, method='get', stream=True)
+
+        while True:
+            chunk = socket.recv(4096)
+            if chunk:
+                # Messages come in the format of length, data, newline.
+                length, data = chunk.split("\n", 1)
+                length = int(length, 16)
+                if length > len(data):
+                    data += socket.recv(length - len(data))
+                yield json.loads(data)
+            else:
+                break
 
     def export(self, container):
         if isinstance(container, dict):
