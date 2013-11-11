@@ -112,7 +112,7 @@ Example of binds mapping from host to container: `{'/mnt/srv/': '/srv'}`
 dictionary whose key is the container's port and the value is a `[{'HostIp': ''
 'HostPort': ''}]` list.  Leaving `HostIp` blank will expose the port on
 all host interfaces.  By leaving the `HostPort` blank, Docker will
-automatically assign a port.  For example: `port_bindings={"2181/tcp": [{'HostIp': ''
+automatically assign a port.  For example: `port_bindings={"2181/tcp": [{'HostIp': '', 
 'HostPort': ''}]}`.
 `lxc_conf` allows to pass LXC configuration options using a dictionary.
 
