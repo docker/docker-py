@@ -443,6 +443,8 @@ class Client(requests.Session):
             'stderr': 1
         }
         u = self._url("/containers/{0}/attach".format(container))
+        if utils.compare_version('1.6', self._version) < 0:
+            return self._result(self.post(u, None, params=params))
         res = ''
         response = self._result(self.post(u, None, params=params))
         walker = 0
