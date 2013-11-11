@@ -231,7 +231,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{}',
+            '{"PublishAllPorts": false}',
             headers={'Content-Type': 'application/json'}
         )
 
@@ -248,7 +248,8 @@ class DockerClientTest(unittest.TestCase):
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(
             json.loads(args[0][1]),
-            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
+            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
+             "PublishAllPorts": False}
         )
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -266,7 +267,8 @@ class DockerClientTest(unittest.TestCase):
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(
             json.loads(args[0][1]),
-            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
+            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
+             "PublishAllPorts": False}
         )
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -282,7 +284,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{"Binds": ["/tmp:/mnt"]}',
+            '{"Binds": ["/tmp:/mnt"], "PublishAllPorts": false}',
             headers={'Content-Type': 'application/json'}
         )
 
@@ -293,7 +295,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
-            '{}', headers={'Content-Type': 'application/json'}
+            '{"PublishAllPorts": false}',
+            headers={'Content-Type': 'application/json'}
         )
 
     def test_wait(self):
