@@ -177,18 +177,21 @@ class Client(requests.Session):
     def _create_websocket_connection(self, url):
         return websocket.create_connection(url)
 
-    def _socket_connection(self, url, method='post', *args, **kwargs):
-        try:
-            handler = {
-                "post": self.post,
-                "get": self.get
-            }[method.lower()]
-        except KeyError:
-            raise KeyError("No such method: `%s`" % (method))
-
-        res = handler(url, *args, **kwargs)
-        self._raise_for_status(res)
-        return res.raw._fp.fp._sock
+    def _stream_helper(self, response):
+        socket = self._stream_result_socket(response)
+        while True:
+            chunk = socket.recv(4096)
+            if chunk:
+                parts = chunk.strip().split('\r\n')
+                for i in range(len(parts)):
+                    if i % 2 != 0:
+                        yield parts[i] + '\n'
+                    else:
+                        size = int(parts[i], 16)
+                if size <= 0:
+                    break
+            else:
+                break
 
     def attach(self, container):
         socket = self.attach_socket(container)
@@ -213,8 +216,8 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
         u = self._url("/containers/{0}/attach".format(container))
-        return self._socket_connection(
-            u, None, params=self._attach_params(params), stream=True)
+        return self._stream_result_socket(self.post(
+            u, None, params=self._attach_params(params), stream=True))
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False):
@@ -318,7 +321,7 @@ class Client(requests.Session):
     def events(self):
         u = self._url("/events")
 
-        socket = self._socket_connection(u, method='get', stream=True)
+        socket = self._stream_result_socket(self.get(u, stream=True))
 
         while True:
             chunk = socket.recv(4096)
@@ -479,25 +482,9 @@ class Client(requests.Session):
         response = self.post(u, params=params, headers=headers, stream=stream)
 
         if stream:
-            return self.stream_helper(response)
+            return self._stream_helper(response)
         else:
             return self._result(response)
-
-    def stream_helper(self, response):
-        socket = self._stream_result_socket(response)
-        while True:
-            chunk = socket.recv(4096)
-            if chunk:
-                parts = chunk.strip().split('\r\n')
-                for i in range(len(parts)):
-                    if i % 2 != 0:
-                        yield parts[i] + '\n'
-                    else:
-                        size = int(parts[i], 16)
-                if size <= 0:
-                    break
-            else:
-                break
 
     def push(self, repository, stream=False):
         registry, repo_name = auth.resolve_repository_name(repository)
@@ -512,13 +499,13 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
             if stream:
-                return self.stream_helper(
+                return self._stream_helper(
                     self._post_json(u, None, headers=headers, stream=True))
             else:
                 return self._result(
                     self._post_json(u, None, headers=headers, stream=False))
         if stream:
-            return self.stream_helper(
+            return self._stream_helper(
                 self._post_json(u, authcfg, stream=True))
         else:
             return self._result(self._post_json(u, authcfg, stream=False))
