@@ -76,7 +76,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/version'
+            'unix://var/run/docker.sock/v1.6/version'
         )
 
     def test_info(self):
@@ -85,7 +85,7 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        fake_request.assert_called_with('unix://var/run/docker.sock/v1.4/info')
+        fake_request.assert_called_with('unix://var/run/docker.sock/v1.6/info')
 
     def test_search(self):
         try:
@@ -94,7 +94,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/search',
+            'unix://var/run/docker.sock/v1.6/images/search',
             params={'term': 'busybox'}
         )
 
@@ -108,7 +108,7 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/json',
+            'unix://var/run/docker.sock/v1.6/images/json',
             params={'filter': None, 'only_ids': 0, 'all': 1}
         )
 
@@ -119,7 +119,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/json',
+            'unix://var/run/docker.sock/v1.6/images/json',
             params={'filter': None, 'only_ids': 1, 'all': 0}
         )
 
@@ -130,7 +130,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/ps',
+            'unix://var/run/docker.sock/v1.6/containers/json',
             params={
                 'all': 1,
                 'since': None,
@@ -152,7 +152,7 @@ class DockerClientTest(unittest.TestCase):
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
-                         'unix://var/run/docker.sock/v1.4/containers/create')
+                         'unix://var/run/docker.sock/v1.6/containers/create')
         self.assertEqual(json.loads(args[0][1]),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
@@ -174,7 +174,7 @@ class DockerClientTest(unittest.TestCase):
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
-                         'unix://var/run/docker.sock/v1.4/containers/create')
+                         'unix://var/run/docker.sock/v1.6/containers/create')
         self.assertEqual(json.loads(args[0][1]),
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
@@ -193,7 +193,7 @@ class DockerClientTest(unittest.TestCase):
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
-                         'unix://var/run/docker.sock/v1.4/containers/create')
+                         'unix://var/run/docker.sock/v1.6/containers/create')
         self.assertEqual(json.loads(args[0][1]),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
@@ -212,7 +212,7 @@ class DockerClientTest(unittest.TestCase):
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
-                         'unix://var/run/docker.sock/v1.4/containers/create')
+                         'unix://var/run/docker.sock/v1.6/containers/create')
         self.assertEqual(json.loads(args[0][1]),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
@@ -230,7 +230,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
             '{"PublishAllPorts": false}',
             headers={'Content-Type': 'application/json'}
         )
@@ -244,7 +244,7 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(
             json.loads(args[0][1]),
@@ -263,7 +263,7 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(
             json.loads(args[0][1]),
@@ -283,7 +283,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.4/'
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(json.loads(args[0][1]),
                          {"Binds": ["/tmp:/mnt"], "PublishAllPorts": False})
@@ -296,10 +296,34 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/start',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
             '{"PublishAllPorts": false}',
             headers={'Content-Type': 'application/json'}
         )
+
+    def test_start_container_with_links(self):
+        try:
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID,
+                links={'link1': 'alias1', 'link2': 'alias2'}
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
+                                     'containers/3cc2351ab11b/start')
+        params = json.loads(args[0][1])
+        self.assertEqual(sorted(["Links", "PublishAllPorts"]),
+                         sorted(params.keys()))
+        self.assertEqual(params["PublishAllPorts"], False)
+        # We have to do this since the order is not guaranteed
+        links = params["Links"]
+        self.assertTrue(len(["link1:alias1", "link2:alias2"]) == len(links))
+        self.assertTrue(
+            sorted(["link1:alias1", "link2:alias2"]) == sorted(links))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
 
     def test_wait(self):
         try:
@@ -308,7 +332,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/wait',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/wait',
             None,
             timeout=None
         )
@@ -320,7 +344,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/wait',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/wait',
             None,
             timeout=None
         )
@@ -332,7 +356,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/attach',
             None,
             params={'logs': 1, 'stderr': 1, 'stdout': 1}
         )
@@ -344,7 +368,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/attach',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/attach',
             None,
             params={'logs': 1, 'stderr': 1, 'stdout': 1}
         )
@@ -356,7 +380,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes')
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/changes')
 
     def test_diff_with_dict_instead_of_id(self):
         try:
@@ -365,7 +389,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/changes')
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/changes')
 
     def test_stop_container(self):
         try:
@@ -374,7 +398,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
             None,
             params={'t': 2}
         )
@@ -386,7 +410,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/stop',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
             None,
             params={'t': 2}
         )
@@ -398,7 +422,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/kill',
             None
         )
 
@@ -409,7 +433,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/kill',
             None
         )
 
@@ -420,7 +444,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception : {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/restart',
             None,
             params={'t': 2}
         )
@@ -432,7 +456,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/restart',
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/restart',
             None,
             params={'t': 2}
         )
@@ -444,8 +468,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b',
-            params={'v': False}
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b',
+            params={'v': False, 'link': False}
         )
 
     def test_remove_container_with_dict_instead_of_id(self):
@@ -455,8 +479,19 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b',
-            params={'v': False}
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b',
+            params={'v': False, 'link': False}
+        )
+
+    def test_remove_link(self):
+        try:
+            self.client.remove_container(fake_api.FAKE_CONTAINER_ID, link=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b',
+            params={'v': False, 'link': True}
         )
 
     ##################
@@ -470,7 +505,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/create',
+            'unix://var/run/docker.sock/v1.6/images/create',
             headers={},
             params={'tag': None, 'fromImage': 'joffrey/test001'},
             stream=False
@@ -483,7 +518,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/create',
+            'unix://var/run/docker.sock/v1.6/images/create',
             headers={},
             params={'tag': None, 'fromImage': 'joffrey/test001'},
             stream=True
@@ -496,7 +531,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/commit',
+            'unix://var/run/docker.sock/v1.6/commit',
             '{}',
             headers={'Content-Type': 'application/json'},
             params={
@@ -515,7 +550,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.4/images/e9aa60c60128'
+            'unix://var/run/docker.sock/v1.6/images/e9aa60c60128'
         )
 
     #################
@@ -559,9 +594,9 @@ class DockerClientTest(unittest.TestCase):
         cfg = docker.auth.load_config(folder)
         self.assertTrue(cfg is not None)
         self.assertTrue('Configs' in cfg)
-        self.assertEquals(cfg['Configs'], {})
+        self.assertEqual(cfg['Configs'], {})
         self.assertTrue('rootPath' in cfg)
-        self.assertEquals(cfg['rootPath'], folder)
+        self.assertEqual(cfg['rootPath'], folder)
 
     def test_load_config(self):
         folder = tempfile.mkdtemp()
