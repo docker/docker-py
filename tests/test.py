@@ -17,6 +17,7 @@ import datetime
 import io
 import json
 import os
+import signal
 import tempfile
 import unittest
 
@@ -399,7 +400,8 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
-            None
+            None,
+            params={}
         )
 
     def test_kill_container_with_dict_instead_of_id(self):
@@ -410,7 +412,20 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
-            None
+            None,
+            params={}
+        )
+
+    def test_kill_container_with_signal(self):
+        try:
+            self.client.kill(fake_api.FAKE_CONTAINER_ID, signal=signal.SIGTERM)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.4/containers/3cc2351ab11b/kill',
+            None,
+            params={'signal': signal.SIGTERM}
         )
 
     def test_restart_container(self):
