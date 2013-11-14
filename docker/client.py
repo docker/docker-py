@@ -449,7 +449,8 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
-        return self._result(self._post(u, params=params, headers=headers))
+        return self._result(self._post(u, params=params,
+            headers=headers, timeout=None))
 
     def push(self, repository):
         registry, repo_name = auth.resolve_repository_name(repository)
