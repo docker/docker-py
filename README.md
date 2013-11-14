@@ -102,7 +102,8 @@ Restart a container. Similar to the `docker restart` command.
 * `c.search(term)`  
 Identical to the `docker search` command.
 
-* `c.start(container, binds=None, port_bindings=None, lxc_conf=None)`
+* <code>c.start(container, binds=None, port_bindings=None, lxc_conf=None,
+        create_local_bind_dirs=False)</code>  
 Similar to the `docker start` command, but doesn't support attach options.
 Use `docker logs` to recover `stdout`/`stderr`  
 `binds` Allows to bind a directory in the host to the container.
@@ -116,6 +117,8 @@ all host interfaces.  By leaving the `HostPort` blank, Docker will
 automatically assign a port.  For example: `port_bindings={"2181/tcp": [{'HostIp': '', 
 'HostPort': ''}]}`.
 `lxc_conf` allows to pass LXC configuration options using a dictionary.
+`create_local_bind_dirs` tells the Docker daemon to create any
+non-existent host-side directory that is the source of a bind-mount.
 
 * `c.stop(container, timeout=10)`  
 Stops a container. Similar to the `docker stop` command.
