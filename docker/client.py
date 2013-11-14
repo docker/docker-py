@@ -522,7 +522,7 @@ class Client(requests.Session):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
-        res = self._post(url, params=params)
+        res = self._post(url, params=params, timeout=max(timeout, self._timeout))
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
