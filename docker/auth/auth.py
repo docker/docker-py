@@ -89,11 +89,11 @@ def decode_auth(auth):
         auth = auth.encode('ascii')
     s = base64.b64decode(auth)
     login, pwd = s.split(b':')
-    return login, pwd
+    return login.decode('ascii'), pwd.decode('ascii')
 
 
 def encode_header(auth):
-    auth_json = json.dumps(auth)
+    auth_json = json.dumps(auth).encode('ascii')
     return base64.b64encode(auth_json)
 
 

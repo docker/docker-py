@@ -631,8 +631,8 @@ class DockerClientTest(unittest.TestCase):
         cfg = docker.auth.load_config(folder)
         self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
         cfg = cfg['Configs'][docker.auth.INDEX_URL]
-        self.assertEqual(cfg['Username'], b'sakuya')
-        self.assertEqual(cfg['Password'], b'izayoi')
+        self.assertEqual(cfg['Username'], 'sakuya')
+        self.assertEqual(cfg['Password'], 'izayoi')
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
 
