@@ -71,7 +71,7 @@ Identical to the `docker inspect` command, but only for containers.
 * `c.inspect_image(image_id)`  
 Identical to the `docker inspect` command, but only for images.
 
-* `c.kill(container)`  
+* `c.kill(container, signal=None)`  
 Kill a container. Similar to the `docker kill` command.
 
 * `c.login(username, password=None, email=None)`  
