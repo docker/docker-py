@@ -870,6 +870,31 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
 
+#######################
+##    LINK TESTS     ##
+#######################
+
+class TestDefaultLink(BaseTestCase):
+    def runTest(self):
+        os.environ['REDIS_PORT'] = 'tcp://192.168.1.10:6379'
+        proto, ip, port = docker.require('redis')
+        self.assertEqual(proto, 'tcp')
+        self.assertEqual(ip, '192.168.1.10')
+        self.assertEqual(port, '6379')
+
+class TestStandardLink(BaseTestCase):
+    def runTest(self):
+        os.environ['REDIS_PORT_6379_TCP'] = 'tcp://192.168.1.10:6379'
+        proto, ip, port = docker.require_port('redis', 6379)
+        self.assertEqual(proto, 'tcp')
+        self.assertEqual(ip, '192.168.1.10')
+        self.assertEqual(port, '6379')
+
+class TestEnvLink(BaseTestCase):
+    def runTest(self):
+        os.environ['REDIS_ENV_PASSWORD'] = 'docker'
+        p = docker.require_env('redis')
+        self.assertEqual(p, 'docker')
 
 if __name__ == '__main__':
     unittest.main()
