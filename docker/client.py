@@ -577,8 +577,9 @@ class Client(requests.Session):
 
         if links:
             formatted_links = [
-                '{0}:{1}'.format(path, alias) for path, alias in links.items()
+                '{0}:{1}'.format(k, v) for k, v in six.iteritems(links)
             ]
+
             start_config['Links'] = formatted_links
 
         url = self._url("/containers/{0}/start".format(container))
