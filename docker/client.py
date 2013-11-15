@@ -28,6 +28,8 @@ import docker.utils as utils
 if not six.PY3:
     import websocket
 
+DEFAULT_TIMEOUT_SECONDS = 60
+
 
 class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
@@ -62,17 +64,35 @@ class APIError(requests.exceptions.HTTPError):
 
 
 class Client(requests.Session):
-    def __init__(self, base_url="unix://var/run/docker.sock", version="1.6"):
+    def __init__(self, base_url="unix://var/run/docker.sock", version="1.6",
+                 timeout=DEFAULT_TIMEOUT_SECONDS):
         super(Client, self).__init__()
         if base_url.startswith('unix:///'):
             base_url = base_url.replace('unix:/', 'unix:')
-        self.mount('unix://', unixconn.UnixAdapter(base_url))
         self.base_url = base_url
         self._version = version
+        self._timeout = timeout
+
+        self.mount('unix://', unixconn.UnixAdapter(base_url, timeout))
         try:
             self._cfg = auth.load_config()
         except Exception:
             pass
+
+    def _set_request_timeout(self, kwargs):
+        """Prepare the kwargs for an HTTP request by inserting the timeout
+        parameter, if not already present."""
+        kwargs.setdefault('timeout', self._timeout)
+        return kwargs
+
+    def _post(self, url, **kwargs):
+        return self.post(url, **self._set_request_timeout(kwargs))
+
+    def _get(self, url, **kwargs):
+        return self.get(url, **self._set_request_timeout(kwargs))
+
+    def _delete(self, url, **kwargs):
+        return self.delete(url, **self._set_request_timeout(kwargs))
 
     def _url(self, path):
         return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
@@ -155,7 +175,7 @@ class Client(requests.Session):
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
         kwargs['headers']['Content-Type'] = 'application/json'
-        return self.post(url, json.dumps(data2), **kwargs)
+        return self._post(url, data=json.dumps(data2), **kwargs)
 
     def _attach_params(self, override=None):
         return override or {
@@ -243,8 +263,11 @@ class Client(requests.Session):
         }
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
-        response = self.post(
-            u, context, params=params, headers=headers, stream=stream)
+
+        response = self._post(
+            u, data=context, params=params, headers=headers, stream=stream
+        )
+
         if context is not None:
             context.close()
         if stream:
@@ -267,7 +290,8 @@ class Client(requests.Session):
             'author': author
         }
         u = self._url("/commit")
-        return self._result(self._post_json(u, conf, params=params), json=True)
+        return self._result(self._post_json(u, data=conf, params=params),
+                            json=True)
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False,
                    since=None, before=None, limit=-1):
@@ -279,7 +303,8 @@ class Client(requests.Session):
             'before': before
         }
         u = self._url("/containers/json")
-        res = self._result(self.get(u, params=params), True)
+        res = self._result(self._get(u, params=params), True)
+
         if quiet:
             return [{'Id': x['Id']} for x in res]
         return res
@@ -287,7 +312,7 @@ class Client(requests.Session):
     def copy(self, container, resource):
         res = self._post_json(
             self._url("/containers/{0}/copy".format(container)),
-            {"Resource": resource},
+            data={"Resource": resource},
             stream=True
         )
         self._raise_for_status(res)
@@ -310,13 +335,13 @@ class Client(requests.Session):
         params = {
             'name': name
         }
-        res = self._post_json(u, config, params=params)
+        res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
 
     def diff(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
-        return self._result(self.get(self._url("/containers/{0}/changes".
+        return self._result(self._get(self._url("/containers/{0}/changes".
                             format(container))), True)
 
     def events(self):
@@ -339,25 +364,25 @@ class Client(requests.Session):
     def export(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
-        res = self.get(self._url("/containers/{0}/export".format(container)),
-                       stream=True)
+        res = self._get(self._url("/containers/{0}/export".format(container)),
+                        stream=True)
         self._raise_for_status(res)
         return res.raw
 
     def history(self, image):
-        res = self.get(self._url("/images/{0}/history".format(image)))
+        res = self._get(self._url("/images/{0}/history".format(image)))
         self._raise_for_status(res)
         return self._result(res)
 
     def images(self, name=None, quiet=False, all=False, viz=False):
         if viz:
-            return self._result(self.get(self._url("images/viz")))
+            return self._result(self._get(self._url("images/viz")))
         params = {
             'filter': name,
             'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
         }
-        res = self._result(self.get(self._url("/images/json"), params=params),
+        res = self._result(self._get(self._url("/images/json"), params=params),
                            True)
         if quiet:
             return [x['Id'] for x in res]
@@ -381,12 +406,13 @@ class Client(requests.Session):
             data = None
         if isinstance(src, six.string_types):
             params['fromSrc'] = src
-            return self._result(self.post(u, data, params=params))
+            return self._result(self._post(u, data=data, params=params))
 
-        return self._result(self.post(u, src, params=params))
+        return self._result(self._post(u, data=src, params=params))
 
     def info(self):
-        return self._result(self.get(self._url("/info")), True)
+        return self._result(self._get(self._url("/info")),
+                            True)
 
     def insert(self, image, url, path):
         api_url = self._url("/images/" + image + "/insert")
@@ -394,19 +420,20 @@ class Client(requests.Session):
             'url': url,
             'path': path
         }
-        return self._result(self.post(api_url, None, params=params))
+        return self._result(self._post(api_url, params=params))
 
     def inspect_container(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
-        return self._result(self.get(
-            self._url("/containers/{0}/json".format(container))
-        ), True)
+        return self._result(
+            self._get(self._url("/containers/{0}/json".format(container))),
+            True)
 
     def inspect_image(self, image_id):
-        return self._result(self.get(
-            self._url("/images/{0}/json".format(image_id))
-        ), True)
+        return self._result(
+            self._get(self._url("/images/{0}/json".format(image_id))),
+            True
+        )
 
     def kill(self, container, signal=None):
         if isinstance(container, dict):
@@ -415,7 +442,8 @@ class Client(requests.Session):
         params = {}
         if signal is not None:
             params['signal'] = signal
-        res = self.post(url, None, params=params)
+        res = self._post(url, params=params)
+
         self._raise_for_status(res)
 
     def login(self, username, password=None, email=None, registry=None):
@@ -432,7 +460,7 @@ class Client(requests.Session):
             'password': password,
             'email': email
         }
-        res = self._result(self._post_json(url, req_data), True)
+        res = self._result(self._post_json(url, data=req_data), True)
         if res['Status'] == 'Login Succeeded':
             self._cfg['Configs'][registry] = req_data
         return res
@@ -447,9 +475,9 @@ class Client(requests.Session):
         }
         u = self._url("/containers/{0}/attach".format(container))
         if utils.compare_version('1.6', self._version) < 0:
-            return self._result(self.post(u, None, params=params))
+            return self._result(self._post(u, params=params))
         res = ''
-        response = self._result(self.post(u, None, params=params))
+        response = self._result(self._post(u, params=params))
         walker = 0
         while walker < len(response):
             header = response[walker:walker+8]
@@ -464,7 +492,7 @@ class Client(requests.Session):
     def port(self, container, private_port):
         if isinstance(container, dict):
             container = container.get('Id')
-        res = self.get(self._url("/containers/{0}/json".format(container)))
+        res = self._get(self._url("/containers/{0}/json".format(container)))
         self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
@@ -496,7 +524,7 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
-        response = self.post(u, params=params, headers=headers, stream=stream)
+        response = self._post(u, params=params, headers=headers, stream=stream)
 
         if stream:
             return self._stream_helper(response)
@@ -515,6 +543,7 @@ class Client(requests.Session):
             # for this specific registry as we can have an anon push
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+
             if stream:
                 return self._stream_helper(
                     self._post_json(u, None, headers=headers, stream=True))
@@ -531,11 +560,12 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
         params = {'v': v, 'link': link}
-        res = self.delete(self._url("/containers/" + container), params=params)
+        res = self._delete(self._url("/containers/" + container),
+                           params=params)
         self._raise_for_status(res)
 
     def remove_image(self, image):
-        res = self.delete(self._url("/images/" + image))
+        res = self._delete(self._url("/images/" + image))
         self._raise_for_status(res)
 
     def restart(self, container, timeout=10):
@@ -543,12 +573,13 @@ class Client(requests.Session):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart".format(container))
-        res = self.post(url, None, params=params)
+        res = self._post(url, params=params)
         self._raise_for_status(res)
 
     def search(self, term):
-        return self._result(self.get(self._url("/images/search"),
-                            params={'term': term}), True)
+        return self._result(self._get(self._url("/images/search"),
+                                      params={'term': term}),
+                            True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None):
@@ -583,7 +614,7 @@ class Client(requests.Session):
             start_config['Links'] = formatted_links
 
         url = self._url("/containers/{0}/start".format(container))
-        res = self._post_json(url, start_config)
+        res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
     def stop(self, container, timeout=10):
@@ -591,7 +622,8 @@ class Client(requests.Session):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
-        res = self.post(url, None, params=params)
+        res = self._post(url, params=params,
+                         timeout=max(timeout, self._timeout))
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
@@ -601,22 +633,22 @@ class Client(requests.Session):
             'force': 1 if force else 0
         }
         url = self._url("/images/{0}/tag".format(image))
-        res = self.post(url, None, params=params)
+        res = self._post(url, params=params)
         self._raise_for_status(res)
         return res.status_code == 201
 
     def top(self, container):
         u = self._url("/containers/{0}/top".format(container))
-        return self._result(self.get(u), True)
+        return self._result(self._get(u), True)
 
     def version(self):
-        return self._result(self.get(self._url("/version")), True)
+        return self._result(self._get(self._url("/version")), True)
 
     def wait(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
         url = self._url("/containers/{0}/wait".format(container))
-        res = self.post(url, None, timeout=None)
+        res = self._post(url, timeout=None)
         self._raise_for_status(res)
         json_ = res.json()
         if 'StatusCode' in json_:

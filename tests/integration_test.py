@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import time
 import base64
 import io
 import os
@@ -74,9 +75,9 @@ class TestSearch(BaseTestCase):
     def runTest(self):
         res = self.client.search('busybox')
         self.assertTrue(len(res) >= 1)
-        base_img = [x for x in res if x['Name'] == 'busybox']
+        base_img = [x for x in res if x['name'] == 'busybox']
         self.assertEqual(len(base_img), 1)
-        self.assertIn('Description', base_img[0])
+        self.assertIn('description', base_img[0])
 
 ###################
 ## LISTING TESTS ##
@@ -166,8 +167,9 @@ class TestCreateContainerPrivileged(BaseTestCase):
         res = self.client.create_container('busybox', 'true', privileged=True)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
-        # In newer versions of docker, the "Privileged" flag is no
-        # longer exposed in the API
+        # Since Nov 2013, the Privileged flag is no longer part of the
+        # container's config exposed via the API (safety concerns?).
+        #
         # self.assertEqual(inspect['Config']['Privileged'], True)
 
 
@@ -749,6 +751,26 @@ class TestLoadConfig(BaseTestCase):
         self.assertEqual(cfg['Password'], b'izayoi')
         self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
+
+
+class TestConnectionTimeout(unittest.TestCase):
+    def setUp(self):
+        self.timeout = 0.5
+        self.client = docker.client.Client(base_url='http://192.168.10.2:4243',
+                                           timeout=self.timeout)
+
+    def runTest(self):
+        start = time.time()
+        res = None
+        # This call isn't supposed to complete, and it should fail fast.
+        try:
+            res = self.client.inspect_container('id')
+        except:
+            pass
+        end = time.time()
+        self.assertTrue(res is None)
+        self.assertTrue(end - start < 2 * self.timeout)
+
 
 if __name__ == '__main__':
     unittest.main()
