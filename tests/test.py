@@ -253,7 +253,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
-            data='{"PublishAllPorts": false}',
+            data='{"PublishAllPorts": false, "CreateLocalBindDirs": false}',
             headers={'Content-Type': 'application/json'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
@@ -274,7 +274,7 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(
             json.loads(args[1]['data']),
             {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
-             "PublishAllPorts": False}
+            "PublishAllPorts": False, "CreateLocalBindDirs": False}
         )
         self.assertEqual(
             args[1]['headers'],
@@ -297,7 +297,7 @@ class DockerClientTest(unittest.TestCase):
             json.loads(args[1]['data']),
             {
                 "LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
-                "PublishAllPorts": False
+                "PublishAllPorts": False, "CreateLocalBindDirs": False
             }
         )
         self.assertEqual(args[1]['headers'],
@@ -315,8 +315,11 @@ class DockerClientTest(unittest.TestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
                                      'containers/3cc2351ab11b/start')
-        self.assertEqual(json.loads(args[1]['data']),
-                         {"Binds": ["/tmp:/mnt"], "PublishAllPorts": False})
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"Binds": ["/tmp:/mnt"],
+             "PublishAllPorts": False,
+             "CreateLocalBindDirs": False})
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(
@@ -341,13 +344,16 @@ class DockerClientTest(unittest.TestCase):
         )
         self.assertEqual(
             json.loads(args[1]['data']),
-            {"PublishAllPorts": False, "Links": ["path:alias"]}
+            {"PublishAllPorts": False,
+             "CreateLocalBindDirs": False,
+             "Links": ["path:alias"]}
         )
         self.assertEqual(
             args[1]['headers'],
             {'Content-Type': 'application/json'}
         )
 
+    def test_start_container_with_multiple_links(self):
         # multiple links
         try:
             link_path = 'path'
@@ -371,6 +377,7 @@ class DockerClientTest(unittest.TestCase):
             json.loads(args[1]['data']),
             {
                 "PublishAllPorts": False,
+                "CreateLocalBindDirs": False,
                 "Links": ["path2:alias2", "path1:alias1"]
             }
         )
@@ -386,7 +393,20 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
-            data='{"PublishAllPorts": false}',
+            data='{"PublishAllPorts": false, "CreateLocalBindDirs": false}',
+            headers={'Content-Type': 'application/json'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_start_container_with_create_local_bind_dirs(self):
+        try:
+            self.client.start({'Id': fake_api.FAKE_CONTAINER_ID},
+                    create_local_bind_dirs=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
+            data='{"PublishAllPorts": false, "CreateLocalBindDirs": true}',
             headers={'Content-Type': 'application/json'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )

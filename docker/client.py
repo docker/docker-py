@@ -582,7 +582,7 @@ class Client(requests.Session):
                             True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=False, links=None):
+            publish_all_ports=False, links=None, create_local_bind_dirs=False):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -593,8 +593,11 @@ class Client(requests.Session):
             lxc_conf = formatted
 
         start_config = {
-            'LxcConf': lxc_conf
+            'LxcConf': lxc_conf,
+            'PublishAllPorts': publish_all_ports,
+            'CreateLocalBindDirs': create_local_bind_dirs,
         }
+
         if binds:
             bind_pairs = [
                 '{0}:{1}'.format(host, dest) for host, dest in binds.items()
@@ -604,13 +607,10 @@ class Client(requests.Session):
         if port_bindings:
             start_config['PortBindings'] = port_bindings
 
-        start_config['PublishAllPorts'] = publish_all_ports
-
         if links:
             formatted_links = [
                 '{0}:{1}'.format(k, v) for k, v in six.iteritems(links)
             ]
-
             start_config['Links'] = formatted_links
 
         url = self._url("/containers/{0}/start".format(container))
