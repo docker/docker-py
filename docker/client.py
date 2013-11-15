@@ -408,11 +408,14 @@ class Client(requests.Session):
             self._url("/images/{0}/json".format(image_id))
         ), True)
 
-    def kill(self, container):
+    def kill(self, container, signal=None):
         if isinstance(container, dict):
             container = container.get('Id')
         url = self._url("/containers/{0}/kill".format(container))
-        res = self.post(url, None)
+        params = {}
+        if signal is not None:
+            params['signal'] = signal
+        res = self.post(url, None, params=params)
         self._raise_for_status(res)
 
     def login(self, username, password=None, email=None, registry=None):

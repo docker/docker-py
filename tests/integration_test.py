@@ -15,6 +15,7 @@
 import base64
 import io
 import os
+import signal
 import tempfile
 import unittest
 
@@ -367,6 +368,24 @@ class TestKillWithDictInsteadOfId(BaseTestCase):
         self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
+
+
+class TestKillWithSignal(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '60'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(id, signal=signal.SIGTERM)
+        exitcode = self.client.wait(id)
+        self.assertNotEqual(exitcode, 0)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False, state)
 
 
 class TestRestart(BaseTestCase):
