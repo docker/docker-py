@@ -273,7 +273,7 @@ class DockerClientTest(unittest.TestCase):
         )
         self.assertEqual(
             json.loads(args[1]['data']),
-            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
+            {"LxcConf": {"lxc.conf.k": "lxc.conf.value"},
              "PublishAllPorts": False}
         )
         self.assertEqual(
