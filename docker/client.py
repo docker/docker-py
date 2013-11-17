@@ -592,6 +592,12 @@ class Client(requests.Session):
                 for k, v in six.iteritems(lxc_conf):
                     formatted.append({'Key': k, 'Value': str(v)})
                 lxc_conf = formatted
+        else:
+            if isinstance(lxc_conf, dict):
+                formatted = [
+                    '{0}:{1}'.format(k, v) for k, v in six.iteritems(lxc_conf)
+                ]
+                lxc_conf = formatted
 
         start_config = {
             'LxcConf': lxc_conf
