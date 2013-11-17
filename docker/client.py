@@ -586,18 +586,14 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
 
-        if utils.compare_version('1.6', self._version) < 0:
-            if isinstance(lxc_conf, dict):
-                formatted = []
-                for k, v in six.iteritems(lxc_conf):
+        if isinstance(lxc_conf, dict):
+            formatted = []
+            for k, v in six.iteritems(lxc_conf):
+                if utils.compare_version('1.6', self._version) < 0:
                     formatted.append({'Key': k, 'Value': str(v)})
-                lxc_conf = formatted
-        else:
-            if isinstance(lxc_conf, dict):
-                formatted = [
-                    '{0}:{1}'.format(k, v) for k, v in six.iteritems(lxc_conf)
-                ]
-                lxc_conf = formatted
+                else:
+                    formatted.append({k: str(v)})
+            lxc_conf = formatted
 
         start_config = {
             'LxcConf': lxc_conf
