@@ -219,6 +219,24 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
             self.assertEqual(inspect['State']['ExitCode'], 0)
 
 
+class TestStartContainerWithLxcConf(BaseTestCase):
+    def runTest(self):
+        res = self.client.create_container('busybox', 'true')
+        self.assertIn('Id', res)
+        self.tmp_containers.append(res['Id'])
+        self.client.start(res['Id'], lxc_conf={'lxc.conf.k': 'lxc.conf.value'})
+        inspect = self.client.inspect_container(res['Id'])
+        self.assertIn('Config', inspect)
+        self.assertIn('ID', inspect)
+        self.assertTrue(inspect['ID'].startswith(res['Id']))
+        self.assertIn('Image', inspect)
+        self.assertIn('State', inspect)
+        self.assertIn('Running', inspect['State'])
+        if not inspect['State']['Running']:
+            self.assertIn('ExitCode', inspect['State'])
+            self.assertEqual(inspect['State']['ExitCode'], 0)
+
+
 class TestWait(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', ['sleep', '10'])
