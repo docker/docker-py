@@ -607,7 +607,7 @@ class Client(requests.Session):
 
         if links:
             formatted_links = [
-                '{0}:{1}'.format(k, v) for k, v in six.iteritems(links)
+                '{0}:{1}'.format(k, v) for k, v in sorted(six.iteritems(links))
             ]
 
             start_config['Links'] = formatted_links
