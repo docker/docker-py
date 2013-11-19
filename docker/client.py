@@ -525,7 +525,7 @@ class Client(requests.Session):
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
         response = self._post(u, params=params, headers=headers, stream=stream,
-                timeout=None)
+                              timeout=None)
 
         if stream:
             return self._stream_helper(response)
