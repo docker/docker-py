@@ -344,8 +344,8 @@ class TestStopWithDictInsteadOfId(BaseTestCase):
 
 class TestStopWithTimeout(BaseTestCase):
     def runTest(self):
-        shcmd = 'trap "echo TERM" SIGTERM; echo STARTED; sleep 10; echo STOPPED'
-        container = self.client.create_container('busybox', ['sh', '-c', shcmd])
+        cmd = 'trap "echo TERM" SIGTERM; echo STARTED; sleep 10'
+        container = self.client.create_container('busybox', ['sh', '-c', cmd])
         self.tmp_containers.append(container)
         self.client.start(container)
 
