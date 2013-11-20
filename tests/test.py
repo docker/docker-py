@@ -505,7 +505,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
-            params={},
+            params={'t': 10},
             timeout=11,
         )
 
