@@ -468,7 +468,7 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
             params={'t': 2},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS + 2
         )
 
     def test_stop_container_with_dict_instead_of_id(self):
@@ -480,7 +480,33 @@ class DockerClientTest(unittest.TestCase):
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
             params={'t': 2},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS + 2
+        )
+
+    def test_stop_container_with_timeout(self):
+        client = docker.Client(timeout=1)
+        try:
+            client.stop({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=3)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
+            params={'t': 3},
+            timeout=4,
+        )
+
+    def test_stop_container_without_timeout(self):
+        client = docker.Client(timeout=1)
+        try:
+            client.stop({'Id': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/stop',
+            params={},
+            timeout=11,
         )
 
     def test_kill_container(self):

@@ -617,13 +617,17 @@ class Client(requests.Session):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
-    def stop(self, container, timeout=10):
+    def stop(self, container, timeout=None):
         if isinstance(container, dict):
             container = container.get('Id')
-        params = {'t': timeout}
+
+        params = {}
+        if timeout is not None:
+            params['t'] = timeout
+
         url = self._url("/containers/{0}/stop".format(container))
         res = self._post(url, params=params,
-                         timeout=max(timeout, self._timeout))
+                         timeout=self._timeout + (timeout or 10))
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
