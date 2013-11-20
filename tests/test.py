@@ -492,8 +492,9 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/attach',
-            params={'logs': 1, 'stderr': 1, 'stdout': 1},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            params={'stream': 0, 'logs': 1, 'stderr': 1, 'stdout': 1},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            stream=False
         )
 
     def test_logs_with_dict_instead_of_id(self):
@@ -504,8 +505,22 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/attach',
-            params={'logs': 1, 'stderr': 1, 'stdout': 1},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            params={'stream': 0, 'logs': 1, 'stderr': 1, 'stdout': 1},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+    def test_log_streaming(self):
+        try:
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/attach',
+            params={'stream': 1, 'logs': 1, 'stderr': 1, 'stdout': 1},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            stream=True
         )
 
     def test_diff(self):
