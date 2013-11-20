@@ -344,7 +344,7 @@ class TestStopWithDictInsteadOfId(BaseTestCase):
 
 class TestStopWithTimeout(BaseTestCase):
     def runTest(self):
-        cmd = 'trap "echo TERM" SIGTERM; echo STARTED; sleep 10'
+        cmd = 'trap "" TERM; echo STARTED ; sleep 20 & wait $!'
         container = self.client.create_container('busybox', ['sh', '-c', cmd])
         self.tmp_containers.append(container)
         self.client.start(container)
@@ -361,6 +361,29 @@ class TestStopWithTimeout(BaseTestCase):
         # Total request timeout is 4 seconds,
         # 1s of client timeout + 3s of server timeout
         docker.Client(timeout=1).stop(container, timeout=3)
+        exitcode = self.client.wait(container)
+        self.assertEqual(exitcode, 137)  # 128 + SIGKILL
+
+
+class TestStopWithDefaultTimeout(BaseTestCase):
+    def runTest(self):
+        cmd = 'trap "" TERM; echo STARTED ; sleep 20 & wait $!'
+        container = self.client.create_container('busybox', ['sh', '-c', cmd])
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        # Be sure the cmd is running before stopping the container or it will
+        # never gets to ignore SIGTERM
+        for _ in xrange(5):
+            time.sleep(2)
+            if 'STARTED' in self.client.logs(container):
+                break
+        else:
+            self.fail('Test container does not started in time')
+
+        # Total request timeout is 11 seconds,
+        # 1s of client timeout + 10s of default server side timeout
+        docker.Client(timeout=1).stop(container)
         exitcode = self.client.wait(container)
         self.assertEqual(exitcode, 137)  # 128 + SIGKILL
 
