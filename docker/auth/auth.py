@@ -36,7 +36,7 @@ def expand_registry_url(hostname):
         if '/' not in hostname[9:]:
             hostname = hostname + '/v1/'
         return hostname
-    if utils.ping('https://' + hostname + '_ping'):
+    if utils.ping('https://' + hostname + '/v1/_ping'):
         return 'https://' + hostname + '/v1/'
     return 'http://' + hostname + '/v1/'
 
