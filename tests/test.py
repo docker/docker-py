@@ -348,7 +348,7 @@ class DockerClientTest(unittest.TestCase):
             {'Content-Type': 'application/json'}
         )
 
-        # multiple links
+    def test_start_container_with_multiple_links(self):
         try:
             link_path = 'path'
             alias = 'alias'
@@ -371,7 +371,7 @@ class DockerClientTest(unittest.TestCase):
             json.loads(args[1]['data']),
             {
                 "PublishAllPorts": False,
-                "Links": ["path2:alias2", "path1:alias1"]
+                "Links": ["path1:alias1", "path2:alias2"]
             }
         )
         self.assertEqual(

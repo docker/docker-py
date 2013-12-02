@@ -524,7 +524,8 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
         u = self._url("/images/create")
-        response = self._post(u, params=params, headers=headers, stream=stream)
+        response = self._post(u, params=params, headers=headers, stream=stream,
+                              timeout=None)
 
         if stream:
             return self._stream_helper(response)
@@ -608,7 +609,7 @@ class Client(requests.Session):
 
         if links:
             formatted_links = [
-                '{0}:{1}'.format(k, v) for k, v in six.iteritems(links)
+                '{0}:{1}'.format(k, v) for k, v in sorted(six.iteritems(links))
             ]
 
             start_config['Links'] = formatted_links
