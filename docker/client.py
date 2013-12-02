@@ -35,6 +35,7 @@ class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
         super(APIError, self).__init__(message, response)
 
+        self.response = response
         self.explanation = explanation
 
         if self.explanation is None and response.content:
