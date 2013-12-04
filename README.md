@@ -34,7 +34,7 @@ Creates a container that can then be `start`ed. Parameters are similar to those
 for the `docker run` command except it doesn't support the attach options
 (`-a`)  
 In order to create volumes that can be rebinded at start time, use the
-following syntax: `volumes={"/srv": {} }`.   The `ports` parameter is a
+following syntax: `volumes={"/srv": {}}`.   The `ports` parameter is a
 dictionary whose key is the port to expose and the value is an empty
 dictionary: `ports={"2181/tcp": {}}`.  Note, this will simply expose the ports in
 the container, but does not make them available on the host.  See `start`
