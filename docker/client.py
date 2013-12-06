@@ -388,27 +388,35 @@ class Client(requests.Session):
             return [x['Id'] for x in res]
         return res
 
-    def import_image(self, src, data=None, repository=None, tag=None):
+    def import_image(self, src=None, data=None, repository=None, tag=None,
+                     image=None):
         u = self._url("/images/create")
         params = {
             'repo': repository,
             'tag': tag
         }
-        try:
-            # XXX: this is ways not optimal but the only way
-            # for now to import tarballs through the API
-            fic = open(src)
-            data = fic.read()
-            fic.close()
-            src = "-"
-        except IOError:
-            # file does not exists or not a file (URL)
-            data = None
-        if isinstance(src, six.string_types):
-            params['fromSrc'] = src
-            return self._result(self._post(u, data=data, params=params))
 
-        return self._result(self._post(u, data=src, params=params))
+        if src:
+            try:
+                # XXX: this is ways not optimal but the only way
+                # for now to import tarballs through the API
+                fic = open(src)
+                data = fic.read()
+                fic.close()
+                src = "-"
+            except IOError:
+                # file does not exists or not a file (URL)
+                data = None
+            if isinstance(src, six.string_types):
+                params['fromSrc'] = src
+                return self._result(self._post(u, data=data, params=params))
+            return self._result(self._post(u, data=src, params=params))
+
+        if image:
+            params['fromImage'] = image
+            return self._result(self._post(u, data=None, params=params))
+
+        raise Exception("Must specify a src or image")
 
     def info(self):
         return self._result(self._get(self._url("/info")),
