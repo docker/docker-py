@@ -133,6 +133,27 @@ class Client(requests.Session):
                 '{0}={1}'.format(k, v) for k, v in environment.items()
             ]
 
+        if ports and isinstance(ports, list):
+            exposed_ports = {}
+            for port_definition in ports:
+                port = port_definition
+                proto = None
+                if isinstance(port_definition, tuple):
+                    if len(port_definition) == 2:
+                        proto = port_definition[1]
+                    port = port_definition[0]
+                exposed_ports['{}{}'.format(
+                    port,
+                    '/' + proto if proto else ''
+                )] = {}
+            ports = exposed_ports
+
+        if volumes and isinstance(volumes, list):
+            volumes_dict = {}
+            for vol in volumes:
+                volumes_dict[vol] = {}
+            volumes = volumes_dict
+
         attach_stdin = False
         attach_stdout = False
         attach_stderr = False
@@ -603,7 +624,22 @@ class Client(requests.Session):
             start_config['Binds'] = bind_pairs
 
         if port_bindings:
-            start_config['PortBindings'] = port_bindings
+            ports = {}
+            for k, v in six.iteritems(port_bindings):
+                key = str(k)
+                if '/' not in key:
+                    key = key + '/tcp'
+                ports[key] = [{ 'HostIp': '', 'HostPort': ''}]
+                if isinstance(v, tuple):
+                    if len(v) == 2:
+                        ports[key][0]['HostPort'] = str(v[1])
+                        ports[key][0]['HostIp'] = v[0]
+                    else:
+                        ports[key][0]['HostPort'] = str(v[0])
+                else:
+                    ports[key][0]['HostPort'] = str(v)
+
+            start_config['PortBindings'] = ports
 
         start_config['PublishAllPorts'] = publish_all_ports
 
