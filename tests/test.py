@@ -740,6 +740,27 @@ class DockerClientTest(unittest.TestCase):
         buf.close()
         os.remove(buf.name)
 
+    def test_import_image_from_image(self):
+        try:
+            self.client.import_image(
+                image=fake_api.FAKE_IMAGE_NAME,
+                repository=fake_api.FAKE_REPO_NAME,
+                tag=fake_api.FAKE_TAG_NAME
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/images/create',
+            params={
+                'repo': fake_api.FAKE_REPO_NAME,
+                'tag': fake_api.FAKE_TAG_NAME,
+                'fromImage': fake_api.FAKE_IMAGE_NAME
+            },
+            data=None,
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_inspect_image(self):
         try:
             self.client.inspect_image(fake_api.FAKE_IMAGE_NAME)
