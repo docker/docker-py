@@ -29,7 +29,7 @@ Identical to the `docker cp` command.
 
 * <code>c.create_container(image, command=None, hostname=None, user=None, detach=False,  
         stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None,  
-        dns=None, volumes=None, volumes_from=None, privileged=False, name=None)</code>  
+        dns=None, volumes=None, volumes_from=None, name=None)</code>  
 Creates a container that can then be `start`ed. Parameters are similar to those
 for the `docker run` command except it doesn't support the attach options
 (`-a`)  
@@ -102,7 +102,7 @@ Restart a container. Similar to the `docker restart` command.
 * `c.search(term)`  
 Identical to the `docker search` command.
 
-* `c.start(container, binds=None, port_bindings=None, lxc_conf=None)`
+* `c.start(container, binds=None, port_bindings=None, lxc_conf=None, privileged=False)`
 Similar to the `docker start` command, but doesn't support attach options.
 Use `docker logs` to recover `stdout`/`stderr`  
 `binds` Allows to bind a directory in the host to the container.
@@ -116,6 +116,7 @@ all host interfaces.  By leaving the `HostPort` blank, Docker will
 automatically assign a port.  For example: `port_bindings={"2181/tcp": [{'HostIp': '', 
 'HostPort': ''}]}`.
 `lxc_conf` allows to pass LXC configuration options using a dictionary.
+`privileged` starts the container in privileged mode.
 
 * `c.stop(container, timeout=10)`  
 Stops a container. Similar to the `docker stop` command.
