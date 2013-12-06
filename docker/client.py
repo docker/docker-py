@@ -629,7 +629,7 @@ class Client(requests.Session):
                 key = str(k)
                 if '/' not in key:
                     key = key + '/tcp'
-                ports[key] = [{ 'HostIp': '', 'HostPort': ''}]
+                ports[key] = [{'HostIp': '', 'HostPort': ''}]
                 if isinstance(v, tuple):
                     if len(v) == 2:
                         ports[key][0]['HostPort'] = str(v[1])
