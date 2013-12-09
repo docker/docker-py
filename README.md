@@ -141,7 +141,7 @@ Bindings are then declared in the `Client.start` method.
 
     client.start(container_id, port_bindings={
         1111: 4567,
-        2222: ''
+        2222: None
     })
 
 You can limit the host address on which the port will be exposed like such:
@@ -149,6 +149,14 @@ You can limit the host address on which the port will be exposed like such:
     client.start(container_id, port_bindings={
         1111: ('127.0.0.1', 4567)
     })
+
+or without host port assignment:
+
+    client.start(container_id, port_bindings={
+        1111: ('127.0.0.1',)
+    })
+
+
 
 Using volumes
 =============

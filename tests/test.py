@@ -190,7 +190,7 @@ class DockerClientTest(unittest.TestCase):
 
         try:
             self.client.create_container('busybox', ['ls', mount_dest],
-                                         volumes={mount_dest: {}})
+                                         volumes=[mount_dest])
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -202,6 +202,30 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
                              "Volumes": {"/mnt": {}}, "Memory": 0,
+                             "AttachStderr": true, "Privileged": false,
+                             "AttachStdout": true, "OpenStdin": false}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    def test_create_container_with_ports(self):
+        try:
+            self.client.create_container('busybox', 'ls',
+                                         ports=[1111, (2222, 'udp'), (3333,)])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.6/containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "Memory": 0, "ExposedPorts": {
+                                "1111": {},
+                                "2222/udp": {},
+                                "3333": {}
+                             },
                              "AttachStderr": true, "Privileged": false,
                              "AttachStdout": true, "OpenStdin": false}'''))
         self.assertEqual(args[1]['headers'],
@@ -317,6 +341,53 @@ class DockerClientTest(unittest.TestCase):
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(json.loads(args[1]['data']),
                          {"Binds": ["/tmp:/mnt"], "PublishAllPorts": False})
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_start_container_with_port_binds(self):
+        self.maxDiff = None
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
+                1111: None,
+                2222: 2222,
+                '3333/udp': (3333,),
+                4444: ('127.0.0.1',),
+                5555: ('127.0.0.1', 5555),
+                6666: [('127.0.0.1',), ('192.168.0.1',)]
+            })
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
+                                     'containers/3cc2351ab11b/start')
+        self.assertEqual(json.loads(args[1]['data']), {
+            "PublishAllPorts": False,
+            "PortBindings": {
+                "1111/tcp": [{"HostPort": "", "HostIp": ""}],
+                "2222/tcp": [{"HostPort": "2222", "HostIp": ""}],
+                "3333/udp": [{"HostPort": "3333", "HostIp": ""}],
+                "4444/tcp": [{
+                    "HostPort": "",
+                    "HostIp": "127.0.0.1"
+                }],
+                "5555/tcp": [{
+                    "HostPort": "5555",
+                    "HostIp": "127.0.0.1"
+                }],
+                "6666/tcp": [{
+                    "HostPort": "",
+                    "HostIp": "127.0.0.1"
+                }, {
+                    "HostPort": "",
+                    "HostIp": "192.168.0.1"
+                }]
+            }
+        })
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(

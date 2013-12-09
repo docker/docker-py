@@ -142,7 +142,7 @@ class Client(requests.Session):
                     if len(port_definition) == 2:
                         proto = port_definition[1]
                     port = port_definition[0]
-                exposed_ports['{}{}'.format(
+                exposed_ports['{0}{1}'.format(
                     port,
                     '/' + proto if proto else ''
                 )] = {}
@@ -624,22 +624,9 @@ class Client(requests.Session):
             start_config['Binds'] = bind_pairs
 
         if port_bindings:
-            ports = {}
-            for k, v in six.iteritems(port_bindings):
-                key = str(k)
-                if '/' not in key:
-                    key = key + '/tcp'
-                ports[key] = [{'HostIp': '', 'HostPort': ''}]
-                if isinstance(v, tuple):
-                    if len(v) == 2:
-                        ports[key][0]['HostPort'] = str(v[1])
-                        ports[key][0]['HostIp'] = v[0]
-                    else:
-                        ports[key][0]['HostPort'] = str(v[0])
-                else:
-                    ports[key][0]['HostPort'] = str(v)
-
-            start_config['PortBindings'] = ports
+            start_config['PortBindings'] = utils.convert_port_bindings(
+                port_bindings
+            )
 
         start_config['PublishAllPorts'] = publish_all_ports
 
