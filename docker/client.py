@@ -199,20 +199,15 @@ class Client(requests.Session):
         return websocket.create_connection(url)
 
     def _stream_helper(self, response):
-        socket = self._stream_result_socket(response)
+        socket = self._stream_result_socket(response).makefile()
         while True:
-            chunk = socket.recv(4096)
-            if chunk:
-                parts = chunk.strip().split('\r\n')
-                for i in range(len(parts)):
-                    if i % 2 != 0:
-                        yield parts[i] + '\n'
-                    else:
-                        size = int(parts[i], 16)
-                if size <= 0:
-                    break
-            else:
+            size = int(socket.readline(), 16)
+            if size <= 0:
                 break
+            data = socket.readline()
+            if not data:
+                break
+            yield data
 
     def attach(self, container):
         socket = self.attach_socket(container)
