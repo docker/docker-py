@@ -133,6 +133,27 @@ class Client(requests.Session):
                 '{0}={1}'.format(k, v) for k, v in environment.items()
             ]
 
+        if ports and isinstance(ports, list):
+            exposed_ports = {}
+            for port_definition in ports:
+                port = port_definition
+                proto = None
+                if isinstance(port_definition, tuple):
+                    if len(port_definition) == 2:
+                        proto = port_definition[1]
+                    port = port_definition[0]
+                exposed_ports['{0}{1}'.format(
+                    port,
+                    '/' + proto if proto else ''
+                )] = {}
+            ports = exposed_ports
+
+        if volumes and isinstance(volumes, list):
+            volumes_dict = {}
+            for vol in volumes:
+                volumes_dict[vol] = {}
+            volumes = volumes_dict
+
         attach_stdin = False
         attach_stdout = False
         attach_stderr = False
@@ -598,7 +619,9 @@ class Client(requests.Session):
             start_config['Binds'] = bind_pairs
 
         if port_bindings:
-            start_config['PortBindings'] = port_bindings
+            start_config['PortBindings'] = utils.convert_port_bindings(
+                port_bindings
+            )
 
         start_config['PublishAllPorts'] = publish_all_ports
 

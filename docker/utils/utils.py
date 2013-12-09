@@ -60,3 +60,37 @@ def ping(url):
         return res.status >= 400
     except Exception:
         return False
+
+
+def _convert_port_binding(binding):
+    result = {'HostIp': '', 'HostPort': ''}
+    if isinstance(binding, tuple):
+        if len(binding) == 2:
+            result['HostPort'] = binding[1]
+            result['HostIp'] = binding[0]
+        elif isinstance(binding[0], six.string_types):
+            result['HostIp'] = binding[0]
+        else:
+            result['HostPort'] = binding[0]
+    else:
+        result['HostPort'] = binding
+
+    if result['HostPort'] is None:
+        result['HostPort'] = ''
+    else:
+        result['HostPort'] = str(result['HostPort'])
+
+    return result
+
+
+def convert_port_bindings(port_bindings):
+    result = {}
+    for k, v in six.iteritems(port_bindings):
+        key = str(k)
+        if '/' not in key:
+            key = key + '/tcp'
+        if isinstance(v, list):
+            result[key] = [_convert_port_binding(binding) for binding in v]
+        else:
+            result[key] = [_convert_port_binding(v)]
+    return result
