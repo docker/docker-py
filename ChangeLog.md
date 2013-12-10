@@ -1,6 +1,32 @@
 ChangeLog
 =========
 
+0.2.3
+-----
+
+* Support for API version 1.6
+* Added support for links
+* Added support for global request timeout
+* Added `signal` parameter in `Client.kill`
+* Added support for `publish_all_ports` in `Client.start`
+* `Client.pull`, `Client.push` and `Client.build` can be streamed now
+* Added support for websockets in `Client.attach`
+* Fixed ports for Docker 0.6.5+
+* Added `Client.events` method (access to the `/events` endpoint)
+* Changed the way the ports and volumes are provided in `Client.start` and
+  `Client.create_container̀` to make them simpler and more intuitive.
+
+### Bugfixes
+
+* Fixed a bug where private registries on HTTPS weren't handled properly
+* Fixed a bug where auth would break with Python 3
+
+### Miscellaneous
+
+* Test improvements
+* Slight doc improvements
+
+
 0.2.2
 -----
 
