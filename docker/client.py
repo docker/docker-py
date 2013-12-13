@@ -533,7 +533,7 @@ class Client(requests.Session):
                 self._result(response, binary=True)
 
         return stream and self._multiplexed_socket_stream_helper(response) or \
-           ''.join([x for x in self._multiplexed_buffer_helper(response)])
+            ''.join([x for x in self._multiplexed_buffer_helper(response)])
 
     def port(self, container, private_port):
         if isinstance(container, dict):
