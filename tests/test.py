@@ -226,25 +226,7 @@ class DockerClientTest(unittest.TestCase):
                                 "2222/udp": {},
                                 "3333": {}
                              },
-                             "AttachStderr": true, "Privileged": false,
-                             "AttachStdout": true, "OpenStdin": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-
-    def test_create_container_privileged(self):
-        try:
-            self.client.create_container('busybox', 'true', privileged=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(args[0][0],
-                         'unix://var/run/docker.sock/v1.6/containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": false, "Memory": 0,
-                             "AttachStderr": true, "Privileged": true,
+                             "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -386,29 +368,35 @@ class DockerClientTest(unittest.TestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
                                      'containers/3cc2351ab11b/start')
-        self.assertEqual(json.loads(args[1]['data']), {
-            "PublishAllPorts": False,
-            "PortBindings": {
-                "1111/tcp": [{"HostPort": "", "HostIp": ""}],
-                "2222/tcp": [{"HostPort": "2222", "HostIp": ""}],
-                "3333/udp": [{"HostPort": "3333", "HostIp": ""}],
-                "4444/tcp": [{
-                    "HostPort": "",
-                    "HostIp": "127.0.0.1"
-                }],
-                "5555/tcp": [{
-                    "HostPort": "5555",
-                    "HostIp": "127.0.0.1"
-                }],
-                "6666/tcp": [{
-                    "HostPort": "",
-                    "HostIp": "127.0.0.1"
-                }, {
-                    "HostPort": "",
-                    "HostIp": "192.168.0.1"
-                }]
-            }
-        })
+        data = json.loads(args[1]['data'])
+        self.assertEqual(data['PublishAllPorts'], False)
+        self.assertTrue('1111/tcp' in data['PortBindings'])
+        self.assertTrue('2222/tcp' in data['PortBindings'])
+        self.assertTrue('3333/udp' in data['PortBindings'])
+        self.assertTrue('4444/tcp' in data['PortBindings'])
+        self.assertTrue('5555/tcp' in data['PortBindings'])
+        self.assertTrue('6666/tcp' in data['PortBindings'])
+        self.assertEqual(
+            [{"HostPort": "", "HostIp": ""}],
+            data['PortBindings']['1111/tcp']
+        )
+        self.assertEqual(
+            [{"HostPort": "2222", "HostIp": ""}],
+            data['PortBindings']['2222/tcp']
+        )
+        self.assertEqual(
+            [{"HostPort": "3333", "HostIp": ""}],
+            data['PortBindings']['3333/udp']
+        )
+        self.assertEqual(
+            [{"HostPort": "", "HostIp": "127.0.0.1"}],
+            data['PortBindings']['4444/tcp']
+        )
+        self.assertEqual(
+            [{"HostPort": "5555", "HostIp": "127.0.0.1"}],
+            data['PortBindings']['5555/tcp']
+        )
+        self.assertEqual(len(data['PortBindings']['6666/tcp']), 2)
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(
