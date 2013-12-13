@@ -118,7 +118,7 @@ class Client(requests.Session):
     def _container_config(self, image, command, hostname=None, user=None,
                           detach=False, stdin_open=False, tty=False,
                           mem_limit=0, ports=None, environment=None, dns=None,
-                          volumes=None, volumes_from=None, privileged=False):
+                          volumes=None, volumes_from=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -174,7 +174,6 @@ class Client(requests.Session):
             'Image':        image,
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
-            'Privileged':   privileged,
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -371,12 +370,11 @@ class Client(requests.Session):
     def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
                          mem_limit=0, ports=None, environment=None, dns=None,
-                         volumes=None, volumes_from=None, privileged=False,
-                         name=None):
+                         volumes=None, volumes_from=None, name=None):
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
-            ports, environment, dns, volumes, volumes_from, privileged
+            ports, environment, dns, volumes, volumes_from
         )
         return self.create_container_from_config(config, name)
 
@@ -629,7 +627,7 @@ class Client(requests.Session):
                             True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=False, links=None):
+              publish_all_ports=False, links=None, privileged=False):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -661,6 +659,8 @@ class Client(requests.Session):
             ]
 
             start_config['Links'] = formatted_links
+
+        start_config['Privileged'] = privileged
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)

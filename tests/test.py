@@ -179,8 +179,8 @@ class DockerClientTest(unittest.TestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
-                             "AttachStderr": true, "Privileged": false,
-                             "AttachStdout": true, "OpenStdin": false}'''))
+                             "AttachStderr": true, "AttachStdout": true,
+                             "OpenStdin": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -202,7 +202,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
                              "Volumes": {"/mnt": {}}, "Memory": 0,
-                             "AttachStderr": true, "Privileged": false,
+                             "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -263,8 +263,8 @@ class DockerClientTest(unittest.TestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
-                             "AttachStderr": true, "Privileged": false,
-                             "AttachStdout": true, "OpenStdin": false}'''))
+                             "AttachStderr": true, "AttachStdout": true,
+                             "OpenStdin": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
@@ -274,12 +274,22 @@ class DockerClientTest(unittest.TestCase):
             self.client.start(fake_api.FAKE_CONTAINER_ID)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
-
-        fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
-            data='{"PublishAllPorts": false}',
-            headers={'Content-Type': 'application/json'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_lxc_conf(self):
@@ -298,11 +308,15 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(
             json.loads(args[1]['data']),
             {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
-             "PublishAllPorts": False}
+             "PublishAllPorts": False, "Privileged": False}
         )
         self.assertEqual(
             args[1]['headers'],
             {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_lxc_conf_compat(self):
@@ -320,12 +334,17 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(
             json.loads(args[1]['data']),
             {
-                "LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}],
-                "PublishAllPorts": False
+                "LxcConf": [{"Key": "lxc.conf.k", "Value": "lxc.conf.value"}],
+                "PublishAllPorts": False,
+                "Privileged": False,
             }
         )
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
 
     def test_start_container_with_binds(self):
         try:
@@ -340,7 +359,9 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(args[0][0], 'unix://var/run/docker.sock/v1.6/'
                                      'containers/3cc2351ab11b/start')
         self.assertEqual(json.loads(args[1]['data']),
-                         {"Binds": ["/tmp:/mnt"], "PublishAllPorts": False})
+                         {"Binds": ["/tmp:/mnt"],
+                          "PublishAllPorts": False,
+                          "Privileged": False})
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(
@@ -412,7 +433,8 @@ class DockerClientTest(unittest.TestCase):
         )
         self.assertEqual(
             json.loads(args[1]['data']),
-            {"PublishAllPorts": False, "Links": ["path:alias"]}
+            {"PublishAllPorts": False, "Privileged": False,
+             "Links": ["path:alias"]}
         )
         self.assertEqual(
             args[1]['headers'],
@@ -442,6 +464,7 @@ class DockerClientTest(unittest.TestCase):
             json.loads(args[1]['data']),
             {
                 "PublishAllPorts": False,
+                "Privileged": False,
                 "Links": ["path1:alias1", "path2:alias2"]
             }
         )
@@ -450,16 +473,47 @@ class DockerClientTest(unittest.TestCase):
             {'Content-Type': 'application/json'}
         )
 
+    def test_start_container_privileged(self):
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(json.loads(args[1]['data']),
+                         {"PublishAllPorts": False, "Privileged": True})
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_start_container_with_dict_instead_of_id(self):
         try:
             self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
-        fake_request.assert_called_with(
-            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start',
-            data='{"PublishAllPorts": false}',
-            headers={'Content-Type': 'application/json'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_wait(self):
