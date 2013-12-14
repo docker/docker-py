@@ -1018,10 +1018,6 @@ class DockerClientTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         cfg = docker.auth.load_config(folder)
         self.assertTrue(cfg is not None)
-        self.assertTrue('Configs' in cfg)
-        self.assertEqual(cfg['Configs'], {})
-        self.assertTrue('rootPath' in cfg)
-        self.assertEqual(cfg['rootPath'], folder)
 
     def test_load_config(self):
         folder = tempfile.mkdtemp()
@@ -1031,12 +1027,13 @@ class DockerClientTest(unittest.TestCase):
         f.write('email = sakuya@scarlet.net')
         f.close()
         cfg = docker.auth.load_config(folder)
-        self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
-        cfg = cfg['Configs'][docker.auth.INDEX_URL]
-        self.assertEqual(cfg['Username'], 'sakuya')
-        self.assertEqual(cfg['Password'], 'izayoi')
-        self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
-        self.assertEqual(cfg.get('Auth'), None)
+        self.assertTrue(docker.auth.INDEX_URL in cfg)
+        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
+        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], 'sakuya')
+        self.assertEqual(cfg['password'], 'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('auth'), None)
 
 
 if __name__ == '__main__':

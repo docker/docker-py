@@ -775,11 +775,29 @@ class TestLoadConfig(BaseTestCase):
         f.write('email = sakuya@scarlet.net')
         f.close()
         cfg = docker.auth.load_config(folder)
-        self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
-        cfg = cfg['Configs'][docker.auth.INDEX_URL]
-        self.assertEqual(cfg['Username'], b'sakuya')
-        self.assertEqual(cfg['Password'], b'izayoi')
-        self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
+        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
+        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], b'sakuya')
+        self.assertEqual(cfg['password'], b'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('Auth'), None)
+
+
+class TestLoadJSONConfig(BaseTestCase):
+    def runTest(self):
+        folder = tempfile.mkdtemp()
+        f = open(os.path.join(folder, '.dockercfg'), 'w')
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        email_ = 'sakuya@scarlet.net'
+        f.write('{{"{}": {{"auth": "{}", "email": "{}"}}}}\n'.format(
+            docker.auth.INDEX_URL, auth_, email_))
+        f.close()
+        cfg = docker.auth.load_config(folder)
+        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
+        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], b'sakuya')
+        self.assertEqual(cfg['password'], b'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
 
 
