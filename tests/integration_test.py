@@ -405,7 +405,8 @@ class TestKillWithSignal(BaseTestCase):
 
 class TestPort(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'], ports=[1111, 2222])
+        container = self.client.create_container('busybox', ['sleep', '9999'],
+            ports=[1111, 2222])
         id = container['Id']
         self.client.start(container, port_bindings={
             1111: ('127.0.0.1', 4567),

@@ -540,13 +540,13 @@ class Client(requests.Session):
         self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
-        host_port_bindings = None
+        h_ports = None
 
-        host_port_bindings = json_['NetworkSettings']['Ports'].get(s_port +'/udp')
-        if host_port_bindings is None:
-            host_port_bindings = json_['NetworkSettings']['Ports'].get(s_port + '/tcp')
+        h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/udp')
+        if h_ports is None:
+            h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/tcp')
 
-        return host_port_bindings
+        return h_ports
 
     def pull(self, repository, tag=None, stream=False):
         registry, repo_name = auth.resolve_repository_name(repository)
