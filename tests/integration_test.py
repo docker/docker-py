@@ -402,26 +402,29 @@ class TestKillWithSignal(BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False, state)
 
-
 class TestPort(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'],
-            ports=[1111, 2222])
+
+        port_bindings = {
+            1111 :('127.0.0.1', '4567'),
+            2222 :('192.168.0.100', '4568')
+        }
+
+        container = self.client.create_container('busybox', ['sleep', '60'],
+            ports=port_bindings.keys())
         id = container['Id']
-        self.client.start(container, port_bindings={
-            1111: ('127.0.0.1', 4567),
-            })
-        port_bindings = self.client.port(container, 1111)
-        self.assertIsInstance(port_bindings, list)
-        self.assertEqual(len(port_bindings), 1)
 
-        print port_bindings
-        port_binding = port_bindings.pop()
-        self.assertIn('HostPort', port_binding)
-        self.assertIn('HostIp', port_binding)
+        self.client.start(container, port_bindings= port_bindings)
 
-        self.assertEqual(port_binding['HostPort'], '4567')
-        self.assertEqual(port_binding['HostIp'], '127.0.0.1')
+        #Call the port function on each biding and compare expected vs actual
+        for port in port_bindings:
+            actual_bindings = self.client.port(container, port)
+            port_binding = actual_bindings.pop()
+
+            ip, host_port = port_binding['HostIp'], port_binding['HostPort']
+
+            self.assertEqual(ip, port_bindings[port][0])
+            self.assertEqual(host_port, port_bindings[port][1])
 
         self.client.kill(id)
 
