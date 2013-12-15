@@ -402,20 +402,25 @@ class TestKillWithSignal(BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False, state)
 
+
 class TestPort(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'], ports=[1111, 2222])
         id = container['Id']
-        self.client.start(container, port_bindings={1111: ('127.0.0.1', 4567)})
+        self.client.start(container, port_bindings={
+            1111: ('127.0.0.1', 4567),
+            })
         port_bindings = self.client.port(container, 1111)
         self.assertIsInstance(port_bindings, list)
         self.assertEqual(len(port_bindings), 1)
 
+        print port_bindings
         port_binding = port_bindings.pop()
         self.assertIn('HostPort', port_binding)
         self.assertIn('HostIp', port_binding)
 
-        self.assertTrue(port_binding['HostPort'])
+        self.assertEqual(port_binding['HostPort'], '4567')
+        self.assertEqual(port_binding['HostIp'], '127.0.0.1')
 
         self.client.kill(id)
 
