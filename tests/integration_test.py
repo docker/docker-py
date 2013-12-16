@@ -402,19 +402,21 @@ class TestKillWithSignal(BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False, state)
 
+
 class TestPort(BaseTestCase):
     def runTest(self):
 
         port_bindings = {
-            1111 :('127.0.0.1', '4567'),
-            2222 :('192.168.0.100', '4568')
+            1111: ('127.0.0.1', '4567'),
+            2222: ('192.168.0.100', '4568')
         }
 
-        container = self.client.create_container('busybox', ['sleep', '60'],
-            ports=port_bindings.keys())
+        container = self.client.create_container(
+            'busybox', ['sleep', '60'], ports=port_bindings.keys()
+            )
         id = container['Id']
 
-        self.client.start(container, port_bindings= port_bindings)
+        self.client.start(container, port_bindings=port_bindings)
 
         #Call the port function on each biding and compare expected vs actual
         for port in port_bindings:
@@ -427,6 +429,7 @@ class TestPort(BaseTestCase):
             self.assertEqual(host_port, port_bindings[port][1])
 
         self.client.kill(id)
+
 
 class TestRestart(BaseTestCase):
     def runTest(self):

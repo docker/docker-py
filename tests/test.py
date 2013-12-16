@@ -33,6 +33,7 @@ try:
 except ImportError:
     import mock
 
+
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None):
     res = requests.Response()

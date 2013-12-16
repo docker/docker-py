@@ -156,70 +156,34 @@ def get_fake_inspect_image():
     }
     return status_code, response
 
+
 def get_fake_port():
     status_code = 200
-    response = {'Args': [],
-     'Config': {'AttachStderr': True,
-      'AttachStdin': False,
-      'AttachStdout': True,
-      'Cmd': ['yes'],
-      'CpuShares': 0,
-      'Dns': None,
-      'Domainname': '',
-      'Entrypoint': None,
-      'Env': None,
-      'ExposedPorts': {'1111': {}, '2222': {}},
-      'Hostname': 'a398832bc87e',
-      'Image': 'ubuntu',
-      'Memory': 0,
-      'MemorySwap': 0,
-      'NetworkDisabled': False,
-      'OpenStdin': False,
-      'PortSpecs': None,
-      'StdinOnce': False,
-      'Tty': False,
-      'User': '',
-      'Volumes': None,
-      'VolumesFrom': '',
-      'WorkingDir': ''},
-     'Created': '2013-12-14T17:41:13.976760086Z',
-     'Driver': 'aufs',
-     'HostConfig': {'Binds': None,
-      'ContainerIDFile': '',
-      'Links': None,
-      'LxcConf': None,
-      'PortBindings': {'1111': None,
-       '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-       '2222': None},
-      'Privileged': False,
-      'PublishAllPorts': False},
-     'HostnamePath': '/var/lib/docker/containers/a398832bc87e15b220d710a98386493559df2448480fc9243e86ee5544eea767/hostname',
-     'HostsPath': '/var/lib/docker/containers/a398832bc87e15b220d710a98386493559df2448480fc9243e86ee5544eea767/hosts',
-     'ID': 'a398832bc87e15b220d710a98386493559df2448480fc9243e86ee5544eea767',
-     'Image': '8dbd9e392a964056420e5d58ca5cc376ef18e2de93b5cc90e868a1bbc8318c1c',
-     'Name': '/sad_tesla7',
-     'NetworkSettings': {'Bridge': 'docker0',
-      'Gateway': '172.17.42.1',
-      'IPAddress': '172.17.0.19',
-      'IPPrefixLen': 16,
-      'PortMapping': None,
-      'Ports': {'1111': None,
-       '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-       '2222': None}},
-     'Path': 'yes',
-     'ResolvConfPath': '/var/lib/docker/containers/a398832bc87e15b220d710a98386493559df2448480fc9243e86ee5544eea767/resolv.conf',
-     'State': {'ExitCode': 0,
-      'FinishedAt': '0001-01-01T00:00:00Z',
-      'Ghost': False,
-      'Pid': 11703,
-      'Running': True,
-      'StartedAt': '2013-12-14T17:41:27.844076587Z'},
-     'SysInitPath': '/usr/bin/docker',
-     'Volumes': {},
-     'VolumesRW': {}}
-
-
+    response = {
+        'HostConfig': {
+            'Binds': None,
+            'ContainerIDFile': '',
+            'Links': None,
+            'LxcConf': None,
+            'PortBindings': {
+                '1111': None,
+                '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
+                '2222': None
+            },
+            'Privileged': False,
+            'PublishAllPorts': False
+        },
+        'NetworkSettings': {
+            'Bridge': 'docker0',
+            'PortMapping': None,
+            'Ports': {
+                '1111': None,
+                '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
+                '2222': None}
+        }
+    }
     return status_code, response
+
 
 def get_fake_insert_image():
     status_code = 200
