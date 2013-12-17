@@ -253,15 +253,24 @@ class Client(requests.Session):
         """A generator of multiplexed data blocks coming from a response
         socket."""
         socket = self._stream_result_socket(response)
+
+        def recvall(socket, size):
+            data = ''
+            while size > 0:
+                block = socket.recv(size)
+                data += block
+                size -= len(block)
+            return data
+
         while True:
             socket.settimeout(None)
-            header = socket.recv(8)
+            header = recvall(socket, STREAM_HEADER_SIZE_BYTES)
             if not header:
                 break
             _, length = struct.unpack('>BxxxL', header)
             if not length:
                 break
-            yield socket.recv(length).strip()
+            yield recvall(socket, length).rstrip()
 
     def attach(self, container):
         socket = self.attach_socket(container)
