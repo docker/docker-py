@@ -23,7 +23,7 @@ is hosted. `version` is the version of the API the client will use and
 
 ```python
 c.build(path=None, tag=None, quiet=False, fileobj=None, nocache=False,
-        rm=False)
+        rm=False, stream=False)
 ```
 
 Similar to the `docker build` command. Either `path` or `fileobj` needs
@@ -88,7 +88,7 @@ c.images(name=None, quiet=False, all=False, viz=False)
 Identical to the `docker images` command.
 
 ```python
-c.import_image(src, repository=None, tag=None)
+c.import_image(src, data=None, repository=None, tag=None)
 ```
 
 Identical to the `docker import` command. If `src` is a string or
@@ -105,7 +105,7 @@ c.info()
 Identical to the `docker info` command.
 
 ```python
-c.insert(url, path)
+c.insert(image, url, path)
 ```
 
 Identical to the `docker insert` command.
@@ -129,7 +129,7 @@ c.kill(container, signal=None)
 Kill a container. Similar to the `docker kill` command.
 
 ```python
-c.login(username, password=None, email=None)
+c.login(username, password=None, email=None, registry=None)
 ```
 
 Identical to the `docker login` command (but non-interactive, obviously).
@@ -149,19 +149,19 @@ c.port(container, private_port)
 Identical to the `docker port` command.
 
 ```python
-c.pull(repository, tag=None)
+c.pull(repository, tag=None, stream=False)
 ```
 
 Identical to the `docker pull` command.
 
 ```python
-c.push(repository)
+c.push(repository, stream=False)
 ```
 
 Identical to the `docker push` command.
 
 ````python
-c.remove_container(container, v=False)
+c.remove_container(container, v=False, link=False)
 ```
 
 Remove a container. Similar to the `docker rm` command.
@@ -185,7 +185,7 @@ Identical to the `docker search` command.
 
 ```python
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
-        privileged=False)
+        publish_all_ports=False, links=None, privileged=False)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
@@ -210,7 +210,7 @@ c.tag(image, repository, tag=None, force=False)
 Identical to the `docker tag` command.
 
 ```python
-c.top(container_id)
+c.top(container)
 ```
 
 Identical to the `docker top` command.
