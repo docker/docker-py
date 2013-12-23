@@ -277,7 +277,7 @@ c.create_container('busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'])
 Volume mappings are then declared inside the `Client.start` method like this:
 
 ```python
-c.start(container_id, bindings={
+c.start(container_id, binds={
     '/mnt/vol2': '/home/user1/',
     '/mnt/vol1': '/var/www'
 })
