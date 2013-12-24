@@ -274,6 +274,23 @@ class TestLogs(BaseTestCase):
         logs = self.client.logs(id)
         self.assertEqual(logs, snippet + '\n')
 
+class TestLogsStreaming(BaseTestCase):
+    def runTest(self):
+        snippet = 'Flowering Nights (Sakuya Iyazoi)'
+        container = self.client.create_container(
+            'busybox', 'echo {0}'.format(snippet)
+        )
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        logs = ''
+        for chunk in self.client.logs(id, stream=True):
+            logs += chunk
+
+        exitcode = self.client.wait(id)
+        self.assertEqual(exitcode, 0)
+
+        self.assertEqual(logs, snippet + '\n')
 
 class TestLogsWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
