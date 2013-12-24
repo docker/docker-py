@@ -274,6 +274,7 @@ class TestLogs(BaseTestCase):
         logs = self.client.logs(id)
         self.assertEqual(logs, snippet + '\n')
 
+
 class TestLogsStreaming(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -291,6 +292,7 @@ class TestLogsStreaming(BaseTestCase):
         self.assertEqual(exitcode, 0)
 
         self.assertEqual(logs, snippet + '\n')
+
 
 class TestLogsWithDictInsteadOfId(BaseTestCase):
     def runTest(self):

@@ -276,10 +276,9 @@ class Client(requests.Session):
             if not length:
                 break
             data = recvall(socket, length)
-            if data:
-                yield data
-            else:
+            if not data:
                 break
+            yield data
 
     def attach(self, container):
         socket = self.attach_socket(container)
