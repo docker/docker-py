@@ -260,6 +260,9 @@ class Client(requests.Session):
             data = ''
             while size > 0:
                 block = socket.recv(size)
+                if not block:
+                    return None
+
                 data += block
                 size -= len(block)
             return data
@@ -272,7 +275,11 @@ class Client(requests.Session):
             _, length = struct.unpack('>BxxxL', header)
             if not length:
                 break
-            yield recvall(socket, length).rstrip()
+            data = recvall(socket, length)
+            if data:
+                yield data
+            else:
+                break
 
     def attach(self, container):
         socket = self.attach_socket(container)
