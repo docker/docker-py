@@ -227,7 +227,9 @@ class Client(requests.Session):
 
     def _stream_helper(self, response):
         """Generator for data coming from a chunked-encoded HTTP response."""
-        socket = self._stream_result_socket(response).makefile()
+        socket_fp = self._stream_result_socket(response)
+        socket_fp.setblocking(1)
+        socket = socket_fp.makefile()
         while True:
             size = int(socket.readline(), 16)
             if size <= 0:
