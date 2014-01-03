@@ -120,7 +120,8 @@ class Client(requests.Session):
     def _container_config(self, image, command, hostname=None, user=None,
                           detach=False, stdin_open=False, tty=False,
                           mem_limit=0, ports=None, environment=None, dns=None,
-                          volumes=None, volumes_from=None):
+                          volumes=None, volumes_from=None,
+                          network_disabled=False):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -176,6 +177,7 @@ class Client(requests.Session):
             'Image':        image,
             'Volumes':      volumes,
             'VolumesFrom':  volumes_from,
+            'NetworkDisabled': network_disabled
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -389,11 +391,12 @@ class Client(requests.Session):
     def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
                          mem_limit=0, ports=None, environment=None, dns=None,
-                         volumes=None, volumes_from=None, name=None):
+                         volumes=None, volumes_from=None,
+                         network_disabled=False, name=None):
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
-            ports, environment, dns, volumes, volumes_from
+            ports, environment, dns, volumes, volumes_from, network_disabled
         )
         return self.create_container_from_config(config, name)
 
