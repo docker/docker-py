@@ -180,7 +180,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
-                             "OpenStdin": false}'''))
+                             "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -203,7 +203,8 @@ class DockerClientTest(unittest.TestCase):
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
                              "Volumes": {"/mnt": {}}, "Memory": 0,
                              "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false}'''))
+                             "AttachStdout": true, "OpenStdin": false,
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -227,7 +228,8 @@ class DockerClientTest(unittest.TestCase):
                                 "3333": {}
                              },
                              "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false}'''))
+                             "AttachStdout": true, "OpenStdin": false,
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -246,7 +248,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
-                             "OpenStdin": false}'''))
+                             "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
