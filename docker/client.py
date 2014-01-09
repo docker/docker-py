@@ -75,12 +75,9 @@ class Client(requests.Session):
         self.base_url = base_url
         self._version = version
         self._timeout = timeout
+        self._auth_configs = auth.load_config()
 
         self.mount('unix://', unixconn.UnixAdapter(base_url, timeout))
-        try:
-            self._cfg = auth.load_config()
-        except Exception:
-            pass
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
@@ -516,24 +513,33 @@ class Client(requests.Session):
 
         self._raise_for_status(res)
 
-    def login(self, username, password=None, email=None, registry=None):
-        url = self._url("/auth")
-        if registry is None:
-            registry = auth.INDEX_URL
-        if getattr(self, '_cfg', None) is None:
-            self._cfg = auth.load_config()
-        authcfg = auth.resolve_authconfig(self._cfg, registry)
-        if 'username' in authcfg and authcfg['username'] == username:
+    def login(self, username, password=None, email=None, registry=None,
+              reauth=False):
+        # If we don't have any auth data so far, try reloading the config file
+        # one more time in case anything showed up in there.
+        if not self._auth_configs:
+            self._auth_configs = auth.load_config()
+
+        registry = registry or auth.INDEX_URL
+
+        authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+        # If we found an existing auth config for this registry and username
+        # combination, we can return it immediately unless reauth is requested.
+        if authcfg and authcfg.get('username', None) == username \
+                and not reauth:
             return authcfg
+
         req_data = {
             'username': username,
             'password': password,
-            'email': email
+            'email': email,
+            'serveraddress': registry,
         }
-        res = self._result(self._post_json(url, data=req_data), True)
-        if res['Status'] == 'Login Succeeded':
-            self._cfg['Configs'][registry] = req_data
-        return res
+
+        response = self._post_json(self._url('/auth'), data=req_data)
+        if response.status_code == 200:
+            self._auth_configs[registry] = req_data
+        return self._result(response, json=True)
 
     def logs(self, container, stdout=True, stderr=True, stream=False):
         if isinstance(container, dict):
@@ -582,16 +588,20 @@ class Client(requests.Session):
         headers = {}
 
         if utils.compare_version('1.5', self._version) >= 0:
-            if getattr(self, '_cfg', None) is None:
-                self._cfg = auth.load_config()
-            authcfg = auth.resolve_authconfig(self._cfg, registry)
-            # do not fail if no atuhentication exists
-            # for this specific registry as we can have a readonly pull
+            # If we don't have any auth data so far, try reloading the config
+            # file one more time in case anything showed up in there.
+            if not self._auth_configs:
+                self._auth_configs = auth.load_config()
+            authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+
+            # Do not fail here if no atuhentication exists for this specific
+            # registry as we can have a readonly pull. Just put the header if
+            # we can.
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
-        u = self._url("/images/create")
-        response = self._post(u, params=params, headers=headers, stream=stream,
-                              timeout=None)
+
+        response = self._post(self._url('/images/create'), params=params,
+                              headers=headers, stream=stream, timeout=None)
 
         if stream:
             return self._stream_helper(response)
@@ -602,26 +612,26 @@ class Client(requests.Session):
         registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         headers = {}
-        if getattr(self, '_cfg', None) is None:
-            self._cfg = auth.load_config()
-        authcfg = auth.resolve_authconfig(self._cfg, registry)
+
         if utils.compare_version('1.5', self._version) >= 0:
-            # do not fail if no atuhentication exists
-            # for this specific registry as we can have an anon push
+            # If we don't have any auth data so far, try reloading the config
+            # file one more time in case anything showed up in there.
+            if not self._auth_configs:
+                self._auth_configs = auth.load_config()
+            authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+
+            # Do not fail here if no atuhentication exists for this specific
+            # registry as we can have a readonly pull. Just put the header if
+            # we can.
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-            if stream:
-                return self._stream_helper(
-                    self._post_json(u, None, headers=headers, stream=True))
-            else:
-                return self._result(
-                    self._post_json(u, None, headers=headers, stream=False))
-        if stream:
-            return self._stream_helper(
-                self._post_json(u, authcfg, stream=True))
+            response = self._post_json(u, None, headers=headers, stream=stream)
         else:
-            return self._result(self._post_json(u, authcfg, stream=False))
+            response = self._post_json(u, authcfg, stream=stream)
+
+        return stream and self._stream_helper(response) \
+            or self._result(response)
 
     def remove_container(self, container, v=False, link=False):
         if isinstance(container, dict):
