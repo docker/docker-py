@@ -70,6 +70,8 @@ class Client(requests.Session):
         super(Client, self).__init__()
         if base_url.startswith('unix:///'):
             base_url = base_url.replace('unix:/', 'unix:')
+        if base_url.startswith('tcp:'):
+            base_url = base_url.replace('tcp:', 'http:')
         if base_url.endswith('/'):
             base_url = base_url[:-1]
         self.base_url = base_url
