@@ -308,7 +308,7 @@ class Client(requests.Session):
             u, None, params=self._attach_params(params), stream=True))
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
-              nocache=False, rm=False, stream=False):
+              nocache=False, rm=False, stream=False, timeout=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise Exception("Either path or fileobj needs to be provided.")
@@ -332,7 +332,12 @@ class Client(requests.Session):
             headers = {'Content-Type': 'application/tar'}
 
         response = self._post(
-            u, data=context, params=params, headers=headers, stream=stream
+            u,
+            data=context,
+            params=params,
+            headers=headers,
+            stream=stream,
+            timeout=timeout,
         )
 
         if context is not None:
