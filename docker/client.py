@@ -332,7 +332,12 @@ class Client(requests.Session):
             headers = {'Content-Type': 'application/tar'}
 
         response = self._post(
-            u, data=context, params=params, headers=headers, stream=stream, timeout=timeout
+            u,
+            data=context,
+            params=params,
+            headers=headers,
+            stream=stream,
+            timeout=timeout,
         )
 
         if context is not None:
