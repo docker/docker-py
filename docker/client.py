@@ -65,11 +65,15 @@ class APIError(requests.exceptions.HTTPError):
 
 
 class Client(requests.Session):
-    def __init__(self, base_url="unix://var/run/docker.sock", version="1.6",
+    def __init__(self, base_url=None, version="1.6",
                  timeout=DEFAULT_TIMEOUT_SECONDS):
         super(Client, self).__init__()
+        if base_url is None:
+            base_url = "unix://var/run/docker.sock"
         if base_url.startswith('unix:///'):
             base_url = base_url.replace('unix:/', 'unix:')
+        if base_url.startswith('tcp:'):
+            base_url = base_url.replace('tcp:', 'http:')
         if base_url.endswith('/'):
             base_url = base_url[:-1]
         self.base_url = base_url
