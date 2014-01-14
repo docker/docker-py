@@ -281,15 +281,26 @@ class Client(requests.Session):
                 break
             yield data
 
-    def attach(self, container):
-        socket = self.attach_socket(container)
+    def attach(self, container, stdout=True, stderr=True,
+               stream=False, logs=False):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        params = {
+            'logs': logs and 1 or 0,
+            'stdout': stdout and 1 or 0,
+            'stderr': stderr and 1 or 0,
+            'stream': stream and 1 or 0,
+        }
+        u = self._url("/containers/{0}/attach".format(container))
+        response = self._post(u, params=params, stream=stream)
 
-        while True:
-            chunk = socket.recv(4096)
-            if chunk:
-                yield chunk
-            else:
-                break
+        # Stream multi-plexing was introduced in API v1.6.
+        if utils.compare_version('1.6', self._version) < 0:
+            return stream and self._stream_result(response) or \
+                self._result(response, binary=True)
+
+        return stream and self._multiplexed_socket_stream_helper(response) or \
+            ''.join([x for x in self._multiplexed_buffer_helper(response)])
 
     def attach_socket(self, container, params=None, ws=False):
         if params is None:
@@ -542,24 +553,13 @@ class Client(requests.Session):
         return self._result(response, json=True)
 
     def logs(self, container, stdout=True, stderr=True, stream=False):
-        if isinstance(container, dict):
-            container = container.get('Id')
-        params = {
-            'logs': 1,
-            'stdout': stdout and 1 or 0,
-            'stderr': stderr and 1 or 0,
-            'stream': stream and 1 or 0,
-        }
-        u = self._url("/containers/{0}/attach".format(container))
-        response = self._post(u, params=params, stream=stream)
-
-        # Stream multi-plexing was introduced in API v1.6.
-        if utils.compare_version('1.6', self._version) < 0:
-            return stream and self._stream_result(response) or \
-                self._result(response, binary=True)
-
-        return stream and self._multiplexed_socket_stream_helper(response) or \
-            ''.join([x for x in self._multiplexed_buffer_helper(response)])
+        return self.attach(
+            container,
+            stdout=stdout,
+            stderr=stderr,
+            stream=stream,
+            logs=True
+        )
 
     def port(self, container, private_port):
         if isinstance(container, dict):
