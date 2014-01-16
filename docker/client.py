@@ -453,8 +453,7 @@ class Client(requests.Session):
             return [x['Id'] for x in res]
         return res
 
-    def import_image(self, src=None, data=None, repository=None, tag=None,
-                     image=None):
+    def import_image(self, src=None, repository=None, tag=None, image=None):
         u = self._url("/images/create")
         params = {
             'repo': repository,
