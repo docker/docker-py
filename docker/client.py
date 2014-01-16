@@ -134,15 +134,12 @@ class Client(requests.Session):
             exposed_ports = {}
             for port_definition in ports:
                 port = port_definition
-                proto = None
+                proto = 'tcp'
                 if isinstance(port_definition, tuple):
                     if len(port_definition) == 2:
                         proto = port_definition[1]
                     port = port_definition[0]
-                exposed_ports['{0}{1}'.format(
-                    port,
-                    '/' + proto if proto else ''
-                )] = {}
+                exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
 
         if volumes and isinstance(volumes, list):

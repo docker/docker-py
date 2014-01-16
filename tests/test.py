@@ -223,9 +223,9 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls"], "AttachStdin": false,
                              "Memory": 0, "ExposedPorts": {
-                                "1111": {},
+                                "1111/tcp": {},
                                 "2222/udp": {},
-                                "3333": {}
+                                "3333/tcp": {}
                              },
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
