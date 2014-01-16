@@ -21,9 +21,9 @@ import requests
 import requests.exceptions
 import six
 
-import docker.auth as auth
-import docker.unixconn as unixconn
-import docker.utils as utils
+from .auth import auth
+from .unixconn import unixconn
+from .utils import utils
 
 if not six.PY3:
     import websocket
