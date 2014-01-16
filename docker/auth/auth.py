@@ -13,14 +13,16 @@
 #    limitations under the License.
 
 import base64
+import fileinput
 import json
 import os
 
 import six
 
-import docker.utils as utils
+from ..utils import utils
 
 INDEX_URL = 'https://index.docker.io/v1/'
+DOCKER_CONFIG_FILENAME = '.dockercfg'
 
 
 def swap_protocol(url):
@@ -59,12 +61,15 @@ def resolve_repository_name(repo_name):
     return expand_registry_url(parts[0]), parts[1]
 
 
-def resolve_authconfig(authconfig, registry):
-    default = {}
-    if registry == INDEX_URL or registry == '':
-        # default to the index server
-        return authconfig['Configs'].get(INDEX_URL, default)
-    # if its not the index server there are three cases:
+def resolve_authconfig(authconfig, registry=None):
+    """Return the authentication data from the given auth configuration for a
+    specific registry. We'll do our best to infer the correct URL for the
+    registry, trying both http and https schemes. Returns an empty dictionnary
+    if no data exists."""
+    # Default to the public index server
+    registry = registry or INDEX_URL
+
+    # Ff its not the index server there are three cases:
     #
     # 1. this is a full config url -> it should be used as is
     # 2. it could be a full url, but with the wrong protocol
@@ -77,11 +82,9 @@ def resolve_authconfig(authconfig, registry):
     if not registry.startswith('http:') and not registry.startswith('https:'):
         registry = 'https://' + registry
 
-    if registry in authconfig['Configs']:
-        return authconfig['Configs'][registry]
-    elif swap_protocol(registry) in authconfig['Configs']:
-        return authconfig['Configs'][swap_protocol(registry)]
-    return default
+    if registry in authconfig:
+        return authconfig[registry]
+    return authconfig.get(swap_protocol(registry), None)
 
 
 def decode_auth(auth):
@@ -98,38 +101,53 @@ def encode_header(auth):
 
 
 def load_config(root=None):
-    root = root or os.environ['HOME']
-    config = {
-        'Configs': {},
-        'rootPath': root
-    }
+    """Loads authentication data from a Docker configuration file in the given
+    root directory."""
+    conf = {}
+    data = None
 
-    config_file = os.path.join(root, '.dockercfg')
-    if not os.path.exists(config_file):
-        return config
+    config_file = os.path.join(root or os.environ.get('HOME', '.'),
+                               DOCKER_CONFIG_FILENAME)
 
-    f = open(config_file)
+    # First try as JSON
     try:
-        config['Configs'] = json.load(f)
-        for k, conf in six.iteritems(config['Configs']):
-            conf['Username'], conf['Password'] = decode_auth(conf['auth'])
-            del conf['auth']
-            config['Configs'][k] = conf
-    except Exception:
-        f.seek(0)
-        buf = []
-        for line in f:
-            k, v = line.split(' = ')
-            buf.append(v)
-        if len(buf) < 2:
-            raise Exception("The Auth config file is empty")
-        user, pwd = decode_auth(buf[0])
-        config['Configs'][INDEX_URL] = {
-            'Username': user,
-            'Password': pwd,
-            'Email': buf[1]
-        }
-    finally:
-        f.close()
+        with open(config_file) as f:
+            conf = {}
+            for registry, entry in six.iteritems(json.load(f)):
+                username, password = decode_auth(entry['auth'])
+                conf[registry] = {
+                    'username': username,
+                    'password': password,
+                    'email': entry['email'],
+                    'serveraddress': registry,
+                }
+            return conf
+    except:
+        pass
 
-    return config
+    # If that fails, we assume the configuration file contains a single
+    # authentication token for the public registry in the following format:
+    #
+    # auth = AUTH_TOKEN
+    # email = email@domain.com
+    try:
+        data = []
+        for line in fileinput.input(config_file):
+            data.append(line.strip().split(' = ')[1])
+        if len(data) < 2:
+            # Not enough data
+            raise Exception('Invalid or empty configuration file!')
+
+        username, password = decode_auth(data[0])
+        conf[INDEX_URL] = {
+            'username': username,
+            'password': password,
+            'email': data[1],
+            'serveraddress': INDEX_URL,
+        }
+        return conf
+    except:
+        pass
+
+    # If all fails, return an empty config
+    return {}

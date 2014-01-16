@@ -34,10 +34,6 @@ except ImportError:
     import mock
 
 
-# FIXME: missing tests for
-# port;
-
-
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None):
     res = requests.Response()
@@ -180,7 +176,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
-                             "OpenStdin": false}'''))
+                             "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -203,7 +199,8 @@ class DockerClientTest(unittest.TestCase):
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
                              "Volumes": {"/mnt": {}}, "Memory": 0,
                              "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false}'''))
+                             "AttachStdout": true, "OpenStdin": false,
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -222,12 +219,13 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls"], "AttachStdin": false,
                              "Memory": 0, "ExposedPorts": {
-                                "1111": {},
+                                "1111/tcp": {},
                                 "2222/udp": {},
-                                "3333": {}
+                                "3333/tcp": {}
                              },
                              "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false}'''))
+                             "AttachStdout": true, "OpenStdin": false,
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -246,7 +244,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
-                             "OpenStdin": false}'''))
+                             "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
@@ -584,6 +582,17 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/changes',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_port(self):
+        try:
+            self.client.port({'Id': fake_api.FAKE_CONTAINER_ID}, 1111)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/json',
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1037,10 +1046,6 @@ class DockerClientTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         cfg = docker.auth.load_config(folder)
         self.assertTrue(cfg is not None)
-        self.assertTrue('Configs' in cfg)
-        self.assertEqual(cfg['Configs'], {})
-        self.assertTrue('rootPath' in cfg)
-        self.assertEqual(cfg['rootPath'], folder)
 
     def test_load_config(self):
         folder = tempfile.mkdtemp()
@@ -1050,12 +1055,13 @@ class DockerClientTest(unittest.TestCase):
         f.write('email = sakuya@scarlet.net')
         f.close()
         cfg = docker.auth.load_config(folder)
-        self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
-        cfg = cfg['Configs'][docker.auth.INDEX_URL]
-        self.assertEqual(cfg['Username'], 'sakuya')
-        self.assertEqual(cfg['Password'], 'izayoi')
-        self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
-        self.assertEqual(cfg.get('Auth'), None)
+        self.assertTrue(docker.auth.INDEX_URL in cfg)
+        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
+        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], 'sakuya')
+        self.assertEqual(cfg['password'], 'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('auth'), None)
 
 
 if __name__ == '__main__':

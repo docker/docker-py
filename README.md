@@ -55,7 +55,7 @@ Identical to the `docker cp` command.
 c.create_container(image, command=None, hostname=None, user=None,
                    detach=False, stdin_open=False, tty=False, mem_limit=0,
                    ports=None, environment=None, dns=None, volumes=None,
-                   volumes_from=None, name=None)
+                   volumes_from=None, network_disabled=False, name=None)
 ```
 
 Creates a container that can then be `start`ed. Parameters are similar
@@ -141,6 +141,14 @@ c.logs(container, stdout=True, stderr=True, stream=False)
 Identical to the `docker logs` command. The `stream` parameter makes the
 `logs` function return a blocking generator you can iterate over to
 retrieve log output as it happens.
+
+```python
+c.attach(container, stdout=True, stderr=True, stream=False, logs=False)
+```
+
+The `logs` function is a wrapper around this one, which you can use
+instead if you want to fetch/stream container output without first
+retrieving the entire backlog.
 
 ```python
 c.port(container, private_port)

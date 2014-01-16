@@ -422,6 +422,34 @@ class TestKillWithSignal(BaseTestCase):
         self.assertEqual(state['Running'], False, state)
 
 
+class TestPort(BaseTestCase):
+    def runTest(self):
+
+        port_bindings = {
+            1111: ('127.0.0.1', '4567'),
+            2222: ('192.168.0.100', '4568')
+        }
+
+        container = self.client.create_container(
+            'busybox', ['sleep', '60'], ports=port_bindings.keys()
+            )
+        id = container['Id']
+
+        self.client.start(container, port_bindings=port_bindings)
+
+        #Call the port function on each biding and compare expected vs actual
+        for port in port_bindings:
+            actual_bindings = self.client.port(container, port)
+            port_binding = actual_bindings.pop()
+
+            ip, host_port = port_binding['HostIp'], port_binding['HostPort']
+
+            self.assertEqual(ip, port_bindings[port][0])
+            self.assertEqual(host_port, port_bindings[port][1])
+
+        self.client.kill(id)
+
+
 class TestRestart(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
@@ -775,11 +803,29 @@ class TestLoadConfig(BaseTestCase):
         f.write('email = sakuya@scarlet.net')
         f.close()
         cfg = docker.auth.load_config(folder)
-        self.assertNotEqual(cfg['Configs'][docker.auth.INDEX_URL], None)
-        cfg = cfg['Configs'][docker.auth.INDEX_URL]
-        self.assertEqual(cfg['Username'], b'sakuya')
-        self.assertEqual(cfg['Password'], b'izayoi')
-        self.assertEqual(cfg['Email'], 'sakuya@scarlet.net')
+        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
+        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], b'sakuya')
+        self.assertEqual(cfg['password'], b'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('Auth'), None)
+
+
+class TestLoadJSONConfig(BaseTestCase):
+    def runTest(self):
+        folder = tempfile.mkdtemp()
+        f = open(os.path.join(folder, '.dockercfg'), 'w')
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        email_ = 'sakuya@scarlet.net'
+        f.write('{{"{}": {{"auth": "{}", "email": "{}"}}}}\n'.format(
+            docker.auth.INDEX_URL, auth_, email_))
+        f.close()
+        cfg = docker.auth.load_config(folder)
+        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
+        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], b'sakuya')
+        self.assertEqual(cfg['password'], b'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
 
 
