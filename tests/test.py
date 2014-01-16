@@ -34,10 +34,6 @@ except ImportError:
     import mock
 
 
-# FIXME: missing tests for
-# port;
-
-
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None):
     res = requests.Response()
@@ -586,6 +582,17 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/changes',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_port(self):
+        try:
+            self.client.port({'Id': fake_api.FAKE_CONTAINER_ID}, 1111)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/json',
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 

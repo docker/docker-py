@@ -574,13 +574,13 @@ class Client(requests.Session):
         self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
-        f_port = None
-        if s_port in json_['NetworkSettings']['PortMapping']['Udp']:
-            f_port = json_['NetworkSettings']['PortMapping']['Udp'][s_port]
-        elif s_port in json_['NetworkSettings']['PortMapping']['Tcp']:
-            f_port = json_['NetworkSettings']['PortMapping']['Tcp'][s_port]
+        h_ports = None
 
-        return f_port
+        h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/udp')
+        if h_ports is None:
+            h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/tcp')
+
+        return h_ports
 
     def pull(self, repository, tag=None, stream=False):
         registry, repo_name = auth.resolve_repository_name(repository)
