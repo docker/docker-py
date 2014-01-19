@@ -229,6 +229,28 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_entrypoint(self):
+        try:
+            self.client.create_container('busybox', 'hello',
+                                         entrypoint='cowsay')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.6/containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["hello"], "AttachStdin": false,
+                             "Memory": 0,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "NetworkDisabled": false,
+                             "Entrypoint": "cowsay"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_named_container(self):
         try:
             self.client.create_container('busybox', 'true',
