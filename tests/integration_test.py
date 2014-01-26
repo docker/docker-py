@@ -24,7 +24,7 @@ import docker
 import six
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push; tag
+# history; import_image; insert; port; push; tag
 
 
 class BaseTestCase(unittest.TestCase):
@@ -97,7 +97,8 @@ class TestExport(BaseTestCase):
                 break
             os.write(fd, block)
         os.close(fd)
-        self.assertTrue(os.stat(path).st_size > 2609905.664)  # size should bigger than then busybox itself [2.489MB]
+        self.assertTrue(
+            os.stat(path).st_size > 2609905.664)  # the temp file size should bigger than the [busybox] itself
         os.remove(path)
 
 
