@@ -79,6 +79,28 @@ class TestSearch(BaseTestCase):
         self.assertEqual(len(base_img), 1)
         self.assertIn('description', base_img[0])
 
+
+###################
+## EXPORT TESTS ##
+###################
+
+
+class TestExport(BaseTestCase):
+    def runTest(self):
+        res1 = self.client.create_container("busybox", "true")
+        self.tmp_containers.append(res1['Id'])
+        fd, path = tempfile.mkstemp()
+        raw = self.client.export(res1['Id'])
+        while 1:
+            block = raw.read(1024)
+            if not block:
+                break
+            os.write(fd, block)
+        os.close(fd)
+        self.assertTrue(os.stat(path).st_size > 2609905.664)  # size should bigger than then busybox itself [2.489MB]
+        os.remove(path)
+
+
 ###################
 ## LISTING TESTS ##
 ###################
@@ -224,10 +246,10 @@ class TestStartContainerPrivileged(BaseTestCase):
         if not inspect['State']['Running']:
             self.assertIn('ExitCode', inspect['State'])
             self.assertEqual(inspect['State']['ExitCode'], 0)
-        # Since Nov 2013, the Privileged flag is no longer part of the
-        # container's config exposed via the API (safety concerns?).
-        #
-        # self.assertEqual(inspect['Config']['Privileged'], True)
+            # Since Nov 2013, the Privileged flag is no longer part of the
+            # container's config exposed via the API (safety concerns?).
+            #
+            # self.assertEqual(inspect['Config']['Privileged'], True)
 
 
 class TestWait(BaseTestCase):
@@ -424,7 +446,6 @@ class TestKillWithSignal(BaseTestCase):
 
 class TestPort(BaseTestCase):
     def runTest(self):
-
         port_bindings = {
             1111: ('127.0.0.1', '4567'),
             2222: ('192.168.0.100', '4568')
@@ -432,7 +453,7 @@ class TestPort(BaseTestCase):
 
         container = self.client.create_container(
             'busybox', ['sleep', '60'], ports=port_bindings.keys()
-            )
+        )
         id = container['Id']
 
         self.client.start(container, port_bindings=port_bindings)
