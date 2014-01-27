@@ -206,6 +206,11 @@ container ports to the host. See "Port bindings" below for more
 information. `lxc_conf` allows to pass LXC configuration options using a
 dictionary. `privileged` starts the container in privileged mode.
 
+[Links](http://docs.docker.io/en/latest/use/working_with_links_names/)
+can be specified with the `links` argument. They can either be
+specified as a dictionary mapping name to alias or as a list of
+`(name, alias)` tuples.
+
 ```python
 c.stop(container, timeout=10)
 ```

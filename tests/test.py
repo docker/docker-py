@@ -525,6 +525,31 @@ class DockerClientTest(unittest.TestCase):
             {'Content-Type': 'application/json'}
         )
 
+    def test_start_container_with_links_as_list_of_tuples(self):
+        # one link
+        try:
+            link_path = 'path'
+            alias = 'alias'
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              links=[(link_path, alias)])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False,
+             "Links": ["path:alias"]}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+
     def test_start_container_privileged(self):
         try:
             self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
