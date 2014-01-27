@@ -276,7 +276,7 @@ def post_fake_tag_image():
 
 
 ## maps real api url to fake response callback
-prefix = 'unix://var/run/docker.sock'
+prefix = 'http+unix://var/run/docker.sock'
 fake_responses = {
     '{1}/{0}/version'.format(CURRENT_VERSION, prefix):
     get_fake_version,
