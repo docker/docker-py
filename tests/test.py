@@ -176,6 +176,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
+                             "StdinOnce": false,
                              "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -200,6 +201,7 @@ class DockerClientTest(unittest.TestCase):
                              "Volumes": {"/mnt": {}}, "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
                              "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -225,6 +227,7 @@ class DockerClientTest(unittest.TestCase):
                              },
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
                              "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -246,6 +249,7 @@ class DockerClientTest(unittest.TestCase):
                              "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
                              "NetworkDisabled": false,
                              "Entrypoint": "cowsay"}'''))
         self.assertEqual(args[1]['headers'],
@@ -268,6 +272,7 @@ class DockerClientTest(unittest.TestCase):
                              "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
                              "NetworkDisabled": false,
                              "CpuShares": 5}'''))
         self.assertEqual(args[1]['headers'],
@@ -290,8 +295,28 @@ class DockerClientTest(unittest.TestCase):
                              "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
                              "NetworkDisabled": false,
                              "WorkingDir": "/root"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    def test_create_container_with_stdin_open(self):
+        try:
+            self.client.create_container('busybox', 'true', stdin_open=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         'unix://var/run/docker.sock/v1.6/containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+                             "AttachStdin": true, "Memory": 0,
+                             "AttachStderr": true, "AttachStdout": true,
+                             "StdinOnce": true,
+                             "OpenStdin": true, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -310,6 +335,7 @@ class DockerClientTest(unittest.TestCase):
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
+                             "StdinOnce": false,
                              "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
