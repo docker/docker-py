@@ -310,7 +310,7 @@ class DockerClientTest(unittest.TestCase):
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
-                         'unix://var/run/docker.sock/v1.6/containers/create')
+                         url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
@@ -566,7 +566,7 @@ class DockerClientTest(unittest.TestCase):
         args = fake_request.call_args
         self.assertEqual(
             args[0][0],
-            'unix://var/run/docker.sock/v1.6/containers/3cc2351ab11b/start'
+            url_prefix + 'containers/3cc2351ab11b/start'
         )
         self.assertEqual(
             json.loads(args[1]['data']),
