@@ -403,6 +403,8 @@ class Client(requests.Session):
         return res
 
     def copy(self, container, resource):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self._post_json(
             self._url("/containers/{0}/copy".format(container)),
             data={"Resource": resource},
