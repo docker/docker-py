@@ -133,7 +133,7 @@ class Client(requests.Session):
                 '{0}={1}'.format(k, v) for k, v in environment.items()
             ]
 
-        if ports and isinstance(ports, list):
+        if isinstance(ports, list):
             exposed_ports = {}
             for port_definition in ports:
                 port = port_definition
@@ -145,7 +145,7 @@ class Client(requests.Session):
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
 
-        if volumes and isinstance(volumes, list):
+        if isinstance(volumes, list):
             volumes_dict = {}
             for vol in volumes:
                 volumes_dict[vol] = {}
