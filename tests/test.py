@@ -55,7 +55,8 @@ def fake_resp(url, data=None, **kwargs):
     return response(status_code=status_code, content=content)
 
 fake_request = mock.Mock(side_effect=fake_resp)
-url_prefix = 'http+unix://var/run/docker.sock/v1.6/'
+url_prefix = 'http+unix://var/run/docker.sock/v{0}/'.format(
+    docker.client.DEFAULT_DOCKER_API_VERSION)
 
 
 @mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
@@ -102,6 +103,13 @@ class DockerClientTest(unittest.TestCase):
             params={'term': 'busybox'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
+
+    def test_image_viz(self):
+        try:
+            self.client.images('busybox', viz=True)
+            self.fail('Viz output should not be supported!')
+        except Exception:
+            pass
 
     ###################
     ## LISTING TESTS ##

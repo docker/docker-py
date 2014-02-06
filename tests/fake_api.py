@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-CURRENT_VERSION = 'v1.6'
+CURRENT_VERSION = 'v1.8'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -30,13 +30,16 @@ FAKE_PATH = '/path'
 
 def get_fake_version():
     status_code = 200
-    response = {'GoVersion': '1', 'Version': '1.1.1'}
+    response = {'GoVersion': '1', 'Version': '1.1.1',
+                'GitCommit': 'deadbeef+CHANGES'}
     return status_code, response
 
 
 def get_fake_info():
     status_code = 200
-    response = {'Containers': 1, 'Images': 1, 'Debug': ''}
+    response = {'Containers': 1, 'Images': 1, 'Debug': False,
+                'MemoryLimit': False, 'SwapLimit': False,
+                'IPv4Forwarding': True}
     return status_code, response
 
 
@@ -52,7 +55,7 @@ def get_fake_images():
         'Id': FAKE_IMAGE_ID,
         'Created': '2 days ago',
         'Repository': 'busybox',
-        'Tag': 'latest'
+        'RepoTags': ['busybox:latest', 'busybox:1.0'],
     }]
     return status_code, response
 

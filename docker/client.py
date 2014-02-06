@@ -28,6 +28,7 @@ from .utils import utils
 if not six.PY3:
     import websocket
 
+DEFAULT_DOCKER_API_VERSION = '1.8'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -65,7 +66,7 @@ class APIError(requests.exceptions.HTTPError):
 
 
 class Client(requests.Session):
-    def __init__(self, base_url=None, version="1.6",
+    def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
                  timeout=DEFAULT_TIMEOUT_SECONDS):
         super(Client, self).__init__()
         if base_url is None:
@@ -363,7 +364,7 @@ class Client(requests.Session):
 
         if context is not None:
             context.close()
-        if stream:
+        if stream or utils.compare_version('1.8', self._version) >= 0:
             return self._stream_result(response)
         else:
             output = self._result(response)
@@ -473,6 +474,8 @@ class Client(requests.Session):
 
     def images(self, name=None, quiet=False, all=False, viz=False):
         if viz:
+            if utils.compare_version('1.7', self._version) >= 0:
+                raise Exception('Viz output is not supported in API >= 1.7!')
             return self._result(self._get(self._url("images/viz")))
         params = {
             'filter': name,
