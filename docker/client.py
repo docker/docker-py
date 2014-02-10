@@ -35,7 +35,10 @@ STREAM_HEADER_SIZE_BYTES = 8
 
 class APIError(requests.exceptions.HTTPError):
     def __init__(self, message, response, explanation=None):
-        super(APIError, self).__init__(message, response=response)
+        # requests 1.2 supports response as a keyword argument, but
+        # requests 1.1 doesn't
+        super(APIError, self).__init__(message)
+        self.response = response
 
         self.explanation = explanation
 
