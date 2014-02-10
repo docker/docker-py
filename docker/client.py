@@ -540,10 +540,13 @@ class Client(requests.Session):
             True)
 
     def inspect_image(self, image_id):
-        return self._result(
-            self._get(self._url("/images/{0}/json".format(image_id))),
-            True
-        )
+        try:
+            return self._result(
+                self._get(self._url("/images/{0}/json".format(image_id))),
+                True
+            )
+        except APIError:
+            print("No such image: {0}".format(image_id))
 
     def kill(self, container, signal=None):
         if isinstance(container, dict):
