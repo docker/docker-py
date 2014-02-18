@@ -253,12 +253,6 @@ open inside the container in the `Client.create_container` method.
 c.create_container('busybox', 'ls', ports=[1111, 2222])
 ```
 
-If you wish to use UDP instead of TCP (default), you can declare it like such:
-
-```python
-c.create_container('busybox', 'ls', ports=[(1111, 'udp'), 2222])
-```
-
 Bindings are then declared in the `Client.start` method.
 
 ```python
@@ -275,6 +269,14 @@ Or without host port assignment:
 
 ```python
 c.start(container_id, port_bindings={1111: ('127.0.0.1',)})
+```
+
+If you wish to use UDP instead of TCP (default), you need to declare it
+like such in both the `create_container()` and `start()` calls:
+
+```python
+container_id = c.create_container('busybox', 'ls', ports=[(1111, 'udp'), 2222])
+c.start(container_id, port_bindings={'1111/udp': 4567, 2222: None})
 ```
 
 
