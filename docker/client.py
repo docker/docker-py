@@ -450,20 +450,7 @@ class Client(requests.Session):
                             format(container))), True)
 
     def events(self):
-        socket = self._get_raw_response_socket(self.get(self._url('/events'),
-                                                        stream=True))
-        while True:
-            chunk = socket.recv(4096)
-            if chunk:
-                # Messages come in the format of length, data, newline.
-                # XXX: do they really?
-                length, data = chunk.split("\n", 1)
-                length = int(length, 16)
-                if length > len(data):
-                    data += socket.recv(length - len(data))
-                yield json.loads(data)
-            else:
-                break
+        return self._stream_helper(self.get(self._url('/events'), stream=True))
 
     def export(self, container):
         if isinstance(container, dict):
