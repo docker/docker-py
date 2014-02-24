@@ -11,7 +11,7 @@ with open('./requirements.txt') as requirements_txt:
 
 setup(
     name="docker-py",
-    version='0.2.3',
+    version='0.3.0',
     description="Python client for Docker.",
     packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils'],
     install_requires=requirements + test_requirements,
