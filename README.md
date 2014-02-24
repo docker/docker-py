@@ -5,6 +5,13 @@ docker-py
 
 An API client for docker written in Python
 
+Installation
+============
+
+Our latest stable is always available on PyPi.
+
+    pip install docker
+
 API
 ===
 
