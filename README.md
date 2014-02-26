@@ -10,7 +10,7 @@ Installation
 
 Our latest stable is always available on PyPi.
 
-    pip install docker
+    pip install docker-py
 
 API
 ===
