@@ -129,7 +129,7 @@ class Client(requests.Session):
                           mem_limit=0, ports=None, environment=None, dns=None,
                           volumes=None, volumes_from=None,
                           network_disabled=False, entrypoint=None,
-                          cpu_shares=None, working_dir=None):
+                          cpu_shares=None, working_dir=None, domainname=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -170,6 +170,7 @@ class Client(requests.Session):
 
         return {
             'Hostname':     hostname,
+            'Domainname':   domainname,
             'ExposedPorts': ports,
             'User':         user,
             'Tty':          tty,
@@ -426,12 +427,12 @@ class Client(requests.Session):
                          mem_limit=0, ports=None, environment=None, dns=None,
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
-                         cpu_shares=None, working_dir=None):
+                         cpu_shares=None, working_dir=None, domainname=None):
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
-            entrypoint, cpu_shares, working_dir
+            entrypoint, cpu_shares, working_dir, domainname
         )
         return self.create_container_from_config(config, name)
 
