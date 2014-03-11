@@ -267,17 +267,19 @@ class Client(requests.Session):
         socket = self._get_raw_response_socket(response)
 
         def recvall(socket, size):
-            if six.PY3:
-                data = bytes()
-            else:
-                data = ''
+            blocks = []
             while size > 0:
                 block = socket.recv(size)
                 if not block:
                     return None
 
-                data += block
+                blocks.append(block)
                 size -= len(block)
+
+            sep = bytes() if six.PY3 else str()
+            data = sep.join(blocks)
+            if six.PY3:
+                data = data.decode('utf-8')
             return data
 
         while True:
