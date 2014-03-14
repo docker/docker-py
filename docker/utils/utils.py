@@ -60,3 +60,15 @@ def ping(url):
         return res.status >= 400
     except Exception:
         return False
+
+
+def parse_repository_tag(repo):
+    column_index = repo.rfind(':')
+    if column_index < 0:
+        return repo, ""
+    tag = repo[column_index+1:]
+    slash_index = tag.find('/')
+    if slash_index < 0:
+        return repo[:column_index], tag
+
+    return repo, ""
