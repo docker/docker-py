@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 import os
+import sys
 from setuptools import setup
 
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
+if sys.version_info[0] == 3:
+    requirements_file = './requirements3.txt'
+else:
+    requirements_file = './requirements.txt'
+
 test_requirements = []
-with open('./requirements.txt') as requirements_txt:
+with open(requirements_file) as requirements_txt:
     requirements = [line for line in requirements_txt]
 
 setup(
