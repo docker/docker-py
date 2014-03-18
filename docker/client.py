@@ -312,7 +312,7 @@ class Client(requests.Session):
                     if line:
                         yield line
 
-            return stream and stream_result(response) or \
+            return stream_result() if stream else \
                 self._result(response, binary=True)
 
         return stream and self._multiplexed_socket_stream_helper(response) or \
@@ -651,7 +651,7 @@ class Client(requests.Session):
 
             response = self._post_json(u, None, headers=headers, stream=stream)
         else:
-            response = self._post_json(u, authcfg, stream=stream)
+            response = self._post_json(u, None, stream=stream)
 
         return stream and self._stream_helper(response) \
             or self._result(response)
