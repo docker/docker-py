@@ -237,7 +237,10 @@ class Client(requests.Session):
         socket_fp.setblocking(1)
         socket = socket_fp.makefile()
         while True:
-            size = int(socket.readline(), 16)
+            line = socket.readline()
+            if line == '\r\n':
+                continue
+            size = int(line, 16)
             if size <= 0:
                 break
             data = socket.readline()
