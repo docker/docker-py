@@ -349,6 +349,9 @@ class Client(requests.Session):
         else:
             context = utils.tar(path)
 
+        if utils.compare_version('1.8', self._version) >= 0:
+            stream = True
+
         u = self._url('/build')
         params = {
             't': tag,
@@ -372,7 +375,7 @@ class Client(requests.Session):
         if context is not None:
             context.close()
 
-        if stream or utils.compare_version('1.8', self._version) >= 0:
+        if stream:
             return self._stream_helper(response)
         else:
             output = self._result(response)
