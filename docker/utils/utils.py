@@ -114,3 +114,15 @@ def convert_port_bindings(port_bindings):
         else:
             result[key] = [_convert_port_binding(v)]
     return result
+
+
+def parse_repository_tag(repo):
+    column_index = repo.rfind(':')
+    if column_index < 0:
+        return repo, ""
+    tag = repo[column_index+1:]
+    slash_index = tag.find('/')
+    if slash_index < 0:
+        return repo[:column_index], tag
+
+    return repo, ""
