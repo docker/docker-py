@@ -341,7 +341,7 @@ class Client(requests.Session):
               nocache=False, rm=False, stream=False, timeout=None):
         remote = context = headers = None
         if path is None and fileobj is None:
-            raise Exception("Either path or fileobj needs to be provided.")
+            raise TypeError("Either path or fileobj needs to be provided.")
 
         if fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
