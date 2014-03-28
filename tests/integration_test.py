@@ -51,7 +51,7 @@ class BaseTestCase(unittest.TestCase):
                 pass
 
 #########################
-##  INFORMATION TESTS  ##
+#   INFORMATION TESTS   #
 #########################
 
 
@@ -80,7 +80,7 @@ class TestSearch(BaseTestCase):
         self.assertIn('description', base_img[0])
 
 ###################
-## LISTING TESTS ##
+#  LISTING TESTS  #
 ###################
 
 
@@ -124,7 +124,7 @@ class TestListContainers(BaseTestCase):
         self.assertIn('Status', retrieved)
 
 #####################
-## CONTAINER TESTS ##
+#  CONTAINER TESTS  #
 #####################
 
 
@@ -434,7 +434,7 @@ class TestPort(BaseTestCase):
 
         self.client.start(container, port_bindings=port_bindings)
 
-        #Call the port function on each biding and compare expected vs actual
+        # Call the port function on each biding and compare expected vs actual
         for port in port_bindings:
             actual_bindings = self.client.port(container, port)
             port_binding = actual_bindings.pop()
@@ -561,7 +561,7 @@ class TestStartContainerWithLinks(BaseTestCase):
         self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix2), logs)
 
 #################
-## LINKS TESTS ##
+#  LINKS TESTS  #
 #################
 
 
@@ -602,7 +602,7 @@ class TestRemoveLink(BaseTestCase):
         self.assertEqual(len(retrieved), 2)
 
 ##################
-## IMAGES TESTS ##
+#  IMAGES TESTS  #
 ##################
 
 
@@ -756,7 +756,7 @@ class TestBuildFromStringIO(BaseTestCase):
 
 
 #######################
-## PY SPECIFIC TESTS ##
+#  PY SPECIFIC TESTS  #
 #######################
 
 
