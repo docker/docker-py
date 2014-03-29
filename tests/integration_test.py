@@ -843,7 +843,7 @@ class TestLoadJSONConfig(BaseTestCase):
 class TestConnectionTimeout(unittest.TestCase):
     def setUp(self):
         self.timeout = 0.5
-        self.client = docker.client.Client(base_url='http://localhost:4243',
+        self.client = docker.client.Client(base_url='http://192.168.10.2:4243',
                                            timeout=self.timeout)
 
     def runTest(self):
