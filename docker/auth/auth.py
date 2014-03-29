@@ -87,6 +87,10 @@ def resolve_authconfig(authconfig, registry=None):
     return authconfig.get(swap_protocol(registry), None)
 
 
+def encode_auth(auth_info):
+    return base64.b64encode(auth_info.get('username', '') + b':' +
+                            auth_info.get('password', ''))
+
 def decode_auth(auth):
     if isinstance(auth, six.string_types):
         auth = auth.encode('ascii')
@@ -98,6 +102,12 @@ def decode_auth(auth):
 def encode_header(auth):
     auth_json = json.dumps(auth).encode('ascii')
     return base64.b64encode(auth_json)
+
+
+def encode_full_header(auth):
+    """ Returns the given auth block encoded for the X-Registry-Config header.
+    """
+    return encode_header({'configs': auth})
 
 
 def load_config(root=None):
