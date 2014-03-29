@@ -68,7 +68,7 @@ class DockerClientTest(unittest.TestCase):
         self.client._cfg = {'Configs': {}}
 
     #########################
-    ##  INFORMATION TESTS  ##
+    #   INFORMATION TESTS   #
     #########################
     def test_version(self):
         try:
@@ -112,7 +112,7 @@ class DockerClientTest(unittest.TestCase):
             pass
 
     ###################
-    ## LISTING TESTS ##
+    #  LISTING TESTS  #
     ###################
 
     def test_images(self):
@@ -168,7 +168,7 @@ class DockerClientTest(unittest.TestCase):
         )
 
     #####################
-    ## CONTAINER TESTS ##
+    #  CONTAINER TESTS  #
     #####################
 
     def test_create_container(self):
@@ -192,7 +192,6 @@ class DockerClientTest(unittest.TestCase):
 
     def test_create_container_with_binds(self):
         mount_dest = '/mnt'
-        #mount_origin = '/tmp'
 
         try:
             self.client.create_container('busybox', ['ls', mount_dest],
@@ -905,7 +904,7 @@ class DockerClientTest(unittest.TestCase):
         )
 
     ##################
-    ## IMAGES TESTS ##
+    #  IMAGES TESTS  #
     ##################
 
     def test_pull(self):
@@ -1192,7 +1191,7 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
     #######################
-    ## PY SPECIFIC TESTS ##
+    #  PY SPECIFIC TESTS  #
     #######################
 
     def test_load_config_no_file(self):
