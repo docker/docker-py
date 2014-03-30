@@ -234,7 +234,8 @@ class Client(requests.Session):
     def _stream_helper(self, response):
         """Generator for data coming from a chunked-encoded HTTP response."""
         for line in response.iter_lines(chunk_size=32):
-            yield line
+            if line:
+                yield line
 
     def _multiplexed_buffer_helper(self, response):
         """A generator of multiplexed data blocks read from a buffered
