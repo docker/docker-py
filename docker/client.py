@@ -155,6 +155,9 @@ class Client(requests.Session):
                 volumes_dict[vol] = {}
             volumes = volumes_dict
 
+        if not isinstance(volumes_from, six.string_types):
+            volumes_from = ','.join(volumes_from)
+
         attach_stdin = False
         attach_stdout = False
         attach_stderr = False
