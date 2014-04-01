@@ -514,6 +514,36 @@ class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
         self.assertEqual(len(res), 0)
 
 
+class TestStartContainerWithVolumesFrom(BaseTestCase):
+    def runTest(self):
+        vol_names = ['foobar_vol0', 'foobar_vol1']
+
+        res0 = self.client.create_container(
+            'busybox', 'true',
+            name=vol_names[0])
+        container1_id = res0['Id']
+        self.tmp_containers.append(container1_id)
+        self.client.start(container1_id)
+
+        res1 = self.client.create_container(
+            'busybox', 'true',
+            name=vol_names[1])
+        container2_id = res1['Id']
+        self.tmp_containers.append(container2_id)
+        self.client.start(container2_id)
+
+        res2 = self.client.create_container(
+            'busybox', 'cat',
+            detach=True, stdin_open=True,
+            volumes_from=vol_names)
+        container3_id = res2['Id']
+        self.tmp_containers.append(container3_id)
+        self.client.start(container3_id)
+
+        info = self.client.inspect_container(res2['Id'])
+        self.assertEqual(info['Config']['VolumesFrom'], ','.join(vol_names))
+
+
 class TestStartContainerWithLinks(BaseTestCase):
     def runTest(self):
         res0 = self.client.create_container(
