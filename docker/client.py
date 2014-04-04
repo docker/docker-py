@@ -169,27 +169,27 @@ class Client(requests.Session):
                 stdin_once = True
 
         return {
-            'Hostname':     hostname,
-            'Domainname':   domainname,
+            'Hostname': hostname,
+            'Domainname': domainname,
             'ExposedPorts': ports,
-            'User':         user,
-            'Tty':          tty,
-            'OpenStdin':    stdin_open,
-            'StdinOnce':    stdin_once,
-            'Memory':       mem_limit,
-            'AttachStdin':  attach_stdin,
+            'User': user,
+            'Tty': tty,
+            'OpenStdin': stdin_open,
+            'StdinOnce': stdin_once,
+            'Memory': mem_limit,
+            'AttachStdin': attach_stdin,
             'AttachStdout': attach_stdout,
             'AttachStderr': attach_stderr,
-            'Env':          environment,
-            'Cmd':          command,
-            'Dns':          dns,
-            'Image':        image,
-            'Volumes':      volumes,
-            'VolumesFrom':  volumes_from,
+            'Env': environment,
+            'Cmd': command,
+            'Dns': dns,
+            'Image': image,
+            'Volumes': volumes,
+            'VolumesFrom': volumes_from,
             'NetworkDisabled': network_disabled,
-            'Entrypoint':   entrypoint,
-            'CpuShares':    cpu_shares,
-            'WorkingDir':    working_dir
+            'Entrypoint': entrypoint,
+            'CpuShares': cpu_shares,
+            'WorkingDir': working_dir
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -271,8 +271,6 @@ class Client(requests.Session):
 
             sep = bytes() if six.PY3 else str()
             data = sep.join(blocks)
-            if six.PY3:
-                data = data.decode('utf-8')
             return data
 
         while True:
