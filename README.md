@@ -20,7 +20,7 @@ a Docker daemon, simply do:
 
 ```python
 c = docker.Client(base_url='unix://var/run/docker.sock',
-                  version='1.6',
+                  version='1.9',
                   timeout=10)
 ```
 

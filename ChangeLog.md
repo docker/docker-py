@@ -1,6 +1,29 @@
 ChangeLog
 =========
 
+0.3.1
+-----
+
+* Default API version is now 1.9
+* Streaming responses no longer yield blank lines.
+* `Client.create_container` now supports the `domainname` parameter.
+* `volumes_from` parameter in `Client.create_container` now supports
+  iterables.
+* Auth credentials are provided to the docker daemon when using `Client.build`
+  (new feature in API version 1.9)
+
+
+### Bugfixes
+
+* Various fixes for response streams (`logs`, `pull`, etc.).
+* Fixed a bug with `Client.push` when using API version < 1.5
+* Fixed a bug with API version checks.
+
+### Miscellaneous
+
+* `mock` has been removed from the runtime requirements.
+* Added installation instructions in the README.
+
 0.3.0
 -----
 
