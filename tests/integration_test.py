@@ -32,7 +32,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_containers = []
 
     def setUp(self):
-        self.client = docker.Client(base_url='http://localhost:4243')
+        self.client = docker.Client()
         self.client.pull('busybox')
         self.tmp_imgs = []
         self.tmp_containers = []
@@ -118,7 +118,7 @@ class TestListContainers(BaseTestCase):
         self.assertEqual(len(retrieved), 1)
         retrieved = retrieved[0]
         self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], 'true; ')
+        self.assertEqual(retrieved['Command'], 'true;')
         self.assertIn('Image', retrieved)
         self.assertEqual(retrieved['Image'], 'busybox:latest')
         self.assertIn('Status', retrieved)
