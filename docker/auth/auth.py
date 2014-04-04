@@ -91,6 +91,7 @@ def encode_auth(auth_info):
     return base64.b64encode(auth_info.get('username', '') + b':' +
                             auth_info.get('password', ''))
 
+
 def decode_auth(auth):
     if isinstance(auth, six.string_types):
         auth = auth.encode('ascii')

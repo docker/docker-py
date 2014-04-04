@@ -760,8 +760,9 @@ class TestBuildWithAuth(BaseTestCase):
         if self.client._version < 1.9:
             return
 
-        key = 'K4104GON3P4Q6ZUJFZRRC2ZQTBJ5YT0UMZD7TGT7ZVIR8Y05FAH2TJQI6Y90SMIB'
-        self.client.login('quay+fortesting', key, registry='https://quay.io/v1/', email='')
+        k = 'K4104GON3P4Q6ZUJFZRRC2ZQTBJ5YT0UMZD7TGT7ZVIR8Y05FAH2TJQI6Y90SMIB'
+        self.client.login('quay+fortesting', k, registry='https://quay.io/v1/',
+                          email='')
 
         script = io.BytesIO('\n'.join([
             'FROM quay.io/quay/teststuff',

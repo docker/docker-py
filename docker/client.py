@@ -370,7 +370,9 @@ class Client(requests.Session):
             # Send the full auth configuration (if any exists), since the build
             # could use any (or all) of the registries.
             if self._auth_configs:
-                headers['X-Registry-Config'] = auth.encode_full_header(self._auth_configs)
+                headers['X-Registry-Config'] = auth.encode_full_header(
+                    self._auth_configs
+                )
 
         response = self._post(
             u,
