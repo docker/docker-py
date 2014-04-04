@@ -32,7 +32,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_containers = []
 
     def setUp(self):
-        self.client = docker.Client()
+        self.client = docker.Client(base_url='http://localhost:4243')
         self.client.pull('busybox')
         self.tmp_imgs = []
         self.tmp_containers = []
@@ -753,6 +753,29 @@ class TestBuildFromStringIO(BaseTestCase):
         for chunk in stream:
             logs += chunk
         self.assertNotEqual(logs, '')
+
+
+class TestBuildWithAuth(BaseTestCase):
+    def runTest(self):
+        if self.client._version < 1.9:
+            return
+
+        key = 'K4104GON3P4Q6ZUJFZRRC2ZQTBJ5YT0UMZD7TGT7ZVIR8Y05FAH2TJQI6Y90SMIB'
+        self.client.login('quay+fortesting', key, registry='https://quay.io/v1/', email='')
+
+        script = io.BytesIO('\n'.join([
+            'FROM quay.io/quay/teststuff',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+        ]).encode('ascii'))
+
+        stream = self.client.build(fileobj=script, stream=True)
+        logs = ''
+        for chunk in stream:
+            logs += chunk
+
+        self.assertNotEqual(logs, '')
+        self.assertEqual(logs.find('HTTP code: 403'), -1)
 
 
 #######################

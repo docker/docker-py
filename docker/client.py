@@ -28,7 +28,7 @@ from .utils import utils
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.8'
+DEFAULT_DOCKER_API_VERSION = '1.9'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -361,6 +361,17 @@ class Client(requests.Session):
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
 
+        if utils.compare_version('1.9', self._version) >= 0:
+            # If we don't have any auth data so far, try reloading the config
+            # file one more time in case anything showed up in there.
+            if not self._auth_configs:
+                self._auth_configs = auth.load_config()
+
+            # Send the full auth configuration (if any exists), since the build
+            # could use any (or all) of the registries.
+            if self._auth_configs:
+                headers['X-Registry-Config'] = auth.encode_full_header(self._auth_configs)
+
         response = self._post(
             u,
             data=context,
@@ -618,7 +629,7 @@ class Client(requests.Session):
                 self._auth_configs = auth.load_config()
             authcfg = auth.resolve_authconfig(self._auth_configs, registry)
 
-            # Do not fail here if no atuhentication exists for this specific
+            # Do not fail here if no authentication exists for this specific
             # registry as we can have a readonly pull. Just put the header if
             # we can.
             if authcfg:
@@ -644,7 +655,7 @@ class Client(requests.Session):
                 self._auth_configs = auth.load_config()
             authcfg = auth.resolve_authconfig(self._auth_configs, registry)
 
-            # Do not fail here if no atuhentication exists for this specific
+            # Do not fail here if no authentication exists for this specific
             # registry as we can have a readonly pull. Just put the header if
             # we can.
             if authcfg:
