@@ -229,7 +229,10 @@ class Client(requests.Session):
 
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
-        return response.raw._fp.fp._sock
+        if six.PY3:
+            return response.raw._fp.fp.raw._sock
+        else:
+            return response.raw._fp.fp._sock
 
     def _stream_helper(self, response):
         """Generator for data coming from a chunked-encoded HTTP response."""
@@ -257,14 +260,19 @@ class Client(requests.Session):
         socket = self._get_raw_response_socket(response)
 
         def recvall(socket, size):
-            data = ''
+            blocks = []
             while size > 0:
                 block = socket.recv(size)
                 if not block:
                     return None
 
-                data += block
+                blocks.append(block)
                 size -= len(block)
+
+            sep = bytes() if six.PY3 else str()
+            data = sep.join(blocks)
+            if six.PY3:
+                data = data.decode('utf-8')
             return data
 
         while True:
