@@ -328,6 +328,20 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_volumes_from(self):
+        vol_names = ['foo', 'bar']
+        try:
+            self.client.create_container('busybox', 'true',
+                                         volumes_from=vol_names)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data'])['VolumesFrom'],
+                         ','.join(vol_names))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_named_container(self):
         try:
             self.client.create_container('busybox', 'true',
