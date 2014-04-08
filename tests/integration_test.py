@@ -41,13 +41,13 @@ class BaseTestCase(unittest.TestCase):
         for img in self.tmp_imgs:
             try:
                 self.client.remove_image(img)
-            except docker.APIError:
+            except docker.errors.APIError:
                 pass
         for container in self.tmp_containers:
             try:
                 self.client.stop(container, timeout=1)
                 self.client.remove_container(container)
-            except docker.APIError:
+            except docker.errors.APIError:
                 pass
 
 #########################
@@ -641,7 +641,7 @@ class TestPull(BaseTestCase):
         try:
             self.client.remove_image('joffrey/test001')
             self.client.remove_image('376968a23351')
-        except docker.APIError:
+        except docker.errors.APIError:
             pass
         info = self.client.info()
         self.assertIn('Images', info)
@@ -660,7 +660,7 @@ class TestPullStream(BaseTestCase):
         try:
             self.client.remove_image('joffrey/test001')
             self.client.remove_image('376968a23351')
-        except docker.APIError:
+        except docker.errors.APIError:
             pass
         info = self.client.info()
         self.assertIn('Images', info)

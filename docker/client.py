@@ -24,6 +24,7 @@ import six
 from .auth import auth
 from .unixconn import unixconn
 from .utils import utils
+from docker import errors
 
 if not six.PY3:
     import websocket
@@ -31,41 +32,6 @@ if not six.PY3:
 DEFAULT_DOCKER_API_VERSION = '1.9'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
-
-
-class APIError(requests.exceptions.HTTPError):
-    def __init__(self, message, response, explanation=None):
-        # requests 1.2 supports response as a keyword argument, but
-        # requests 1.1 doesn't
-        super(APIError, self).__init__(message)
-        self.response = response
-
-        self.explanation = explanation
-
-        if self.explanation is None and response.content:
-            self.explanation = response.content.strip()
-
-    def __str__(self):
-        message = super(APIError, self).__str__()
-
-        if self.is_client_error():
-            message = '%s Client Error: %s' % (
-                self.response.status_code, self.response.reason)
-
-        elif self.is_server_error():
-            message = '%s Server Error: %s' % (
-                self.response.status_code, self.response.reason)
-
-        if self.explanation:
-            message = '%s ("%s")' % (message, self.explanation)
-
-        return message
-
-    def is_client_error(self):
-        return 400 <= self.response.status_code < 500
-
-    def is_server_error(self):
-        return 500 <= self.response.status_code < 600
 
 
 class Client(requests.Session):
@@ -112,7 +78,7 @@ class Client(requests.Session):
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise APIError(e, response, explanation=explanation)
+            raise errors.APIError(e, response, explanation=explanation)
 
     def _result(self, response, json=False, binary=False):
         assert not (json and binary)
@@ -341,7 +307,7 @@ class Client(requests.Session):
               nocache=False, rm=False, stream=False, timeout=None):
         remote = context = headers = None
         if path is None and fileobj is None:
-            raise Exception("Either path or fileobj needs to be provided.")
+            raise TypeError("Either path or fileobj needs to be provided.")
 
         if fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
