@@ -341,6 +341,7 @@ class DockerClientTest(unittest.TestCase):
                          ','.join(vol_names))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
+
     def test_create_container_empty_volumes_from(self):
         try:
             self.client.create_container('busybox', 'true', volumes_from=[])
