@@ -16,6 +16,7 @@ import json
 import re
 import shlex
 import struct
+import warnings
 
 import requests
 import requests.exceptions
@@ -136,6 +137,14 @@ class Client(requests.Session):
             if stdin_open:
                 attach_stdin = True
                 stdin_once = True
+
+        if utils.compare_version('1.10', self._version) >= 0:
+            message = ('{0!r} parameter has no effect on create_container().'
+                       ' It has been moved to start()')
+            if dns:
+                warnings.warn(message.format('dns'), FutureWarning)
+            if volumes_from:
+                warnings.warn(message.format('volumes_from'), FutureWarning)
 
         return {
             'Hostname': hostname,
@@ -665,7 +674,8 @@ class Client(requests.Session):
                             True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=False, links=None, privileged=False):
+              publish_all_ports=False, links=None, privileged=False,
+              dns=None, volumes_from=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -702,6 +712,14 @@ class Client(requests.Session):
             start_config['Links'] = formatted_links
 
         start_config['Privileged'] = privileged
+
+        if utils.compare_version('1.10', self._version) >= 0:
+            if dns:
+                start_config['Dns'] = dns
+            if volumes_from:
+                if not isinstance(volumes_from, six.string_types):
+                    volumes_from = ','.join(volumes_from)
+                start_config['VolumesFrom'] = volumes_from
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
