@@ -679,14 +679,13 @@ class Client(requests.Session):
             'LxcConf': lxc_conf
         }
         if binds:
-            try:
-                bind_pairs = [
-                  '%s:%s:ro' % (h,d['bind']) if d['ro'] else '%s:%s:rw' %
-                  (h,d['bind']) for h, d in binds.items()
-                ]
-            except KeyError:
-                bind_pairs = [ ]
-                
+            bind_pairs = [
+                '%s:%s:%s' % (
+                    h, d['bind'],
+                    'ro' if 'ro' in d and d['ro'] else 'rw'
+                ) for h, d in binds.items()
+            ]
+
             start_config['Binds'] = bind_pairs
 
         if port_bindings:
