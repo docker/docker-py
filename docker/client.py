@@ -680,8 +680,12 @@ class Client(requests.Session):
         }
         if binds:
             bind_pairs = [
-                '{0}:{1}'.format(host, dest) for host, dest in binds.items()
+                '%s:%s:%s' % (
+                    h, d['bind'],
+                    'ro' if 'ro' in d and d['ro'] else 'rw'
+                ) for h, d in binds.items()
             ]
+
             start_config['Binds'] = bind_pairs
 
         if port_bindings:
