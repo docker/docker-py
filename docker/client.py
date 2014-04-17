@@ -381,8 +381,7 @@ class Client(requests.Session):
         }
         u = self._url("/commit")
         return self._result(
-             self._post_json(
-                 u, data=conf, params=params, timeout=timeout),
+             self._post_json(u, data=conf, params=params, timeout=timeout),
              json=True
         )
 
