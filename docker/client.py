@@ -250,7 +250,7 @@ class Client(requests.Session):
             start = walker + STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end
-            yield str(buf[start:end])
+            yield buf[start:end]
 
     def _multiplexed_socket_stream_helper(self, response):
         """A generator of multiplexed data blocks coming from a response
@@ -311,8 +311,10 @@ class Client(requests.Session):
             return stream_result() if stream else \
                 self._result(response, binary=True)
 
+        sep = bytes() if six.PY3 else str()
+
         return stream and self._multiplexed_socket_stream_helper(response) or \
-            ''.join([x for x in self._multiplexed_buffer_helper(response)])
+            sep.join([x for x in self._multiplexed_buffer_helper(response)])
 
     def attach_socket(self, container, params=None, ws=False):
         if params is None:
