@@ -652,16 +652,26 @@ class Client(requests.Session):
         return stream and self._stream_helper(response) \
             or self._result(response)
 
-    def remove_container(self, container, v=False, link=False):
+    def remove_container(self, container, v=False, link=False, **kwargs):
+        # we do this because when timeout=None, we want to pass in None
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = self._timeout
         if isinstance(container, dict):
             container = container.get('Id')
         params = {'v': v, 'link': link}
         res = self._delete(self._url("/containers/" + container),
-                           params=params)
+                           params=params, timeout=timeout)
         self._raise_for_status(res)
 
-    def remove_image(self, image):
-        res = self._delete(self._url("/images/" + image))
+    def remove_image(self, image, **kwargs):
+        # we do this because when timeout=None, we want to pass in None
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = self._timeout
+        res = self._delete(self._url("/images/" + image), timeout=timeout)
         self._raise_for_status(res)
 
     def restart(self, container, timeout=10):
