@@ -441,12 +441,15 @@ class DockerClientTest(unittest.TestCase):
             docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
-    def test_start_container_with_binds(self):
+    def test_start_container_with_binds_ro(self):
         try:
             mount_dest = '/mnt'
             mount_origin = '/tmp'
             self.client.start(fake_api.FAKE_CONTAINER_ID,
-                              binds={mount_origin: mount_dest})
+                              binds={mount_origin: {
+                                  "bind": mount_dest,
+                                  "ro": True
+                              }})
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -454,7 +457,30 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(args[0][0], url_prefix +
                          'containers/3cc2351ab11b/start')
         self.assertEqual(json.loads(args[1]['data']),
-                         {"Binds": ["/tmp:/mnt"],
+                         {"Binds": ["/tmp:/mnt:ro"],
+                          "PublishAllPorts": False,
+                          "Privileged": False})
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS)
+
+    def test_start_container_with_binds_rw(self):
+        try:
+            mount_dest = '/mnt'
+            mount_origin = '/tmp'
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              binds={mount_origin: {
+                                     "bind": mount_dest, "ro": False}})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix +
+                         'containers/3cc2351ab11b/start')
+        self.assertEqual(json.loads(args[1]['data']),
+                         {"Binds": ["/tmp:/mnt:rw"],
                           "PublishAllPorts": False,
                           "Privileged": False})
         self.assertEqual(args[1]['headers'],
