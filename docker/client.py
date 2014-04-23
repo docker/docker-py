@@ -121,8 +121,12 @@ class Client(requests.Session):
                 volumes_dict[vol] = {}
             volumes = volumes_dict
 
-        if volumes_from and not isinstance(volumes_from, six.string_types):
-            volumes_from = ','.join(volumes_from)
+        if volumes_from:
+            if not isinstance(volumes_from, six.string_types):
+                volumes_from = ','.join(volumes_from)
+        else:
+            # Force None, an empty list or dict causes client.start to fail
+            volumes_from = None
 
         attach_stdin = False
         attach_stdout = False
