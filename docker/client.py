@@ -317,7 +317,8 @@ class Client(requests.Session):
         else:
             if fileobj is not None:
                 context = utils.mkbuildcontext(fileobj)
-            elif path.startswith(('http://', 'https://', 'git://', 'github.com/')):
+            elif path.startswith(('http://', 'https://',
+                                  'git://', 'github.com/')):
                 remote = path
             else:
                 context = utils.tar(path)

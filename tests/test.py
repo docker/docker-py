@@ -1245,7 +1245,6 @@ class DockerClientTest(unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-
     #######################
     #  PY SPECIFIC TESTS  #
     #######################
