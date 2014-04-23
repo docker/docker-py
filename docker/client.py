@@ -309,19 +309,18 @@ class Client(requests.Session):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
-        if custom_context and not fileobj:
-            raise TypeError("You must specify fileobj for a custom context")
 
         if custom_context:
+            if not fileobj:
+                raise TypeError("You must specify fileobj for a custom context")
             context = fileobj
+        elif fileobj is not None:
+            context = utils.mkbuildcontext(fileobj)
+        elif path.startswith(('http://', 'https://',
+                              'git://', 'github.com/')):
+            remote = path
         else:
-            if fileobj is not None:
-                context = utils.mkbuildcontext(fileobj)
-            elif path.startswith(('http://', 'https://',
-                                  'git://', 'github.com/')):
-                remote = path
-            else:
-                context = utils.tar(path)
+            context = utils.tar(path)
 
         if utils.compare_version('1.8', self._version) >= 0:
             stream = True
