@@ -20,7 +20,7 @@ import os
 import six
 
 from ..utils import utils
-from docker import errors
+from .. import errors
 
 INDEX_URL = 'https://index.docker.io/v1/'
 DOCKER_CONFIG_FILENAME = '.dockercfg'
