@@ -312,7 +312,7 @@ class Client(requests.Session):
 
         if custom_context:
             if not fileobj:
-                raise TypeError("You must specify fileobj for a custom context")
+                raise TypeError("You must specify fileobj with custom_context")
             context = fileobj
         elif fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
