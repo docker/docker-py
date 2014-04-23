@@ -535,13 +535,19 @@ class TestStartContainerWithVolumesFrom(BaseTestCase):
         res2 = self.client.create_container(
             'busybox', 'cat',
             detach=True, stdin_open=True,
-            volumes_from=vol_names)
+        )
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
-        self.client.start(container3_id)
+        self.client.start(
+            container3_id,
+            volumes_from=vol_names,
+        )
 
         info = self.client.inspect_container(res2['Id'])
-        self.assertEqual(info['Config']['VolumesFrom'], ','.join(vol_names))
+        self.assertEqual(
+            info['HostConfig']['VolumesFrom'],
+            ','.join(vol_names),
+        )
 
 
 class TestStartContainerWithLinks(BaseTestCase):
