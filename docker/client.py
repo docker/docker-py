@@ -24,7 +24,7 @@ import six
 from .auth import auth
 from .unixconn import unixconn
 from .utils import utils
-from docker import errors
+from . import errors
 
 if not six.PY3:
     import websocket
