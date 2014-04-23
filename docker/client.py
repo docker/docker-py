@@ -335,7 +335,7 @@ class Client(requests.Session):
         }
 
         if context is not None:
-            headers['Content-Type'] = 'application/tar'
+            headers = {'Content-Type': 'application/tar'}
             if encoding:
                 headers['Content-Encoding'] = encoding
 
