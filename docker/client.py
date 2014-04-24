@@ -141,10 +141,10 @@ class Client(requests.Session):
         if utils.compare_version('1.10', self._version) >= 0:
             message = ('{0!r} parameter has no effect on create_container().'
                        ' It has been moved to start()')
-            if dns:
+            if dns is not None:
                 warnings.warn(message.format('dns'), FutureWarning)
-            if volumes_from:
                 warnings.warn(message.format('volumes_from'), FutureWarning)
+            if volumes_from is not None:
 
         return {
             'Hostname': hostname,
@@ -714,9 +714,9 @@ class Client(requests.Session):
         start_config['Privileged'] = privileged
 
         if utils.compare_version('1.10', self._version) >= 0:
-            if dns:
+            if dns is not None:
                 start_config['Dns'] = dns
-            if volumes_from:
+            if volumes_from is not None:
                 if not isinstance(volumes_from, six.string_types):
                     volumes_from = ','.join(volumes_from)
                 start_config['VolumesFrom'] = volumes_from
