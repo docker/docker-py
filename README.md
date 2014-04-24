@@ -71,6 +71,11 @@ to those for the `docker run` command except it doesn't support the
 attach options (`-a`). See "Port bindings" and "Using volumes" below for
 more information on how to create port bindings and volume mappings.
 
+`volumes_from` and `dns` arguments raise TypeError exception if they are used
+against v1.10 of docker remote API. Those arguments should be passed to
+`start()` instead.
+
+
 ```python
 c.diff(container)
 ```
@@ -201,7 +206,8 @@ Identical to the `docker search` command.
 
 ```python
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
-        publish_all_ports=False, links=None, privileged=False)
+        publish_all_ports=False, links=None, privileged=False,
+        dns=None, volumes_from=None)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
@@ -217,6 +223,9 @@ dictionary. `privileged` starts the container in privileged mode.
 can be specified with the `links` argument. They can either be
 specified as a dictionary mapping name to alias or as a list of
 `(name, alias)` tuples.
+
+`dns` and `volumes_from` are only available if they are used with version v1.10
+of docker remote API. Otherwise they are ignored.
 
 ```python
 c.stop(container, timeout=10)
