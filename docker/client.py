@@ -720,6 +720,17 @@ class Client(requests.Session):
                 if not isinstance(volumes_from, six.string_types):
                     volumes_from = ','.join(volumes_from)
                 start_config['VolumesFrom'] = volumes_from
+        else:
+            warning_message = ('{0!r} parameter is discarded. It is only'
+                               ' available for API version greater or equal'
+                               ' than 1.10')
+
+            if dns is not None:
+                warnings.warn(warning_message.format('dns'),
+                              DeprecationWarning)
+            if volumes_from is not None:
+                warnings.warn(warning_message.format('volumes_from'),
+                              DeprecationWarning)
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
