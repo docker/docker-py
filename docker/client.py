@@ -717,8 +717,8 @@ class Client(requests.Session):
             if dns is not None:
                 start_config['Dns'] = dns
             if volumes_from is not None:
-                if not isinstance(volumes_from, six.string_types):
-                    volumes_from = ','.join(volumes_from)
+                if isinstance(volumes_from, six.string_types):
+                    volumes_from = volumes_from.split(',')
                 start_config['VolumesFrom'] = volumes_from
         else:
             warning_message = ('{0!r} parameter is discarded. It is only'
