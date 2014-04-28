@@ -142,9 +142,9 @@ class Client(requests.Session):
             message = ('{0!r} parameter has no effect on create_container().'
                        ' It has been moved to start()')
             if dns is not None:
-                raise TypeError(message.format('dns'))
+                raise errors.DockerException(message.format('dns'))
             if volumes_from is not None:
-                raise TypeError(message.format('volumes_from'))
+                raise errors.DockerException(message.format('volumes_from'))
 
         return {
             'Hostname': hostname,
