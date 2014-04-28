@@ -149,7 +149,15 @@ class TestCreateContainerWithBinds(BaseTestCase):
                 ['ls', mount_dest], volumes={mount_dest: {}}
             )
             container_id = container['Id']
-            self.client.start(container_id, binds={mount_origin: mount_dest})
+            self.client.start(
+                container_id,
+                binds={
+                    mount_origin: {
+                        'bind': mount_dest,
+                        'ro': False,
+                    },
+                },
+            )
             self.tmp_containers.append(container_id)
             exitcode = self.client.wait(container_id)
             self.assertEqual(exitcode, 0)
