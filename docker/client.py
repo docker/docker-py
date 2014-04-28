@@ -16,6 +16,7 @@ import json
 import re
 import shlex
 import struct
+import warnings
 
 import requests
 import requests.exceptions
@@ -140,6 +141,14 @@ class Client(requests.Session):
             if stdin_open:
                 attach_stdin = True
                 stdin_once = True
+
+        if utils.compare_version('1.10', self._version) >= 0:
+            message = ('{0!r} parameter has no effect on create_container().'
+                       ' It has been moved to start()')
+            if dns is not None:
+                raise errors.DockerException(message.format('dns'))
+            if volumes_from is not None:
+                raise errors.DockerException(message.format('volumes_from'))
 
         return {
             'Hostname': hostname,
@@ -669,7 +678,8 @@ class Client(requests.Session):
                             True)
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=False, links=None, privileged=False):
+              publish_all_ports=False, links=None, privileged=False,
+              dns=None, volumes_from=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -710,6 +720,25 @@ class Client(requests.Session):
             start_config['Links'] = formatted_links
 
         start_config['Privileged'] = privileged
+
+        if utils.compare_version('1.10', self._version) >= 0:
+            if dns is not None:
+                start_config['Dns'] = dns
+            if volumes_from is not None:
+                if isinstance(volumes_from, six.string_types):
+                    volumes_from = volumes_from.split(',')
+                start_config['VolumesFrom'] = volumes_from
+        else:
+            warning_message = ('{0!r} parameter is discarded. It is only'
+                               ' available for API version greater or equal'
+                               ' than 1.10')
+
+            if dns is not None:
+                warnings.warn(warning_message.format('dns'),
+                              DeprecationWarning)
+            if volumes_from is not None:
+                warnings.warn(warning_message.format('volumes_from'),
+                              DeprecationWarning)
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
