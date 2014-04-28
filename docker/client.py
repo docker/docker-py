@@ -317,14 +317,20 @@ class Client(requests.Session):
             u, None, params=self._attach_params(params), stream=True))
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
-              nocache=False, rm=False, stream=False, timeout=None):
+              nocache=False, rm=False, stream=False, timeout=None,
+              custom_context=False, encoding=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
 
-        if fileobj is not None:
+        if custom_context:
+            if not fileobj:
+                raise TypeError("You must specify fileobj with custom_context")
+            context = fileobj
+        elif fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
-        elif path.startswith(('http://', 'https://', 'git://', 'github.com/')):
+        elif path.startswith(('http://', 'https://',
+                              'git://', 'github.com/')):
             remote = path
         else:
             context = utils.tar(path)
@@ -340,8 +346,11 @@ class Client(requests.Session):
             'nocache': nocache,
             'rm': rm
         }
+
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
+            if encoding:
+                headers['Content-Encoding'] = encoding
 
         if utils.compare_version('1.9', self._version) >= 0:
             # If we don't have any auth data so far, try reloading the config

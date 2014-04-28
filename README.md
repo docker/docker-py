@@ -30,13 +30,19 @@ is hosted. `version` is the version of the API the client will use and
 
 ```python
 c.build(path=None, tag=None, quiet=False, fileobj=None, nocache=False,
-        rm=False, stream=False)
+        rm=False, stream=False, timeout=None,
+        custom_context=False, encoding=None):
 ```
 
 Similar to the `docker build` command. Either `path` or `fileobj` needs
 to be set. `path` can be a local path (to a directory containing a
 Dockerfile) or a remote URL. `fileobj` must be a readable file-like
 object to a Dockerfile.
+
+If you have a tar file for the docker build context (including a dockerfile)
+already, pass a readable file-like object to `fileobj` and also pass
+`custom_context=True`. If the stream is compressed also, set `encoding` to
+the correct value (e.g `gzip`).
 
 ```python
 c.commit(container, repository=None, tag=None, message=None, author=None,

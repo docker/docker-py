@@ -20,6 +20,7 @@ import os
 import signal
 import tempfile
 import unittest
+import gzip
 
 import docker
 import requests
@@ -1237,6 +1238,41 @@ class DockerClientTest(unittest.TestCase):
         ]).encode('ascii'))
         try:
             self.client.build(fileobj=script, stream=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_custom_context(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+        context = docker.utils.mkbuildcontext(script)
+        try:
+            self.client.build(fileobj=context, custom_context=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_custom_context_gzip(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+        context = docker.utils.mkbuildcontext(script)
+        gz_context = gzip.GzipFile(fileobj=context)
+        try:
+            self.client.build(
+                fileobj=gz_context,
+                custom_context=True,
+                encoding="gzip"
+            )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
