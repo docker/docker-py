@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.3.2
+-----
+
+_In development._
+
 0.3.1
 -----
 
