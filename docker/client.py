@@ -388,7 +388,12 @@ class Client(requests.Session):
             return match.group(1), output
 
     def commit(self, container, repository=None, tag=None, message=None,
-               author=None, conf=None):
+               author=None, conf=None, **kwargs):
+        # we do this because when timeout=None, we want to pass in None
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = self._timeout
         params = {
             'container': container,
             'repo': repository,
@@ -397,8 +402,10 @@ class Client(requests.Session):
             'author': author
         }
         u = self._url("/commit")
-        return self._result(self._post_json(u, data=conf, params=params),
-                            json=True)
+        return self._result(
+             self._post_json(u, data=conf, params=params, timeout=timeout),
+             json=True
+        )
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False,
                    since=None, before=None, limit=-1):
@@ -636,7 +643,12 @@ class Client(requests.Session):
         else:
             return self._result(response)
 
-    def push(self, repository, stream=False):
+    def push(self, repository, stream=False, **kwargs):
+        # we do this because when timeout=None, we want to pass in None
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = self._timeout
         registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         headers = {}
@@ -654,23 +666,34 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-            response = self._post_json(u, None, headers=headers, stream=stream)
+            response = self._post_json(
+                u, None, headers=headers, stream=stream, timeout=timeout)
         else:
-            response = self._post_json(u, None, stream=stream)
+            response = self._post_json(u, None, stream=stream, timeout=timeout)
 
         return stream and self._stream_helper(response) \
             or self._result(response)
 
-    def remove_container(self, container, v=False, link=False):
+    def remove_container(self, container, v=False, link=False, **kwargs):
+        # we do this because when timeout=None, we want to pass in None
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = self._timeout
         if isinstance(container, dict):
             container = container.get('Id')
         params = {'v': v, 'link': link}
         res = self._delete(self._url("/containers/" + container),
-                           params=params)
+                           params=params, timeout=timeout)
         self._raise_for_status(res)
 
-    def remove_image(self, image):
-        res = self._delete(self._url("/images/" + image))
+    def remove_image(self, image, **kwargs):
+        # we do this because when timeout=None, we want to pass in None
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = self._timeout
+        res = self._delete(self._url("/images/" + image), timeout=timeout)
         self._raise_for_status(res)
 
     def restart(self, container, timeout=10):
