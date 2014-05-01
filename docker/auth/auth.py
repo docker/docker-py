@@ -45,12 +45,24 @@ def expand_registry_url(hostname):
 
 
 def resolve_repository_name(repo_name):
+    # root
+    # root:tag
+    # root:tag.minor
+    # user/repo
+    # user/repo:tag
+    # domain.name:5000/repo
+    # domain.name:5000/repo:tag
+    # domain.name:5000/user/repo:tag
+    # localhost:5000/repo
+    # localhost:5000/repo:tag
+    # localhost:5000/user/repo:tag
+
     if '://' in repo_name:
         raise errors.InvalidRepository(
             'Repository name cannot contain a scheme ({0})'.format(repo_name))
     parts = repo_name.split('/', 1)
-    if ('.' not in parts[0] and (':' not in parts[0] or len(parts) == 1) and
-        parts[0] != 'localhost'):
+    if (len(parts) == 1 or 
+        (':' not in parts[0] and '.' not in parts[0] and parts[0] != 'localhost')):
         # This is a docker index repo (ex: foo/bar or ubuntu)
         return INDEX_URL, repo_name
     if len(parts) < 2:
