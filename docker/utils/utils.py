@@ -118,7 +118,7 @@ def convert_port_bindings(port_bindings):
 def convert_volume_binds(binds):
     result = []
     for k, v in binds.items():
-        if isinstance(d, dict):
+        if isinstance(v, dict):
             result.append('%s:%s:%s' % (
                 k, v['bind'], 'ro' if v.get('ro', False) else 'rw'
             ))
