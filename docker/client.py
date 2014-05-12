@@ -592,7 +592,17 @@ class Client(requests.Session):
             self._auth_configs[registry] = req_data
         return self._result(response, json=True)
 
-    def logs(self, container, stdout=True, stderr=True, stream=False):
+    def logs(self, container, stdout=True, stderr=True, stream=False,
+             timestamps=False):
+        if utils.compare_version('1.11', self._version) >= 0:
+            params = {'stderr': stderr and 1 or 0,
+                      'stdout': stdout and 1 or 0,
+                      'timestamps': timestamps and 1 or 0,
+                      'follow': stream and 1 or 0}
+            url = self._url("/containers/{0}/logs".format(container))
+            res = self._get(url, params=params, stream=stream)
+            return stream and self._multiplexed_socket_stream_helper(res) or \
+                ''.join([x for x in self._multiplexed_buffer_helper(res)])
         return self.attach(
             container,
             stdout=stdout,
