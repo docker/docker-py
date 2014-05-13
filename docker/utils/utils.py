@@ -116,6 +116,18 @@ def convert_port_bindings(port_bindings):
     return result
 
 
+def convert_volume_binds(binds):
+    result = []
+    for k, v in binds.items():
+        if isinstance(v, dict):
+            result.append('%s:%s:%s' % (
+                k, v['bind'], 'ro' if v.get('ro', False) else 'rw'
+            ))
+        else:
+            result.append('%s:%s:rw' % (k, v))
+    return result
+
+
 def parse_repository_tag(repo):
     column_index = repo.rfind(':')
     if column_index < 0:

@@ -702,14 +702,7 @@ class Client(requests.Session):
             'LxcConf': lxc_conf
         }
         if binds:
-            bind_pairs = [
-                '%s:%s:%s' % (
-                    h, d['bind'],
-                    'ro' if 'ro' in d and d['ro'] else 'rw'
-                ) for h, d in binds.items()
-            ]
-
-            start_config['Binds'] = bind_pairs
+            start_config['Binds'] = utils.convert_volume_binds(binds)
 
         if port_bindings:
             start_config['PortBindings'] = utils.convert_port_bindings(
