@@ -213,7 +213,7 @@ Identical to the `docker search` command.
 ```python
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
         publish_all_ports=False, links=None, privileged=False,
-        dns=None, volumes_from=None)
+        dns=None, volumes_from=None, network_mode=None)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
@@ -232,6 +232,12 @@ specified as a dictionary mapping name to alias or as a list of
 
 `dns` and `volumes_from` are only available if they are used with version v1.10
 of docker remote API. Otherwise they are ignored.
+
+`network_mode` is available since v1.11 and sets the Network mode for the
+container ('bridge': creates a new network stack for the container on the
+docker bridge, 'none': no networking for this container, 'container:[name|id]':
+reuses another container network stack), 'host': use the host network stack
+inside the container.
 
 ```python
 c.stop(container, timeout=10)
