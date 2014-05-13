@@ -69,7 +69,8 @@ c.create_container(image, command=None, hostname=None, user=None,
                    detach=False, stdin_open=False, tty=False, mem_limit=0,
                    ports=None, environment=None, dns=None, volumes=None,
                    volumes_from=None, network_disabled=False, name=None,
-                   entrypoint=None, cpu_shares=None, working_dir=None)
+                   entrypoint=None, cpu_shares=None, working_dir=None,
+                   memswap_limit=0)
 ```
 
 Creates a container that can then be `start`ed. Parameters are similar

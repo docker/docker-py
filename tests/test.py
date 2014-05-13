@@ -187,7 +187,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
                              "StdinOnce": false,
-                             "OpenStdin": false, "NetworkDisabled": false}'''))
+                             "OpenStdin": false, "NetworkDisabled": false,
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -211,7 +212,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
-                             "NetworkDisabled": false}'''))
+                             "NetworkDisabled": false,
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -237,7 +239,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
-                             "NetworkDisabled": false}'''))
+                             "NetworkDisabled": false,
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -260,7 +263,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "Entrypoint": "cowsay"}'''))
+                             "Entrypoint": "cowsay",
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -283,7 +287,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "CpuShares": 5}'''))
+                             "CpuShares": 5,
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -306,7 +311,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "WorkingDir": "/root"}'''))
+                             "WorkingDir": "/root",
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -325,7 +331,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStdin": true, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
                              "StdinOnce": true,
-                             "OpenStdin": true, "NetworkDisabled": false}'''))
+                             "OpenStdin": true, "NetworkDisabled": false,
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -369,7 +376,8 @@ class DockerClientTest(unittest.TestCase):
                              "AttachStdin": false, "Memory": 0,
                              "AttachStderr": true, "AttachStdout": true,
                              "StdinOnce": false,
-                             "OpenStdin": false, "NetworkDisabled": false}'''))
+                             "OpenStdin": false, "NetworkDisabled": false,
+                             "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
