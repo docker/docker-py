@@ -16,6 +16,7 @@ import json
 import re
 import shlex
 import struct
+import os
 
 import requests
 import requests.exceptions
@@ -23,7 +24,9 @@ import six
 
 from .auth import auth
 from .unixconn import unixconn
+from .ssladapter import ssladapter
 from .utils import utils
+from .exceptions import exceptions
 
 if not six.PY3:
     import websocket
@@ -75,12 +78,14 @@ class Client(requests.Session):
                  timeout=DEFAULT_TIMEOUT_SECONDS,
                  tls=False,
                  tls_cert=None,
-                 tls_key=None):
+                 tls_key=None,
+                 tls_verify=False,
+                 tls_ca_cert=None,
+                 ssl_version=None):
         super(Client, self).__init__()
-        if tls and not (tls_cert and tls_key):
-                raise RuntimeError('tls_key and tls_cert are required.')
-        if tls and not base_url.startswith('https'):
-            raise RuntimeError('TLS: base_url has to start with https://')
+  
+        if (tls or tls_verify) and not base_url.startswith('https://'):
+            raise exceptions.TLSParameterError('If using TLS, the base_url argument must begin with "https://".')
         if base_url is None:
             base_url = "http+unix://var/run/docker.sock"
         if 'unix:///' in base_url:
@@ -96,10 +101,44 @@ class Client(requests.Session):
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
-        if tls:
-            self.cert = (tls_cert, tls_key)
-            self.verify = False  # We assume the server.crt will we self signed
-            self.mount('https://', requests.adapters.HTTPAdapter())
+        """ Argument compatibility/mapping with http://docs.docker.io/examples/https/ 
+
+            This diverges from the Docker CLI in that users can specify 'tls' here, but also
+            disable any public/default CA pool verification by leaving tls_verify=False
+        """
+        """ urllib3 sets a default ssl_version if ssl_version is None
+            https://github.com/shazow/urllib3/blob/62ecd1523ec383802cb13b09bd7084d2da997420/urllib3/util/ssl_.py#L83
+        """
+        self.ssl_version = ssl_version
+
+        """ "tls" and "tls_verify" must have both or neither cert/key files
+            In either case, Alert the user when both are expected, but any are missing."""
+        if (tls or tls_verify) and (tls_cert or tls_key):
+            if not (tls_cert and tls_key) or (not os.path.isfile(tls_cert) or not os.path.isfile(tls_key)):
+                raise exceptions.TLSParameterError(
+                    'You must provide either both "tls_cert"/"tls_key" files, or neither, in order to use TLS.')  
+            else:
+                self.cert = (tls_cert, tls_key)
+            
+        """ 
+            Either set tls_verify to True (public/default CA checks) or to the path of a CA Cert file.
+            ref: https://github.com/kennethreitz/requests/blob/739d153ef77765392fa109bebead4260c05f3193/requests/adapters.py#L135-L137
+            ref: https://github.com/kennethreitz/requests/blob/master/requests/sessions.py#L433-L439
+        """
+        if tls_verify:
+            if not tls_ca_cert:
+                self.verify = True
+            elif os.path.isfile(tls_ca_cert):
+                self.verify = tls_ca_cert
+            else:
+                raise exceptions.TLSParameterError(
+                    'If "tls_verify" is set, then "tls_ca_cert" must be blank (to check default/public CA list) OR a path to a CA Cert File.')                      
+        else:
+            self.verify = False
+
+        """ Use SSLAdapter for the ability to specify SSL version """
+        if tls or tls_verify:
+            self.mount('https://', ssladapter.SSLAdapter(self.ssl_version))
         else:
             self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
 

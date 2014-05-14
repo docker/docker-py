@@ -19,7 +19,7 @@ setup(
     name="docker-py",
     version='0.3.0',
     description="Python client for Docker.",
-    packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils'],
+    packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils', 'docker.ssladapter', 'docker.exceptions'],
     install_requires=requirements + test_requirements,
     zip_safe=False,
     test_suite='tests',
