@@ -14,6 +14,7 @@
 
 import time
 import base64
+import json
 import io
 import os
 import signal
@@ -674,10 +675,8 @@ class TestPullStream(BaseTestCase):
         self.assertIn('Images', info)
         img_count = info['Images']
         stream = self.client.pull('joffrey/test001', stream=True)
-        res = u''
         for chunk in stream:
-            res += chunk
-        self.assertEqual(type(res), six.text_type)
+            json.loads(chunk)  # ensure chunk is a single, valid JSON blob
         self.assertEqual(img_count + 3, self.client.info()['Images'])
         img_info = self.client.inspect_image('joffrey/test001')
         self.assertIn('id', img_info)
@@ -770,6 +769,7 @@ class TestBuildStream(BaseTestCase):
         stream = self.client.build(fileobj=script, stream=True)
         logs = ''
         for chunk in stream:
+            json.loads(chunk)  # ensure chunk is a single, valid JSON blob
             logs += chunk
         self.assertNotEqual(logs, '')
 
