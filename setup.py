@@ -11,13 +11,15 @@ if sys.version_info[0] == 3:
 else:
     requirements_file = './requirements.txt'
 
+exec(open('docker/version.py').read())
+
 test_requirements = []
 with open(requirements_file) as requirements_txt:
     requirements = [line for line in requirements_txt]
 
 setup(
     name="docker-py",
-    version='0.3.2-dev',
+    version=version,
     description="Python client for Docker.",
     packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils'],
     install_requires=requirements + test_requirements,
