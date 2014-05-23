@@ -13,7 +13,8 @@ else:
 
 exec(open('docker/version.py').read())
 
-test_requirements = []
+with open('./test-requirements.txt') as test_reqs_txt:
+    test_requirements = [line for line in test_reqs_txt]
 with open(requirements_file) as requirements_txt:
     requirements = [line for line in requirements_txt]
 
