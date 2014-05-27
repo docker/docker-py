@@ -214,7 +214,7 @@ Identical to the `docker search` command.
 ```python
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
         publish_all_ports=False, links=None, privileged=False,
-        dns=None, volumes_from=None, network_mode=None)
+        dns=None, dns_search=None, volumes_from=None, network_mode=None)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
