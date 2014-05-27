@@ -616,6 +616,9 @@ class Client(requests.Session):
             logs=True
         )
 
+    def ping(self):
+        return self._result(self._get(self._url('/_ping')))
+
     def port(self, container, private_port):
         if isinstance(container, dict):
             container = container.get('Id')
