@@ -171,6 +171,13 @@ instead if you want to fetch/stream container output without first
 retrieving the entire backlog.
 
 ```python
+c.ping()
+```
+
+Hits the /_ping endpoint of the remote API and returns the result.
+An exception will be raised if the endpoint isn't responding.
+
+```python
 c.port(container, private_port)
 ```
 
