@@ -155,7 +155,7 @@ c.login(username, password=None, email=None, registry=None)
 Identical to the `docker login` command (but non-interactive, obviously).
 
 ```python
-c.logs(container, stdout=True, stderr=True, stream=False)
+c.logs(container, stdout=True, stderr=True, stream=False, timestamps=False)
 ```
 
 Identical to the `docker logs` command. The `stream` parameter makes the
