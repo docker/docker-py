@@ -691,16 +691,17 @@ class Client(requests.Session):
         return stream and self._stream_helper(response) \
             or self._result(response)
 
-    def remove_container(self, container, v=False, link=False):
+    def remove_container(self, container, v=False, link=False, force=False):
         if isinstance(container, dict):
             container = container.get('Id')
-        params = {'v': v, 'link': link}
+        params = {'v': v, 'link': link, 'force': force}
         res = self._delete(self._url("/containers/" + container),
                            params=params)
         self._raise_for_status(res)
 
-    def remove_image(self, image):
-        res = self._delete(self._url("/images/" + image))
+    def remove_image(self, image, force=False, noprune=False):
+        params = {'force': force, 'noprune': noprune}
+        res = self._delete(self._url("/images/" + image), params=params)
         self._raise_for_status(res)
 
     def restart(self, container, timeout=10):
