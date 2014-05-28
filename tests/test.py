@@ -899,7 +899,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
-            params={'v': False, 'link': False},
+            params={'v': False, 'link': False, 'force': False},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -911,7 +911,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
-            params={'v': False, 'link': False},
+            params={'v': False, 'link': False, 'force': False},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -923,7 +923,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
-            params={'v': False, 'link': True},
+            params={'v': False, 'link': True, 'force': False},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1028,6 +1028,7 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128',
+            params={'force': False, 'noprune': False},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
