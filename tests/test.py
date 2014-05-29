@@ -345,8 +345,9 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        print(args[1]['data'])
         self.assertEqual(json.loads(args[1]['data'])['VolumesFrom'],
-                         ','.join(vol_names))
+                         vol_names)
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
