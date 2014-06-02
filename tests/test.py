@@ -1218,6 +1218,30 @@ class DockerClientTest(unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_get_image(self):
+        try:
+            self.client.get_image(fake_api.FAKE_IMAGE_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'images/e9aa60c60128/get',
+            stream=True,
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_load_image(self):
+        try:
+            self.client.load_image('Byte Stream....')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'images/load',
+            data='Byte Stream....',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     #################
     # BUILDER TESTS #
     #################

@@ -25,7 +25,7 @@ import docker
 import six
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push; tag
+# export; history; import_image; insert; port; push; tag; get; load
 
 
 class BaseTestCase(unittest.TestCase):
