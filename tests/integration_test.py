@@ -25,7 +25,7 @@ import docker
 import six
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push; tag
+# history; import_image; insert; port; push; tag
 
 
 class BaseTestCase(unittest.TestCase):
@@ -79,6 +79,29 @@ class TestSearch(BaseTestCase):
         base_img = [x for x in res if x['name'] == 'busybox']
         self.assertEqual(len(base_img), 1)
         self.assertIn('description', base_img[0])
+
+
+###################
+## EXPORT TESTS ##
+###################
+
+
+class TestExport(BaseTestCase):
+    def runTest(self):
+        res1 = self.client.create_container("busybox", "true")
+        self.tmp_containers.append(res1['Id'])
+        fd, path = tempfile.mkstemp()
+        raw = self.client.export(res1['Id'])
+        while 1:
+            block = raw.read(1024)
+            if not block:
+                break
+            os.write(fd, block)
+        os.close(fd)
+        self.assertTrue(
+            os.stat(path).st_size > 2609905.664)  # the temp file size should bigger than the [busybox] itself
+        os.remove(path)
+
 
 ###################
 #  LISTING TESTS  #
@@ -230,10 +253,10 @@ class TestStartContainerPrivileged(BaseTestCase):
         if not inspect['State']['Running']:
             self.assertIn('ExitCode', inspect['State'])
             self.assertEqual(inspect['State']['ExitCode'], 0)
-        # Since Nov 2013, the Privileged flag is no longer part of the
-        # container's config exposed via the API (safety concerns?).
-        #
-        # self.assertEqual(inspect['Config']['Privileged'], True)
+            # Since Nov 2013, the Privileged flag is no longer part of the
+            # container's config exposed via the API (safety concerns?).
+            #
+            # self.assertEqual(inspect['Config']['Privileged'], True)
 
 
 class TestWait(BaseTestCase):
@@ -430,7 +453,6 @@ class TestKillWithSignal(BaseTestCase):
 
 class TestPort(BaseTestCase):
     def runTest(self):
-
         port_bindings = {
             1111: ('127.0.0.1', '4567'),
             2222: ('127.0.0.1', '4568')
