@@ -285,17 +285,18 @@ class Client(requests.Session):
             yield data
 
     def attach(self, container, stdout=True, stderr=True,
-               stream=False, logs=False):
+               stdin=None, stream=False, logs=False):
         if isinstance(container, dict):
             container = container.get('Id')
         params = {
             'logs': logs and 1 or 0,
+            'stdin': stdin is not None and 1 or 0,
             'stdout': stdout and 1 or 0,
             'stderr': stderr and 1 or 0,
             'stream': stream and 1 or 0,
         }
         u = self._url("/containers/{0}/attach".format(container))
-        response = self._post(u, params=params, stream=stream)
+        response = self._post(u, data=stdin, params=params, stream=stream)
 
         # Stream multi-plexing was only introduced in API v1.6. Anything before
         # that needs old-style streaming.
