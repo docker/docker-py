@@ -39,10 +39,8 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None):
     res = requests.Response()
     res.status_code = status_code
-    if not isinstance(content, six.string_types):
-        content = json.dumps(content)
-    if six.PY3:
-        content = content.encode('ascii')
+    if not isinstance(content, six.binary_type):
+        content = json.dumps(content).encode('ascii')
     res._content = content
     res.headers = requests.structures.CaseInsensitiveDict(headers or {})
     res.reason = reason
@@ -737,7 +735,7 @@ class DockerClientTest(unittest.TestCase):
 
     def test_logs(self):
         try:
-            self.client.logs(fake_api.FAKE_CONTAINER_ID)
+            logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -748,9 +746,14 @@ class DockerClientTest(unittest.TestCase):
             stream=False
         )
 
+        self.assertEqual(
+            logs,
+            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        )
+
     def test_logs_with_dict_instead_of_id(self):
         try:
-            self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
+            logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -759,6 +762,11 @@ class DockerClientTest(unittest.TestCase):
             params={'stream': 0, 'logs': 1, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=False
+        )
+
+        self.assertEqual(
+            logs,
+            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
         )
 
     def test_log_streaming(self):

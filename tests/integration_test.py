@@ -278,7 +278,7 @@ class TestLogs(BaseTestCase):
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(id)
-        self.assertEqual(logs, snippet + '\n')
+        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
 
 class TestLogsStreaming(BaseTestCase):
@@ -290,14 +290,14 @@ class TestLogsStreaming(BaseTestCase):
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        logs = ''
+        logs = bytes() if six.PY3 else str()
         for chunk in self.client.logs(id, stream=True):
             logs += chunk
 
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
 
-        self.assertEqual(logs, snippet + '\n')
+        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
 
 class TestLogsWithDictInsteadOfId(BaseTestCase):
@@ -312,7 +312,7 @@ class TestLogsWithDictInsteadOfId(BaseTestCase):
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(container)
-        self.assertEqual(logs, snippet + '\n')
+        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
 
 class TestDiff(BaseTestCase):
