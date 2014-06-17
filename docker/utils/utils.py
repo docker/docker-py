@@ -131,10 +131,10 @@ def convert_volume_binds(binds):
 def parse_repository_tag(repo):
     column_index = repo.rfind(':')
     if column_index < 0:
-        return repo, ""
+        return repo, None
     tag = repo[column_index+1:]
     slash_index = tag.find('/')
     if slash_index < 0:
         return repo[:column_index], tag
 
-    return repo, ""
+    return repo, None

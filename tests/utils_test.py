@@ -7,15 +7,15 @@ class UtilsTest(unittest.TestCase):
 
     def test_parse_repository_tag(self):
         self.assertEqual(parse_repository_tag("root"),
-                         ("root", ""))
+                         ("root", None))
         self.assertEqual(parse_repository_tag("root:tag"),
                          ("root", "tag"))
         self.assertEqual(parse_repository_tag("user/repo"),
-                         ("user/repo", ""))
+                         ("user/repo", None))
         self.assertEqual(parse_repository_tag("user/repo:tag"),
                          ("user/repo", "tag"))
         self.assertEqual(parse_repository_tag("url:5000/repo"),
-                         ("url:5000/repo", ""))
+                         ("url:5000/repo", None))
         self.assertEqual(parse_repository_tag("url:5000/repo:tag"),
                          ("url:5000/repo", "tag"))
 
