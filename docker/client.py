@@ -647,6 +647,8 @@ class Client(requests.Session):
         return h_ports
 
     def pull(self, repository, tag=None, stream=False):
+        if not tag:
+            repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
         if repo_name.count(":") == 1:
             repository, tag = repository.rsplit(":", 1)
