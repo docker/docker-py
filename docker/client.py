@@ -485,6 +485,12 @@ class Client(requests.Session):
         self._raise_for_status(res)
         return res.raw
 
+    def get_image(self, image):
+        res = self._get(self._url("/images/{0}/get".format(image)),
+                        stream=True)
+        self._raise_for_status(res)
+        return res.raw
+
     def history(self, image):
         res = self._get(self._url("/images/{0}/history".format(image)))
         self._raise_for_status(res)
@@ -569,6 +575,10 @@ class Client(requests.Session):
             params['signal'] = signal
         res = self._post(url, params=params)
 
+        self._raise_for_status(res)
+
+    def load_image(self, data):
+        res = self._post(self._url("/images/load"), data=data)
         self._raise_for_status(res)
 
     def login(self, username, password=None, email=None, registry=None,
