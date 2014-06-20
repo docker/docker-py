@@ -339,6 +339,11 @@ class DockerClientTest(unittest.TestCase):
         try:
             self.client.create_container('busybox', 'true',
                                          volumes_from=vol_names)
+        except docker.errors.DockerException as e:
+            self.assertTrue(
+                docker.utils.compare_version('1.10', self.client._version) >= 0
+            )
+            return
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         args = fake_request.call_args
@@ -740,8 +745,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            url_prefix + 'containers/3cc2351ab11b/attach',
-            params={'stream': 0, 'logs': 1, 'stderr': 1, 'stdout': 1},
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
@@ -758,8 +763,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            url_prefix + 'containers/3cc2351ab11b/attach',
-            params={'stream': 0, 'logs': 1, 'stderr': 1, 'stdout': 1},
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
@@ -776,8 +781,8 @@ class DockerClientTest(unittest.TestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
-            url_prefix + 'containers/3cc2351ab11b/attach',
-            params={'stream': 1, 'logs': 1, 'stderr': 1, 'stdout': 1},
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=True
         )
@@ -1133,6 +1138,11 @@ class DockerClientTest(unittest.TestCase):
         try:
             self.client.insert(fake_api.FAKE_IMAGE_NAME,
                                fake_api.FAKE_URL, fake_api.FAKE_PATH)
+        except docker.errors.DeprecatedMethod as e:
+            self.assertTrue(
+                docker.utils.compare_version('1.12', self.client._version) >= 0
+            )
+            return
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 

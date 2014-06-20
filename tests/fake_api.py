@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-CURRENT_VERSION = 'v1.9'
+CURRENT_VERSION = 'v1.12'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -316,7 +316,7 @@ fake_responses = {
     post_fake_tag_image,
     '{1}/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION, prefix):
     get_fake_wait,
-    '{1}/{0}/containers/3cc2351ab11b/attach'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/3cc2351ab11b/logs'.format(CURRENT_VERSION, prefix):
     get_fake_logs,
     '{1}/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION, prefix):
     get_fake_diff,
