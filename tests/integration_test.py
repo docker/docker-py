@@ -33,8 +33,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_containers = []
 
     def setUp(self):
-        self.client = docker.Client()
-        self.client.pull('busybox')
+        self.client = docker.Client(timeout=5)
         self.tmp_imgs = []
         self.tmp_containers = []
 
@@ -109,7 +108,7 @@ class TestListContainers(BaseTestCase):
     def runTest(self):
         res0 = self.client.containers(all=True)
         size = len(res0)
-        res1 = self.client.create_container('busybox', 'true;')
+        res1 = self.client.create_container('busybox:latest', 'true;')
         self.assertIn('Id', res1)
         self.client.start(res1['Id'])
         self.tmp_containers.append(res1['Id'])
@@ -119,9 +118,9 @@ class TestListContainers(BaseTestCase):
         self.assertEqual(len(retrieved), 1)
         retrieved = retrieved[0]
         self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], 'true;')
+        self.assertEqual(retrieved['Command'], u'true;')
         self.assertIn('Image', retrieved)
-        self.assertEqual(retrieved['Image'], 'busybox:latest')
+        self.assertRegexpMatches(retrieved['Image'], r'busybox:.*')
         self.assertIn('Status', retrieved)
 
 #####################
@@ -186,8 +185,8 @@ class TestStartContainer(BaseTestCase):
         self.client.start(res['Id'])
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
-        self.assertIn('ID', inspect)
-        self.assertTrue(inspect['ID'].startswith(res['Id']))
+        self.assertIn('Id', inspect)
+        self.assertTrue(inspect['Id'].startswith(res['Id']))
         self.assertIn('Image', inspect)
         self.assertIn('State', inspect)
         self.assertIn('Running', inspect['State'])
@@ -204,8 +203,8 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
         self.client.start(res)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
-        self.assertIn('ID', inspect)
-        self.assertTrue(inspect['ID'].startswith(res['Id']))
+        self.assertIn('Id', inspect)
+        self.assertTrue(inspect['Id'].startswith(res['Id']))
         self.assertIn('Image', inspect)
         self.assertIn('State', inspect)
         self.assertIn('Running', inspect['State'])
@@ -222,8 +221,8 @@ class TestStartContainerPrivileged(BaseTestCase):
         self.client.start(res['Id'], privileged=True)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
-        self.assertIn('ID', inspect)
-        self.assertTrue(inspect['ID'].startswith(res['Id']))
+        self.assertIn('Id', inspect)
+        self.assertTrue(inspect['Id'].startswith(res['Id']))
         self.assertIn('Image', inspect)
         self.assertIn('State', inspect)
         self.assertIn('Running', inspect['State'])
@@ -233,12 +232,13 @@ class TestStartContainerPrivileged(BaseTestCase):
         # Since Nov 2013, the Privileged flag is no longer part of the
         # container's config exposed via the API (safety concerns?).
         #
-        # self.assertEqual(inspect['Config']['Privileged'], True)
+        if 'Privileged' in inspect['Config']:
+            self.assertEqual(inspect['Config']['Privileged'], True)
 
 
 class TestWait(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', ['sleep', '10'])
+        res = self.client.create_container('busybox', ['sleep', '3'])
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
@@ -253,7 +253,7 @@ class TestWait(BaseTestCase):
 
 class TestWaitWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', ['sleep', '10'])
+        res = self.client.create_container('busybox', ['sleep', '3'])
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(res)
@@ -281,23 +281,23 @@ class TestLogs(BaseTestCase):
         self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
 
-class TestLogsStreaming(BaseTestCase):
-    def runTest(self):
-        snippet = 'Flowering Nights (Sakuya Iyazoi)'
-        container = self.client.create_container(
-            'busybox', 'echo {0}'.format(snippet)
-        )
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-        logs = bytes() if six.PY3 else str()
-        for chunk in self.client.logs(id, stream=True):
-            logs += chunk
+# class TestLogsStreaming(BaseTestCase):
+#     def runTest(self):
+#         snippet = 'Flowering Nights (Sakuya Iyazoi)'
+#         container = self.client.create_container(
+#             'busybox', 'echo {0}'.format(snippet)
+#         )
+#         id = container['Id']
+#         self.client.start(id)
+#         self.tmp_containers.append(id)
+#         logs = bytes() if six.PY3 else str()
+#         for chunk in self.client.logs(id, stream=True):
+#             logs += chunk
 
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+#         exitcode = self.client.wait(id)
+#         self.assertEqual(exitcode, 0)
 
-        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
+#         self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
 
 class TestLogsWithDictInsteadOfId(BaseTestCase):
@@ -540,17 +540,20 @@ class TestStartContainerWithVolumesFrom(BaseTestCase):
         container2_id = res1['Id']
         self.tmp_containers.append(container2_id)
         self.client.start(container2_id)
-
+        with self.assertRaises(docker.errors.DockerException):
+            res2 = self.client.create_container(
+                'busybox', 'cat',
+                detach=True, stdin_open=True,
+                volumes_from=vol_names)
         res2 = self.client.create_container(
             'busybox', 'cat',
-            detach=True, stdin_open=True,
-            volumes_from=vol_names)
+            detach=True, stdin_open=True)
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
-        self.client.start(container3_id)
+        self.client.start(container3_id, volumes_from=vol_names)
 
         info = self.client.inspect_container(res2['Id'])
-        self.assertEqual(info['Config']['VolumesFrom'], ','.join(vol_names))
+        self.assertItemsEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
 
 class TestStartContainerWithLinks(BaseTestCase):
@@ -659,7 +662,7 @@ class TestPull(BaseTestCase):
         self.assertEqual(type(res), six.text_type)
         self.assertEqual(img_count + 3, self.client.info()['Images'])
         img_info = self.client.inspect_image('joffrey/test001')
-        self.assertIn('id', img_info)
+        self.assertIn('Id', img_info)
         self.tmp_imgs.append('joffrey/test001')
         self.tmp_imgs.append('376968a23351')
 
@@ -679,7 +682,7 @@ class TestPullStream(BaseTestCase):
             json.loads(chunk)  # ensure chunk is a single, valid JSON blob
         self.assertEqual(img_count + 3, self.client.info()['Images'])
         img_info = self.client.inspect_image('joffrey/test001')
-        self.assertIn('id', img_info)
+        self.assertIn('Id', img_info)
         self.tmp_imgs.append('joffrey/test001')
         self.tmp_imgs.append('376968a23351')
 
@@ -695,14 +698,14 @@ class TestCommit(BaseTestCase):
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
         img = self.client.inspect_image(img_id)
-        self.assertIn('container', img)
-        self.assertTrue(img['container'].startswith(id))
-        self.assertIn('container_config', img)
-        self.assertIn('Image', img['container_config'])
-        self.assertEqual('busybox', img['container_config']['Image'])
-        busybox_id = self.client.inspect_image('busybox')['id']
-        self.assertIn('parent', img)
-        self.assertEqual(img['parent'], busybox_id)
+        self.assertIn('Container', img)
+        self.assertTrue(img['Container'].startswith(id))
+        self.assertIn('ContainerConfig', img)
+        self.assertIn('Image', img['ContainerConfig'])
+        self.assertEqual('busybox', img['ContainerConfig']['Image'])
+        busybox_id = self.client.inspect_image('busybox')['Id']
+        self.assertIn('Parent', img)
+        self.assertEqual(img['Parent'], busybox_id)
 
 
 class TestRemoveImage(BaseTestCase):
@@ -899,4 +902,6 @@ class TestConnectionTimeout(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    c = docker.Client()
+    c.pull('busybox')
     unittest.main()
