@@ -30,7 +30,7 @@ from . import errors
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.9'
+DEFAULT_DOCKER_API_VERSION = '1.12'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -546,6 +546,10 @@ class Client(requests.Session):
                             True)
 
     def insert(self, image, url, path):
+        if utils.compare_version('1.12', self._version) >= 0:
+            raise errors.DeprecatedMethod(
+                'insert is not available for API version >=1.12'
+            )
         api_url = self._url("/images/" + image + "/insert")
         params = {
             'url': url,
@@ -611,6 +615,8 @@ class Client(requests.Session):
 
     def logs(self, container, stdout=True, stderr=True, stream=False,
              timestamps=False):
+        if isinstance(container, dict):
+            container = container.get('Id')
         if utils.compare_version('1.11', self._version) >= 0:
             params = {'stderr': stderr and 1 or 0,
                       'stdout': stdout and 1 or 0,
