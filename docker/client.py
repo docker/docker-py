@@ -624,8 +624,16 @@ class Client(requests.Session):
                       'follow': stream and 1 or 0}
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
-            return stream and self._multiplexed_socket_stream_helper(res) or \
-                ''.join([x for x in self._multiplexed_buffer_helper(res)])
+            if stream:
+                return self._multiplexed_socket_stream_helper(res)
+            elif six.PY3:
+                return bytes().join(
+                    [x for x in self._multiplexed_buffer_helper(res)]
+                )
+            else:
+                return str().join(
+                    [x for x in self._multiplexed_buffer_helper(res)]
+                )
         return self.attach(
             container,
             stdout=stdout,
