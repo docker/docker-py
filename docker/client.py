@@ -124,8 +124,10 @@ class Client(requests.Session):
             volumes = volumes_dict
 
         if volumes_from:
-            if not isinstance(volumes_from, six.string_types):
-                volumes_from = ','.join(volumes_from)
+            if isinstance(volumes_from, six.string_types):
+                volumes_from = volumes_from.split(',')
+            elif isinstance(volumes_from, list) and len(volumes_from) == 1:
+                volumes_from = volumes_from[0]
         else:
             # Force None, an empty list or dict causes client.start to fail
             volumes_from = None
@@ -788,6 +790,8 @@ class Client(requests.Session):
             if volumes_from is not None:
                 if isinstance(volumes_from, six.string_types):
                     volumes_from = volumes_from.split(',')
+                elif isinstance(volumes_from, list) and len(volumes_from) == 1:
+                    volumes_from = volumes_from[0]
                 start_config['VolumesFrom'] = volumes_from
         else:
             warning_message = ('{0!r} parameter is discarded. It is only'
