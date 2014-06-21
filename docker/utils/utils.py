@@ -92,6 +92,13 @@ def _convert_port_binding(binding):
             result['HostIp'] = binding[0]
         else:
             result['HostPort'] = binding[0]
+    elif isinstance(binding, dict):
+        if 'HostPort' in binding:
+            result['HostPort'] = binding['HostPort']
+            if 'HostIp' in binding:
+                result['HostIp'] = binding['HostIp']
+        else:
+            raise ValueError(binding)
     else:
         result['HostPort'] = binding
 
