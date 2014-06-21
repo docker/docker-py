@@ -690,6 +690,22 @@ class DockerClientTest(unittest.TestCase):
             docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_resize_container(self):
+        try:
+            self.client.resize(
+                {'Id': fake_api.FAKE_CONTAINER_ID},
+                height=15,
+                width=120
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/resize',
+            params={'h': 15, 'w': 120},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_wait(self):
         try:
             self.client.wait(fake_api.FAKE_CONTAINER_ID)

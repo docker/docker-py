@@ -811,6 +811,15 @@ class Client(requests.Session):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
+    def resize(self, container, height, width):
+        if isinstance(container, dict):
+            container = container.get('Id')
+
+        params = {'h': height, 'w': width}
+        url = self._url("/containers/{0}/resize".format(container))
+        res = self._post(url, params=params)
+        self._raise_for_status(res)
+
     def stop(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
