@@ -36,9 +36,18 @@ STREAM_HEADER_SIZE_BYTES = 8
 
 
 class Client(requests.Session):
-    def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
-                 timeout=DEFAULT_TIMEOUT_SECONDS):
+    def __init__(self,
+                 base_url=None,
+                 version=DEFAULT_DOCKER_API_VERSION,
+                 timeout=DEFAULT_TIMEOUT_SECONDS,
+                 tls=False,
+                 tls_cert=None,
+                 tls_key=None):
         super(Client, self).__init__()
+        if tls and not (tls_cert and tls_key):
+                raise RuntimeError('tls_key and tls_cert are required.')
+        if tls and not base_url.startswith('https'):
+            raise RuntimeError('TLS: base_url has to start with https://')
         if base_url is None:
             base_url = "http+unix://var/run/docker.sock"
         if 'unix:///' in base_url:
@@ -54,7 +63,12 @@ class Client(requests.Session):
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
-        self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
+        if tls:
+            self.cert = (tls_cert, tls_key)
+            self.verify = False  # We assume the server.crt will we self signed
+            self.mount('https://', requests.adapters.HTTPAdapter())
+        else:
+            self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
