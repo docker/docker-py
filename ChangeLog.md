@@ -4,7 +4,39 @@ ChangeLog
 0.3.2
 -----
 
-_In development._
+* Default API version is now 1.12 (support for docker 1.0)
+* Added new methods `Client.get_image` and `Client.load_image`
+  (`docker save` and `docker load`)
+* Added new method `Client.ping`
+* `Client.build` can now be provided with a custom context using the
+  `custom_context` parameter.
+* Added support for `memswap_limit` parameter in `create_container`
+* Added support for `force` parameter in `remove_container`
+* Added support for `force` and `noprune` parameters in `remove_image`
+* Added support for `timestamps` parameter in `logs`
+* Added support for `dns_search` parameter in `start`
+* Added support for `network_mode` parameter in `start`
+* Added support for `volumes_from` and `dns` parameters in `start`. As of
+  API version >= 1.10, these parameters no longer belong to `create_container`
+* `Client.logs` now uses the logs endpoint when API version is sufficient
+
+### Bugfixes
+
+* Fixed a bug in pull where the `repo:tag` notation wasn't interpreted
+  properly
+* Fixed a bug in streaming methods with python 3 (unicode, bytes/str related)
+* Fixed a bug in `Client.start` where legacy notation for volumes wasn't
+  supported anymore.
+
+### Miscellaneous
+
+* The client now raises `DockerException`s when appropriate. You can import
+  `DockerException` (and its subclasses) from the `docker.errors` module to
+  catch them if needed.
+* `docker.APIError` has been moved to the new `docker.errors` module as well.
+* `Client.insert` is deprecated in API version > 1.11
+* Improved integration tests should now run much faster.
+* There is now a single source of truth for the docker-py version number.
 
 0.3.1
 -----
