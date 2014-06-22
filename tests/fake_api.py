@@ -103,6 +103,12 @@ def post_fake_start_container():
     return status_code, response
 
 
+def post_fake_resize_container():
+    status_code = 200
+    response = {'Id': FAKE_CONTAINER_ID}
+    return status_code, response
+
+
 def post_fake_create_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
@@ -310,6 +316,8 @@ fake_responses = {
     get_fake_containers,
     '{1}/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
     post_fake_start_container,
+    '{1}/{0}/containers/3cc2351ab11b/resize'.format(CURRENT_VERSION, prefix):
+    post_fake_resize_container,
     '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
     get_fake_inspect_container,
     '{1}/{0}/images/e9aa60c60128/tag'.format(CURRENT_VERSION, prefix):
