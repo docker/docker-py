@@ -159,6 +159,7 @@ class DockerClientTest(unittest.TestCase):
             params={
                 'all': 1,
                 'since': None,
+                'size': 0,
                 'limit': -1,
                 'trunc_cmd': 1,
                 'before': None
