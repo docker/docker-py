@@ -419,10 +419,11 @@ class Client(requests.Session):
                             json=True)
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False,
-                   since=None, before=None, limit=-1):
+                   since=None, before=None, limit=-1, size=False):
         params = {
             'limit': 1 if latest else limit,
             'all': 1 if all else 0,
+            'size': 1 if size else 0,
             'trunc_cmd': 1 if trunc else 0,
             'since': since,
             'before': before
