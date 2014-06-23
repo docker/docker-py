@@ -342,3 +342,44 @@ c.start(container_id, binds={
         }
 })
 ```
+
+Connection to daemon using HTTPS
+================================
+
+*These instructions are docker-py specific. Please refer to
+http://docs.docker.com/articles/https/ first.*
+
+*  Authenticate server based on public/default CA pool
+
+```python
+client = docker.Client(base_url='<https_url>', tls=True)
+```
+
+* Authenticate server based on given CA
+
+```python
+tls_config = docker.tls.TLSConfig(
+  False, tls_verify=True, tls_ca_cert='/path/to/ca.pem')
+client = docker.Client(base_url='<https_url>', tls=tls_config)
+```
+
+* Authenticate with client certificate, do not authenticate server
+  based on given CA
+
+```python
+tls_config = docker.tls.TLSConfig(
+  True, tls_cert='/path/to/client-cert.pem',
+  tls_key='/path/to/client-key.pem'
+)
+client = docker.Client(base_url='<https_url>', tls=tls_config)
+```
+
+* Authenticate with client certificate, authenticate server based on given CA
+
+```python
+tls_config = docker.tls.TLSConfig(
+  False, tls_cert='/path/to/client-cert.pem',
+  tls_key='/path/to/client-key.pem', tls_ca_cert='/path/to/ca.pem'
+)
+client = docker.Client(base_url='<https_url>', tls=tls_config)
+```
