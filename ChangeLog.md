@@ -8,6 +8,7 @@ ChangeLog
 * Added new methods `Client.get_image` and `Client.load_image`
   (`docker save` and `docker load`)
 * Added new method `Client.ping`
+* Added new method `Client.resize`
 * `Client.build` can now be provided with a custom context using the
   `custom_context` parameter.
 * Added support for `memswap_limit` parameter in `create_container`
@@ -16,6 +17,7 @@ ChangeLog
 * Added support for `timestamps` parameter in `logs`
 * Added support for `dns_search` parameter in `start`
 * Added support for `network_mode` parameter in `start`
+* Added support for `size` parameter in `containers`
 * Added support for `volumes_from` and `dns` parameters in `start`. As of
   API version >= 1.10, these parameters no longer belong to `create_container`
 * `Client.logs` now uses the logs endpoint when API version is sufficient
