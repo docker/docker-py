@@ -24,8 +24,10 @@ import six
 
 from .auth import auth
 from .unixconn import unixconn
+from .ssladapter import ssladapter
 from .utils import utils
 from . import errors
+from .tls import TLSConfig
 
 if not six.PY3:
     import websocket
@@ -37,10 +39,15 @@ STREAM_HEADER_SIZE_BYTES = 8
 
 class Client(requests.Session):
     def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
-                 timeout=DEFAULT_TIMEOUT_SECONDS):
+                 timeout=DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
+
         if base_url is None:
             base_url = "http+unix://var/run/docker.sock"
+        if tls and not base_url.startswith('https://'):
+            raise errors.TLSParameterError(
+                'If using TLS, the base_url argument must begin with '
+                '"https://".')
         if 'unix:///' in base_url:
             base_url = base_url.replace('unix:/', 'unix:')
         if base_url.startswith('unix:'):
@@ -54,7 +61,13 @@ class Client(requests.Session):
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
-        self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
+        """ Use SSLAdapter for the ability to specify SSL version """
+        if isinstance(tls, TLSConfig):
+            tls.configure_client(self)
+        elif tls:
+            self.mount('https://', ssladapter.SSLAdapter(self.ssl_version))
+        else:
+            self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
