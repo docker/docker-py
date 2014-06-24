@@ -61,7 +61,7 @@ class Client(requests.Session):
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
-        """ Use SSLAdapter for the ability to specify SSL version """
+        # Use SSLAdapter for the ability to specify SSL version
         if isinstance(tls, TLSConfig):
             tls.configure_client(self)
         elif tls:

@@ -5,6 +5,10 @@ from .ssladapter import ssladapter
 
 
 class TLSConfig(object):
+    cert = None
+    verify = None
+    ssl_version = None
+
     def __init__(self, tls, tls_cert=None, tls_key=None, tls_verify=False,
                  tls_ca_cert=None, ssl_version=None):
         # Argument compatibility/mapping with
@@ -25,11 +29,12 @@ class TLSConfig(object):
             if not (tls_cert and tls_key) or (not os.path.isfile(tls_cert) or
                not os.path.isfile(tls_key)):
                 raise errors.TLSParameterError(
-                    'You must provide either both "tls_cert"/"tls_key" files, '
-                    'or neither, in order to use TLS.')
+                    'Client certificate must provide certificate and key files'
+                    ' through tls_cert and tls_key params respectively'
+                )
             self.cert = (tls_cert, tls_key)
 
-        # Either set tls_verify to True (public/default CA checks) or to the
+        # Either set verify to True (public/default CA checks) or to the
         # path of a CA Cert file.
         if tls_verify:
             if not tls_ca_cert:
@@ -38,14 +43,13 @@ class TLSConfig(object):
                 self.verify = tls_ca_cert
             else:
                 raise errors.TLSParameterError(
-                    'If "tls_verify" is set, then "tls_ca_cert" must be blank'
-                    ' (to check public CA list) OR a path to a Cert File.'
+                    'Invalid CA certificate provided for `tls_ca_cert`.'
                 )
-        else:
-            self.verify = False
 
     def configure_client(self, client):
-        client.verify = self.verify
         client.ssl_version = self.ssl_version
-        client.cert = self.cert
-        self.mount('https://', ssladapter.SSLAdapter(self.ssl_version))
+        if self.verify is not None:
+            client.verify = self.verify
+        if self.cert:
+            client.cert = self.cert
+        client.mount('https://', ssladapter.SSLAdapter(self.ssl_version))
