@@ -1,6 +1,7 @@
 language: python
 python:
   - "2.7"
+  - "3.4"
 install: pip install tox
 script: tox
 before_install:
