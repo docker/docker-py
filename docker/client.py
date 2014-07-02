@@ -65,7 +65,7 @@ class Client(requests.Session):
         if isinstance(tls, TLSConfig):
             tls.configure_client(self)
         elif tls:
-            self.mount('https://', ssladapter.SSLAdapter(self.ssl_version))
+            self.mount('https://', ssladapter.SSLAdapter())
         else:
             self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
 
