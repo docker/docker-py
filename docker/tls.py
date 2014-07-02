@@ -9,7 +9,7 @@ class TLSConfig(object):
     verify = None
     ssl_version = None
 
-    def __init__(self, tls, tls_cert=None, tls_key=None, tls_verify=False,
+    def __init__(self, tls, tls_cert=None, tls_key=None, tls_verify=None,
                  tls_ca_cert=None, ssl_version=None):
         # Argument compatibility/mapping with
         # http://docs.docker.com/examples/https/
@@ -36,9 +36,9 @@ class TLSConfig(object):
 
         # Either set verify to True (public/default CA checks) or to the
         # path of a CA Cert file.
-        if tls_verify:
+        if tls_verify is not None:
             if not tls_ca_cert:
-                self.verify = True
+                self.verify = tls_verify
             elif os.path.isfile(tls_ca_cert):
                 self.verify = tls_ca_cert
             else:
