@@ -40,6 +40,11 @@ class TLSConfig(object):
             if not tls_ca_cert:
                 self.verify = tls_verify
             elif os.path.isfile(tls_ca_cert):
+                if not tls_verify:
+                    raise errors.TLSParameterError(
+                        'tls_verify can not be False when a CA cert is'
+                        ' provided.'
+                    )
                 self.verify = tls_ca_cert
             else:
                 raise errors.TLSParameterError(
