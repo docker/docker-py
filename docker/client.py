@@ -227,7 +227,7 @@ class Client(requests.Session):
             # Because Docker introduced newlines at the end of chunks in v0.9,
             # and only on some API endpoints, we have to cater for both cases.
             size_line = socket.readline()
-            if size_line == '\r\n':
+            if size_line == '\r\n' or size_line == '\n':
                 size_line = socket.readline()
 
             size = int(size_line, 16)
