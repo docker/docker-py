@@ -166,6 +166,8 @@ def parse_host(addr):
     addr = addr.strip()
     if addr.startswith('http://'):
         addr = addr.replace('http://', 'tcp://')
+    if addr.startswith('http+unix://'):
+        addr = addr.replace('http+unix://', 'unix://')
 
     if addr == 'tcp://':
         raise errors.DockerException("Invalid bind address format: %s" % addr)
