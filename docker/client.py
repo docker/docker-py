@@ -39,16 +39,9 @@ class Client(requests.Session):
     def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
                  timeout=DEFAULT_TIMEOUT_SECONDS):
         super(Client, self).__init__()
-        if base_url is None:
-            base_url = "http+unix://var/run/docker.sock"
-        if 'unix:///' in base_url:
+        base_url = utils.parse_host(base_url)
+        if 'http+unix:///' in base_url:
             base_url = base_url.replace('unix:/', 'unix:')
-        if base_url.startswith('unix:'):
-            base_url = "http+" + base_url
-        if base_url.startswith('tcp:'):
-            base_url = base_url.replace('tcp:', 'http:')
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
         self.base_url = base_url
         self._version = version
         self._timeout = timeout
