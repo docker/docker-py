@@ -108,7 +108,7 @@ class TestListContainers(BaseTestCase):
     def runTest(self):
         res0 = self.client.containers(all=True)
         size = len(res0)
-        res1 = self.client.create_container('busybox:latest', 'true;')
+        res1 = self.client.create_container('busybox:latest', 'true')
         self.assertIn('Id', res1)
         self.client.start(res1['Id'])
         self.tmp_containers.append(res1['Id'])
@@ -118,7 +118,7 @@ class TestListContainers(BaseTestCase):
         self.assertEqual(len(retrieved), 1)
         retrieved = retrieved[0]
         self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], u'true;')
+        self.assertEqual(retrieved['Command'], u'true')
         self.assertIn('Image', retrieved)
         self.assertRegexpMatches(retrieved['Image'], r'busybox:.*')
         self.assertIn('Status', retrieved)
