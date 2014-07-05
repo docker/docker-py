@@ -17,6 +17,7 @@ import base64
 import json
 import io
 import os
+import shutil
 import signal
 import tempfile
 import unittest
@@ -31,11 +32,13 @@ import six
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
     tmp_containers = []
+    tmp_folders = []
 
     def setUp(self):
         self.client = docker.Client(timeout=5)
         self.tmp_imgs = []
         self.tmp_containers = []
+        self.tmp_folders = []
 
     def tearDown(self):
         for img in self.tmp_imgs:
@@ -49,6 +52,8 @@ class BaseTestCase(unittest.TestCase):
                 self.client.remove_container(container)
             except docker.errors.APIError:
                 pass
+        for folder in self.tmp_folders:
+            shutil.rmtree(folder)
 
 #########################
 #   INFORMATION TESTS   #
@@ -138,7 +143,8 @@ class TestCreateContainer(BaseTestCase):
 class TestCreateContainerWithBinds(BaseTestCase):
     def runTest(self):
         mount_dest = '/mnt'
-        mount_origin = '/tmp'
+        mount_origin = tempfile.mkdtemp()
+        self.tmp_folders.append(mount_origin)
 
         filename = 'shared.txt'
         shared_file = os.path.join(mount_origin, filename)
@@ -850,6 +856,7 @@ class TestRunShlex(BaseTestCase):
 class TestLoadConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
+        self.tmp_folders.append(folder)
         f = open(os.path.join(folder, '.dockercfg'), 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         f.write('auth = {0}\n'.format(auth_))
@@ -867,6 +874,7 @@ class TestLoadConfig(BaseTestCase):
 class TestLoadJSONConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
+        self.tmp_folders.append(folder)
         f = open(os.path.join(folder, '.dockercfg'), 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         email_ = 'sakuya@scarlet.net'
