@@ -60,8 +60,11 @@ url_prefix = 'http+unix://var/run/docker.sock/v{0}/'.format(
 
 @mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
                      put=fake_request, delete=fake_request)
+@mock.patch.dict('os.environ')
 class DockerClientTest(unittest.TestCase):
     def setUp(self):
+        if 'DOCKER_HOST' in os.environ:
+            del os.environ['DOCKER_HOST']
         self.client = docker.Client()
         # Force-clear authconfig to avoid tampering with the tests
         self.client._cfg = {'Configs': {}}
@@ -1368,6 +1371,13 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('auth'), None)
+
+    def test_docker_host_from_environ(self):
+        self.assertEqual(
+            self.client.base_url, 'http+unix://var/run/docker.sock')
+        os.environ['DOCKER_HOST'] = 'tcp://192.168.10.2:4243'
+        client = docker.Client()
+        self.assertEqual(client.base_url, 'http://192.168.10.2:4243')
 
 
 if __name__ == '__main__':

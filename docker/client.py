@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import json
+import os
 import re
 import shlex
 import struct
@@ -40,7 +41,8 @@ class Client(requests.Session):
                  timeout=DEFAULT_TIMEOUT_SECONDS):
         super(Client, self).__init__()
         if base_url is None:
-            base_url = "http+unix://var/run/docker.sock"
+            base_url = os.environ.get('DOCKER_HOST',
+                                      'http+unix://var/run/docker.sock')
         if 'unix:///' in base_url:
             base_url = base_url.replace('unix:/', 'unix:')
         if base_url.startswith('unix:'):
