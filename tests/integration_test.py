@@ -28,6 +28,8 @@ import six
 # FIXME: missing tests for
 # export; history; import_image; insert; port; push; tag; get; load
 
+DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
+
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
@@ -35,7 +37,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_folders = []
 
     def setUp(self):
-        self.client = docker.Client(timeout=5)
+        self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=5)
         self.tmp_imgs = []
         self.tmp_containers = []
         self.tmp_folders = []
@@ -910,6 +912,6 @@ class TestConnectionTimeout(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    c = docker.Client()
+    c = docker.Client(base_url=DEFAULT_BASE_URL)
     c.pull('busybox')
     unittest.main()
