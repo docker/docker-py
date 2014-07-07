@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
 import json
 import re
 import shlex
@@ -91,6 +92,16 @@ class Client(requests.Session):
             return response.content
         return response.text
 
+    def _validate_env(self, val):
+        arr = val.split('=')
+        if len(arr) > 1:
+            return val
+        try:
+            passthrough = os.environ[val]
+        except KeyError:
+            passthrough = ''
+        return "%s=%s" % (val, passthrough)
+
     def _container_config(self, image, command, hostname=None, user=None,
                           detach=False, stdin_open=False, tty=False,
                           mem_limit=0, ports=None, environment=None, dns=None,
@@ -104,7 +115,10 @@ class Client(requests.Session):
             environment = [
                 '{0}={1}'.format(k, v) for k, v in environment.items()
             ]
-
+        if isinstance(environment, list):
+            environment = [
+                self._validate_env(e) for e in environment
+            ]
         if isinstance(ports, list):
             exposed_ports = {}
             for port_definition in ports:
