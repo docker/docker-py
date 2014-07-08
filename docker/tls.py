@@ -9,8 +9,8 @@ class TLSConfig(object):
     verify = None
     ssl_version = None
 
-    def __init__(self, tls, tls_cert=None, tls_key=None, tls_verify=None,
-                 tls_ca_cert=None, ssl_version=None):
+    def __init__(self, client_cert=None, server_cacert=None, verify=None,
+                 ssl_version=None):
         # Argument compatibility/mapping with
         # http://docs.docker.com/examples/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
@@ -25,27 +25,35 @@ class TLSConfig(object):
         # In either case, Alert the user when both are expected, but any are
         # missing.
 
-        if tls_cert or tls_key:
+        if client_cert:
+            try:
+                tls_cert, tls_key = client_cert
+            except ValueError:
+                raise errors.TLSParameterError(
+                    'client_config must be a tuple of'
+                    ' (client certificate, key file)'
+                )
+
             if not (tls_cert and tls_key) or (not os.path.isfile(tls_cert) or
                not os.path.isfile(tls_key)):
                 raise errors.TLSParameterError(
-                    'Client certificate must provide certificate and key files'
-                    ' through tls_cert and tls_key params respectively'
+                    'Path to a certificate and key files must be provided'
+                    ' through the client_config param'
                 )
             self.cert = (tls_cert, tls_key)
 
         # Either set verify to True (public/default CA checks) or to the
         # path of a CA Cert file.
-        if tls_verify is not None:
-            if not tls_ca_cert:
-                self.verify = tls_verify
-            elif os.path.isfile(tls_ca_cert):
-                if not tls_verify:
+        if verify is not None:
+            if not server_cacert:
+                self.verify = verify
+            elif os.path.isfile(server_cacert):
+                if not verify:
                     raise errors.TLSParameterError(
-                        'tls_verify can not be False when a CA cert is'
+                        'verify can not be False when a CA cert is'
                         ' provided.'
                     )
-                self.verify = tls_ca_cert
+                self.verify = server_cacert
             else:
                 raise errors.TLSParameterError(
                     'Invalid CA certificate provided for `tls_ca_cert`.'
