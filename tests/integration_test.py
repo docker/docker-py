@@ -17,6 +17,7 @@ import base64
 import json
 import io
 import os
+import shutil
 import signal
 import tempfile
 import unittest
@@ -27,15 +28,19 @@ import six
 # FIXME: missing tests for
 # export; history; import_image; insert; port; push; tag; get; load
 
+DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
+
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
     tmp_containers = []
+    tmp_folders = []
 
     def setUp(self):
-        self.client = docker.Client(timeout=5)
+        self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=5)
         self.tmp_imgs = []
         self.tmp_containers = []
+        self.tmp_folders = []
 
     def tearDown(self):
         for img in self.tmp_imgs:
@@ -49,6 +54,8 @@ class BaseTestCase(unittest.TestCase):
                 self.client.remove_container(container)
             except docker.errors.APIError:
                 pass
+        for folder in self.tmp_folders:
+            shutil.rmtree(folder)
 
 #########################
 #   INFORMATION TESTS   #
@@ -108,7 +115,7 @@ class TestListContainers(BaseTestCase):
     def runTest(self):
         res0 = self.client.containers(all=True)
         size = len(res0)
-        res1 = self.client.create_container('busybox:latest', 'true;')
+        res1 = self.client.create_container('busybox:latest', 'true')
         self.assertIn('Id', res1)
         self.client.start(res1['Id'])
         self.tmp_containers.append(res1['Id'])
@@ -118,7 +125,7 @@ class TestListContainers(BaseTestCase):
         self.assertEqual(len(retrieved), 1)
         retrieved = retrieved[0]
         self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], u'true;')
+        self.assertEqual(retrieved['Command'], u'true')
         self.assertIn('Image', retrieved)
         self.assertRegexpMatches(retrieved['Image'], r'busybox:.*')
         self.assertIn('Status', retrieved)
@@ -138,7 +145,8 @@ class TestCreateContainer(BaseTestCase):
 class TestCreateContainerWithBinds(BaseTestCase):
     def runTest(self):
         mount_dest = '/mnt'
-        mount_origin = '/tmp'
+        mount_origin = tempfile.mkdtemp()
+        self.tmp_folders.append(mount_origin)
 
         filename = 'shared.txt'
         shared_file = os.path.join(mount_origin, filename)
@@ -850,6 +858,7 @@ class TestRunShlex(BaseTestCase):
 class TestLoadConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
+        self.tmp_folders.append(folder)
         f = open(os.path.join(folder, '.dockercfg'), 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         f.write('auth = {0}\n'.format(auth_))
@@ -867,6 +876,7 @@ class TestLoadConfig(BaseTestCase):
 class TestLoadJSONConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
+        self.tmp_folders.append(folder)
         f = open(os.path.join(folder, '.dockercfg'), 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         email_ = 'sakuya@scarlet.net'
@@ -902,6 +912,6 @@ class TestConnectionTimeout(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    c = docker.Client()
+    c = docker.Client(base_url=DEFAULT_BASE_URL)
     c.pull('busybox')
     unittest.main()
