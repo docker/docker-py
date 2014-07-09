@@ -39,6 +39,7 @@ def mkbuildcontext(dockerfile):
     elif isinstance(dockerfile, io.BytesIO):
         dfinfo = tarfile.TarInfo('Dockerfile')
         dfinfo.size = len(dockerfile.getvalue())
+        dockerfile.seek(0)
     else:
         dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
     t.addfile(dfinfo, dockerfile)
