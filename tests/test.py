@@ -746,14 +746,14 @@ class DockerClientTest(unittest.TestCase):
         assert c.base_url == "http+unix://socket"
 
     def test_url_compatibility_http(self):
-        c = docker.Client(base_url="http://hostname")
+        c = docker.Client(base_url="http://hostname:1234")
 
-        assert c.base_url == "http://hostname"
+        assert c.base_url == "http://hostname:1234"
 
     def test_url_compatibility_tcp(self):
-        c = docker.Client(base_url="tcp://hostname")
+        c = docker.Client(base_url="tcp://hostname:1234")
 
-        assert c.base_url == "http://hostname"
+        assert c.base_url == "http://hostname:1234"
 
     def test_logs(self):
         try:
