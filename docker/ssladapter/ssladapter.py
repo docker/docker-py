@@ -18,7 +18,11 @@ class SSLAdapter(HTTPAdapter):
         super(SSLAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
-        urllib_ver = urllib3.__version__
+        try:
+            urllib_ver = urllib3.__version__
+        except NameError:
+            urllib_ver = urllib3 = None
+
         if urllib3 and StrictVersion(urllib_ver) <= StrictVersion('1.5'):
             self.poolmanager = PoolManager(num_pools=connections,
                                            maxsize=maxsize,
