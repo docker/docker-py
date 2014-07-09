@@ -379,7 +379,7 @@ Equivalent CLI options: `docker --tlsverify --tlscacert /path/to/ca.pem ...`
 
 ```python
 tls_config = docker.tls.TLSConfig(
-  True, client_cert=('/path/to/client-cert.pem', '/path/to/client-key.pem')
+  client_cert=('/path/to/client-cert.pem', '/path/to/client-key.pem')
 )
 client = docker.Client(base_url='<https_url>', tls=tls_config)
 ```
