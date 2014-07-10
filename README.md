@@ -368,7 +368,7 @@ client = docker.Client(base_url='<https_url>', tls=tls_config)
 * Authenticate server based on given CA
 
 ```python
-tls_config = docker.tls.TLSConfig(server_cacert='/path/to/ca.pem')
+tls_config = docker.tls.TLSConfig(ca_cert='/path/to/ca.pem')
 client = docker.Client(base_url='<https_url>', tls=tls_config)
 ```
 
@@ -393,7 +393,7 @@ Equivalent CLI options:
 ```python
 tls_config = docker.tls.TLSConfig(
   client_cert=('/path/to/client-cert.pem', '/path/to/client-key.pem'),
-  server_cacert='/path/to/ca.pem'
+  ca_cert='/path/to/ca.pem'
 )
 client = docker.Client(base_url='<https_url>', tls=tls_config)
 ```
