@@ -63,3 +63,14 @@ class InvalidConfigFile(DockerException):
 
 class DeprecatedMethod(DockerException):
     pass
+
+
+class TLSParameterError(DockerException):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg + (". TLS configurations should map the Docker CLI "
+                           "client configurations. See "
+                           "http://docs.docker.com/examples/https/ for "
+                           "API details.")
