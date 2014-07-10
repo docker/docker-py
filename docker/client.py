@@ -41,21 +41,13 @@ class Client(requests.Session):
     def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
-
-        if base_url is None:
-            base_url = "http+unix://var/run/docker.sock"
+        base_url = utils.parse_host(base_url)
+        if 'http+unix:///' in base_url:
+            base_url = base_url.replace('unix:/', 'unix:')
         if tls and not base_url.startswith('https://'):
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must begin with '
                 '"https://".')
-        if 'unix:///' in base_url:
-            base_url = base_url.replace('unix:/', 'unix:')
-        if base_url.startswith('unix:'):
-            base_url = "http+" + base_url
-        if base_url.startswith('tcp:'):
-            base_url = base_url.replace('tcp:', 'http:')
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
         self.base_url = base_url
         self._version = version
         self._timeout = timeout
@@ -240,7 +232,7 @@ class Client(requests.Session):
             # Because Docker introduced newlines at the end of chunks in v0.9,
             # and only on some API endpoints, we have to cater for both cases.
             size_line = socket.readline()
-            if size_line == '\r\n':
+            if size_line == '\r\n' or size_line == '\n':
                 size_line = socket.readline()
 
             size = int(size_line, 16)
