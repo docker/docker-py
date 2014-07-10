@@ -5,10 +5,12 @@
 from distutils.version import StrictVersion
 from requests.adapters import HTTPAdapter
 try:
-    from requests.packages.urllib3.poolmanager import PoolManager
+    import requests.packages.urllib3 as urllib3
 except ImportError:
     import urllib3
-    from urllib3.poolmanager import PoolManager
+
+
+PoolManager = urllib3.poolmanager.PoolManager
 
 
 class SSLAdapter(HTTPAdapter):
@@ -18,8 +20,9 @@ class SSLAdapter(HTTPAdapter):
         super(SSLAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
-        urllib_ver = urllib3.__version__
-        if urllib3 and StrictVersion(urllib_ver) <= StrictVersion('1.5'):
+        urllib_ver = urllib3.__version__.split('-')[0]
+        if urllib3 and urllib_ver != 'dev' and \
+           StrictVersion(urllib_ver) <= StrictVersion('1.5'):
             self.poolmanager = PoolManager(num_pools=connections,
                                            maxsize=maxsize,
                                            block=block)
