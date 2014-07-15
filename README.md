@@ -78,6 +78,8 @@ to those for the `docker run` command except it doesn't support the
 attach options (`-a`). See "Port bindings" and "Using volumes" below for
 more information on how to create port bindings and volume mappings.
 
+`command` is a string to specify the ARGS to pass to `docker run`.
+
 `volumes_from` and `dns` arguments raise TypeError exception if they are used
 against v1.10 of docker remote API. Those arguments should be passed to
 `start()` instead.
