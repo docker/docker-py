@@ -1,0 +1,10 @@
+[run]
+branch = True
+source = docker
+
+[report]
+exclude_lines =
+    if __name__ == .__main__.:
+
+[html]
+directory = html
