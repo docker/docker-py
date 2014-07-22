@@ -77,7 +77,20 @@ class DockerClientTest(unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'version',
+            api_version=True,
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_discover_version(self):
+        try:
+            self.client.version(api_version=False)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'version',
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            api_version=False,
         )
 
     def test_info(self):

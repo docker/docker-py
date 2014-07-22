@@ -35,6 +35,13 @@ def get_fake_version():
     return status_code, response
 
 
+def get_fake_discover_version():
+    status_code = 200
+    response = {'GoVersion': '1', 'Version': '1.1.1',
+                'GitCommit': 'deadbeef+CHANGES', 'ApiVersion': '1.1.1'}
+    return status_code, response
+
+
 def get_fake_info():
     status_code = 200
     response = {'Containers': 1, 'Images': 1, 'Debug': False,
@@ -302,6 +309,8 @@ prefix = 'http+unix://var/run/docker.sock'
 fake_responses = {
     '{1}/{0}/version'.format(CURRENT_VERSION, prefix):
     get_fake_version,
+    '{0}/version'.format(prefix):
+    get_fake_discover_version,
     '{1}/{0}/info'.format(CURRENT_VERSION, prefix):
     get_fake_info,
     '{1}/{0}/images/search'.format(CURRENT_VERSION, prefix):

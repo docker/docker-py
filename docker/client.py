@@ -33,6 +33,8 @@ if not six.PY3:
     import websocket
 
 DEFAULT_DOCKER_API_VERSION = '1.12'
+# 1.10 is a safety net - it's in Ubunty Trusty and it's just before ApiVersion
+FALLBACK_API_VERSION = '1.10'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -61,6 +63,9 @@ class Client(requests.Session):
         else:
             self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
 
+        if not version:
+            self._verion = self._discover_server_version()
+
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
         parameter, if not already present."""
@@ -76,8 +81,11 @@ class Client(requests.Session):
     def _delete(self, url, **kwargs):
         return self.delete(url, **self._set_request_timeout(kwargs))
 
-    def _url(self, path):
-        return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
+    def _url(self, path, add_version=True):
+        if add_version:
+            return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
+        else:
+            return '{0}{1}'.format(self.base_url, path)
 
     def _raise_for_status(self, response, explanation=None):
         """Raises stored :class:`APIError`, if one occurred."""
@@ -288,6 +296,13 @@ class Client(requests.Session):
             if not data:
                 break
             yield data
+
+    def _discover_server_version(self):
+        version = self.version(api_version=False)
+        try:
+            return version['ApiVersion']
+        except KeyError:
+            return FALLBACK_API_VERSION
 
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
@@ -850,8 +865,9 @@ class Client(requests.Session):
         u = self._url("/containers/{0}/top".format(container))
         return self._result(self._get(u), True)
 
-    def version(self):
-        return self._result(self._get(self._url("/version")), True)
+    def version(self, api_version=True):
+        return self._result(self._get(self._url("/version"),
+                                      api_version=api_version), True)
 
     def wait(self, container):
         if isinstance(container, dict):
