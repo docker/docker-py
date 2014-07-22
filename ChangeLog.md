@@ -1,6 +1,25 @@
 ChangeLog
 =========
 
+0.4.0
+-----
+
+* **This version introduces breaking changes!**
+* The `base_url` parameter in the `Client` constructor should now allow most
+  of the `DOCKER_HOST` environment values (except for the fd:// protocol)
+    * As a result, URLs that don't specify a port are now invalid (similar
+    to the official client's behavior)
+* Added TLS support (see [documentation](https://github.com/dotcloud/docker-py#connection-to-daemon-using-https))
+
+### Bugfixes
+
+* Fixed an issue with `Client.build` streamed logs in Python 3
+
+### Miscellaneous
+
+* Added unit tests coverage
+* Various integration tests fixes
+
 0.3.2
 -----
 
