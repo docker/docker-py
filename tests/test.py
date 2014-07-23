@@ -52,6 +52,10 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
     return res
 
 
+def fake_resolve_authconfig(authconfig, registry=None):
+    return None
+
+
 def fake_resp(url, data=None, **kwargs):
     status_code, content = fake_api.fake_responses[url]()
     return response(status_code=status_code, content=content)
@@ -1202,7 +1206,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
     def test_push_image(self):
         try:
-            self.client.push(fake_api.FAKE_IMAGE_NAME)
+            with mock.patch('docker.auth.auth.resolve_authconfig',
+                            fake_resolve_authconfig):
+                self.client.push(fake_api.FAKE_IMAGE_NAME)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1216,7 +1222,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
     def test_push_image_stream(self):
         try:
-            self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
+            with mock.patch('docker.auth.auth.resolve_authconfig',
+                            fake_resolve_authconfig):
+                self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
