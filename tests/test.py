@@ -17,7 +17,10 @@ import datetime
 import io
 import json
 import os
+import shutil
 import signal
+import sys
+import tarfile
 import tempfile
 import unittest
 import gzip
@@ -58,9 +61,34 @@ url_prefix = 'http+unix://var/run/docker.sock/v{0}/'.format(
     docker.client.DEFAULT_DOCKER_API_VERSION)
 
 
+class Cleanup(object):
+    if sys.version_info < (2, 7):
+        # Provide a basic implementation of addCleanup for Python < 2.7
+        def __init__(self, *args, **kwargs):
+            super(Cleanup, self).__init__(*args, **kwargs)
+            self._cleanups = []
+
+        def tearDown(self):
+            super(Cleanup, self).tearDown()
+            ok = True
+            while self._cleanups:
+                fn, args, kwargs = self._cleanups.pop(-1)
+                try:
+                    fn(*args, **kwargs)
+                except KeyboardInterrupt:
+                    raise
+                except:
+                    ok = False
+            if not ok:
+                raise
+
+        def addCleanup(self, function, *args, **kwargs):
+            self._cleanups.append((function, args, kwargs))
+
+
 @mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
                      put=fake_request, delete=fake_request)
-class DockerClientTest(unittest.TestCase):
+class DockerClientTest(Cleanup, unittest.TestCase):
     def setUp(self):
         self.client = docker.Client()
         # Force-clear authconfig to avoid tampering with the tests
@@ -1350,11 +1378,13 @@ class DockerClientTest(unittest.TestCase):
 
     def test_load_config_no_file(self):
         folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
         cfg = docker.auth.load_config(folder)
         self.assertTrue(cfg is not None)
 
     def test_load_config(self):
         folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
         f = open(os.path.join(folder, '.dockercfg'), 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         f.write('auth = {0}\n'.format(auth_))
@@ -1368,6 +1398,26 @@ class DockerClientTest(unittest.TestCase):
         self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('auth'), None)
+
+    def test_tar_with_excludes(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['test/foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+            for f in ['a.txt', 'b.py', 'other.png']:
+                with open(os.path.join(base, d, f), 'w') as f:
+                    f.write("content")
+
+        for exclude, names in (
+            (['*.py'], ['bar/a.txt', 'bar/other.png',
+                        'test/foo/a.txt', 'test/foo/other.png']),
+            (['*.png', 'bar'], ['test/foo/a.txt', 'test/foo/b.py']),
+            (['test/foo', 'a.txt'], ['bar/a.txt', 'bar/b.py',
+                                     'bar/other.png']),
+        ):
+            archive = docker.utils.tar(base, exclude=exclude)
+            tar = tarfile.open(fileobj=archive)
+            self.assertEqual(sorted(tar.getnames()), names)
 
 
 if __name__ == '__main__':

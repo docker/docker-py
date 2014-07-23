@@ -13,9 +13,11 @@
 #    limitations under the License.
 
 import io
+import os
 import tarfile
 import tempfile
 from distutils.version import StrictVersion
+from fnmatch import fnmatch
 
 import requests
 import six
@@ -47,10 +49,29 @@ def mkbuildcontext(dockerfile):
     return f
 
 
-def tar(path):
+def fnmatch_any(relpath, patterns):
+    return any([fnmatch(relpath, pattern) for pattern in patterns])
+
+
+def tar(path, exclude=None):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
-    t.add(path, arcname='.')
+    for dirpath, dirnames, filenames in os.walk(path):
+        relpath = os.path.relpath(dirpath, path)
+        if relpath == '.':
+            relpath = ''
+        if exclude is None:
+            fnames = filenames
+        else:
+            dirnames[:] = [d for d in dirnames
+                           if not fnmatch_any(os.path.join(relpath, d),
+                                              exclude)]
+            fnames = [name for name in filenames
+                      if not fnmatch_any(os.path.join(relpath, name),
+                                         exclude)]
+        for name in fnames:
+            arcname = os.path.join(relpath, name)
+            t.add(os.path.join(path, arcname), arcname=arcname)
     t.close()
     f.seek(0)
     return f
