@@ -101,7 +101,7 @@ def compare_version(v1, v2):
 
 def ping(url):
     try:
-        res = requests.get(url)
+        res = requests.get(url, timeout=3)
     except Exception:
         return False
     else:
