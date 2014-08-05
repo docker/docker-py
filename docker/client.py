@@ -115,25 +115,35 @@ class Client(requests.Session):
             if len(mem_limit) == 0:
                 mem_limit = 0
             else:
-                units = {'k': 1024,
+                units = {'b': 1,
+                         'k': 1024,
                          'm': 1024*1024,
                          'g': 1024*1024*1024}
                 suffix = mem_limit[-1].lower()
 
-                if suffix in units.keys():
+                # Check if the variable is a string representation of an int
+                # without a units part. Assuming that the units are bytes.
+                if suffix.isdigit():
+                    digits_part = mem_limit
+                    suffix = 'b'
+                else:
+                    digits_part = mem_limit[:-1]
+
+                if suffix in units.keys() or suffix.isdigit():
                     try:
-                        digits = int(mem_limit[:-1])
+                        digits = int(digits_part)
                     except ValueError:
                         message = ('Failed converting the string value for'
                                    ' mem_limit ({0}) to a number.')
-                        formatted_message = message.format(mem_limit[:-1])
+                        formatted_message = message.format(digits_part)
                         raise errors.DockerException(formatted_message)
 
                     mem_limit = digits * units[suffix]
                 else:
                     message = ('The specified value for mem_limit parameter'
                                ' ({0}) should specify the units. The postfix'
-                               ' should be one of the `k` `m` `g` characters')
+                               ' should be one of the `b` `k` `m` `g`'
+                               ' characters')
                     raise errors.DockerException(message.format(mem_limit))
 
         if isinstance(ports, list):

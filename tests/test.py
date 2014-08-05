@@ -418,6 +418,70 @@ class DockerClientTest(Cleanup, unittest.TestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
 
+    def test_create_container_with_mem_limit_as_int(self):
+        try:
+            self.client.create_container('busybox', 'true',
+                                         mem_limit=128.0)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+        self.assertEqual(data['Memory'], 128.0)
+
+    def test_create_container_with_mem_limit_as_string(self):
+        try:
+            self.client.create_container('busybox', 'true',
+                                         mem_limit='128')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+        self.assertEqual(data['Memory'], 128.0)
+
+    def test_create_container_with_mem_limit_as_string_with_k_unit(self):
+        try:
+            self.client.create_container('busybox', 'true',
+                                         mem_limit='128k')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+        self.assertEqual(data['Memory'], 128.0 * 1024)
+
+    def test_create_container_with_mem_limit_as_string_with_m_unit(self):
+        try:
+            self.client.create_container('busybox', 'true',
+                                         mem_limit='128m')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+        self.assertEqual(data['Memory'], 128.0 * 1024 * 1024)
+
+    def test_create_container_with_mem_limit_as_string_with_g_unit(self):
+        try:
+            self.client.create_container('busybox', 'true',
+                                         mem_limit='128g')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+        self.assertEqual(data['Memory'], 128.0 * 1024 * 1024 * 1024)
+
+    def test_create_container_with_mem_limit_as_string_with_wrong_value(self):
+        self.assertRaises(docker.errors.DockerException,
+                          self.client.create_container,
+                          'busybox', 'true', mem_limit='128p')
+
+        self.assertRaises(docker.errors.DockerException,
+                          self.client.create_container,
+                          'busybox', 'true', mem_limit='1f28')
+
     def test_start_container(self):
         try:
             self.client.start(fake_api.FAKE_CONTAINER_ID)
