@@ -112,12 +112,26 @@ class Client(requests.Session):
             ]
 
         if isinstance(mem_limit, six.string_types):
-            units = {'k': 1024,
-                     'm': 1024*1024,
-                     'g': 1024*1024*1024}
-            suffix = mem_limit[-1].lower()
-            if suffix in units.keys():
-                mem_limit = int(mem_limit[:-1]) * units[suffix]
+            if len(mem_limit) == 0:
+                mem_limit = 0
+            else:
+                units = {'k': 1024,
+                         'm': 1024*1024,
+                         'g': 1024*1024*1024}
+                suffix = mem_limit[-1].lower()
+                
+                if suffix in units.keys():
+                    try:
+                        digits = int(mem_limit[:-1])                        
+                    except ValueError:
+                        message = ('Failed converting the string value for mem_limit ({0}) to a number.')
+                        raise errors.DockerException(message.format(mem_limit[:-1]))                        
+
+                    mem_limit = digits * units[suffix]
+                else:
+                    message = ('The specified value for mem_limit parameter ({0}) should specify' 
+                               ' the units. The postfix should be one of the `k` `m` `g` characters' )
+                    raise errors.DockerException(message.format(mem_limit))
 
         if isinstance(ports, list):
             exposed_ports = {}
