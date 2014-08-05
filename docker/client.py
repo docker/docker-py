@@ -111,6 +111,14 @@ class Client(requests.Session):
                 '{0}={1}'.format(k, v) for k, v in environment.items()
             ]
 
+        if isinstance(mem_limit, six.string_types):
+            units = {'k': 1024,
+                     'm': 1024*1024,
+                     'g': 1024*1024*1024}
+            suffix = mem_limit[-1].lower()
+            if suffix in units.keys():
+                mem_limit = int(mem_limit[:-1]) * units[suffix]
+
         if isinstance(ports, list):
             exposed_ports = {}
             for port_definition in ports:
