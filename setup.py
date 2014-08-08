@@ -6,17 +6,19 @@ from setuptools import setup
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
-if sys.version_info[0] == 3:
-    requirements_file = './requirements3.txt'
-else:
-    requirements_file = './requirements.txt'
+requirements = [
+    'requests >= 2.2.1',
+    'six >= 1.3.0',
+]
+
+if sys.version_info[0] < 3:
+    requirements.append('websocket-client >= 0.11.0')
 
 exec(open('docker/version.py').read())
 
 with open('./test-requirements.txt') as test_reqs_txt:
     test_requirements = [line for line in test_reqs_txt]
-with open(requirements_file) as requirements_txt:
-    requirements = [line for line in requirements_txt]
+
 
 setup(
     name="docker-py",
@@ -24,7 +26,8 @@ setup(
     description="Python client for Docker.",
     packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils',
               'docker.ssladapter'],
-    install_requires=requirements + test_requirements,
+    install_requires=requirements,
+    tests_require=test_requirements,
     zip_safe=False,
     test_suite='tests',
     classifiers=[
