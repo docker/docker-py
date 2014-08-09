@@ -870,10 +870,10 @@ class Client(requests.Session):
     def stop(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
+
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
-        res = self._post(url, params=params,
-                         timeout=max(timeout, self._timeout))
+        res = self._post(url, params=params, timeout=self._timeout + timeout)
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
