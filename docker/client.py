@@ -158,6 +158,9 @@ class Client(requests.Session):
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
 
+        if isinstance(volumes, (str, unicode)):
+            volumes = [volumes, ]
+
         if isinstance(volumes, list):
             volumes_dict = {}
             for vol in volumes:
