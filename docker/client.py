@@ -500,6 +500,9 @@ class Client(requests.Session):
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0):
 
+        if isinstance(volumes, (str, unicode)):
+            volumes = [volumes, ]
+
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
