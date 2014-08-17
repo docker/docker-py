@@ -248,6 +248,31 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_volume_string(self):
+        mount_dest = '/mnt'
+
+        try:
+            self.client.create_container('busybox', ['ls', mount_dest],
+                                         volumes=mount_dest)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls", "/mnt"], "AttachStdin": false,
+                             "Volumes": {"/mnt": {}}, "Memory": 0,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "MemorySwap": 0}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_ports(self):
         try:
             self.client.create_container('busybox', 'ls',
