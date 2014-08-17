@@ -117,8 +117,8 @@ class Client(requests.Session):
             else:
                 units = {'b': 1,
                          'k': 1024,
-                         'm': 1024*1024,
-                         'g': 1024*1024*1024}
+                         'm': 1024 * 1024,
+                         'g': 1024 * 1024 * 1024}
                 suffix = mem_limit[-1].lower()
 
                 # Check if the variable is a string representation of an int
