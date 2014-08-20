@@ -934,27 +934,30 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         )
 
     def test_stop_container(self):
+        timeout = 2
         try:
-            self.client.stop(fake_api.FAKE_CONTAINER_ID, timeout=2)
+            self.client.stop(fake_api.FAKE_CONTAINER_ID, timeout=timeout)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stop',
-            params={'t': 2},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            params={'t': timeout},
+            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
     def test_stop_container_with_dict_instead_of_id(self):
+        timeout = 2
         try:
-            self.client.stop({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=2)
+            self.client.stop({'Id': fake_api.FAKE_CONTAINER_ID},
+                             timeout=timeout)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stop',
-            params={'t': 2},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            params={'t': timeout},
+            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
     def test_kill_container(self):
