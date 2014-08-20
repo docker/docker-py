@@ -158,7 +158,7 @@ class Client(requests.Session):
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
 
-        if isinstance(volumes, str):
+        if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
 
         if isinstance(volumes, list):
@@ -503,7 +503,7 @@ class Client(requests.Session):
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0):
 
-        if isinstance(volumes, str):
+        if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
 
         config = self._container_config(
