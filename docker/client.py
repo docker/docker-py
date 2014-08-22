@@ -117,8 +117,8 @@ class Client(requests.Session):
             else:
                 units = {'b': 1,
                          'k': 1024,
-                         'm': 1024*1024,
-                         'g': 1024*1024*1024}
+                         'm': 1024 * 1024,
+                         'g': 1024 * 1024 * 1024}
                 suffix = mem_limit[-1].lower()
 
                 # Check if the variable is a string representation of an int
@@ -157,6 +157,9 @@ class Client(requests.Session):
                     port = port_definition[0]
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
+
+        if isinstance(volumes, six.string_types):
+            volumes = [volumes, ]
 
         if isinstance(volumes, list):
             volumes_dict = {}
@@ -499,6 +502,9 @@ class Client(requests.Session):
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0):
+
+        if isinstance(volumes, six.string_types):
+            volumes = [volumes, ]
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
