@@ -78,10 +78,16 @@ to those for the `docker run` command except it doesn't support the
 attach options (`-a`). See "Port bindings" and "Using volumes" below for
 more information on how to create port bindings and volume mappings.
 
+`command` is the command to be run in the container. String or list types are
+accepted.
+
 The `environment` variable accepts a dictionary or a list of strings
 in the following format `["PASSWORD=xxx"]` or `{"PASSWORD": "xxx"}`.
 
-The `mem_limit` variable accepts float values (which represent the memory limit of the created container in bytes) or a string with a units identification char ('100000b', 1000k', 128m', '1g'). If a string is specified without a units character, bytes are assumed as an intended unit.
+The `mem_limit` variable accepts float values (which represent the memory limit
+of the created container in bytes) or a string with a units identification char
+('100000b', 1000k', 128m', '1g'). If a string is specified without a units
+character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise TypeError exception if they are used
 against v1.10 of docker remote API. Those arguments should be passed to
