@@ -28,7 +28,6 @@ import gzip
 import docker
 import requests
 import six
-
 import fake_api
 
 
@@ -65,6 +64,37 @@ url_prefix = 'http+unix://var/run/docker.sock/v{0}/'.format(
     docker.client.DEFAULT_DOCKER_API_VERSION)
 
 
+def fake_get_raw_response_socket(self, response):
+    class FakeSocket(object):
+        def __init__(self, content):
+            self.content = content
+            self.idx = 0
+
+        def __iter__(self):
+            for line in self.content:
+                yield line
+
+        def settimeout(self, noop):
+            return
+
+        def setblocking(self, noop):
+            return
+
+        def makefile(self):
+            file_contents = '{0}\r\n{1}'.format(
+                len(self.content), self.content.decode('ascii')
+            )
+            if six.PY3:
+                return io.StringIO(file_contents)
+            return io.StringIO(unicode(file_contents))
+
+        def recv(self, size):
+            self.idx += size
+            return self.content[self.idx - size:self.idx]
+
+    return FakeSocket(response.content)
+
+
 class Cleanup(object):
     if sys.version_info < (2, 7):
         # Provide a basic implementation of addCleanup for Python < 2.7
@@ -92,6 +122,8 @@ class Cleanup(object):
 
 @mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
                      put=fake_request, delete=fake_request)
+@mock.patch('docker.Client._get_raw_response_socket',
+            fake_get_raw_response_socket)
 class DockerClientTest(Cleanup, unittest.TestCase):
     def setUp(self):
         self.client = docker.Client()
@@ -882,15 +914,19 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+        result = bytes() if six.PY3 else str()
+        for line in logs:
+            result += line
+
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
-            stream=False
+            stream=True
         )
 
         self.assertEqual(
-            logs,
+            result,
             'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
         )
 
@@ -900,29 +936,20 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+        result = bytes() if six.PY3 else str()
+        for line in logs:
+            result += line
+
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
-            stream=False
+            stream=True
         )
 
         self.assertEqual(
-            logs,
+            result,
             'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
-        )
-
-    def test_log_streaming(self):
-        try:
-            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        fake_request.assert_called_with(
-            url_prefix + 'containers/3cc2351ab11b/logs',
-            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
-            stream=True
         )
 
     def test_diff(self):
@@ -1122,7 +1149,7 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
     def test_pull(self):
         try:
-            self.client.pull('joffrey/test001')
+            next(self.client.pull('joffrey/test001'))
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1135,11 +1162,11 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             args[1]['params'],
             {'tag': None, 'fromImage': 'joffrey/test001'}
         )
-        self.assertFalse(args[1]['stream'])
+        self.assertTrue(args[1]['stream'])
 
-    def test_pull_stream(self):
+    def test_pull_tag(self):
         try:
-            self.client.pull('joffrey/test001', stream=True)
+            next(self.client.pull('joffrey/test001:latest'))
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1150,7 +1177,7 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         )
         self.assertEqual(
             args[1]['params'],
-            {'tag': None, 'fromImage': 'joffrey/test001'}
+            {'tag': 'latest', 'fromImage': 'joffrey/test001'}
         )
         self.assertTrue(args[1]['stream'])
 
@@ -1300,7 +1327,7 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         try:
             with mock.patch('docker.auth.auth.resolve_authconfig',
                             fake_resolve_authconfig):
-                self.client.push(fake_api.FAKE_IMAGE_NAME)
+                next(self.client.push(fake_api.FAKE_IMAGE_NAME))
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1308,23 +1335,6 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             url_prefix + 'images/test_image/push',
             data='{}',
             headers={'Content-Type': 'application/json'},
-            stream=False,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
-        )
-
-    def test_push_image_stream(self):
-        try:
-            with mock.patch('docker.auth.auth.resolve_authconfig',
-                            fake_resolve_authconfig):
-                self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        fake_request.assert_called_with(
-            url_prefix + 'images/test_image/push',
-            data='{}',
-            headers={'Content-Type': 'application/json'},
-            stream=True,
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1420,20 +1430,6 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         ]).encode('ascii'))
         try:
             self.client.build(fileobj=script)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-    def test_build_container_stream(self):
-        script = io.BytesIO('\n'.join([
-            'FROM busybox',
-            'MAINTAINER docker-py',
-            'RUN mkdir -p /tmp/test',
-            'EXPOSE 8080',
-            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
-            ' /tmp/silence.tar.gz'
-        ]).encode('ascii'))
-        try:
-            self.client.build(fileobj=script, stream=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 

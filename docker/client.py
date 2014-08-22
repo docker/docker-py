@@ -14,7 +14,6 @@
 
 import json
 import os
-import re
 import shlex
 import struct
 import warnings
@@ -282,20 +281,6 @@ class Client(requests.Session):
                 break
             yield data
 
-    def _multiplexed_buffer_helper(self, response):
-        """A generator of multiplexed data blocks read from a buffered
-        response."""
-        buf = self._result(response, binary=True)
-        walker = 0
-        while True:
-            if len(buf[walker:]) < 8:
-                break
-            _, length = struct.unpack_from('>BxxxL', buf[walker:])
-            start = walker + STREAM_HEADER_SIZE_BYTES
-            end = start + length
-            walker = end
-            yield buf[start:end]
-
     def _multiplexed_socket_stream_helper(self, response):
         """A generator of multiplexed data blocks coming from a response
         socket."""
@@ -339,26 +324,20 @@ class Client(requests.Session):
             'stream': stream and 1 or 0,
         }
         u = self._url("/containers/{0}/attach".format(container))
-        response = self._post(u, params=params, stream=stream)
+        response = self._post(u, params=params, stream=True)
 
         # Stream multi-plexing was only introduced in API v1.6. Anything before
         # that needs old-style streaming.
         if utils.compare_version('1.6', self._version) < 0:
-            def stream_result():
-                self._raise_for_status(response)
-                for line in response.iter_lines(chunk_size=1,
-                                                decode_unicode=True):
-                    # filter out keep-alive new lines
-                    if line:
-                        yield line
-
-            return stream_result() if stream else \
-                self._result(response, binary=True)
-
-        sep = bytes() if six.PY3 else str()
-
-        return stream and self._multiplexed_socket_stream_helper(response) or \
-            sep.join([x for x in self._multiplexed_buffer_helper(response)])
+            self._raise_for_status(response)
+            for line in response.iter_lines(chunk_size=1,
+                                            decode_unicode=True):
+                # filter out keep-alive new lines
+                if line:
+                    yield line
+        else:
+            for line in self._multiplexed_socket_stream_helper(response):
+                yield line
 
     def attach_socket(self, container, params=None, ws=False):
         if params is None:
@@ -379,8 +358,8 @@ class Client(requests.Session):
             u, None, params=self._attach_params(params), stream=True))
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
-              nocache=False, rm=False, stream=False, timeout=None,
-              custom_context=False, encoding=None):
+              nocache=False, rm=False, timeout=None, custom_context=False,
+              encoding=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
@@ -391,8 +370,7 @@ class Client(requests.Session):
             context = fileobj
         elif fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
-        elif path.startswith(('http://', 'https://',
-                              'git://', 'github.com/')):
+        elif path.startswith(('http://', 'https://', 'git://', 'github.com/')):
             remote = path
         else:
             dockerignore = os.path.join(path, '.dockerignore')
@@ -401,9 +379,6 @@ class Client(requests.Session):
                 with open(dockerignore, 'r') as f:
                     exclude = list(filter(bool, f.read().split('\n')))
             context = utils.tar(path, exclude=exclude)
-
-        if utils.compare_version('1.8', self._version) >= 0:
-            stream = True
 
         u = self._url('/build')
         params = {
@@ -437,22 +412,15 @@ class Client(requests.Session):
             data=context,
             params=params,
             headers=headers,
-            stream=stream,
+            stream=True,
             timeout=timeout,
         )
 
         if context is not None:
             context.close()
 
-        if stream:
-            return self._stream_helper(response)
-        else:
-            output = self._result(response)
-            srch = r'Successfully built ([0-9a-f]+)'
-            match = re.search(srch, output)
-            if not match:
-                return None, output
-            return match.group(1), output
+        for line in self._stream_helper(response):
+            yield json.loads(line)
 
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, conf=None):
@@ -666,7 +634,7 @@ class Client(requests.Session):
             self._auth_configs[registry] = req_data
         return self._result(response, json=True)
 
-    def logs(self, container, stdout=True, stderr=True, stream=False,
+    def logs(self, container, stdout=True, stderr=True, follow=False,
              timestamps=False):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -674,26 +642,21 @@ class Client(requests.Session):
             params = {'stderr': stderr and 1 or 0,
                       'stdout': stdout and 1 or 0,
                       'timestamps': timestamps and 1 or 0,
-                      'follow': stream and 1 or 0}
+                      'follow': follow and 1 or 0}
             url = self._url("/containers/{0}/logs".format(container))
-            res = self._get(url, params=params, stream=stream)
-            if stream:
-                return self._multiplexed_socket_stream_helper(res)
-            elif six.PY3:
-                return bytes().join(
-                    [x for x in self._multiplexed_buffer_helper(res)]
-                )
-            else:
-                return str().join(
-                    [x for x in self._multiplexed_buffer_helper(res)]
-                )
-        return self.attach(
-            container,
-            stdout=stdout,
-            stderr=stderr,
-            stream=stream,
-            logs=True
-        )
+            res = self._get(url, params=params, stream=True)
+            for line in self._multiplexed_socket_stream_helper(res):
+                yield line
+        else:
+            strm = self.attach(
+                container,
+                stdout=stdout,
+                stderr=stderr,
+                stream=True,
+                logs=True
+            )
+            for line in strm:
+                yield line
 
     def ping(self):
         return self._result(self._get(self._url('/_ping')))
@@ -713,7 +676,7 @@ class Client(requests.Session):
 
         return h_ports
 
-    def pull(self, repository, tag=None, stream=False):
+    def pull(self, repository, tag=None):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
@@ -740,14 +703,12 @@ class Client(requests.Session):
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
         response = self._post(self._url('/images/create'), params=params,
-                              headers=headers, stream=stream, timeout=None)
+                              headers=headers, stream=True, timeout=None)
 
-        if stream:
-            return self._stream_helper(response)
-        else:
-            return self._result(response)
+        for line in self._stream_helper(response):
+            yield json.loads(line)
 
-    def push(self, repository, stream=False):
+    def push(self, repository):
         registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         headers = {}
@@ -765,12 +726,12 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-            response = self._post_json(u, None, headers=headers, stream=stream)
+            response = self._post_json(u, None, headers=headers)
         else:
-            response = self._post_json(u, None, stream=stream)
+            response = self._post_json(u, None)
 
-        return stream and self._stream_helper(response) \
-            or self._result(response)
+        for line in self._stream_helper(response):
+            yield json.loads(line)
 
     def remove_container(self, container, v=False, link=False, force=False):
         if isinstance(container, dict):
