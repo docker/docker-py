@@ -201,7 +201,7 @@ c.pull(repository, tag=None, stream=False)
 Identical to the `docker pull` command.
 
 ```python
-c.push(repository, stream=False)
+c.push(repository, tag=None, stream=False)
 ```
 
 Identical to the `docker push` command.

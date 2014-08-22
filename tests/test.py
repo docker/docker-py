@@ -1306,6 +1306,30 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/push',
+            params={
+                'tag': None
+            },
+            data='{}',
+            headers={'Content-Type': 'application/json'},
+            stream=False,
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_push_image_with_tag(self):
+        try:
+            with mock.patch('docker.auth.auth.resolve_authconfig',
+                            fake_resolve_authconfig):
+                self.client.push(
+                    fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME
+                )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'images/test_image/push',
+            params={
+                'tag': fake_api.FAKE_TAG_NAME,
+            },
             data='{}',
             headers={'Content-Type': 'application/json'},
             stream=False,
@@ -1322,6 +1346,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/push',
+            params={
+                'tag': None
+            },
             data='{}',
             headers={'Content-Type': 'application/json'},
             stream=True,
