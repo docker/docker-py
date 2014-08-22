@@ -1319,7 +1319,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         try:
             with mock.patch('docker.auth.auth.resolve_authconfig',
                             fake_resolve_authconfig):
-                self.client.push(fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME)
+                self.client.push(
+                    fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME
+                )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
