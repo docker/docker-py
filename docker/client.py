@@ -33,7 +33,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.12'
+DEFAULT_DOCKER_API_VERSION = '1.13'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -661,7 +661,7 @@ class Client(requests.Session):
         return self._result(response, json=True)
 
     def logs(self, container, stdout=True, stderr=True, stream=False,
-             timestamps=False):
+             timestamps=False, tail=-1):
         if isinstance(container, dict):
             container = container.get('Id')
         if utils.compare_version('1.11', self._version) >= 0:
@@ -669,6 +669,9 @@ class Client(requests.Session):
                       'stdout': stdout and 1 or 0,
                       'timestamps': timestamps and 1 or 0,
                       'follow': stream and 1 or 0}
+            if tail and tail >= 0 and \
+                    utils.compare_version('1.13', self._version) >= 0:
+                params['tail'] = tail
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
             if stream:

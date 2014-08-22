@@ -291,6 +291,22 @@ class TestLogs(BaseTestCase):
         self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
 
+class TestLogsWithTailOption(BaseTestCase):
+    def runTest(self):
+        snippet = '''Line1
+Line2'''
+        container = self.client.create_container(
+            'busybox', 'echo "{0}"'.format(snippet)
+        )
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        exitcode = self.client.wait(id)
+        self.assertEqual(exitcode, 0)
+        logs = self.client.logs(id, tail=1)
+        self.assertEqual(logs, ('Line2\n').encode(encoding='ascii'))
+
+
 # class TestLogsStreaming(BaseTestCase):
 #     def runTest(self):
 #         snippet = 'Flowering Nights (Sakuya Iyazoi)'
