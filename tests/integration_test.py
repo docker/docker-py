@@ -612,6 +612,23 @@ class TestStartContainerWithLinks(BaseTestCase):
         self.assertIn('{0}_NAME='.format(link_env_prefix2), logs)
         self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix2), logs)
 
+
+class TestRestartingContainer(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['false'])
+        id = container['Id']
+        self.client.start(id, restart_policy={
+            {
+                "Name": "on-failure",
+                "MaximumRetryCount": 1
+            }
+        })
+        self.client.wait(id)
+        self.client.remove_container(id)
+        containers = self.client.containers(all=True)
+        res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
+        self.assertEqual(len(res), 0)
+
 #################
 #  LINKS TESTS  #
 #################
