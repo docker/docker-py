@@ -860,10 +860,6 @@ class Client(requests.Session):
             if volumes_from is not None:
                 warnings.warn(warning_message.format('volumes_from'),
                               DeprecationWarning)
-            if restart_policy is not None:
-                warnings.warn(warning_message.format('restart_policy'),
-                              DeprecationWarning)
-
         if dns_search:
             start_config['DnsSearch'] = dns_search
 
