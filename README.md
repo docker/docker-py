@@ -78,10 +78,16 @@ to those for the `docker run` command except it doesn't support the
 attach options (`-a`). See "Port bindings" and "Using volumes" below for
 more information on how to create port bindings and volume mappings.
 
+`command` is the command to be run in the container. String or list types are
+accepted.
+
 The `environment` variable accepts a dictionary or a list of strings
 in the following format `["PASSWORD=xxx"]` or `{"PASSWORD": "xxx"}`.
 
-The `mem_limit` variable accepts float values (which represent the memory limit of the created container in bytes) or a string with a units identification char ('100000b', 1000k', 128m', '1g'). If a string is specified without a units character, bytes are assumed as an intended unit.
+The `mem_limit` variable accepts float values (which represent the memory limit
+of the created container in bytes) or a string with a units identification char
+('100000b', 1000k', 128m', '1g'). If a string is specified without a units
+character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise TypeError exception if they are used
 against v1.10 of docker remote API. Those arguments should be passed to
@@ -195,7 +201,7 @@ c.pull(repository, tag=None, stream=False)
 Identical to the `docker pull` command.
 
 ```python
-c.push(repository, stream=False)
+c.push(repository, tag=None, stream=False)
 ```
 
 Identical to the `docker push` command.
@@ -226,7 +232,7 @@ Identical to the `docker search` command.
 ```python
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
         publish_all_ports=False, links=None, privileged=False,
-        dns=None, dns_search=None, volumes_from=None, network_mode=None)
+        dns=None, dns_search=None, volumes_from=None, network_mode=None, restart_policy=None)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
@@ -252,6 +258,27 @@ docker bridge, 'none': no networking for this container, 'container:[name|id]':
 reuses another container network stack), 'host': use the host network stack
 inside the container.
 
+`restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a container should or should not be 
+restarted on exit. By default the policy is set to no meaning do not restart the container when it exits. 
+The user may specify the restart policy as a dictionary for example:
+for example: 
+```
+{
+    "MaximumRetryCount": 0, 
+    "Name": "always"
+}
+```
+for always restarting the container on exit or can specify to restart the container to restart on failure and can limit
+number of restarts. 
+for example:
+```
+{
+    "MaximumRetryCount": 5, 
+    "Name": "on-failure"
+}
+```
+
+ 
 ```python
 c.stop(container, timeout=10)
 ```

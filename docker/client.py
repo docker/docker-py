@@ -118,8 +118,8 @@ class Client(requests.Session):
             else:
                 units = {'b': 1,
                          'k': 1024,
-                         'm': 1024*1024,
-                         'g': 1024*1024*1024}
+                         'm': 1024 * 1024,
+                         'g': 1024 * 1024 * 1024}
                 suffix = mem_limit[-1].lower()
 
                 # Check if the variable is a string representation of an int
@@ -158,6 +158,9 @@ class Client(requests.Session):
                     port = port_definition[0]
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
+
+        if isinstance(volumes, six.string_types):
+            volumes = [volumes, ]
 
         if isinstance(volumes, list):
             volumes_dict = {}
@@ -501,6 +504,9 @@ class Client(requests.Session):
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0):
 
+        if isinstance(volumes, six.string_types):
+            volumes = [volumes, ]
+
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
@@ -742,9 +748,14 @@ class Client(requests.Session):
         else:
             return self._result(response)
 
-    def push(self, repository, stream=False):
+    def push(self, repository, tag=None, stream=False):
+        if not tag:
+            repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
+        params = {
+            'tag': tag
+        }
         headers = {}
 
         if utils.compare_version('1.5', self._version) >= 0:
@@ -760,9 +771,10 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-            response = self._post_json(u, None, headers=headers, stream=stream)
+            response = self._post_json(u, None, headers=headers,
+                                       stream=stream, params=params)
         else:
-            response = self._post_json(u, None, stream=stream)
+            response = self._post_json(u, None, stream=stream, params=params)
 
         return stream and self._stream_helper(response) \
             or self._result(response)
@@ -795,7 +807,8 @@ class Client(requests.Session):
 
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
-              dns=None, dns_search=None, volumes_from=None, network_mode=None):
+              dns=None, dns_search=None, volumes_from=None, network_mode=None,
+              restart_policy=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -848,12 +861,14 @@ class Client(requests.Session):
             if volumes_from is not None:
                 warnings.warn(warning_message.format('volumes_from'),
                               DeprecationWarning)
-
         if dns_search:
             start_config['DnsSearch'] = dns_search
 
         if network_mode:
             start_config['NetworkMode'] = network_mode
+
+        if restart_policy:
+            start_config['RestartPolicy'] = restart_policy
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
@@ -874,7 +889,7 @@ class Client(requests.Session):
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
         res = self._post(url, params=params,
-                         timeout=max(timeout, self._timeout))
+                         timeout=(timeout + self._timeout))
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
