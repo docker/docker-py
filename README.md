@@ -232,7 +232,8 @@ Identical to the `docker search` command.
 ```python
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
         publish_all_ports=False, links=None, privileged=False,
-        dns=None, dns_search=None, volumes_from=None, network_mode=None, restart_policy=None)
+        dns=None, dns_search=None, volumes_from=None, network_mode=None,
+        restart_policy=None, cap_add=None, cap_drop=None)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
@@ -276,6 +277,15 @@ for example:
     "MaximumRetryCount": 5, 
     "Name": "on-failure"
 }
+```
+
+`cap_add` and `cap_drop` are available since v1.2.0 and can be used to add or drop certain capabilities.
+The user may specify the capabilities as an array for example:
+```
+[
+    "SYS_ADMIN",
+    "MKNOD"
+]
 ```
 
  
