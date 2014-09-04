@@ -100,7 +100,7 @@ class Client(requests.Session):
     def _container_config(self, image, command, hostname=None, user=None,
                           detach=False, stdin_open=False, tty=False,
                           mem_limit=0, ports=None, environment=None, dns=None,
-                          volumes=None, volumes_from=None,
+                          volumes=None, volumes_from=None, devices=None,
                           network_disabled=False, entrypoint=None,
                           cpu_shares=None, working_dir=None, domainname=None,
                           memswap_limit=0, devices=None):
