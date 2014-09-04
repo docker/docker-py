@@ -635,6 +635,30 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_start_container_with_devices_rw(self):
+        try:
+            device_dest = '/dev/null'
+            device_origin = '/dev/null'
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              devices={device_origin: {
+                                  "bind": device_dest, "rom": False}})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix +
+                         'containers/3cc2351ab11b/start')
+        self.assertEqual(json.loads(args[1]['data']),
+                         {"Devices": [{ "CgroupPermissions": "rwm", "PathInContainer": "/dev/null", "PathOnHost": "/dev/null"}],
+                          "PublishAllPorts": False,
+                          "Privileged": False})
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_start_container_with_port_binds(self):
         self.maxDiff = None
         try:

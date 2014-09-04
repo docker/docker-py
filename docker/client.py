@@ -103,7 +103,7 @@ class Client(requests.Session):
                           volumes=None, volumes_from=None,
                           network_disabled=False, entrypoint=None,
                           cpu_shares=None, working_dir=None, domainname=None,
-                          memswap_limit=0):
+                          memswap_limit=0, devices=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -167,6 +167,12 @@ class Client(requests.Session):
                 volumes_dict[vol] = {}
             volumes = volumes_dict
 
+        if isinstance(devices, list):
+            devices_dict = {}
+            for device in devices:
+                devices_dict[device] = {}
+            devices = devices_dict
+
         if volumes_from:
             if not isinstance(volumes_from, six.string_types):
                 volumes_from = ','.join(volumes_from)
@@ -213,6 +219,7 @@ class Client(requests.Session):
             'Image': image,
             'Volumes': volumes,
             'VolumesFrom': volumes_from,
+            'Devices': devices,
             'NetworkDisabled': network_disabled,
             'Entrypoint': entrypoint,
             'CpuShares': cpu_shares,
@@ -498,7 +505,7 @@ class Client(requests.Session):
     def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
                          mem_limit=0, ports=None, environment=None, dns=None,
-                         volumes=None, volumes_from=None,
+                         volumes=None, volumes_from=None, devices=None,
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0):
@@ -509,7 +516,8 @@ class Client(requests.Session):
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
-            entrypoint, cpu_shares, working_dir, domainname, memswap_limit
+            entrypoint, cpu_shares, working_dir, domainname, memswap_limit,
+            devices
         )
         return self.create_container_from_config(config, name)
 
@@ -807,7 +815,7 @@ class Client(requests.Session):
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None):
+              restart_policy=None, devices=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -827,6 +835,9 @@ class Client(requests.Session):
             start_config['PortBindings'] = utils.convert_port_bindings(
                 port_bindings
             )
+
+        if devices:
+            start_config['Devices'] = utils.convert_devices(devices)
 
         start_config['PublishAllPorts'] = publish_all_ports
 
