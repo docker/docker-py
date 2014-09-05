@@ -841,6 +841,56 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_start_container_with_added_capabilities(self):
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              cap_add=['MKNOD'])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            url_prefix + 'containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False,
+             "CapAdd": ["MKNOD"]}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_start_container_with_dropped_capabilities(self):
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              cap_drop=['MKNOD'])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            url_prefix + 'containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False,
+             "CapDrop": ["MKNOD"]}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_resize_container(self):
         try:
             self.client.resize(
