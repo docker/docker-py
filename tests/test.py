@@ -649,7 +649,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(args[0][0], url_prefix +
                          'containers/3cc2351ab11b/start')
         self.assertEqual(json.loads(args[1]['data']),
-                         {"Devices": [{ "CgroupPermissions": "rwm", "PathInContainer": "/dev/null", "PathOnHost": "/dev/null"}],
+                         {"Devices": [{"CgroupPermissions": "rwm",
+                                       "PathInContainer": "/dev/null",
+                                       "PathOnHost": "/dev/null"}],
                           "PublishAllPorts": False,
                           "Privileged": False})
         self.assertEqual(args[1]['headers'],

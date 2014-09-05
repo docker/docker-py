@@ -160,12 +160,16 @@ def convert_volume_binds(binds):
             result.append('%s:%s:rw' % (k, v))
     return result
 
+
 def convert_devices(devices):
     result = []
     for k, v in devices.items():
         device = {}
         if isinstance(v, dict):
-            device['CgroupPermissions'] = 'rom' if v.get('rom', False) else 'rwm'
+            if v.get('rom', False):
+                device['CgroupPermissions'] = 'rom'
+            else:
+                device['CgroupPermissions'] = 'rwm'
             device['PathOnHost'] = v['bind']
         else:
             device['CgroupPermissions'] = 'rwm'
@@ -173,6 +177,7 @@ def convert_devices(devices):
         device['PathInContainer'] = k
         result.append(device)
     return result
+
 
 def parse_repository_tag(repo):
     column_index = repo.rfind(':')
