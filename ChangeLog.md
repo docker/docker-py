@@ -1,6 +1,28 @@
 ChangeLog
 =========
 
+0.5.0
+-----
+
+* **This version introduces breaking changes!**
+* Added `insecure_registry` parameter in `Client.push` and `Client.pull`.
+  *It defaults to False and code pushing to non-HTTPS private registries
+  might break as a result.*
+* Added support for adding and dropping capabilities
+* Added support for restart policy
+* Added support for string values in `Client.create_container`'s `mem_limit`
+* Added support for `.dockerignore` file in `Client.build`
+
+### Bugfixes
+
+* Fixed timeout behavior in `Client.stop`
+
+### Miscellaneous
+
+* `Client.create_container` provides better validation of the `volumes`
+  parameter
+* Improved integration tests
+
 0.4.0
 -----
 
