@@ -713,10 +713,13 @@ class Client(requests.Session):
 
         return h_ports
 
-    def pull(self, repository, tag=None, stream=False):
+    def pull(self, repository, tag=None, stream=False,
+             insecure_registry=False):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
-        registry, repo_name = auth.resolve_repository_name(repository)
+        registry, repo_name = auth.resolve_repository_name(
+            repository, insecure=insecure_registry
+        )
         if repo_name.count(":") == 1:
             repository, tag = repository.rsplit(":", 1)
 
@@ -747,10 +750,13 @@ class Client(requests.Session):
         else:
             return self._result(response)
 
-    def push(self, repository, tag=None, stream=False):
+    def push(self, repository, tag=None, stream=False,
+             insecure_registry=False):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
-        registry, repo_name = auth.resolve_repository_name(repository)
+        registry, repo_name = auth.resolve_repository_name(
+            repository, insecure=insecure_registry
+        )
         u = self._url("/images/{0}/push".format(repository))
         params = {
             'tag': tag
