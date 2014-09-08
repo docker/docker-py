@@ -25,7 +25,7 @@ import unittest
 import docker
 import six
 
-from tests.test import Cleanup
+from test import Cleanup
 
 # FIXME: missing tests for
 # export; history; import_image; insert; port; push; tag; get; load
@@ -426,7 +426,7 @@ class TestKillWithSignal(BaseTestCase):
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        self.client.kill(id, signal=signal.SIGTERM)
+        self.client.kill(id, signal=signal.SIGKILL)
         exitcode = self.client.wait(id)
         self.assertNotEqual(exitcode, 0)
         container_info = self.client.inspect_container(id)
@@ -618,10 +618,8 @@ class TestRestartingContainer(BaseTestCase):
         container = self.client.create_container('busybox', ['false'])
         id = container['Id']
         self.client.start(id, restart_policy={
-            {
-                "Name": "on-failure",
-                "MaximumRetryCount": 1
-            }
+            "Name": "on-failure",
+            "MaximumRetryCount": 1
         })
         self.client.wait(id)
         self.client.remove_container(id)
