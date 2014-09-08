@@ -21,13 +21,13 @@ class SSLAdapter(HTTPAdapter):
 
     def init_poolmanager(self, connections, maxsize, block=False):
         urllib_ver = urllib3.__version__.split('-')[0]
-        if urllib3 and urllib_ver != 'dev' and \
-           StrictVersion(urllib_ver) <= StrictVersion('1.5'):
-            self.poolmanager = PoolManager(num_pools=connections,
-                                           maxsize=maxsize,
-                                           block=block)
-        else:
-            self.poolmanager = PoolManager(num_pools=connections,
-                                           maxsize=maxsize,
-                                           block=block,
-                                           ssl_version=self.ssl_version)
+        kwargs = {
+            'num_pools': connections,
+            'maxsize': maxsize,
+            'block': block
+        }
+        if urllib3 and urllib_ver == 'dev' and \
+           StrictVersion(urllib_ver) > StrictVersion('1.5'):
+            kwargs['ssl_version'] = self.ssl_version
+
+        self.poolmanager = PoolManager(**kwargs)
