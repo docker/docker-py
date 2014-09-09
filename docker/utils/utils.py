@@ -99,9 +99,11 @@ def compare_version(v1, v2):
         return 1
 
 
-def ping(url):
+def ping(url, insecure=False):
     try:
         res = requests.get(url, timeout=3)
+    except requests.exceptions.SSLError:
+        return insecure
     except Exception:
         return False
     else:
