@@ -43,25 +43,28 @@ class Client(requests.Session):
     def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
-        base_url = utils.parse_host(base_url)
-        if 'http+unix:///' in base_url:
-            base_url = base_url.replace('unix:/', 'unix:')
+
         if tls and not base_url.startswith('https://'):
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must begin with '
                 '"https://".')
-        self.base_url = base_url
+
         self._version = version
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
-        # Use SSLAdapter for the ability to specify SSL version
-        if isinstance(tls, TLSConfig):
-            tls.configure_client(self)
-        elif tls:
-            self.mount('https://', ssladapter.SSLAdapter())
+        base_url = utils.parse_host(base_url)
+        if base_url.startswith('http+unix://'):
+            unix_socket_adapter = unixconn.UnixAdapter(base_url, timeout)
+            self.mount('http+docker://', unix_socket_adapter)
+            self.base_url = 'http+docker://localunixsocket'
         else:
-            self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
+            # Use SSLAdapter for the ability to specify SSL version
+            if isinstance(tls, TLSConfig):
+                tls.configure_client(self)
+            elif tls:
+                self.mount('https://', ssladapter.SSLAdapter())
+            self.base_url = base_url
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
@@ -567,7 +570,6 @@ class Client(requests.Session):
         return res
 
     def import_image(self, src=None, repository=None, tag=None, image=None):
-        u = self._url("/images/create")
         params = {
             'repo': repository,
             'tag': tag
@@ -575,25 +577,53 @@ class Client(requests.Session):
 
         if src:
             try:
-                # XXX: this is ways not optimal but the only way
-                # for now to import tarballs through the API
-                fic = open(src)
-                data = fic.read()
-                fic.close()
-                src = "-"
+                with open(src) as f:
+                    return self._import_image_from_stream(f, params)
             except IOError:
-                # file does not exists or not a file (URL)
-                data = None
+                pass
+
             if isinstance(src, six.string_types):
-                params['fromSrc'] = src
-                return self._result(self._post(u, data=data, params=params))
-            return self._result(self._post(u, data=src, params=params))
+                return self._import_image_from_url(src, params)
+
+            else:
+                return self._import_image_from_bytes(src, params)
 
         if image:
-            params['fromImage'] = image
-            return self._result(self._post(u, data=None, params=params))
+            return self._import_image_from_image(image, params)
 
         raise Exception("Must specify a src or image")
+
+    def import_image_from_stream(self, src=None, repository=None, tag=None):
+        params = {
+            'repo': repository,
+            'tag': tag
+        }
+
+        return self._import_image_from_stream(src, params)
+
+    def _import_image_from_bytes(self, data, params):
+        u = self._url("/images/create")
+        return self._result(self._post(u, data=data, params=params))
+
+    def _import_image_from_image(self, image, params):
+        u = self._url("/images/create")
+        params['fromImage'] = image
+        return self._result(self._post(u, data=None, params=params))
+
+    def _import_image_from_stream(self, stream, params):
+        u = self._url("/images/create")
+        params['fromSrc'] = '-'
+        headers = {
+            'Content-Type': 'application/tar',
+            'Transfer-Encoding': 'chunked',
+        }
+        return self._result(self._post(u, data=stream, params=params,
+                                       headers=headers))
+
+    def _import_image_from_url(self, url, params):
+        u = self._url("/images/create")
+        params['fromSrc'] = url
+        return self._result(self._post(u, data=None, params=params))
 
     def info(self):
         return self._result(self._get(self._url("/info")),
