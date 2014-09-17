@@ -570,7 +570,6 @@ class Client(requests.Session):
         return res
 
     def import_image(self, src=None, repository=None, tag=None, image=None):
-        u = self._url("/images/create")
         params = {
             'repo': repository,
             'tag': tag
@@ -578,25 +577,53 @@ class Client(requests.Session):
 
         if src:
             try:
-                # XXX: this is ways not optimal but the only way
-                # for now to import tarballs through the API
-                fic = open(src)
-                data = fic.read()
-                fic.close()
-                src = "-"
+                with open(src) as f:
+                    return self._import_image_from_stream(f, params)
             except IOError:
-                # file does not exists or not a file (URL)
-                data = None
+                pass
+
             if isinstance(src, six.string_types):
-                params['fromSrc'] = src
-                return self._result(self._post(u, data=data, params=params))
-            return self._result(self._post(u, data=src, params=params))
+                return self._import_image_from_url(src, params)
+
+            else:
+                return self._import_image_from_bytes(src, params)
 
         if image:
-            params['fromImage'] = image
-            return self._result(self._post(u, data=None, params=params))
+            return self._import_image_from_image(image, params)
 
         raise Exception("Must specify a src or image")
+
+    def import_image_from_stream(self, src=None, repository=None, tag=None):
+        params = {
+            'repo': repository,
+            'tag': tag
+        }
+
+        return self._import_image_from_stream(src, params)
+
+    def _import_image_from_bytes(self, data, params):
+        u = self._url("/images/create")
+        return self._result(self._post(u, data=data, params=params))
+
+    def _import_image_from_image(self, image, params):
+        u = self._url("/images/create")
+        params['fromImage'] = image
+        return self._result(self._post(u, data=None, params=params))
+
+    def _import_image_from_stream(self, stream, params):
+        u = self._url("/images/create")
+        params['fromSrc'] = '-'
+        headers = {
+            'Content-Type': 'application/tar',
+            'Transfer-Encoding': 'chunked',
+        }
+        return self._result(self._post(u, data=stream, params=params,
+                                       headers=headers))
+
+    def _import_image_from_url(self, url, params):
+        u = self._url("/images/create")
+        params['fromSrc'] = url
+        return self._result(self._post(u, data=None, params=params))
 
     def info(self):
         return self._result(self._get(self._url("/info")),
