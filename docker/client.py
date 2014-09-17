@@ -43,25 +43,28 @@ class Client(requests.Session):
     def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
-        base_url = utils.parse_host(base_url)
-        if 'http+unix:///' in base_url:
-            base_url = base_url.replace('unix:/', 'unix:')
+
         if tls and not base_url.startswith('https://'):
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must begin with '
                 '"https://".')
-        self.base_url = base_url
+
         self._version = version
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
-        # Use SSLAdapter for the ability to specify SSL version
-        if isinstance(tls, TLSConfig):
-            tls.configure_client(self)
-        elif tls:
-            self.mount('https://', ssladapter.SSLAdapter())
+        base_url = utils.parse_host(base_url)
+        if base_url.startswith('http+unix://'):
+            unix_socket_adapter = unixconn.UnixAdapter(base_url, timeout)
+            self.mount('http+docker://', unix_socket_adapter)
+            self.base_url = 'http+docker://localunixsocket'
         else:
-            self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
+            # Use SSLAdapter for the ability to specify SSL version
+            if isinstance(tls, TLSConfig):
+                tls.configure_client(self)
+            elif tls:
+                self.mount('https://', ssladapter.SSLAdapter())
+            self.base_url = base_url
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
