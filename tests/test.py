@@ -99,6 +99,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         # Force-clear authconfig to avoid tampering with the tests
         self.client._cfg = {'Configs': {}}
 
+    def tearDown(self):
+        self.client.close()
+
     #########################
     #   INFORMATION TESTS   #
     #########################
