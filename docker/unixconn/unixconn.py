@@ -25,6 +25,11 @@ try:
 except ImportError:
     import urllib3.connectionpool as connectionpool
 
+try:
+    from requests.packages.urllib3._collections import RecentlyUsedContainer
+except ImportError:
+    from urllib3._collections import RecentlyUsedContainer
+
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):
     def __init__(self, base_url, unix_socket, timeout=60):
@@ -65,7 +70,22 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
     def __init__(self, base_url, timeout=60):
         self.base_url = base_url
         self.timeout = timeout
+        self.pools = RecentlyUsedContainer(10,
+                                           dispose_func=lambda p: p.close())
         super(UnixAdapter, self).__init__()
 
     def get_connection(self, socket_path, proxies=None):
-        return UnixHTTPConnectionPool(self.base_url, socket_path, self.timeout)
+        with self.pools.lock:
+            pool = self.pools.get(socket_path)
+            if pool:
+                return pool
+
+            pool = UnixHTTPConnectionPool(self.base_url,
+                                          socket_path,
+                                          self.timeout)
+            self.pools[socket_path] = pool
+
+        return pool
+
+    def close(self):
+        self.pools.clear()
