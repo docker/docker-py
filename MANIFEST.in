@@ -3,3 +3,4 @@ include requirements.txt
 include requirements3.txt
 include README.md
 include LICENSE
+recursive-include tests *.py
