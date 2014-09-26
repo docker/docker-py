@@ -94,6 +94,7 @@ def resolve_authconfig(authconfig, registry=None):
         return authconfig[registry]
     return authconfig.get(swap_protocol(registry), None)
 
+
 def store_authconfig(authconfig, registry, req_data):
     """Store the authentication data from the given auth configuration for a
     specific registry in the standard format."""
@@ -106,6 +107,7 @@ def store_authconfig(authconfig, registry, req_data):
         registry = 'https://' + registry
 
     authconfig[registry] = req_data
+
 
 def encode_auth(auth_info):
     return base64.b64encode(auth_info.get('username', '') + b':' +
