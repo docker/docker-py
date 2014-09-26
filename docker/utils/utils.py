@@ -105,7 +105,7 @@ def ping(url):
     except Exception:
         return False
     else:
-        return res.status_code < 400
+        return res.status_code < 400 or res.status_code == 401
 
 
 def _convert_port_binding(binding):
