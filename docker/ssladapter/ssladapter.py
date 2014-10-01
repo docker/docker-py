@@ -26,7 +26,7 @@ class SSLAdapter(HTTPAdapter):
             'maxsize': maxsize,
             'block': block
         }
-        if urllib3 and urllib_ver == 'dev' and \
+        if urllib3 and urllib_ver != 'dev' and \
            StrictVersion(urllib_ver) > StrictVersion('1.5'):
             kwargs['ssl_version'] = self.ssl_version
 
