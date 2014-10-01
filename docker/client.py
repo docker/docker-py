@@ -794,6 +794,8 @@ class Client(requests.Session):
         self._raise_for_status(res)
 
     def remove_image(self, image, force=False, noprune=False):
+        if isinstance(image, dict):
+            image = image.get('Id') 
         params = {'force': force, 'noprune': noprune}
         res = self._delete(self._url("/images/" + image), params=params)
         self._raise_for_status(res)
