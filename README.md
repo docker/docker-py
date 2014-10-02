@@ -31,7 +31,7 @@ is hosted. `version` is the version of the API the client will use and
 ```python
 c.build(path=None, tag=None, quiet=False, fileobj=None, nocache=False,
         rm=False, stream=False, timeout=None,
-        custom_context=False, encoding=None):
+        custom_context=False, encoding=None)
 ```
 
 Similar to the `docker build` command. Either `path` or `fileobj` needs
