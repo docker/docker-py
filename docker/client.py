@@ -395,6 +395,8 @@ class Client(requests.Session):
         elif path.startswith(('http://', 'https://',
                               'git://', 'github.com/')):
             remote = path
+        elif not os.path.isdir(path):
+            raise TypeError("You must specify a directory to build in path")
         else:
             dockerignore = os.path.join(path, '.dockerignore')
             exclude = None
