@@ -329,7 +329,7 @@ class Client(requests.Session):
             u, None, params=self._attach_params(params), stream=True))
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
-              nocache=False, rm=False, stream=False, timeout=None):
+              nocache=False, rm=True, stream=False, timeout=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise Exception("Either path or fileobj needs to be provided.")
