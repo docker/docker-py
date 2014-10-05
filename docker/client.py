@@ -469,7 +469,8 @@ class Client(requests.Session):
                             json=True)
 
     def containers(self, quiet=False, all=False, trunc=True, latest=False,
-                   since=None, before=None, limit=-1, size=False):
+                   since=None, before=None, limit=-1, size=False,
+                   filters=None):
         params = {
             'limit': 1 if latest else limit,
             'all': 1 if all else 0,
@@ -478,6 +479,8 @@ class Client(requests.Session):
             'since': since,
             'before': before
         }
+        if filters:
+            params['filters'] = utils.convert_filters(filters)
         u = self._url("/containers/json")
         res = self._result(self._get(u, params=params), True)
 
@@ -550,7 +553,8 @@ class Client(requests.Session):
         self._raise_for_status(res)
         return self._result(res)
 
-    def images(self, name=None, quiet=False, all=False, viz=False):
+    def images(self, name=None, quiet=False, all=False, viz=False,
+               filters=None):
         if viz:
             if utils.compare_version('1.7', self._version) >= 0:
                 raise Exception('Viz output is not supported in API >= 1.7!')
@@ -560,6 +564,8 @@ class Client(requests.Session):
             'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
         }
+        if filters:
+            params['filters'] = utils.convert_filters(filters)
         res = self._result(self._get(self._url("/images/json"), params=params),
                            True)
         if quiet:

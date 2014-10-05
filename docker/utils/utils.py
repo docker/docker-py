@@ -14,6 +14,7 @@
 
 import io
 import os
+import json
 import tarfile
 import tempfile
 from distutils.version import StrictVersion
@@ -233,3 +234,14 @@ def parse_host(addr):
     if proto == "http+unix":
         return "%s://%s" % (proto, host)
     return "%s://%s:%d" % (proto, host, port)
+
+
+def convert_filters(filters):
+    result = {}
+    for k, v in six.iteritems(filters):
+        if isinstance(v, bool):
+            v = 'true' if v else 'false'
+        if not isinstance(v, list):
+            v = [v, ]
+        result[k] = v
+    return json.dumps(result)

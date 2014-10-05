@@ -1,7 +1,9 @@
 import unittest
 
 from docker.errors import DockerException
-from docker.utils import parse_repository_tag, parse_host
+from docker.utils import (
+    parse_repository_tag, parse_host, convert_filters
+)
 
 
 class UtilsTest(unittest.TestCase):
@@ -52,6 +54,18 @@ class UtilsTest(unittest.TestCase):
 
         for host, expected in valid_hosts.items():
             self.assertEqual(parse_host(host), expected, msg=host)
+
+    def test_convert_filters(self):
+        tests = [
+            ({'dangling': True}, '{"dangling": ["true"]}'),
+            ({'dangling': "true"}, '{"dangling": ["true"]}'),
+            ({'exited': 0}, '{"exited": [0]}'),
+            ({'exited': [0, 1]}, '{"exited": [0, 1]}'),
+        ]
+
+        for filters, expected in tests:
+            self.assertEqual(convert_filters(filters), expected)
+
 
 if __name__ == '__main__':
     unittest.main()
