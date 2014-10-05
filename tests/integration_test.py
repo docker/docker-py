@@ -627,6 +627,37 @@ class TestRestartingContainer(BaseTestCase):
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
 
+
+class TestPauseUnpauseContainer(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        self.client.pause(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], True)
+        self.assertIn('Paused', state)
+        self.assertEqual(state['Paused'], True)
+
+        self.client.unpause(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], True)
+        self.assertIn('Paused', state)
+        self.assertEqual(state['Paused'], False)
+
+
 #################
 #  LINKS TESTS  #
 #################

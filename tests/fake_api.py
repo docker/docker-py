@@ -237,6 +237,18 @@ def post_fake_kill_container():
     return status_code, response
 
 
+def post_fake_pause_container():
+    status_code = 200
+    response = {'Id': FAKE_CONTAINER_ID}
+    return status_code, response
+
+
+def post_fake_unpause_container():
+    status_code = 200
+    response = {'Id': FAKE_CONTAINER_ID}
+    return status_code, response
+
+
 def post_fake_restart_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
@@ -334,6 +346,10 @@ fake_responses = {
     post_fake_stop_container,
     '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):
     post_fake_kill_container,
+    '{1}/{0}/containers/3cc2351ab11b/pause'.format(CURRENT_VERSION, prefix):
+    post_fake_pause_container,
+    '{1}/{0}/containers/3cc2351ab11b/unpause'.format(CURRENT_VERSION, prefix):
+    post_fake_unpause_container,
     '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
     get_fake_port,
     '{1}/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION, prefix):
