@@ -182,6 +182,12 @@ instead if you want to fetch/stream container output without first
 retrieving the entire backlog.
 
 ```python
+c.pause(container)
+```
+
+Pauses all processes within a container.
+
+```python
 c.ping()
 ```
 
@@ -306,6 +312,12 @@ c.top(container)
 ```
 
 Identical to the `docker top` command.
+
+```python
+c.unpause(container)
+```
+
+Unpauses all processes within a container.
 
 ```python
 c.version()

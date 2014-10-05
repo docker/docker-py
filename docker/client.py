@@ -696,6 +696,13 @@ class Client(requests.Session):
             logs=True
         )
 
+    def pause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url('/containers/{0}/pause'.format(container))
+        res = self._post(url)
+        self._raise_for_status(res)
+
     def ping(self):
         return self._result(self._get(self._url('/_ping')))
 
@@ -921,6 +928,13 @@ class Client(requests.Session):
 
     def version(self):
         return self._result(self._get(self._url("/version")), True)
+
+    def unpause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url('/containers/{0}/unpause'.format(container))
+        res = self._post(url)
+        self._raise_for_status(res)
 
     def wait(self, container):
         if isinstance(container, dict):
