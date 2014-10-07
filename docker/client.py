@@ -1380,6 +1380,43 @@ class Client(requests.Session):
 
     def push(self, repository, tag=None, stream=False,
              insecure_registry=False):
+        """
+        Push an image or a repository to the registry. Identical to the docker
+        push command
+
+        :param repository: The repository to push to
+        :type repository: str
+
+        :param tag: An optional tag to push
+        :type tag: str
+
+        :param stream: Stream the output as a blocking generator
+        :type stream: bool
+
+        :param insecure_registry: Use ``http://`` to connect to the registry
+        :type insecure_registry: bool
+
+        :rtype: str or generator
+        :return: The output of the upload
+
+        Example:
+
+        .. code-block:: python
+
+            >>> from docker import Client
+            >>> cli = Client(base_url='tcp://127.0.0.1:2375')
+            >>> response = [line for line in cli.push('yourname/app', stream=True)]
+            >>> response
+            ['{"status":"Pushing repository yourname/app (1 tags)"}\\n',
+             '{"status":"Pushing","progressDetail":{},"id":"511136ea3c5a"}\\n',
+             '{"status":"Image already pushed, skipping","progressDetail":{},
+                "id":"511136ea3c5a"}\\n',
+             ...
+             '{"status":"Pushing tag for rev [918af568e6e5] on {
+                https://cdn-registry-1.docker.io/v1/repositories/
+                yourname/app/tags/latest}"}\\n']
+
+        """
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(
