@@ -1615,11 +1615,11 @@ class DockerClientTest(Cleanup, unittest.TestCase):
                     f.write("content")
 
         for exclude, names in (
-                (['*.py'], ['bar/a.txt', 'bar/other.png',
-                            'test/foo/a.txt', 'test/foo/other.png']),
-                (['*.png', 'bar'], ['test/foo/a.txt', 'test/foo/b.py']),
-                (['test/foo', 'a.txt'], ['bar/a.txt', 'bar/b.py',
-                                         'bar/other.png']),
+                (['*.py'], ['bar', 'bar/a.txt', 'bar/other.png',
+                            'test', 'test/foo', 'test/foo/a.txt', 'test/foo/other.png']),
+                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt', 'test/foo/b.py']),
+                (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
+                                         'bar/other.png', 'test']),
         ):
             archive = docker.utils.tar(base, exclude=exclude)
             tar = tarfile.open(fileobj=archive)
