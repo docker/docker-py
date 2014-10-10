@@ -6,3 +6,5 @@ dist
 *.swp
 
 .tox
+.coverage
+html/*

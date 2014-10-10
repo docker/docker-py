@@ -34,46 +34,39 @@ def swap_protocol(url):
     return url
 
 
-def expand_registry_url(hostname):
+def expand_registry_url(hostname, insecure=False):
     if hostname.startswith('http:') or hostname.startswith('https:'):
         if '/' not in hostname[9:]:
             hostname = hostname + '/v1/'
         return hostname
     if utils.ping('https://' + hostname + '/v1/_ping'):
         return 'https://' + hostname + '/v1/'
-    return 'http://' + hostname + '/v1/'
+    elif insecure:
+        return 'http://' + hostname + '/v1/'
+    else:
+        raise errors.DockerException(
+            "HTTPS endpoint unresponsive and insecure mode isn't enabled."
+        )
 
 
-def resolve_repository_name(repo_name):
-    # root
-    # root:tag
-    # root:tag.minor
-    # user/repo
-    # user/repo:tag
-    # domain.name:5000/repo
-    # domain.name:5000/repo:tag
-    # domain.name:5000/user/repo:tag
-    # localhost:5000/repo
-    # localhost:5000/repo:tag
-    # localhost:5000/user/repo:tag
-
+def resolve_repository_name(repo_name, insecure=False):
     if '://' in repo_name:
         raise errors.InvalidRepository(
             'Repository name cannot contain a scheme ({0})'.format(repo_name))
     parts = repo_name.split('/', 1)
-    if (len(parts) == 1 or 
-        (':' not in parts[0] and '.' not in parts[0] and parts[0] != 'localhost')):
+    if '.' not in parts[0] and ':' not in parts[0] and parts[0] != 'localhost':
         # This is a docker index repo (ex: foo/bar or ubuntu)
         return INDEX_URL, repo_name
     if len(parts) < 2:
         raise errors.InvalidRepository(
             'Invalid repository name ({0})'.format(repo_name))
 
-    if 'index.docker.io' in parts[0]:
+    if 'index.docker.io' in parts[0] or 'registry.hub.docker.com' in parts[0]:
         raise errors.InvalidRepository(
-            'Invalid repository name, try "{0}" instead'.format(parts[1]))
+            'Invalid repository name, try "{0}" instead'.format(parts[1])
+        )
 
-    return expand_registry_url(parts[0]), parts[1]
+    return expand_registry_url(parts[0], insecure), parts[1]
 
 
 def resolve_authconfig(authconfig, registry=None):

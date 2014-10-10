@@ -1,10 +1,85 @@
 ChangeLog
 =========
 
+0.5.0
+-----
+
+* **This version introduces breaking changes!**
+* Added `insecure_registry` parameter in `Client.push` and `Client.pull`.
+  *It defaults to False and code pushing to non-HTTPS private registries
+  might break as a result.*
+* Added support for adding and dropping capabilities
+* Added support for restart policy
+* Added support for string values in `Client.create_container`'s `mem_limit`
+* Added support for `.dockerignore` file in `Client.build`
+
+### Bugfixes
+
+* Fixed timeout behavior in `Client.stop`
+
+### Miscellaneous
+
+* `Client.create_container` provides better validation of the `volumes`
+  parameter
+* Improved integration tests
+
+0.4.0
+-----
+
+* **This version introduces breaking changes!**
+* The `base_url` parameter in the `Client` constructor should now allow most
+  of the `DOCKER_HOST` environment values (except for the fd:// protocol)
+    * As a result, URLs that don't specify a port are now invalid (similar
+    to the official client's behavior)
+* Added TLS support (see [documentation](https://github.com/dotcloud/docker-py#connection-to-daemon-using-https))
+
+### Bugfixes
+
+* Fixed an issue with `Client.build` streamed logs in Python 3
+
+### Miscellaneous
+
+* Added unit tests coverage
+* Various integration tests fixes
+
 0.3.2
 -----
 
-_In development._
+* Default API version is now 1.12 (support for docker 1.0)
+* Added new methods `Client.get_image` and `Client.load_image`
+  (`docker save` and `docker load`)
+* Added new method `Client.ping`
+* Added new method `Client.resize`
+* `Client.build` can now be provided with a custom context using the
+  `custom_context` parameter.
+* Added support for `memswap_limit` parameter in `create_container`
+* Added support for `force` parameter in `remove_container`
+* Added support for `force` and `noprune` parameters in `remove_image`
+* Added support for `timestamps` parameter in `logs`
+* Added support for `dns_search` parameter in `start`
+* Added support for `network_mode` parameter in `start`
+* Added support for `size` parameter in `containers`
+* Added support for `volumes_from` and `dns` parameters in `start`. As of
+  API version >= 1.10, these parameters no longer belong to `create_container`
+* `Client.logs` now uses the logs endpoint when API version is sufficient
+
+### Bugfixes
+
+* Fixed a bug in pull where the `repo:tag` notation wasn't interpreted
+  properly
+* Fixed a bug in streaming methods with python 3 (unicode, bytes/str related)
+* Fixed a bug in `Client.start` where legacy notation for volumes wasn't
+  supported anymore.
+
+### Miscellaneous
+
+* The client now raises `DockerException`s when appropriate. You can import
+  `DockerException` (and its subclasses) from the `docker.errors` module to
+  catch them if needed.
+* `docker.APIError` has been moved to the new `docker.errors` module as well.
+* `Client.insert` is deprecated in API version > 1.11
+* Improved integration tests should now run much faster.
+* There is now a single source of truth for the docker-py version number.
 
 0.3.1
 -----

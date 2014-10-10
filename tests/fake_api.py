@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-CURRENT_VERSION = 'v1.9'
+CURRENT_VERSION = 'v1.12'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -98,6 +98,12 @@ def get_fake_containers():
 
 
 def post_fake_start_container():
+    status_code = 200
+    response = {'Id': FAKE_CONTAINER_ID}
+    return status_code, response
+
+
+def post_fake_resize_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
     return status_code, response
@@ -202,7 +208,8 @@ def get_fake_wait():
 
 def get_fake_logs():
     status_code = 200
-    response = 'Flowering Nights (Sakuya Iyazoi)'
+    response = (b'\x01\x00\x00\x00\x00\x00\x00\x11Flowering Nights\n'
+                b'\x01\x00\x00\x00\x00\x00\x00\x10(Sakuya Iyazoi)\n')
     return status_code, response
 
 
@@ -254,6 +261,18 @@ def delete_fake_remove_image():
     return status_code, response
 
 
+def get_fake_get_image():
+    status_code = 200
+    response = 'Byte Stream....'
+    return status_code, response
+
+
+def post_fake_load_image():
+    status_code = 200
+    response = {'Id': FAKE_IMAGE_ID}
+    return status_code, response
+
+
 def post_fake_commit():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
@@ -297,13 +316,15 @@ fake_responses = {
     get_fake_containers,
     '{1}/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
     post_fake_start_container,
+    '{1}/{0}/containers/3cc2351ab11b/resize'.format(CURRENT_VERSION, prefix):
+    post_fake_resize_container,
     '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
     get_fake_inspect_container,
     '{1}/{0}/images/e9aa60c60128/tag'.format(CURRENT_VERSION, prefix):
     post_fake_tag_image,
     '{1}/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION, prefix):
     get_fake_wait,
-    '{1}/{0}/containers/3cc2351ab11b/attach'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/3cc2351ab11b/logs'.format(CURRENT_VERSION, prefix):
     get_fake_logs,
     '{1}/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION, prefix):
     get_fake_diff,
@@ -323,6 +344,10 @@ fake_responses = {
     post_fake_image_create,
     '{1}/{0}/images/e9aa60c60128'.format(CURRENT_VERSION, prefix):
     delete_fake_remove_image,
+    '{1}/{0}/images/e9aa60c60128/get'.format(CURRENT_VERSION, prefix):
+    get_fake_get_image,
+    '{1}/{0}/images/load'.format(CURRENT_VERSION, prefix):
+    post_fake_load_image,
     '{1}/{0}/images/test_image/json'.format(CURRENT_VERSION, prefix):
     get_fake_inspect_image,
     '{1}/{0}/images/test_image/insert'.format(CURRENT_VERSION, prefix):
