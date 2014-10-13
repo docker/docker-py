@@ -15,15 +15,17 @@ PoolManager = urllib3.poolmanager.PoolManager
 
 class SSLAdapter(HTTPAdapter):
     '''An HTTPS Transport Adapter that uses an arbitrary SSL version.'''
-    def __init__(self, ssl_version=None, **kwargs):
+    def __init__(self, ssl_version=None, assert_hostname=None, **kwargs):
         self.ssl_version = ssl_version
+        self.assert_hostname = assert_hostname
         super(SSLAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
         kwargs = {
             'num_pools': connections,
             'maxsize': maxsize,
-            'block': block
+            'block': block,
+            'assert_hostname': self.assert_hostname,
         }
         if self.can_override_ssl_version():
             kwargs['ssl_version'] = self.ssl_version
