@@ -20,14 +20,20 @@ class SSLAdapter(HTTPAdapter):
         super(SSLAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
-        urllib_ver = urllib3.__version__.split('-')[0]
         kwargs = {
             'num_pools': connections,
             'maxsize': maxsize,
             'block': block
         }
-        if urllib3 and urllib_ver == 'dev' and \
-           StrictVersion(urllib_ver) > StrictVersion('1.5'):
+        if self.can_override_ssl_version():
             kwargs['ssl_version'] = self.ssl_version
 
         self.poolmanager = PoolManager(**kwargs)
+
+    def can_override_ssl_version(self):
+        urllib_ver = urllib3.__version__.split('-')[0]
+        if urllib_ver is None:
+            return False
+        if urllib_ver == 'dev':
+            return True
+        return StrictVersion(urllib_ver) > StrictVersion('1.5')
