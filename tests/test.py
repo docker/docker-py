@@ -1616,8 +1616,10 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
         for exclude, names in (
                 (['*.py'], ['bar', 'bar/a.txt', 'bar/other.png',
-                            'test', 'test/foo', 'test/foo/a.txt', 'test/foo/other.png']),
-                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt', 'test/foo/b.py']),
+                            'test', 'test/foo', 'test/foo/a.txt',
+                            'test/foo/other.png']),
+                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt',
+                                    'test/foo/b.py']),
                 (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
                                          'bar/other.png', 'test']),
         ):
