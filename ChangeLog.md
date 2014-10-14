@@ -1,6 +1,14 @@
 ChangeLog
 =========
 
+0.5.1
+-----
+
+* Added a `assert_hostname` option to `TLSConfig` which can be used to
+  disable verification of hostnames.
+* Fixed SSL not working due to an incorrect version comparison
+* Fixed streams not working on Windows
+
 0.5.0
 -----
 
