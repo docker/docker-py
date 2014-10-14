@@ -10,7 +10,7 @@ class TLSConfig(object):
     ssl_version = None
 
     def __init__(self, client_cert=None, ca_cert=None, verify=None,
-                 ssl_version=None):
+                 ssl_version=None, assert_hostname=None):
         # Argument compatibility/mapping with
         # http://docs.docker.com/examples/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
@@ -20,6 +20,7 @@ class TLSConfig(object):
         # urllib3 sets a default ssl_version if ssl_version is None
         # http://tinyurl.com/kxga8hb
         self.ssl_version = ssl_version
+        self.assert_hostname = assert_hostname
 
         # "tls" and "tls_verify" must have both or neither cert/key files
         # In either case, Alert the user when both are expected, but any are
@@ -65,4 +66,7 @@ class TLSConfig(object):
             client.verify = self.verify
         if self.cert:
             client.cert = self.cert
-        client.mount('https://', ssladapter.SSLAdapter(self.ssl_version))
+        client.mount('https://', ssladapter.SSLAdapter(
+            ssl_version=self.ssl_version,
+            assert_hostname=self.assert_hostname,
+        ))
