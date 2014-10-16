@@ -262,7 +262,16 @@ class Client(requests.Session):
             sock = response.raw._fp.fp.raw._sock
         else:
             sock = response.raw._fp.fp._sock
-        sock._response = response
+        try:
+            # Keep a reference to the response to stop it being garbage
+            # collected. If the response is garbage collected, it will close
+            # TLS sockets.
+            sock._response = response
+        except AttributeError:
+            # UNIX sockets can't have attributes set on them, but that's fine
+            # because we won't be doing TLS over them
+            pass
+
         return sock
 
     def _stream_helper(self, response):
