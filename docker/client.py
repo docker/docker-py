@@ -904,6 +904,22 @@ class Client(requests.Session):
                          timeout=(timeout + self._timeout))
         self._raise_for_status(res)
 
+    def pause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/pause".format(container))
+        res = self._post(url)
+        self._raise_for_status(res)
+        return res.status_code == 204
+
+    def unpause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/unpause".format(container))
+        res = self._post(url)
+        self._raise_for_status(res)
+        return res.status_code == 204
+
     def tag(self, image, repository, tag=None, force=False):
         params = {
             'tag': tag,
