@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.5.2
+-----
+
+* Fixed a bug where sockets were closed immediately when attaching over
+  TLS.
+
 0.5.1
 -----
 
