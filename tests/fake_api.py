@@ -133,6 +133,18 @@ def get_fake_inspect_container():
     return status_code, response
 
 
+def post_fake_pause_container():
+    status_code = 204
+    response = None
+    return status_code, response
+
+
+def post_fake_unpause_container():
+    status_code = 204
+    response = None
+    return status_code, response
+
+
 def get_fake_inspect_image():
     status_code = 200
     response = {
@@ -320,6 +332,10 @@ fake_responses = {
     post_fake_resize_container,
     '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
     get_fake_inspect_container,
+    '{1}/{0}/containers/3cc2351ab11b/pause'.format(CURRENT_VERSION, prefix):
+    post_fake_pause_container,
+    '{1}/{0}/containers/3cc2351ab11b/unpause'.format(CURRENT_VERSION, prefix):
+    post_fake_unpause_container,
     '{1}/{0}/images/e9aa60c60128/tag'.format(CURRENT_VERSION, prefix):
     post_fake_tag_image,
     '{1}/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION, prefix):
