@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.5.3
+-----
+
+* Fixed attaching when connecting to the daemon over a UNIX socket.
+
 0.5.2
 -----
 
