@@ -627,6 +627,34 @@ class TestRestartingContainer(BaseTestCase):
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
 
+
+class TestExecuteCommand(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['false'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        res = self.client.execute(id, ['echo', 'hello'])
+        expected = b'hello\n' if six.PY3 else 'hello\n'
+        self.assertEqual(res, expected)
+
+
+class TestExecuteCommandStreaming(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['false'])
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        chunks = self.client.execute(id, ['echo', 'hello\nworld'], stream=True)
+        res = b'' if six.PY3 else ''
+        for chunk in chunks:
+            res += chunk
+        expected = b'hello\nworld\n' if six.PY3 else 'hello\nworld\n'
+        self.assertEqual(res, expected)
+
+
 #################
 #  LINKS TESTS  #
 #################

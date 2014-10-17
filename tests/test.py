@@ -1064,6 +1064,31 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
+    def test_execute_command(self):
+        try:
+            self.client.execute(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'exec/3cc2351ab11b/start')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''{
+                            "Tty": false,
+                            "AttachStderr": true,
+                            "Container": "3cc2351ab11b",
+                            "Cmd": ["ls", "-1"],
+                            "AttachStdin": false,
+                            "User": "",
+                            "Detach": false,
+                            "Privileged": false,
+                            "AttachStdout": true}'''))
+
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_kill_container(self):
         try:
             self.client.kill(fake_api.FAKE_CONTAINER_ID)
