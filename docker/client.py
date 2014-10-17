@@ -569,8 +569,8 @@ class Client(requests.Session):
 
         # start the command
         cmd_id = res.json().get('Id')
-        res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)), data=data,
-            stream=stream)
+        res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)),
+                              data=data, stream=stream)
         self._raise_for_status(res)
         if stream:
             return self._multiplexed_socket_stream_helper(res)
