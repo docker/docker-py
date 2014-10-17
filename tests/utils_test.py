@@ -1,11 +1,21 @@
 import unittest
 
 from docker.errors import DockerException
-from docker.utils import parse_repository_tag, parse_host
+from docker.utils import parse_repository_tag, parse_host, kwargs_from_env
+from docker.client import Client
+
+import os
+import os.path
 
 
 class UtilsTest(unittest.TestCase):
     longMessage = True
+
+    def setUp(self):
+        self.os_environ = os.environ.copy()
+
+    def tearDown(self):
+        os.environ = self.os_environ
 
     def test_parse_repository_tag(self):
         self.assertEqual(parse_repository_tag("root"),
@@ -52,6 +62,26 @@ class UtilsTest(unittest.TestCase):
 
         for host, expected in valid_hosts.items():
             self.assertEqual(parse_host(host), expected, msg=host)
+
+    def test_kwargs_from_env(self):
+        os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
+                          DOCKER_CERT_PATH=os.path.join(
+                              os.path.dirname(__file__),
+                              'testdata/certs'),
+                          DOCKER_TLS_VERIFY='1')
+        kwargs = kwargs_from_env(assert_hostname=False)
+        self.assertEquals('https://192.168.59.103:2376', kwargs['base_url'])
+        self.assertIn('ca.pem', kwargs['tls'].verify)
+        self.assertIn('cert.pem', kwargs['tls'].cert[0])
+        self.assertIn('key.pem', kwargs['tls'].cert[1])
+        self.assertEquals(False, kwargs['tls'].assert_hostname)
+        try:
+            client = Client(**kwargs)
+            self.assertEquals(kwargs['base_url'], client.base_url)
+            self.assertEquals(kwargs['tls'].verify, client.verify)
+            self.assertEquals(kwargs['tls'].cert, client.cert)
+        except TypeError, e:
+            self.fail(e)
 
 if __name__ == '__main__':
     unittest.main()
