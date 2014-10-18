@@ -101,6 +101,26 @@ c.diff(container)
 Identical to the `docker diff` command.
 
 ```python
+c.exec(container, cmd, detach=False, stdout=True, stderr=True,
+       stream=False, tty=False)
+```
+
+Execute a command in a running container.
+
+The `container` argument can be a container dictionary (result of
+running `inspect_container`), unique id or container name.
+
+The `cmd` argument must be a `list` or `tuple`, representing the command
+and its arguments.  Example `['ls', '-la']`.
+
+Setting the `detach` flag to `True` will run the process in the background.
+
+The `stdout` and `stderr` flags indicate which output streams to read from.
+
+The `stream` flag indicates whether to return a generator which will yield
+the streaming response in chunks.
+
+```python
 c.export(container)
 ```
 
