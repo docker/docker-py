@@ -564,7 +564,8 @@ class Client(requests.Session):
             }
 
         # create the command
-        res = self._post_json(self._url('/containers/shell/exec'), data=data)
+        url = self._url('/containers/{0}/exec'.format(container))
+        res = self._post_json(url, data=data)
         self._raise_for_status(res)
 
         # start the command

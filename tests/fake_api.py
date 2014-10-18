@@ -344,7 +344,7 @@ fake_responses = {
     get_fake_diff,
     '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
     get_fake_export,
-    '{1}/{0}/containers/shell/exec'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/3cc2351ab11b/exec'.format(CURRENT_VERSION, prefix):
     post_fake_execute,
     '{1}/{0}/exec/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
     post_fake_execute_start,
