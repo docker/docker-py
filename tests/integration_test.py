@@ -882,6 +882,43 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
         self.assertFalse('node_modules' in logs)
         self.assertTrue('not-ignored' in logs)
 
+class TestBuildWithSymlinks(Cleanup, BaseTestCase):
+    def runTest(self):
+        if self.client._version < 1.8:
+            return
+
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+
+        with open(os.path.join(base_dir, 'Dockerfile'), 'w') as f:
+            f.write("\n".join([
+                'FROM busybox',
+                'MAINTAINER docker-py',
+                'ADD . /test',
+                'RUN ls -A /test',
+            ]))
+
+        with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
+            f.write("\n".join([
+                'node_modules',
+                '',  # empty line
+            ]))
+
+        with open(os.path.join(base_dir, 'not-ignored'), 'w') as f:
+            f.write("this file should not be ignored")
+
+        subdir = os.path.join(base_dir, 'node_modules', 'grunt-cli')
+        os.makedirs(subdir)
+        with open(os.path.join(subdir, 'grunt'), 'w') as f:
+            f.write("grunt")
+
+        stream = self.client.build(path=base_dir, stream=True)
+        logs = ''
+        for chunk in stream:
+            logs += chunk
+        self.assertFalse('node_modules' in logs)
+        self.assertTrue('not-ignoredx' in logs)
+
 #######################
 #  PY SPECIFIC TESTS  #
 #######################
