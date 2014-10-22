@@ -935,11 +935,11 @@ class Client(requests.Session):
     def version(self):
         return self._result(self._get(self._url("/version")), True)
 
-    def wait(self, container):
+    def wait(self, container, timeout=None):
         if isinstance(container, dict):
             container = container.get('Id')
         url = self._url("/containers/{0}/wait".format(container))
-        res = self._post(url, timeout=None)
+        res = self._post(url, timeout=timeout)
         self._raise_for_status(res)
         json_ = res.json()
         if 'StatusCode' in json_:
