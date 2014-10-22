@@ -548,8 +548,8 @@ class Client(requests.Session):
             raise Exception('Exec is not supported in API < 1.15!')
         if isinstance(container, dict):
             container = container.get('Id')
-        if not isinstance(cmd, (list, tuple)):
-            cmd = [cmd]
+        if isinstance(cmd, six.string_types):
+            cmd = shlex.split(str(cmd))
 
         data = {
             'Container': container,

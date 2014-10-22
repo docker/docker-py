@@ -630,7 +630,8 @@ class TestRestartingContainer(BaseTestCase):
 
 class TestExecuteCommand(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['false'])
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -640,9 +641,23 @@ class TestExecuteCommand(BaseTestCase):
         self.assertEqual(res, expected)
 
 
+class TestExecuteCommandString(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        res = self.client.execute(id, 'echo hello world', stdout=True)
+        expected = b'hello world\n' if six.PY3 else 'hello world\n'
+        self.assertEqual(res, expected)
+
+
 class TestExecuteCommandStreaming(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['false'])
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
