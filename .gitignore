@@ -8,3 +8,13 @@ dist
 .tox
 .coverage
 html/*
+
+# Pycharm
+.idea/
+
+# Virtualenv
+env/
+venv/
+
+# Documentation artifacts
+docs/_build/
