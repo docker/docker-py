@@ -824,10 +824,29 @@ class Client(requests.Session):
                                       params={'term': term}),
                             True)
 
+    def _parse_devices(self, devices):
+        device_list = []
+        for device in devices:
+            device_mapping = device.split(",")
+            if device_mapping:
+                path_on_host = device_mapping[0]
+                if len(device_mapping) > 1:
+                    path_in_container = device_mapping[1]
+                else:
+                    path_in_container = path_on_host
+                if len(device_mapping) > 2:
+                    permissions = device_mapping[2]
+                else:
+                    permissions = 'rwm'
+                device_list.append({"PathOnHost": path_on_host,
+                                    "PathInContainer": path_in_container,
+                                    "CgroupPermissions": permissions})
+        return device_list
+
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None):
+              restart_policy=None, cap_add=None, cap_drop=None, devices=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -894,6 +913,9 @@ class Client(requests.Session):
 
         if cap_drop:
             start_config['CapDrop'] = cap_drop
+
+        if devices:
+            start_config['Devices'] = self._parse_devices(devices)
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
