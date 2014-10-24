@@ -233,3 +233,23 @@ def parse_host(addr):
     if proto == "http+unix":
         return "%s://%s" % (proto, host)
     return "%s://%s:%d" % (proto, host, port)
+
+
+def parse_devices(devices):
+    device_list = []
+    for device in devices:
+        device_mapping = device.split(",")
+        if device_mapping:
+            path_on_host = device_mapping[0]
+            if len(device_mapping) > 1:
+                path_in_container = device_mapping[1]
+            else:
+                path_in_container = path_on_host
+            if len(device_mapping) > 2:
+                permissions = device_mapping[2]
+            else:
+                permissions = 'rwm'
+            device_list.append({"PathOnHost": path_on_host,
+                                "PathInContainer": path_in_container,
+                                "CgroupPermissions": permissions})
+    return device_list
