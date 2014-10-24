@@ -349,6 +349,30 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_cpu_set(self):
+        try:
+            self.client.create_container('busybox', 'ls',
+                                         cpu_set="0-3")
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "Memory": 0,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "Cpuset": "0-3",
+                             "MemorySwap": 0}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_working_dir(self):
         try:
             self.client.create_container('busybox', 'ls',
@@ -881,6 +905,41 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             json.loads(args[1]['data']),
             {"PublishAllPorts": False, "Privileged": False,
              "CapDrop": ["MKNOD"]}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_start_container_with_devices(self):
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              devices=['/dev/sda:/dev/xvda:rwm',
+                                       '/dev/sdb:/dev/xvdb',
+                                       '/dev/sdc'])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            url_prefix + 'containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False,
+             "Devices": [{'CgroupPermissions': 'rwm',
+                          'PathInContainer': '/dev/sda:/dev/xvda:rwm',
+                          'PathOnHost': '/dev/sda:/dev/xvda:rwm'},
+                         {'CgroupPermissions': 'rwm',
+                          'PathInContainer': '/dev/sdb:/dev/xvdb',
+                          'PathOnHost': '/dev/sdb:/dev/xvdb'},
+                         {'CgroupPermissions': 'rwm',
+                          'PathInContainer': '/dev/sdc',
+                          'PathOnHost': '/dev/sdc'}]}
         )
         self.assertEqual(
             args[1]['headers'],

@@ -104,7 +104,7 @@ class Client(requests.Session):
                           volumes=None, volumes_from=None,
                           network_disabled=False, entrypoint=None,
                           cpu_shares=None, working_dir=None, domainname=None,
-                          memswap_limit=0):
+                          memswap_limit=0, cpu_set=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -217,6 +217,7 @@ class Client(requests.Session):
             'NetworkDisabled': network_disabled,
             'Entrypoint': entrypoint,
             'CpuShares': cpu_shares,
+            'Cpuset': cpu_set,
             'WorkingDir': working_dir,
             'MemorySwap': memswap_limit
         }
@@ -515,7 +516,15 @@ class Client(requests.Session):
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
-                         memswap_limit=0):
+<<<<<<< HEAD
+                         memswap_limit=0, cpu_set=None):
+=======
+<<<<<<< HEAD
+                         memswap_limit=0, cpu_set=None):
+=======
+                         memswap_limit=0,cpu_set=None):
+>>>>>>> da4f197729006436d8628add5ddeb5c7a4734bad
+>>>>>>> d7c3eef4e2779a8e94f0b8a318d72edd78b4a924
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -523,7 +532,8 @@ class Client(requests.Session):
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
-            entrypoint, cpu_shares, working_dir, domainname, memswap_limit
+            entrypoint, cpu_shares, working_dir, domainname, memswap_limit,
+            cpu_set
         )
         return self.create_container_from_config(config, name)
 
@@ -824,10 +834,29 @@ class Client(requests.Session):
                                       params={'term': term}),
                             True)
 
+    def _parse_devices(self, devices):
+        device_list = []
+        for device in devices:
+            device_mapping = device.split(",")
+            if device_mapping:
+                path_on_host = device_mapping[0]
+                if len(device_mapping) > 1:
+                    path_in_container = device_mapping[1]
+                else:
+                    path_in_container = path_on_host
+                if len(device_mapping) > 2:
+                    permissions = device_mapping[2]
+                else:
+                    permissions = 'rwm'
+                device_list.append({"PathOnHost": path_on_host,
+                                    "PathInContainer": path_in_container,
+                                    "CgroupPermissions": permissions})
+        return device_list
+
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None):
+              restart_policy=None, cap_add=None, cap_drop=None, devices=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -894,6 +923,9 @@ class Client(requests.Session):
 
         if cap_drop:
             start_config['CapDrop'] = cap_drop
+
+        if devices:
+            start_config['Devices'] = self._parse_devices(devices)
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
