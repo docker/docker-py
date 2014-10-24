@@ -516,7 +516,11 @@ class Client(requests.Session):
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
+<<<<<<< HEAD
                          memswap_limit=0, cpu_set=None):
+=======
+                         memswap_limit=0,cpu_set=None):
+>>>>>>> da4f197729006436d8628add5ddeb5c7a4734bad
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
