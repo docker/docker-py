@@ -233,7 +233,8 @@ Identical to the `docker search` command.
 c.start(container, binds=None, port_bindings=None, lxc_conf=None,
         publish_all_ports=False, links=None, privileged=False,
         dns=None, dns_search=None, volumes_from=None, network_mode=None,
-        restart_policy=None, cap_add=None, cap_drop=None)
+        restart_policy=None, cap_add=None, cap_drop=None,
+        auto_remove=False)
 ```
 
 Similar to the `docker start` command, but doesn't support attach
@@ -259,22 +260,22 @@ docker bridge, 'none': no networking for this container, 'container:[name|id]':
 reuses another container network stack), 'host': use the host network stack
 inside the container.
 
-`restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a container should or should not be 
-restarted on exit. By default the policy is set to no meaning do not restart the container when it exits. 
+`restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a container should or should not be
+restarted on exit. By default the policy is set to no meaning do not restart the container when it exits.
 The user may specify the restart policy as a dictionary for example:
-for example: 
+for example:
 ```
 {
-    "MaximumRetryCount": 0, 
+    "MaximumRetryCount": 0,
     "Name": "always"
 }
 ```
 for always restarting the container on exit or can specify to restart the container to restart on failure and can limit
-number of restarts. 
+number of restarts.
 for example:
 ```
 {
-    "MaximumRetryCount": 5, 
+    "MaximumRetryCount": 5,
     "Name": "on-failure"
 }
 ```
@@ -288,7 +289,9 @@ The user may specify the capabilities as an array for example:
 ]
 ```
 
- 
+`auto_remove` is the Docker-CLI command line option `--rm` for
+`docker run`. When the container exits, it’ll automatically be removed.
+
 ```python
 c.stop(container, timeout=10)
 ```

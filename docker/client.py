@@ -827,7 +827,8 @@ class Client(requests.Session):
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None):
+              restart_policy=None, cap_add=None, cap_drop=None,
+              auto_remove=False):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -898,6 +899,13 @@ class Client(requests.Session):
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
+
+        if auto_remove:
+            if self.wait(container) != -1:
+                container_state = self.inspect_container(container)["State"]
+                if not container_state["Running"] and \
+                   container_state["ExitCode"] == 0:
+                    self.remove_container(container)
 
     def resize(self, container, height, width):
         if isinstance(container, dict):
