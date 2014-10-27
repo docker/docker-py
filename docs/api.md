@@ -648,6 +648,20 @@ Display the running processes of a container
  'Titles': ['PID', 'USER', 'COMMAND']}
 ```
 
+## wait
+Identical to the `docker wait` command. Block until a container stops, then 
+print its exit code. Returns the value `-1` if no `StatusCode` is returned by 
+the API.
+
+If `container` a dict, the `Id` key is used.
+
+**Params**:
+
+* container (str or dict): The container to wait on
+
+**Returns** (int): The exit code of the container
+
+
 <!---
 TODO:
 
@@ -656,6 +670,5 @@ TODO:
 * load_image
 * resize
 * version
-* wait
 
 -->
