@@ -1,5 +1,5 @@
 site_name: docker-py Documentation
-site_description: An API client for docker written in Python
+site_description: An API client for Docker written in Python
 site_favicon: favicon_whale.png
 # site_url: docker-py.readthedocs.org
 repo_url: https://github.com/docker/docker-py/

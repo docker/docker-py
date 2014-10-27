@@ -10,7 +10,7 @@ c = Client(base_url='unix://var/run/docker.sock')
 
 **Params**:
 
-* base_url (str): Refers to the protocol+hostname+port where the docker server 
+* base_url (str): Refers to the protocol+hostname+port where the Docker server 
 is hosted.
 * version (str): The version of the API the client will use
 * timeout (int): The HTTP request timeout, in seconds.
@@ -40,7 +40,7 @@ Similar to the `docker build` command. Either `path` or `fileobj` needs to be
 set. `path` can be a local path (to a directory containing a Dockerfile) or a 
 remote URL. `fileobj` must be a readable file-like object to a Dockerfile.
 
-If you have a tar file for the docker build context (including a Dockerfile) 
+If you have a tar file for the Docker build context (including a Dockerfile) 
 already, pass a readable file-like object to `fileobj` and also pass 
 `custom_context=True`. If the stream is compressed also, set `encoding` to the 
 correct value (e.g `gzip`).
@@ -108,7 +108,7 @@ Identical to the `docker commit` command.
 * tag (str): The tag to push
 * message (str): A commit message
 * author (str): The name of the author
-* conf (dict): The configuraton for the container. See the [docker remote api](
+* conf (dict): The configuraton for the container. See the [Docker remote api](
 https://docs.docker.com/reference/api/docker_remote_api/) for full details.
 
 ## containers
@@ -170,7 +170,7 @@ character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
 https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if 
-they are used against v1.10 of docker remote API. Those arguments should be 
+they are used against v1.10 of the Docker remote API. Those arguments should be 
 passed to `start()` instead.
 
 **Params**:
@@ -377,8 +377,8 @@ output as it happens.
 
 ## ping
 
-Hits the /_ping endpoint of the remote API and returns the result. An exception
-will be raised if the endpoint isn't responding.
+Hits the `/_ping` endpoint of the remote API and returns the result. An 
+exception will be raised if the endpoint isn't responding.
 
 **Returns** (bool)
 
@@ -434,7 +434,7 @@ Identical to the `docker pull` command.
 
 ## push
 
-Push an image or a repository to the registry. Identical to the docker push 
+Push an image or a repository to the registry. Identical to the `docker push` 
 command
 
 **Params**:
@@ -541,7 +541,7 @@ of docker remote API. Otherwise they are ignored.
 
 `network_mode` is available since v1.11 and sets the Network mode for the 
 container ('bridge': creates a new network stack for the container on the 
-docker bridge, 'none': no networking for this container, 'container:[name|id]': 
+Docker bridge, 'none': no networking for this container, 'container:[name|id]': 
 reuses another container network stack), 'host': use the host network stack 
 inside the container.
 
@@ -659,4 +659,3 @@ TODO:
 * wait
 
 -->
-
