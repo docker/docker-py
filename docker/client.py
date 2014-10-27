@@ -276,7 +276,12 @@ class Client(requests.Session):
 
     def _stream_helper(self, response):
         """Generator for data coming from a chunked-encoded HTTP response."""
-        socket_fp = socket_obj(_sock=self._get_raw_response_socket(response))
+        if six.PY3:
+            socket_fp = self._get_raw_response_socket(response)
+        else:
+            socket_fp = socket_obj(
+                _sock=self._get_raw_response_socket(response)
+            )
         socket_fp.setblocking(1)
         socket = socket_fp.makefile()
         while True:
