@@ -648,6 +648,27 @@ Display the running processes of a container
  'Titles': ['PID', 'USER', 'COMMAND']}
 ```
 
+## version
+Nearly identical to the `docker version` command. 
+
+**Returns** (dict): The server version information
+
+```python
+>>> from docker import Client
+>>> cli = Client(base_url='tcp://127.0.0.1:2375')
+>>> cli.version()
+{
+    "KernelVersion": "3.16.4-tinycore64", 
+    "Arch": "amd64", 
+    "ApiVersion": "1.15", 
+    "Version": "1.3.0", 
+    "GitCommit": "c78088f", 
+    "Os": "linux", 
+    "GoVersion": "go1.3.3"
+}
+```
+
+
 ## wait
 Identical to the `docker wait` command. Block until a container stops, then 
 print its exit code. Returns the value `-1` if no `StatusCode` is returned by 
@@ -669,6 +690,5 @@ TODO:
 * get_image
 * load_image
 * resize
-* version
 
 -->
