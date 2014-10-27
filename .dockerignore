@@ -1,0 +1,15 @@
+.git/
+
+build
+dist
+*.egg-info
+*.egg/
+*.pyc
+*.swp
+
+.tox
+.coverage
+html/*
+
+# Compiled Documentation
+site/
