@@ -1,5 +1,10 @@
-ChangeLog
-=========
+Change Log
+==========
+
+0.5.4
+-----
+
+* Added MkDocs documentation.
 
 0.5.3
 -----

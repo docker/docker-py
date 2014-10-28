@@ -26,7 +26,7 @@ $ mkdocs serve
 Before a new release, please go through the following checklist:
 
 * Bump version in docker/version.py
-* Add a release note in docs/release_notes.md
+* Add a release note in docs/change_log.md
 * Git tag the version
 * Upload to pypi
 

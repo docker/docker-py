@@ -10,5 +10,5 @@ pages:
 - [port-bindings.md, Port Bindings]
 - [volumes.md, Using Volumes]
 - [tls.md, Using TLS]
-- [release_notes.md, Release Notes]
+- [change_log.md, Change Log]
 - [contributing.md, Contributing]
