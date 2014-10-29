@@ -11,6 +11,8 @@ ADD . /opt/src
 
 WORKDIR /opt/src/
 
-RUN pip install -e /opt/src
+RUN pip install \
+    -r /opt/src/test-requirements.txt \
+    -e /opt/src
 
 CMD ["/bin/bash"]
