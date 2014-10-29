@@ -221,11 +221,36 @@ Inspect changes on a container's filesystem
 
 **Returns** (str):
 
+## exec
+
+```python
+c.exec(container, cmd, detach=False, stdout=True, stderr=True,
+       stream=False, tty=False)
+```
+
+Execute a command in a running container.
+
+**Params**:
+
+* container (str): can be a container dictionary (result of
+running `inspect_container`), unique id or container name.
+
+
+* cmd (str or list): representing the command and its arguments.
+
+* detach (bool): flag to `True` will run the process in the background.
+
+* stdout (bool): indicates which output streams to read from.
+* stderr (bool): indicates which output streams to read from.
+
+* stream (bool): indicates whether to return a generator which will yield
+  the streaming response in chunks.
+
 ## export
 
 Export the contents of a filesystem as a tar archive to STDOUT
 
-**Params**: 
+**Params**:
 
 * container (str): The container to export
 
