@@ -69,9 +69,11 @@ def tar(path, exclude=None):
             fnames = [name for name in filenames
                       if not fnmatch_any(os.path.join(relpath, name),
                                          exclude)]
-        for name in fnames:
+        for name in fnames + dirnames:
             arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname), arcname=arcname)
+            t.add(os.path.join(path, arcname), arcname=arcname,
+                  recursive=False)
+
     t.close()
     f.seek(0)
     return f
