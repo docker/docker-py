@@ -1615,16 +1615,47 @@ class DockerClientTest(Cleanup, unittest.TestCase):
                     f.write("content")
 
         for exclude, names in (
-                (['*.py'], ['bar/a.txt', 'bar/other.png',
-                            'test/foo/a.txt', 'test/foo/other.png']),
-                (['*.png', 'bar'], ['test/foo/a.txt', 'test/foo/b.py']),
-                (['test/foo', 'a.txt'], ['bar/a.txt', 'bar/b.py',
-                                         'bar/other.png']),
+                (['*.py'], ['bar', 'bar/a.txt', 'bar/other.png',
+                            'test', 'test/foo', 'test/foo/a.txt',
+                            'test/foo/other.png']),
+                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt',
+                                    'test/foo/b.py']),
+                (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
+                                         'bar/other.png', 'test']),
         ):
             archive = docker.utils.tar(base, exclude=exclude)
             tar = tarfile.open(fileobj=archive)
             self.assertEqual(sorted(tar.getnames()), names)
 
+    def test_tar_with_empty_directory(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        archive = docker.utils.tar(base)
+        tar = tarfile.open(fileobj=archive)
+        self.assertEqual(sorted(tar.getnames()), ['bar', 'foo'])
+
+    def test_tar_with_file_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        with open(os.path.join(base, 'foo'), 'w') as f:
+            f.write("content")
+        os.makedirs(os.path.join(base, 'bar'))
+        os.symlink('../foo', os.path.join(base, 'bar/foo'))
+        archive = docker.utils.tar(base)
+        tar = tarfile.open(fileobj=archive)
+        self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
+
+    def test_tar_with_directory_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        os.symlink('../foo', os.path.join(base, 'bar/foo'))
+        archive = docker.utils.tar(base)
+        tar = tarfile.open(fileobj=archive)
+        self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
 
 if __name__ == '__main__':
     unittest.main()
