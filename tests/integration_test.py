@@ -627,6 +627,76 @@ class TestRestartingContainer(BaseTestCase):
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
         self.assertEqual(len(res), 0)
 
+
+class TestExecuteCommand(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        res = self.client.execute(id, ['echo', 'hello'])
+        expected = b'hello\n' if six.PY3 else 'hello\n'
+        self.assertEqual(res, expected)
+
+
+class TestExecuteCommandString(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        res = self.client.execute(id, 'echo hello world', stdout=True)
+        expected = b'hello world\n' if six.PY3 else 'hello world\n'
+        self.assertEqual(res, expected)
+
+
+class TestExecuteCommandStreaming(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        chunks = self.client.execute(id, ['echo', 'hello\nworld'], stream=True)
+        res = b'' if six.PY3 else ''
+        for chunk in chunks:
+            res += chunk
+        expected = b'hello\nworld\n' if six.PY3 else 'hello\nworld\n'
+        self.assertEqual(res, expected)
+
+
+class TestPauseUnpauseContainer(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.pause(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], True)
+        self.assertIn('Paused', state)
+        self.assertEqual(state['Paused'], True)
+
+        self.client.unpause(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], True)
+        self.assertIn('Paused', state)
+        self.assertEqual(state['Paused'], False)
+
+
 #################
 #  LINKS TESTS  #
 #################

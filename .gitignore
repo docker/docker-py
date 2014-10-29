@@ -8,3 +8,10 @@ dist
 .tox
 .coverage
 html/*
+
+# Compiled Documentation
+site/
+
+env/
+venv/
+.idea/

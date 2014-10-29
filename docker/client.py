@@ -34,7 +34,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.12'
+DEFAULT_DOCKER_API_VERSION = '1.15'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -103,8 +103,8 @@ class Client(requests.Session):
                           mem_limit=0, ports=None, environment=None, dns=None,
                           volumes=None, volumes_from=None,
                           network_disabled=False, entrypoint=None,
-                          cpu_shares=None, working_dir=None, domainname=None,
-                          memswap_limit=0):
+                          cpu_shares=None, working_dir=None,
+                          domainname=None, memswap_limit=0, cpuset=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -217,6 +217,7 @@ class Client(requests.Session):
             'NetworkDisabled': network_disabled,
             'Entrypoint': entrypoint,
             'CpuShares': cpu_shares,
+            'Cpuset': cpuset,
             'WorkingDir': working_dir,
             'MemorySwap': memswap_limit
         }
@@ -519,8 +520,8 @@ class Client(requests.Session):
                          mem_limit=0, ports=None, environment=None, dns=None,
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
-                         cpu_shares=None, working_dir=None, domainname=None,
-                         memswap_limit=0):
+                         cpu_shares=None, working_dir=None,
+                         domainname=None, memswap_limit=0, cpuset=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -528,7 +529,8 @@ class Client(requests.Session):
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
-            entrypoint, cpu_shares, working_dir, domainname, memswap_limit
+            entrypoint, cpu_shares, working_dir, domainname,
+            memswap_limit, cpuset
         )
         return self.create_container_from_config(config, name)
 
@@ -548,6 +550,48 @@ class Client(requests.Session):
 
     def events(self):
         return self._stream_helper(self.get(self._url('/events'), stream=True))
+
+    def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
+                stream=False, tty=False):
+        if utils.compare_version('1.15', self._version) < 0:
+            raise Exception('Exec is not supported in API < 1.15!')
+        if isinstance(container, dict):
+            container = container.get('Id')
+        if isinstance(cmd, six.string_types):
+            cmd = shlex.split(str(cmd))
+
+        data = {
+            'Container': container,
+            'User': '',
+            'Privileged': False,
+            'Tty': tty,
+            'AttachStdin': False,
+            'AttachStdout': stdout,
+            'AttachStderr': stderr,
+            'Detach': detach,
+            'Cmd': cmd
+            }
+
+        # create the command
+        url = self._url('/containers/{0}/exec'.format(container))
+        res = self._post_json(url, data=data)
+        self._raise_for_status(res)
+
+        # start the command
+        cmd_id = res.json().get('Id')
+        res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)),
+                              data=data, stream=stream)
+        self._raise_for_status(res)
+        if stream:
+            return self._multiplexed_socket_stream_helper(res)
+        elif six.PY3:
+            return bytes().join(
+                [x for x in self._multiplexed_buffer_helper(res)]
+            )
+        else:
+            return str().join(
+                [x for x in self._multiplexed_buffer_helper(res)]
+            )
 
     def export(self, container):
         if isinstance(container, dict):
@@ -714,6 +758,13 @@ class Client(requests.Session):
             logs=True
         )
 
+    def pause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url('/containers/{0}/pause'.format(container))
+        res = self._post(url)
+        self._raise_for_status(res)
+
     def ping(self):
         return self._result(self._get(self._url('/_ping')))
 
@@ -832,7 +883,7 @@ class Client(requests.Session):
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None):
+              restart_policy=None, cap_add=None, cap_drop=None, devices=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -900,6 +951,9 @@ class Client(requests.Session):
         if cap_drop:
             start_config['CapDrop'] = cap_drop
 
+        if devices:
+            start_config['Devices'] = utils.parse_devices(devices)
+
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
@@ -939,6 +993,13 @@ class Client(requests.Session):
 
     def version(self):
         return self._result(self._get(self._url("/version")), True)
+
+    def unpause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url('/containers/{0}/unpause'.format(container))
+        res = self._post(url)
+        self._raise_for_status(res)
 
     def wait(self, container):
         if isinstance(container, dict):

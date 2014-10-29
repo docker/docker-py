@@ -349,6 +349,30 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_cpuset(self):
+        try:
+            self.client.create_container('busybox', 'ls',
+                                         cpuset='0,1')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "Memory": 0,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "Cpuset": "0,1",
+                             "MemorySwap": 0}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_working_dir(self):
         try:
             self.client.create_container('busybox', 'ls',
@@ -891,6 +915,41 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_start_container_with_devices(self):
+        try:
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              devices=['/dev/sda:/dev/xvda:rwm',
+                                       '/dev/sdb:/dev/xvdb',
+                                       '/dev/sdc'])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0],
+            url_prefix + 'containers/3cc2351ab11b/start'
+        )
+        self.assertEqual(
+            json.loads(args[1]['data']),
+            {"PublishAllPorts": False, "Privileged": False,
+             "Devices": [{'CgroupPermissions': 'rwm',
+                          'PathInContainer': '/dev/sda:/dev/xvda:rwm',
+                          'PathOnHost': '/dev/sda:/dev/xvda:rwm'},
+                         {'CgroupPermissions': 'rwm',
+                          'PathInContainer': '/dev/sdb:/dev/xvdb',
+                          'PathOnHost': '/dev/sdb:/dev/xvdb'},
+                         {'CgroupPermissions': 'rwm',
+                          'PathInContainer': '/dev/sdc',
+                          'PathOnHost': '/dev/sdc'}]}
+        )
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'],
+            docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_resize_container(self):
         try:
             self.client.resize(
@@ -1062,6 +1121,51 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
             timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
+        )
+
+    def test_execute_command(self):
+        try:
+            self.client.execute(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'exec/3cc2351ab11b/start')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''{
+                            "Tty": false,
+                            "AttachStderr": true,
+                            "Container": "3cc2351ab11b",
+                            "Cmd": ["ls", "-1"],
+                            "AttachStdin": false,
+                            "User": "",
+                            "Detach": false,
+                            "Privileged": false,
+                            "AttachStdout": true}'''))
+
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    def test_pause_container(self):
+        try:
+            self.client.pause(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/pause',
+            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS)
+        )
+
+    def test_unpause_container(self):
+        try:
+            self.client.unpause(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/unpause',
+            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_kill_container(self):
@@ -1615,16 +1719,47 @@ class DockerClientTest(Cleanup, unittest.TestCase):
                     f.write("content")
 
         for exclude, names in (
-                (['*.py'], ['bar/a.txt', 'bar/other.png',
-                            'test/foo/a.txt', 'test/foo/other.png']),
-                (['*.png', 'bar'], ['test/foo/a.txt', 'test/foo/b.py']),
-                (['test/foo', 'a.txt'], ['bar/a.txt', 'bar/b.py',
-                                         'bar/other.png']),
+                (['*.py'], ['bar', 'bar/a.txt', 'bar/other.png',
+                            'test', 'test/foo', 'test/foo/a.txt',
+                            'test/foo/other.png']),
+                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt',
+                                    'test/foo/b.py']),
+                (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
+                                         'bar/other.png', 'test']),
         ):
             archive = docker.utils.tar(base, exclude=exclude)
             tar = tarfile.open(fileobj=archive)
             self.assertEqual(sorted(tar.getnames()), names)
 
+    def test_tar_with_empty_directory(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        archive = docker.utils.tar(base)
+        tar = tarfile.open(fileobj=archive)
+        self.assertEqual(sorted(tar.getnames()), ['bar', 'foo'])
+
+    def test_tar_with_file_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        with open(os.path.join(base, 'foo'), 'w') as f:
+            f.write("content")
+        os.makedirs(os.path.join(base, 'bar'))
+        os.symlink('../foo', os.path.join(base, 'bar/foo'))
+        archive = docker.utils.tar(base)
+        tar = tarfile.open(fileobj=archive)
+        self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
+
+    def test_tar_with_directory_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        os.symlink('../foo', os.path.join(base, 'bar/foo'))
+        archive = docker.utils.tar(base)
+        tar = tarfile.open(fileobj=archive)
+        self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
 
 if __name__ == '__main__':
     unittest.main()
