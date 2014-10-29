@@ -1148,6 +1148,26 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_pause_container(self):
+        try:
+            self.client.pause(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/pause',
+            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS)
+        )
+
+    def test_unpause_container(self):
+        try:
+            self.client.unpause(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/unpause',
+            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS)
+        )
+
     def test_kill_container(self):
         try:
             self.client.kill(fake_api.FAKE_CONTAINER_ID)
