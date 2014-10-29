@@ -670,6 +670,33 @@ class TestExecuteCommandStreaming(BaseTestCase):
         self.assertEqual(res, expected)
 
 
+class TestPauseUnpauseContainer(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', ['sleep', '9999'])
+        id = container['Id']
+        self.client.pause(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], True)
+        self.assertIn('Paused', state)
+        self.assertEqual(state['Paused'], True)
+
+        self.client.unpause(id)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], True)
+        self.assertIn('Paused', state)
+        self.assertEqual(state['Paused'], False)
+
+
 #################
 #  LINKS TESTS  #
 #################

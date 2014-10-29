@@ -400,6 +400,15 @@ output as it happens.
 
 **Returns** (generator or str):
 
+## pause
+
+Pauses all processes within a container.
+
+**Params**:
+
+* container (str): The container to pause
+
+
 ## ping
 
 Hits the `/_ping` endpoint of the remote API and returns the result. An 
@@ -672,6 +681,14 @@ Display the running processes of a container
 {'Processes': [['952', 'root', '/bin/sleep 30']],
  'Titles': ['PID', 'USER', 'COMMAND']}
 ```
+
+## unpause
+
+Unpauses all processes within a container.
+
+**Params**:
+
+* container (str): The container to unpause
 
 ## version
 Nearly identical to the `docker version` command. 
