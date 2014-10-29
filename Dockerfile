@@ -1,6 +1,6 @@
-FROM ubuntu:12.10
+FROM python:2.7
 MAINTAINER Joffrey F <joffrey@dotcloud.com>
-RUN apt-get update
-RUN yes | apt-get install python-pip
 ADD . /home/docker-py
-RUN cd /home/docker-py && pip install .
+WORKDIR /home/docker-py
+RUN pip install -r test-requirements.txt
+RUN pip install .
