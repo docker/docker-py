@@ -871,7 +871,7 @@ class Client(requests.Session):
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None):
+              restart_policy=None, cap_add=None, cap_drop=None, devices=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -938,6 +938,9 @@ class Client(requests.Session):
 
         if cap_drop:
             start_config['CapDrop'] = cap_drop
+
+        if devices:
+            start_config['Devices'] = utils.parse_devices(devices)
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)

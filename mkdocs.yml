@@ -10,5 +10,6 @@ pages:
 - [port-bindings.md, Port Bindings]
 - [volumes.md, Using Volumes]
 - [tls.md, Using TLS]
+- [host-devices.md, Host devices]
 - [change_log.md, Change Log]
 - [contributing.md, Contributing]
