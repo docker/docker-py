@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-CURRENT_VERSION = 'v1.12'
+CURRENT_VERSION = 'v1.15'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -225,6 +225,20 @@ def get_fake_export():
     return status_code, response
 
 
+def post_fake_execute():
+    status_code = 200
+    response = {'Id': FAKE_CONTAINER_ID}
+    return status_code, response
+
+
+def post_fake_execute_start():
+    status_code = 200
+    response = (b'\x01\x00\x00\x00\x00\x00\x00\x11bin\nboot\ndev\netc\n'
+                b'\x01\x00\x00\x00\x00\x00\x00\x12lib\nmnt\nproc\nroot\n'
+                b'\x01\x00\x00\x00\x00\x00\x00\x0csbin\nusr\nvar\n')
+    return status_code, response
+
+
 def post_fake_stop_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
@@ -330,6 +344,10 @@ fake_responses = {
     get_fake_diff,
     '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
     get_fake_export,
+    '{1}/{0}/containers/3cc2351ab11b/exec'.format(CURRENT_VERSION, prefix):
+    post_fake_execute,
+    '{1}/{0}/exec/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
+    post_fake_execute_start,
     '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):
     post_fake_stop_container,
     '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):

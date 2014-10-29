@@ -34,7 +34,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.12'
+DEFAULT_DOCKER_API_VERSION = '1.15'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -545,6 +545,48 @@ class Client(requests.Session):
 
     def events(self):
         return self._stream_helper(self.get(self._url('/events'), stream=True))
+
+    def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
+                stream=False, tty=False):
+        if utils.compare_version('1.15', self._version) < 0:
+            raise Exception('Exec is not supported in API < 1.15!')
+        if isinstance(container, dict):
+            container = container.get('Id')
+        if isinstance(cmd, six.string_types):
+            cmd = shlex.split(str(cmd))
+
+        data = {
+            'Container': container,
+            'User': '',
+            'Privileged': False,
+            'Tty': tty,
+            'AttachStdin': False,
+            'AttachStdout': stdout,
+            'AttachStderr': stderr,
+            'Detach': detach,
+            'Cmd': cmd
+            }
+
+        # create the command
+        url = self._url('/containers/{0}/exec'.format(container))
+        res = self._post_json(url, data=data)
+        self._raise_for_status(res)
+
+        # start the command
+        cmd_id = res.json().get('Id')
+        res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)),
+                              data=data, stream=stream)
+        self._raise_for_status(res)
+        if stream:
+            return self._multiplexed_socket_stream_helper(res)
+        elif six.PY3:
+            return bytes().join(
+                [x for x in self._multiplexed_buffer_helper(res)]
+            )
+        else:
+            return str().join(
+                [x for x in self._multiplexed_buffer_helper(res)]
+            )
 
     def export(self, container):
         if isinstance(container, dict):
