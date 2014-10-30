@@ -15,7 +15,10 @@ Our latest stable is always available on PyPi.
 Documentation
 ------------
 
-Full documentation is available in the `/docs/` directory.
+[![Documentation Status](https://readthedocs.org/projects/docker-py/badge/?version=latest)](https://readthedocs.org/projects/docker-py/?badge=latest)
+
+Full documentation is hosted on [ReadTheDocs](http://docker-py.readthedocs.org/en/latest/). 
+Sources are available in the `docs/` directory.
 
 
 License
