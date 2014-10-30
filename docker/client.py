@@ -291,7 +291,7 @@ class Client(requests.Session):
                 size = int(size_line, 16)
             else:
                 break
-            
+
             if size <= 0:
                 break
             data = socket.readline()
