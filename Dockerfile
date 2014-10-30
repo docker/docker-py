@@ -1,18 +1,6 @@
-FROM debian:wheezy
-
+FROM python:2.7
 MAINTAINER Joffrey F <joffrey@dotcloud.com>
-
-RUN apt-get update && \
-    apt-get install -y python-pip && \
-    rm -rf /var/lib/apt/lists/* && \
-    mkdir -p /opt/src/
-
-ADD . /opt/src
-
-WORKDIR /opt/src/
-
-RUN pip install \
-    -r /opt/src/test-requirements.txt \
-    -e /opt/src
-
-CMD ["/bin/bash"]
+ADD . /home/docker-py
+WORKDIR /home/docker-py
+RUN pip install -r test-requirements.txt
+RUN pip install .
