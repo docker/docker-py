@@ -613,8 +613,7 @@ class Client(requests.Session):
 
     def history(self, image):
         res = self._get(self._url("/images/{0}/history".format(image)))
-        self._raise_for_status(res)
-        return self._result(res)
+        return self._result(res, True)
 
     def images(self, name=None, quiet=False, all=False, viz=False):
         if viz:
