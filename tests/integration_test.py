@@ -21,6 +21,7 @@ import shutil
 import signal
 import tempfile
 import unittest
+import warnings
 
 import docker
 import six
@@ -1033,6 +1034,28 @@ class TestConnectionTimeout(unittest.TestCase):
         end = time.time()
         self.assertTrue(res is None)
         self.assertTrue(end - start < 2 * self.timeout)
+
+
+class UnixconnTestCase(unittest.TestCase):
+    """
+    Test UNIX socket connection adapter.
+    """
+
+    def test_resource_warnings(self):
+        """
+        Test no warnings are produced when using the client.
+        """
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+
+            client = docker.Client()
+            client.images()
+            client.close()
+            del client
+
+            assert len(w) == 0, \
+                "No warnings produced: {0}".format(w[0].message)
 
 
 if __name__ == '__main__':

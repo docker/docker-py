@@ -14,6 +14,7 @@
 
 import io
 import os
+import os.path
 import tarfile
 import tempfile
 from distutils.version import StrictVersion
@@ -23,6 +24,7 @@ import requests
 import six
 
 from .. import errors
+from .. import tls
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
@@ -257,3 +259,23 @@ def parse_devices(devices):
                                 "PathInContainer": path_in_container,
                                 "CgroupPermissions": permissions})
     return device_list
+
+
+def kwargs_from_env(ssl_version=None, assert_hostname=None):
+    host = os.environ.get('DOCKER_HOST')
+    cert_path = os.environ.get('DOCKER_CERT_PATH')
+    tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
+
+    params = {}
+    if host:
+        params['base_url'] = (host.replace('tcp://', 'https://')
+                              if tls_verify else host)
+    if tls_verify and cert_path:
+        params['tls'] = tls.TLSConfig(
+            client_cert=(os.path.join(cert_path, 'cert.pem'),
+                         os.path.join(cert_path, 'key.pem')),
+            ca_cert=os.path.join(cert_path, 'ca.pem'),
+            verify=True,
+            ssl_version=ssl_version,
+            assert_hostname=assert_hostname)
+    return params
