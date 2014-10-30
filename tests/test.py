@@ -1069,6 +1069,20 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             stream=True
         )
 
+    def test_log_tail(self):
+        try:
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False, tail=10)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 10},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
     def test_diff(self):
         try:
             self.client.diff(fake_api.FAKE_CONTAINER_ID)

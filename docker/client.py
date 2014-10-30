@@ -574,7 +574,7 @@ class Client(requests.Session):
             'AttachStderr': stderr,
             'Detach': detach,
             'Cmd': cmd
-            }
+        }
 
         # create the command
         url = self._url('/containers/{0}/exec'.format(container))
@@ -738,13 +738,15 @@ class Client(requests.Session):
         if isinstance(container, dict):
             container = container.get('Id')
         if utils.compare_version('1.11', self._version) >= 0:
-            if tail != 'all' and (not isinstance(tail, int) or tail <= 0):
-                tail = 'all'
             params = {'stderr': stderr and 1 or 0,
                       'stdout': stdout and 1 or 0,
                       'timestamps': timestamps and 1 or 0,
                       'follow': stream and 1 or 0,
-                      'tail': tail}
+                      }
+            if utils.compare_version('1.13', self._version) >= 0:
+                if tail != 'all' and (not isinstance(tail, int) or tail <= 0):
+                    tail = 'all'
+                params['tail'] = tail
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
             if stream:
