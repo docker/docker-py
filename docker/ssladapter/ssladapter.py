@@ -20,7 +20,7 @@ def get_max_tls_protocol():
                  'PROTOCOL_TLSv1')
     for proto in protocols:
         if hasattr(ssl, proto):
-            return proto
+            return getattr(ssl, proto)
 
 
 class SSLAdapter(HTTPAdapter):
