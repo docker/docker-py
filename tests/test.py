@@ -1025,7 +1025,8 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
-            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1},
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
@@ -1043,7 +1044,8 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
-            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1},
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
@@ -1061,7 +1063,8 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
-            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1},
+            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
             stream=True
         )
