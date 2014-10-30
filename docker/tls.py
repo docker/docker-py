@@ -17,8 +17,11 @@ class TLSConfig(object):
         # here, but also disable any public/default CA pool verification by
         # leaving tls_verify=False
 
-        # urllib3 sets a default ssl_version if ssl_version is None
-        # http://tinyurl.com/kxga8hb
+        # urllib3 sets a default ssl_version if ssl_version is None,
+        # but that default is the vulnerable PROTOCOL_SSLv23 selection,
+        # so we override the default with the maximum supported in the running
+        # Python interpeter up to TLS 1.2. (see: http://tinyurl.com/kxga8hb)
+        ssl_version = ssl_version or ssladapter.get_max_tls_protocol()
         self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
 
