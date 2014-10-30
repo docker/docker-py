@@ -287,7 +287,11 @@ class Client(requests.Session):
             if size_line == '\r\n' or size_line == '\n':
                 size_line = socket.readline()
 
-            size = int(size_line, 16)
+            if len(size_line.strip()) > 0:
+                size = int(size_line, 16)
+            else:
+                break
+            
             if size <= 0:
                 break
             data = socket.readline()
