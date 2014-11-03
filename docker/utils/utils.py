@@ -15,6 +15,7 @@
 import io
 import os
 import os.path
+import json
 import tarfile
 import tempfile
 from distutils.version import StrictVersion
@@ -279,3 +280,14 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
             ssl_version=ssl_version,
             assert_hostname=assert_hostname)
     return params
+
+
+def convert_filters(filters):
+    result = {}
+    for k, v in six.iteritems(filters):
+        if isinstance(v, bool):
+            v = 'true' if v else 'false'
+        if not isinstance(v, list):
+            v = [v, ]
+        result[k] = v
+    return json.dumps(result)
