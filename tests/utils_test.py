@@ -1,11 +1,12 @@
-import unittest
-
-from docker.errors import DockerException
-from docker.utils import parse_repository_tag, parse_host, kwargs_from_env
-from docker.client import Client
-
 import os
 import os.path
+import unittest
+
+from docker.client import Client
+from docker.errors import DockerException
+from docker.utils import (
+    parse_repository_tag, parse_host, convert_filters, kwargs_from_env
+)
 
 
 class UtilsTest(unittest.TestCase):
@@ -80,8 +81,20 @@ class UtilsTest(unittest.TestCase):
             self.assertEquals(kwargs['base_url'], client.base_url)
             self.assertEquals(kwargs['tls'].verify, client.verify)
             self.assertEquals(kwargs['tls'].cert, client.cert)
-        except TypeError, e:
+        except TypeError as e:
             self.fail(e)
+
+    def test_convert_filters(self):
+        tests = [
+            ({'dangling': True}, '{"dangling": ["true"]}'),
+            ({'dangling': "true"}, '{"dangling": ["true"]}'),
+            ({'exited': 0}, '{"exited": [0]}'),
+            ({'exited': [0, 1]}, '{"exited": [0, 1]}'),
+        ]
+
+        for filters, expected in tests:
+            self.assertEqual(convert_filters(filters), expected)
+
 
 if __name__ == '__main__':
     unittest.main()

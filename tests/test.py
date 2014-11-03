@@ -184,6 +184,19 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_images_filters(self):
+        try:
+            self.client.images(filters={'dangling': True})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'images/json',
+            params={'filter': None, 'only_ids': 0, 'all': 0,
+                    'filters': '{"dangling": ["true"]}'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_list_containers(self):
         try:
             self.client.containers(all=True)
