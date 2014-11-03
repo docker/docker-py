@@ -221,10 +221,10 @@ Inspect changes on a container's filesystem
 
 **Returns** (str):
 
-## exec
+## execute
 
 ```python
-c.exec(container, cmd, detach=False, stdout=True, stderr=True,
+c.execute(container, cmd, detach=False, stdout=True, stderr=True,
        stream=False, tty=False)
 ```
 

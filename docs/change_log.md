@@ -1,10 +1,50 @@
 Change Log
 ==========
 
-0.5.4
+0.6.0
 -----
+* **This version introduces breaking changes!**
 
-* Added MkDocs documentation.
+### Breaking changes
+
+* The default SSL protocol is now the highest TLS v1.x (was SSL v2.3 before)
+  (Poodle fix)
+* The `history` command now returns a dict instead of a raw JSON string.
+
+### Features
+
+* Added the `execute` command.
+* Added `pause` and `unpause` commands.
+* Added support fo the `cpuset` param in `create_container`
+* Added support for host devices (`devices` param in `start`)
+* Added support for the `tail` param in `logs`.
+* Added support for the `filters` param in `images` and `containers`
+* The `kwargs_from_env` method is now available in the `docker.utils`
+  module. This should make it easier for boot2docker user to connect
+  to their daemon.
+
+### Bugfixes
+
+* Fixed a bug where empty directories weren't correctly included when
+  providing a context to `Client.build`.
+* Fixed a bug where UNIX socket connections weren't properly cleaned up,
+  causing `ResourceWarning`s to appear in some cases.
+* Fixed a bug where docker-py would crash if the docker daemon was stopped
+  while reading a streaming response
+* Fixed a bug with streaming responses in Python 3
+* `remove_image` now supports a dict containing an `Id` key as its `id`
+  parameter (similar to other methods requiring a resource ID)
+
+### Documentation
+
+* Added new MkDocs documentation. Currently hosted on
+  [ReadTheDocs](http://docker-py.readthedocs.org/en/latest/)
+
+### Miscellaneous
+
+* Added tests to sdist
+* Added a Makefile for running tests in Docker
+* Updated Dockerfile
 
 0.5.3
 -----

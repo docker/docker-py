@@ -691,6 +691,8 @@ class TestPauseUnpauseContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
         id = container['Id']
+        self.tmp_containers.append(id)
+        self.client.start(container)
         self.client.pause(id)
         container_info = self.client.inspect_container(id)
         self.assertIn('State', container_info)
