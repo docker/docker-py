@@ -13,7 +13,7 @@ Change Log
 
 ## Features
 
-* Added the `exec` command.
+* Added the `execute` command.
 * Added `pause` and `unpause` commands.
 * Added support fo the `cpuset` param in `create_container`
 * Added support for host devices (`devices` param in `start`)
