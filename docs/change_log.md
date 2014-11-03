@@ -5,13 +5,13 @@ Change Log
 -----
 * **This version introduces breaking changes!**
 
-## Breaking changes
+### Breaking changes
 
 * The default SSL protocol is now the highest TLS v1.x (was SSL v2.3 before)
   (Poodle fix)
 * The `history` command now returns a dict instead of a raw JSON string.
 
-## Features
+### Features
 
 * Added the `execute` command.
 * Added `pause` and `unpause` commands.
