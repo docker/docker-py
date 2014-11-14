@@ -1,6 +1,6 @@
 # Client API
 
-To instantiate a `Client` class that will allow you to communicate with a 
+To instantiate a `Client` class that will allow you to communicate with a
 Docker daemon, simply do:
 
 ```python
@@ -10,7 +10,7 @@ c = Client(base_url='unix://var/run/docker.sock')
 
 **Params**:
 
-* base_url (str): Refers to the protocol+hostname+port where the Docker server 
+* base_url (str): Refers to the protocol+hostname+port where the Docker server
 is hosted.
 * version (str): The version of the API the client will use
 * timeout (int): The HTTP request timeout, in seconds.
@@ -20,8 +20,8 @@ is hosted.
 
 ## attach
 
-The `.logs()` function is a wrapper around this method, which you can use 
-instead if you want to fetch/stream container output without first retrieving 
+The `.logs()` function is a wrapper around this method, which you can use
+instead if you want to fetch/stream container output without first retrieving
 the entire backlog.
 
 **Params**:
@@ -36,13 +36,13 @@ the entire backlog.
 
 ## build
 
-Similar to the `docker build` command. Either `path` or `fileobj` needs to be 
-set. `path` can be a local path (to a directory containing a Dockerfile) or a 
+Similar to the `docker build` command. Either `path` or `fileobj` needs to be
+set. `path` can be a local path (to a directory containing a Dockerfile) or a
 remote URL. `fileobj` must be a readable file-like object to a Dockerfile.
 
-If you have a tar file for the Docker build context (including a Dockerfile) 
-already, pass a readable file-like object to `fileobj` and also pass 
-`custom_context=True`. If the stream is compressed also, set `encoding` to the 
+If you have a tar file for the Docker build context (including a Dockerfile)
+already, pass a readable file-like object to `fileobj` and also pass
+`custom_context=True`. If the stream is compressed also, set `encoding` to the
 correct value (e.g `gzip`).
 
 **Params**:
@@ -53,7 +53,7 @@ correct value (e.g `gzip`).
 * fileobj: A file object to use as the Dockerfile. (Or a file-like object)
 * nocache (bool): Don't use the cache when set to `True`
 * rm (bool): Remove intermediate containers
-* stream (bool): Return a blocking generator you can iterate over to retrieve 
+* stream (bool): Return a blocking generator you can iterate over to retrieve
 build output as it happens
 * timeout (int): HTTP timeout
 * custom_context (bool): Optional if using `fileobj`
@@ -94,7 +94,7 @@ build output as it happens
 ```
 
 **Raises:** [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) if `path` nor 
+https://docs.python.org/3.4/library/exceptions.html#TypeError) if `path` nor
 `fileobj` are specified
 
 ## commit
@@ -122,9 +122,9 @@ List containers. Identical to the `docker ps` command.
 * trunc (bool): Truncate output
 * latest (bool): Show only the latest created container, include non-running
 ones.
-* since (str): Show only containers created since Id or Name, include 
+* since (str): Show only containers created since Id or Name, include
 non-running ones
-* before (str): Show only container created before Id or Name, include 
+* before (str): Show only container created before Id or Name, include
 non-running ones
 * limit (int): Show `limit` last created containers, include non-running ones
 * size (bool): Display sizes
@@ -156,21 +156,21 @@ Identical to the `docker cp` command. Get files/folders from the container.
 
 ## create_container
 
-Creates a container that can then be `.start()` ed. Parameters are similar to 
-those for the `docker run` command except it doesn't support the attach 
+Creates a container that can then be `.start()` ed. Parameters are similar to
+those for the `docker run` command except it doesn't support the attach
 options (`-a`).
 
-See [Port bindings](port-bindings.md) and [Using volumes](volumes.md) for more 
+See [Port bindings](port-bindings.md) and [Using volumes](volumes.md) for more
 information on how to create port bindings and volume mappings.
 
-The `mem_limit` variable accepts float values (which represent the memory limit 
-of the created container in bytes) or a string with a units identification char 
-('100000b', 1000k', 128m', '1g'). If a string is specified without a units 
+The `mem_limit` variable accepts float values (which represent the memory limit
+of the created container in bytes) or a string with a units identification char
+('100000b', 1000k', 128m', '1g'). If a string is specified without a units
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if 
-they are used against v1.10 of the Docker remote API. Those arguments should be 
+https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if
+they are used against v1.10 of the Docker remote API. Those arguments should be
 passed to `start()` instead.
 
 **Params**:
@@ -179,18 +179,18 @@ passed to `start()` instead.
 * command (str or list): The command to be run in the container
 * hostname (str): Optional hostname for the container
 * user (str or int): Username or UID
-* detach (bool): Detached mode: run container in the background and print new 
+* detach (bool): Detached mode: run container in the background and print new
 container Id
 * stdin_open (bool): Keep STDIN open even if not attached
 * tty (bool): Allocate a pseudo-TTY
-* mem_limit (float or str): Memory limit (format: [number][optional unit], 
+* mem_limit (float or str): Memory limit (format: [number][optional unit],
 where unit = b, k, m, or g)
 * ports (list of ints): A list of port numbers
-* environment (dict or list): A dictionary or a list of strings in the 
+* environment (dict or list): A dictionary or a list of strings in the
 following format `["PASSWORD=xxx"]` or `{"PASSWORD": "xxx"}`.
 * dns (list): DNS name servers
-* volumes (str or list): 
-* volumes_from (str or list): List of container names or Ids to get volumes 
+* volumes (str or list):
+* volumes_from (str or list): List of container names or Ids to get volumes
 from. Optionally a single string joining container id's with commas
 * network_disabled (bool): Disable networking
 * name (str): A name for the container
@@ -292,11 +292,11 @@ layers)
 
 ## import_image
 
-Identical to the `docker import` command. If `src` is a string or unicode 
-string, it will be treated as a URL to fetch the image from. To import an image 
-from the local machine, `src` needs to be a file-like object or bytes 
-collection.  To import from a tarball use your absolute path to your tarball. 
-To load arbitrary data as tarball use whatever you want as src and your 
+Identical to the `docker import` command. If `src` is a string or unicode
+string, it will be treated as a URL to fetch the image from. To import an image
+from the local machine, `src` needs to be a file-like object or bytes
+collection.  To import from a tarball use your absolute path to your tarball.
+To load arbitrary data as tarball use whatever you want as src and your
 tarball content in data.
 
 **Params**:
@@ -347,7 +347,7 @@ Identical to the `docker inspect` command, but only for containers.
 
 * container (str): The container to inspect
 
-**Returns** (dict): Nearly the same output as `docker inspect`, just as a 
+**Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
 
 ## inspect_image
@@ -358,7 +358,7 @@ Identical to the `docker inspect` command, but only for images
 
 * image_id (str): The image to inspect
 
-**Returns** (dict): Nearly the same output as `docker inspect`, just as a 
+**Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
 
 ## kill
@@ -387,7 +387,7 @@ Nearly identical to the `docker login` command, but non-interactive.
 ## logs
 
 Identical to the `docker logs` command. The `stream` parameter makes the `logs`
-function return a blocking generator you can iterate over to retrieve log 
+function return a blocking generator you can iterate over to retrieve log
 output as it happens.
 
 **Params**:
@@ -411,13 +411,13 @@ Pauses all processes within a container.
 
 ## ping
 
-Hits the `/_ping` endpoint of the remote API and returns the result. An 
+Hits the `/_ping` endpoint of the remote API and returns the result. An
 exception will be raised if the endpoint isn't responding.
 
 **Returns** (bool)
 
 ## port
-Lookup the public-facing port that is NAT-ed to `private_port`. Identical to 
+Lookup the public-facing port that is NAT-ed to `private_port`. Identical to
 the `docker port` command.
 
 **Params**:
@@ -468,7 +468,7 @@ Identical to the `docker pull` command.
 
 ## push
 
-Push an image or a repository to the registry. Identical to the `docker push` 
+Push an image or a repository to the registry. Identical to the `docker push`
 command
 
 **Params**:
@@ -525,7 +525,7 @@ If `container` a dict, the `Id` key is used.
 **Params**:
 
 * container (str or dict): The container to restart
-* timeout (int): Number of seconds to try to stop for before killing the 
+* timeout (int): Number of seconds to try to stop for before killing the
 container. Once killed it will then be restarted. Default is 10 seconds.
 
 ## search
@@ -554,34 +554,34 @@ Identical to the `docker search` command.
   'star_count': 60},
   ...
 ```
- 
+
 ## start
- 
+
 Similar to the `docker start` command, but doesn't support attach options. Use
 `.logs()` to recover `stdout`/`stderr`.
 
-`binds` allows to bind a directory in the host to the container. See [Using 
-volumes](volumes.md) for more information. `port_bindings` exposes container 
+`binds` allows to bind a directory in the host to the container. See [Using
+volumes](volumes.md) for more information. `port_bindings` exposes container
 ports to the host. See [Port bindings](port-bindings.md) for more information.
-`lxc_conf` allows to pass LXC configuration options using a dictionary. 
+`lxc_conf` allows to pass LXC configuration options using a dictionary.
 `privileged` starts the container in privileged mode.
 
-[Links](http://docs.docker.io/en/latest/use/working_with_links_names/) can be 
-specified with the `links` argument. They can either be specified as a 
+[Links](http://docs.docker.io/en/latest/use/working_with_links_names/) can be
+specified with the `links` argument. They can either be specified as a
 dictionary mapping name to alias or as a list of `(name, alias)` tuples.
 
 `dns` and `volumes_from` are only available if they are used with version v1.10
 of docker remote API. Otherwise they are ignored.
 
-`network_mode` is available since v1.11 and sets the Network mode for the 
-container ('bridge': creates a new network stack for the container on the 
-Docker bridge, 'none': no networking for this container, 'container:[name|id]': 
-reuses another container network stack), 'host': use the host network stack 
+`network_mode` is available since v1.11 and sets the Network mode for the
+container ('bridge': creates a new network stack for the container on the
+Docker bridge, 'none': no networking for this container, 'container:[name|id]':
+reuses another container network stack), 'host': use the host network stack
 inside the container.
 
 `restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a
-container should or should not be restarted on exit. By default the policy is 
-set to no meaning do not restart the container when it exits. The user may 
+container should or should not be restarted on exit. By default the policy is
+set to no meaning do not restart the container when it exits. The user may
 specify the restart policy as a dictionary for example:
 ```python
 {
@@ -590,7 +590,7 @@ specify the restart policy as a dictionary for example:
 }
 ```
 
-For always restarting the container on exit or can specify to restart the 
+For always restarting the container on exit or can specify to restart the
 container to restart on failure and can limit number of restarts. For example:
 ```python
 {
@@ -599,8 +599,8 @@ container to restart on failure and can limit number of restarts. For example:
 }
 ```
 
-`cap_add` and `cap_drop` are available since v1.2.0 and can be used to add or 
-drop certain capabilities. The user may specify the capabilities as an array 
+`cap_add` and `cap_drop` are available since v1.2.0 and can be used to add or
+drop certain capabilities. The user may specify the capabilities as an array
 for example:
 ```python
 [
@@ -620,11 +620,11 @@ for example:
 * privileged (bool): Give extended privileges to this container
 * dns (list): Set custom DNS servers
 * dns_search (list): DNS search  domains
-* volumes_from (str or list): List of container names or Ids to get volumes 
+* volumes_from (str or list): List of container names or Ids to get volumes
 from. Optionally a single string joining container id's with commas
 * network_mode (str): One of `['bridge', None, 'container:<name|id>',
 'host']`
-* restart_policy (dict): See note above. "Name" param must be one of 
+* restart_policy (dict): See note above. "Name" param must be one of
 `['on-failure', 'always']`
 * cap_add (list of str): See note above
 * cap_drop (list of str): See note above
@@ -647,7 +647,7 @@ Stops a container. Similar to the `docker stop` command.
 **Params**:
 
 * container (str): The container to stop
-* timeout (int): Timeout in seconds to wait for the container to stop before 
+* timeout (int): Timeout in seconds to wait for the container to stop before
 sending a `SIGKILL`
 
 ## tag
@@ -691,7 +691,7 @@ Unpauses all processes within a container.
 * container (str): The container to unpause
 
 ## version
-Nearly identical to the `docker version` command. 
+Nearly identical to the `docker version` command.
 
 **Returns** (dict): The server version information
 
@@ -700,20 +700,20 @@ Nearly identical to the `docker version` command.
 >>> cli = Client(base_url='tcp://127.0.0.1:2375')
 >>> cli.version()
 {
-    "KernelVersion": "3.16.4-tinycore64", 
-    "Arch": "amd64", 
-    "ApiVersion": "1.15", 
-    "Version": "1.3.0", 
-    "GitCommit": "c78088f", 
-    "Os": "linux", 
+    "KernelVersion": "3.16.4-tinycore64",
+    "Arch": "amd64",
+    "ApiVersion": "1.15",
+    "Version": "1.3.0",
+    "GitCommit": "c78088f",
+    "Os": "linux",
     "GoVersion": "go1.3.3"
 }
 ```
 
 
 ## wait
-Identical to the `docker wait` command. Block until a container stops, then 
-print its exit code. Returns the value `-1` if no `StatusCode` is returned by 
+Identical to the `docker wait` command. Block until a container stops, then
+print its exit code. Returns the value `-1` if no `StatusCode` is returned by
 the API.
 
 If `container` a dict, the `Id` key is used.

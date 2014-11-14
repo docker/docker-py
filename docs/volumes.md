@@ -1,7 +1,7 @@
 # Using volumes
 
-Volume declaration is done in two parts. First, you have to provide a list of 
-mountpoints to the `Client().create_container()` method.
+Volume declaration is done in two parts. First, you have to provide
+a list of mountpoints to the `Client().create_container()` method.
 
 ```python
 c.create_container('busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'])

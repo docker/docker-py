@@ -1,5 +1,5 @@
 # Contributing
-See the [Docker contributing guidelines](https://github.com/docker/docker/blob/master/CONTRIBUTING.md). 
+See the [Docker contributing guidelines](https://github.com/docker/docker/blob/master/CONTRIBUTING.md).
 The following is specific to docker-py.
 
 ## Running the tests & Code Quality
@@ -14,7 +14,7 @@ $ tox
 ```
 
 ## Building the docs
-Docs are built with [MkDocs](http://www.mkdocs.org/). For development, you can 
+Docs are built with [MkDocs](http://www.mkdocs.org/). For development, you can
 run the following in the project directory:
 ```
 $ pip install -r docs-requirements.txt
@@ -32,5 +32,5 @@ Before a new release, please go through the following checklist:
 
 ## Vulnerability Reporting
 For any security issues, please do NOT file an issue or pull request on github!
-Please contact [security@docker.com](mailto:security@docker.com) or read [the 
+Please contact [security@docker.com](mailto:security@docker.com) or read [the
 Docker security page](https://www.docker.com/resources/security/).
