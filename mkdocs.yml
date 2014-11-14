@@ -7,6 +7,7 @@ theme: readthedocs
 pages:
 - [index.md, Home]
 - [api.md, Client API]
+- [boot2docker.md, With boot2docker]
 - [port-bindings.md, Port Bindings]
 - [volumes.md, Using Volumes]
 - [tls.md, Using TLS]
