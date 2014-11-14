@@ -28,7 +28,7 @@ https://docs.python.org/3.4/library/ssl.html#ssl.PROTOCOL_TLSv1)
 client = docker.Client(base_url='<https_url>', tls=True)
 ```
 
-Equivalent CLI options: 
+Equivalent CLI options:
 ```bash
 docker --tls ...
 ```
@@ -48,7 +48,7 @@ tls_config = docker.tls.TLSConfig(ca_cert='/path/to/ca.pem')
 client = docker.Client(base_url='<https_url>', tls=tls_config)
 ```
 
-Equivalent CLI options: 
+Equivalent CLI options:
 ```bash
 docker --tlsverify --tlscacert /path/to/ca.pem ...`
 

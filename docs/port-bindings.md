@@ -29,8 +29,8 @@ like such in both the `create_container()` and `start()` calls:
 
 ```python
 container_id = c.create_container(
-	'busybox', 
-	'ls', 
+	'busybox',
+	'ls',
 	ports=[(1111, 'udp'), 2222]
 )
 c.start(container_id, port_bindings={'1111/udp': 4567, 2222: None})
