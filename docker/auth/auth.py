@@ -99,7 +99,7 @@ def resolve_authconfig(authconfig, registry=None):
         return authconfig[org_registry]
 
     rs = authconfig.get(swap_protocol(registry), None) \
-    or authconfig.get(swap_protocol(org_registry), None)
+        or authconfig.get(swap_protocol(org_registry), None)
 
     return rs
 
