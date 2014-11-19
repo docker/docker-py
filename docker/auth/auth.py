@@ -92,7 +92,13 @@ def resolve_authconfig(authconfig, registry=None):
 
     if registry in authconfig:
         return authconfig[registry]
-    return authconfig.get(swap_protocol(registry), None)
+
+    # remove '/v1/' to try get the authcfg
+    org_registry = registry[0:len(registry)-4]
+    if org_registry in authconfig:
+        return authconfig[org_registry]
+    
+    return authconfig.get(swap_protocol(registry), None) or authconfig.get(swap_protocol(org_registry), None)
 
 
 def encode_auth(auth_info):
