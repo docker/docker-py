@@ -98,8 +98,10 @@ def resolve_authconfig(authconfig, registry=None):
     if org_registry in authconfig:
         return authconfig[org_registry]
 
-    return authconfig.get(swap_protocol(registry), None)
+    rs = authconfig.get(swap_protocol(registry), None) \
             or authconfig.get(swap_protocol(org_registry), None)
+
+    return rs
 
 
 def encode_auth(auth_info):
