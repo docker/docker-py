@@ -899,7 +899,8 @@ class Client(requests.Session):
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None, devices=None):
+              restart_policy=None, cap_add=None, cap_drop=None, devices=None,
+              extra_hosts=None):
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -931,6 +932,16 @@ class Client(requests.Session):
             ]
 
             start_config['Links'] = formatted_links
+
+        if extra_hosts:
+            if isinstance(extra_hosts, dict):
+                extra_hosts = six.iteritems(extra_hosts)
+
+            formatted_extra_hosts = [
+                '{0}:{1}'.format(k, v) for k, v in sorted(extra_hosts)
+            ]
+
+            start_config['ExtraHosts'] = formatted_extra_hosts
 
         start_config['Privileged'] = privileged
 
