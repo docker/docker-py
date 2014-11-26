@@ -93,6 +93,20 @@ def resolve_authconfig(authconfig, registry=None):
     return authconfig.get(swap_protocol(registry), None)
 
 
+def store_authconfig(authconfig, registry, req_data):
+    """Store the authentication data from the given auth configuration for a
+    specific registry in the standard format."""
+    # Default to the public index server
+    registry = registry or INDEX_URL
+    if '/' not in registry:
+        registry = registry + '/v1/'
+
+    if not registry.startswith('http:') and not registry.startswith('https:'):
+        registry = 'https://' + registry
+
+    authconfig[registry] = req_data
+
+
 def encode_auth(auth_info):
     return base64.b64encode(auth_info.get('username', '') + b':' +
                             auth_info.get('password', ''))
@@ -132,12 +146,12 @@ def load_config(root=None):
             conf = {}
             for registry, entry in six.iteritems(json.load(f)):
                 username, password = decode_auth(entry['auth'])
-                conf[registry] = {
+                store_authconfig(conf, registry, {
                     'username': username,
                     'password': password,
                     'email': entry['email'],
                     'serveraddress': registry,
-                }
+                })
             return conf
     except:
         pass
@@ -157,12 +171,12 @@ def load_config(root=None):
                 'Invalid or empty configuration file!')
 
         username, password = decode_auth(data[0])
-        conf[INDEX_URL] = {
+        store_authconfig(conf, INDEX_URL, {
             'username': username,
             'password': password,
             'email': data[1],
             'serveraddress': INDEX_URL,
-        }
+        })
         return conf
     except:
         pass

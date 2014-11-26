@@ -742,7 +742,7 @@ class Client(requests.Session):
 
         response = self._post_json(self._url('/auth'), data=req_data)
         if response.status_code == 200:
-            self._auth_configs[registry] = req_data
+            auth.store_authconfig(self._auth_configs, registry, req_data)
         return self._result(response, json=True)
 
     def logs(self, container, stdout=True, stderr=True, stream=False,
