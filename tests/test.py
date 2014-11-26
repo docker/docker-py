@@ -102,6 +102,17 @@ class DockerClientTest(Cleanup, unittest.TestCase):
     def tearDown(self):
         self.client.close()
 
+    def test_ctor(self):
+        try:
+            docker.Client(version=1.12)
+        except Exception as e:
+            self.assertTrue(isinstance(e, docker.errors.DockerException))
+            if not six.PY3:
+                self.assertEqual(
+                    e.message,
+                    'version parameter must be a string. Found float'
+                )
+
     #########################
     #   INFORMATION TESTS   #
     #########################
