@@ -158,10 +158,15 @@ class Client(requests.Session):
             for port_definition in ports:
                 port = port_definition
                 proto = 'tcp'
-                if isinstance(port_definition, tuple):
+
+                if isinstance(port_definition, six.string_types):
+                    if '/' in port_definition:
+                        port, proto = port_definition.split('/')
+                elif isinstance(port_definition, tuple):
                     if len(port_definition) == 2:
                         proto = port_definition[1]
                     port = port_definition[0]
+
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
             ports = exposed_ports
 
