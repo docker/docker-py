@@ -36,13 +36,11 @@ def swap_protocol(url):
 
 def expand_registry_url(hostname, insecure=False):
     if hostname.startswith('http:') or hostname.startswith('https:'):
-        if '/' not in hostname[9:]:
-            hostname = hostname + '/v1/'
         return hostname
     if utils.ping('https://' + hostname + '/v1/_ping'):
-        return 'https://' + hostname + '/v1/'
+        return 'https://' + hostname
     elif insecure:
-        return 'http://' + hostname + '/v1/'
+        return 'http://' + hostname
     else:
         raise errors.DockerException(
             "HTTPS endpoint unresponsive and insecure mode isn't enabled."
