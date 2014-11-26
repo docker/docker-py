@@ -109,7 +109,7 @@ class Client(requests.Session):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
             environment = [
-                u'{0}={1}'.format(k, v) for k, v in environment.items()
+                unicode('{0}={1}').format(k, v) for k, v in environment.items()
             ]
 
         if isinstance(mem_limit, six.string_types):
