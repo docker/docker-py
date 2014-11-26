@@ -717,13 +717,14 @@ class Client(requests.Session):
         self._raise_for_status(res)
 
     def login(self, username, password=None, email=None, registry=None,
-              reauth=False):
+              reauth=False, insecure_registry=False):
         # If we don't have any auth data so far, try reloading the config file
         # one more time in case anything showed up in there.
         if not self._auth_configs:
             self._auth_configs = auth.load_config()
 
-        registry = registry or auth.INDEX_URL
+        registry = auth.expand_registry_url(registry, insecure_registry) \
+            if registry else auth.INDEX_URL
 
         authcfg = auth.resolve_authconfig(self._auth_configs, registry)
         # If we found an existing auth config for this registry and username
