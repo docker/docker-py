@@ -57,7 +57,7 @@ class Client(requests.Session):
                 )
             )
         self.base_url = base_url
-        self._version = version
+        self._version = str(version)
         self._timeout = timeout
         self._auth_configs = auth.load_config()
 
