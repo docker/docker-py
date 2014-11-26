@@ -50,6 +50,12 @@ class Client(requests.Session):
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must begin with '
                 '"https://".')
+        if not isinstance(version, six.string_types):
+            raise errors.DockerException(
+                'version parameter must be a string. Found {0}'.format(
+                    type(version).__name__
+                )
+            )
         self.base_url = base_url
         self._version = version
         self._timeout = timeout
