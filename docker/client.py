@@ -439,9 +439,9 @@ class Client(requests.Session):
         params = {
             't': tag,
             'remote': remote,
-            'q': quiet,
-            'nocache': nocache,
-            'rm': rm
+            'q': "1" if quiet else "0",
+            'nocache': "1" if nocache else "0",
+            'rm': "1" if rm else "0"
         }
 
         if context is not None:
