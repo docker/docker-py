@@ -408,7 +408,7 @@ class Client(requests.Session):
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
-              custom_context=False, encoding=None):
+              pull=False, custom_context=False, encoding=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
@@ -439,6 +439,7 @@ class Client(requests.Session):
         params = {
             't': tag,
             'remote': remote,
+            'pull': pull,
             'q': quiet,
             'nocache': nocache,
             'rm': rm
