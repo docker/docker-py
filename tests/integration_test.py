@@ -83,6 +83,7 @@ class TestInfo(BaseTestCase):
 
 class TestSearch(BaseTestCase):
     def runTest(self):
+        self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         res = self.client.search('busybox')
         self.assertTrue(len(res) >= 1)
         base_img = [x for x in res if x['name'] == 'busybox']
@@ -764,6 +765,7 @@ class TestRemoveLink(BaseTestCase):
 
 class TestPull(BaseTestCase):
     def runTest(self):
+        self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         try:
             self.client.remove_image('joffrey/test001')
             self.client.remove_image('376968a23351')
@@ -783,6 +785,7 @@ class TestPull(BaseTestCase):
 
 class TestPullStream(BaseTestCase):
     def runTest(self):
+        self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         try:
             self.client.remove_image('joffrey/test001')
             self.client.remove_image('376968a23351')
