@@ -1677,6 +1677,20 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+    def test_build_container_pull(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+        try:
+            self.client.build(fileobj=script, pull=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
     def test_build_container_stream(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',

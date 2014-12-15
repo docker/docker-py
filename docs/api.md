@@ -58,6 +58,7 @@ build output as it happens
 * timeout (int): HTTP timeout
 * custom_context (bool): Optional if using `fileobj`
 * encoding (str): The encoding for a stream. Set to `gzip` for compressing
+* pull (bool): Downloads any updates to the FROM image in Dockerfiles
 
 **Returns** (generator): A generator of the build output
 
