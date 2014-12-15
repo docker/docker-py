@@ -59,6 +59,7 @@ build output as it happens
 * custom_context (bool): Optional if using `fileobj`
 * encoding (str): The encoding for a stream. Set to `gzip` for compressing
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
+* forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
 
 **Returns** (generator): A generator of the build output
 
