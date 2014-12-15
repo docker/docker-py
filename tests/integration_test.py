@@ -771,12 +771,11 @@ class TestPull(BaseTestCase):
             self.client.remove_image('376968a23351')
         except docker.errors.APIError:
             pass
-        info = self.client.info()
-        self.assertIn('Images', info)
-        img_count = info['Images']
         res = self.client.pull('joffrey/test001')
         self.assertEqual(type(res), six.text_type)
-        self.assertEqual(img_count + 3, self.client.info()['Images'])
+        self.assertGreaterEqual(
+            self.client.images('joffrey/test001'), 1
+        )
         img_info = self.client.inspect_image('joffrey/test001')
         self.assertIn('Id', img_info)
         self.tmp_imgs.append('joffrey/test001')
@@ -791,13 +790,12 @@ class TestPullStream(BaseTestCase):
             self.client.remove_image('376968a23351')
         except docker.errors.APIError:
             pass
-        info = self.client.info()
-        self.assertIn('Images', info)
-        img_count = info['Images']
         stream = self.client.pull('joffrey/test001', stream=True)
         for chunk in stream:
             json.loads(chunk)  # ensure chunk is a single, valid JSON blob
-        self.assertEqual(img_count + 3, self.client.info()['Images'])
+        self.assertGreaterEqual(
+            self.client.images('joffrey/test001'), 1
+        )
         img_info = self.client.inspect_image('joffrey/test001')
         self.assertIn('Id', img_info)
         self.tmp_imgs.append('joffrey/test001')
