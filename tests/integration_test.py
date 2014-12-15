@@ -767,39 +767,33 @@ class TestPull(BaseTestCase):
     def runTest(self):
         self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         try:
-            self.client.remove_image('joffrey/test001')
-            self.client.remove_image('376968a23351')
+            self.client.remove_image('busybox')
         except docker.errors.APIError:
             pass
-        res = self.client.pull('joffrey/test001')
+        res = self.client.pull('busybox')
         self.assertEqual(type(res), six.text_type)
         self.assertGreaterEqual(
-            self.client.images('joffrey/test001'), 1
+            self.client.images('busybox'), 1
         )
-        img_info = self.client.inspect_image('joffrey/test001')
+        img_info = self.client.inspect_image('busybox')
         self.assertIn('Id', img_info)
-        self.tmp_imgs.append('joffrey/test001')
-        self.tmp_imgs.append('376968a23351')
 
 
 class TestPullStream(BaseTestCase):
     def runTest(self):
         self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         try:
-            self.client.remove_image('joffrey/test001')
-            self.client.remove_image('376968a23351')
+            self.client.remove_image('busybox')
         except docker.errors.APIError:
             pass
-        stream = self.client.pull('joffrey/test001', stream=True)
+        stream = self.client.pull('busybox', stream=True)
         for chunk in stream:
             json.loads(chunk)  # ensure chunk is a single, valid JSON blob
         self.assertGreaterEqual(
-            self.client.images('joffrey/test001'), 1
+            self.client.images('busybox'), 1
         )
-        img_info = self.client.inspect_image('joffrey/test001')
+        img_info = self.client.inspect_image('busybox')
         self.assertIn('Id', img_info)
-        self.tmp_imgs.append('joffrey/test001')
-        self.tmp_imgs.append('376968a23351')
 
 
 class TestCommit(BaseTestCase):
