@@ -22,6 +22,7 @@ import re
 import shutil
 import signal
 import socket
+import struct
 import sys
 import tarfile
 import tempfile
@@ -51,8 +52,11 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None):
     res = requests.Response()
     res.status_code = status_code
-    if not isinstance(content, six.binary_type):
-        content = json.dumps(content).encode('ascii')
+    try:
+        if not isinstance(content, six.binary_type):
+            content = json.dumps(content).encode('ascii')
+    except:
+        pass
     res._content = content
     res.headers = requests.structures.CaseInsensitiveDict(headers or {})
     res.reason = reason
@@ -1432,17 +1436,55 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''{
                             "Tty": false,
-                            "AttachStderr": true,
-                            "Container": "3cc2351ab11b",
-                            "Cmd": ["ls", "-1"],
-                            "AttachStdin": false,
-                            "User": "",
-                            "Detach": false,
-                            "Privileged": false,
-                            "AttachStdout": true}'''))
+                            "Detach": false}'''))
 
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
+
+    def test_execute_create(self):
+        try:
+            self.client.executeCreate(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
+        except Exception as e:
+            msg = 'docker exec create should not raise exception: {0}'
+            self.fail(msg.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'containers/3cc2351ab11b/exec')
+        self.assertEqual(json.loads(str(args[1]['data'])),
+                         json.loads('''{
+                                "AttachStdin": false,
+                                "AttachStdout": true,
+                                "AttachStderr": true,
+                                "Detach": false,
+                                "Tty": false,
+                                "Privileged": false,
+                                "Cmd": ["ls", "-1"],
+                                "User": "",
+                                "Container": "3cc2351ab11b"}'''))
+
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(fake_request(args[0][0], None).content,
+                         b'{"Id": "3cc2351ab11b"}')
+
+    def test_execute_start(self):
+        try:
+            res = self.client.executeStart(fake_api.FAKE_CONTAINER_ID,
+                                           stream=False)
+        except Exception as e:
+            msg = 'docker exec start should not raise exception: {0}'
+            self.fail(msg.format(e))
+
+        expected_resp_part1 = '''bin\nboot\ndev\netc\n'''
+        expected_resp_part2 = '''lib\nmnt\nproc\nroot\nsbin\nusr\nvar\n'''
+        val = ''
+        if six.PY3:
+            val = bytes().join([struct.pack('B', x) for x in res.read()])
+        else:
+            val = str().join([str(x) for x in res.read()])
+        self.assertEqual(val.decode('ascii'),
+                         expected_resp_part1 + expected_resp_part2)
 
     def test_pause_container(self):
         try:

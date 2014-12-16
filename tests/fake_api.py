@@ -232,11 +232,18 @@ def post_fake_execute():
 
 
 def post_fake_execute_start():
-    status_code = 200
     response = (b'\x01\x00\x00\x00\x00\x00\x00\x11bin\nboot\ndev\netc\n'
                 b'\x01\x00\x00\x00\x00\x00\x00\x12lib\nmnt\nproc\nroot\n'
-                b'\x01\x00\x00\x00\x00\x00\x00\x0csbin\nusr\nvar\n')
-    return status_code, response
+                b'\x01\x00\x00\x00\x00\x00\x00\x0dsbin\nusr\nvar\n')
+
+    class mockSock():
+        def __init__(self):
+            self.content = response
+
+        def __getitem__(self, i):
+            return response[i]
+
+    return 200, mockSock()
 
 
 def post_fake_stop_container():
