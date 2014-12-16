@@ -294,3 +294,70 @@ def convert_filters(filters):
             v = [v, ]
         result[k] = v
     return json.dumps(result)
+
+
+def create_host_config(
+    binds=None, port_bindings=None, lxc_conf=None,
+    publish_all_ports=False, links=None, privileged=False,
+    dns=None, dns_search=None, volumes_from=None, network_mode=None,
+    restart_policy=None, cap_add=None, cap_drop=None, devices=None
+):
+    host_config = {
+        'Privileged': privileged,
+        'PublishAllPorts': publish_all_ports,
+    }
+
+    if dns_search:
+        host_config['DnsSearch'] = dns_search
+
+    if network_mode:
+        host_config['NetworkMode'] = network_mode
+
+    if restart_policy:
+        host_config['RestartPolicy'] = restart_policy
+
+    if cap_add:
+        host_config['CapAdd'] = cap_add
+
+    if cap_drop:
+        host_config['CapDrop'] = cap_drop
+
+    if devices:
+        host_config['Devices'] = parse_devices(devices)
+
+    if dns is not None:
+        host_config['Dns'] = dns
+
+    if volumes_from is not None:
+        if isinstance(volumes_from, six.string_types):
+            volumes_from = volumes_from.split(',')
+            host_config['VolumesFrom'] = volumes_from
+
+    if binds:
+        host_config['Binds'] = convert_volume_binds(binds)
+
+    if port_bindings:
+        host_config['PortBindings'] = convert_port_bindings(
+            port_bindings
+        )
+
+    host_config['PublishAllPorts'] = publish_all_ports
+
+    if links:
+        if isinstance(links, dict):
+            links = six.iteritems(links)
+
+        formatted_links = [
+            '{0}:{1}'.format(k, v) for k, v in sorted(links)
+        ]
+
+        host_config['Links'] = formatted_links
+
+    if isinstance(lxc_conf, dict):
+        formatted = []
+        for k, v in six.iteritems(lxc_conf):
+            formatted.append({'Key': k, 'Value': str(v)})
+        lxc_conf = formatted
+    host_config['LxcConf'] = lxc_conf
+
+    return host_config
