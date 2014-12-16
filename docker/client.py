@@ -34,7 +34,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.15'
+DEFAULT_DOCKER_API_VERSION = '1.16'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -110,7 +110,8 @@ class Client(requests.Session):
                           volumes=None, volumes_from=None,
                           network_disabled=False, entrypoint=None,
                           cpu_shares=None, working_dir=None,
-                          domainname=None, memswap_limit=0, cpuset=None):
+                          domainname=None, memswap_limit=0, cpuset=None,
+                          host_config=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -225,7 +226,8 @@ class Client(requests.Session):
             'CpuShares': cpu_shares,
             'Cpuset': cpuset,
             'WorkingDir': working_dir,
-            'MemorySwap': memswap_limit
+            'MemorySwap': memswap_limit,
+            'HostConfig': host_config
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -536,17 +538,20 @@ class Client(requests.Session):
                          mem_limit=0, ports=None, environment=None, dns=None,
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
-                         cpu_shares=None, working_dir=None,
-                         domainname=None, memswap_limit=0, cpuset=None):
+                         cpu_shares=None, working_dir=None, domainname=None,
+                         memswap_limit=0, cpuset=None, host_config=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
+
+        if host_config and utils.compare_version('1.15', self._version) < 0:
+            raise errors.APIError('host_config is not supported in API < 1.15')
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
             entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset
+            memswap_limit, cpuset, host_config
         )
         return self.create_container_from_config(config, name)
 
@@ -570,7 +575,7 @@ class Client(requests.Session):
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
-            raise Exception('Exec is not supported in API < 1.15!')
+            raise errors.APIError('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
             container = container.get('Id')
         if isinstance(cmd, six.string_types):
@@ -911,6 +916,40 @@ class Client(requests.Session):
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None):
+
+        def warn(arg_name, version):
+            warning_message = (
+                '{0!r} parameter is deprecated for API version >= {1}'
+            ).format(arg_name, version)
+            warnings.warn(warning_message, DeprecationWarning)
+
+        if utils.compare_version('1.16', self._version) >= 0:
+            version = '1.16'
+            if binds:
+                warn('binds', version)
+            if port_bindings:
+                warn('port_bindings', version)
+            if lxc_conf:
+                warn('lxc_conf', version)
+            if publish_all_ports:
+                warn('publish_all_ports', version)
+            if links:
+                warn('links', version)
+            if privileged:
+                warn('privileged', version)
+            if dns or dns_search:
+                warn('dns/dns_search', version)
+            if volumes_from:
+                warn('volumes_from', version)
+            if network_mode:
+                warn('network_mode', version)
+            if restart_policy:
+                warn('restart_policy', version)
+            if cap_add or cap_drop:
+                warn('cap_add/cap_drop', version)
+            if devices:
+                warn('devices', version)
+
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -963,16 +1002,15 @@ class Client(requests.Session):
                     volumes_from = volumes_from.split(',')
                 start_config['VolumesFrom'] = volumes_from
         else:
-            warning_message = ('{0!r} parameter is discarded. It is only'
-                               ' available for API version greater or equal'
-                               ' than 1.10')
 
             if dns is not None:
-                warnings.warn(warning_message.format('dns'),
-                              DeprecationWarning)
+                raise errors.APIError(
+                    'dns is only supported for API version >= 1.10'
+                )
             if volumes_from is not None:
-                warnings.warn(warning_message.format('volumes_from'),
-                              DeprecationWarning)
+                raise errors.APIError(
+                    'volumes_from is only supported for API version >= 1.10'
+                )
         if dns_search:
             start_config['DnsSearch'] = dns_search
 
