@@ -723,6 +723,7 @@ If `container` a dict, the `Id` key is used.
 **Params**:
 
 * container (str or dict): The container to wait on
+* timeout (int): Request timeout
 
 **Returns** (int): The exit code of the container
 
