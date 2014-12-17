@@ -17,7 +17,6 @@ import os
 import re
 import shlex
 import struct
-from socket import socket as socket_obj
 import warnings
 
 import requests
@@ -291,31 +290,15 @@ class Client(requests.Session):
 
     def _stream_helper(self, response):
         """Generator for data coming from a chunked-encoded HTTP response."""
-        if six.PY3:
-            socket_fp = self._get_raw_response_socket(response)
-        else:
-            socket_fp = socket_obj(
-                _sock=self._get_raw_response_socket(response)
-            )
-        socket_fp.setblocking(1)
-        socket = socket_fp.makefile()
-        while True:
-            # Because Docker introduced newlines at the end of chunks in v0.9,
-            # and only on some API endpoints, we have to cater for both cases.
-            size_line = socket.readline()
-            if size_line == '\r\n' or size_line == '\n':
-                size_line = socket.readline()
-
-            if len(size_line.strip()) > 0:
-                size = int(size_line, 16)
-            else:
-                break
-
-            if size <= 0:
-                break
-            data = socket.readline()
+        reader = response.raw
+        assert reader._fp.chunked
+        while not reader.closed:
+            # this read call will block until we get a chunk
+            data = reader.read(1)
             if not data:
                 break
+            if reader._fp.chunk_left:
+                data += reader.read(reader._fp.chunk_left)
             yield data
 
     def _multiplexed_buffer_helper(self, response):
