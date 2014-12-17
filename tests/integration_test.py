@@ -33,6 +33,9 @@ from test import Cleanup
 
 DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
 
+warnings.simplefilter('error')
+create_host_config = docker.utils.create_host_config
+
 
 class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
@@ -154,21 +157,22 @@ class TestCreateContainerWithBinds(BaseTestCase):
 
         filename = 'shared.txt'
         shared_file = os.path.join(mount_origin, filename)
+        binds = {
+            mount_origin: {
+                'bind': mount_dest,
+                'ro': False,
+            },
+        }
 
         with open(shared_file, 'w'):
             container = self.client.create_container(
                 'busybox',
-                ['ls', mount_dest], volumes={mount_dest: {}}
+                ['ls', mount_dest], volumes={mount_dest: {}},
+                host_config=create_host_config(binds=binds)
             )
             container_id = container['Id']
             self.client.start(
                 container_id,
-                binds={
-                    mount_origin: {
-                        'bind': mount_dest,
-                        'ro': False,
-                    },
-                },
             )
             self.tmp_containers.append(container_id)
             exitcode = self.client.wait(container_id)
@@ -227,10 +231,12 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
 
 class TestStartContainerPrivileged(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', 'true')
+        res = self.client.create_container(
+            'busybox', 'true', host_config=create_host_config(privileged=True)
+        )
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
-        self.client.start(res['Id'], privileged=True)
+        self.client.start(res['Id'])
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
         self.assertIn('Id', inspect)
@@ -465,11 +471,12 @@ class TestPort(BaseTestCase):
         }
 
         container = self.client.create_container(
-            'busybox', ['sleep', '60'], ports=port_bindings.keys()
+            'busybox', ['sleep', '60'], ports=port_bindings.keys(),
+            host_config=create_host_config(port_bindings=port_bindings)
         )
         id = container['Id']
 
-        self.client.start(container, port_bindings=port_bindings)
+        self.client.start(container)
 
         # Call the port function on each biding and compare expected vs actual
         for port in port_bindings:
@@ -551,40 +558,41 @@ class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
         self.assertEqual(len(res), 0)
 
 
-class TestStartContainerWithVolumesFrom(BaseTestCase):
+class TestCreateContainerWithVolumesFrom(BaseTestCase):
     def runTest(self):
         vol_names = ['foobar_vol0', 'foobar_vol1']
 
         res0 = self.client.create_container(
-            'busybox', 'true',
-            name=vol_names[0])
+            'busybox', 'true', name=vol_names[0]
+        )
         container1_id = res0['Id']
         self.tmp_containers.append(container1_id)
         self.client.start(container1_id)
 
         res1 = self.client.create_container(
-            'busybox', 'true',
-            name=vol_names[1])
+            'busybox', 'true', name=vol_names[1]
+        )
         container2_id = res1['Id']
         self.tmp_containers.append(container2_id)
         self.client.start(container2_id)
         with self.assertRaises(docker.errors.DockerException):
-            res2 = self.client.create_container(
-                'busybox', 'cat',
-                detach=True, stdin_open=True,
-                volumes_from=vol_names)
+            self.client.create_container(
+                'busybox', 'cat', detach=True, stdin_open=True,
+                volumes_from=vol_names
+            )
         res2 = self.client.create_container(
-            'busybox', 'cat',
-            detach=True, stdin_open=True)
+            'busybox', 'cat', detach=True, stdin_open=True,
+            host_config=create_host_config(volumes_from=vol_names)
+        )
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
-        self.client.start(container3_id, volumes_from=vol_names)
+        self.client.start(container3_id)
 
         info = self.client.inspect_container(res2['Id'])
         self.assertItemsEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
 
-class TestStartContainerWithLinks(BaseTestCase):
+class TestCreateContainerWithLinks(BaseTestCase):
     def runTest(self):
         res0 = self.client.create_container(
             'busybox', 'cat',
@@ -615,13 +623,14 @@ class TestStartContainerWithLinks(BaseTestCase):
         link_alias2 = 'mylink2'
         link_env_prefix2 = link_alias2.upper()
 
-        res2 = self.client.create_container('busybox', 'env')
+        res2 = self.client.create_container(
+            'busybox', 'env', host_config=create_host_config(
+                links={link_path1: link_alias1, link_path2: link_alias2}
+            )
+        )
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
-        self.client.start(
-            container3_id,
-            links={link_path1: link_alias1, link_path2: link_alias2}
-        )
+        self.client.start(container3_id)
         self.assertEqual(self.client.wait(container3_id), 0)
 
         logs = self.client.logs(container3_id)
@@ -633,12 +642,13 @@ class TestStartContainerWithLinks(BaseTestCase):
 
 class TestRestartingContainer(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['false'])
+        container = self.client.create_container(
+            'busybox', ['false'], host_config=create_host_config(
+                restart_policy={"Name": "on-failure", "MaximumRetryCount": 1}
+            )
+        )
         id = container['Id']
-        self.client.start(id, restart_policy={
-            "Name": "on-failure",
-            "MaximumRetryCount": 1
-        })
+        self.client.start(id)
         self.client.wait(id)
         self.client.remove_container(id)
         containers = self.client.containers(all=True)
@@ -726,7 +736,8 @@ class TestRemoveLink(BaseTestCase):
     def runTest(self):
         # Create containers
         container1 = self.client.create_container(
-            'busybox', 'cat', detach=True, stdin_open=True)
+            'busybox', 'cat', detach=True, stdin_open=True
+        )
         container1_id = container1['Id']
         self.tmp_containers.append(container1_id)
         self.client.start(container1_id)
@@ -736,10 +747,14 @@ class TestRemoveLink(BaseTestCase):
         link_path = self.client.inspect_container(container1_id)['Name'][1:]
         link_alias = 'mylink'
 
-        container2 = self.client.create_container('busybox', 'cat')
+        container2 = self.client.create_container(
+            'busybox', 'cat', host_config=create_host_config(
+                links={link_path: link_alias}
+            )
+        )
         container2_id = container2['Id']
         self.tmp_containers.append(container2_id)
-        self.client.start(container2_id, links={link_path: link_alias})
+        self.client.start(container2_id)
 
         # Remove link
         linked_name = self.client.inspect_container(container2_id)['Name'][1:]
