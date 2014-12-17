@@ -331,7 +331,7 @@ def create_host_config(
     if volumes_from is not None:
         if isinstance(volumes_from, six.string_types):
             volumes_from = volumes_from.split(',')
-            host_config['VolumesFrom'] = volumes_from
+        host_config['VolumesFrom'] = volumes_from
 
     if binds:
         host_config['Binds'] = convert_volume_binds(binds)
