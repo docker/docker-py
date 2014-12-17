@@ -34,7 +34,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.15'
+DEFAULT_DOCKER_API_VERSION = '1.16'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -110,7 +110,8 @@ class Client(requests.Session):
                           volumes=None, volumes_from=None,
                           network_disabled=False, entrypoint=None,
                           cpu_shares=None, working_dir=None,
-                          domainname=None, memswap_limit=0, cpuset=None):
+                          domainname=None, memswap_limit=0, cpuset=None,
+                          host_config=None):
         if isinstance(command, six.string_types):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
@@ -225,7 +226,8 @@ class Client(requests.Session):
             'CpuShares': cpu_shares,
             'Cpuset': cpuset,
             'WorkingDir': working_dir,
-            'MemorySwap': memswap_limit
+            'MemorySwap': memswap_limit,
+            'HostConfig': host_config
         }
 
     def _post_json(self, url, data, **kwargs):
@@ -262,6 +264,12 @@ class Client(requests.Session):
 
     def _create_websocket_connection(self, url):
         return websocket.create_connection(url)
+
+    def _warn_deprecated(self, arg_name, version):
+        warning_message = (
+            '{0!r} is deprecated for API version >= {1}'
+        ).format(arg_name, version)
+        warnings.warn(warning_message, DeprecationWarning)
 
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
@@ -536,17 +544,20 @@ class Client(requests.Session):
                          mem_limit=0, ports=None, environment=None, dns=None,
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
-                         cpu_shares=None, working_dir=None,
-                         domainname=None, memswap_limit=0, cpuset=None):
+                         cpu_shares=None, working_dir=None, domainname=None,
+                         memswap_limit=0, cpuset=None, host_config=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
+
+        if host_config and utils.compare_version('1.15', self._version) < 0:
+            raise errors.APIError('host_config is not supported in API < 1.15')
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
             entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset
+            memswap_limit, cpuset, host_config
         )
         return self.create_container_from_config(config, name)
 
@@ -570,7 +581,7 @@ class Client(requests.Session):
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
-            raise Exception('Exec is not supported in API < 1.15!')
+            raise errors.APIError('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
             container = container.get('Id')
         if isinstance(cmd, six.string_types):
@@ -911,6 +922,9 @@ class Client(requests.Session):
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None):
+
+        start_config = {}
+
         if isinstance(container, dict):
             container = container.get('Id')
 
@@ -920,9 +934,9 @@ class Client(requests.Session):
                 formatted.append({'Key': k, 'Value': str(v)})
             lxc_conf = formatted
 
-        start_config = {
-            'LxcConf': lxc_conf
-        }
+        if lxc_conf:
+            start_config['LxcConf'] = lxc_conf
+
         if binds:
             start_config['Binds'] = utils.convert_volume_binds(binds)
 
@@ -931,7 +945,8 @@ class Client(requests.Session):
                 port_bindings
             )
 
-        start_config['PublishAllPorts'] = publish_all_ports
+        if publish_all_ports:
+            start_config['PublishAllPorts'] = publish_all_ports
 
         if links:
             if isinstance(links, dict):
@@ -953,7 +968,8 @@ class Client(requests.Session):
 
             start_config['ExtraHosts'] = formatted_extra_hosts
 
-        start_config['Privileged'] = privileged
+        if privileged:
+            start_config['Privileged'] = privileged
 
         if utils.compare_version('1.10', self._version) >= 0:
             if dns is not None:
@@ -963,16 +979,15 @@ class Client(requests.Session):
                     volumes_from = volumes_from.split(',')
                 start_config['VolumesFrom'] = volumes_from
         else:
-            warning_message = ('{0!r} parameter is discarded. It is only'
-                               ' available for API version greater or equal'
-                               ' than 1.10')
 
             if dns is not None:
-                warnings.warn(warning_message.format('dns'),
-                              DeprecationWarning)
+                raise errors.APIError(
+                    'dns is only supported for API version >= 1.10'
+                )
             if volumes_from is not None:
-                warnings.warn(warning_message.format('volumes_from'),
-                              DeprecationWarning)
+                raise errors.APIError(
+                    'volumes_from is only supported for API version >= 1.10'
+                )
         if dns_search:
             start_config['DnsSearch'] = dns_search
 
@@ -992,6 +1007,8 @@ class Client(requests.Session):
             start_config['Devices'] = utils.parse_devices(devices)
 
         url = self._url("/containers/{0}/start".format(container))
+        if not start_config:
+            start_config = None
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 

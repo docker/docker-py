@@ -71,16 +71,16 @@ class UtilsTest(unittest.TestCase):
                               'testdata/certs'),
                           DOCKER_TLS_VERIFY='1')
         kwargs = kwargs_from_env(assert_hostname=False)
-        self.assertEquals('https://192.168.59.103:2376', kwargs['base_url'])
+        self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
         self.assertTrue('ca.pem' in kwargs['tls'].verify)
         self.assertTrue('cert.pem' in kwargs['tls'].cert[0])
         self.assertTrue('key.pem' in kwargs['tls'].cert[1])
-        self.assertEquals(False, kwargs['tls'].assert_hostname)
+        self.assertEqual(False, kwargs['tls'].assert_hostname)
         try:
             client = Client(**kwargs)
-            self.assertEquals(kwargs['base_url'], client.base_url)
-            self.assertEquals(kwargs['tls'].verify, client.verify)
-            self.assertEquals(kwargs['tls'].cert, client.cert)
+            self.assertEqual(kwargs['base_url'], client.base_url)
+            self.assertEqual(kwargs['tls'].verify, client.verify)
+            self.assertEqual(kwargs['tls'].cert, client.cert)
         except TypeError as e:
             self.fail(e)
 
