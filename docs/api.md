@@ -172,8 +172,9 @@ character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
 https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if
-they are used against v1.10 of the Docker remote API. Those arguments should be
-passed to `start()` instead.
+they are used against v1.10 and above of the Docker remote API. Those
+arguments should be passed to `start()` instead, or as part of the `host_config`
+dictionary.
 
 **Params**:
 
@@ -200,7 +201,8 @@ from. Optionally a single string joining container id's with commas
 * cpu_shares (int or float): CPU shares (relative weight)
 * working_dir (str): Path to the working directory
 * domainname (str or list): Set custom DNS search domains
-* memswap_limit:
+* memswap_limit (int):
+* host_config (dict): A [HostConfig](hostconfig.md) dictionary
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 
@@ -563,9 +565,13 @@ Similar to the `docker start` command, but doesn't support attach options. Use
 `.logs()` to recover `stdout`/`stderr`.
 
 `binds` allows to bind a directory in the host to the container. See [Using
-volumes](volumes.md) for more information. `port_bindings` exposes container
-ports to the host. See [Port bindings](port-bindings.md) for more information.
+volumes](volumes.md) for more information.
+
+`port_bindings` exposes container ports to the host.
+See [Port bindings](port-bindings.md) for more information.
+
 `lxc_conf` allows to pass LXC configuration options using a dictionary.
+
 `privileged` starts the container in privileged mode.
 
 [Links](http://docs.docker.io/en/latest/use/working_with_links_names/) can be
