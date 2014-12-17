@@ -171,9 +171,37 @@ class TestCreateContainerWithBinds(BaseTestCase):
                 host_config=create_host_config(binds=binds)
             )
             container_id = container['Id']
-            self.client.start(
-                container_id,
+            self.client.start(container_id)
+            self.tmp_containers.append(container_id)
+            exitcode = self.client.wait(container_id)
+            self.assertEqual(exitcode, 0)
+            logs = self.client.logs(container_id)
+
+        os.unlink(shared_file)
+        self.assertIn(filename, logs)
+
+
+class TestStartContainerWithBinds(BaseTestCase):
+    def runTest(self):
+        mount_dest = '/mnt'
+        mount_origin = tempfile.mkdtemp()
+        self.tmp_folders.append(mount_origin)
+
+        filename = 'shared.txt'
+        shared_file = os.path.join(mount_origin, filename)
+        binds = {
+            mount_origin: {
+                'bind': mount_dest,
+                'ro': False,
+            },
+        }
+
+        with open(shared_file, 'w'):
+            container = self.client.create_container(
+                'busybox', ['ls', mount_dest], volumes={mount_dest: {}}
             )
+            container_id = container['Id']
+            self.client.start(container_id, binds=binds)
             self.tmp_containers.append(container_id)
             exitcode = self.client.wait(container_id)
             self.assertEqual(exitcode, 0)
@@ -229,7 +257,7 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
             self.assertEqual(inspect['State']['ExitCode'], 0)
 
 
-class TestStartContainerPrivileged(BaseTestCase):
+class TestCreateContainerPrivileged(BaseTestCase):
     def runTest(self):
         res = self.client.create_container(
             'busybox', 'true', host_config=create_host_config(privileged=True)
@@ -237,6 +265,29 @@ class TestStartContainerPrivileged(BaseTestCase):
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
         self.client.start(res['Id'])
+        inspect = self.client.inspect_container(res['Id'])
+        self.assertIn('Config', inspect)
+        self.assertIn('Id', inspect)
+        self.assertTrue(inspect['Id'].startswith(res['Id']))
+        self.assertIn('Image', inspect)
+        self.assertIn('State', inspect)
+        self.assertIn('Running', inspect['State'])
+        if not inspect['State']['Running']:
+            self.assertIn('ExitCode', inspect['State'])
+            self.assertEqual(inspect['State']['ExitCode'], 0)
+        # Since Nov 2013, the Privileged flag is no longer part of the
+        # container's config exposed via the API (safety concerns?).
+        #
+        if 'Privileged' in inspect['Config']:
+            self.assertEqual(inspect['Config']['Privileged'], True)
+
+
+class TestStartContainerPrivileged(BaseTestCase):
+    def runTest(self):
+        res = self.client.create_container('busybox', 'true')
+        self.assertIn('Id', res)
+        self.tmp_containers.append(res['Id'])
+        self.client.start(res['Id'], privileged=True)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
         self.assertIn('Id', inspect)
@@ -491,6 +542,34 @@ class TestPort(BaseTestCase):
         self.client.kill(id)
 
 
+class TestStartWithPortBindings(BaseTestCase):
+    def runTest(self):
+
+        port_bindings = {
+            1111: ('127.0.0.1', '4567'),
+            2222: ('127.0.0.1', '4568')
+        }
+
+        container = self.client.create_container(
+            'busybox', ['sleep', '60'], ports=port_bindings.keys()
+        )
+        id = container['Id']
+
+        self.client.start(container, port_bindings=port_bindings)
+
+        # Call the port function on each biding and compare expected vs actual
+        for port in port_bindings:
+            actual_bindings = self.client.port(container, port)
+            port_binding = actual_bindings.pop()
+
+            ip, host_port = port_binding['HostIp'], port_binding['HostPort']
+
+            self.assertEqual(ip, port_bindings[port][0])
+            self.assertEqual(host_port, port_bindings[port][1])
+
+        self.client.kill(id)
+
+
 class TestRestart(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
@@ -631,6 +710,86 @@ class TestCreateContainerWithLinks(BaseTestCase):
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
         self.client.start(container3_id)
+        self.assertEqual(self.client.wait(container3_id), 0)
+
+        logs = self.client.logs(container3_id)
+        self.assertIn('{0}_NAME='.format(link_env_prefix1), logs)
+        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix1), logs)
+        self.assertIn('{0}_NAME='.format(link_env_prefix2), logs)
+        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix2), logs)
+
+
+class TestStartContainerWithVolumesFrom(BaseTestCase):
+    def runTest(self):
+        vol_names = ['foobar_vol0', 'foobar_vol1']
+
+        res0 = self.client.create_container(
+            'busybox', 'true',
+            name=vol_names[0])
+        container1_id = res0['Id']
+        self.tmp_containers.append(container1_id)
+        self.client.start(container1_id)
+
+        res1 = self.client.create_container(
+            'busybox', 'true',
+            name=vol_names[1])
+        container2_id = res1['Id']
+        self.tmp_containers.append(container2_id)
+        self.client.start(container2_id)
+        with self.assertRaises(docker.errors.DockerException):
+            res2 = self.client.create_container(
+                'busybox', 'cat',
+                detach=True, stdin_open=True,
+                volumes_from=vol_names)
+        res2 = self.client.create_container(
+            'busybox', 'cat',
+            detach=True, stdin_open=True)
+        container3_id = res2['Id']
+        self.tmp_containers.append(container3_id)
+        self.client.start(container3_id, volumes_from=vol_names)
+
+        info = self.client.inspect_container(res2['Id'])
+        self.assertItemsEqual(info['HostConfig']['VolumesFrom'], vol_names)
+
+
+class TestStartContainerWithLinks(BaseTestCase):
+    def runTest(self):
+        res0 = self.client.create_container(
+            'busybox', 'cat',
+            detach=True, stdin_open=True,
+            environment={'FOO': '1'})
+
+        container1_id = res0['Id']
+        self.tmp_containers.append(container1_id)
+
+        self.client.start(container1_id)
+
+        res1 = self.client.create_container(
+            'busybox', 'cat',
+            detach=True, stdin_open=True,
+            environment={'FOO': '1'})
+
+        container2_id = res1['Id']
+        self.tmp_containers.append(container2_id)
+
+        self.client.start(container2_id)
+
+        # we don't want the first /
+        link_path1 = self.client.inspect_container(container1_id)['Name'][1:]
+        link_alias1 = 'mylink1'
+        link_env_prefix1 = link_alias1.upper()
+
+        link_path2 = self.client.inspect_container(container2_id)['Name'][1:]
+        link_alias2 = 'mylink2'
+        link_env_prefix2 = link_alias2.upper()
+
+        res2 = self.client.create_container('busybox', 'env')
+        container3_id = res2['Id']
+        self.tmp_containers.append(container3_id)
+        self.client.start(
+            container3_id,
+            links={link_path1: link_alias1, link_path2: link_alias2}
+        )
         self.assertEqual(self.client.wait(container3_id), 0)
 
         logs = self.client.logs(container3_id)
