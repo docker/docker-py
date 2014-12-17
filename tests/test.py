@@ -585,17 +585,12 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             args[0][0],
             url_prefix + 'containers/3cc2351ab11b/start'
         )
+        self.assertEqual(json.loads(args[1]['data']), {})
         self.assertEqual(
-            json.loads(args[1]['data']),
-            {"PublishAllPorts": False, "Privileged": False}
+            args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['headers'],
-            {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_lxc_conf(self):
@@ -876,17 +871,12 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             args[0][0],
             url_prefix + 'containers/3cc2351ab11b/start'
         )
+        self.assertEqual(json.loads(args[1]['data']), {})
         self.assertEqual(
-            json.loads(args[1]['data']),
-            {"PublishAllPorts": False, "Privileged": False}
+            args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['headers'],
-            {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_restart_policy(self):
