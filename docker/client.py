@@ -917,6 +917,8 @@ class Client(requests.Session):
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None):
 
+        start_config = {}
+
         def warn(arg_name, version):
             warning_message = (
                 '{0!r} parameter is deprecated for API version >= {1}'
@@ -959,9 +961,9 @@ class Client(requests.Session):
                 formatted.append({'Key': k, 'Value': str(v)})
             lxc_conf = formatted
 
-        start_config = {
-            'LxcConf': lxc_conf
-        }
+        if lxc_conf:
+            start_config['LxcConf'] = lxc_conf
+
         if binds:
             start_config['Binds'] = utils.convert_volume_binds(binds)
 
@@ -970,7 +972,8 @@ class Client(requests.Session):
                 port_bindings
             )
 
-        start_config['PublishAllPorts'] = publish_all_ports
+        if publish_all_ports:
+            start_config['PublishAllPorts'] = publish_all_ports
 
         if links:
             if isinstance(links, dict):
@@ -992,7 +995,8 @@ class Client(requests.Session):
 
             start_config['ExtraHosts'] = formatted_extra_hosts
 
-        start_config['Privileged'] = privileged
+        if privileged:
+            start_config['Privileged'] = privileged
 
         if utils.compare_version('1.10', self._version) >= 0:
             if dns is not None:
@@ -1030,6 +1034,8 @@ class Client(requests.Session):
             start_config['Devices'] = utils.parse_devices(devices)
 
         url = self._url("/containers/{0}/start".format(container))
+        if not start_config:
+            start_config = None
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
