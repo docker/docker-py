@@ -265,6 +265,12 @@ class Client(requests.Session):
     def _create_websocket_connection(self, url):
         return websocket.create_connection(url)
 
+    def _warn_deprecated(self, arg_name, version):
+        warning_message = (
+            '{0!r} is deprecated for API version >= {1}'
+        ).format(arg_name, version)
+        warnings.warn(warning_message, DeprecationWarning)
+
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
         if six.PY3:
@@ -918,39 +924,6 @@ class Client(requests.Session):
               extra_hosts=None):
 
         start_config = {}
-
-        def warn(arg_name, version):
-            warning_message = (
-                '{0!r} parameter is deprecated for API version >= {1}'
-            ).format(arg_name, version)
-            warnings.warn(warning_message, DeprecationWarning)
-
-        if utils.compare_version('1.16', self._version) >= 0:
-            version = '1.16'
-            if binds:
-                warn('binds', version)
-            if port_bindings:
-                warn('port_bindings', version)
-            if lxc_conf:
-                warn('lxc_conf', version)
-            if publish_all_ports:
-                warn('publish_all_ports', version)
-            if links:
-                warn('links', version)
-            if privileged:
-                warn('privileged', version)
-            if dns or dns_search:
-                warn('dns/dns_search', version)
-            if volumes_from:
-                warn('volumes_from', version)
-            if network_mode:
-                warn('network_mode', version)
-            if restart_policy:
-                warn('restart_policy', version)
-            if cap_add or cap_drop:
-                warn('cap_add/cap_drop', version)
-            if devices:
-                warn('devices', version)
 
         if isinstance(container, dict):
             container = container.get('Id')
