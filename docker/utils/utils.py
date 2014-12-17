@@ -246,7 +246,7 @@ def parse_host(addr):
 def parse_devices(devices):
     device_list = []
     for device in devices:
-        device_mapping = device.split(",")
+        device_mapping = device.split(":")
         if device_mapping:
             path_on_host = device_mapping[0]
             if len(device_mapping) > 1:
