@@ -2148,10 +2148,17 @@ class StreamTest(Cleanup, unittest.TestCase):
             b'\r\n'
         ) + b'\r\n'.join(lines)
 
-        client = docker.Client(base_url="http+unix:/" + self.socket_file)
-        stream = client.build(
-            path=os.path.dirname(self.build_context),
-            stream=True)
+        client = docker.Client(base_url="http+unix://" + self.socket_file)
+        for i in range(5):
+            try:
+                stream = client.build(
+                    path=os.path.dirname(self.build_context),
+                    stream=True
+                )
+                break
+            except requests.ConnectionError as e:
+                if i == 4:
+                    raise e
 
         self.assertEqual(list(stream), [
             str(i).encode() for i in range(50)])
