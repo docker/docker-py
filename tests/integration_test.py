@@ -132,7 +132,7 @@ class TestListContainers(BaseTestCase):
         self.assertEqual(len(retrieved), 1)
         retrieved = retrieved[0]
         self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], u'true')
+        self.assertEqual(retrieved['Command'], unicode('true'))
         self.assertIn('Image', retrieved)
         self.assertRegexpMatches(retrieved['Image'], r'busybox:.*')
         self.assertIn('Status', retrieved)
@@ -1064,7 +1064,7 @@ class TestBuildFromStringIO(BaseTestCase):
     def runTest(self):
         if six.PY3:
             return
-        script = io.StringIO(u'\n'.join([
+        script = io.StringIO(unicode('\n').join([
             'FROM busybox',
             'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
