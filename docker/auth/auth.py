@@ -117,18 +117,16 @@ def encode_full_header(auth):
     return encode_header({'configs': auth})
 
 
-def load_config(root=None):
+def load_config(config_path=None):
     """
     Loads authentication data from a Docker configuration file in the given
-    root directory.
-
-    If root passed config_file is set to new path.
+    root directory or if config_path is passed use given path.
     """
     conf = {}
     data = None
 
-    config_file = root or os.path.join(os.environ.get('HOME', '.'),
-                                       DOCKER_CONFIG_FILENAME)
+    config_file = config_path or os.path.join(os.environ.get('HOME', '.'),
+                                              DOCKER_CONFIG_FILENAME)
 
     # if config path doesn't exist return empty config
     if not os.path.exists(config_file):
