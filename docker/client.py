@@ -715,10 +715,14 @@ class Client(requests.Session):
         self._raise_for_status(res)
 
     def login(self, username, password=None, email=None, registry=None,
-              reauth=False, insecure_registry=False):
+              reauth=False, insecure_registry=False, dockercfg_path=None):
         # If we don't have any auth data so far, try reloading the config file
         # one more time in case anything showed up in there.
-        if not self._auth_configs:
+        # If dockercfg_path is passed check to see if the config file exists,
+        # if so load that config.
+        if dockercfg_path and os.path.exists(dockercfg_path):
+            self._auth_configs = auth.load_config(dockercfg_path)
+        elif not self._auth_configs:
             self._auth_configs = auth.load_config()
 
         registry = auth.expand_registry_url(registry, insecure_registry) \

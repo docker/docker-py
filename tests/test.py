@@ -29,6 +29,7 @@ import threading
 import time
 import unittest
 import warnings
+import random
 
 import docker
 import requests
@@ -2004,15 +2005,44 @@ class DockerClientTest(Cleanup, unittest.TestCase):
     def test_load_config(self):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
-        f = open(os.path.join(folder, '.dockercfg'), 'w')
+        dockercfg_path = os.path.join(folder, '.dockercfg')
+        f = open(dockercfg_path, 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         f.write('auth = {0}\n'.format(auth_))
         f.write('email = sakuya@scarlet.net')
         f.close()
-        cfg = docker.auth.load_config(folder)
+        cfg = docker.auth.load_config(dockercfg_path)
         self.assertTrue(docker.auth.INDEX_URL in cfg)
         self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
         cfg = cfg[docker.auth.INDEX_URL]
+        self.assertEqual(cfg['username'], 'sakuya')
+        self.assertEqual(cfg['password'], 'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('auth'), None)
+
+    def test_load_config_with_random_name(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+
+        dockercfg_path = os.path.join(folder,
+                                      '.{0}.dockercfg'.format(
+                                          random.randrange(100000)))
+        registry = 'https://your.private.registry.io'
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        config = {
+            registry: {
+                'auth': '{0}'.format(auth_),
+                'email': 'sakuya@scarlet.net'
+            }
+        }
+
+        with open(dockercfg_path, 'w') as f:
+            f.write(json.dumps(config))
+
+        cfg = docker.auth.load_config(dockercfg_path)
+        self.assertTrue(registry in cfg)
+        self.assertNotEqual(cfg[registry], None)
+        cfg = cfg[registry]
         self.assertEqual(cfg['username'], 'sakuya')
         self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
