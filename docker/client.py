@@ -115,7 +115,8 @@ class Client(requests.Session):
             command = shlex.split(str(command))
         if isinstance(environment, dict):
             environment = [
-                unicode('{0}={1}').format(k, v) for k, v in environment.items()
+                (six.text_type('{0}={1}').format(k, v)
+                    for k, v in environment.items())
             ]
 
         if isinstance(mem_limit, six.string_types):
