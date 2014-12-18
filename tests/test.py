@@ -2074,16 +2074,15 @@ class DockerClientTest(Cleanup, unittest.TestCase):
 class StreamTest(Cleanup, unittest.TestCase):
 
     def setUp(self):
-        folder = tempfile.mkdtemp()
+        socket_dir = tempfile.mkdtemp()
         self.build_context = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, folder)
+        self.addCleanup(shutil.rmtree, socket_dir)
         self.addCleanup(shutil.rmtree, self.build_context)
-        self.socket_file = os.path.join(folder, 'test_sock.sock')
-        self.server_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.server_sock.bind(self.socket_file)
+        self.socket_file = os.path.join(socket_dir, 'test_sock.sock')
+        self.server_socket = self._setup_socket()
+        self.stop_server = False
         server_thread = threading.Thread(target=self.run_server)
         server_thread.setDaemon(True)
-        self.stop_server = False
         server_thread.start()
         self.response = None
         self.request_handler = None
@@ -2093,24 +2092,31 @@ class StreamTest(Cleanup, unittest.TestCase):
     def stop(self):
         self.stop_server = True
 
+    def _setup_socket(self):
+        server_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server_sock.bind(self.socket_file)
+        # Non-blocking mode so that we can shut the test down easily
+        server_sock.setblocking(0)
+        server_sock.listen(5)
+        return server_sock
+
     def run_server(self):
-        self.server_sock.setblocking(0)
+        try:
+            while not self.stop_server:
+                try:
+                    connection, client_address = self.server_socket.accept()
+                except socket.error:
+                    # Probably no connection to accept yet
+                    time.sleep(0.01)
+                    continue
 
-        self.server_sock.listen(5)
-        while not self.stop_server:
-            try:
-                connection, client_address = self.server_sock.accept()
-            except socket.error:
-                time.sleep(0.01)
-                continue
-
-            connection.setblocking(1)
-            try:
-                self.request_handler(connection)
-            finally:
-                connection.close()
-
-        self.server_sock.close()
+                connection.setblocking(1)
+                try:
+                    self.request_handler(connection)
+                finally:
+                    connection.close()
+        finally:
+            self.server_socket.close()
 
     def early_response_sending_handler(self, connection):
         data = b''
@@ -2152,7 +2158,7 @@ class StreamTest(Cleanup, unittest.TestCase):
         for i in range(5):
             try:
                 stream = client.build(
-                    path=os.path.dirname(self.build_context),
+                    path=self.build_context,
                     stream=True
                 )
                 break
