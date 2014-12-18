@@ -1,6 +1,43 @@
 Change Log
 ==========
 
+0.7.0
+-----
+
+### Breaking changes
+
+* Passing `dns` or `volumes_from` in `Client.start` with API version < 1.10
+  will now raise an exception (previously only triggered a warning)
+
+### Features
+
+* Added support for `host_config` in `Client.create_container`
+* Added utility method `docker.utils.create_host_config` to help build a
+  proper `HostConfig` dictionary.
+* Added support for the `pull` parameter in `Client.build`
+* Added support for the `forcerm` parameter in `Client.build`
+* Added support for `extra_hosts` in `Client.start`
+* Added support for a custom `timeout` in `Client.wait`
+* Added support for custom `.dockercfg` loading in `Client.login`
+  (`dockercfg_path` argument)
+
+### Bugfixes
+
+* Fixed a bug where some output wouldn't be streamed properly in streaming
+  chunked responses
+* Fixed a bug where the `devices` param didn't recognize the proper delimiter
+* `Client.login` now properly expands the `registry` URL if provided.
+* Fixed a bug where unicode characters in passed for `environment` in
+  `create_container` would break.
+
+### Miscellaneous
+
+* Several unit tests and integration tests improvements.
+* `Client` constructor now enforces passing the `version` parameter as a
+  string.
+* Build context files are now ordered by filename when creating the archive
+  (for consistency with docker mainline behavior)
+
 0.6.0
 -----
 * **This version introduces breaking changes!**
