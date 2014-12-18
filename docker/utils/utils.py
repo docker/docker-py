@@ -300,7 +300,8 @@ def create_host_config(
     binds=None, port_bindings=None, lxc_conf=None,
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
-    restart_policy=None, cap_add=None, cap_drop=None, devices=None
+    restart_policy=None, cap_add=None, cap_drop=None, devices=None,
+    extra_hosts=None
 ):
     host_config = {
         'Privileged': privileged,
@@ -340,6 +341,15 @@ def create_host_config(
         host_config['PortBindings'] = convert_port_bindings(
             port_bindings
         )
+
+    if extra_hosts:
+        if isinstance(extra_hosts, dict):
+            extra_hosts = [
+                '{0}:{1}'.format(k, v)
+                for k, v in sorted(six.iteritems(extra_hosts))
+            ]
+
+            host_config['ExtraHosts'] = extra_hosts
 
     host_config['PublishAllPorts'] = publish_all_ports
 
