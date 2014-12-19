@@ -36,6 +36,37 @@ if not six.PY3:
 DEFAULT_DOCKER_API_VERSION = '1.16'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
+DOCKER_STREAM_STDOUT = 1
+DOCKER_STREAM_STDERR = 2
+
+
+class ClientSock:
+    def __init__(self, response, client, stream):
+        self.response = response
+        self.client = client
+        self.stream = stream
+
+    def read(self, stdout=True, stderr=True):
+        res = self.response
+        if self.stream:
+            return self.client._multiplexed_socket_stream_helper(res,
+                                                                 stdout,
+                                                                 stderr)
+        elif six.PY3:
+            return bytes().join(
+                [x for x in self.client._multiplexed_buffer_helper(res,
+                                                                   stdout,
+                                                                   stderr)]
+            )
+        else:
+            return str().join(
+                [x for x in self.client._multiplexed_buffer_helper(res,
+                                                                   stdout,
+                                                                   stderr)]
+            )
+
+    def write(self, data):
+        self.socket.sendall(data)
 
 
 class Client(requests.Session):
@@ -302,7 +333,7 @@ class Client(requests.Session):
                 data += reader.read(reader._fp.chunk_left)
             yield data
 
-    def _multiplexed_buffer_helper(self, response):
+    def _multiplexed_buffer_helper(self, response, stdout=True, stderr=True):
         """A generator of multiplexed data blocks read from a buffered
         response."""
         buf = self._result(response, binary=True)
@@ -310,13 +341,18 @@ class Client(requests.Session):
         while True:
             if len(buf[walker:]) < 8:
                 break
-            _, length = struct.unpack_from('>BxxxL', buf[walker:])
+            stream_type, length = struct.unpack_from('>BxxxL', buf[walker:])
             start = walker + STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end
+            if stream_type == DOCKER_STREAM_STDOUT and not stdout:
+                continue
+            if stream_type == DOCKER_STREAM_STDERR and not stderr:
+                continue
             yield buf[start:end]
 
-    def _multiplexed_socket_stream_helper(self, response):
+    def _multiplexed_socket_stream_helper(self, response, stdout=True,
+                                          stderr=True):
         """A generator of multiplexed data blocks coming from a response
         socket."""
         socket = self._get_raw_response_socket(response)
@@ -340,10 +376,14 @@ class Client(requests.Session):
             header = recvall(socket, STREAM_HEADER_SIZE_BYTES)
             if not header:
                 break
-            _, length = struct.unpack('>BxxxL', header)
+            stream_type, length = struct.unpack('>BxxxL', header)
             if not length:
                 break
             data = recvall(socket, length)
+            if stream_type == DOCKER_STREAM_STDOUT and not stdout:
+                continue
+            if stream_type == DOCKER_STREAM_STDERR and not stderr:
+                continue
             if not data:
                 break
             yield data
@@ -564,6 +604,13 @@ class Client(requests.Session):
 
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
+        cmd_id = self.executeCreate(container, cmd, detach, stdout, stderr,
+                                    stream, False, tty)
+        return self.executeStart(cmd_id, detach, tty, stream).read()
+
+    def executeCreate(self, container, cmd, detach=False,
+                      stdout=True, stderr=True, stream=False,
+                      stdin=False, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
             raise errors.APIError('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
@@ -576,7 +623,7 @@ class Client(requests.Session):
             'User': '',
             'Privileged': False,
             'Tty': tty,
-            'AttachStdin': False,
+            'AttachStdin': stdin,
             'AttachStdout': stdout,
             'AttachStderr': stderr,
             'Detach': detach,
@@ -588,21 +635,19 @@ class Client(requests.Session):
         res = self._post_json(url, data=data)
         self._raise_for_status(res)
 
-        # start the command
         cmd_id = res.json().get('Id')
+        return cmd_id
+
+    def executeStart(self, cmd_id, detach=False, tty=False, stream=False):
+        data = {
+            'Detach': detach,
+            'Tty': tty
+        }
+
         res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)),
                               data=data, stream=stream)
         self._raise_for_status(res)
-        if stream:
-            return self._multiplexed_socket_stream_helper(res)
-        elif six.PY3:
-            return bytes().join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
-        else:
-            return str().join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
+        return ClientSock(res, self, stream)
 
     def export(self, container):
         if isinstance(container, dict):
