@@ -54,7 +54,7 @@ correct value (e.g `gzip`).
 * nocache (bool): Don't use the cache when set to `True`
 * rm (bool): Remove intermediate containers
 * stream (bool): Return a blocking generator you can iterate over to retrieve
-build output as it happens
+  build output as it happens
 * timeout (int): HTTP timeout
 * custom_context (bool): Optional if using `fileobj`
 * encoding (str): The encoding for a stream. Set to `gzip` for compressing
@@ -385,6 +385,8 @@ Nearly identical to the `docker login` command, but non-interactive.
 * email (str): The email for the registry account
 * registry (str): URL to the registry. Ex:`https://index.docker.io/v1/`
 * reauth (bool): Whether refresh existing authentication on the docker server.
+* dockercfg_path (str): Use a custom path for the .dockercfg file
+  (default `$HOME/.dockercfg`)
 
 **Returns** (dict): The response from the login request
 
@@ -636,6 +638,7 @@ from. Optionally a single string joining container id's with commas
 `['on-failure', 'always']`
 * cap_add (list of str): See note above
 * cap_drop (list of str): See note above
+* extra_hosts (dict): custom host-to-IP mappings (host:ip)
 
 ```python
 >>> from docker import Client

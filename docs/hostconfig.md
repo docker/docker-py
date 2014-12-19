@@ -81,6 +81,7 @@ for example:
 * restart_policy (dict):  "Name" param must be one of `['on-failure', 'always']`
 * cap_add (list of str): Add kernel capabilities
 * cap_drop (list of str): Drop kernel capabilities
+* extra_hosts (dict): custom host-to-IP mappings (host:ip)
 
 **Returns** (dict) HostConfig dictionary
 

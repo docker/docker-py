@@ -5,7 +5,8 @@ import unittest
 from docker.client import Client
 from docker.errors import DockerException
 from docker.utils import (
-    parse_repository_tag, parse_host, convert_filters, kwargs_from_env
+    parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
+    create_host_config
 )
 
 
@@ -94,6 +95,10 @@ class UtilsTest(unittest.TestCase):
 
         for filters, expected in tests:
             self.assertEqual(convert_filters(filters), expected)
+
+    def test_create_host_config(self):
+        empty_config = create_host_config()
+        self.assertEqual(empty_config, {})
 
 
 if __name__ == '__main__':

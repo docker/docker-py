@@ -35,6 +35,7 @@ DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
 
 warnings.simplefilter('error')
 create_host_config = docker.utils.create_host_config
+compare_version = docker.utils.compare_version
 
 
 class BaseTestCase(unittest.TestCase):
@@ -43,6 +44,9 @@ class BaseTestCase(unittest.TestCase):
     tmp_folders = []
 
     def setUp(self):
+        if six.PY2:
+            self.assertRegex = self.assertRegexpMatches
+            self.assertCountEqual = self.assertItemsEqual
         self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=5)
         self.tmp_imgs = []
         self.tmp_containers = []
@@ -62,6 +66,7 @@ class BaseTestCase(unittest.TestCase):
                 pass
         for folder in self.tmp_folders:
             shutil.rmtree(folder)
+        self.client.close()
 
 #########################
 #   INFORMATION TESTS   #
@@ -134,7 +139,7 @@ class TestListContainers(BaseTestCase):
         self.assertIn('Command', retrieved)
         self.assertEqual(retrieved['Command'], six.text_type('true'))
         self.assertIn('Image', retrieved)
-        self.assertRegexpMatches(retrieved['Image'], r'busybox:.*')
+        self.assertRegex(retrieved['Image'], r'busybox:.*')
         self.assertIn('Status', retrieved)
 
 #####################
@@ -178,6 +183,8 @@ class TestCreateContainerWithBinds(BaseTestCase):
             logs = self.client.logs(container_id)
 
         os.unlink(shared_file)
+        if six.PY3:
+            logs = logs.decode('utf-8')
         self.assertIn(filename, logs)
 
 
@@ -208,6 +215,8 @@ class TestStartContainerWithBinds(BaseTestCase):
             logs = self.client.logs(container_id)
 
         os.unlink(shared_file)
+        if six.PY3:
+            logs = logs.decode('utf-8')
         self.assertIn(filename, logs)
 
 
@@ -517,12 +526,12 @@ class TestPort(BaseTestCase):
     def runTest(self):
 
         port_bindings = {
-            1111: ('127.0.0.1', '4567'),
-            2222: ('127.0.0.1', '4568')
+            '1111': ('127.0.0.1', '4567'),
+            '2222': ('127.0.0.1', '4568')
         }
 
         container = self.client.create_container(
-            'busybox', ['sleep', '60'], ports=port_bindings.keys(),
+            'busybox', ['sleep', '60'], ports=list(port_bindings.keys()),
             host_config=create_host_config(port_bindings=port_bindings)
         )
         id = container['Id']
@@ -546,12 +555,12 @@ class TestStartWithPortBindings(BaseTestCase):
     def runTest(self):
 
         port_bindings = {
-            1111: ('127.0.0.1', '4567'),
-            2222: ('127.0.0.1', '4568')
+            '1111': ('127.0.0.1', '4567'),
+            '2222': ('127.0.0.1', '4568')
         }
 
         container = self.client.create_container(
-            'busybox', ['sleep', '60'], ports=port_bindings.keys()
+            'busybox', ['sleep', '60'], ports=list(port_bindings.keys())
         )
         id = container['Id']
 
@@ -668,7 +677,7 @@ class TestCreateContainerWithVolumesFrom(BaseTestCase):
         self.client.start(container3_id)
 
         info = self.client.inspect_container(res2['Id'])
-        self.assertItemsEqual(info['HostConfig']['VolumesFrom'], vol_names)
+        self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
 
 class TestCreateContainerWithLinks(BaseTestCase):
@@ -713,6 +722,8 @@ class TestCreateContainerWithLinks(BaseTestCase):
         self.assertEqual(self.client.wait(container3_id), 0)
 
         logs = self.client.logs(container3_id)
+        if six.PY3:
+            logs = logs.decode('utf-8')
         self.assertIn('{0}_NAME='.format(link_env_prefix1), logs)
         self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix1), logs)
         self.assertIn('{0}_NAME='.format(link_env_prefix2), logs)
@@ -749,7 +760,7 @@ class TestStartContainerWithVolumesFrom(BaseTestCase):
         self.client.start(container3_id, volumes_from=vol_names)
 
         info = self.client.inspect_container(res2['Id'])
-        self.assertItemsEqual(info['HostConfig']['VolumesFrom'], vol_names)
+        self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
 
 class TestStartContainerWithLinks(BaseTestCase):
@@ -793,6 +804,8 @@ class TestStartContainerWithLinks(BaseTestCase):
         self.assertEqual(self.client.wait(container3_id), 0)
 
         logs = self.client.logs(container3_id)
+        if six.PY3:
+            logs = logs.decode('utf-8')
         self.assertIn('{0}_NAME='.format(link_env_prefix1), logs)
         self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix1), logs)
         self.assertIn('{0}_NAME='.format(link_env_prefix2), logs)
@@ -939,6 +952,7 @@ class TestRemoveLink(BaseTestCase):
 
 class TestPull(BaseTestCase):
     def runTest(self):
+        self.client.close()
         self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         try:
             self.client.remove_image('busybox')
@@ -947,7 +961,7 @@ class TestPull(BaseTestCase):
         res = self.client.pull('busybox')
         self.assertEqual(type(res), six.text_type)
         self.assertGreaterEqual(
-            self.client.images('busybox'), 1
+            len(self.client.images('busybox')), 1
         )
         img_info = self.client.inspect_image('busybox')
         self.assertIn('Id', img_info)
@@ -955,6 +969,7 @@ class TestPull(BaseTestCase):
 
 class TestPullStream(BaseTestCase):
     def runTest(self):
+        self.client.close()
         self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
         try:
             self.client.remove_image('busybox')
@@ -962,9 +977,11 @@ class TestPullStream(BaseTestCase):
             pass
         stream = self.client.pull('busybox', stream=True)
         for chunk in stream:
+            if six.PY3:
+                chunk = chunk.decode('utf-8')
             json.loads(chunk)  # ensure chunk is a single, valid JSON blob
         self.assertGreaterEqual(
-            self.client.images('busybox'), 1
+            len(self.client.images('busybox')), 1
         )
         img_info = self.client.inspect_image('busybox')
         self.assertIn('Id', img_info)
@@ -1013,7 +1030,7 @@ class TestRemoveImage(BaseTestCase):
 
 class TestBuild(BaseTestCase):
     def runTest(self):
-        if self.client._version >= 1.8:
+        if compare_version(self.client._version, '1.8') < 0:
             return
         script = io.BytesIO('\n'.join([
             'FROM busybox',
@@ -1055,6 +1072,8 @@ class TestBuildStream(BaseTestCase):
         stream = self.client.build(fileobj=script, stream=True)
         logs = ''
         for chunk in stream:
+            if six.PY3:
+                chunk = chunk.decode('utf-8')
             json.loads(chunk)  # ensure chunk is a single, valid JSON blob
             logs += chunk
         self.assertNotEqual(logs, '')
@@ -1075,13 +1094,15 @@ class TestBuildFromStringIO(BaseTestCase):
         stream = self.client.build(fileobj=script, stream=True)
         logs = ''
         for chunk in stream:
+            if six.PY3:
+                chunk = chunk.decode('utf-8')
             logs += chunk
         self.assertNotEqual(logs, '')
 
 
 class TestBuildWithAuth(BaseTestCase):
     def runTest(self):
-        if self.client._version < 1.9:
+        if compare_version(self.client._version, '1.9') >= 0:
             return
 
         k = 'K4104GON3P4Q6ZUJFZRRC2ZQTBJ5YT0UMZD7TGT7ZVIR8Y05FAH2TJQI6Y90SMIB'
@@ -1097,6 +1118,8 @@ class TestBuildWithAuth(BaseTestCase):
         stream = self.client.build(fileobj=script, stream=True)
         logs = ''
         for chunk in stream:
+            if six.PY3:
+                chunk = chunk.decode('utf-8')
             logs += chunk
 
         self.assertNotEqual(logs, '')
@@ -1105,7 +1128,7 @@ class TestBuildWithAuth(BaseTestCase):
 
 class TestBuildWithDockerignore(Cleanup, BaseTestCase):
     def runTest(self):
-        if self.client._version < 1.8:
+        if compare_version(self.client._version, '1.8') >= 0:
             return
 
         base_dir = tempfile.mkdtemp()
@@ -1136,6 +1159,8 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
         stream = self.client.build(path=base_dir, stream=True)
         logs = ''
         for chunk in stream:
+            if six.PY3:
+                chunk = chunk.decode('utf-8')
             logs += chunk
         self.assertFalse('node_modules' in logs)
         self.assertTrue('not-ignored' in logs)
@@ -1171,16 +1196,17 @@ class TestLoadConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
         self.tmp_folders.append(folder)
-        f = open(os.path.join(folder, '.dockercfg'), 'w')
+        cfg_path = os.path.join(folder, '.dockercfg')
+        f = open(cfg_path, 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         f.write('auth = {0}\n'.format(auth_))
         f.write('email = sakuya@scarlet.net')
         f.close()
-        cfg = docker.auth.load_config(folder)
+        cfg = docker.auth.load_config(cfg_path)
         self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
         cfg = cfg[docker.auth.INDEX_URL]
-        self.assertEqual(cfg['username'], b'sakuya')
-        self.assertEqual(cfg['password'], b'izayoi')
+        self.assertEqual(cfg['username'], 'sakuya')
+        self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
 
@@ -1189,17 +1215,18 @@ class TestLoadJSONConfig(BaseTestCase):
     def runTest(self):
         folder = tempfile.mkdtemp()
         self.tmp_folders.append(folder)
+        cfg_path = os.path.join(folder, '.dockercfg')
         f = open(os.path.join(folder, '.dockercfg'), 'w')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         email_ = 'sakuya@scarlet.net'
-        f.write('{{"{}": {{"auth": "{}", "email": "{}"}}}}\n'.format(
+        f.write('{{"{0}": {{"auth": "{1}", "email": "{2}"}}}}\n'.format(
             docker.auth.INDEX_URL, auth_, email_))
         f.close()
-        cfg = docker.auth.load_config(folder)
+        cfg = docker.auth.load_config(cfg_path)
         self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
         cfg = cfg[docker.auth.INDEX_URL]
-        self.assertEqual(cfg['username'], b'sakuya')
-        self.assertEqual(cfg['password'], b'izayoi')
+        self.assertEqual(cfg['username'], 'sakuya')
+        self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('Auth'), None)
 
@@ -1248,4 +1275,5 @@ class UnixconnTestCase(unittest.TestCase):
 if __name__ == '__main__':
     c = docker.Client(base_url=DEFAULT_BASE_URL)
     c.pull('busybox')
+    c.close()
     unittest.main()
