@@ -911,63 +911,7 @@ class Client(requests.Session):
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None):
 
-        start_config = {}
-
-        if isinstance(container, dict):
-            container = container.get('Id')
-
-        if isinstance(lxc_conf, dict):
-            formatted = []
-            for k, v in six.iteritems(lxc_conf):
-                formatted.append({'Key': k, 'Value': str(v)})
-            lxc_conf = formatted
-
-        if lxc_conf:
-            start_config['LxcConf'] = lxc_conf
-
-        if binds:
-            start_config['Binds'] = utils.convert_volume_binds(binds)
-
-        if port_bindings:
-            start_config['PortBindings'] = utils.convert_port_bindings(
-                port_bindings
-            )
-
-        if publish_all_ports:
-            start_config['PublishAllPorts'] = publish_all_ports
-
-        if links:
-            if isinstance(links, dict):
-                links = six.iteritems(links)
-
-            formatted_links = [
-                '{0}:{1}'.format(k, v) for k, v in sorted(links)
-            ]
-
-            start_config['Links'] = formatted_links
-
-        if extra_hosts:
-            if isinstance(extra_hosts, dict):
-                extra_hosts = six.iteritems(extra_hosts)
-
-            formatted_extra_hosts = [
-                '{0}:{1}'.format(k, v) for k, v in sorted(extra_hosts)
-            ]
-
-            start_config['ExtraHosts'] = formatted_extra_hosts
-
-        if privileged:
-            start_config['Privileged'] = privileged
-
-        if utils.compare_version('1.10', self._version) >= 0:
-            if dns is not None:
-                start_config['Dns'] = dns
-            if volumes_from is not None:
-                if isinstance(volumes_from, six.string_types):
-                    volumes_from = volumes_from.split(',')
-                start_config['VolumesFrom'] = volumes_from
-        else:
-
+        if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
                 raise errors.APIError(
                     'dns is only supported for API version >= 1.10'
@@ -976,23 +920,18 @@ class Client(requests.Session):
                 raise errors.APIError(
                     'volumes_from is only supported for API version >= 1.10'
                 )
-        if dns_search:
-            start_config['DnsSearch'] = dns_search
 
-        if network_mode:
-            start_config['NetworkMode'] = network_mode
+        start_config = utils.create_host_config(
+            binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
+            publish_all_ports=publish_all_ports, links=links, dns=dns,
+            privileged=privileged, dns_search=dns_search, cap_add=cap_add,
+            cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
+            network_mode=network_mode, restart_policy=restart_policy,
+            extra_hosts=extra_hosts
+        )
 
-        if restart_policy:
-            start_config['RestartPolicy'] = restart_policy
-
-        if cap_add:
-            start_config['CapAdd'] = cap_add
-
-        if cap_drop:
-            start_config['CapDrop'] = cap_drop
-
-        if devices:
-            start_config['Devices'] = utils.parse_devices(devices)
+        if isinstance(container, dict):
+            container = container.get('Id')
 
         url = self._url("/containers/{0}/start".format(container))
         if not start_config:

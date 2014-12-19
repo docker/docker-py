@@ -303,10 +303,13 @@ def create_host_config(
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None
 ):
-    host_config = {
-        'Privileged': privileged,
-        'PublishAllPorts': publish_all_ports,
-    }
+    host_config = {}
+
+    if privileged:
+        host_config['Privileged'] = privileged
+
+    if publish_all_ports:
+        host_config['PublishAllPorts'] = publish_all_ports
 
     if dns_search:
         host_config['DnsSearch'] = dns_search
@@ -351,8 +354,6 @@ def create_host_config(
 
             host_config['ExtraHosts'] = extra_hosts
 
-    host_config['PublishAllPorts'] = publish_all_ports
-
     if links:
         if isinstance(links, dict):
             links = six.iteritems(links)
@@ -368,6 +369,8 @@ def create_host_config(
         for k, v in six.iteritems(lxc_conf):
             formatted.append({'Key': k, 'Value': str(v)})
         lxc_conf = formatted
-    host_config['LxcConf'] = lxc_conf
+
+    if lxc_conf:
+        host_config['LxcConf'] = lxc_conf
 
     return host_config

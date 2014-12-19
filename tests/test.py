@@ -733,7 +733,6 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['HostConfig']['PublishAllPorts'], False)
         port_bindings = data['HostConfig']['PortBindings']
         self.assertTrue('1111/tcp' in port_bindings)
         self.assertTrue('2222/tcp' in port_bindings)
