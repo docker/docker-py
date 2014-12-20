@@ -21,3 +21,17 @@ from docker.utils import kwargs_from_env
 client = Client(**kwargs_from_env())
 print client.version()
 ```
+
+To avoid the common error `SSLError: hostname '192.168.59.103' doesn't match 'boot2docker'`, you
+can disable hostname validation.
+
+```python
+from docker.client import Client
+from docker.utils import kwargs_from_env
+
+kwargs = kwargs_from_env()
+kwargs['tls'].assert_hostname = False
+
+client = Client(**kwargs)
+print client.version()
+```
