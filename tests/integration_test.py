@@ -870,6 +870,17 @@ class TestExecuteCommandStreaming(BaseTestCase):
         self.assertEqual(res, expected)
 
 
+class TestRunContainerStreaming(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', '/bin/sh',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        socket = self.client.attach_socket(container, ws=False)
+        self.assertTrue(socket.fileno() > -1)
+
+
 class TestPauseUnpauseContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
