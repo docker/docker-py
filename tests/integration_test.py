@@ -12,24 +12,31 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import time
 import base64
+import contextlib
 import json
 import io
 import os
 import shutil
 import signal
+import socket
+import tarfile
 import tempfile
+import threading
+import time
 import unittest
 import warnings
 
 import docker
 import six
 
+from six.moves import BaseHTTPServer
+from six.moves import socketserver
+
 from test import Cleanup
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push; tag; get; load
+# export; history; insert; port; push; tag; get; load
 
 DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
 
@@ -1022,6 +1029,157 @@ class TestRemoveImage(BaseTestCase):
         images = self.client.images(all=True)
         res = [x for x in images if x['Id'].startswith(img_id)]
         self.assertEqual(len(res), 0)
+
+
+##################
+#  IMPORT TESTS  #
+##################
+
+
+class ImportTestCase(BaseTestCase):
+    '''Base class for `docker import` test cases.'''
+
+    # Use a large file size to increase the chance of triggering any
+    # MemoryError exceptions we might hit.
+    TAR_SIZE = 512 * 1024 * 1024
+
+    def write_dummy_tar_content(self, n_bytes, tar_fd):
+        def extend_file(f, n_bytes):
+            f.seek(n_bytes - 1)
+            f.write(bytearray([65]))
+            f.seek(0)
+
+        tar = tarfile.TarFile(fileobj=tar_fd, mode='w')
+
+        with tempfile.NamedTemporaryFile() as f:
+            extend_file(f, n_bytes)
+            tarinfo = tar.gettarinfo(name=f.name, arcname='testdata')
+            tar.addfile(tarinfo, fileobj=f)
+
+        tar.close()
+
+    @contextlib.contextmanager
+    def dummy_tar_stream(self, n_bytes):
+        '''Yields a stream that is valid tar data of size n_bytes.'''
+        with tempfile.NamedTemporaryFile() as tar_file:
+            self.write_dummy_tar_content(n_bytes, tar_file)
+            tar_file.seek(0)
+            yield tar_file
+
+    @contextlib.contextmanager
+    def dummy_tar_file(self, n_bytes):
+        '''Yields the name of a valid tar file of size n_bytes.'''
+        with tempfile.NamedTemporaryFile() as tar_file:
+            self.write_dummy_tar_content(n_bytes, tar_file)
+            tar_file.seek(0)
+            yield tar_file.name
+
+
+class TestImportFromBytes(ImportTestCase):
+    '''Tests importing an image from in-memory byte data.'''
+
+    def runTest(self):
+        with self.dummy_tar_stream(n_bytes=500) as f:
+            content = f.read()
+
+        # The generic import_image() function cannot import in-memory bytes
+        # data that happens to be represented as a string type, because
+        # import_image() will try to use it as a filename and usually then
+        # trigger an exception. So we test the import_image_from_data()
+        # function instead.
+        statuses = self.client.import_image_from_data(
+            content, repository='test/import-from-bytes')
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        self.assertNotIn('error', result)
+
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+
+class TestImportFromFile(ImportTestCase):
+    '''Tests importing an image from a tar file on disk.'''
+
+    def runTest(self):
+        with self.dummy_tar_file(n_bytes=self.TAR_SIZE) as tar_filename:
+            # statuses = self.client.import_image(
+            #     src=tar_filename, repository='test/import-from-file')
+            statuses = self.client.import_image_from_file(
+                tar_filename, repository='test/import-from-file')
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        self.assertNotIn('error', result)
+
+        self.assertIn('status', result)
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+
+class TestImportFromStream(ImportTestCase):
+    '''Tests importing an image from a stream containing tar data.'''
+
+    def runTest(self):
+        with self.dummy_tar_stream(n_bytes=self.TAR_SIZE) as tar_stream:
+            statuses = self.client.import_image(
+                src=tar_stream, repository='test/import-from-stream')
+            # statuses = self.client.import_image_from_stream(
+            #     tar_stream, repository='test/import-from-stream')
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        self.assertNotIn('error', result)
+
+        self.assertIn('status', result)
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+
+class TestImportFromURL(ImportTestCase):
+    '''Tests downloading an image over HTTP.'''
+
+    @contextlib.contextmanager
+    def temporary_http_file_server(self, stream):
+        '''Serve data from an IO stream over HTTP.'''
+
+        class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/x-tar')
+                self.end_headers()
+                shutil.copyfileobj(stream, self.wfile)
+
+        server = socketserver.TCPServer(('', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever)
+        thread.setDaemon(True)
+        thread.start()
+
+        yield 'http://%s:%s' % (socket.gethostname(), server.server_address[1])
+
+        server.shutdown()
+
+    def runTest(self):
+        # The crappy test HTTP server doesn't handle large files well, so use
+        # a small file.
+        TAR_SIZE = 10240
+
+        with self.dummy_tar_stream(n_bytes=TAR_SIZE) as tar_data:
+            with self.temporary_http_file_server(tar_data) as url:
+                statuses = self.client.import_image(
+                    src=url, repository='test/import-from-url')
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        self.assertNotIn('error', result)
+
+        self.assertIn('status', result)
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
 
 #################
 # BUILDER TESTS #
