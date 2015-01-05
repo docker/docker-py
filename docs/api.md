@@ -314,6 +314,48 @@ the name of an existing image to import from.
 * tag (str): The tag to apply
 * image (str): Use another image like the `FROM` Dockerfile parameter
 
+## import_image_from_data
+
+Like `.import_image()`, but allows importing in-memory bytes data.
+
+**Params**:
+
+* data (bytes collection): Bytes collection containing valid tar data
+* repository (str): The repository to create
+* tag (str): The tag to apply
+
+## import_image_from_file
+
+Like `.import_image()`, but only supports importing from a tar file on
+disk. If the file doesn't exist it will raise `IOError`.
+
+**Params**:
+
+* filename (str): Full path to a tar file.
+* repository (str): The repository to create
+* tag (str): The tag to apply
+
+## import_image_from_url
+
+Like `.import_image()`, but only supports importing from a URL.
+
+**Params**:
+
+* url (str): A URL pointing to a tar file.
+* repository (str): The repository to create
+* tag (str): The tag to apply
+
+## import_image_from_image
+
+Like `.import_image()`, but only supports importing from another image,
+like the `FROM` Dockerfile parameter.
+
+**Params**:
+
+* image (str): Image name to import from
+* repository (str): The repository to create
+* tag (str): The tag to apply
+
 ## info
 
 Display system-wide information. Identical to the `docker info` command.
