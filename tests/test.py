@@ -1700,12 +1700,11 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
-    def test_import_image_from_file(self):
-        buf = tempfile.NamedTemporaryFile(delete=False)
+    def test_import_image_from_bytes(self):
+        stream = (i for i in range(0, 100))
         try:
-            # pretent the buffer is a file
             self.client.import_image(
-                buf.name,
+                stream,
                 repository=fake_api.FAKE_REPO_NAME,
                 tag=fake_api.FAKE_TAG_NAME
             )
@@ -1717,13 +1716,14 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             params={
                 'repo': fake_api.FAKE_REPO_NAME,
                 'tag': fake_api.FAKE_TAG_NAME,
-                'fromSrc': '-'
+                'fromSrc': '-',
             },
-            data='',
+            headers={
+                'Content-Type': 'application/tar',
+            },
+            data=stream,
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
-        buf.close()
-        os.remove(buf.name)
 
     def test_import_image_from_image(self):
         try:

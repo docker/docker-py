@@ -646,33 +646,86 @@ class Client(requests.Session):
         return res
 
     def import_image(self, src=None, repository=None, tag=None, image=None):
+        if src:
+            if isinstance(src, six.string_types):
+                try:
+                    result = self.import_image_from_file(
+                        src, repository=repository, tag=tag)
+                except IOError:
+                    result = self.import_image_from_url(
+                        src, repository=repository, tag=tag)
+            else:
+                result = self.import_image_from_data(
+                    src, repository=repository, tag=tag)
+        elif image:
+            result = self.import_image_from_image(
+                image, repository=repository, tag=tag)
+        else:
+            raise Exception("Must specify a src or image")
+
+        return result
+
+    def import_image_from_data(self, data, repository=None, tag=None):
         u = self._url("/images/create")
         params = {
+            'fromSrc': '-',
             'repo': repository,
             'tag': tag
         }
+        headers = {
+            'Content-Type': 'application/tar',
+        }
+        return self._result(
+            self._post(u, data=data, params=params, headers=headers))
 
-        if src:
-            try:
-                # XXX: this is ways not optimal but the only way
-                # for now to import tarballs through the API
-                fic = open(src)
-                data = fic.read()
-                fic.close()
-                src = "-"
-            except IOError:
-                # file does not exists or not a file (URL)
-                data = None
-            if isinstance(src, six.string_types):
-                params['fromSrc'] = src
-                return self._result(self._post(u, data=data, params=params))
-            return self._result(self._post(u, data=src, params=params))
+    def import_image_from_file(self, filename, repository=None, tag=None):
+        u = self._url("/images/create")
+        params = {
+            'fromSrc': '-',
+            'repo': repository,
+            'tag': tag
+        }
+        headers = {
+            'Content-Type': 'application/tar',
+        }
+        with open(filename, 'rb') as f:
+            return self._result(
+                self._post(u, data=f, params=params, headers=headers,
+                           timeout=None))
 
-        if image:
-            params['fromImage'] = image
-            return self._result(self._post(u, data=None, params=params))
+    def import_image_from_stream(self, stream, repository=None, tag=None):
+        u = self._url("/images/create")
+        params = {
+            'fromSrc': '-',
+            'repo': repository,
+            'tag': tag
+        }
+        headers = {
+            'Content-Type': 'application/tar',
+            'Transfer-Encoding': 'chunked',
+        }
+        return self._result(
+            self._post(u, data=stream, params=params, headers=headers))
 
-        raise Exception("Must specify a src or image")
+    def import_image_from_url(self, url, repository=None, tag=None):
+        u = self._url("/images/create")
+        params = {
+            'fromSrc': url,
+            'repo': repository,
+            'tag': tag
+        }
+        return self._result(
+            self._post(u, data=None, params=params))
+
+    def import_image_from_image(self, image, repository=None, tag=None):
+        u = self._url("/images/create")
+        params = {
+            'fromImage': image,
+            'repo': repository,
+            'tag': tag
+        }
+        return self._result(
+            self._post(u, data=None, params=params))
 
     def info(self):
         return self._result(self._get(self._url("/info")),
