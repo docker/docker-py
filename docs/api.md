@@ -296,16 +296,20 @@ layers)
 
 ## import_image
 
-Identical to the `docker import` command. If `src` is a string or unicode
-string, it will be treated as a URL to fetch the image from. To import an image
-from the local machine, `src` needs to be a file-like object or bytes
-collection.  To import from a tarball use your absolute path to your tarball.
-To load arbitrary data as tarball use whatever you want as src and your
-tarball content in data.
+Similar to the `docker import` command.
+
+If `src` is a string or unicode string, it will first be treated as a path to
+a tarball on the local system. If there is an error reading from that file,
+src will be treated as a URL instead to fetch the image from. You can also pass
+an open file handle as 'src', in which case the data will be read from that
+file.
+
+If `src` is unset but `image` is set, the `image` paramater will be taken as
+the name of an existing image to import from.
 
 **Params**:
 
-* src (str or file): Path to tarfile or URL
+* src (str or file): Path to tarfile, URL, or file-like object
 * repository (str): The repository to create
 * tag (str): The tag to apply
 * image (str): Use another image like the `FROM` Dockerfile parameter
