@@ -59,7 +59,7 @@ def resolve_repository_name(repo_name, insecure=False):
         raise errors.InvalidRepository(
             'Invalid repository name ({0})'.format(repo_name))
 
-    if 'index.docker.io' in parts[0] or 'registry.hub.docker.com' in parts[0]:
+    if 'index.docker.io' in parts[0]:
         raise errors.InvalidRepository(
             'Invalid repository name, try "{0}" instead'.format(parts[1])
         )
