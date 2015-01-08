@@ -11,6 +11,7 @@ pages:
 - [volumes.md, Using Volumes]
 - [tls.md, Using TLS]
 - [host-devices.md, Host devices]
+- [hostconfig.md, Host configuration]
 - [boot2docker.md, Using with boot2docker]
 - [change_log.md, Change Log]
 - [contributing.md, Contributing]
