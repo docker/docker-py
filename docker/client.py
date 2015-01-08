@@ -291,16 +291,20 @@ class Client(requests.Session):
 
     def _stream_helper(self, response):
         """Generator for data coming from a chunked-encoded HTTP response."""
-        reader = response.raw
-        assert reader._fp.chunked
-        while not reader.closed:
-            # this read call will block until we get a chunk
-            data = reader.read(1)
-            if not data:
-                break
-            if reader._fp.chunk_left:
-                data += reader.read(reader._fp.chunk_left)
-            yield data
+        if response.raw._fp.chunked:
+            reader = response.raw
+            while not reader.closed:
+                # this read call will block until we get a chunk
+                data = reader.read(1)
+                if not data:
+                    break
+                if reader._fp.chunk_left:
+                    data += reader.read(reader._fp.chunk_left)
+                yield data
+        else:
+            # Response isn't chunked, meaning we probably
+            # encountered an error immediately
+            yield self._result(response)
 
     def _multiplexed_buffer_helper(self, response):
         """A generator of multiplexed data blocks read from a buffered

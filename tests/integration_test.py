@@ -1277,3 +1277,17 @@ if __name__ == '__main__':
     c.pull('busybox')
     c.close()
     unittest.main()
+
+
+####################
+# REGRESSION TESTS #
+####################
+
+class TestRegressions(unittest.TestCase):
+    def setUp(self):
+        self.client = docker.client.Client(timeout=5)
+
+    def test_443(self):
+        with self.assertRaises(docker.errors.APIError) as exc:
+            self.client.build(fileobj=io.BytesIO(), tag="a/b/c")
+        self.assertEqual(exc.response.status_code, 500)
