@@ -907,17 +907,20 @@ class TestStartContainerWithLinks(BaseTestCase):
 class TestRestartingContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container(
-            'busybox', ['false'], host_config=create_host_config(
-                restart_policy={"Name": "on-failure", "MaximumRetryCount": 1}
+            'busybox', ['sleep', '2'], host_config=create_host_config(
+                restart_policy={"Name": "always", "MaximumRetryCount": 0}
             )
         )
         id = container['Id']
         self.client.start(id)
         self.client.wait(id)
-        self.client.remove_container(id)
-        containers = self.client.containers(all=True)
-        res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
-        self.assertEqual(len(res), 0)
+        with self.assertRaises(docker.errors.APIError) as exc:
+            self.client.remove_container(id)
+        err = exc.exception.response.text
+        self.assertTrue(
+            err.startswith('You cannot remove a running container')
+        )
+        self.client.remove_container(id, force=True)
 
 
 class TestExecuteCommand(BaseTestCase):
@@ -1121,7 +1124,7 @@ class TestRemoveImage(BaseTestCase):
         self.assertIn('Id', res)
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
-        self.client.remove_image(img_id)
+        self.client.remove_image(img_id, force=True)
         images = self.client.images(all=True)
         res = [x for x in images if x['Id'].startswith(img_id)]
         self.assertEqual(len(res), 0)
@@ -1201,32 +1204,6 @@ class TestBuildFromStringIO(BaseTestCase):
                 chunk = chunk.decode('utf-8')
             logs += chunk
         self.assertNotEqual(logs, '')
-
-
-class TestBuildWithAuth(BaseTestCase):
-    def runTest(self):
-        if compare_version(self.client._version, '1.9') >= 0:
-            return
-
-        k = 'K4104GON3P4Q6ZUJFZRRC2ZQTBJ5YT0UMZD7TGT7ZVIR8Y05FAH2TJQI6Y90SMIB'
-        self.client.login('quay+fortesting', k, registry='https://quay.io/v1/',
-                          email='')
-
-        script = io.BytesIO('\n'.join([
-            'FROM quay.io/quay/teststuff',
-            'MAINTAINER docker-py',
-            'RUN mkdir -p /tmp/test',
-        ]).encode('ascii'))
-
-        stream = self.client.build(fileobj=script, stream=True)
-        logs = ''
-        for chunk in stream:
-            if six.PY3:
-                chunk = chunk.decode('utf-8')
-            logs += chunk
-
-        self.assertNotEqual(logs, '')
-        self.assertEqual(logs.find('HTTP code: 403'), -1)
 
 
 class TestBuildWithDockerignore(Cleanup, BaseTestCase):
@@ -1384,9 +1361,12 @@ class TestRegressions(unittest.TestCase):
         self.client = docker.client.Client(timeout=5)
 
     def test_443(self):
+        dfile = io.BytesIO()
         with self.assertRaises(docker.errors.APIError) as exc:
-            self.client.build(fileobj=io.BytesIO(), tag="a/b/c")
-        self.assertEqual(exc.response.status_code, 500)
+            for line in self.client.build(fileobj=dfile, tag="a/b/c"):
+                pass
+        self.assertEqual(exc.exception.response.status_code, 500)
+        dfile.close()
 
 
 if __name__ == '__main__':
