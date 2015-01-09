@@ -6,9 +6,9 @@ from distutils.version import StrictVersion
 from requests.adapters import HTTPAdapter
 import ssl
 try:
-    import requests.packages.urllib3 as urllib3
-except ImportError:
     import urllib3
+except ImportError:
+    import requests.packages.urllib3 as urllib3
 
 
 PoolManager = urllib3.poolmanager.PoolManager
