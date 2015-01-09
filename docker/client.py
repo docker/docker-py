@@ -274,18 +274,19 @@ class Client(requests.Session):
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
         if six.PY3:
-            sock = response.raw._fp.fp.raw._sock
+            sock = response.raw._fp.fp.raw
+            sock._response = response
         else:
             sock = response.raw._fp.fp._sock
-        try:
-            # Keep a reference to the response to stop it being garbage
-            # collected. If the response is garbage collected, it will close
-            # TLS sockets.
-            sock._response = response
-        except AttributeError:
-            # UNIX sockets can't have attributes set on them, but that's fine
-            # because we won't be doing TLS over them
-            pass
+            try:
+                # Keep a reference to the response to stop it being garbage
+                # collected. If the response is garbage collected, it will
+                # close TLS sockets.
+                sock._response = response
+            except AttributeError:
+                # UNIX sockets can't have attributes set on them, but that's
+                # fine because we won't be doing TLS over them
+                pass
 
         return sock
 
@@ -328,7 +329,10 @@ class Client(requests.Session):
         def recvall(socket, size):
             blocks = []
             while size > 0:
-                block = socket.recv(size)
+                if six.PY3:
+                    block = socket._sock.recv(size)
+                else:
+                    block = socket.recv(size)
                 if not block:
                     return None
 
@@ -340,7 +344,10 @@ class Client(requests.Session):
             return data
 
         while True:
-            socket.settimeout(None)
+            if six.PY3:
+                socket._sock.settimeout(None)
+            else:
+                socket.settimeout(None)
             header = recvall(socket, STREAM_HEADER_SIZE_BYTES)
             if not header:
                 break
