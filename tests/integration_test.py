@@ -186,6 +186,52 @@ class TestCreateContainerWithBinds(BaseTestCase):
         if six.PY3:
             logs = logs.decode('utf-8')
         self.assertIn(filename, logs)
+        inspect_data = self.client.inspect_container(container_id)
+        self.assertIn('Volumes', inspect_data)
+        self.assertIn(mount_dest, inspect_data['Volumes'])
+        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
+        self.assertIn(mount_dest, inspect_data['VolumesRW'])
+        self.assertTrue(inspect_data['VolumesRW'][mount_dest])
+
+
+class TestCreateContainerWithRoBinds(BaseTestCase):
+    def runTest(self):
+        mount_dest = '/mnt'
+        mount_origin = tempfile.mkdtemp()
+        self.tmp_folders.append(mount_origin)
+
+        filename = 'shared.txt'
+        shared_file = os.path.join(mount_origin, filename)
+        binds = {
+            mount_origin: {
+                'bind': mount_dest,
+                'ro': True,
+            },
+        }
+
+        with open(shared_file, 'w'):
+            container = self.client.create_container(
+                'busybox',
+                ['ls', mount_dest], volumes={mount_dest: {}},
+                host_config=create_host_config(binds=binds)
+            )
+            container_id = container['Id']
+            self.client.start(container_id)
+            self.tmp_containers.append(container_id)
+            exitcode = self.client.wait(container_id)
+            self.assertEqual(exitcode, 0)
+            logs = self.client.logs(container_id)
+
+        os.unlink(shared_file)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        self.assertIn(filename, logs)
+        inspect_data = self.client.inspect_container(container_id)
+        self.assertIn('Volumes', inspect_data)
+        self.assertIn(mount_dest, inspect_data['Volumes'])
+        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
+        self.assertIn(mount_dest, inspect_data['VolumesRW'])
+        self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
 class TestStartContainerWithBinds(BaseTestCase):
@@ -218,6 +264,52 @@ class TestStartContainerWithBinds(BaseTestCase):
         if six.PY3:
             logs = logs.decode('utf-8')
         self.assertIn(filename, logs)
+        inspect_data = self.client.inspect_container(container_id)
+        self.assertIn('Volumes', inspect_data)
+        self.assertIn(mount_dest, inspect_data['Volumes'])
+        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
+        self.assertIn(mount_dest, inspect_data['VolumesRW'])
+        self.assertTrue(inspect_data['VolumesRW'][mount_dest])
+
+
+class TestStartContainerWithRoBinds(BaseTestCase):
+    def runTest(self):
+        mount_dest = '/mnt'
+        mount_origin = tempfile.mkdtemp()
+        self.tmp_folders.append(mount_origin)
+
+        filename = 'shared.txt'
+        shared_file = os.path.join(mount_origin, filename)
+        binds = {
+            mount_origin: {
+                'bind': mount_dest,
+                'ro': True,
+            },
+        }
+
+        with open(shared_file, 'w'):
+            container = self.client.create_container(
+                'busybox', ['ls', mount_dest], volumes={mount_dest: {}}
+            )
+            container_id = container['Id']
+            self.client.start(container_id, binds=binds)
+            self.tmp_containers.append(container_id)
+            exitcode = self.client.wait(container_id)
+            self.assertEqual(exitcode, 0)
+            logs = self.client.logs(container_id)
+
+        os.unlink(shared_file)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        self.assertIn(filename, logs)
+
+        inspect_data = self.client.inspect_container(container_id)
+        self.assertIn('Volumes', inspect_data)
+        self.assertIn(mount_dest, inspect_data['Volumes'])
+        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
+        self.assertIn('VolumesRW', inspect_data)
+        self.assertIn(mount_dest, inspect_data['VolumesRW'])
+        self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
 class TestCreateContainerWithName(BaseTestCase):
@@ -1283,13 +1375,6 @@ class UnixconnTestCase(unittest.TestCase):
                 "No warnings produced: {0}".format(w[0].message)
 
 
-if __name__ == '__main__':
-    c = docker.Client(base_url=DEFAULT_BASE_URL)
-    c.pull('busybox')
-    c.close()
-    unittest.main()
-
-
 ####################
 # REGRESSION TESTS #
 ####################
@@ -1302,3 +1387,10 @@ class TestRegressions(unittest.TestCase):
         with self.assertRaises(docker.errors.APIError) as exc:
             self.client.build(fileobj=io.BytesIO(), tag="a/b/c")
         self.assertEqual(exc.response.status_code, 500)
+
+
+if __name__ == '__main__':
+    c = docker.Client(base_url=DEFAULT_BASE_URL)
+    c.pull('busybox')
+    c.close()
+    unittest.main()
