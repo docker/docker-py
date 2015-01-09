@@ -21,9 +21,9 @@ import requests.adapters
 import socket
 
 try:
-    import urllib3
-except ImportError:
     import requests.packages.urllib3 as urllib3
+except ImportError:
+    import urllib3
 
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):
@@ -77,9 +77,9 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
             if pool:
                 return pool
 
-            pool = UnixHTTPConnectionPool(self.base_url,
-                                          socket_path,
-                                          self.timeout)
+            pool = UnixHTTPConnectionPool(
+                self.base_url, socket_path, self.timeout
+            )
             self.pools[socket_path] = pool
 
         return pool
