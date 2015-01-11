@@ -22,7 +22,12 @@ import six
 from ..utils import utils
 from .. import errors
 
-import urlparse
+try:
+    import urlparse
+except ImportError:
+    # we're probably in py3k
+    from urllib import parse as urlparse
+
 
 INDEX_URL = 'https://index.docker.io/v1/'
 DOCKER_CONFIG_FILENAME = '.dockercfg'
