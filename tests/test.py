@@ -2047,6 +2047,35 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('auth'), None)
 
+    def test_registry_with_tailing_v1(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+
+        dockercfg_path = os.path.join(folder,
+                                      '.{0}.dockercfg'.format(
+                                          random.randrange(100000)))
+        registry_stripped = 'https://your.private.registry.io'
+        registry = registry_stripped + "/v1/"
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        config = {
+            registry: {
+                'auth': '{0}'.format(auth_),
+                'email': 'sakuya@scarlet.net'
+            }
+        }
+        
+        with open(dockercfg_path, 'w') as f:
+            f.write(json.dumps(config))
+
+        cfg = docker.auth.load_config(dockercfg_path)
+        self.assertTrue(registry_stripped in cfg)
+        self.assertNotEqual(cfg[registry_stripped], None)
+        cfg = cfg[registry_stripped]
+        self.assertEqual(cfg['username'], 'sakuya')
+        self.assertEqual(cfg['password'], 'izayoi')
+        self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+        self.assertEqual(cfg.get('auth'), None)
+    
     def test_tar_with_excludes(self):
         base = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base)
