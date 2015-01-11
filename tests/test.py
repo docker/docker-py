@@ -65,7 +65,6 @@ def fake_resolve_authconfig(authconfig, registry=None):
     return None
 
 def true_ping(uri):
-    print "true ping"
     return True
 
 def false_ping(uri):
