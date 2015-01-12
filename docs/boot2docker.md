@@ -22,8 +22,12 @@ client = Client(**kwargs_from_env())
 print client.version()
 ```
 
-To avoid the common error `SSLError: hostname '192.168.59.103' doesn't match 'boot2docker'`, you
-can disable hostname validation.
+If you're encountering the following error:
+`SSLError: hostname '192.168.59.103' doesn't match 'boot2docker'`, you can:
+
+1. Add an entry to your /etc/hosts file matching boot2docker to the daemon's IP
+1. disable hostname validation (but please consider the security implications
+   in doing this)
 
 ```python
 from docker.client import Client
