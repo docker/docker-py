@@ -53,8 +53,9 @@ correct value (e.g `gzip`).
 * fileobj: A file object to use as the Dockerfile. (Or a file-like object)
 * nocache (bool): Don't use the cache when set to `True`
 * rm (bool): Remove intermediate containers
-* stream (bool): Return a blocking generator you can iterate over to retrieve
-  build output as it happens
+* stream (bool): *Deprecated for API version > 1.8 (always True)*.
+  Return a blocking generator you can iterate over to retrieve build output as
+  it happens
 * timeout (int): HTTP timeout
 * custom_context (bool): Optional if using `fileobj`
 * encoding (str): The encoding for a stream. Set to `gzip` for compressing

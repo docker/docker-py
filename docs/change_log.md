@@ -1,6 +1,23 @@
 Change Log
 ==========
 
+0.7.1
+-----
+
+### Bugfixes
+
+* `setup.py` now indicates a maximum version of requests to work around the
+  boot2docker / `assert_hostname` bug.
+* Removed invalid exception when using the Registry Hub's FQDN when pulling.
+* Fixed an issue where early HTTP errors weren't handled properly in streaming
+  responses.
+* Fixed a bug where sockets would close unexpectedly using Python 3.x
+* Various fixes for integration tests.
+
+### Miscellaneous
+
+* Small doc fixes
+
 0.7.0
 -----
 
