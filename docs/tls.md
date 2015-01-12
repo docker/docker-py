@@ -50,7 +50,8 @@ client = docker.Client(base_url='<https_url>', tls=tls_config)
 
 Equivalent CLI options:
 ```bash
-docker --tlsverify --tlscacert /path/to/ca.pem ...`
+docker --tlsverify --tlscacert /path/to/ca.pem ...
+```
 
 ## Authenticate with client certificate, do not authenticate server based on given CA
 
