@@ -917,8 +917,8 @@ class TestRestartingContainer(BaseTestCase):
         with self.assertRaises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
         err = exc.exception.response.text
-        self.assertTrue(
-            err.startswith('You cannot remove a running container')
+        self.assertIn(
+            'You cannot remove a running container', err
         )
         self.client.remove_container(id, force=True)
 
