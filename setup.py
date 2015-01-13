@@ -25,7 +25,7 @@ setup(
     version=version,
     description="Python client for Docker.",
     packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils',
-              'docker.ssladapter'],
+              'docker.ssladapter', 'docker.efficiency'],
     install_requires=requirements,
     tests_require=test_requirements,
     zip_safe=False,
