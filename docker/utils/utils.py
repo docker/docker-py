@@ -337,15 +337,15 @@ def create_host_config(
             volumes_from = volumes_from.split(',')
         host_config['VolumesFrom'] = volumes_from
 
-    if binds:
+    if binds is not None:
         host_config['Binds'] = convert_volume_binds(binds)
 
-    if port_bindings:
+    if port_bindings is not None:
         host_config['PortBindings'] = convert_port_bindings(
             port_bindings
         )
 
-    if extra_hosts:
+    if extra_hosts is not None:
         if isinstance(extra_hosts, dict):
             extra_hosts = [
                 '{0}:{1}'.format(k, v)
@@ -354,7 +354,7 @@ def create_host_config(
 
             host_config['ExtraHosts'] = extra_hosts
 
-    if links:
+    if links is not None:
         if isinstance(links, dict):
             links = six.iteritems(links)
 
@@ -370,7 +370,7 @@ def create_host_config(
             formatted.append({'Key': k, 'Value': str(v)})
         lxc_conf = formatted
 
-    if lxc_conf:
+    if lxc_conf is not None:
         host_config['LxcConf'] = lxc_conf
 
     return host_config
