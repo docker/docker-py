@@ -83,7 +83,7 @@ def resolve_authconfig(authconfig, registry=None):
     #
     # as there is only one auth entry which is fully qualified we need to start
     # parsing and matching
-    if '/' not in registry:
+    if not registry.endswith("/v1/"):
         registry = registry + '/v1/'
     if not registry.startswith('http:') and not registry.startswith('https:'):
         registry = 'https://' + registry
