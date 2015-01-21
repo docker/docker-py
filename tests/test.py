@@ -768,6 +768,18 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_mac_address(self):
+        try:
+            mac_address_expected = "02:42:ac:11:00:0a"
+            container = self.client.create_container(
+                'busybox', ['sleep', '60'], mac_address=mac_address_expected)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        res = self.client.inspect_container(container['Id'])
+        self.assertEqual(mac_address_expected,
+                         res['NetworkSettings']['MacAddress'])
+
     def test_create_container_with_links(self):
         try:
             link_path = 'path'

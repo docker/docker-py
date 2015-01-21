@@ -129,6 +129,7 @@ def get_fake_inspect_container():
             "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
             "Ghost": False
         },
+        "MacAddress": "02:42:ac:11:00:0a"
     }
     return status_code, response
 
@@ -188,7 +189,8 @@ def get_fake_port():
             'Ports': {
                 '1111': None,
                 '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-                '2222': None}
+                '2222': None},
+            'MacAddress': '02:42:ac:11:00:0a'
         }
     }
     return status_code, response

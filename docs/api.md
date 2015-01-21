@@ -204,6 +204,7 @@ from. Optionally a single string joining container id's with commas
 * domainname (str or list): Set custom DNS search domains
 * memswap_limit (int):
 * host_config (dict): A [HostConfig](hostconfig.md) dictionary
+* mac_address (str): The Mac Address to assign the container
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 
