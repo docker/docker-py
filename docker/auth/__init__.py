@@ -3,5 +3,5 @@ from .auth import (
     encode_header,
     load_config,
     resolve_authconfig,
-    resolve_repository_name
+    resolve_repository_name,
 )  # flake8: noqa

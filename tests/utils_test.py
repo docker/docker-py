@@ -8,6 +8,7 @@ from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config
 )
+from docker.auth import resolve_authconfig
 
 
 class UtilsTest(unittest.TestCase):
@@ -99,6 +100,60 @@ class UtilsTest(unittest.TestCase):
     def test_create_host_config(self):
         empty_config = create_host_config()
         self.assertEqual(empty_config, {})
+
+    def test_resolve_authconfig(self):
+        auth_config = {
+            'https://index.docker.io/v1/': {'auth': 'indexuser'},
+            'http://my.registry.net/v1/': {'auth': 'privateuser'}
+        }
+        # hostname only
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'my.registry.net'),
+            {'auth': 'privateuser'}
+        )
+        # no protocol
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'my.registry.net/v1/'),
+            {'auth': 'privateuser'}
+        )
+        # no path
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'http://my.registry.net'),
+            {'auth': 'privateuser'}
+        )
+        # no path, trailing slash
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'http://my.registry.net/'),
+            {'auth': 'privateuser'}
+        )
+        # no path, wrong secure protocol
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'https://my.registry.net'),
+            {'auth': 'privateuser'}
+        )
+        # no path, wrong insecure protocol
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'http://index.docker.io'),
+            {'auth': 'indexuser'}
+        )
+        # with path, wrong protocol
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'https://my.registry.net/v1/'),
+            {'auth': 'privateuser'}
+        )
+        # default registry
+        self.assertEqual(
+            resolve_authconfig(auth_config), {'auth': 'indexuser'}
+        )
+        # default registry (explicit None)
+        self.assertEqual(
+            resolve_authconfig(auth_config, None), {'auth': 'indexuser'}
+        )
+        # fully explicit
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'http://my.registry.net/v1/'),
+            {'auth': 'privateuser'}
+        )
 
 
 if __name__ == '__main__':

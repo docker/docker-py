@@ -75,7 +75,7 @@ def resolve_authconfig(authconfig, registry=None):
     # Default to the public index server
     registry = registry or INDEX_URL
 
-    # Ff its not the index server there are three cases:
+    # If it's not the index server there are three cases:
     #
     # 1. this is a full config url -> it should be used as is
     # 2. it could be a full url, but with the wrong protocol
@@ -84,7 +84,7 @@ def resolve_authconfig(authconfig, registry=None):
     # as there is only one auth entry which is fully qualified we need to start
     # parsing and matching
     if '/v1/' not in registry:
-        registry = registry + '/v1/'
+        registry = os.path.join(registry, 'v1/')
     if not registry.startswith('http:') and not registry.startswith('https:'):
         registry = 'https://' + registry
 
