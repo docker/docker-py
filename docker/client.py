@@ -463,7 +463,7 @@ class Client(requests.Session):
             timeout=timeout,
         )
 
-        if context is not None:
+        if context is not None and not custom_context:
             context.close()
 
         if stream:
