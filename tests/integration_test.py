@@ -671,6 +671,22 @@ class TestStartWithPortBindings(BaseTestCase):
         self.client.kill(id)
 
 
+class TestMacAddress(BaseTestCase):
+    def runTest(self):
+        mac_address_expected = "02:42:ac:11:00:0a"
+        container = self.client.create_container(
+            'busybox', ['sleep', '60'], mac_address=mac_address_expected)
+
+        id = container['Id']
+
+        self.client.start(container)
+        res = self.client.inspect_container(container['Id'])
+        self.assertEqual(mac_address_expected,
+                         res['NetworkSettings']['MacAddress'])
+
+        self.client.kill(id)
+
+
 class TestRestart(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', ['sleep', '9999'])
