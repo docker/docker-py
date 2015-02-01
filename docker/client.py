@@ -533,7 +533,9 @@ class Client(requests.Session):
             volumes = [volumes, ]
 
         if host_config and utils.compare_version('1.15', self._version) < 0:
-            raise errors.APIError('host_config is not supported in API < 1.15')
+            raise errors.InvalidVersion(
+                'host_config is not supported in API < 1.15'
+            )
 
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
@@ -563,7 +565,7 @@ class Client(requests.Session):
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
-            raise errors.APIError('Exec is not supported in API < 1.15')
+            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
             container = container.get('Id')
         if isinstance(cmd, six.string_types):
@@ -911,11 +913,11 @@ class Client(requests.Session):
 
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
-                raise errors.APIError(
+                raise errors.InvalidVersion(
                     'dns is only supported for API version >= 1.10'
                 )
             if volumes_from is not None:
-                raise errors.APIError(
+                raise errors.InvalidVersion(
                     'volumes_from is only supported for API version >= 1.10'
                 )
 

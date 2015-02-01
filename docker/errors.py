@@ -53,6 +53,10 @@ class DockerException(Exception):
     pass
 
 
+class InvalidVersion(DockerException):
+    pass
+
+
 class InvalidRepository(DockerException):
     pass
 
