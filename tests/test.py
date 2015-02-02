@@ -65,6 +65,14 @@ def fake_resolve_authconfig(authconfig, registry=None):
     return None
 
 
+def true_ping(uri):
+    return True
+
+
+def false_ping(uri):
+    return False
+
+
 def fake_resp(url, data=None, **kwargs):
     status_code, content = fake_api.fake_responses[url]()
     return response(status_code=status_code, content=content)
@@ -2058,6 +2066,34 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('auth'), None)
+
+    def test_unqualified_registry(self, ):
+        registry = "my.registry.io"
+        # Force the ping to return true, so that we get a
+        # value back
+        with mock.patch("docker.utils.utils.ping", true_ping):
+            hn = docker.auth.auth.expand_registry_url(registry, insecure=False)
+
+        self.assertEqual(hn, "https://" + registry)
+        # use false ping to return http+hostname, to take the
+        # elif branch
+        with mock.patch("docker.utils.utils.ping", false_ping):
+            hn = docker.auth.auth.expand_registry_url(registry, insecure=True)
+        self.assertEqual(hn, "http://" + registry)
+
+    def test_registry_without_tailing_v1(self):
+        registry = "https://my.registry.io"
+        hn = docker.auth.auth.expand_registry_url(registry)
+
+        self.assertEqual(hn, registry)
+
+    def test_registry_with_tailing_v1(self):
+        registry = "https://my.registry.io/v1/"
+        stripped = "https://my.registry.io"
+
+        hn = docker.auth.auth.expand_registry_url(registry)
+
+        self.assertEqual(hn, stripped)
 
     def test_tar_with_excludes(self):
         base = tempfile.mkdtemp()

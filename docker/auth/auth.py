@@ -22,6 +22,13 @@ import six
 from ..utils import utils
 from .. import errors
 
+try:
+    import urlparse
+except ImportError:
+    # we're probably in py3k
+    from urllib import parse as urlparse
+
+
 INDEX_URL = 'https://index.docker.io/v1/'
 DOCKER_CONFIG_FILENAME = '.dockercfg'
 
@@ -36,6 +43,13 @@ def swap_protocol(url):
 
 def expand_registry_url(hostname, insecure=False):
     if hostname.startswith('http:') or hostname.startswith('https:'):
+        parts = urlparse.urlparse(hostname)
+        path = parts.path.split("/")
+        # If v1 is in the URL, strip it. This allows for users who were using
+        # the previous variant of a fully-qualifed URI to have The Right Thing
+        # happen.
+        if "v1" in path:
+            return parts.scheme + "://" + parts.netloc
         return hostname
     if utils.ping('https://' + hostname + '/v1/_ping'):
         return 'https://' + hostname
