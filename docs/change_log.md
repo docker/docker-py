@@ -1,6 +1,30 @@
 Change Log
 ==========
 
+0.7.2
+-----
+
+### Features
+
+* Added support for `mac_address` in `Client.create_container`
+
+### Bugfixes
+
+* Fixed a bug where streaming responses (`pull`, `push`, `logs`, etc.) were
+  unreliable (#300)
+* Fixed a bug where resolve_authconfig wouldn't properly resolve configuration
+  for private repositories (#468)
+* Fixed a bug where some errors wouldn't be properly constructed in
+  `client.py`, leading to unhelpful exceptions bubbling up (#466)
+* Fixed a bug where `Client.build` would try to close context when externally
+  provided (`custom_context == True`) (#458)
+* Fixed an issue in `create_host_config` where empty sequences wouldn't be
+  interpreted properly (#462)
+
+### Miscellaneous
+
+* Added `resolve_authconfig` tests.
+
 0.7.1
 -----
 
