@@ -2003,6 +2003,20 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+    def test_build_remote_with_registry_auth(self):
+        try:
+            self.client._auth_configs = {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
+            }
+
+            self.client.build(path='https://github.com/docker-library/mongo')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
     #######################
     #  PY SPECIFIC TESTS  #
     #######################
