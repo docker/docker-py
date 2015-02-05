@@ -52,7 +52,9 @@ correct value (e.g `gzip`).
 * quiet (bool): Whether to return the status
 * fileobj: A file object to use as the Dockerfile. (Or a file-like object)
 * nocache (bool): Don't use the cache when set to `True`
-* rm (bool): Remove intermediate containers
+* rm (bool): Remove intermediate containers. The `docker build` command now
+  defaults to ``--rm=true``, but we have kept the old default of `False`
+  to preserve backward compatibility
 * stream (bool): *Deprecated for API version > 1.8 (always True)*.
   Return a blocking generator you can iterate over to retrieve build output as
   it happens
