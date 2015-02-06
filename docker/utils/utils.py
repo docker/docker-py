@@ -20,6 +20,7 @@ import tarfile
 import tempfile
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
+from datetime import datetime
 
 import requests
 import six
@@ -294,6 +295,11 @@ def convert_filters(filters):
             v = [v, ]
         result[k] = v
     return json.dumps(result)
+
+
+def datetime_to_timestamp(dt=datetime.now()):
+    """Convert a datetime in local timezone to a unix timestamp"""
+    return int((dt - datetime.fromtimestamp(0)).total_seconds())
 
 
 def create_host_config(

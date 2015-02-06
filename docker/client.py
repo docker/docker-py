@@ -23,6 +23,8 @@ import requests
 import requests.exceptions
 import six
 
+from datetime import datetime
+
 from .auth import auth
 from .unixconn import unixconn
 from .ssladapter import ssladapter
@@ -565,8 +567,24 @@ class Client(requests.Session):
         return self._result(self._get(self._url("/containers/{0}/changes".
                             format(container))), True)
 
-    def events(self):
-        return self._stream_helper(self.get(self._url('/events'), stream=True))
+    def events(self, since=None, until=None, filters=None):
+        if isinstance(since, datetime):
+            since = utils.datetime_to_timestamp(since)
+
+        if isinstance(until, datetime):
+            until = utils.datetime_to_timestamp(until)
+
+        if filters:
+            filters = utils.convert_filters(filters)
+
+        params = {
+            'since': since,
+            'until': until,
+            'filters': filters
+        }
+
+        return self._stream_helper(self.get(self._url('/events'),
+                                            params=params, stream=True))
 
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):

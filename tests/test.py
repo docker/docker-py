@@ -177,6 +177,56 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         except Exception:
             pass
 
+    def test_events(self):
+        try:
+            self.client.events()
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'events',
+            params={'since': None, 'until': None, 'filters': None},
+            stream=True
+        )
+
+    def test_events_with_since_until(self):
+        now = datetime.datetime.now()
+        since = now - datetime.timedelta(seconds=10)
+        until = now + datetime.timedelta(seconds=10)
+        ts = int((now - datetime.datetime.fromtimestamp(0)).total_seconds())
+        try:
+            self.client.events(since=since, until=until)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'events',
+            params={
+                'since': ts - 10,
+                'until': ts + 10,
+                'filters': None
+            },
+            stream=True
+        )
+
+    def test_events_with_filters(self):
+        filters = {'event': ['die', 'stop'], 'container': fake_api.FAKE_CONTAINER_ID}
+        try:
+            self.client.events(filters=filters)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        expected_filters = docker.utils.convert_filters(filters)
+        fake_request.assert_called_with(
+            url_prefix + 'events',
+            params={
+                'since': None,
+                'until': None,
+                'filters': expected_filters
+            },
+            stream=True
+        )
+
     ###################
     #  LISTING TESTS  #
     ###################
