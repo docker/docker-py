@@ -18,12 +18,11 @@ import re
 import shlex
 import struct
 import warnings
+from datetime import datetime
 
 import requests
 import requests.exceptions
 import six
-
-from datetime import datetime
 
 from .auth import auth
 from .unixconn import unixconn
@@ -31,6 +30,7 @@ from .ssladapter import ssladapter
 from .utils import utils
 from . import errors
 from .tls import TLSConfig
+
 
 if not six.PY3:
     import websocket
