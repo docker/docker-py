@@ -292,7 +292,7 @@ class Client(requests.Session):
 
         return sock
 
-    def _stream_helper(self, response):
+    def _stream_helper(self, response, decode=False):
         """Generator for data coming from a chunked-encoded HTTP response."""
         if response.raw._fp.chunked:
             reader = response.raw
@@ -303,6 +303,8 @@ class Client(requests.Session):
                     break
                 if reader._fp.chunk_left:
                     data += reader.read(reader._fp.chunk_left)
+                if decode:
+                    data = json.loads(data)
                 yield data
         else:
             # Response isn't chunked, meaning we probably
@@ -584,7 +586,8 @@ class Client(requests.Session):
         }
 
         return self._stream_helper(self.get(self._url('/events'),
-                                            params=params, stream=True))
+                                            params=params, stream=True),
+                                   decode=True)
 
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):

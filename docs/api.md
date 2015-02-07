@@ -245,10 +245,10 @@ function return a blocking generator you can iterate over to retrieve events as 
 **Returns** (generator):
 
 ```python
-{"status":"die",
-"id":"container-id",
-"from":"image/with:tag",
-"time":unix-timestamp}
+{u'status': u'start',
+ u'from': u'image/with:tag',
+ u'id': u'container-id',
+ u'time': 1423339459}
 ```
 
 ## execute
