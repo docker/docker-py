@@ -190,10 +190,10 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         )
 
     def test_events_with_since_until(self):
-        now = datetime.datetime.now()
+        ts = 1356048000
+        now = datetime.datetime.fromtimestamp(ts)
         since = now - datetime.timedelta(seconds=10)
         until = now + datetime.timedelta(seconds=10)
-        ts = int((now - datetime.datetime.fromtimestamp(0)).total_seconds())
         try:
             self.client.events(since=since, until=until)
         except Exception as e:
@@ -210,7 +210,8 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         )
 
     def test_events_with_filters(self):
-        filters = {'event': ['die', 'stop'], 'container': fake_api.FAKE_CONTAINER_ID}
+        filters = {'event': ['die', 'stop'],
+                   'container': fake_api.FAKE_CONTAINER_ID}
         try:
             self.client.events(filters=filters)
         except Exception as e:
