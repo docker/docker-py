@@ -322,6 +322,18 @@ class TestCreateContainerWithName(BaseTestCase):
         self.assertEqual('/foobar', inspect['Name'])
 
 
+class TestRenameContainer(BaseTestCase):
+    def runTest(self):
+        name = 'hong_meiling'
+        res = self.client.create_container('busybox', 'true')
+        self.assertIn('Id', res)
+        self.tmp_containers.append(res['Id'])
+        self.client.rename(res, name)
+        inspect = self.client.inspect_container(res['Id'])
+        self.assertIn('Name', inspect)
+        self.assertEqual(name, inspect['Name'])
+
+
 class TestStartContainer(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', 'true')
