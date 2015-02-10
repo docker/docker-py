@@ -56,8 +56,8 @@ class Client(requests.Session):
                 )
             )
         self.base_url = base_url
+        self.timeout = timeout
         self._version = version
-        self._timeout = timeout
         self._auth_configs = auth.load_config()
 
         # Use SSLAdapter for the ability to specify SSL version
@@ -71,7 +71,7 @@ class Client(requests.Session):
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
         parameter, if not already present."""
-        kwargs.setdefault('timeout', self._timeout)
+        kwargs.setdefault('timeout', self.timeout)
         return kwargs
 
     def _post(self, url, **kwargs):
@@ -954,7 +954,7 @@ class Client(requests.Session):
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
         res = self._post(url, params=params,
-                         timeout=(timeout + self._timeout))
+                         timeout=(timeout + self.timeout))
         self._raise_for_status(res)
 
     def tag(self, image, repository, tag=None, force=False):
