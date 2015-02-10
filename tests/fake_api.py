@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-CURRENT_VERSION = 'v1.16'
+CURRENT_VERSION = 'v1.17'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -271,6 +271,11 @@ def post_fake_restart_container():
     return status_code, response
 
 
+def post_fake_rename_container():
+    status_code = 204
+    return status_code, None
+
+
 def delete_fake_remove_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
@@ -348,6 +353,8 @@ fake_responses = {
     post_fake_resize_container,
     '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
     get_fake_inspect_container,
+    '{1}/{0}/containers/3cc2351ab11b/rename'.format(CURRENT_VERSION, prefix):
+    post_fake_rename_container,
     '{1}/{0}/images/e9aa60c60128/tag'.format(CURRENT_VERSION, prefix):
     post_fake_tag_image,
     '{1}/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION, prefix):

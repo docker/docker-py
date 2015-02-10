@@ -526,6 +526,15 @@ Remove an image. Similar to the `docker rmi` command.
 * force (bool): Force removal of the image
 * noprune (bool): Do not delete untagged parents
 
+## rename
+
+Rename a container. Similar to the `docker rename` command.
+
+**Params**:
+
+* container (str): ID of the container to rename
+* name (str): New name for the container
+
 ## restart
 
 Restart a container. Similar to the `docker restart` command.

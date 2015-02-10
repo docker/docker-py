@@ -1256,6 +1256,21 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_rename_container(self):
+        try:
+            self.client.rename(
+                {'Id': fake_api.FAKE_CONTAINER_ID},
+                name='foobar'
+            )
+        except Exception as e:
+            self.fail('Command shold not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/rename',
+            params={'name': 'foobar'},
+            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_wait(self):
         try:
             self.client.wait(fake_api.FAKE_CONTAINER_ID)

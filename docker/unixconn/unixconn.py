@@ -12,13 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import six
+import requests.adapters
+import socket
 
 if six.PY3:
     import http.client as httplib
 else:
     import httplib
-import requests.adapters
-import socket
 
 try:
     import requests.packages.urllib3 as urllib3
