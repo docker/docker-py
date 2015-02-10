@@ -33,7 +33,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.16'
+DEFAULT_DOCKER_API_VERSION = '1.17'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
@@ -374,8 +374,12 @@ class Client(requests.Session):
 
         sep = bytes() if six.PY3 else str()
 
-        return stream and self._multiplexed_response_stream_helper(response) or \
-            sep.join([x for x in self._multiplexed_buffer_helper(response)])
+        if stream:
+            return self._multiplexed_response_stream_helper(response)
+        else:
+            return sep.join(
+                [x for x in self._multiplexed_buffer_helper(response)]
+            )
 
     def attach_socket(self, container, params=None, ws=False):
         if params is None:
@@ -893,11 +897,15 @@ class Client(requests.Session):
         self._raise_for_status(res)
 
     def rename(self, container, name):
+        if utils.compare_version('1.17', self._version) < 0:
+            raise errors.InvalidVersion(
+                'rename was only introduced in API version 1.17'
+            )
         if isinstance(container, dict):
             container = container.get('Id')
         url = self._url("/containers/{0}/rename".format(container))
         params = {'name': name}
-        res = self._post(url, None, params=params)
+        res = self._post(url, params=params)
         self._raise_for_status(res)
 
     def resize(self, container, height, width):
