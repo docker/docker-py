@@ -892,6 +892,23 @@ class Client(requests.Session):
         res = self._delete(self._url("/images/" + image), params=params)
         self._raise_for_status(res)
 
+    def rename(self, container, name):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/rename".format(container))
+        params = {'name': name}
+        res = self._post(url, None, params=params)
+        self._raise_for_status(res)
+
+    def resize(self, container, height, width):
+        if isinstance(container, dict):
+            container = container.get('Id')
+
+        params = {'h': height, 'w': width}
+        url = self._url("/containers/{0}/resize".format(container))
+        res = self._post(url, params=params)
+        self._raise_for_status(res)
+
     def restart(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -937,15 +954,6 @@ class Client(requests.Session):
         if not start_config:
             start_config = None
         res = self._post_json(url, data=start_config)
-        self._raise_for_status(res)
-
-    def resize(self, container, height, width):
-        if isinstance(container, dict):
-            container = container.get('Id')
-
-        params = {'h': height, 'w': width}
-        url = self._url("/containers/{0}/resize".format(container))
-        res = self._post(url, params=params)
         self._raise_for_status(res)
 
     def stop(self, container, timeout=10):
