@@ -216,7 +216,7 @@ def parse_host(addr):
     else:
         if "://" in addr:
             raise errors.DockerException(
-                "Invalid bind address protocol: {0]".format(addr)
+                "Invalid bind address protocol: {0}".format(addr)
             )
         proto = "http"
 
@@ -244,7 +244,7 @@ def parse_host(addr):
 
     if proto == "http+unix":
         return "{0}://{1}".format(proto, host)
-    return "{0}://{1}:{2}" % (proto, host, port)
+    return "{0}://{1}:{2}".format(proto, host, port)
 
 
 def parse_devices(devices):
