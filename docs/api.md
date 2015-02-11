@@ -674,6 +674,8 @@ from. Optionally a single string joining container id's with commas
 * cap_add (list of str): See note above
 * cap_drop (list of str): See note above
 * extra_hosts (dict): custom host-to-IP mappings (host:ip)
+* pid_mode (str): if set to "host", use the host PID namespace inside the
+  container
 
 ```python
 >>> from docker import Client

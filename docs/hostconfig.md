@@ -83,6 +83,8 @@ for example:
 * cap_drop (list of str): Drop kernel capabilities
 * extra_hosts (dict): custom host-to-IP mappings (host:ip)
 * read_only (bool): mount the container's root filesystem as read only
+* pid_mode (str): if set to "host", use the host PID namespace inside the
+  container
 
 **Returns** (dict) HostConfig dictionary
 
