@@ -312,6 +312,33 @@ class TestStartContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
+class TestCreateContainerReadOnlyFs(BaseTestCase):
+    def runTest(self):
+        ctnr = self.client.create_container(
+            'busybox', ['mkdir', '/shrine'],
+            host_config=create_host_config(read_only=True)
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr)
+        res = self.client.wait(ctnr)
+        self.assertNotEqual(res, 0)
+
+
+class TestStartContainerReadOnlyFs(BaseTestCase):
+    def runTest(self):
+        # Presumably a bug in 1.5.0
+        # https://github.com/docker/docker/issues/10695
+        ctnr = self.client.create_container(
+            'busybox', ['mkdir', '/shrine'],
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr, read_only=True)
+        # res = self.client.wait(ctnr)
+        # self.assertNotEqual(res, 0)
+
+
 class TestCreateContainerWithName(BaseTestCase):
     def runTest(self):
         res = self.client.create_container('busybox', 'true', name='foobar')

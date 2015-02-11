@@ -301,7 +301,7 @@ def create_host_config(
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-    extra_hosts=None
+    extra_hosts=None, read_only=None
 ):
     host_config = {}
 
@@ -310,6 +310,9 @@ def create_host_config(
 
     if publish_all_ports:
         host_config['PublishAllPorts'] = publish_all_ports
+
+    if read_only is not None:
+        host_config['ReadOnlyRootFs'] = read_only
 
     if dns_search:
         host_config['DnsSearch'] = dns_search
