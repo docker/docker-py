@@ -286,6 +286,26 @@ Export the contents of a filesystem as a tar archive to STDOUT
 
 **Returns** (str): The filesystem tar archive as a str
 
+## get_image
+
+Get an image from the docker daemon. Similar to the `docker save` command.
+
+**Params**:
+
+* image (str): Image name to get
+
+**Returns** (urllib3.response.HTTPResponse object): The response from the docker daemon
+
+An example of how to get (save) an image to a file.
+```python
+>>> from docker import Client
+>>> cli = Client(base_url='unix://var/run/docker.sock')
+>>> image = cli.get_image(“fedora:latest”)
+>>> image_tar = open(‘/tmp/fedora-latest.tar’,’w’)
+>>> image_tar.write(image.data)
+>>> image_tar.close()
+```
+
 ## history
 
 Show the history of an image
@@ -778,7 +798,6 @@ If `container` a dict, the `Id` key is used.
 TODO:
 
 * events
-* get_image
 * load_image
 * resize
 
