@@ -966,11 +966,35 @@ class Client(requests.Session):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
+    def stats(self, container, aggregate=0):
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/stats".format(container))
+        res = self._get(url, stream=True)
+        self._raise_for_status(res)
+
+        stats_stream = res.iter_lines()
+        stats_array = []
+        stats_aggregated = 0
+
+        if aggregate:
+            for stat_obj in stats_stream:
+                if stats_aggregated >= aggregate:
+                    stats_aggregated = 0
+                    yield stats_array
+                    stats_array = []
+                stats_array.append(stat_obj)
+                stats_aggregated += 1
+        else:
+            for stat_obj in stats_stream:
+                yield stat_obj
+
     def stop(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
+
         res = self._post(url, params=params,
                          timeout=(timeout + self.timeout))
         self._raise_for_status(res)
