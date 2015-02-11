@@ -229,6 +229,28 @@ Inspect changes on a container's filesystem
 
 **Returns** (str):
 
+## events
+
+Identical to the `docker events` command: get real time events from the server. The `events`
+function return a blocking generator you can iterate over to retrieve events as they happen.
+
+**Params**:
+
+* since (datetime or int): get events from this point
+
+* until (datetime or int): get events until this point
+
+* filters (dict): filter the events by event time, container or image
+
+**Returns** (generator):
+
+```python
+{u'status': u'start',
+ u'from': u'image/with:tag',
+ u'id': u'container-id',
+ u'time': 1423339459}
+```
+
 ## execute
 
 ```python

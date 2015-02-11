@@ -20,12 +20,14 @@ import tarfile
 import tempfile
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
+from datetime import datetime
 
 import requests
 import six
 
 from .. import errors
 from .. import tls
+
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
@@ -294,6 +296,12 @@ def convert_filters(filters):
             v = [v, ]
         result[k] = v
     return json.dumps(result)
+
+
+def datetime_to_timestamp(dt=datetime.now()):
+    """Convert a datetime in local timezone to a unix timestamp"""
+    delta = dt - datetime.fromtimestamp(0)
+    return delta.seconds + delta.days * 24 * 3600
 
 
 def create_host_config(

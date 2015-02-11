@@ -221,6 +221,13 @@ def get_fake_diff():
     return status_code, response
 
 
+def get_fake_events():
+    status_code = 200
+    response = [{'status': 'stop', 'id': FAKE_CONTAINER_ID,
+                 'from': FAKE_IMAGE_ID, 'time': 1423247867}]
+    return status_code, response
+
+
 def get_fake_export():
     status_code = 200
     response = 'Byte Stream....'
@@ -402,5 +409,7 @@ fake_responses = {
     '{1}/{0}/containers/create'.format(CURRENT_VERSION, prefix):
     post_fake_create_container,
     '{1}/{0}/build'.format(CURRENT_VERSION, prefix):
-    post_fake_build_container
+    post_fake_build_container,
+    '{1}/{0}/events'.format(CURRENT_VERSION, prefix):
+    get_fake_events
 }
