@@ -82,6 +82,7 @@ for example:
 * cap_add (list of str): Add kernel capabilities
 * cap_drop (list of str): Drop kernel capabilities
 * extra_hosts (dict): custom host-to-IP mappings (host:ip)
+* read_only (bool): mount the container's root filesystem as read only
 
 **Returns** (dict) HostConfig dictionary
 
