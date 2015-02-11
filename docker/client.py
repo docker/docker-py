@@ -550,8 +550,8 @@ class Client(requests.Session):
         config = self._container_config(
             image, command, hostname, user, detach, stdin_open, tty, mem_limit,
             ports, environment, dns, volumes, volumes_from, network_disabled,
-            entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset, host_config, mac_address
+            entrypoint, cpu_shares, working_dir, domainname, memswap_limit,
+            cpuset, host_config, mac_address
         )
         return self.create_container_from_config(config, name)
 
@@ -957,7 +957,7 @@ class Client(requests.Session):
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-              extra_hosts=None, read_only=None):
+              extra_hosts=None, read_only=None, pid_mode=None):
 
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
@@ -969,11 +969,15 @@ class Client(requests.Session):
                     'volumes_from is only supported for API version >= 1.10'
                 )
 
-        if utils.compare_version('1.17', self._version) < 0 and \
-           read_only is not None:
-            raise errors.InvalidVersion(
-                'read_only is only supported for API version >= 1.17'
-            )
+        if utils.compare_version('1.17', self._version) < 0:
+            if read_only is not None:
+                raise errors.InvalidVersion(
+                    'read_only is only supported for API version >= 1.17'
+                )
+            if pid_mode is not None:
+                raise errors.InvalidVersion(
+                    'pid_mode is only supported for API version >= 1.17'
+                )
 
         start_config = utils.create_host_config(
             binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
@@ -981,7 +985,7 @@ class Client(requests.Session):
             privileged=privileged, dns_search=dns_search, cap_add=cap_add,
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
             network_mode=network_mode, restart_policy=restart_policy,
-            extra_hosts=extra_hosts, read_only=read_only
+            extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode
         )
 
         if isinstance(container, dict):
