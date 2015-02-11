@@ -165,11 +165,11 @@ def convert_volume_binds(binds):
     result = []
     for k, v in binds.items():
         if isinstance(v, dict):
-            result.append('%s:%s:%s' % (
+            result.append('{0}:{1}:{2}'.format(
                 k, v['bind'], 'ro' if v.get('ro', False) else 'rw'
             ))
         else:
-            result.append('%s:%s:rw' % (k, v))
+            result.append('{0}:{1}:rw'.format(k, v))
     return result
 
 
@@ -203,7 +203,8 @@ def parse_host(addr):
         addr = addr.replace('http+unix://', 'unix://')
 
     if addr == 'tcp://':
-        raise errors.DockerException("Invalid bind address format: %s" % addr)
+        raise errors.DockerException(
+            "Invalid bind address format: {0}".format(addr))
     elif addr.startswith('unix://'):
         addr = addr[7:]
     elif addr.startswith('tcp://'):
@@ -217,7 +218,7 @@ def parse_host(addr):
     else:
         if "://" in addr:
             raise errors.DockerException(
-                "Invalid bind address protocol: %s" % addr
+                "Invalid bind address protocol: {0}".format(addr)
             )
         proto = "http"
 
@@ -225,7 +226,7 @@ def parse_host(addr):
         host_parts = addr.split(':')
         if len(host_parts) != 2:
             raise errors.DockerException(
-                "Invalid bind address format: %s" % addr
+                "Invalid bind address format: {0}".format(addr)
             )
         if host_parts[0]:
             host = host_parts[0]
@@ -238,13 +239,14 @@ def parse_host(addr):
             )
 
     elif proto in ("http", "https") and ':' not in addr:
-        raise errors.DockerException("Bind address needs a port: %s" % addr)
+        raise errors.DockerException(
+            "Bind address needs a port: {0}".format(addr))
     else:
         host = addr
 
     if proto == "http+unix":
-        return "%s://%s" % (proto, host)
-    return "%s://%s:%d" % (proto, host, port)
+        return "{0}://{1}".format(proto, host)
+    return "{0}://{1}:{2}".format(proto, host, port)
 
 
 def parse_devices(devices):
