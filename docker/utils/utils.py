@@ -16,6 +16,7 @@ import io
 import os
 import os.path
 import json
+import shlex
 import tarfile
 import tempfile
 from distutils.version import StrictVersion
@@ -31,6 +32,12 @@ from .. import tls
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
+BYTE_UNITS = {
+    'b': 1,
+    'k': 1024,
+    'm': 1024 * 1024,
+    'g': 1024 * 1024 * 1024
+}
 
 
 def mkbuildcontext(dockerfile):
@@ -306,6 +313,41 @@ def datetime_to_timestamp(dt=datetime.now()):
     return delta.seconds + delta.days * 24 * 3600
 
 
+def parse_bytes(s):
+    if len(s) == 0:
+        s = 0
+    else:
+        units = BYTE_UNITS
+        suffix = s[-1].lower()
+
+        # Check if the variable is a string representation of an int
+        # without a units part. Assuming that the units are bytes.
+        if suffix.isdigit():
+            digits_part = s
+            suffix = 'b'
+        else:
+            digits_part = s[:-1]
+
+        if suffix in units.keys() or suffix.isdigit():
+            try:
+                digits = int(digits_part)
+            except ValueError:
+                message = ('Failed converting the string value for'
+                           'memory ({0}) to a number.')
+                formatted_message = message.format(digits_part)
+                raise errors.DockerException(formatted_message)
+
+            s = digits * units[suffix]
+        else:
+            message = ('The specified value for memory'
+                       ' ({0}) should specify the units. The postfix'
+                       ' should be one of the `b` `k` `m` `g`'
+                       ' characters')
+            raise errors.DockerException(message.format(s))
+
+    return s
+
+
 def create_host_config(
     binds=None, port_bindings=None, lxc_conf=None,
     publish_all_ports=False, links=None, privileged=False,
@@ -394,3 +436,101 @@ def create_host_config(
         host_config['LxcConf'] = lxc_conf
 
     return host_config
+
+
+def create_container_config(
+    version, image, command, hostname=None, user=None, detach=False,
+    stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None,
+    dns=None, volumes=None, volumes_from=None, network_disabled=False,
+    entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
+    memswap_limit=0, cpuset=None, host_config=None, mac_address=None
+):
+    if isinstance(command, six.string_types):
+        command = shlex.split(str(command))
+    if isinstance(environment, dict):
+        environment = [
+            six.text_type('{0}={1}').format(k, v)
+            for k, v in six.iteritems(environment)
+        ]
+
+    if isinstance(mem_limit, six.string_types):
+        mem_limit = parse_bytes(mem_limit)
+    if isinstance(memswap_limit, six.string_types):
+        memswap_limit = parse_bytes(memswap_limit)
+
+    if isinstance(ports, list):
+        exposed_ports = {}
+        for port_definition in ports:
+            port = port_definition
+            proto = 'tcp'
+            if isinstance(port_definition, tuple):
+                if len(port_definition) == 2:
+                    proto = port_definition[1]
+                port = port_definition[0]
+            exposed_ports['{0}/{1}'.format(port, proto)] = {}
+        ports = exposed_ports
+
+    if isinstance(volumes, six.string_types):
+        volumes = [volumes, ]
+
+    if isinstance(volumes, list):
+        volumes_dict = {}
+        for vol in volumes:
+            volumes_dict[vol] = {}
+        volumes = volumes_dict
+
+    if volumes_from:
+        if not isinstance(volumes_from, six.string_types):
+            volumes_from = ','.join(volumes_from)
+    else:
+        # Force None, an empty list or dict causes client.start to fail
+        volumes_from = None
+
+    attach_stdin = False
+    attach_stdout = False
+    attach_stderr = False
+    stdin_once = False
+
+    if not detach:
+        attach_stdout = True
+        attach_stderr = True
+
+        if stdin_open:
+            attach_stdin = True
+            stdin_once = True
+
+    if compare_version('1.10', version) >= 0:
+        message = ('{0!r} parameter has no effect on create_container().'
+                   ' It has been moved to start()')
+        if dns is not None:
+            raise errors.DockerException(message.format('dns'))
+        if volumes_from is not None:
+            raise errors.DockerException(message.format('volumes_from'))
+
+    return {
+        'Hostname': hostname,
+        'Domainname': domainname,
+        'ExposedPorts': ports,
+        'User': user,
+        'Tty': tty,
+        'OpenStdin': stdin_open,
+        'StdinOnce': stdin_once,
+        'Memory': mem_limit,
+        'AttachStdin': attach_stdin,
+        'AttachStdout': attach_stdout,
+        'AttachStderr': attach_stderr,
+        'Env': environment,
+        'Cmd': command,
+        'Dns': dns,
+        'Image': image,
+        'Volumes': volumes,
+        'VolumesFrom': volumes_from,
+        'NetworkDisabled': network_disabled,
+        'Entrypoint': entrypoint,
+        'CpuShares': cpu_shares,
+        'Cpuset': cpuset,
+        'WorkingDir': working_dir,
+        'MemorySwap': memswap_limit,
+        'HostConfig': host_config,
+        'MacAddress': mac_address
+    }
