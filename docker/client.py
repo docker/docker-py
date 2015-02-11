@@ -569,7 +569,7 @@ class Client(requests.Session):
         return self._result(self._get(self._url("/containers/{0}/changes".
                             format(container))), True)
 
-    def events(self, since=None, until=None, filters=None):
+    def events(self, since=None, until=None, filters=None, decode=None):
         if isinstance(since, datetime):
             since = utils.datetime_to_timestamp(since)
 
@@ -587,7 +587,7 @@ class Client(requests.Session):
 
         return self._stream_helper(self.get(self._url('/events'),
                                             params=params, stream=True),
-                                   decode=True)
+                                   decode=decode)
 
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
