@@ -31,11 +31,12 @@ import unittest
 import warnings
 import random
 
-import docker
 import requests
 import six
 
+import docker
 import fake_api
+
 
 try:
     from unittest import mock
@@ -1670,6 +1671,17 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/json',
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_stats(self):
+        try:
+            self.client.stats(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/stats',
+            stream=True
         )
 
     ##################
