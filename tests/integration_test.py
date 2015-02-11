@@ -1060,6 +1060,37 @@ class TestPauseUnpauseContainer(BaseTestCase):
         self.assertEqual(state['Paused'], False)
 
 
+class TestCreateContainerWithHostPidMode(BaseTestCase):
+    def runTest(self):
+        ctnr = self.client.create_container(
+            'busybox', 'true', host_config=create_host_config(
+                pid_mode='host'
+            )
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr)
+        inspect = self.client.inspect_container(ctnr)
+        self.assertIn('HostConfig', inspect)
+        host_config = inspect['HostConfig']
+        self.assertIn('PidMode', host_config)
+        self.assertEqual(host_config['PidMode'], 'host')
+
+
+class TestStartContainerWithHostPidMode(BaseTestCase):
+    def runTest(self):
+        ctnr = self.client.create_container(
+            'busybox', 'true'
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr, pid_mode='host')
+        inspect = self.client.inspect_container(ctnr)
+        self.assertIn('HostConfig', inspect)
+        host_config = inspect['HostConfig']
+        self.assertIn('PidMode', host_config)
+        self.assertEqual(host_config['PidMode'], 'host')
+
 #################
 #  LINKS TESTS  #
 #################
