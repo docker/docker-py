@@ -672,7 +672,6 @@ This will stream statistics for a specific container.
 **Params**:
 
 * container (str): The container to start
-* aggregate (int): The number of messages to aggregate before returning a stream object.
 
 ```python
 >>> from docker import Client
