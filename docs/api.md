@@ -708,6 +708,27 @@ from. Optionally a single string joining container id's with commas
 None
 ```
 
+## stats
+
+The Docker API parallel to the `docker stats` command.
+This will stream statistics for a specific container.
+
+**Params**:
+
+* container (str): The container to start
+
+```python
+>>> from docker import Client
+>>> cli = Client(base_url='tcp://127.0.0.1:2375')
+>>> stats_obj = cli.stats('elasticsearch')
+>>> for stat in stats:
+>>>     print(stat)
+{"read":"2015-02-11T21:47:30.49388286+02:00","network":{"rx_bytes":666052,"rx_packets":4409 ...
+...
+...
+...
+```
+
 ## stop
 
 Stops a container. Similar to the `docker stop` command.

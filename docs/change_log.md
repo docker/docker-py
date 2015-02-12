@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+0.7.3
+-----
+
+### Features
+
+* Added support for `stats` API.
+
+
 0.7.2
 -----
 
