@@ -669,9 +669,6 @@ None
 The Docker API parallel to the `docker stats` command.
 This will stream statistics for a specific container.
 
-`aggregate`, if 0 will return an iterable stream object of messages.
-If aggregate is above 0, an iterable stream object of a list of messages in the size of `aggregate` will be returned.
-
 **Params**:
 
 * container (str): The container to start
@@ -679,12 +676,11 @@ If aggregate is above 0, an iterable stream object of a list of messages in the 
 
 ```python
 >>> from docker import Client
->>> aggregate = 10
 >>> cli = Client(base_url='tcp://127.0.0.1:2375')
->>> stats_obj = cli.stats('elasticsearch', aggregate=aggregate)
+>>> stats_obj = cli.stats('elasticsearch')
 >>> for stat in stats:
 >>>     print(stat)
-['{"read":"2015-02-11T21:47:30.49388286+02:00","network":{"rx_bytes":666052,"rx_packets":4409 ...
+{"read":"2015-02-11T21:47:30.49388286+02:00","network":{"rx_bytes":666052,"rx_packets":4409 ...
 ...
 ...
 ...
