@@ -214,6 +214,10 @@ class Client(requests.Session):
                 break
             yield data
 
+    @property
+    def api_version(self):
+        return self._version
+
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
         if isinstance(container, dict):
