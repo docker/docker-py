@@ -967,6 +967,10 @@ class Client(requests.Session):
         self._raise_for_status(res)
 
     def stats(self, container):
+        if utils.compare_version('1.17', self._version) < 0:
+            raise errors.InvalidVersion(
+                'Stats retrieval is not supported in API < 1.17!')
+
         if isinstance(container, dict):
             container = container.get('Id')
         url = self._url("/containers/{0}/stats".format(container))
