@@ -825,6 +825,9 @@ class Client(requests.Session):
                                       params={'term': term}),
                             True)
 
+    def set_timeout(self, timeout):
+        self._timeout = timeout
+
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,

@@ -158,6 +158,14 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_set_timeout(self):
+        try:
+            self.client.set_timeout(15)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        assert self.client._timeout == 15
+
     def test_search(self):
         try:
             self.client.search('busybox')
