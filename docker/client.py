@@ -17,7 +17,6 @@ import os
 import re
 import shlex
 import struct
-import warnings
 from datetime import datetime
 
 import requests
@@ -139,12 +138,6 @@ class Client(requests.Session):
 
     def _create_websocket_connection(self, url):
         return websocket.create_connection(url)
-
-    def _warn_deprecated(self, arg_name, version):
-        warning_message = (
-            '{0!r} is deprecated for API version >= {1}'
-        ).format(arg_name, version)
-        warnings.warn(warning_message, DeprecationWarning)
 
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
