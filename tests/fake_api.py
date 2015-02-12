@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import fake_stat
+
 CURRENT_VERSION = 'v1.17'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
@@ -337,6 +339,11 @@ def post_fake_tag_image():
     return status_code, response
 
 
+def get_fake_stats():
+    status_code = 200
+    response = fake_stat.OBJ
+    return status_code, response
+
 # Maps real api url to fake response callback
 prefix = 'http+unix://var/run/docker.sock'
 fake_responses = {
@@ -376,6 +383,8 @@ fake_responses = {
     post_fake_execute,
     '{1}/{0}/exec/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
     post_fake_execute_start,
+    '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
+    get_fake_stats,
     '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):
     post_fake_stop_container,
     '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):

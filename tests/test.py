@@ -1672,6 +1672,18 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_container_stats(self):
+        try:
+            self.client.stats(fake_api.FAKE_CONTAINER_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/stats',
+            timeout=60,
+            stream=True
+        )
+
     ##################
     #  IMAGES TESTS  #
     ##################

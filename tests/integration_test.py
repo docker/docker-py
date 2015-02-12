@@ -29,7 +29,7 @@ import six
 from test import Cleanup
 
 # FIXME: missing tests for
-# export; history; import_image; insert; port; push; tag; get; load
+# export; history; import_image; insert; port; push; tag; get; load; stats;
 
 DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
 

@@ -869,11 +869,22 @@ class Client(requests.Session):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
+    def stats(self, container):
+        if utils.compare_version('1.17', self._version) < 0:
+            raise errors.InvalidVersion(
+                'Stats retrieval is not supported in API < 1.17!')
+
+        if isinstance(container, dict):
+            container = container.get('Id')
+        url = self._url("/containers/{0}/stats".format(container))
+        return self._stream_helper(self._get(url, stream=True))
+
     def stop(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
+
         res = self._post(url, params=params,
                          timeout=(timeout + self.timeout))
         self._raise_for_status(res)
