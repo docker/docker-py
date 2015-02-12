@@ -228,6 +228,12 @@ def get_fake_events():
     return status_code, response
 
 
+def get_fake_stats():
+    status_code = 200
+    response = [{'read': '2015-02-07T19:50:17.746360731Z'}]
+    return status_code, response
+
+
 def get_fake_export():
     status_code = 200
     response = 'Byte Stream....'
@@ -388,6 +394,8 @@ fake_responses = {
     get_fake_port,
     '{1}/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION, prefix):
     post_fake_restart_container,
+    '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
+    get_fake_stats,
     '{1}/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION, prefix):
     delete_fake_remove_container,
     '{1}/{0}/images/create'.format(CURRENT_VERSION, prefix):

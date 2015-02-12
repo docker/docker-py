@@ -869,6 +869,12 @@ class Client(requests.Session):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
+    def stats(self, container):
+        if utils.compare_version('1.17', self._version) < 0:
+            raise errors.InvalidVersion('Stats is not supported in API < 1.17')
+        u = self._url("/containers/{0}/stats".format(container))
+        return self._stream_helper(self.get(u, stream=True), decode=True)
+
     def stop(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
