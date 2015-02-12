@@ -376,6 +376,8 @@ fake_responses = {
     post_fake_execute,
     '{1}/{0}/exec/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
     post_fake_execute_start,
+    '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
+    get_fake_stats,
     '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):
     post_fake_stop_container,
     '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):
@@ -390,8 +392,6 @@ fake_responses = {
     post_fake_restart_container,
     '{1}/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION, prefix):
     delete_fake_remove_container,
-    '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
-    get_fake_stats,
     '{1}/{0}/images/create'.format(CURRENT_VERSION, prefix):
     post_fake_image_create,
     '{1}/{0}/images/e9aa60c60128'.format(CURRENT_VERSION, prefix):
