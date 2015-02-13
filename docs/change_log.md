@@ -1,6 +1,35 @@
 Change Log
 ==========
 
+1.0.0
+-----
+
+### Features
+
+* Added new `Client.rename` method (`docker rename`)
+* Added now `Client.stats` method (`docker stats`)
+* Added `read_only` param support to `utils.create_host_config` and
+  `Client.start` (`docker run --read-only`)
+* Added `pid_mode` param support to `utils.create_host_config` and
+  `Client.start` (`docker run --pid='host'`)
+* Added `since`, `until` and `filters` params to `Client.events`.
+* Added `decode` parameter to `Client.stats` and `Client.events` to decode
+  JSON objects on the fly (False by default).
+
+### Bugfixes
+
+* Fixed a bug that caused `Client.build` to crash when the provided source was
+  a remote source.
+
+### Miscellaneous
+
+* Default API version has been bumped to 1.17 (Docker Engine 1.5.0)
+* `Client.timeout` is now a public attribute, and users are encouraged to use it
+  when request timeouts need to be changed at runtime.
+* Added `Client.api_version` as a read-only property.
+* The `memswap_limit` argument in `Client.create_container` now accepts string
+  type values similar to `mem_limit` ('6g', '120000k', etc.)
+* Improved documentation
 
 0.7.2
 -----
