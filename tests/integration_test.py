@@ -1132,8 +1132,8 @@ class TestRemoveLink(BaseTestCase):
 
         # Containers are still there
         retrieved = [
-            x for x in containers if x['Id'].startswith(container1_id)
-            or x['Id'].startswith(container2_id)
+            x for x in containers if x['Id'].startswith(container1_id) or
+            x['Id'].startswith(container2_id)
         ]
         self.assertEqual(len(retrieved), 2)
 
