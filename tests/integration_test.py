@@ -1429,7 +1429,7 @@ class UnixconnTestCase(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
 
-            client = docker.Client()
+            client = docker.Client(base_url=DEFAULT_BASE_URL)
             client.images()
             client.close()
             del client
@@ -1444,7 +1444,7 @@ class UnixconnTestCase(unittest.TestCase):
 
 class TestRegressions(unittest.TestCase):
     def setUp(self):
-        self.client = docker.client.Client(timeout=5)
+        self.client = docker.Client(timeout=5, base_url=DEFAULT_BASE_URL)
 
     def test_443(self):
         dfile = io.BytesIO()
