@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from contextlib import contextmanager
 from distutils.util import strtobool
-from sys import stdout
 from uuid import uuid4
 import json
 import platform
 
 from characteristic import Attribute, attributes
 from docker.client import Client
+from docker.errors import APIError
 from docker.utils import kwargs_from_env
 
 if platform.system() == "Darwin":
@@ -20,31 +20,55 @@ class ImageBuildFailure(Exception):
     pass
 
 
-@attributes(
-    [
-        Attribute(name="client"),
-        Attribute(name="stdout", default_value=stdout),
-    ],
-)
+@attributes([Attribute(name="client")])
 class Docker(object):
     @contextmanager
     def temporary_image(self, **kwargs):
         kwargs.setdefault("forcerm", True)
 
-        image_id = uuid4().hex
-        for event_json in self.client.build(tag=image_id, rm=True, **kwargs):
-            event = json.loads(event_json)
+        context = kwargs.pop("context", None)
+        if context is not None:
+            kwargs.update(custom_context=True, fileobj=context)
 
-            error = event.get("errorDetail")
-            if error is not None:
-                raise ImageBuildFailure(error["message"])
+        image = Image(id=uuid4().hex, client=self.client)
+        yield image.build(rm=True, **kwargs)
+        try:
+            image.remove()
+        except APIError:
+            pass
 
-            self.stdout.write(event["stream"])
 
-        image = Image(id=image_id, client=self.client)
-        yield image
-        image.remove()
+@attributes(
+    [
+        Attribute(name="image"),
+        Attribute(name="log", default_value=()),
+        Attribute(name="failed", default_value=False),
+    ],
+)
+class Build(object):
+    """
+    An image build.
 
+    """
+
+    @classmethod
+    def run(cls, image, client, **kwargs):
+        failed, log = False, []
+        for event in client.build(tag=image.id, **kwargs):
+            try:
+                log.append(_parse_API_event(event))
+            except ImageBuildFailure:
+                # XXX: do something with error
+                failed = True
+        return cls(image=image, log=log, failed=failed)
+
+
+def _parse_API_event(event_json):
+    event = json.loads(event_json)
+    error = event.get("errorDetail")
+    if error is not None or event.keys() != ["stream"]:
+        raise ImageBuildFailure(error)
+    return event["stream"]
 
 
 @attributes([Attribute(name="id"), Attribute(name="client")])
@@ -56,6 +80,9 @@ class Image(object):
         )
         yield container
         container.remove()
+
+    def build(self, **kwargs):
+        return Build.run(image=self, client=self.client, **kwargs)
 
     def remove(self):
         self.client.remove_image(self.id)
@@ -91,6 +118,9 @@ class Container(object):
 
     def logs(self, stream=True, **kwargs):
         return self.client.logs(container=self.id, stream=stream, **kwargs)
+
+    def wait(self, **kwargs):
+        return self.client.wait(container=self.id, **kwargs)
 
 
 @attributes(
