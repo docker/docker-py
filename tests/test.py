@@ -2095,6 +2095,12 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+    def test_build_container_with_named_dockerfile(self):
+        try:
+            self.client.build('.', dockerfile='nameddockerfile')
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
     #######################
     #  PY SPECIFIC TESTS  #
     #######################
