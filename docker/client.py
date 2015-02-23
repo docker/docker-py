@@ -275,7 +275,7 @@ class Client(requests.Session):
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=True,
-              forcerm=False):
+              forcerm=False, dockerfile=None):
         remote = context = headers = None
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
@@ -302,6 +302,11 @@ class Client(requests.Session):
         if utils.compare_version('1.8', self._version) >= 0:
             stream = True
 
+        if dockerfile and utils.compare_version('1.17', self._version) < 0:
+            raise errors.InvalidVersion(
+                'dockerfile was only introduced in API version 1.17'
+            )
+
         u = self._url('/build')
         params = {
             't': tag,
@@ -310,7 +315,8 @@ class Client(requests.Session):
             'nocache': nocache,
             'rm': rm,
             'forcerm': forcerm,
-            'pull': pull
+            'pull': pull,
+            'dockerfile': dockerfile
         }
 
         if context is not None:

@@ -63,6 +63,7 @@ correct value (e.g `gzip`).
 * encoding (str): The encoding for a stream. Set to `gzip` for compressing
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
 * forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
+* dockerfile (str): path within the build context to the Dockerfile
 
 **Returns** (generator): A generator of the build output
 
