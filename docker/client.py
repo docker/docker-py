@@ -627,8 +627,7 @@ class Client(requests.Session):
         elif not self._auth_configs:
             self._auth_configs = auth.load_config()
 
-        registry = auth.expand_registry_url(registry, insecure_registry) \
-            if registry else auth.INDEX_URL
+        registry = registry or auth.INDEX_URL
 
         authcfg = auth.resolve_authconfig(self._auth_configs, registry)
         # If we found an existing auth config for this registry and username
