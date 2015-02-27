@@ -351,6 +351,7 @@ class TestCreateContainerWithName(BaseTestCase):
 
 class TestRenameContainer(BaseTestCase):
     def runTest(self):
+        version = self.client.version()['Version']
         name = 'hong_meiling'
         res = self.client.create_container('busybox', 'true')
         self.assertIn('Id', res)
@@ -358,7 +359,10 @@ class TestRenameContainer(BaseTestCase):
         self.client.rename(res, name)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Name', inspect)
-        self.assertEqual(name, inspect['Name'])
+        if version == '1.5.0':
+            self.assertEqual(name, inspect['Name'])
+        else:
+            self.assertEqual('/{0}'.format(name), inspect['Name'])
 
 
 class TestStartContainer(BaseTestCase):
