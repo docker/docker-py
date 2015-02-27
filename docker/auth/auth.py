@@ -80,9 +80,7 @@ def resolve_authconfig(authconfig, registry=None):
 
 
 def convert_to_hostname(url):
-    url = url.replace('http://', '')
-    url = url.replace('https://', '')
-    return url.split('/', 1)[0]
+    return url.replace('http://', '').replace('https://', '').split('/', 1)[0]
 
 
 def encode_auth(auth_info):
