@@ -104,7 +104,8 @@ class UtilsTest(unittest.TestCase):
     def test_resolve_authconfig(self):
         auth_config = {
             'https://index.docker.io/v1/': {'auth': 'indexuser'},
-            'http://my.registry.net/v1/': {'auth': 'privateuser'}
+            'my.registry.net': {'auth': 'privateuser'},
+            'http://legacy.registry.url/v1/': {'auth': 'legacyauth'}
         }
         # hostname only
         self.assertEqual(
@@ -153,6 +154,15 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(
             resolve_authconfig(auth_config, 'http://my.registry.net/v1/'),
             {'auth': 'privateuser'}
+        )
+        # legacy entry in config
+        self.assertEqual(
+            resolve_authconfig(auth_config, 'legacy.registry.url'),
+            {'auth': 'legacyauth'}
+        )
+        # no matching entry
+        self.assertTrue(
+            resolve_authconfig(auth_config, 'does.not.exist') is None
         )
 
 
