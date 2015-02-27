@@ -313,7 +313,7 @@ class TestStartContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
-@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE)
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestCreateContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
         ctnr = self.client.create_container(
@@ -327,7 +327,7 @@ class TestCreateContainerReadOnlyFs(BaseTestCase):
         self.assertNotEqual(res, 0)
 
 
-@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE)
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestStartContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
         # Presumably a bug in 1.5.0
@@ -985,7 +985,7 @@ class TestRestartingContainer(BaseTestCase):
         self.client.remove_container(id, force=True)
 
 
-@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE)
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommand(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
@@ -999,7 +999,7 @@ class TestExecuteCommand(BaseTestCase):
         self.assertEqual(res, expected)
 
 
-@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE)
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommandString(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
@@ -1013,7 +1013,7 @@ class TestExecuteCommandString(BaseTestCase):
         self.assertEqual(res, expected)
 
 
-@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE)
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommandStreaming(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
