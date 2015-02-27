@@ -1325,6 +1325,8 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
         with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
             f.write("\n".join([
                 'node_modules',
+                'Dockerfile',
+                '.dockerginore',
                 '',  # empty line
             ]))
 
@@ -1343,6 +1345,8 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
                 chunk = chunk.decode('utf-8')
             logs += chunk
         self.assertFalse('node_modules' in logs)
+        self.assertFalse('Dockerfile' in logs)
+        self.assertFalse('.dockerginore' in logs)
         self.assertTrue('not-ignored' in logs)
 
 #######################
