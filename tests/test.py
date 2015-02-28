@@ -2115,11 +2115,10 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
         dockercfg_path = os.path.join(folder, '.dockercfg')
-        f = open(dockercfg_path, 'w')
-        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
-        f.write('auth = {0}\n'.format(auth_))
-        f.write('email = sakuya@scarlet.net')
-        f.close()
+        with open(dockercfg_path, 'w') as f:
+            auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+            f.write('auth = {0}\n'.format(auth_))
+            f.write('email = sakuya@scarlet.net')
         cfg = docker.auth.load_config(dockercfg_path)
         self.assertTrue(docker.auth.INDEX_URL in cfg)
         self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
@@ -2175,18 +2174,18 @@ class DockerClientTest(Cleanup, unittest.TestCase):
                 (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
                                          'bar/other.png', 'test']),
         ):
-            archive = docker.utils.tar(base, exclude=exclude)
-            tar = tarfile.open(fileobj=archive)
-            self.assertEqual(sorted(tar.getnames()), names)
+            with docker.utils.tar(base, exclude=exclude) as archive:
+                tar = tarfile.open(fileobj=archive)
+                self.assertEqual(sorted(tar.getnames()), names)
 
     def test_tar_with_empty_directory(self):
         base = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base)
         for d in ['foo', 'bar']:
             os.makedirs(os.path.join(base, d))
-        archive = docker.utils.tar(base)
-        tar = tarfile.open(fileobj=archive)
-        self.assertEqual(sorted(tar.getnames()), ['bar', 'foo'])
+        with docker.utils.tar(base) as archive:
+            tar = tarfile.open(fileobj=archive)
+            self.assertEqual(sorted(tar.getnames()), ['bar', 'foo'])
 
     def test_tar_with_file_symlinks(self):
         base = tempfile.mkdtemp()
@@ -2195,9 +2194,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             f.write("content")
         os.makedirs(os.path.join(base, 'bar'))
         os.symlink('../foo', os.path.join(base, 'bar/foo'))
-        archive = docker.utils.tar(base)
-        tar = tarfile.open(fileobj=archive)
-        self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
+        with docker.utils.tar(base) as archive:
+            tar = tarfile.open(fileobj=archive)
+            self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
 
     def test_tar_with_directory_symlinks(self):
         base = tempfile.mkdtemp()
@@ -2205,9 +2204,9 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         for d in ['foo', 'bar']:
             os.makedirs(os.path.join(base, d))
         os.symlink('../foo', os.path.join(base, 'bar/foo'))
-        archive = docker.utils.tar(base)
-        tar = tarfile.open(fileobj=archive)
-        self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
+        with docker.utils.tar(base) as archive:
+            tar = tarfile.open(fileobj=archive)
+            self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
 
 
 class StreamTest(Cleanup, unittest.TestCase):
@@ -2293,21 +2292,21 @@ class StreamTest(Cleanup, unittest.TestCase):
             b'\r\n'
         ) + b'\r\n'.join(lines)
 
-        client = docker.Client(base_url="http+unix://" + self.socket_file)
-        for i in range(5):
-            try:
-                stream = client.build(
-                    path=self.build_context,
-                    stream=True
-                )
-                break
-            except requests.ConnectionError as e:
-                if i == 4:
-                    raise e
+        with docker.Client(base_url="http+unix://" + self.socket_file) \
+                as client:
+            for i in range(5):
+                try:
+                    stream = client.build(
+                        path=self.build_context,
+                        stream=True
+                    )
+                    break
+                except requests.ConnectionError as e:
+                    if i == 4:
+                        raise e
 
-        self.assertEqual(list(stream), [
-            str(i).encode() for i in range(50)])
-
+            self.assertEqual(list(stream), [
+                str(i).encode() for i in range(50)])
 
 if __name__ == '__main__':
     unittest.main()
