@@ -32,6 +32,7 @@ from test import Cleanup
 # export; history; import_image; insert; port; push; tag; get; load; stats;
 
 DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
+EXEC_DRIVER_IS_NATIVE = True
 
 warnings.simplefilter('error')
 create_host_config = docker.utils.create_host_config
@@ -312,6 +313,7 @@ class TestStartContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestCreateContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
         ctnr = self.client.create_container(
@@ -325,6 +327,7 @@ class TestCreateContainerReadOnlyFs(BaseTestCase):
         self.assertNotEqual(res, 0)
 
 
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestStartContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
         # Presumably a bug in 1.5.0
@@ -351,6 +354,7 @@ class TestCreateContainerWithName(BaseTestCase):
 
 class TestRenameContainer(BaseTestCase):
     def runTest(self):
+        version = self.client.version()['Version']
         name = 'hong_meiling'
         res = self.client.create_container('busybox', 'true')
         self.assertIn('Id', res)
@@ -358,7 +362,10 @@ class TestRenameContainer(BaseTestCase):
         self.client.rename(res, name)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Name', inspect)
-        self.assertEqual(name, inspect['Name'])
+        if version == '1.5.0':
+            self.assertEqual(name, inspect['Name'])
+        else:
+            self.assertEqual('/{0}'.format(name), inspect['Name'])
 
 
 class TestStartContainer(BaseTestCase):
@@ -581,7 +588,8 @@ class TestStop(BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
+        if EXEC_DRIVER_IS_NATIVE:
+            self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -598,7 +606,8 @@ class TestStopWithDictInsteadOfId(BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
+        if EXEC_DRIVER_IS_NATIVE:
+            self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -614,7 +623,8 @@ class TestKill(BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
+        if EXEC_DRIVER_IS_NATIVE:
+            self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -630,7 +640,8 @@ class TestKillWithDictInsteadOfId(BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
+        if EXEC_DRIVER_IS_NATIVE:
+            self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -978,6 +989,7 @@ class TestRestartingContainer(BaseTestCase):
         self.client.remove_container(id, force=True)
 
 
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommand(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
@@ -991,6 +1003,7 @@ class TestExecuteCommand(BaseTestCase):
         self.assertEqual(res, expected)
 
 
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommandString(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
@@ -1004,6 +1017,7 @@ class TestExecuteCommandString(BaseTestCase):
         self.assertEqual(res, expected)
 
 
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommandStreaming(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
@@ -1311,6 +1325,8 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
         with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
             f.write("\n".join([
                 'node_modules',
+                'Dockerfile',
+                '.dockerginore',
                 '',  # empty line
             ]))
 
@@ -1329,6 +1345,8 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
                 chunk = chunk.decode('utf-8')
             logs += chunk
         self.assertFalse('node_modules' in logs)
+        self.assertFalse('Dockerfile' in logs)
+        self.assertFalse('.dockerginore' in logs)
         self.assertTrue('not-ignored' in logs)
 
 #######################
@@ -1458,5 +1476,7 @@ class TestRegressions(unittest.TestCase):
 if __name__ == '__main__':
     c = docker.Client(base_url=DEFAULT_BASE_URL)
     c.pull('busybox')
+    exec_driver = c.info()['ExecutionDriver']
+    EXEC_DRIVER_IS_NATIVE = exec_driver.startswith('native')
     c.close()
     unittest.main()

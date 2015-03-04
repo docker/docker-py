@@ -92,7 +92,7 @@ def decode_auth(auth):
     if isinstance(auth, six.string_types):
         auth = auth.encode('ascii')
     s = base64.b64decode(auth)
-    login, pwd = s.split(b':')
+    login, pwd = s.split(b':', 1)
     return login.decode('ascii'), pwd.decode('ascii')
 
 
