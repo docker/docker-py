@@ -169,7 +169,9 @@ class Client(requests.Session):
                 if reader._fp.chunk_left:
                     data += reader.read(reader._fp.chunk_left)
                 if decode:
-                    data = json.loads(data.decode('utf-8'))
+                    if six.PY3:
+                        data = data.decode('utf-8')
+                    data = json.loads(data)
                 yield data
         else:
             # Response isn't chunked, meaning we probably
