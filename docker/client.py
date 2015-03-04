@@ -169,6 +169,8 @@ class Client(requests.Session):
                 if reader._fp.chunk_left:
                     data += reader.read(reader._fp.chunk_left)
                 if decode:
+                    if six.PY3:
+                        data = data.decode('utf-8')
                     data = json.loads(data)
                 yield data
         else:
