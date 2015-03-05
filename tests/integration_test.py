@@ -1415,6 +1415,28 @@ class TestLoadJSONConfig(BaseTestCase):
         self.assertEqual(cfg.get('Auth'), None)
 
 
+class TestAutoDetectVersion(unittest.TestCase):
+    def test_client_init(self):
+        client = docker.Client(version='auto')
+        client_version = client._version
+        api_version = client.version(api_version=False)['ApiVersion']
+        self.assertEqual(client_version, api_version)
+        api_version_2 = client.version()['ApiVersion']
+        self.assertEqual(client_version, api_version_2)
+        client.close()
+
+    def test_auto_client(self):
+        client = docker.AutoVersionClient()
+        client_version = client._version
+        api_version = client.version(api_version=False)['ApiVersion']
+        self.assertEqual(client_version, api_version)
+        api_version_2 = client.version()['ApiVersion']
+        self.assertEqual(client_version, api_version_2)
+        client.close()
+        with self.assertRaises(docker.errors.DockerException):
+            docker.AutoVersionClient(version='1.11')
+
+
 class TestConnectionTimeout(unittest.TestCase):
     def setUp(self):
         self.timeout = 0.5
