@@ -66,8 +66,8 @@ class Client(requests.Session):
         if version is None:
             self._version = DEFAULT_DOCKER_API_VERSION
         elif isinstance(version, six.string_types):
-            if version.lower() == "auto":
-                self._version = self.retrieve_server_version()
+            if version.lower() == 'auto':
+                self._version = self._retrieve_server_version()
             else:
                 self._version = version
         else:
@@ -77,13 +77,18 @@ class Client(requests.Session):
                 )
             )
 
-    def retrieve_server_version(self):
-        response = self.version(api_version=False)
+    def _retrieve_server_version(self):
         try:
-            return response["ApiVersion"]
+            return self.version(api_version=False)["ApiVersion"]
         except KeyError:
-            raise ValueError("Invalid response from docker daemon: "
-                             "key \"ApiVersion\" is missing.")
+            raise errors.DockerException(
+                'Invalid response from docker daemon: key "ApiVersion"'
+                ' is missing.'
+            )
+        except Exception as e:
+            raise errors.DockerException(
+                'Error while fetching server API version: {0}'.format(e)
+            )
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
