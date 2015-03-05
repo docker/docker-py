@@ -40,7 +40,7 @@ STREAM_HEADER_SIZE_BYTES = 8
 
 
 class Client(requests.Session):
-    def __init__(self, base_url=None, version=DEFAULT_DOCKER_API_VERSION,
+    def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
         base_url = utils.parse_host(base_url)
@@ -50,15 +50,8 @@ class Client(requests.Session):
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must begin with '
                 '"https://".')
-        if not isinstance(version, six.string_types):
-            raise errors.DockerException(
-                'version parameter must be a string. Found {0}'.format(
-                    type(version).__name__
-                )
-            )
         self.base_url = base_url
         self.timeout = timeout
-        self._version = version
         self._auth_configs = auth.load_config()
 
         # Use SSLAdapter for the ability to specify SSL version
@@ -68,6 +61,34 @@ class Client(requests.Session):
             self.mount('https://', ssladapter.SSLAdapter())
         else:
             self.mount('http+unix://', unixconn.UnixAdapter(base_url, timeout))
+
+        # version detection needs to be after unix adapter mounting
+        if version is None:
+            self._version = DEFAULT_DOCKER_API_VERSION
+        elif isinstance(version, six.string_types):
+            if version.lower() == 'auto':
+                self._version = self._retrieve_server_version()
+            else:
+                self._version = version
+        else:
+            raise errors.DockerException(
+                'Version parameter must be a string or None. Found {0}'.format(
+                    type(version).__name__
+                )
+            )
+
+    def _retrieve_server_version(self):
+        try:
+            return self.version(api_version=False)["ApiVersion"]
+        except KeyError:
+            raise errors.DockerException(
+                'Invalid response from docker daemon: key "ApiVersion"'
+                ' is missing.'
+            )
+        except Exception as e:
+            raise errors.DockerException(
+                'Error while fetching server API version: {0}'.format(e)
+            )
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout
@@ -84,8 +105,11 @@ class Client(requests.Session):
     def _delete(self, url, **kwargs):
         return self.delete(url, **self._set_request_timeout(kwargs))
 
-    def _url(self, path):
-        return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
+    def _url(self, path, versioned_api=True):
+        if versioned_api:
+            return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
+        else:
+            return '{0}{1}'.format(self.base_url, path)
 
     def _raise_for_status(self, response, explanation=None):
         """Raises stored :class:`APIError`, if one occurred."""
@@ -914,8 +938,9 @@ class Client(requests.Session):
         u = self._url("/containers/{0}/top".format(container))
         return self._result(self._get(u), True)
 
-    def version(self):
-        return self._result(self._get(self._url("/version")), True)
+    def version(self, api_version=True):
+        url = self._url("/version", versioned_api=api_version)
+        return self._result(self._get(url), json=True)
 
     def unpause(self, container):
         if isinstance(container, dict):
@@ -934,3 +959,13 @@ class Client(requests.Session):
         if 'StatusCode' in json_:
             return json_['StatusCode']
         return -1
+
+
+class AutoVersionClient(Client):
+    def __init__(self, *args, **kwargs):
+        if 'version' in kwargs and kwargs['version']:
+            raise errors.DockerException(
+                'Can not specify version for AutoVersionClient'
+            )
+        kwargs['version'] = 'auto'
+        super(AutoVersionClient, self).__init__(*args, **kwargs)

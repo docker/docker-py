@@ -30,6 +30,17 @@ FAKE_PATH = '/path'
 # for clarity and readability
 
 
+def get_fake_raw_version():
+    status_code = 200
+    response = {
+        "ApiVersion": "1.17",
+        "GitCommit": "fake-commit",
+        "GoVersion": "go1.3.3",
+        "Version": "1.5.0"
+    }
+    return status_code, response
+
+
 def get_fake_version():
     status_code = 200
     response = {'GoVersion': '1', 'Version': '1.1.1',
@@ -347,6 +358,8 @@ def get_fake_stats():
 # Maps real api url to fake response callback
 prefix = 'http+unix://var/run/docker.sock'
 fake_responses = {
+    '{0}/version'.format(prefix):
+    get_fake_raw_version,
     '{1}/{0}/version'.format(CURRENT_VERSION, prefix):
     get_fake_version,
     '{1}/{0}/info'.format(CURRENT_VERSION, prefix):

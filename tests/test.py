@@ -130,7 +130,7 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             if not six.PY3:
                 self.assertEqual(
                     str(e),
-                    'version parameter must be a string. Found float'
+                    'Version parameter must be a string or None. Found float'
                 )
 
     #########################
@@ -146,6 +146,19 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             url_prefix + 'version',
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
+
+    def test_retrieve_server_version(self):
+        client = docker.Client(version="auto")
+        self.assertTrue(isinstance(client._version, six.string_types))
+        self.assertFalse(client._version == "auto")
+
+    def test_auto_retrieve_server_version(self):
+        try:
+            version = self.client.retrieve_server_version()
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        else:
+            self.assertTrue(isinstance(version, six.string_types))
 
     def test_info(self):
         try:

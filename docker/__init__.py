@@ -17,4 +17,4 @@ from .version import version
 __version__ = version
 __title__ = 'docker-py'
 
-from .client import Client # flake8: noqa
+from .client import Client, AutoVersionClient # flake8: noqa
