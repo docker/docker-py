@@ -12,7 +12,8 @@ c = Client(base_url='unix://var/run/docker.sock')
 
 * base_url (str): Refers to the protocol+hostname+port where the Docker server
 is hosted.
-* version (str): The version of the API the client will use
+* version (str): The version of the API the client will use. Specify `'auto'`
+  to use the API version provided by the server.
 * timeout (int): The HTTP request timeout, in seconds.
 * tls (bool or [TLSConfig](tls.md#TLSConfig)): Equivalent CLI options: `docker --tls ...`
 
