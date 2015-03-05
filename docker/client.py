@@ -963,5 +963,9 @@ class Client(requests.Session):
 
 class AutoVersionClient(Client):
     def __init__(self, *args, **kwargs):
+        if 'version' in kwargs and kwargs['version']:
+            raise errors.DockerException(
+                'Can not specify version for AutoVersionClient'
+            )
         kwargs['version'] = 'auto'
         super(AutoVersionClient, self).__init__(*args, **kwargs)
