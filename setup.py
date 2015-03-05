@@ -7,7 +7,7 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'requests >= 2.2.1, < 2.5.0',
+    'requests >= 2.5.2',
     'six >= 1.3.0',
 ]
 
