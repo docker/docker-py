@@ -151,10 +151,11 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         client = docker.Client(version="auto")
         self.assertTrue(isinstance(client._version, six.string_types))
         self.assertFalse(client._version == "auto")
+        client.close()
 
     def test_auto_retrieve_server_version(self):
         try:
-            version = self.client.retrieve_server_version()
+            version = self.client._retrieve_server_version()
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         else:
