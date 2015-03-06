@@ -451,6 +451,7 @@ output as it happens.
 * stderr (bool): Get STDERR
 * stream (bool): Stream the response
 * timestamps (bool): Show timestamps
+* tail (str or int): Output specified number of lines at the end of logs: `"all"` or `number`. Default `"all"`
 
 **Returns** (generator or str):
 
