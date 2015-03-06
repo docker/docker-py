@@ -96,7 +96,7 @@ def tar(path, exclude=None):
                         rellinkpath = string.split(content, 'gitdir: ').pop
                         linkpath = os.path.join(relpath, rellinkpath)
                         t.add(os.path.join(path, linkpath), arcname=arcname)
-            else
+            else:
                 t.add(os.path.join(path, arcname), arcname=arcname)
         for name in dirnames:
             arcname = os.path.join(relpath, name)
