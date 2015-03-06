@@ -89,7 +89,7 @@ def tar(path, exclude=None):
             fullname = os.path.join(path, arcname)
             # Deal with .git file/folder for nested submodules
             if (os.path.basename(fullname) == '.git' and
-                os.path.isfile(fullname)):
+               os.path.isfile(fullname)):
                 with open(fullname, 'r') as git_file:
                     content = git_file.read()
                     if content.startswith('gitdir: '):
