@@ -86,7 +86,18 @@ def tar(path, exclude=None):
         dirnames.sort()
         for name in sorted(fnames):
             arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname), arcname=arcname)
+            fullname = os.path.join(path, arcname)
+            # Deal with .git file/folder for nested submodules
+            if (  os.path.basename(fullname) == '.git' and
+                  os.path.isfile(fullname) ):
+                with open(fullname, 'r') as git_file:
+                    content = git_file.read()
+                    if content.startswith('gitdir: '):
+                        rellinkpath = string.split(content, 'gitdir: ').pop
+                        linkpath = os.path.join(relpath, rellinkpath)
+                        t.add(os.path.join(path, linkpath), arcname=arcname)
+            else
+                t.add(os.path.join(path, arcname), arcname=arcname)
         for name in dirnames:
             arcname = os.path.join(relpath, name)
             t.add(os.path.join(path, arcname),
