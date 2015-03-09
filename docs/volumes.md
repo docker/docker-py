@@ -4,7 +4,7 @@ Volume declaration is done in two parts. First, you have to provide
 a list of mountpoints to the `Client().create_container()` method.
 
 ```python
-c.create_container('busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'])
+container_id = c.create_container('busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'])
 ```
 
 Volume mappings are then declared inside the `Client.start` method like this:

@@ -3,7 +3,7 @@ Port bindings is done in two parts. Firstly, by providing a list of ports to
 open inside the container in the `Client().create_container()` method.
 
 ```python
-c.create_container('busybox', 'ls', ports=[1111, 2222])
+container_id = c.create_container('busybox', 'ls', ports=[1111, 2222])
 ```
 
 Bindings are then declared in the `Client.start` method.
