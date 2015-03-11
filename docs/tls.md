@@ -72,7 +72,7 @@ docker --tls --tlscert /path/to/client-cert.pem --tlskey /path/to/client-key.pem
 ```python
 tls_config = docker.tls.TLSConfig(
   client_cert=('/path/to/client-cert.pem', '/path/to/client-key.pem'),
-  ca_cert='/path/to/ca.pem'
+  verify='/path/to/ca.pem'
 )
 client = docker.Client(base_url='<https_url>', tls=tls_config)
 ```
