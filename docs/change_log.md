@@ -1,6 +1,35 @@
 Change Log
 ==========
 
+1.1.0
+-----
+
+### Features
+
+* Added `dockerfile` param support to `Client.build` (mirrors
+  `docker build -f` behavior)
+* Added the ability to specify `'auto'` as `version` in `Client.__init__`,
+  allowing the constructor to autodetect the daemon's API version.
+
+### Bugfixes
+
+* Fixed a bug where decoding a result stream using the `decode` parameter
+  would break when using Python 3.x
+* Fixed a bug where some files in `.dockerignore` weren't being handled
+  properly
+* Fixed `resolve_authconfig` issues by bringing it closer to Docker Engine's
+  behavior. This should fix all issues encountered with private registry auth
+* Fixed an issue where passwords containing a colon weren't being handled
+  properly.
+* Bumped `requests` version requirement, which should fix most of the SSL
+  issues encountered recently.
+
+### Miscellaneous
+
+* Several integration test improvements.
+* Fixed some unclosed resources in unit tests.
+* Several docs improvements.
+
 1.0.0
 -----
 
