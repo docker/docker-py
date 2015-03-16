@@ -708,9 +708,9 @@ class Client(requests.Session):
         if port_settings is None:
             return None
 
-        h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/udp')
+        h_ports = port_settings.get(s_port + '/udp')
         if h_ports is None:
-            h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/tcp')
+            h_ports = port_settings.get(s_port + '/tcp')
 
         return h_ports
 
