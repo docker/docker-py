@@ -702,6 +702,12 @@ class Client(requests.Session):
         s_port = str(private_port)
         h_ports = None
 
+        # Port settings is None when the container is running with
+        # network_mode=host.
+        port_settings = json_['NetworkSettings']['Ports']
+        if port_settings is None:
+            return None
+
         h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/udp')
         if h_ports is None:
             h_ports = json_['NetworkSettings']['Ports'].get(s_port + '/tcp')
