@@ -443,7 +443,8 @@ def create_container_config(
     stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None,
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
-    memswap_limit=0, cpuset=None, host_config=None, mac_address=None
+    memswap_limit=0, cpuset=None, host_config=None, mac_address=None,
+    labels=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
@@ -452,6 +453,15 @@ def create_container_config(
             six.text_type('{0}={1}').format(k, v)
             for k, v in six.iteritems(environment)
         ]
+
+    if isinstance(labels, six.string_types):
+        labels = [labels, ]
+
+    if isinstance(labels, list):
+        labels_dict = {}
+        for lbl in labels:
+            labels_dict[lbl] = {}
+        labels = labels_dict
 
     if isinstance(mem_limit, six.string_types):
         mem_limit = parse_bytes(mem_limit)
@@ -532,5 +542,6 @@ def create_container_config(
         'WorkingDir': working_dir,
         'MemorySwap': memswap_limit,
         'HostConfig': host_config,
-        'MacAddress': mac_address
+        'MacAddress': mac_address,
+        'Labels': labels
     }
