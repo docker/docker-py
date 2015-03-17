@@ -20,17 +20,38 @@ class ImageBuildFailure(Exception):
     pass
 
 
-@attributes([Attribute(name="client")])
+def client_from_opts(client_opts=()):
+    """
+    Construct a docker-py Client from a string specifying options.
+
+    """
+
+    kwargs = CLIENT_DEFAULTS.copy()
+
+    for name, value in client_opts:
+        if name == "timeout":
+            kwargs["timeout"] = int(value)
+        elif name == "tls":
+            kwargs["tls"] = strtobool(value.lower())
+        else:
+            kwargs[name] = value
+
+    return Client(**kwargs)
+
+
+@attributes([Attribute(name="client", default_factory=client_from_opts)])
 class Docker(object):
     @contextmanager
     def temporary_image(self, **kwargs):
         kwargs.setdefault("forcerm", True)
 
-        context = kwargs.pop("context", None)
-        if context is not None:
-            kwargs.update(custom_context=True, fileobj=context)
+        image = kwargs.pop("image", None)
+        if image is None:
+            context = kwargs.pop("context", None)
+            if context is not None:
+                kwargs.update(custom_context=True, fileobj=context)
+            image = Image(client=self.client)
 
-        image = Image(id=uuid4().hex, client=self.client)
         yield image.build(rm=True, **kwargs)
         try:
             image.remove()
@@ -66,13 +87,27 @@ class Build(object):
 def _parse_API_event(event_json):
     event = json.loads(event_json)
     error = event.get("errorDetail")
-    if error is not None or event.keys() != ["stream"]:
+    if error is not None:
         raise ImageBuildFailure(error)
-    return event["stream"]
+    elif event.keys() != ["stream"]:
+        raise ImageBuildFailure(event)
+    else:
+        return event["stream"]
 
 
-@attributes([Attribute(name="id"), Attribute(name="client")])
+@attributes(
+    [
+        Attribute(name="id", default_factory=lambda : uuid4().hex),
+        Attribute(name="client"),
+    ],
+)
 class Image(object):
+    @classmethod
+    def from_source_file(cls, file, **kwargs):
+        image = cls(**kwargs)
+        print image.client.import_image(src=file)
+        return image
+
     @contextmanager
     def temporary_container(self, **kwargs):
         container = Container.create(
@@ -135,22 +170,3 @@ class Volume(object):
         return (
             self.bind.path, {"bind" : self.mount_point, "ro" : self.read_only}
         )
-
-
-def client_from_opts(client_opts):
-    """
-    Construct a docker-py Client from a string specifying options.
-
-    """
-
-    kwargs = CLIENT_DEFAULTS.copy()
-
-    for name, value in client_opts:
-        if name == "timeout":
-            kwargs["timeout"] = int(value)
-        elif name == "tls":
-            kwargs["tls"] = strtobool(value.lower())
-        else:
-            kwargs[name] = value
-
-    return Client(**kwargs)
