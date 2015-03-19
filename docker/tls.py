@@ -10,7 +10,8 @@ class TLSConfig(object):
     ssl_version = None
 
     def __init__(self, client_cert=None, ca_cert=None, verify=None,
-                 ssl_version=None, assert_hostname=None):
+                 ssl_version=None, assert_hostname=None,
+                 assert_fingerprint=None):
         # Argument compatibility/mapping with
         # http://docs.docker.com/examples/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
@@ -24,6 +25,7 @@ class TLSConfig(object):
         ssl_version = ssl_version or ssladapter.get_max_tls_protocol()
         self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
+        self.assert_fingerprint = assert_fingerprint
 
         # "tls" and "tls_verify" must have both or neither cert/key files
         # In either case, Alert the user when both are expected, but any are
@@ -72,4 +74,5 @@ class TLSConfig(object):
         client.mount('https://', ssladapter.SSLAdapter(
             ssl_version=self.ssl_version,
             assert_hostname=self.assert_hostname,
+            assert_fingerprint=self.assert_fingerprint,
         ))
