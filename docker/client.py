@@ -34,7 +34,7 @@ from .tls import TLSConfig
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.17'
+DEFAULT_DOCKER_API_VERSION = '1.18'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
 
