@@ -454,14 +454,13 @@ def create_container_config(
             for k, v in six.iteritems(environment)
         ]
 
-    if isinstance(labels, six.string_types):
-        labels = [labels, ]
+    if labels is not None and compare_version('1.18', version) < 0:
+        raise errors.DockerException(
+            'labels were only introduced in API version 1.18'
+        )
 
     if isinstance(labels, list):
-        labels_dict = {}
-        for lbl in labels:
-            labels_dict[lbl] = {}
-        labels = labels_dict
+        labels = dict((lbl, six.text_type('')) for lbl in labels)
 
     if isinstance(mem_limit, six.string_types):
         mem_limit = parse_bytes(mem_limit)
