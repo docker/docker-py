@@ -14,7 +14,7 @@
 
 import fake_stat
 
-CURRENT_VERSION = 'v1.17'
+CURRENT_VERSION = 'v1.18'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -33,7 +33,7 @@ FAKE_PATH = '/path'
 def get_fake_raw_version():
     status_code = 200
     response = {
-        "ApiVersion": "1.17",
+        "ApiVersion": "1.18",
         "GitCommit": "fake-commit",
         "GoVersion": "go1.3.3",
         "Version": "1.5.0"
