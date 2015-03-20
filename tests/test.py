@@ -1305,6 +1305,54 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_labels_dict(self):
+        labels_dict = {
+            six.text_type('foo'): six.text_type('1'),
+            six.text_type('bar'): six.text_type('2'),
+        }
+        try:
+            self.client.create_container(
+                'busybox', 'true',
+                labels=labels_dict,
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_create_container_with_labels_list(self):
+        labels_list = [
+            six.text_type('foo'),
+            six.text_type('bar'),
+        ]
+        labels_dict = {
+            six.text_type('foo'): six.text_type(),
+            six.text_type('bar'): six.text_type(),
+        }
+        try:
+            self.client.create_container(
+                'busybox', 'true',
+                labels=labels_list,
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_resize_container(self):
         try:
             self.client.resize(
