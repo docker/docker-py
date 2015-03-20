@@ -735,7 +735,7 @@ class Client(requests.Session):
 
         # Port settings is None when the container is running with
         # network_mode=host.
-        port_settings = json_['NetworkSettings']['Ports']
+        port_settings = json_.get('NetworkSettings', {}).get('Ports')
         if port_settings is None:
             return None
 
