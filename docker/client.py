@@ -322,7 +322,7 @@ class Client(requests.Session):
             exclude = None
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
-                    exclude = list(filter(bool, f.read().split('\n')))
+                    exclude = list(filter(bool, f.read().splitlines()))
                     # These are handled by the docker daemon and should not be
                     # excluded on the client
                     if 'Dockerfile' in exclude:
