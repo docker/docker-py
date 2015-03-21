@@ -725,7 +725,7 @@ This will stream statistics for a specific container.
 >>> from docker import Client
 >>> cli = Client(base_url='tcp://127.0.0.1:2375')
 >>> stats_obj = cli.stats('elasticsearch')
->>> for stat in stats:
+>>> for stat in stats_obj:
 >>>     print(stat)
 {"read":"2015-02-11T21:47:30.49388286+02:00","network":{"rx_bytes":666052,"rx_packets":4409 ...
 ...
