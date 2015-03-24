@@ -444,7 +444,7 @@ class Client(requests.Session):
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0, cpuset=None, host_config=None,
-                         mac_address=None, labels=None):
+                         mac_address=None, labels=None, security_opt=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -458,7 +458,8 @@ class Client(requests.Session):
             self._version, image, command, hostname, user, detach, stdin_open,
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset, host_config, mac_address, labels
+            memswap_limit, cpuset, host_config, mac_address, labels,
+            security_opt
         )
         return self.create_container_from_config(config, name)
 
@@ -869,7 +870,8 @@ class Client(requests.Session):
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-              extra_hosts=None, read_only=None, pid_mode=None):
+              extra_hosts=None, read_only=None, pid_mode=None,
+              security_opt=None):
 
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
@@ -897,7 +899,8 @@ class Client(requests.Session):
             privileged=privileged, dns_search=dns_search, cap_add=cap_add,
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
             network_mode=network_mode, restart_policy=restart_policy,
-            extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode
+            extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
+            security_opt=security_opt
         )
 
         if isinstance(container, dict):

@@ -353,7 +353,7 @@ def create_host_config(
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-    extra_hosts=None, read_only=None, pid_mode=None
+    extra_hosts=None, read_only=None, pid_mode=None, security_opt=None
 ):
     host_config = {}
 
@@ -393,6 +393,9 @@ def create_host_config(
 
     if dns is not None:
         host_config['Dns'] = dns
+
+    if security_opt is not None:
+        host_config['SecurityOpt'] = security_opt
 
     if volumes_from is not None:
         if isinstance(volumes_from, six.string_types):
@@ -444,7 +447,7 @@ def create_container_config(
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=0, cpuset=None, host_config=None, mac_address=None,
-    labels=None
+    labels=None, security_opt=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
@@ -542,5 +545,6 @@ def create_container_config(
         'MemorySwap': memswap_limit,
         'HostConfig': host_config,
         'MacAddress': mac_address,
-        'Labels': labels
+        'Labels': labels,
+        'SecurityOpt': security_opt,
     }
