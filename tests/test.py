@@ -2270,6 +2270,19 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             tar = tarfile.open(fileobj=archive)
             self.assertEqual(sorted(tar.getnames()), ['bar', 'bar/foo', 'foo'])
 
+    #######################
+    #  HOST CONFIG TESTS  #
+    #######################
+
+    def test_create_host_config_secopt(self):
+        security_opt = ['apparmor:test_profile']
+        result = create_host_config(security_opt=security_opt)
+        self.assertIn('SecurityOpt', result)
+        self.assertEqual(result['SecurityOpt'], security_opt)
+
+        with self.assertRaises(docker.errors.DockerException):
+            create_host_config(security_opt='wrong')
+
 
 class StreamTest(Cleanup, unittest.TestCase):
 

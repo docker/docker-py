@@ -700,6 +700,7 @@ from. Optionally a single string joining container id's with commas
 * extra_hosts (dict): custom host-to-IP mappings (host:ip)
 * pid_mode (str): if set to "host", use the host PID namespace inside the
   container
+* security_opt (list): A list of string values to customize labels for MLS systems, such as SELinux.
 
 ```python
 >>> from docker import Client
