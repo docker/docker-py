@@ -353,7 +353,7 @@ def create_host_config(
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-    extra_hosts=None, read_only=None, pid_mode=None
+    extra_hosts=None, read_only=None, pid_mode=None, security_opt=None
 ):
     host_config = {}
 
@@ -393,6 +393,14 @@ def create_host_config(
 
     if dns is not None:
         host_config['Dns'] = dns
+
+    if security_opt is not None:
+        if not isinstance(security_opt, list):
+            raise errors.DockerException(
+                'Invalid type for security_opt param: expected list but found'
+                ' {0}'.format(type(security_opt))
+            )
+        host_config['SecurityOpt'] = security_opt
 
     if volumes_from is not None:
         if isinstance(volumes_from, six.string_types):
@@ -542,5 +550,5 @@ def create_container_config(
         'MemorySwap': memswap_limit,
         'HostConfig': host_config,
         'MacAddress': mac_address,
-        'Labels': labels
+        'Labels': labels,
     }

@@ -869,7 +869,8 @@ class Client(requests.Session):
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-              extra_hosts=None, read_only=None, pid_mode=None):
+              extra_hosts=None, read_only=None, pid_mode=None,
+              security_opt=None):
 
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
@@ -879,6 +880,12 @@ class Client(requests.Session):
             if volumes_from is not None:
                 raise errors.InvalidVersion(
                     'volumes_from is only supported for API version >= 1.10'
+                )
+
+        if utils.compare_version('1.15', self._version) < 0:
+            if security_opt is not None:
+                raise errors.InvalidVersion(
+                    'security_opt is only supported for API version >= 1.15'
                 )
 
         if utils.compare_version('1.17', self._version) < 0:
@@ -897,7 +904,8 @@ class Client(requests.Session):
             privileged=privileged, dns_search=dns_search, cap_add=cap_add,
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
             network_mode=network_mode, restart_policy=restart_policy,
-            extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode
+            extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
+            security_opt=security_opt
         )
 
         if isinstance(container, dict):
