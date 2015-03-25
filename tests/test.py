@@ -2285,8 +2285,10 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         self.assertIn('SecurityOpt', result)
         self.assertEqual(result['SecurityOpt'], security_opt)
 
-        with self.assertRaises(docker.errors.DockerException):
-            create_host_config(security_opt='wrong')
+        self.assertRaises(
+            docker.errors.DockerException, create_host_config,
+            security_opt='wrong'
+        )
 
 
 class StreamTest(Cleanup, unittest.TestCase):
