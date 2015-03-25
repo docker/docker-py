@@ -111,6 +111,11 @@ class DockerClientTest(Cleanup, unittest.TestCase):
     def tearDown(self):
         self.client.close()
 
+    def assertIn(self, object, collection):
+        if six.PY2 and sys.version_info[1] <= 6:
+            return self.assertTrue(object in collection)
+        return super(DockerClientTest, self).assertIn(object, collection)
+
     def base_create_payload(self, img='busybox', cmd=None):
         if not cmd:
             cmd = ['true']
