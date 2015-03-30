@@ -353,7 +353,8 @@ def create_host_config(
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-    extra_hosts=None, read_only=None, pid_mode=None, security_opt=None
+    extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
+    security_opt=None
 ):
     host_config = {}
 
@@ -363,6 +364,9 @@ def create_host_config(
         )
     elif pid_mode:
         host_config['PidMode'] = pid_mode
+
+    if ipc_mode:
+        host_config['IpcMode'] = ipc_mode
 
     if privileged:
         host_config['Privileged'] = privileged
