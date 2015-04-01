@@ -24,6 +24,7 @@ setup(
     name="docker-py",
     version=version,
     description="Python client for Docker.",
+    url='https://github.com/docker/docker-py/',
     packages=['docker', 'docker.auth', 'docker.unixconn', 'docker.utils',
               'docker.ssladapter'],
     install_requires=requirements,
