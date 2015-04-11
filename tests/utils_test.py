@@ -215,13 +215,18 @@ class UtilsTest(unittest.TestCase):
                          [("127.0.0.1", "1000"), ("127.0.0.1", "1001")])
 
     def test_split_port_invalid(self):
-        self.assertRaises(ValueError, lambda: split_port("0.0.0.0:1000:2000:tcp"))
+        self.assertRaises(ValueError,
+                          lambda: split_port("0.0.0.0:1000:2000:tcp"))
 
     def test_non_matching_length_port_ranges(self):
-        self.assertRaises(ValueError, lambda: split_port("0.0.0.0:1000-1010:2000-2002/tcp"))
+        self.assertRaises(
+            ValueError,
+            lambda: split_port("0.0.0.0:1000-1010:2000-2002/tcp")
+            )
 
     def test_port_and_range_invalid(self):
-        self.assertRaises(ValueError, lambda: split_port("0.0.0.0:1000:2000-2002/tcp"))
+        self.assertRaises(ValueError,
+                          lambda: split_port("0.0.0.0:1000:2000-2002/tcp"))
 
     def test_build_port_bindings_with_one_port(self):
         port_bindings = build_port_bindings(["127.0.0.1:1000:1000"])
