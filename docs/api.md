@@ -502,6 +502,7 @@ Identical to the `docker pull` command.
 * tag (str): The tag to pull
 * stream (bool): Stream the output as a generator
 * insecure_registry (bool): Use an insecure registry
+* auth_config (dict): Override the credentials that Client.login has set for this request
 
 **Returns** (generator or str): The output
 
