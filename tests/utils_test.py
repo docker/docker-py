@@ -6,13 +6,15 @@ from docker.client import Client
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
-    create_host_config
+    create_host_config, Ulimit
 )
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_authconfig
 
+import base
 
-class UtilsTest(unittest.TestCase):
+
+class UtilsTest(base.BaseTestCase):
     longMessage = True
 
     def setUp(self):
@@ -98,9 +100,37 @@ class UtilsTest(unittest.TestCase):
         for filters, expected in tests:
             self.assertEqual(convert_filters(filters), expected)
 
-    def test_create_host_config(self):
+    def test_create_empty_host_config(self):
         empty_config = create_host_config()
         self.assertEqual(empty_config, {})
+
+    def test_create_host_config_dict_ulimit(self):
+        ulimit_dct = {'name': 'nofile', 'soft': 8096}
+        config = create_host_config(ulimits=[ulimit_dct])
+        self.assertIn('Ulimits', config)
+        self.assertEqual(len(config['Ulimits']), 1)
+        ulimit_obj = config['Ulimits'][0]
+        self.assertTrue(isinstance(ulimit_obj, Ulimit))
+        self.assertEqual(ulimit_obj.name, ulimit_dct['name'])
+        self.assertEqual(ulimit_obj.soft, ulimit_dct['soft'])
+        self.assertEqual(ulimit_obj['soft'], ulimit_obj.soft)
+
+    def test_create_host_config_obj_ulimit(self):
+        ulimit_dct = Ulimit(name='nofile', soft=8096)
+        config = create_host_config(ulimits=[ulimit_dct])
+        self.assertIn('Ulimits', config)
+        self.assertEqual(len(config['Ulimits']), 1)
+        ulimit_obj = config['Ulimits'][0]
+        self.assertTrue(isinstance(ulimit_obj, Ulimit))
+        self.assertEqual(ulimit_obj, ulimit_dct)
+
+    def test_ulimit_invalid_type(self):
+        with self.assertRaises(ValueError):
+            Ulimit(name=None)
+        with self.assertRaises(ValueError):
+            Ulimit(name='hello', soft='1234')
+        with self.assertRaises(ValueError):
+            Ulimit(name='hello', hard='4567')
 
     def test_resolve_authconfig(self):
         auth_config = {
@@ -222,7 +252,7 @@ class UtilsTest(unittest.TestCase):
         self.assertRaises(
             ValueError,
             lambda: split_port("0.0.0.0:1000-1010:2000-2002/tcp")
-            )
+        )
 
     def test_port_and_range_invalid(self):
         self.assertRaises(ValueError,
