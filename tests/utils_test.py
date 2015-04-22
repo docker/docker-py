@@ -8,6 +8,7 @@ from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config
 )
+from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_authconfig
 
 
@@ -165,6 +166,102 @@ class UtilsTest(unittest.TestCase):
             resolve_authconfig(auth_config, 'does.not.exist') is None
         )
 
+    def test_split_port_with_host_ip(self):
+        internal_port, external_port = split_port("127.0.0.1:1000:2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, [("127.0.0.1", "1000")])
+
+    def test_split_port_with_protocol(self):
+        internal_port, external_port = split_port("127.0.0.1:1000:2000/udp")
+        self.assertEqual(internal_port, ["2000/udp"])
+        self.assertEqual(external_port, [("127.0.0.1", "1000")])
+
+    def test_split_port_with_host_ip_no_port(self):
+        internal_port, external_port = split_port("127.0.0.1::2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, [("127.0.0.1", None)])
+
+    def test_split_port_range_with_host_ip_no_port(self):
+        internal_port, external_port = split_port("127.0.0.1::2000-2001")
+        self.assertEqual(internal_port, ["2000", "2001"])
+        self.assertEqual(external_port,
+                         [("127.0.0.1", None), ("127.0.0.1", None)])
+
+    def test_split_port_with_host_port(self):
+        internal_port, external_port = split_port("1000:2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, ["1000"])
+
+    def test_split_port_range_with_host_port(self):
+        internal_port, external_port = split_port("1000-1001:2000-2001")
+        self.assertEqual(internal_port, ["2000", "2001"])
+        self.assertEqual(external_port, ["1000", "1001"])
+
+    def test_split_port_no_host_port(self):
+        internal_port, external_port = split_port("2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, None)
+
+    def test_split_port_range_no_host_port(self):
+        internal_port, external_port = split_port("2000-2001")
+        self.assertEqual(internal_port, ["2000", "2001"])
+        self.assertEqual(external_port, None)
+
+    def test_split_port_range_with_protocol(self):
+        internal_port, external_port = split_port(
+            "127.0.0.1:1000-1001:2000-2001/udp")
+        self.assertEqual(internal_port, ["2000/udp", "2001/udp"])
+        self.assertEqual(external_port,
+                         [("127.0.0.1", "1000"), ("127.0.0.1", "1001")])
+
+    def test_split_port_invalid(self):
+        self.assertRaises(ValueError,
+                          lambda: split_port("0.0.0.0:1000:2000:tcp"))
+
+    def test_non_matching_length_port_ranges(self):
+        self.assertRaises(
+            ValueError,
+            lambda: split_port("0.0.0.0:1000-1010:2000-2002/tcp")
+            )
+
+    def test_port_and_range_invalid(self):
+        self.assertRaises(ValueError,
+                          lambda: split_port("0.0.0.0:1000:2000-2002/tcp"))
+
+    def test_build_port_bindings_with_one_port(self):
+        port_bindings = build_port_bindings(["127.0.0.1:1000:1000"])
+        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
+
+    def test_build_port_bindings_with_matching_internal_ports(self):
+        port_bindings = build_port_bindings(
+            ["127.0.0.1:1000:1000", "127.0.0.1:2000:1000"])
+        self.assertEqual(port_bindings["1000"],
+                         [("127.0.0.1", "1000"), ("127.0.0.1", "2000")])
+
+    def test_build_port_bindings_with_nonmatching_internal_ports(self):
+        port_bindings = build_port_bindings(
+            ["127.0.0.1:1000:1000", "127.0.0.1:2000:2000"])
+        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
+        self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
+
+    def test_build_port_bindings_with_port_range(self):
+        port_bindings = build_port_bindings(["127.0.0.1:1000-1001:1000-1001"])
+        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
+        self.assertEqual(port_bindings["1001"], [("127.0.0.1", "1001")])
+
+    def test_build_port_bindings_with_matching_internal_port_ranges(self):
+        port_bindings = build_port_bindings(
+            ["127.0.0.1:1000-1001:1000-1001", "127.0.0.1:2000-2001:1000-1001"])
+        self.assertEqual(port_bindings["1000"],
+                         [("127.0.0.1", "1000"), ("127.0.0.1", "2000")])
+        self.assertEqual(port_bindings["1001"],
+                         [("127.0.0.1", "1001"), ("127.0.0.1", "2001")])
+
+    def test_build_port_bindings_with_nonmatching_internal_port_ranges(self):
+        port_bindings = build_port_bindings(
+            ["127.0.0.1:1000:1000", "127.0.0.1:2000:2000"])
+        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
+        self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
 
 if __name__ == '__main__':
     unittest.main()
