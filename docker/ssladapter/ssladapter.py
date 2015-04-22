@@ -25,10 +25,12 @@ def get_max_tls_protocol():
 
 class SSLAdapter(HTTPAdapter):
     '''An HTTPS Transport Adapter that uses an arbitrary SSL version.'''
-    def __init__(self, ssl_version=None, assert_hostname=None, **kwargs):
+    def __init__(self, ssl_version=None, assert_hostname=None,
+                 assert_fingerprint=None, **kwargs):
         ssl_version = ssl_version or get_max_tls_protocol()
         self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
+        self.assert_fingerprint = assert_fingerprint
         super(SSLAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
@@ -37,6 +39,7 @@ class SSLAdapter(HTTPAdapter):
             'maxsize': maxsize,
             'block': block,
             'assert_hostname': self.assert_hostname,
+            'assert_fingerprint': self.assert_fingerprint,
         }
         if self.can_override_ssl_version():
             kwargs['ssl_version'] = self.ssl_version
