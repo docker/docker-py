@@ -746,7 +746,7 @@ class Client(requests.Session):
         return h_ports
 
     def pull(self, repository, tag=None, stream=False,
-             insecure_registry=False):
+             insecure_registry=False, auth_config=None):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(
@@ -764,15 +764,20 @@ class Client(requests.Session):
         if utils.compare_version('1.5', self._version) >= 0:
             # If we don't have any auth data so far, try reloading the config
             # file one more time in case anything showed up in there.
-            if not self._auth_configs:
-                self._auth_configs = auth.load_config()
-            authcfg = auth.resolve_authconfig(self._auth_configs, registry)
-
-            # Do not fail here if no authentication exists for this specific
-            # registry as we can have a readonly pull. Just put the header if
-            # we can.
-            if authcfg:
-                headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+            if auth_config is None:
+                if not self._auth_configs:
+                    self._auth_configs = auth.load_config()
+                authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+                # Do not fail here if no authentication exists for this
+                # specific registry as we can have a readonly pull. Just
+                # put the header if we can.
+                if authcfg:
+                    # auth_config needs to be a dict in the format used by
+                    # auth.py username , password, serveraddress, email
+                    headers['X-Registry-Auth'] = auth.encode_header(
+                        auth_config)
+            else:
+                headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         response = self._post(self._url('/images/create'), params=params,
                               headers=headers, stream=stream, timeout=None)
