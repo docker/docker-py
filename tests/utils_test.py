@@ -113,7 +113,19 @@ class UtilsTest(base.BaseTestCase):
         self.assertTrue(isinstance(ulimit_obj, Ulimit))
         self.assertEqual(ulimit_obj.name, ulimit_dct['name'])
         self.assertEqual(ulimit_obj.soft, ulimit_dct['soft'])
-        self.assertEqual(ulimit_obj['soft'], ulimit_obj.soft)
+        self.assertEqual(ulimit_obj['Soft'], ulimit_obj.soft)
+
+    def test_create_host_config_dict_ulimit_capitals(self):
+        ulimit_dct = {'Name': 'nofile', 'Soft': 8096, 'Hard': 8096 * 4}
+        config = create_host_config(ulimits=[ulimit_dct])
+        self.assertIn('Ulimits', config)
+        self.assertEqual(len(config['Ulimits']), 1)
+        ulimit_obj = config['Ulimits'][0]
+        self.assertTrue(isinstance(ulimit_obj, Ulimit))
+        self.assertEqual(ulimit_obj.name, ulimit_dct['Name'])
+        self.assertEqual(ulimit_obj.soft, ulimit_dct['Soft'])
+        self.assertEqual(ulimit_obj.hard, ulimit_dct['Hard'])
+        self.assertEqual(ulimit_obj['Soft'], ulimit_obj.soft)
 
     def test_create_host_config_obj_ulimit(self):
         ulimit_dct = Ulimit(name='nofile', soft=8096)
