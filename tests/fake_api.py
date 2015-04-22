@@ -356,7 +356,7 @@ def get_fake_stats():
     return status_code, response
 
 # Maps real api url to fake response callback
-prefix = 'http+unix://var/run/docker.sock'
+prefix = 'http+docker://localunixsocket'
 fake_responses = {
     '{0}/version'.format(prefix):
     get_fake_raw_version,

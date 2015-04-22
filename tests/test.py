@@ -71,7 +71,7 @@ def fake_resp(url, data=None, **kwargs):
 
 
 fake_request = mock.Mock(side_effect=fake_resp)
-url_prefix = 'http+unix://var/run/docker.sock/v{0}/'.format(
+url_prefix = 'http+docker://localunixsocket/v{0}/'.format(
     docker.client.DEFAULT_DOCKER_API_VERSION)
 
 
@@ -1412,20 +1412,24 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=None
         )
 
+    def _socket_path_for_client_session(self, client):
+        socket_adapter = client.get_adapter('http+docker://')
+        return socket_adapter.socket_path
+
     def test_url_compatibility_unix(self):
         c = docker.Client(base_url="unix://socket")
 
-        assert c.base_url == "http+unix://socket"
+        assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_unix_triple_slash(self):
         c = docker.Client(base_url="unix:///socket")
 
-        assert c.base_url == "http+unix://socket"
+        assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http_unix_triple_slash(self):
         c = docker.Client(base_url="http+unix:///socket")
 
-        assert c.base_url == "http+unix://socket"
+        assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http(self):
         c = docker.Client(base_url="http://hostname:1234")
@@ -1853,12 +1857,11 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
-    def test_import_image_from_file(self):
-        buf = tempfile.NamedTemporaryFile(delete=False)
+    def test_import_image_from_bytes(self):
+        stream = (i for i in range(0, 100))
         try:
-            # pretent the buffer is a file
             self.client.import_image(
-                buf.name,
+                stream,
                 repository=fake_api.FAKE_REPO_NAME,
                 tag=fake_api.FAKE_TAG_NAME
             )
@@ -1870,13 +1873,14 @@ class DockerClientTest(Cleanup, unittest.TestCase):
             params={
                 'repo': fake_api.FAKE_REPO_NAME,
                 'tag': fake_api.FAKE_TAG_NAME,
-                'fromSrc': '-'
+                'fromSrc': '-',
             },
-            data='',
+            headers={
+                'Content-Type': 'application/tar',
+            },
+            data=stream,
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
         )
-        buf.close()
-        os.remove(buf.name)
 
     def test_import_image_from_image(self):
         try:
