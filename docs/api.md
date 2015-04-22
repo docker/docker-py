@@ -749,6 +749,7 @@ from. Optionally a single string joining container id's with commas
 * pid_mode (str): if set to "host", use the host PID namespace inside the
   container
 * security_opt (list): A list of string values to customize labels for MLS systems, such as SELinux.
+* ulimits (list): A list of dicts or `docker.utils.Ulimit` objects.
 
 ```python
 >>> from docker import Client
