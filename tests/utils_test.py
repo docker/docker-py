@@ -125,12 +125,9 @@ class UtilsTest(base.BaseTestCase):
         self.assertEqual(ulimit_obj, ulimit_dct)
 
     def test_ulimit_invalid_type(self):
-        with self.assertRaises(ValueError):
-            Ulimit(name=None)
-        with self.assertRaises(ValueError):
-            Ulimit(name='hello', soft='1234')
-        with self.assertRaises(ValueError):
-            Ulimit(name='hello', hard='4567')
+        self.assertRaises(ValueError, lambda: Ulimit(name=None))
+        self.assertRaises(ValueError, lambda: Ulimit(name='hello', soft='123'))
+        self.assertRaises(ValueError, lambda: Ulimit(name='hello', hard='456'))
 
     def test_resolve_authconfig(self):
         auth_config = {
