@@ -29,7 +29,7 @@ DOCKER_CONFIG_FILENAME = '.dockercfg'
 def expand_registry_url(hostname, insecure=False):
     if hostname.startswith('http:') or hostname.startswith('https:'):
         return hostname
-    if utils.ping('https://' + hostname + '/v1/_ping'):
+    if utils.ping_registry('https://' + hostname):
         return 'https://' + hostname
     elif insecure:
         return 'http://' + hostname

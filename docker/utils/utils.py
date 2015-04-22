@@ -118,6 +118,10 @@ def compare_version(v1, v2):
         return 1
 
 
+def ping_registry(url):
+    return ping(url + '/v2/_ping') or ping(url + '/v1/_ping')
+
+
 def ping(url):
     try:
         res = requests.get(url, timeout=3)
