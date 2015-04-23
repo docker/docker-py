@@ -312,7 +312,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'since': None,
                 'size': 0,
                 'limit': -1,
-                'trunc_cmd': 1,
+                'trunc_cmd': 0,
                 'before': None
             },
             timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
