@@ -35,6 +35,7 @@ import docker
 import requests
 import six
 
+import base
 import fake_api
 
 try:
@@ -102,7 +103,7 @@ class Cleanup(object):
 
 @mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
                      put=fake_request, delete=fake_request)
-class DockerClientTest(Cleanup, unittest.TestCase):
+class DockerClientTest(Cleanup, base.BaseTestCase):
     def setUp(self):
         self.client = docker.Client()
         # Force-clear authconfig to avoid tampering with the tests
@@ -2295,7 +2296,7 @@ class DockerClientTest(Cleanup, unittest.TestCase):
         )
 
 
-class StreamTest(Cleanup, unittest.TestCase):
+class StreamTest(Cleanup, base.BaseTestCase):
 
     def setUp(self):
         socket_dir = tempfile.mkdtemp()

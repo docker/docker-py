@@ -28,6 +28,7 @@ import six
 
 from .. import errors
 from .. import tls
+from .types import Ulimit
 
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
@@ -358,7 +359,7 @@ def create_host_config(
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
-    security_opt=None
+    security_opt=None, ulimits=None
 ):
     host_config = {}
 
@@ -450,6 +451,17 @@ def create_host_config(
 
     if lxc_conf is not None:
         host_config['LxcConf'] = lxc_conf
+
+    if ulimits is not None:
+        if not isinstance(ulimits, list):
+            raise errors.DockerException(
+                'Invalid type for ulimits param: expected list but found'
+                ' {0}'.format(type(ulimits)))
+        host_config['Ulimits'] = []
+        for l in ulimits:
+            if not isinstance(l, Ulimit):
+                l = Ulimit(**l)
+            host_config['Ulimits'].append(l)
 
     return host_config
 

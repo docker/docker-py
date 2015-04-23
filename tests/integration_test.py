@@ -927,6 +927,19 @@ class TestStartContainerWithVolumesFrom(BaseTestCase):
         self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
 
+class TestStartContainerWithUlimits(BaseTestCase):
+    def runTest(self):
+        ulimit = docker.utils.Ulimit('nofile', 4096, 4096)
+
+        res0 = self.client.create_container('busybox', 'true')
+        container1_id = res0['Id']
+        self.tmp_containers.append(container1_id)
+        self.client.start(container1_id, ulimits=[ulimit])
+
+        info = self.client.inspect_container(container1_id)
+        self.assertCountEqual(info['HostConfig']['Ulimits'], [ulimit])
+
+
 class TestStartContainerWithLinks(BaseTestCase):
     def runTest(self):
         res0 = self.client.create_container(
