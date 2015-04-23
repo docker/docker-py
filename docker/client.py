@@ -820,7 +820,9 @@ class Client(requests.Session):
             'tag': tag,
             'fromImage': repository
         }
-        headers = {}
+        headers = {
+            'Content-Type': 'text/plain'
+        }
 
         if utils.compare_version('1.5', self._version) >= 0:
             # If we don't have any auth data so far, try reloading the config
