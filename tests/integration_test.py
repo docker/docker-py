@@ -319,6 +319,35 @@ class TestStartContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
+class TestStartContainerWithFileBind(BaseTestCase):
+    def runTest(self):
+        mount_dest = '/myfile/myfile'
+        mount_origin = tempfile.mktemp()
+        try:
+            binds = {
+                mount_origin: {
+                    'bind': mount_dest,
+                    'ro': True
+                },
+            }
+
+            with open(mount_origin, 'w') as f:
+                f.write('sakuya izayoi')
+
+            container = self.client.create_container(
+                'busybox', ['cat', mount_dest], volumes={mount_dest: {}}
+            )
+            self.client.start(container, binds=binds)
+            exitcode = self.client.wait(container)
+            self.assertEqual(exitcode, 0)
+            logs = self.client.logs(container)
+            if six.PY3:
+                logs = logs.decode('utf-8')
+            self.assertIn('sakuya izayoi', logs)
+        finally:
+            os.unlink(mount_origin)
+
+
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestCreateContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
