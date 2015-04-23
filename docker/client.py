@@ -411,7 +411,7 @@ class Client(requests.Session):
         return self._result(self._post_json(u, data=conf, params=params),
                             json=True)
 
-    def containers(self, quiet=False, all=False, trunc=True, latest=False,
+    def containers(self, quiet=False, all=False, trunc=False, latest=False,
                    since=None, before=None, limit=-1, size=False,
                    filters=None):
         params = {
@@ -429,6 +429,9 @@ class Client(requests.Session):
 
         if quiet:
             return [{'Id': x['Id']} for x in res]
+        if trunc:
+            for x in res:
+                x['Id'] = x['Id'][:12]
         return res
 
     def copy(self, container, resource):

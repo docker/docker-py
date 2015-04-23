@@ -1681,10 +1681,7 @@ class UnixconnTestCase(unittest.TestCase):
 # REGRESSION TESTS #
 ####################
 
-class TestRegressions(unittest.TestCase):
-    def setUp(self):
-        self.client = docker.Client(timeout=5, base_url=DEFAULT_BASE_URL)
-
+class TestRegressions(BaseTestCase):
     def test_443(self):
         dfile = io.BytesIO()
         with self.assertRaises(docker.errors.APIError) as exc:
@@ -1692,6 +1689,13 @@ class TestRegressions(unittest.TestCase):
                 pass
         self.assertEqual(exc.exception.response.status_code, 500)
         dfile.close()
+
+    def test_542(self):
+        self.client.start(
+            self.client.create_container('busybox', ['true'])
+        )
+        result = self.client.containers(trunc=True)
+        self.assertEqual(len(result[0]['Id']), 12)
 
 
 if __name__ == '__main__':
