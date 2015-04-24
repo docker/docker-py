@@ -6,7 +6,7 @@ from docker.client import Client
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
-    create_host_config, Ulimit, LogConfig
+    create_host_config, Ulimit, LogConfig, parse_bytes
 )
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_authconfig
@@ -36,6 +36,12 @@ class UtilsTest(base.BaseTestCase):
                          ("url:5000/repo", None))
         self.assertEqual(parse_repository_tag("url:5000/repo:tag"),
                          ("url:5000/repo", "tag"))
+
+    def test_parse_bytes(self):
+        self.assertEqual(parse_bytes("512MB"), (536870912))
+        self.assertEqual(parse_bytes("512M"), (536870912))
+        self.assertRaises(DockerException, parse_bytes, "512MK")
+        self.assertRaises(DockerException, parse_bytes, "512L")
 
     def test_parse_host(self):
         invalid_hosts = [

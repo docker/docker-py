@@ -322,6 +322,9 @@ def parse_bytes(s):
     if len(s) == 0:
         s = 0
     else:
+        if s[-2:-1].isalpha() and s[-1].isalpha():
+            if (s[-1] == "b" or s[-1] == "B"):
+                s = s[:-1]
         units = BYTE_UNITS
         suffix = s[-1].lower()
 
