@@ -669,6 +669,21 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_start_container_none(self):
+        try:
+            self.client.start(container=None)
+        except ValueError as e:
+            self.assertEqual(str(e), 'image or container param is None')
+        else:
+            self.fail('Command should raise ValueError')
+
+        try:
+            self.client.start(None)
+        except ValueError as e:
+            self.assertEqual(str(e), 'image or container param is None')
+        else:
+            self.fail('Command should raise ValueError')
+
     def test_create_container_with_lxc_conf(self):
         try:
             self.client.create_container(
