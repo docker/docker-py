@@ -6,7 +6,7 @@ from docker.client import Client
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
-    create_host_config, Ulimit
+    create_host_config, Ulimit, LogConfig
 )
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_authconfig
@@ -140,6 +140,26 @@ class UtilsTest(base.BaseTestCase):
         self.assertRaises(ValueError, lambda: Ulimit(name=None))
         self.assertRaises(ValueError, lambda: Ulimit(name='hello', soft='123'))
         self.assertRaises(ValueError, lambda: Ulimit(name='hello', hard='456'))
+
+    def test_create_host_config_dict_logconfig(self):
+        dct = {'type': LogConfig.types.SYSLOG, 'config': {'key1': 'val1'}}
+        config = create_host_config(log_config=dct)
+        self.assertIn('LogConfig', config)
+        self.assertTrue(isinstance(config['LogConfig'], LogConfig))
+        self.assertEqual(dct['type'], config['LogConfig'].type)
+
+    def test_create_host_config_obj_logconfig(self):
+        obj = LogConfig(type=LogConfig.types.SYSLOG, config={'key1': 'val1'})
+        config = create_host_config(log_config=obj)
+        self.assertIn('LogConfig', config)
+        self.assertTrue(isinstance(config['LogConfig'], LogConfig))
+        self.assertEqual(obj, config['LogConfig'])
+
+    def test_logconfig_invalid_type(self):
+        self.assertRaises(ValueError, lambda: LogConfig(type='xxx', config={}))
+        self.assertRaises(ValueError, lambda: LogConfig(
+            type=LogConfig.types.JSON, config='helloworld'
+        ))
 
     def test_resolve_authconfig(self):
         auth_config = {

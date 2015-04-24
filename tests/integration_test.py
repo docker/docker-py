@@ -348,6 +348,31 @@ class TestStartContainerWithFileBind(BaseTestCase):
             os.unlink(mount_origin)
 
 
+class TestCreateContainerWithLogConfig(BaseTestCase):
+    def runTest(self):
+        config = docker.utils.LogConfig(
+            type=docker.utils.LogConfig.types.SYSLOG,
+            config={'key1': 'val1'}
+        )
+        ctnr = self.client.create_container(
+            'busybox', ['true'],
+            host_config=create_host_config(log_config=config)
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr)
+        info = self.client.inspect_container(ctnr)
+        self.assertIn('HostConfig', info)
+        host_config = info['HostConfig']
+        self.assertIn('LogConfig', host_config)
+        log_config = host_config['LogConfig']
+        self.assertIn('Type', log_config)
+        self.assertEqual(log_config['Type'], config.type)
+        self.assertIn('Config', log_config)
+        self.assertEqual(type(log_config['Config']), dict)
+        self.assertEqual(log_config['Config'], config.config)
+
+
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestCreateContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
@@ -958,7 +983,7 @@ class TestStartContainerWithVolumesFrom(BaseTestCase):
 
 class TestStartContainerWithUlimits(BaseTestCase):
     def runTest(self):
-        ulimit = docker.utils.Ulimit('nofile', 4096, 4096)
+        ulimit = docker.utils.Ulimit(name='nofile', soft=4096, hard=4096)
 
         res0 = self.client.create_container('busybox', 'true')
         container1_id = res0['Id']

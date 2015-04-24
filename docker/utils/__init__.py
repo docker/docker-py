@@ -5,4 +5,4 @@ from .utils import (
     create_container_config, parse_bytes, ping_registry
 ) # flake8: noqa
 
-from .types import Ulimit # flake8: noqa
+from .types import Ulimit, LogConfig # flake8: noqa

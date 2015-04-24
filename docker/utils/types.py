@@ -1,10 +1,61 @@
 import six
 
 
+class LogConfigTypesEnum(object):
+    _values = (
+        'json-file',
+        'syslog',
+        'none'
+    )
+    JSON, SYSLOG, NONE = _values
+
+
 class DictType(dict):
     def __init__(self, init):
         for k, v in six.iteritems(init):
             self[k] = v
+
+
+class LogConfig(DictType):
+    types = LogConfigTypesEnum
+
+    def __init__(self, **kwargs):
+        type_ = kwargs.get('type', kwargs.get('Type'))
+        config = kwargs.get('config', kwargs.get('Config'))
+        if type_ not in self.types._values:
+            raise ValueError("LogConfig.type must be one of ({0})".format(
+                ', '.join(self.types._values)
+            ))
+        if config and not isinstance(config, dict):
+            raise ValueError("LogConfig.config must be a dictionary")
+
+        super(LogConfig, self).__init__({
+            'Type': type_,
+            'Config': config or {}
+        })
+
+    @property
+    def type(self):
+        return self['Type']
+
+    @type.setter
+    def type(self, value):
+        if value not in self.types._values:
+            raise ValueError("LogConfig.type must be one of {0}".format(
+                ', '.join(self.types._values)
+            ))
+        self['Type'] = value
+
+    @property
+    def config(self):
+        return self['Config']
+
+    def set_config_value(self, key, value):
+        self.config[key] = value
+
+    def unset_config(self, key):
+        if key in self.config:
+            del self.config[key]
 
 
 class Ulimit(DictType):

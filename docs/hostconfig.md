@@ -85,8 +85,11 @@ for example:
 * read_only (bool): mount the container's root filesystem as read only
 * pid_mode (str): if set to "host", use the host PID namespace inside the
   container
-* security_opt (list): A list of string values to customize labels for MLS systems, such as SELinux.
-* ulimits (list): A list of dicts or `docker.utils.Ulimit` objects.
+* security_opt (list): A list of string values to customize labels for MLS
+  systems, such as SELinux.
+* ulimits (list): A list of dicts or `docker.utils.Ulimit` objects. A list
+  of ulimits to be set in the container.
+* log_config (`docker.utils.LogConfig` or dict): Logging configuration to container
 
 **Returns** (dict) HostConfig dictionary
 
