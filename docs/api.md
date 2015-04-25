@@ -258,7 +258,7 @@ function return a blocking generator you can iterate over to retrieve events as 
 
 ```python
 c.execute(container, cmd, detach=False, stdout=True, stderr=True,
-       stream=False, tty=False)
+       stream=False, tty=False, exec_id=False)
 ```
 
 Execute a command in a running container.
@@ -278,6 +278,23 @@ running `inspect_container`), unique id or container name.
 
 * stream (bool): indicates whether to return a generator which will yield
   the streaming response in chunks.
+
+* exec_id (bool) whether to return the execution id or not as a second value
+
+## execute_inspect
+
+```python
+>>> _, exec_id = c.execute(container, cmd, exec_id=True)
+>>> info = c.execute_inspect(exec_id)
+```
+
+Retrieve information about a previous execute call
+
+**Params**:
+
+* exec_id (str): an execution unique id
+
+**Returns** (urllib3.response.HTTPResponse object): The response from the docker daemon
 
 ## export
 

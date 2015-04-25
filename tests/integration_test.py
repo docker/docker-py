@@ -1107,6 +1107,21 @@ class TestExecuteCommandStreaming(BaseTestCase):
         self.assertEqual(res, expected)
 
 
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
+class TestExecuteCommandInspect(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        _, exec_id = self.client.execute(id, ['sh', '-c', 'exit 5'],
+                                         exec_id=True)
+        res = self.client.execute_inspect(exec_id)
+        self.assertEqual(res['ExitCode'], 5)
+
+
 class TestRunContainerStreaming(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', '/bin/sh',

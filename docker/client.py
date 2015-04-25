@@ -505,7 +505,7 @@ class Client(requests.Session):
                                    decode=decode)
 
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
-                stream=False, tty=False):
+                stream=False, tty=False, exec_id=False):
         if utils.compare_version('1.15', self._version) < 0:
             raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
@@ -527,24 +527,33 @@ class Client(requests.Session):
 
         # create the command
         url = self._url('/containers/{0}/exec'.format(container))
-        res = self._post_json(url, data=data)
-        self._raise_for_status(res)
+        cmd_res = self._post_json(url, data=data)
+        self._raise_for_status(cmd_res)
 
         # start the command
-        cmd_id = res.json().get('Id')
+        cmd_id = cmd_res.json().get('Id')
         res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)),
                               data=data, stream=stream)
         self._raise_for_status(res)
         if stream:
-            return self._multiplexed_response_stream_helper(res)
+            out = self._multiplexed_response_stream_helper(res)
         elif six.PY3:
-            return bytes().join(
+            out = bytes().join(
                 [x for x in self._multiplexed_buffer_helper(res)]
             )
         else:
-            return str().join(
+            out = str().join(
                 [x for x in self._multiplexed_buffer_helper(res)]
             )
+
+        if exec_id:
+            return out, cmd_res.json().get('Id')
+        else:
+            return out
+
+    def execute_inspect(self, exec_id):
+        res = self._get(self._url('/exec/{0}/json'.format(exec_id)))
+        return self._result(res, True)
 
     def export(self, container):
         if isinstance(container, dict):
