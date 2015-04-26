@@ -400,6 +400,8 @@ class Client(requests.Session):
 
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, conf=None):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {
             'container': container,
             'repo': repository,
