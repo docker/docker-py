@@ -26,7 +26,7 @@ import six
 from .auth import auth
 from .unixconn import unixconn
 from .ssladapter import ssladapter
-from .utils import utils
+from .utils import utils, check_resource
 from . import errors
 from .tls import TLSConfig
 
@@ -154,6 +154,7 @@ class Client(requests.Session):
             'stream': 1
         }
 
+    @check_resource
     def _attach_websocket(self, container, params=None):
         if six.PY3:
             raise NotImplementedError("This method is not currently supported "
@@ -249,6 +250,7 @@ class Client(requests.Session):
     def api_version(self):
         return self._version
 
+    @check_resource
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
         if isinstance(container, dict):
@@ -285,6 +287,7 @@ class Client(requests.Session):
                 [x for x in self._multiplexed_buffer_helper(response)]
             )
 
+    @check_resource
     def attach_socket(self, container, params=None, ws=False):
         if params is None:
             params = {
@@ -398,6 +401,7 @@ class Client(requests.Session):
                 return None, output
             return match.group(1), output
 
+    @check_resource
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, conf=None):
         if isinstance(container, dict):
@@ -436,6 +440,7 @@ class Client(requests.Session):
                 x['Id'] = x['Id'][:12]
         return res
 
+    @check_resource
     def copy(self, container, resource):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -480,6 +485,7 @@ class Client(requests.Session):
         res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
 
+    @check_resource
     def diff(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -506,6 +512,7 @@ class Client(requests.Session):
                                             params=params, stream=True),
                                    decode=decode)
 
+    @check_resource
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
@@ -548,6 +555,7 @@ class Client(requests.Session):
                 [x for x in self._multiplexed_buffer_helper(res)]
             )
 
+    @check_resource
     def export(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -556,12 +564,14 @@ class Client(requests.Session):
         self._raise_for_status(res)
         return res.raw
 
+    @check_resource
     def get_image(self, image):
         res = self._get(self._url("/images/{0}/get".format(image)),
                         stream=True)
         self._raise_for_status(res)
         return res.raw
 
+    @check_resource
     def history(self, image):
         res = self._get(self._url("/images/{0}/history".format(image)))
         return self._result(res, True)
@@ -671,18 +681,20 @@ class Client(requests.Session):
         return self._result(self._get(self._url("/info")),
                             True)
 
+    @check_resource
     def insert(self, image, url, path):
         if utils.compare_version('1.12', self._version) >= 0:
             raise errors.DeprecatedMethod(
                 'insert is not available for API version >=1.12'
             )
-        api_url = self._url("/images/" + image + "/insert")
+        api_url = self._url("/images/{0}/insert".fornat(image))
         params = {
             'url': url,
             'path': path
         }
         return self._result(self._post(api_url, params=params))
 
+    @check_resource
     def inspect_container(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -690,12 +702,14 @@ class Client(requests.Session):
             self._get(self._url("/containers/{0}/json".format(container))),
             True)
 
-    def inspect_image(self, image_id):
+    @check_resource
+    def inspect_image(self, image):
         return self._result(
-            self._get(self._url("/images/{0}/json".format(image_id))),
+            self._get(self._url("/images/{0}/json".format(image))),
             True
         )
 
+    @check_resource
     def kill(self, container, signal=None):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -743,6 +757,7 @@ class Client(requests.Session):
             self._auth_configs[registry] = req_data
         return self._result(response, json=True)
 
+    @check_resource
     def logs(self, container, stdout=True, stderr=True, stream=False,
              timestamps=False, tail='all'):
         if isinstance(container, dict):
@@ -777,6 +792,7 @@ class Client(requests.Session):
             logs=True
         )
 
+    @check_resource
     def pause(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -787,6 +803,7 @@ class Client(requests.Session):
     def ping(self):
         return self._result(self._get(self._url('/_ping')))
 
+    @check_resource
     def port(self, container, private_port):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -884,6 +901,7 @@ class Client(requests.Session):
         return stream and self._stream_helper(response) \
             or self._result(response)
 
+    @check_resource
     def remove_container(self, container, v=False, link=False, force=False):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -892,6 +910,7 @@ class Client(requests.Session):
                            params=params)
         self._raise_for_status(res)
 
+    @check_resource
     def remove_image(self, image, force=False, noprune=False):
         if isinstance(image, dict):
             image = image.get('Id')
@@ -899,6 +918,7 @@ class Client(requests.Session):
         res = self._delete(self._url("/images/" + image), params=params)
         self._raise_for_status(res)
 
+    @check_resource
     def rename(self, container, name):
         if utils.compare_version('1.17', self._version) < 0:
             raise errors.InvalidVersion(
@@ -911,6 +931,7 @@ class Client(requests.Session):
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
+    @check_resource
     def resize(self, container, height, width):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -920,6 +941,7 @@ class Client(requests.Session):
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
+    @check_resource
     def restart(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -933,6 +955,7 @@ class Client(requests.Session):
                                       params={'term': term}),
                             True)
 
+    @check_resource
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=False, links=None, privileged=False,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
@@ -995,6 +1018,7 @@ class Client(requests.Session):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
+    @check_resource
     def stats(self, container, decode=None):
         if utils.compare_version('1.17', self._version) < 0:
             raise errors.InvalidVersion(
@@ -1005,6 +1029,7 @@ class Client(requests.Session):
         url = self._url("/containers/{0}/stats".format(container))
         return self._stream_helper(self._get(url, stream=True), decode=decode)
 
+    @check_resource
     def stop(self, container, timeout=10):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -1015,6 +1040,7 @@ class Client(requests.Session):
                          timeout=(timeout + self.timeout))
         self._raise_for_status(res)
 
+    @check_resource
     def tag(self, image, repository, tag=None, force=False):
         params = {
             'tag': tag,
@@ -1026,7 +1052,10 @@ class Client(requests.Session):
         self._raise_for_status(res)
         return res.status_code == 201
 
+    @check_resource
     def top(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         u = self._url("/containers/{0}/top".format(container))
         return self._result(self._get(u), True)
 
@@ -1034,6 +1063,7 @@ class Client(requests.Session):
         url = self._url("/version", versioned_api=api_version)
         return self._result(self._get(url), json=True)
 
+    @check_resource
     def unpause(self, container):
         if isinstance(container, dict):
             container = container.get('Id')
@@ -1041,6 +1071,7 @@ class Client(requests.Session):
         res = self._post(url)
         self._raise_for_status(res)
 
+    @check_resource
     def wait(self, container, timeout=None):
         if isinstance(container, dict):
             container = container.get('Id')

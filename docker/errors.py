@@ -78,3 +78,7 @@ class TLSParameterError(DockerException):
                            "client configurations. See "
                            "http://docs.docker.com/examples/https/ for "
                            "API details.")
+
+
+class NullResource(DockerException, ValueError):
+    pass
