@@ -44,6 +44,8 @@ except ImportError:
     import mock
 
 
+DEFAULT_TIMEOUT_SECONDS = docker.client.constants.DEFAULT_TIMEOUT_SECONDS
+
 warnings.simplefilter('error')
 create_host_config = docker.utils.create_host_config
 
@@ -73,7 +75,7 @@ def fake_resp(url, data=None, **kwargs):
 
 fake_request = mock.Mock(side_effect=fake_resp)
 url_prefix = 'http+docker://localunixsocket/v{0}/'.format(
-    docker.client.DEFAULT_DOCKER_API_VERSION)
+    docker.client.constants.DEFAULT_DOCKER_API_VERSION)
 
 
 class Cleanup(object):
@@ -150,7 +152,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'version',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_retrieve_server_version(self):
@@ -175,7 +177,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'info',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_search(self):
@@ -187,7 +189,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/search',
             params={'term': 'busybox'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_image_viz(self):
@@ -260,7 +262,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 0, 'all': 1},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_images_quiet(self):
@@ -271,7 +273,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 1, 'all': 1},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_image_ids(self):
@@ -283,7 +285,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 1, 'all': 0},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_images_filters(self):
@@ -296,7 +298,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 0, 'all': 0,
                     'filters': '{"dangling": ["true"]}'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_list_containers(self):
@@ -315,7 +317,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'trunc_cmd': 0,
                 'before': None
             },
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     #####################
@@ -666,7 +668,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_none(self):
@@ -711,7 +713,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_lxc_conf_compat(self):
@@ -737,7 +739,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_binds_ro(self):
@@ -766,7 +768,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_binds_rw(self):
@@ -795,7 +797,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_port_binds(self):
@@ -851,7 +853,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_mac_address(self):
@@ -960,7 +962,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_lxc_conf(self):
@@ -986,7 +988,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_lxc_conf_compat(self):
@@ -1009,7 +1011,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_binds_ro(self):
@@ -1034,7 +1036,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS)
+            DEFAULT_TIMEOUT_SECONDS)
 
     def test_start_container_with_binds_rw(self):
         try:
@@ -1056,7 +1058,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_port_binds(self):
@@ -1108,7 +1110,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_links(self):
@@ -1200,7 +1202,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
         self.assertEqual(
             args[1]['timeout'],
-            docker.client.DEFAULT_TIMEOUT_SECONDS
+            DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_start_container_with_dict_instead_of_id(self):
@@ -1218,7 +1220,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_restart_policy(self):
@@ -1247,7 +1249,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_added_capabilities(self):
@@ -1268,7 +1270,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_dropped_capabilities(self):
@@ -1289,7 +1291,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_devices(self):
@@ -1323,7 +1325,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_labels_dict(self):
@@ -1345,7 +1347,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_create_container_with_labels_list(self):
@@ -1371,7 +1373,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['headers'], {'Content-Type': 'application/json'}
         )
         self.assertEqual(
-            args[1]['timeout'], docker.client.DEFAULT_TIMEOUT_SECONDS
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_resize_container(self):
@@ -1387,7 +1389,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/resize',
             params={'h': 15, 'w': 120},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_rename_container(self):
@@ -1402,7 +1404,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/rename',
             params={'name': 'foobar'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_wait(self):
@@ -1467,7 +1469,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
 
@@ -1486,7 +1488,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
 
@@ -1505,7 +1507,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=True
         )
 
@@ -1519,7 +1521,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 10},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS,
+            timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
 
@@ -1531,7 +1533,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/changes',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_diff_with_dict_instead_of_id(self):
@@ -1542,7 +1544,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/changes',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_port(self):
@@ -1553,7 +1555,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/json',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_stop_container(self):
@@ -1566,7 +1568,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
-            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
+            timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
     def test_stop_container_with_dict_instead_of_id(self):
@@ -1580,7 +1582,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
-            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
+            timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
     def test_exec_create(self):
@@ -1679,7 +1681,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/pause',
-            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS)
+            timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_unpause_container(self):
@@ -1689,7 +1691,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.fail('Command should not raise exception: {0}'.format(e))
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/unpause',
-            timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS)
+            timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_kill_container(self):
@@ -1701,7 +1703,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/kill',
             params={},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_kill_container_with_dict_instead_of_id(self):
@@ -1713,7 +1715,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/kill',
             params={},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_kill_container_with_signal(self):
@@ -1725,7 +1727,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/kill',
             params={'signal': signal.SIGTERM},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_restart_container(self):
@@ -1737,7 +1739,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/restart',
             params={'t': 2},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_restart_container_with_dict_instead_of_id(self):
@@ -1749,7 +1751,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/restart',
             params={'t': 2},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_container(self):
@@ -1761,7 +1763,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': False, 'force': False},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_container_with_dict_instead_of_id(self):
@@ -1773,7 +1775,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': False, 'force': False},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_link(self):
@@ -1785,7 +1787,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': True, 'force': False},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_export(self):
@@ -1797,7 +1799,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/export',
             stream=True,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_export_with_dict_instead_of_id(self):
@@ -1809,7 +1811,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/export',
             stream=True,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_inspect_container(self):
@@ -1820,7 +1822,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/json',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_container_stats(self):
@@ -1890,7 +1892,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'container': '3cc2351ab11b',
                 'author': None
             },
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_remove_image(self):
@@ -1902,7 +1904,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128',
             params={'force': False, 'noprune': False},
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_image_history(self):
@@ -1913,7 +1915,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/history',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_import_image(self):
@@ -1934,7 +1936,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'fromSrc': fake_api.FAKE_TARBALL_PATH
             },
             data=None,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_import_image_from_bytes(self):
@@ -1959,7 +1961,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'Content-Type': 'application/tar',
             },
             data=stream,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_import_image_from_image(self):
@@ -1980,7 +1982,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'fromImage': fake_api.FAKE_IMAGE_NAME
             },
             data=None,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_inspect_image(self):
@@ -1991,7 +1993,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/json',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_insert_image(self):
@@ -2012,7 +2014,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'url': fake_api.FAKE_URL,
                 'path': fake_api.FAKE_PATH
             },
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_push_image(self):
@@ -2031,7 +2033,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             data='{}',
             headers={'Content-Type': 'application/json'},
             stream=False,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_push_image_with_tag(self):
@@ -2052,7 +2054,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             data='{}',
             headers={'Content-Type': 'application/json'},
             stream=False,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_push_image_stream(self):
@@ -2071,7 +2073,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             data='{}',
             headers={'Content-Type': 'application/json'},
             stream=True,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_tag_image(self):
@@ -2087,7 +2089,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'repo': 'repo',
                 'force': 0
             },
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_tag_image_tag(self):
@@ -2107,7 +2109,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'repo': 'repo',
                 'force': 0
             },
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_tag_image_force(self):
@@ -2124,7 +2126,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'repo': 'repo',
                 'force': 1
             },
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_get_image(self):
@@ -2136,7 +2138,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128/get',
             stream=True,
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_load_image(self):
@@ -2148,7 +2150,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             url_prefix + 'images/load',
             data='Byte Stream....',
-            timeout=docker.client.DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     #################
@@ -2251,6 +2253,25 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.client.build('.', dockerfile='nameddockerfile')
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_with_container_limits(self):
+        try:
+            self.client.build('.', container_limits={
+                'memory': 1024 * 1024,
+                'cpusetcpus': 1,
+                'cpushares': 1000,
+                'memswap': 1024 * 1024 * 8
+            })
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_invalid_container_limits(self):
+        self.assertRaises(
+            docker.errors.DockerException,
+            lambda: self.client.build('.', container_limits={
+                'foo': 'bar'
+            })
+        )
 
     #######################
     #  PY SPECIFIC TESTS  #

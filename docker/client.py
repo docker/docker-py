@@ -24,25 +24,22 @@ import requests
 import requests.exceptions
 import six
 
+from . import constants
+from . import errors
 from .auth import auth
 from .unixconn import unixconn
 from .ssladapter import ssladapter
 from .utils import utils, check_resource
-from . import errors
 from .tls import TLSConfig
 
 
 if not six.PY3:
     import websocket
 
-DEFAULT_DOCKER_API_VERSION = '1.18'
-DEFAULT_TIMEOUT_SECONDS = 60
-STREAM_HEADER_SIZE_BYTES = 8
-
 
 class Client(requests.Session):
     def __init__(self, base_url=None, version=None,
-                 timeout=DEFAULT_TIMEOUT_SECONDS, tls=False):
+                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
 
         if tls and not base_url.startswith('https://'):
@@ -70,7 +67,7 @@ class Client(requests.Session):
 
         # version detection needs to be after unix adapter mounting
         if version is None:
-            self._version = DEFAULT_DOCKER_API_VERSION
+            self._version = constants.DEFAULT_DOCKER_API_VERSION
         elif isinstance(version, six.string_types):
             if version.lower() == 'auto':
                 self._version = self._retrieve_server_version()
@@ -218,7 +215,7 @@ class Client(requests.Session):
             if len(buf[walker:]) < 8:
                 break
             _, length = struct.unpack_from('>BxxxL', buf[walker:])
-            start = walker + STREAM_HEADER_SIZE_BYTES
+            start = walker + constants.STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end
             yield buf[start:end]
@@ -236,7 +233,7 @@ class Client(requests.Session):
             socket.settimeout(None)
 
         while True:
-            header = response.raw.read(STREAM_HEADER_SIZE_BYTES)
+            header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
             if not header:
                 break
             _, length = struct.unpack('>BxxxL', header)
@@ -310,10 +307,17 @@ class Client(requests.Session):
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=True,
-              forcerm=False, dockerfile=None):
+              forcerm=False, dockerfile=None, container_limits=None):
         remote = context = headers = None
+        container_limits = container_limits or {}
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
+
+        for key in container_limits.keys():
+            if key not in constants.CONTAINER_LIMITS_KEYS:
+                raise errors.DockerException(
+                    'Invalid container_limits key {0}'.format(key)
+                )
 
         if custom_context:
             if not fileobj:
@@ -357,8 +361,9 @@ class Client(requests.Session):
             'rm': rm,
             'forcerm': forcerm,
             'pull': pull,
-            'dockerfile': dockerfile
+            'dockerfile': dockerfile,
         }
+        params.update(container_limits)
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
