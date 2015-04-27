@@ -2254,6 +2254,25 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+    def test_build_container_with_container_limits(self):
+        try:
+            self.client.build('.', container_limits={
+                'memory': 1024 * 1024,
+                'cpusetcpus': 1,
+                'cpushares': 1000,
+                'memswap': 1024 * 1024 * 8
+            })
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_invalid_container_limits(self):
+        self.assertRaises(
+            docker.errors.DockerException,
+            lambda: self.client.build('.', container_limits={
+                'foo': 'bar'
+            })
+        )
+
     #######################
     #  PY SPECIFIC TESTS  #
     #######################
