@@ -65,6 +65,12 @@ correct value (e.g `gzip`).
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
 * forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
 * dockerfile (str): path within the build context to the Dockerfile
+* container_limits (dict): A dictionary of limits applied to each container
+  created by the build process. Valid keys:
+    - memory (int): set memory limit for build
+    - memswap (int): Total memory (memory + swap), -1 to disable swap
+    - cpushares (int): CPU shares (relative weight)
+    - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
 
 **Returns** (generator): A generator of the build output
 
