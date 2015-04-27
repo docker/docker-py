@@ -135,6 +135,10 @@ non-running ones
 non-running ones
 * limit (int): Show `limit` last created containers, include non-running ones
 * size (bool): Display sizes
+* filters (dict): Filters to be processed on the image list. Available filters:
+    - `exited` (int): Only containers with specified exit code
+    - `status` (str): One of `restarting`, `running`, `paused`, `exited`
+
 
 **Returns** (dict): The system's containers
 
@@ -355,11 +359,12 @@ List images. Identical to the `docker images` command.
 
 **Params**:
 
-* name (str): Optional filter for a name
+* name (str): Only show images belonging to the repository `name`
 * quiet (bool): Only show numeric Ids. Returns a list
 * all (bool): Show all images (by default filter out the intermediate image
 layers)
-* viz: *Depreciated*
+* filters (dict): Filters to be processed on the image list. Available filters:
+    - `dangling` (bool)
 
 **Returns** (dict or list): A list if `quiet=True`, otherwise a dict.
 
