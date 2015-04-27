@@ -256,28 +256,58 @@ function return a blocking generator you can iterate over to retrieve events as 
 
 ## execute
 
-```python
-c.execute(container, cmd, detach=False, stdout=True, stderr=True,
-       stream=False, tty=False)
-```
+This command is deprecated for docker-py >= 1.2.0 ; use `exec_create` and
+`exec_start` instead.
 
-Execute a command in a running container.
+## exec_create
+
+Sets up an exec instance in a running container.
 
 **Params**:
 
-* container (str): can be a container dictionary (result of
-running `inspect_container`), unique id or container name.
+* container (str): Target container where exec instance will be created
+* cmd (str or list): Command to be executed
+* stdout (bool): Attach to stdout of the exec command if true. Default: True
+* stderr (bool): Attach to stderr of the exec command if true. Default: True
+* tty (bool): Allocate a pseudo-TTY. Default: False
+
+**Returns** (dict): A dictionary with an exec 'Id' key.
 
 
-* cmd (str or list): representing the command and its arguments.
+## exec_inspect
 
-* detach (bool): flag to `True` will run the process in the background.
+Return low-level information about an exec command.
 
-* stdout (bool): indicates which output streams to read from.
-* stderr (bool): indicates which output streams to read from.
+**Params**:
 
-* stream (bool): indicates whether to return a generator which will yield
-  the streaming response in chunks.
+* exec_id (str): ID of the exec instance
+
+**Returns** (dict): Dictionary of values returned by the endpoint.
+
+
+## exec_resize
+
+Resize the tty session used by the specified exec command.
+
+**Params**:
+
+* exec_id (str): ID of the exec instance
+* height (int): Height of tty session
+* width (int): Width of tty session
+
+## exec_start
+
+Start a previously set up exec instance.
+
+**Params**:
+
+* exec_id (str): ID of the exec instance
+* detach (bool): If true, detach from the exec command. Default: False
+* tty (bool): Allocate a pseudo-TTY. Default: False
+* stream (bool): Stream response data
+
+**Returns** (generator or str): If `stream=True`, a generator yielding response
+chunks. A string containing response data otherwise.
 
 ## export
 

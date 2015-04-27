@@ -526,8 +526,7 @@ class Client(requests.Session):
 
         return self.exec_start(create_res, detach, tty, stream)
 
-    def exec_create(self, container, cmd, detach=False, stdout=True,
-                    stderr=True, tty=False):
+    def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
             raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
@@ -543,7 +542,6 @@ class Client(requests.Session):
             'AttachStdin': False,
             'AttachStdout': stdout,
             'AttachStderr': stderr,
-            'Detach': detach,
             'Cmd': cmd
         }
 

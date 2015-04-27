@@ -1601,7 +1601,6 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'Tty': False,
                 'AttachStdout': True,
                 'Container': fake_api.FAKE_CONTAINER_ID,
-                'Detach': False,
                 'Cmd': ['ls', '-1'],
                 'Privileged': False,
                 'AttachStdin': False,
