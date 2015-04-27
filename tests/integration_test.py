@@ -1071,9 +1071,12 @@ class TestExecuteCommand(BaseTestCase):
         self.client.start(id)
         self.tmp_containers.append(id)
 
-        res = self.client.execute(id, ['echo', 'hello'])
+        res = self.client.exec_create(id, ['echo', 'hello'])
+        self.assertIn('Id', res)
+
+        exec_log = self.client.exec_start(res)
         expected = b'hello\n' if six.PY3 else 'hello\n'
-        self.assertEqual(res, expected)
+        self.assertEqual(exec_log, expected)
 
 
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
@@ -1085,9 +1088,12 @@ class TestExecuteCommandString(BaseTestCase):
         self.client.start(id)
         self.tmp_containers.append(id)
 
-        res = self.client.execute(id, 'echo hello world', stdout=True)
+        res = self.client.exec_create(id, 'echo hello world')
+        self.assertIn('Id', res)
+
+        exec_log = self.client.exec_start(res)
         expected = b'hello world\n' if six.PY3 else 'hello world\n'
-        self.assertEqual(res, expected)
+        self.assertEqual(exec_log, expected)
 
 
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
@@ -1099,12 +1105,31 @@ class TestExecuteCommandStreaming(BaseTestCase):
         self.client.start(id)
         self.tmp_containers.append(id)
 
-        chunks = self.client.execute(id, ['echo', 'hello\nworld'], stream=True)
+        exec_id = self.client.exec_create(id, ['echo', 'hello\nworld'])
+        self.assertIn('Id', exec_id)
+
         res = b'' if six.PY3 else ''
-        for chunk in chunks:
+        for chunk in self.client.exec_start(exec_id, stream=True):
             res += chunk
         expected = b'hello\nworld\n' if six.PY3 else 'hello\nworld\n'
         self.assertEqual(res, expected)
+
+
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
+class TestExecInspect(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        exec_id = self.client.exec_create(id, ['mkdir', '/does/not/exist'])
+        self.assertIn('Id', exec_id)
+        self.client.exec_start(exec_id)
+        exec_info = self.client.exec_inspect(exec_id)
+        self.assertIn('ExitCode', exec_info)
+        self.assertNotEqual(exec_info['ExitCode'], 0)
 
 
 class TestRunContainerStreaming(BaseTestCase):

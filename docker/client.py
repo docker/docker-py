@@ -569,7 +569,7 @@ class Client(requests.Session):
             'w': width
         }
         res = self._post_json(
-            self._url('exec/{0}/resize'.format(exec_id)), data
+            self._url('/exec/{0}/resize'.format(exec_id)), data
         )
         res.raise_for_status()
 
