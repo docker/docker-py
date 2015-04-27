@@ -1583,30 +1583,94 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             timeout=(docker.client.DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
-    def test_execute_command(self):
+    def test_exec_create(self):
         try:
-            self.client.execute(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
+            self.client.exec_create(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
-                         url_prefix + 'exec/3cc2351ab11b/start')
+        self.assertEqual(
+            args[0][0], url_prefix + 'containers/{0}/exec'.format(
+                fake_api.FAKE_CONTAINER_ID
+            )
+        )
 
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''{
-                            "Tty": false,
-                            "AttachStderr": true,
-                            "Container": "3cc2351ab11b",
-                            "Cmd": ["ls", "-1"],
-                            "AttachStdin": false,
-                            "User": "",
-                            "Detach": false,
-                            "Privileged": false,
-                            "AttachStdout": true}'''))
+        self.assertEqual(
+            json.loads(args[1]['data']), {
+                'Tty': False,
+                'AttachStdout': True,
+                'Container': fake_api.FAKE_CONTAINER_ID,
+                'Cmd': ['ls', '-1'],
+                'Privileged': False,
+                'AttachStdin': False,
+                'AttachStderr': True,
+                'User': ''
+            }
+        )
 
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
+
+    def test_exec_start(self):
+        try:
+            self.client.exec_start(fake_api.FAKE_EXEC_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0], url_prefix + 'exec/{0}/start'.format(
+                fake_api.FAKE_EXEC_ID
+            )
+        )
+
+        self.assertEqual(
+            json.loads(args[1]['data']), {
+                'Tty': False,
+                'Detach': False,
+            }
+        )
+
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    def test_exec_inspect(self):
+        try:
+            self.client.exec_inspect(fake_api.FAKE_EXEC_ID)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0], url_prefix + 'exec/{0}/json'.format(
+                fake_api.FAKE_EXEC_ID
+            )
+        )
+
+    def test_exec_resize(self):
+        try:
+            self.client.exec_resize(fake_api.FAKE_EXEC_ID, height=20, width=60)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][0], url_prefix + 'exec/{0}/resize'.format(
+                fake_api.FAKE_EXEC_ID
+            )
+        )
+
+        self.assertEqual(
+            json.loads(args[1]['data']), {
+                'h': 20,
+                'w': 60,
+            }
+        )
+
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
 
     def test_pause_container(self):
         try:

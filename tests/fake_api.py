@@ -18,6 +18,7 @@ CURRENT_VERSION = 'v1.18'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
+FAKE_EXEC_ID = 'd5d177f121dc'
 FAKE_IMAGE_NAME = 'test_image'
 FAKE_TARBALL_PATH = '/path/to/tarball'
 FAKE_REPO_NAME = 'repo'
@@ -247,18 +248,42 @@ def get_fake_export():
     return status_code, response
 
 
-def post_fake_execute():
+def post_fake_exec_create():
     status_code = 200
-    response = {'Id': FAKE_CONTAINER_ID}
+    response = {'Id': FAKE_EXEC_ID}
     return status_code, response
 
 
-def post_fake_execute_start():
+def post_fake_exec_start():
     status_code = 200
     response = (b'\x01\x00\x00\x00\x00\x00\x00\x11bin\nboot\ndev\netc\n'
                 b'\x01\x00\x00\x00\x00\x00\x00\x12lib\nmnt\nproc\nroot\n'
                 b'\x01\x00\x00\x00\x00\x00\x00\x0csbin\nusr\nvar\n')
     return status_code, response
+
+
+def post_fake_exec_resize():
+    status_code = 201
+    return status_code, ''
+
+
+def get_fake_exec_inspect():
+    return 200, {
+        'OpenStderr': True,
+        'OpenStdout': True,
+        'Container': get_fake_inspect_container()[1],
+        'Running': False,
+        'ProcessConfig': {
+            'arguments': ['hello world'],
+            'tty': False,
+            'entrypoint': 'echo',
+            'privileged': False,
+            'user': ''
+        },
+        'ExitCode': 0,
+        'ID': FAKE_EXEC_ID,
+        'OpenStdin': False
+    }
 
 
 def post_fake_stop_container():
@@ -393,9 +418,14 @@ fake_responses = {
     '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
     get_fake_export,
     '{1}/{0}/containers/3cc2351ab11b/exec'.format(CURRENT_VERSION, prefix):
-    post_fake_execute,
-    '{1}/{0}/exec/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
-    post_fake_execute_start,
+    post_fake_exec_create,
+    '{1}/{0}/exec/d5d177f121dc/start'.format(CURRENT_VERSION, prefix):
+    post_fake_exec_start,
+    '{1}/{0}/exec/d5d177f121dc/json'.format(CURRENT_VERSION, prefix):
+    get_fake_exec_inspect,
+    '{1}/{0}/exec/d5d177f121dc/resize'.format(CURRENT_VERSION, prefix):
+    post_fake_exec_resize,
+
     '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
     get_fake_stats,
     '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):

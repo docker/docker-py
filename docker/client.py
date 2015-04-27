@@ -17,6 +17,7 @@ import os
 import re
 import shlex
 import struct
+import warnings
 from datetime import datetime
 
 import requests
@@ -515,6 +516,17 @@ class Client(requests.Session):
     @check_resource
     def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
                 stream=False, tty=False):
+        warnings.warn(
+            'Client.execute is being deprecated. Please use exec_create & '
+            'exec_start instead', DeprecationWarning
+        )
+        create_res = self.exec_create(
+            container, cmd, detach, stdout, stderr, tty
+        )
+
+        return self.exec_start(create_res, detach, tty, stream)
+
+    def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False):
         if utils.compare_version('1.15', self._version) < 0:
             raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(container, dict):
@@ -530,18 +542,47 @@ class Client(requests.Session):
             'AttachStdin': False,
             'AttachStdout': stdout,
             'AttachStderr': stderr,
-            'Detach': detach,
             'Cmd': cmd
         }
 
-        # create the command
         url = self._url('/containers/{0}/exec'.format(container))
         res = self._post_json(url, data=data)
-        self._raise_for_status(res)
+        return self._result(res, True)
 
-        # start the command
-        cmd_id = res.json().get('Id')
-        res = self._post_json(self._url('/exec/{0}/start'.format(cmd_id)),
+    def exec_inspect(self, exec_id):
+        if utils.compare_version('1.15', self._version) < 0:
+            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
+        if isinstance(exec_id, dict):
+            exec_id = exec_id.get('Id')
+        res = self._get(self._url("/exec/{0}/json".format(exec_id)))
+        return self._result(res, True)
+
+    def exec_resize(self, exec_id, height=None, width=None):
+        if utils.compare_version('1.15', self._version) < 0:
+            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
+        if isinstance(exec_id, dict):
+            exec_id = exec_id.get('Id')
+        data = {
+            'h': height,
+            'w': width
+        }
+        res = self._post_json(
+            self._url('/exec/{0}/resize'.format(exec_id)), data
+        )
+        res.raise_for_status()
+
+    def exec_start(self, exec_id, detach=False, tty=False, stream=False):
+        if utils.compare_version('1.15', self._version) < 0:
+            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
+        if isinstance(exec_id, dict):
+            exec_id = exec_id.get('Id')
+
+        data = {
+            'Tty': tty,
+            'Detach': detach
+        }
+
+        res = self._post_json(self._url('/exec/{0}/start'.format(exec_id)),
                               data=data, stream=stream)
         self._raise_for_status(res)
         if stream:
