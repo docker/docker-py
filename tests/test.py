@@ -675,16 +675,22 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             self.client.start(container=None)
         except ValueError as e:
-            self.assertEqual(str(e), 'image or container param is None')
+            self.assertEqual(str(e), 'image or container param is undefined')
         else:
             self.fail('Command should raise ValueError')
 
         try:
             self.client.start(None)
         except ValueError as e:
-            self.assertEqual(str(e), 'image or container param is None')
+            self.assertEqual(str(e), 'image or container param is undefined')
         else:
             self.fail('Command should raise ValueError')
+
+    def test_start_container_regression_573(self):
+        try:
+            self.client.start(**{'container': fake_api.FAKE_CONTAINER_ID})
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
 
     def test_create_container_with_lxc_conf(self):
         try:
