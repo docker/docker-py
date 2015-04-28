@@ -144,7 +144,7 @@ non-running ones
 * filters (dict): Filters to be processed on the image list. Available filters:
     - `exited` (int): Only containers with specified exit code
     - `status` (str): One of `restarting`, `running`, `paused`, `exited`
-
+    - `label` (str): format either `"key"` or `"key=value"`
 
 **Returns** (dict): The system's containers
 
@@ -371,6 +371,7 @@ List images. Identical to the `docker images` command.
 layers)
 * filters (dict): Filters to be processed on the image list. Available filters:
     - `dangling` (bool)
+    - `label` (str): format either `"key"` or `"key=value"`
 
 **Returns** (dict or list): A list if `quiet=True`, otherwise a dict.
 
