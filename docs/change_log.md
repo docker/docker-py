@@ -1,6 +1,51 @@
 Change Log
 ==========
 
+1.2.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.2.0+is%3Aclosed)
+
+### Deprecation warning
+
+* `Client.execute` is being deprecated in favor of the more dev-friendly
+  `Client.exec_start` and `Client.exec_create`. **It will be removed in 1.3.0**
+
+### Features
+
+* Added `exec_create`, `exec_start`, `exec_inspect` and `exec_resize` to
+  client, accurately mirroring the
+  [Exec API](https://docs.docker.com/reference/api/docker_remote_api_v1.18/#exec-create)
+* Added `auth_config` param to `Client.pull` (allows to use one-off credentials
+  for this pull request)
+* Added support for `ipc_mode` in host config.
+* Added support for the `log_config` param in host config.
+* Added support for the `ulimit` param in host config.
+* Added support for container resource limits in `Client.build`.
+* When a resource identifier (image or container ID) is passed to a Client
+  method, we now check for `None` values to avoid crashing
+  (now raises `docker.errors.NullResource`)
+* Added tools to parse port ranges inside the new `docker.utils.ports` package.
+* Added a `version_info` attribute to the `docker` package.
+
+### Bugfixes
+
+* Fixed a bug in `Client.port` where absence of a certain key in the
+  container's JSON would raise an error (now just returns `None`)
+* Fixed a bug with the `trunc` parameter in `Client.containers` having no
+  effect (moved functionality to the client)
+* Several improvements have been made to the `Client.import_image` method.
+* Fixed pushing / pulling to
+  [v2 registries](https://github.com/docker/distribution)
+* Fixed a bug where passing a container dictionary to `Client.commit`
+  would fail
+
+### Miscellaneous
+
+* Default API version has been bumped to 1.18 (Docker Engine 1.6.0)
+* Several testing coverage improvements
+* Docs fixes and improvements
+
 1.1.0
 -----
 
