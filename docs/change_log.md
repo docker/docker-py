@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+1.2.1
+-----
+
+### Bugfixes
+
+* Fixed a bug where the check_resource decorator would break with some
+  argument-passing methods. (#573)
+
 1.2.0
 -----
 
