@@ -567,14 +567,11 @@ class Client(requests.Session):
             raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
-        data = {
-            'h': height,
-            'w': width
-        }
-        res = self._post_json(
-            self._url('/exec/{0}/resize'.format(exec_id)), data
-        )
-        res.raise_for_status()
+
+        params = {'h': height, 'w': width}
+        url = self._url("/exec/{0}/resize".format(exec_id))
+        res = self._post(url, params=params)
+        self._raise_for_status(res)
 
     def exec_start(self, exec_id, detach=False, tty=False, stream=False):
         if utils.compare_version('1.15', self._version) < 0:
