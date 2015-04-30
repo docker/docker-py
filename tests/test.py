@@ -1662,22 +1662,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
-        args = fake_request.call_args
-        self.assertEqual(
-            args[0][0], url_prefix + 'exec/{0}/resize'.format(
-                fake_api.FAKE_EXEC_ID
-            )
-        )
-
-        self.assertEqual(
-            json.loads(args[1]['data']), {
-                'h': 20,
-                'w': 60,
-            }
-        )
-
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
+        fake_request.assert_called_with(
+            url_prefix + 'exec/{0}/resize'.format(fake_api.FAKE_EXEC_ID),
+            params={'h': 20, 'w': 60},
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_pause_container(self):
