@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+1.2.2
+-----
+
+### Bugfixes
+
+* Fixed a bug where parameters passed to `Client.exec_resize` would be ignored (#576)
+* Fixed a bug where auth config wouldn't be resolved properly in `Client.pull` (#577)
+
 1.2.1
 -----
 

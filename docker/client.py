@@ -898,7 +898,8 @@ class Client(requests.Session):
                     # auth_config needs to be a dict in the format used by
                     # auth.py username , password, serveraddress, email
                     headers['X-Registry-Auth'] = auth.encode_header(
-                        authcfg)
+                        authcfg
+                    )
             else:
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
