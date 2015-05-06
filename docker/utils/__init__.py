@@ -7,3 +7,8 @@ from .utils import (
 
 from .types import Ulimit, LogConfig # flake8: noqa
 from .decorators import check_resource #flake8: noqa
+from .context import (
+    create_context_from_path,
+    is_remote,
+    ContextError
+) # flake8: noqa
