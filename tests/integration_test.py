@@ -39,6 +39,7 @@ from test import Cleanup
 # export; history; insert; port; push; tag; get; load; stats
 DEFAULT_BASE_URL = os.environ.get('DOCKER_HOST')
 EXEC_DRIVER_IS_NATIVE = True
+NOT_ON_HOST = os.environ.get('NOT_ON_HOST', False)
 
 warnings.simplefilter('error')
 create_host_config = docker.utils.create_host_config
@@ -1435,6 +1436,7 @@ class TestImportFromStream(ImportTestCase):
         self.tmp_imgs.append(img_id)
 
 
+@unittest.skipIf(NOT_ON_HOST, 'Tests running inside a container')
 class TestImportFromURL(ImportTestCase):
     '''Tests downloading an image over HTTP.'''
 
