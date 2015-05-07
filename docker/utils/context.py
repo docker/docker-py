@@ -20,7 +20,7 @@ class ContextError(Exception):
 
 
 INVALID_CONTEXT_FORMAT_LONG_FMT = """
-Build context at %s is not supported by docker-compose\\n
+Build context at %s is not supported by Docker\\n
 The path must point to either:
 \t * A readable directory containing a valid Dockerfile
 \t * A tarball (optionally compressed with gzip, xz or bzip2)
@@ -39,11 +39,6 @@ REMOTE_CONTEXT_PREFIXES = ["http://",
                            "git://",
                            "git@",
                            "github.com/"]
-
-DOCKERFILE_CMD_RG = re.compile(r"[\t\s]*\\n$|([\s\t]*"
-                               r"FROM|MAINTAINER|RUN|CMD|EXPOSE|ENV|ADD|COPY|"
-                               r"ENTRYPOINT|VOLUME|USER|WORKDIR|ONBUILD"
-                               r"[\s\t]+.+)")
 
 
 class BuildContext(namedtuple('BuildContext',
@@ -194,11 +189,10 @@ def validate_dockerfile_head(fpath):
     return True
 
 
-def _read_first_instruction_line(line_reader, marker=r'^[\s\t]*(\#|$)'):
-    import re
-    cmt_regex = re.compile(marker)
+def _read_first_instruction_line(line_reader, to_ignore=r'^[\s\t]*(\#|$)'):
+    to_ignore_regex = re.compile(to_ignore)
     for line in line_reader:
-        if cmt_regex.findall(line):
+        if to_ignore_regex.findall(line):
             continue
         else:
             break
