@@ -47,6 +47,7 @@ except ImportError:
 DEFAULT_TIMEOUT_SECONDS = docker.client.constants.DEFAULT_TIMEOUT_SECONDS
 
 warnings.simplefilter('error')
+warnings.filterwarnings('error')
 create_host_config = docker.utils.create_host_config
 
 
@@ -972,244 +973,210 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_start_container_with_lxc_conf(self):
-        try:
-            self.client.start(
-                fake_api.FAKE_CONTAINER_ID,
-                lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-        args = fake_request.call_args
-        self.assertEqual(
-            args[0][0],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
-        self.assertEqual(
-            json.loads(args[1]['data']),
-            {"LxcConf": [{"Value": "lxc.conf.value", "Key": "lxc.conf.k"}]}
-        )
-        self.assertEqual(
-            args[1]['headers'],
-            {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
+                )
 
     def test_start_container_with_lxc_conf_compat(self):
-        try:
-            self.client.start(
-                fake_api.FAKE_CONTAINER_ID,
-                lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
-                         'containers/3cc2351ab11b/start')
-        self.assertEqual(
-            json.loads(args[1]['data']),
-            {"LxcConf": [{"Key": "lxc.conf.k", "Value": "lxc.conf.value"}]}
-        )
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
+                )
 
     def test_start_container_with_binds_ro(self):
-        try:
-            mount_dest = '/mnt'
-            mount_origin = '/tmp'
-            self.client.start(fake_api.FAKE_CONTAINER_ID,
-                              binds={mount_origin: {
-                                  "bind": mount_dest,
-                                  "ro": True
-                              }})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        mount_dest = '/mnt'
+        mount_origin = '/tmp'
 
-        args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
-                         'containers/3cc2351ab11b/start')
-        self.assertEqual(
-            json.loads(args[1]['data']), {"Binds": ["/tmp:/mnt:ro"]}
-        )
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS)
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID, binds={
+                        mount_origin: {
+                            "bind": mount_dest,
+                            "ro": True
+                        }
+                    }
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID, binds={
+                        mount_origin: {
+                            "bind": mount_dest,
+                            "ro": True
+                        }
+                    }
+                )
 
     def test_start_container_with_binds_rw(self):
-        try:
-            mount_dest = '/mnt'
-            mount_origin = '/tmp'
-            self.client.start(fake_api.FAKE_CONTAINER_ID,
-                              binds={mount_origin: {
-                                  "bind": mount_dest, "ro": False}})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
-                         'containers/3cc2351ab11b/start')
-        self.assertEqual(
-            json.loads(args[1]['data']), {"Binds": ["/tmp:/mnt:rw"]}
-        )
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        mount_dest = '/mnt'
+        mount_origin = '/tmp'
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID, binds={
+                        mount_origin: {"bind": mount_dest, "ro": False}
+                    }
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID, binds={
+                        mount_origin: {"bind": mount_dest, "ro": False}
+                    }
+                )
 
     def test_start_container_with_port_binds(self):
         self.maxDiff = None
-        try:
-            self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
-                1111: None,
-                2222: 2222,
-                '3333/udp': (3333,),
-                4444: ('127.0.0.1',),
-                5555: ('127.0.0.1', 5555),
-                6666: [('127.0.0.1',), ('192.168.0.1',)]
-            })
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
-                         'containers/3cc2351ab11b/start')
-        data = json.loads(args[1]['data'])
-        self.assertTrue('1111/tcp' in data['PortBindings'])
-        self.assertTrue('2222/tcp' in data['PortBindings'])
-        self.assertTrue('3333/udp' in data['PortBindings'])
-        self.assertTrue('4444/tcp' in data['PortBindings'])
-        self.assertTrue('5555/tcp' in data['PortBindings'])
-        self.assertTrue('6666/tcp' in data['PortBindings'])
-        self.assertEqual(
-            [{"HostPort": "", "HostIp": ""}],
-            data['PortBindings']['1111/tcp']
-        )
-        self.assertEqual(
-            [{"HostPort": "2222", "HostIp": ""}],
-            data['PortBindings']['2222/tcp']
-        )
-        self.assertEqual(
-            [{"HostPort": "3333", "HostIp": ""}],
-            data['PortBindings']['3333/udp']
-        )
-        self.assertEqual(
-            [{"HostPort": "", "HostIp": "127.0.0.1"}],
-            data['PortBindings']['4444/tcp']
-        )
-        self.assertEqual(
-            [{"HostPort": "5555", "HostIp": "127.0.0.1"}],
-            data['PortBindings']['5555/tcp']
-        )
-        self.assertEqual(len(data['PortBindings']['6666/tcp']), 2)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        if six.PY2:
+            try:
+                self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
+                    1111: None,
+                    2222: 2222,
+                    '3333/udp': (3333,),
+                    4444: ('127.0.0.1',),
+                    5555: ('127.0.0.1', 5555),
+                    6666: [('127.0.0.1',), ('192.168.0.1',)]
+                })
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
+                    1111: None,
+                    2222: 2222,
+                    '3333/udp': (3333,),
+                    4444: ('127.0.0.1',),
+                    5555: ('127.0.0.1', 5555),
+                    6666: [('127.0.0.1',), ('192.168.0.1',)]
+                })
 
     def test_start_container_with_links(self):
         # one link
-        try:
-            link_path = 'path'
-            alias = 'alias'
-            self.client.start(fake_api.FAKE_CONTAINER_ID,
-                              links={link_path: alias})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        link_path = 'path'
+        alias = 'alias'
 
-        args = fake_request.call_args
-        self.assertEqual(
-            args[0][0],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
-        self.assertEqual(
-            json.loads(args[1]['data']), {"Links": ["path:alias"]}
-        )
-        self.assertEqual(
-            args[1]['headers'],
-            {'Content-Type': 'application/json'}
-        )
+        if six.PY2:
+            try:
+                self.client.start(fake_api.FAKE_CONTAINER_ID,
+                                  links={link_path: alias})
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID, links={link_path: alias}
+                )
 
     def test_start_container_with_multiple_links(self):
-        try:
-            link_path = 'path'
-            alias = 'alias'
-            self.client.start(
-                fake_api.FAKE_CONTAINER_ID,
-                links={
-                    link_path + '1': alias + '1',
-                    link_path + '2': alias + '2'
-                }
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(
-            args[0][0],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
-        self.assertEqual(
-            json.loads(args[1]['data']),
-            {"Links": ["path1:alias1", "path2:alias2"]}
-        )
-        self.assertEqual(
-            args[1]['headers'],
-            {'Content-Type': 'application/json'}
-        )
+        link_path = 'path'
+        alias = 'alias'
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    links={
+                        link_path + '1': alias + '1',
+                        link_path + '2': alias + '2'
+                    }
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    links={
+                        link_path + '1': alias + '1',
+                        link_path + '2': alias + '2'
+                    }
+                )
 
     def test_start_container_with_links_as_list_of_tuples(self):
         # one link
-        try:
-            link_path = 'path'
-            alias = 'alias'
-            self.client.start(fake_api.FAKE_CONTAINER_ID,
-                              links=[(link_path, alias)])
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(
-            args[0][0],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
-        self.assertEqual(
-            json.loads(args[1]['data']), {"Links": ["path:alias"]}
-        )
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        link_path = 'path'
+        alias = 'alias'
+        if six.PY2:
+            try:
+                self.client.start(fake_api.FAKE_CONTAINER_ID,
+                                  links=[(link_path, alias)])
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(fake_api.FAKE_CONTAINER_ID,
+                                  links=[(link_path, alias)])
 
     def test_start_container_privileged(self):
-        try:
-            self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-
-        args = fake_request.call_args
-        self.assertEqual(
-            args[0][0],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
-        self.assertEqual(json.loads(args[1]['data']), {"Privileged": True})
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        if six.PY2:
+            try:
+                self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
 
     def test_start_container_with_dict_instead_of_id(self):
         try:

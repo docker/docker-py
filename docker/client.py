@@ -1059,6 +1059,12 @@ class Client(requests.Session):
         url = self._url("/containers/{0}/start".format(container))
         if not start_config:
             start_config = None
+        elif utils.compare_version('1.15', self._version) > 0:
+            warnings.warn(
+                'Passing host config parameters in start() is deprecated. '
+                'Please use host_config in create_container instead!',
+                DeprecationWarning
+            )
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
