@@ -760,17 +760,3 @@ def create_container_config(
         'Labels': labels,
         'VolumeDriver': volume_driver,
     }
-
-
-def lazy_line_reader(fileobj, line_limit=1024):
-    read_count = 0
-    while read_count < line_limit:
-        try:
-            line = fileobj.readline()
-            if not line:
-                break
-            yield line
-        except IOError:
-            break
-        except EOFError:
-            break

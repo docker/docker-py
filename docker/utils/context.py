@@ -1,17 +1,6 @@
 import os
-import re
 import tarfile
 from collections import namedtuple
-from .utils import lazy_line_reader
-
-lzma = None
-try:
-    import lzma
-except ImportError as ie:
-    try:
-        import backports.lzma as lzma
-    except ImportError:
-        pass
 
 
 class ContextError(Exception):
@@ -28,9 +17,6 @@ The path must point to either:
 \t * A valid URL for a remote build context.
 %s"""
 
-INVALID_FIRST_INSTRUCTION_FMT = """
-Invalid first instruction in Dockerfile %s: '%s'\\n
-The first instruction in a Dockerfile must be "FROM ..."""
 
 # these prefixes are treated as remote by the docker daemon
 # (ref: pkg/urlutil/*) as of v1.6.0
@@ -140,11 +126,7 @@ def detect_context_format(path, dockerfile='Dockerfile'):
         return context_builders['tarball']
 
     elif os.path.isfile(path):
-        try:
-            if validate_dockerfile_head(path):
-                return context_builders['dockerfile']
-        except ContextError as e:
-            raise e
+            return context_builders['dockerfile']
     else:
         return None
 
@@ -152,49 +134,10 @@ def detect_context_format(path, dockerfile='Dockerfile'):
 # The actual contents of the tarball are not checked; this just makes sure the
 # file exists and that this Python installation recognizes the format.
 def is_tarball_context(path):
-    if os.path.isdir(path):
-        return False
-
-    if tarfile.is_tarfile(path):
-        return True
-
-    if lzma is not None:
-        try:
-            with lzma.LZMAFile(path) as xzfile:
-                xzfile.peek(0)
-                return True
-        except lzma.LZMAError:
-            pass
-    return False
+    return (not os.path.isdir(path) and (path.endswith('.xz') or
+                                         tarfile.is_tarfile(path)))
 
 
 def is_directory_context(path, dockerfile='Dockerfile'):
-    return (
-        os.path.isdir(path) and
-        dockerfile in os.listdir(path) and
-        validate_dockerfile_head(os.path.join(path, dockerfile))
-    )
-
-
-def validate_dockerfile_head(fpath):
-    with open(fpath, 'r') as candidate:
-        line_reader = lazy_line_reader(candidate)
-        first_line = _read_first_instruction_line(line_reader)
-        try:
-            if not first_line.startswith("FROM"):
-                raise ContextError(INVALID_FIRST_INSTRUCTION_FMT %
-                                   (fpath, first_line))
-        except UnicodeDecodeError:
-            return False
-    return True
-
-
-def _read_first_instruction_line(line_reader, to_ignore=r'^[\s\t]*(\#|$)'):
-    to_ignore_regex = re.compile(to_ignore)
-    for line in line_reader:
-        if to_ignore_regex.findall(line):
-            continue
-        else:
-            break
-
-    return line  # only in python...
+    dockerfile_path = os.path.abspath(os.path.join(path, dockerfile))
+    return os.path.isdir(path) and os.path.isfile(dockerfile_path)
