@@ -577,6 +577,7 @@ def create_container_config(
         'Entrypoint': entrypoint,
         'CpuShares': cpu_shares,
         'Cpuset': cpuset,
+        'CpusetCpus': cpuset,
         'WorkingDir': working_dir,
         'MemorySwap': memswap_limit,
         'HostConfig': host_config,
