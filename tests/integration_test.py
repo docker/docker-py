@@ -242,113 +242,6 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
-class TestStartContainerWithBinds(BaseTestCase):
-    def runTest(self):
-        mount_dest = '/mnt'
-        mount_origin = tempfile.mkdtemp()
-        self.tmp_folders.append(mount_origin)
-
-        filename = 'shared.txt'
-        shared_file = os.path.join(mount_origin, filename)
-        binds = {
-            mount_origin: {
-                'bind': mount_dest,
-                'ro': False,
-            },
-        }
-
-        with open(shared_file, 'w'):
-            container = self.client.create_container(
-                'busybox', ['ls', mount_dest], volumes={mount_dest: {}}
-            )
-            container_id = container['Id']
-            self.client.start(container_id, binds=binds)
-            self.tmp_containers.append(container_id)
-            exitcode = self.client.wait(container_id)
-            self.assertEqual(exitcode, 0)
-            logs = self.client.logs(container_id)
-
-        os.unlink(shared_file)
-        if six.PY3:
-            logs = logs.decode('utf-8')
-        self.assertIn(filename, logs)
-        inspect_data = self.client.inspect_container(container_id)
-        self.assertIn('Volumes', inspect_data)
-        self.assertIn(mount_dest, inspect_data['Volumes'])
-        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
-        self.assertIn(mount_dest, inspect_data['VolumesRW'])
-        self.assertTrue(inspect_data['VolumesRW'][mount_dest])
-
-
-class TestStartContainerWithRoBinds(BaseTestCase):
-    def runTest(self):
-        mount_dest = '/mnt'
-        mount_origin = tempfile.mkdtemp()
-        self.tmp_folders.append(mount_origin)
-
-        filename = 'shared.txt'
-        shared_file = os.path.join(mount_origin, filename)
-        binds = {
-            mount_origin: {
-                'bind': mount_dest,
-                'ro': True,
-            },
-        }
-
-        with open(shared_file, 'w'):
-            container = self.client.create_container(
-                'busybox', ['ls', mount_dest], volumes={mount_dest: {}}
-            )
-            container_id = container['Id']
-            self.client.start(container_id, binds=binds)
-            self.tmp_containers.append(container_id)
-            exitcode = self.client.wait(container_id)
-            self.assertEqual(exitcode, 0)
-            logs = self.client.logs(container_id)
-
-        os.unlink(shared_file)
-        if six.PY3:
-            logs = logs.decode('utf-8')
-        self.assertIn(filename, logs)
-
-        inspect_data = self.client.inspect_container(container_id)
-        self.assertIn('Volumes', inspect_data)
-        self.assertIn(mount_dest, inspect_data['Volumes'])
-        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
-        self.assertIn('VolumesRW', inspect_data)
-        self.assertIn(mount_dest, inspect_data['VolumesRW'])
-        self.assertFalse(inspect_data['VolumesRW'][mount_dest])
-
-
-class TestStartContainerWithFileBind(BaseTestCase):
-    def runTest(self):
-        mount_dest = '/myfile/myfile'
-        mount_origin = tempfile.mktemp()
-        try:
-            binds = {
-                mount_origin: {
-                    'bind': mount_dest,
-                    'ro': True
-                },
-            }
-
-            with open(mount_origin, 'w') as f:
-                f.write('sakuya izayoi')
-
-            container = self.client.create_container(
-                'busybox', ['cat', mount_dest], volumes={mount_dest: {}}
-            )
-            self.client.start(container, binds=binds)
-            exitcode = self.client.wait(container)
-            self.assertEqual(exitcode, 0)
-            logs = self.client.logs(container)
-            if six.PY3:
-                logs = logs.decode('utf-8')
-            self.assertIn('sakuya izayoi', logs)
-        finally:
-            os.unlink(mount_origin)
-
-
 class TestCreateContainerWithLogConfig(BaseTestCase):
     def runTest(self):
         config = docker.utils.LogConfig(
@@ -386,21 +279,6 @@ class TestCreateContainerReadOnlyFs(BaseTestCase):
         self.client.start(ctnr)
         res = self.client.wait(ctnr)
         self.assertNotEqual(res, 0)
-
-
-@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
-class TestStartContainerReadOnlyFs(BaseTestCase):
-    def runTest(self):
-        # Presumably a bug in 1.5.0
-        # https://github.com/docker/docker/issues/10695
-        ctnr = self.client.create_container(
-            'busybox', ['mkdir', '/shrine'],
-        )
-        self.assertIn('Id', ctnr)
-        self.tmp_containers.append(ctnr['Id'])
-        self.client.start(ctnr, read_only=True)
-        # res = self.client.wait(ctnr)
-        # self.assertNotEqual(res, 0)
 
 
 class TestCreateContainerWithName(BaseTestCase):
@@ -473,29 +351,6 @@ class TestCreateContainerPrivileged(BaseTestCase):
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
         self.client.start(res['Id'])
-        inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertIn('Id', inspect)
-        self.assertTrue(inspect['Id'].startswith(res['Id']))
-        self.assertIn('Image', inspect)
-        self.assertIn('State', inspect)
-        self.assertIn('Running', inspect['State'])
-        if not inspect['State']['Running']:
-            self.assertIn('ExitCode', inspect['State'])
-            self.assertEqual(inspect['State']['ExitCode'], 0)
-        # Since Nov 2013, the Privileged flag is no longer part of the
-        # container's config exposed via the API (safety concerns?).
-        #
-        if 'Privileged' in inspect['Config']:
-            self.assertEqual(inspect['Config']['Privileged'], True)
-
-
-class TestStartContainerPrivileged(BaseTestCase):
-    def runTest(self):
-        res = self.client.create_container('busybox', 'true')
-        self.assertIn('Id', res)
-        self.tmp_containers.append(res['Id'])
-        self.client.start(res['Id'], privileged=True)
         inspect = self.client.inspect_container(res['Id'])
         self.assertIn('Config', inspect)
         self.assertIn('Id', inspect)
@@ -754,34 +609,6 @@ class TestPort(BaseTestCase):
         self.client.kill(id)
 
 
-class TestStartWithPortBindings(BaseTestCase):
-    def runTest(self):
-
-        port_bindings = {
-            '1111': ('127.0.0.1', '4567'),
-            '2222': ('127.0.0.1', '4568')
-        }
-
-        container = self.client.create_container(
-            'busybox', ['sleep', '60'], ports=list(port_bindings.keys())
-        )
-        id = container['Id']
-
-        self.client.start(container, port_bindings=port_bindings)
-
-        # Call the port function on each biding and compare expected vs actual
-        for port in port_bindings:
-            actual_bindings = self.client.port(container, port)
-            port_binding = actual_bindings.pop()
-
-            ip, host_port = port_binding['HostIp'], port_binding['HostPort']
-
-            self.assertEqual(ip, port_bindings[port][0])
-            self.assertEqual(host_port, port_bindings[port][1])
-
-        self.client.kill(id)
-
-
 class TestMacAddress(BaseTestCase):
     def runTest(self):
         mac_address_expected = "02:42:ac:11:00:0a"
@@ -949,101 +776,6 @@ class TestCreateContainerWithLinks(BaseTestCase):
         self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix2), logs)
 
 
-class TestStartContainerWithVolumesFrom(BaseTestCase):
-    def runTest(self):
-        vol_names = ['foobar_vol0', 'foobar_vol1']
-
-        res0 = self.client.create_container(
-            'busybox', 'true',
-            name=vol_names[0])
-        container1_id = res0['Id']
-        self.tmp_containers.append(container1_id)
-        self.client.start(container1_id)
-
-        res1 = self.client.create_container(
-            'busybox', 'true',
-            name=vol_names[1])
-        container2_id = res1['Id']
-        self.tmp_containers.append(container2_id)
-        self.client.start(container2_id)
-        with self.assertRaises(docker.errors.DockerException):
-            res2 = self.client.create_container(
-                'busybox', 'cat',
-                detach=True, stdin_open=True,
-                volumes_from=vol_names)
-        res2 = self.client.create_container(
-            'busybox', 'cat',
-            detach=True, stdin_open=True)
-        container3_id = res2['Id']
-        self.tmp_containers.append(container3_id)
-        self.client.start(container3_id, volumes_from=vol_names)
-
-        info = self.client.inspect_container(res2['Id'])
-        self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
-
-
-class TestStartContainerWithUlimits(BaseTestCase):
-    def runTest(self):
-        ulimit = docker.utils.Ulimit(name='nofile', soft=4096, hard=4096)
-
-        res0 = self.client.create_container('busybox', 'true')
-        container1_id = res0['Id']
-        self.tmp_containers.append(container1_id)
-        self.client.start(container1_id, ulimits=[ulimit])
-
-        info = self.client.inspect_container(container1_id)
-        self.assertCountEqual(info['HostConfig']['Ulimits'], [ulimit])
-
-
-class TestStartContainerWithLinks(BaseTestCase):
-    def runTest(self):
-        res0 = self.client.create_container(
-            'busybox', 'cat',
-            detach=True, stdin_open=True,
-            environment={'FOO': '1'})
-
-        container1_id = res0['Id']
-        self.tmp_containers.append(container1_id)
-
-        self.client.start(container1_id)
-
-        res1 = self.client.create_container(
-            'busybox', 'cat',
-            detach=True, stdin_open=True,
-            environment={'FOO': '1'})
-
-        container2_id = res1['Id']
-        self.tmp_containers.append(container2_id)
-
-        self.client.start(container2_id)
-
-        # we don't want the first /
-        link_path1 = self.client.inspect_container(container1_id)['Name'][1:]
-        link_alias1 = 'mylink1'
-        link_env_prefix1 = link_alias1.upper()
-
-        link_path2 = self.client.inspect_container(container2_id)['Name'][1:]
-        link_alias2 = 'mylink2'
-        link_env_prefix2 = link_alias2.upper()
-
-        res2 = self.client.create_container('busybox', 'env')
-        container3_id = res2['Id']
-        self.tmp_containers.append(container3_id)
-        self.client.start(
-            container3_id,
-            links={link_path1: link_alias1, link_path2: link_alias2}
-        )
-        self.assertEqual(self.client.wait(container3_id), 0)
-
-        logs = self.client.logs(container3_id)
-        if six.PY3:
-            logs = logs.decode('utf-8')
-        self.assertIn('{0}_NAME='.format(link_env_prefix1), logs)
-        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix1), logs)
-        self.assertIn('{0}_NAME='.format(link_env_prefix2), logs)
-        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix2), logs)
-
-
 class TestRestartingContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container(
@@ -1189,20 +921,6 @@ class TestCreateContainerWithHostPidMode(BaseTestCase):
         self.assertIn('PidMode', host_config)
         self.assertEqual(host_config['PidMode'], 'host')
 
-
-class TestStartContainerWithHostPidMode(BaseTestCase):
-    def runTest(self):
-        ctnr = self.client.create_container(
-            'busybox', 'true'
-        )
-        self.assertIn('Id', ctnr)
-        self.tmp_containers.append(ctnr['Id'])
-        self.client.start(ctnr, pid_mode='host')
-        inspect = self.client.inspect_container(ctnr)
-        self.assertIn('HostConfig', inspect)
-        host_config = inspect['HostConfig']
-        self.assertIn('PidMode', host_config)
-        self.assertEqual(host_config['PidMode'], 'host')
 
 #################
 #  LINKS TESTS  #

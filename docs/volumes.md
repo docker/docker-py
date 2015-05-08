@@ -1,25 +1,21 @@
 # Using volumes
 
-Volume declaration is done in two parts. First, you have to provide
-a list of mountpoints to the `Client().create_container()` method.
+Volume declaration is done in two parts.  Provide a list of mountpoints to
+the `Client().create_container()` method, and declare mappings in the
+`host_config` section.
 
 ```python
-container_id = c.create_container('busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'])
-```
-
-Volume mappings are then declared inside the `Client.start` method like this:
-
-```python
-c.start(container_id, binds={
-    '/home/user1/':
-        {
+container_id = c.create_container(
+    'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+    host_config=docker.utils.create_host_config(binds={
+        '/home/user1/': {
             'bind': '/mnt/vol2',
             'ro': False
         },
-    '/var/www':
-        {
+        '/var/www': {
             'bind': '/mnt/vol1',
             'ro': True
         }
-})
+    })
+)
 ```
