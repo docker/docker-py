@@ -489,6 +489,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                              "StdinOnce": false,
                              "NetworkDisabled": false,
                              "Cpuset": "0,1",
+                             "CpusetCpus": "0,1",
                              "MemorySwap": 0}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
