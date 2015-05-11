@@ -730,7 +730,7 @@ class Client(requests.Session):
             raise errors.DeprecatedMethod(
                 'insert is not available for API version >=1.12'
             )
-        api_url = self._url("/images/{0}/insert".fornat(image))
+        api_url = self._url("/images/{0}/insert".format(image))
         params = {
             'url': url,
             'path': path
