@@ -526,7 +526,7 @@ class Client(requests.Session):
             'exec_start instead', DeprecationWarning
         )
         create_res = self.exec_create(
-            container, cmd, detach, stdout, stderr, tty
+            container, cmd, stdout, stderr, tty
         )
 
         return self.exec_start(create_res, detach, tty, stream)
