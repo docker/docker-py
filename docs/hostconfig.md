@@ -1,6 +1,8 @@
 # HostConfig object
 
-The Docker Remote API introduced [support for HostConfig in version 1.15](http://docs.docker.com/reference/api/docker_remote_api_v1.15/#create-a-container). This object contains all the parameters you can pass to `Client.start`.
+The Docker Remote API introduced [support for HostConfig in version 1.15](http://docs.docker.com/reference/api/docker_remote_api_v1.15/#create-a-container). This object contains all the parameters you could previously pass to `Client.start`.
+*It is highly recommended that users pass the HostConfig in the `host_config`*
+*param of `Client.create_container` instead of `Client.start`*
 
 ## HostConfig helper
 

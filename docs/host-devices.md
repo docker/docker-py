@@ -1,10 +1,15 @@
 # Access to devices on the host
 
 If you need to directly expose some host devices to a container, you can use
-the devices parameter in the `Client.start` method as shown below
+the devices parameter in the `host_config` param in `Client.create_container`
+as shown below:
 
 ```python
-c.start(container_id, devices=['/dev/sda:/dev/xvda:rwm'])
+c.create_container(
+    'busybox', 'true', host_config=docker.utils.create_host_config(devices=[
+        '/dev/sda:/dev/xvda:rwm'
+    ])
+)
 ```
 
 Each string is a single mapping using the colon (':') as the separator. So the
