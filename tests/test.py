@@ -2337,6 +2337,15 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                             'test/foo/other.png']),
                 (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt',
                                     'test/foo/b.py']),
+                # directory without trailing slash
+                (['bar'], ['test', 'test/foo', 'test/foo/a.txt',
+                           'test/foo/b.py', 'test/foo/other.png']),
+                # directory with explicit trailing slash
+                (['bar/'], ['test', 'test/foo', 'test/foo/a.txt',
+                           'test/foo/b.py', 'test/foo/other.png']),
+                # nested directory with trailing slash
+                (['test/foo/'], ['bar', 'bar/a.txt', 'bar/b.py', 'bar/other.png',
+                                 'test']),
                 (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
                                          'bar/other.png', 'test']),
         ):
