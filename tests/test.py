@@ -2293,20 +2293,65 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_tar_with_excludes(self):
         base = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base)
-        for d in ['test/foo', 'bar']:
+        for d in ['dir1/dir2', 'dir3']:
             os.makedirs(os.path.join(base, d))
-            for f in ['a.txt', 'b.py', 'other.png']:
+            for f in ['a.txt', 'b.py', 'c.py', 'other.png', 'dir3']:
                 with open(os.path.join(base, d, f), 'w') as f:
                     f.write("content")
 
+        # The initial directory should contain:
+        initial = ['dir1', 'dir1/dir2', 
+            'dir1/dir2/a.txt', 'dir1/dir2/b.py', 'dir1/dir2/c.py', 'dir1/dir2/dir3', 'dir1/dir2/other.png', 
+            'dir3', 
+            'dir3/a.txt', 'dir3/b.py', 'dir3/c.py', 'dir3/dir3', 'dir3/other.png'] 
         for exclude, names in (
-                (['*.py'], ['bar', 'bar/a.txt', 'bar/other.png',
-                            'test', 'test/foo', 'test/foo/a.txt',
-                            'test/foo/other.png']),
-                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt',
-                                    'test/foo/b.py']),
-                (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
-                                         'bar/other.png', 'test']),
+                # Only a small subset of the full .dockerignore syntax is tested here.
+                # See: https://github.com/docker/docker/pull/12245/files
+                # empty exclude
+                ([''], initial), 
+                # wildcard exclude
+                (['*'], []), 
+                # single filename
+                (['b.py'], [i for i in initial if i not in 
+                            ['dir1/dir2/b.py', 'dir3/b.py']]),
+                # wildcard filename
+                (['*.py'], [i for i in initial if i not in 
+                            ['dir1/dir2/b.py', 'dir1/dir2/c.py', 
+                             'dir3/b.py', 'dir3/c.py']]),
+                # ambiguous directory (should also exclude the filename 'dir3')
+                (['dir3'], [i for i in initial if i not in 
+                            ['dir1/dir2/dir3', 
+                             'dir3', 'dir3/a.txt', 'dir3/b.py', 'dir3/c.py',
+                             'dir3/dir3', 'dir3/other.png']]),
+                # directory with trailing slash
+                # TO FIX: Currently, 'dir3' is not excluded but all files inside
+                # are. The reason is that our pathspec algorithm is based on
+                # gitignore which ignores empty directories while docker
+                # includes empty directories. But having an empty 'dir3' is fine.
+                (['dir3/'], [i for i in initial if i not in 
+                            ['dir3/a.txt', 'dir3/b.py', 'dir3/c.py',
+                             'dir3/dir3', 'dir3/other.png']]),
+                # nested directory
+                (['dir2'], [i for i in initial if i not in 
+                            ['dir1/dir2', 'dir1/dir2/a.txt', 'dir1/dir2/b.py',
+                             'dir1/dir2/c.py', 'dir1/dir2/dir3',
+                             'dir1/dir2/other.png']]),
+                # explicit nested directory
+                (['dir1/dir2'], [i for i in initial if i not in 
+                            ['dir1/dir2', 'dir1/dir2/a.txt', 'dir1/dir2/b.py',
+                             'dir1/dir2/c.py', 'dir1/dir2/dir3',
+                             'dir1/dir2/other.png']]),
+                # wildcard filename and directory
+                (['*.py', 'dir3'], [i for i in initial if i not in 
+                            ['dir1/dir2/b.py', 'dir1/dir2/c.py', 'dir1/dir2/dir3',
+                             'dir3', 'dir3/a.txt', 'dir3/b.py', 'dir3/c.py',
+                             'dir3/dir3', 'dir3/other.png']]),
+                # single filename and explicit nested directory
+                (['a.txt', 'dir1/dir2'], [i for i in initial if i not in 
+                            ['dir3/a.txt',
+                             'dir1/dir2', 'dir1/dir2/a.txt', 'dir1/dir2/b.py',
+                             'dir1/dir2/c.py', 'dir1/dir2/dir3',
+                             'dir1/dir2/other.png']]),
         ):
             with docker.utils.tar(base, exclude=exclude) as archive:
                 tar = tarfile.open(fileobj=archive)

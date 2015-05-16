@@ -25,6 +25,7 @@ from datetime import datetime
 
 import requests
 import six
+import pathspec
 
 from .. import errors
 from .. import tls
@@ -64,34 +65,45 @@ def mkbuildcontext(dockerfile):
     return f
 
 
-def fnmatch_any(relpath, patterns):
-    return any([fnmatch(relpath, pattern) for pattern in patterns])
-
-
 def tar(path, exclude=None):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
-    for dirpath, dirnames, filenames in os.walk(path):
-        relpath = os.path.relpath(dirpath, path)
-        if relpath == '.':
-            relpath = ''
-        if exclude is None:
-            fnames = filenames
-        else:
-            dirnames[:] = [d for d in dirnames
-                           if not fnmatch_any(os.path.join(relpath, d),
-                                              exclude)]
-            fnames = [name for name in filenames
-                      if not fnmatch_any(os.path.join(relpath, name),
-                                         exclude)]
-        dirnames.sort()
-        for name in sorted(fnames):
-            arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname), arcname=arcname)
-        for name in dirnames:
-            arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname),
-                  arcname=arcname, recursive=False)
+
+    # get all files in path and add them to list
+    paths = []
+    root = os.path.abspath(path)
+    for parent, dirs, files in os.walk(root, followlinks=False):
+        parent = os.path.relpath(parent, root)
+        if parent == '.':
+            parent = ''
+        for path in dirs:
+            # NOTE: Unlike git which ignores empty directories, docker 
+            # includes them. So we must add them to tar and check them
+            # against .dockerignore.
+            paths.append(os.path.join(parent, path))
+        for path in files:
+            paths.append(os.path.join(parent, path))
+
+    # use pathspec's gitignore-style pattern matching for deciding which files
+    # in the path to include or exclude
+    # NOTE: pathspec's gitignore implementation assumes that only file paths and
+    # NOT directory paths are not passed into `match_files` (e.g. `/path/to/file`
+    # and not `/path/to`). Since we DO use directory paths, there are cases where
+    # an empty directory is not ignored. But that's OK since it's just an empty
+    # directory.
+    ignored_paths = () 
+    if exclude is not None:
+        spec = pathspec.PathSpec.from_lines('gitignore', exclude)
+        file_map = pathspec.util.normalize_files(paths)
+        ignored_paths = pathspec.util.match_files(spec.patterns, 
+                                                  pathspec.compat.viewkeys(file_map))
+
+    # add paths to tar file except for those that are ignored
+    for path in paths:
+        if path not in ignored_paths:
+            arcname = os.path.basename(path)
+            t.add(os.path.join(root, path), arcname=path, recursive=False)
+
     t.close()
     f.seek(0)
     return f
