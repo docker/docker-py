@@ -1782,6 +1782,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
+        try:
+            self.client.inspect_container('')
+        except ValueError as e:
+            self.assertEqual(e.args[0],
+                             'image or container param is empty')
+
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1952,6 +1958,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.client.inspect_image(fake_api.FAKE_IMAGE_NAME)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
+
+        try:
+            self.client.inspect_image('')
+        except ValueError as e:
+            self.assertEqual(e.args[0],
+                             'image or container param is empty')
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/json',
