@@ -93,8 +93,13 @@ context_builders = {
 
 
 def create_context_from_path(path, dockerfile='Dockerfile'):
-    _dockerfile = six.binary_type(dockerfile)
-    _path = six.binary_type(path)
+    if path is None:
+        raise ContextError("'path' parameter cannot be None")
+    if dockerfile is None:
+        raise ContextError("'dockerfile' parameter cannot be None")
+
+    _dockerfile = dockerfile.encode('utf-8')
+    _path = path.encode('utf-8')
     context_maker = detect_context_format(_path, _dockerfile)
     if context_maker is None:
         raise ContextError("Format not supported at "
@@ -104,8 +109,14 @@ def create_context_from_path(path, dockerfile='Dockerfile'):
 
 
 def is_remote(path):
+    if path is None:
+        return False
+
+    _path = path
+    if isinstance(_path, six.binary_type):
+        _path = _path.decode('utf-8')
     for prefix in REMOTE_CONTEXT_PREFIXES:
-        if path.startswith(prefix):
+        if _path.startswith(prefix):
             return True
     return False
 
@@ -137,8 +148,13 @@ def detect_context_format(path, dockerfile='Dockerfile'):
 # The actual contents of the tarball are not checked; this just makes sure the
 # file exists and that this Python installation recognizes the format.
 def is_tarball_context(path):
-    return (not os.path.isdir(path) and (path.endswith('.xz') or
-                                         tarfile.is_tarfile(path)))
+    if path is None:
+        return False
+    _path = path
+    if isinstance(_path, six.binary_type):
+        _path = _path.decode('utf-8')
+    return (not os.path.isdir(_path) and (_path.endswith('.xz') or
+                                          tarfile.is_tarfile(_path)))
 
 
 def is_directory_context(path, dockerfile='Dockerfile'):
