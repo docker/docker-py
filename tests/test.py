@@ -2112,6 +2112,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         context = docker.utils.context.create_context_from_path(tarball_path)
         try:
             self.client.build(context.path, **context.job_params)
+            if context.job_params['fileobj'] is not None:
+                context.job_params['fileobj'].close()
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -2136,8 +2138,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         ctxurl = 'https://localhost/staging/context.tar.gz'
         try:
             context = docker.utils.context.create_context_from_path(ctxurl)
-            self.assertEquals(context.path, ctxurl)
-            self.assertEquals(context.format, 'remote')
+            self.assertEqual(context.path, ctxurl)
+            self.assertEqual(context.format, 'remote')
             self.client.build(context.path, **context.job_params)
         except docker.utils.context.ContextError as ce:
             self.fail(ce.message)
