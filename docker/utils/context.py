@@ -98,8 +98,13 @@ def create_context_from_path(path, dockerfile='Dockerfile'):
     if dockerfile is None:
         raise ContextError("'dockerfile' parameter cannot be None")
 
-    _dockerfile = dockerfile.encode('utf-8')
-    _path = path.encode('utf-8')
+    _dockerfile = dockerfile
+    _path = path
+    if isinstance(_dockerfile, six.string_types):
+        _dockerfile = dockerfile.encode('utf-8')
+    if isinstance(_path, six.string_types):
+        _path = path.encode('utf-8')
+
     context_maker = detect_context_format(_path, _dockerfile)
     if context_maker is None:
         raise ContextError("Format not supported at "
