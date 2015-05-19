@@ -1,5 +1,6 @@
 import os
 import tarfile
+import six
 from collections import namedtuple
 
 
@@ -92,7 +93,9 @@ context_builders = {
 
 
 def create_context_from_path(path, dockerfile='Dockerfile'):
-    context_maker = detect_context_format(path, dockerfile)
+    _dockerfile = six.binary_type(dockerfile)
+    _path = six.binary_type(path)
+    context_maker = detect_context_format(_path, _dockerfile)
     if context_maker is None:
         raise ContextError("Format not supported at "
                            "%s [dockerfile='%s']." % (path, dockerfile))
