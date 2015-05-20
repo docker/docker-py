@@ -747,6 +747,8 @@ class Client(requests.Session):
 
     @check_resource
     def inspect_image(self, image):
+        if isinstance(image, dict):
+            image = image.get('Id')
         return self._result(
             self._get(self._url("/images/{0}/json".format(image))),
             True
