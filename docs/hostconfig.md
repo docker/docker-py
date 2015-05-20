@@ -66,7 +66,6 @@ for example:
 
 **Params**
 
-* container (str): The container to start
 * binds: Volumes to bind. See [Using volumes](volumes.md) for more information.
 * port_bindings (dict): Port bindings. See [Port bindings](port-bindings.md)
   for more information.
