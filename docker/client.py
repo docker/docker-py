@@ -531,9 +531,14 @@ class Client(requests.Session):
 
         return self.exec_start(create_res, detach, tty, stream)
 
-    def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False):
+    def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
+                    privileged=False):
         if utils.compare_version('1.15', self._version) < 0:
             raise errors.InvalidVersion('Exec is not supported in API < 1.15')
+        if privileged and utils.compare_version('1.19', self._version) < 0:
+            raise errors.InvalidVersion(
+                'Privileged exec is not supported in API < 1.19'
+            )
         if isinstance(container, dict):
             container = container.get('Id')
         if isinstance(cmd, six.string_types):
@@ -542,7 +547,7 @@ class Client(requests.Session):
         data = {
             'Container': container,
             'User': '',
-            'Privileged': False,
+            'Privileged': privileged,
             'Tty': tty,
             'AttachStdin': False,
             'AttachStdout': stdout,
