@@ -8,11 +8,9 @@ def check_resource(f):
                 resource_id = kwargs.pop('container')
             elif kwargs.get('image'):
                 resource_id = kwargs.pop('image')
-            else:
-                raise errors.NullResource(
-                    'image or container param is undefined'
-                )
         if not resource_id:
-            raise ValueError('image or container param is empty')
+            raise errors.NullResource(
+                'image or container param is undefined'
+            )
         return f(self, resource_id, *args, **kwargs)
     return wrapped
