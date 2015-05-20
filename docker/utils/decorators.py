@@ -12,5 +12,7 @@ def check_resource(f):
                 raise errors.NullResource(
                     'image or container param is undefined'
                 )
+        if not resource_id:
+            raise ValueError('image or container param is empty')
         return f(self, resource_id, *args, **kwargs)
     return wrapped
