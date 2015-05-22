@@ -1012,7 +1012,7 @@ class Client(requests.Session):
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
-              security_opt=None, ulimits=None):
+              security_opt=None, ulimits=None, log_config=None):
 
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
@@ -1050,6 +1050,12 @@ class Client(requests.Session):
                     'ulimits is only supported for API version >= 1.18'
                 )
 
+        if utils.compare_version('1.18', self._version) < 0:
+            if log_config is not None:
+                raise errors.InvalidVersion(
+                    'log_config is only supported for API version >= 1.18'
+                )
+
         start_config = utils.create_host_config(
             binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
             publish_all_ports=publish_all_ports, links=links, dns=dns,
@@ -1057,7 +1063,8 @@ class Client(requests.Session):
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
             network_mode=network_mode, restart_policy=restart_policy,
             extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
-            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits
+            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits,
+            log_config=log_config
         )
 
         if isinstance(container, dict):
