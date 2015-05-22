@@ -1056,7 +1056,6 @@ class Client(requests.Session):
                     'log_config is only supported for API version >= 1.18'
                 )
 
-
         start_config = utils.create_host_config(
             binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
             publish_all_ports=publish_all_ports, links=links, dns=dns,
