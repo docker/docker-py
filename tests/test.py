@@ -1302,6 +1302,28 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_log_config(self):
+        log_config = {
+            six.text_type('Type'): six.text_type('syslog'),
+            six.text_type('Config'): {},
+            }
+        try:
+            self.client.create_container(
+                'busybox', 'true',
+                log_config=log_config,
+                )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data'])['LogConfig'], log_config)
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_create_container_with_labels_dict(self):
         labels_dict = {
             six.text_type('foo'): six.text_type('1'),

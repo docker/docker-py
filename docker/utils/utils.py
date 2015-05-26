@@ -486,7 +486,7 @@ def create_container_config(
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=0, cpuset=None, host_config=None, mac_address=None,
-    labels=None
+    labels=None, log_config=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
@@ -558,6 +558,11 @@ def create_container_config(
         if volumes_from is not None:
             raise errors.DockerException(message.format('volumes_from'))
 
+    if log_config is not None and compare_version('1.18', version) < 0:
+        raise errors.DockerException(
+            'Log drivers were only introduced in API version 1.18'
+        )
+
     return {
         'Hostname': hostname,
         'Domainname': domainname,
@@ -586,4 +591,5 @@ def create_container_config(
         'HostConfig': host_config,
         'MacAddress': mac_address,
         'Labels': labels,
+        'LogConfig': log_config,
     }
