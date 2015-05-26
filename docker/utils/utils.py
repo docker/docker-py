@@ -383,7 +383,7 @@ def create_host_config(
         host_config['PublishAllPorts'] = publish_all_ports
 
     if read_only is not None:
-        host_config['ReadOnlyRootFs'] = read_only
+        host_config['ReadonlyRootfs'] = read_only
 
     if dns_search:
         host_config['DnsSearch'] = dns_search
