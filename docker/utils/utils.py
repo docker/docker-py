@@ -450,7 +450,7 @@ def create_host_config(
                 for k, v in sorted(six.iteritems(extra_hosts))
             ]
 
-            host_config['ExtraHosts'] = extra_hosts
+        host_config['ExtraHosts'] = extra_hosts
 
     if links is not None:
         if isinstance(links, dict):
