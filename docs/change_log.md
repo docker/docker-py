@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+1.2.3
+-----
+
+Work in progress.
+
+
 1.2.2
 -----
 
