@@ -306,7 +306,7 @@ class Client(requests.Session):
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
-              custom_context=False, encoding=None, pull=True,
+              custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None):
         remote = context = headers = None
         container_limits = container_limits or {}
