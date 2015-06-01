@@ -28,6 +28,7 @@ import unittest
 import warnings
 
 import docker
+import requests.exceptions
 import six
 
 from six.moves import BaseHTTPServer
@@ -1006,6 +1007,25 @@ class TestPullStream(BaseTestCase):
         self.assertGreaterEqual(
             len(self.client.images('busybox')), 1
         )
+        img_info = self.client.inspect_image('busybox')
+        self.assertIn('Id', img_info)
+
+
+class TestPullTimeout(BaseTestCase):
+    def runTest(self):
+        self.client.close()
+        self.client = docker.Client(base_url=DEFAULT_BASE_URL, timeout=10)
+        try:
+            self.client.remove_image('busybox')
+        except docker.errors.APIError:
+            pass
+        # requests library returns a connection error for some timeouts,
+        # so test for RequestException, which is a common parent.
+        # see https://github.com/kennethreitz/requests/issues/2620
+        with self.assertRaises(requests.exceptions.RequestException):
+            self.client.pull('busybox', timeout=1)
+        # test complete, but other tests require busybox image to be available
+        self.client.pull('busybox')
         img_info = self.client.inspect_image('busybox')
         self.assertIn('Id', img_info)
 

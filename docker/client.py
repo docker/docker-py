@@ -876,7 +876,7 @@ class Client(requests.Session):
         return h_ports
 
     def pull(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None):
+             insecure_registry=False, auth_config=None, timeout=None):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(
@@ -911,7 +911,7 @@ class Client(requests.Session):
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         response = self._post(self._url('/images/create'), params=params,
-                              headers=headers, stream=stream, timeout=None)
+                              headers=headers, stream=stream, timeout=timeout)
 
         if stream:
             return self._stream_helper(response)
