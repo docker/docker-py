@@ -306,9 +306,8 @@ class Client(requests.Session):
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
-              custom_context=False, encoding=None, pull=True,
-              forcerm=False, dockerfile=None, container_limits=None,
-              decode=False):
+              custom_context=False, encoding=None, pull=False,
+              forcerm=False, dockerfile=None, container_limits=None):
         remote = context = headers = None
         container_limits = container_limits or {}
         if path is None and fileobj is None:
@@ -399,7 +398,7 @@ class Client(requests.Session):
             context.close()
 
         if stream:
-            return self._stream_helper(response, decode=decode)
+            return self._stream_helper(response)
         else:
             output = self._result(response)
             srch = r'Successfully built ([0-9a-f]+)'
@@ -466,7 +465,7 @@ class Client(requests.Session):
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=0, cpuset=None, host_config=None,
-                         mac_address=None, labels=None, volume_driver=None):
+                         mac_address=None, labels=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -480,8 +479,7 @@ class Client(requests.Session):
             self._version, image, command, hostname, user, detach, stdin_open,
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset, host_config, mac_address, labels,
-            volume_driver
+            memswap_limit, cpuset, host_config, mac_address, labels
         )
         return self.create_container_from_config(config, name)
 
@@ -912,17 +910,13 @@ class Client(requests.Session):
             else:
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
-        response = self._post(
-            self._url('/images/create'), params=params, headers=headers,
-            stream=stream, timeout=None
-        )
-
-        self._raise_for_status(response)
+        response = self._post(self._url('/images/create'), params=params,
+                              headers=headers, stream=stream, timeout=None)
 
         if stream:
             return self._stream_helper(response)
-
-        return self._result(response)
+        else:
+            return self._result(response)
 
     def push(self, repository, tag=None, stream=False,
              insecure_registry=False):
@@ -950,16 +944,13 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-        response = self._post_json(
-            u, None, headers=headers, stream=stream, params=params
-        )
+            response = self._post_json(u, None, headers=headers,
+                                       stream=stream, params=params)
+        else:
+            response = self._post_json(u, None, stream=stream, params=params)
 
-        self._raise_for_status(response)
-
-        if stream:
-            return self._stream_helper(response)
-
-        return self._result(response)
+        return stream and self._stream_helper(response) \
+            or self._result(response)
 
     @check_resource
     def remove_container(self, container, v=False, link=False, force=False):
