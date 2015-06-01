@@ -352,6 +352,12 @@ class Client(requests.Session):
                 'dockerfile was only introduced in API version 1.17'
             )
 
+        # Docker server 1.6 only supports values 1 and 0 for pull
+        # parameter. This was later fixed to support a wider range of
+        # values, including true / false.
+        # See also https://github.com/docker/docker/issues/13631
+        pull = 1 if pull else 0
+
         u = self._url('/build')
         params = {
             't': tag,
