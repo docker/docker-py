@@ -486,7 +486,7 @@ def create_container_config(
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=0, cpuset=None, host_config=None, mac_address=None,
-    labels=None
+    labels=None, volume_driver=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
@@ -586,4 +586,5 @@ def create_container_config(
         'HostConfig': host_config,
         'MacAddress': mac_address,
         'Labels': labels,
+        'VolumeDriver': volume_driver,
     }

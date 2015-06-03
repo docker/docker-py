@@ -1350,6 +1350,37 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_named_volume(self):
+        try:
+            mount_dest = '/mnt'
+            volume_name = 'name'
+            self.client.create_container(
+                'busybox', 'true',
+                host_config=create_host_config(
+                    binds={volume_name: {
+                        "bind": mount_dest,
+                        "ro": False
+                    }}),
+                volume_driver='foodriver',
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix +
+                         'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['VolumeDriver'] = 'foodriver'
+        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig']['Binds'] = ["name:/mnt:rw"]
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_resize_container(self):
         try:
             self.client.resize(

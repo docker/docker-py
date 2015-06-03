@@ -219,6 +219,7 @@ from. Optionally a single string joining container id's with commas
 * host_config (dict): A [HostConfig](hostconfig.md) dictionary
 * mac_address (str): The Mac Address to assign the container
 * labels (dict or list): A dictionary of name-value labels (e.g. `{"label1": "value1", "label2": "value2"}`) or a list of names of labels to set with empty values (e.g. `["label1", "label2"]`)
+* volume_driver (str): The name of a volume driver/plugin.
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 
