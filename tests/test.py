@@ -808,6 +808,53 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_binds_mode(self):
+        try:
+            mount_dest = '/mnt'
+            mount_origin = '/tmp'
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    binds={mount_origin: {
+                        "bind": mount_dest,
+                        "mode": "z",
+                    }}
+                )
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix +
+                         'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:z"]
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_create_container_with_binds_mode_and_ro_error(self):
+        try:
+            mount_dest = '/mnt'
+            mount_origin = '/tmp'
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    binds={mount_origin: {
+                        "bind": mount_dest,
+                        "mode": "z",
+                        "ro": True,
+                    }}
+                )
+            )
+        except ValueError:
+            return
+
+        self.fail('Command should raise ValueError')
+
     def test_create_container_with_port_binds(self):
         self.maxDiff = None
         try:
