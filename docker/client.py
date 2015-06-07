@@ -244,6 +244,11 @@ class Client(requests.Session):
                 break
             yield data
 
+    def _stream_raw_result(self, response):
+        self._raise_for_status(response)
+        for out in response.iter_content(chunk_size=1, decode_unicode=True):
+            yield out
+
     @property
     def api_version(self):
         return self._version
@@ -263,21 +268,15 @@ class Client(requests.Session):
         response = self._post(u, params=params, stream=stream)
 
         # Stream multi-plexing was only introduced in API v1.6. Anything before
-        # that needs old-style streaming.
-        if utils.compare_version('1.6', self._version) < 0:
-            def stream_result():
-                self._raise_for_status(response)
-                for line in response.iter_lines(chunk_size=1,
-                                                decode_unicode=True):
-                    # filter out keep-alive new lines
-                    if line:
-                        yield line
-
-            return stream_result() if stream else \
+        # that needs old-style streaming. We also should use old-style
+        # streaming if we're dealing with a tty-enabled container.
+        cont = self.inspect_container(container)
+        if utils.compare_version('1.6', self._version) < 0 or \
+           cont['Config']['Tty']:
+            return self._stream_raw_result(response) if stream else \
                 self._result(response, binary=True)
 
         sep = bytes() if six.PY3 else str()
-
         if stream:
             return self._multiplexed_response_stream_helper(response)
         else:
@@ -591,15 +590,19 @@ class Client(requests.Session):
 
         res = self._post_json(self._url('/exec/{0}/start'.format(exec_id)),
                               data=data, stream=stream)
+        # Stream multi-plexing was only introduced in API v1.6. Anything before
+        # that needs old-style streaming. We also should use old-style
+        # streaming if we're dealing with a tty-enabled container.
+        if utils.compare_version('1.6', self._version) < 0 or tty:
+            return self._stream_raw_result(res) if stream else \
+                self._result(res, binary=True)
+
         self._raise_for_status(res)
+        sep = bytes() if six.PY3 else str()
         if stream:
             return self._multiplexed_response_stream_helper(res)
-        elif six.PY3:
-            return bytes().join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
         else:
-            return str().join(
+            return sep.join(
                 [x for x in self._multiplexed_buffer_helper(res)]
             )
 
@@ -824,14 +827,21 @@ class Client(requests.Session):
                 params['tail'] = tail
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
+            # Stream multi-plexing was only introduced in API v1.6. Anything
+            # before that needs old-style streaming. We also should use
+            # old-style streaming if we're dealing with a tty-enabled
+            # container.
+            cont = self.inspect_container(container)
+            if utils.compare_version('1.6', self._version) < 0 or \
+               cont['Config']['Tty']:
+                return self._stream_raw_result(res) if stream else \
+                    self._result(res, binary=True)
+
+            sep = bytes() if six.PY3 else str()
             if stream:
                 return self._multiplexed_response_stream_helper(res)
-            elif six.PY3:
-                return bytes().join(
-                    [x for x in self._multiplexed_buffer_helper(res)]
-                )
             else:
-                return str().join(
+                return sep.join(
                     [x for x in self._multiplexed_buffer_helper(res)]
                 )
         return self.attach(

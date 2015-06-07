@@ -133,7 +133,7 @@ def get_fake_inspect_container():
     status_code = 200
     response = {
         'Id': FAKE_CONTAINER_ID,
-        'Config': {'Privileged': True},
+        'Config': {'Privileged': True, 'Tty': False},
         'ID': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
         "State": {
