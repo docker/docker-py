@@ -949,6 +949,9 @@ class Client(requests.Session):
         else:
             response = self._post_json(u, None, stream=stream, params=params)
 
+        if response.status_code != 200:
+            raise errors.DockerException('Error pushing image\n%s', response.text)
+
         return stream and self._stream_helper(response) \
             or self._result(response)
 
