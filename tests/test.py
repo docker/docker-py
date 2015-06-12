@@ -1029,7 +1029,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
-            with self.assertRaises(DeprecationWarning):
+            with self.assertWarns(DeprecationWarning):
                 self.client.start(
                     fake_api.FAKE_CONTAINER_ID,
                     log_config={"config": {}, "type": "none"}
