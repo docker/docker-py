@@ -34,7 +34,6 @@ from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
 from tests.test import Cleanup
-from tests import fake_api, fake_stat
 
 # FIXME: missing tests for
 # export; history; insert; port; push; tag; get; load; stats

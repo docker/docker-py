@@ -973,7 +973,6 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             DEFAULT_TIMEOUT_SECONDS
         )
 
-
     def test_start_container_with_log_config_syslog(self):
         if six.PY2:
             try:
@@ -1034,7 +1033,6 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     log_config={"config": {}, "type": "json-file"}
                 )
 
-
     def test_start_container_with_log_config_bad_value(self):
         if six.PY2:
             try:
@@ -1054,7 +1052,6 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     fake_api.FAKE_CONTAINER_ID,
                     log_config={"config": {}, "type": "baddata"}
                 )
-
 
     def test_start_container_with_log_config_none_dict(self):
         if six.PY2:
