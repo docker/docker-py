@@ -33,7 +33,7 @@ import six
 from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
-from test import Cleanup
+from tests.test import Cleanup
 
 # FIXME: missing tests for
 # export; history; insert; port; push; tag; get; load; stats

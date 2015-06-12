@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import fake_stat
+from tests import fake_stat
 
 CURRENT_VERSION = 'v1.18'
 
