@@ -1007,7 +1007,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
-            with self.assertWarns(DeprecationWarning):
+            with self.assertRaises(DeprecationWarning):
                 self.client.start(
                     fake_api.FAKE_CONTAINER_ID,
                     log_config={"config": {}, "type": "none"}
@@ -1036,10 +1036,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_start_container_with_log_config_bad_value(self):
         if six.PY2:
             try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    log_config={"config": {}, "type": "baddata"}
-                )
+                with self.assertRaises(ValueError):
+                    self.client.start(
+                        fake_api.FAKE_CONTAINER_ID,
+                        log_config={"config": {}, "type": "baddata"}
+                    )
             except DeprecationWarning as e:
                 return
             except Exception as e:
@@ -1056,10 +1057,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_start_container_with_log_config_none_dict(self):
         if six.PY2:
             try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    log_config={}
-                )
+                with self.assertRaises(ValueError):
+                    self.client.start(
+                        fake_api.FAKE_CONTAINER_ID,
+                        log_config={}
+                    )
             except DeprecationWarning as e:
                 return
             except Exception as e:
