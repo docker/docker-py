@@ -35,8 +35,8 @@ import docker
 import requests
 import six
 
-import base
-import fake_api
+from tests import base
+from tests import fake_api
 
 try:
     from unittest import mock
@@ -972,6 +972,109 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[1]['timeout'],
             DEFAULT_TIMEOUT_SECONDS
         )
+
+
+    def test_start_container_with_log_config_syslog(self):
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "syslog"}
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "syslog"}
+                )
+
+    def test_start_container_with_log_config_none(self):
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "none"}
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "none"}
+                )
+
+    def test_start_container_with_log_config_json_file(self):
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "json-file"}
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertWarns(DeprecationWarning):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "json-file"}
+                )
+
+
+    def test_start_container_with_log_config_bad_value(self):
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "baddata"}
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertRaises(ValueError):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "baddata"}
+                )
+
+
+    def test_start_container_with_log_config_none_dict(self):
+        if six.PY2:
+            try:
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={}
+                )
+            except DeprecationWarning as e:
+                return
+            except Exception as e:
+                self.fail('Command should not raise exception: {0}'.format(e))
+            else:
+                self.fail('Expected a DeprecationWarning')
+        else:
+            with self.assertRaises(ValueError):
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={}
+                )
 
     def test_start_container_with_lxc_conf(self):
         if six.PY2:
