@@ -19,3 +19,16 @@ container_id = c.create_container(
     })
 )
 ```
+
+You can alternatively specify binds as a list. This code is equivalent to the
+example above:
+
+```python
+container_id = c.create_container(
+    'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+    host_config=docker.utils.create_host_config(binds=[
+        '/home/user1/:/mnt/vol2',
+        '/var/www:/mnt/vol1:ro',
+    ])
+)
+```
