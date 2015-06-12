@@ -4,6 +4,7 @@ dist
 *.egg/
 *.pyc
 *.swp
+.coverage*
 
 .tox
 .coverage

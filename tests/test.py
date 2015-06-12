@@ -750,6 +750,28 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_log_config(self):
+        try:
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    log_config={'config': {}, 'type': 'syslog'}
+                )
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix +
+                         'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig']['LogConfig'] = \
+            {'Config': {}, 'Type': 'syslog'}
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
+
     def test_create_container_with_binds_ro(self):
         try:
             mount_dest = '/mnt'
@@ -1036,12 +1058,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_start_container_with_log_config_bad_value(self):
         if six.PY2:
             try:
-                with self.assertRaises(ValueError):
-                    self.client.start(
-                        fake_api.FAKE_CONTAINER_ID,
-                        log_config={"config": {}, "type": "baddata"}
-                    )
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={"config": {}, "type": "baddata"}
+                )
             except DeprecationWarning as e:
+                return
+            except ValueError as e:
                 return
             except Exception as e:
                 self.fail('Command should not raise exception: {0}'.format(e))
@@ -1057,12 +1080,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_start_container_with_log_config_none_dict(self):
         if six.PY2:
             try:
-                with self.assertRaises(ValueError):
-                    self.client.start(
-                        fake_api.FAKE_CONTAINER_ID,
-                        log_config={}
-                    )
+                self.client.start(
+                    fake_api.FAKE_CONTAINER_ID,
+                    log_config={}
+                )
             except DeprecationWarning as e:
+                return
+            except ValueError as e:
                 return
             except Exception as e:
                 self.fail('Command should not raise exception: {0}'.format(e))
