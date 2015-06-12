@@ -187,6 +187,9 @@ class Client(requests.Session):
 
     def _stream_helper(self, response, decode=False):
         """Generator for data coming from a chunked-encoded HTTP response."""
+        if response.status_code != 200:
+            raise errors.DockerException(response.text)
+
         if response.raw._fp.chunked:
             reader = response.raw
             while not reader.closed:
