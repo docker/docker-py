@@ -174,6 +174,9 @@ def convert_port_bindings(port_bindings):
 
 
 def convert_volume_binds(binds):
+    if isinstance(binds, list):
+        return binds
+
     result = []
     for k, v in binds.items():
         if isinstance(v, dict):
@@ -322,6 +325,9 @@ def parse_bytes(s):
     if len(s) == 0:
         s = 0
     else:
+        if s[-2:-1].isalpha() and s[-1].isalpha():
+            if (s[-1] == "b" or s[-1] == "B"):
+                s = s[:-1]
         units = BYTE_UNITS
         suffix = s[-1].lower()
 
@@ -380,7 +386,7 @@ def create_host_config(
         host_config['PublishAllPorts'] = publish_all_ports
 
     if read_only is not None:
-        host_config['ReadOnlyRootFs'] = read_only
+        host_config['ReadonlyRootfs'] = read_only
 
     if dns_search:
         host_config['DnsSearch'] = dns_search
