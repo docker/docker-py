@@ -174,6 +174,9 @@ def convert_port_bindings(port_bindings):
 
 
 def convert_volume_binds(binds):
+    if isinstance(binds, list):
+        return binds
+
     result = []
     for k, v in binds.items():
         if isinstance(v, dict):
