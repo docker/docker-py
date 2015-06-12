@@ -11,7 +11,7 @@ from docker.utils import (
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_authconfig
 
-import base
+from tests import base
 
 
 class UtilsTest(base.BaseTestCase):
