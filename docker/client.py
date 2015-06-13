@@ -914,6 +914,8 @@ class Client(requests.Session):
         response = self._post(self._url('/images/create'), params=params,
                               headers=headers, stream=stream, timeout=None)
 
+        self._raise_for_status(response)
+
         if stream:
             return self._stream_helper(response)
         else:
@@ -949,6 +951,8 @@ class Client(requests.Session):
                                        stream=stream, params=params)
         else:
             response = self._post_json(u, None, stream=stream, params=params)
+
+        self._raise_for_status(response)
 
         return stream and self._stream_helper(response) \
             or self._result(response)
