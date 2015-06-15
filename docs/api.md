@@ -71,6 +71,8 @@ correct value (e.g `gzip`).
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
     - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
+* decode (bool): If set to true, the returned stream will be decoded into dicts on the fly. 
+  False by default.
 
 **Returns** (generator): A generator of the build output
 
