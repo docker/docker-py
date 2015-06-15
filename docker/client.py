@@ -307,7 +307,8 @@ class Client(requests.Session):
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=True,
-              forcerm=False, dockerfile=None, container_limits=None):
+              forcerm=False, dockerfile=None, container_limits=None,
+              decode=False):
         remote = context = headers = None
         container_limits = container_limits or {}
         if path is None and fileobj is None:
@@ -398,7 +399,7 @@ class Client(requests.Session):
             context.close()
 
         if stream:
-            return self._stream_helper(response)
+            return self._stream_helper(response, decode=decode)
         else:
             output = self._result(response)
             srch = r'Successfully built ([0-9a-f]+)'
