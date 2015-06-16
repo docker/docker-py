@@ -71,10 +71,10 @@ correct value (e.g `gzip`).
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
     - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
-* decode (bool): If set to true, the returned stream will be decoded into dicts on the fly. 
-  False by default.
+* decode (bool): If set to `True`, the returned stream will be decoded into
+  dicts on the fly. Default `False`.
 
-**Returns** (generator): A generator of the build output
+**Returns** (generator): A generator for the build output
 
 ```python
 >>> from io import BytesIO
