@@ -912,15 +912,17 @@ class Client(requests.Session):
             else:
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
-        response = self._post(self._url('/images/create'), params=params,
-                              headers=headers, stream=stream, timeout=None)
+        response = self._post(
+            self._url('/images/create'), params=params, headers=headers,
+            stream=stream, timeout=None
+        )
 
         self._raise_for_status(response)
 
         if stream:
             return self._stream_helper(response)
-        else:
-            return self._result(response)
+
+        return self._result(response)
 
     def push(self, repository, tag=None, stream=False,
              insecure_registry=False):
@@ -948,15 +950,16 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-            response = self._post_json(u, None, headers=headers,
-                                       stream=stream, params=params)
-        else:
-            response = self._post_json(u, None, stream=stream, params=params)
+        response = self._post_json(
+            u, None, headers=headers, stream=stream, params=params
+        )
 
         self._raise_for_status(response)
 
-        return stream and self._stream_helper(response) \
-            or self._result(response)
+        if stream:
+            return self._stream_helper(response)
+
+        return self._result(response)
 
     @check_resource
     def remove_container(self, container, v=False, link=False, force=False):
