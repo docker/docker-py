@@ -14,7 +14,7 @@
 
 import fake_stat
 
-CURRENT_VERSION = 'v1.18'
+CURRENT_VERSION = 'v1.19'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
