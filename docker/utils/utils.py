@@ -500,8 +500,13 @@ def create_container_config(
         ]
 
     if labels is not None and compare_version('1.18', version) < 0:
-        raise errors.DockerException(
+        raise errors.InvalidVersion(
             'labels were only introduced in API version 1.18'
+        )
+
+    if volume_driver is not None and compare_version('1.19', version) < 0:
+        raise errors.InvalidVersion(
+            'Volume drivers were only introduced in API version 1.19'
         )
 
     if isinstance(labels, list):
@@ -557,9 +562,9 @@ def create_container_config(
         message = ('{0!r} parameter has no effect on create_container().'
                    ' It has been moved to start()')
         if dns is not None:
-            raise errors.DockerException(message.format('dns'))
+            raise errors.InvalidVersion(message.format('dns'))
         if volumes_from is not None:
-            raise errors.DockerException(message.format('volumes_from'))
+            raise errors.InvalidVersion(message.format('volumes_from'))
 
     return {
         'Hostname': hostname,
