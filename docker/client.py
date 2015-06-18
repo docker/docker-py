@@ -306,7 +306,7 @@ class Client(requests.Session):
 
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
-              custom_context=False, encoding=None, pull=True,
+              custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False):
         remote = context = headers = None
@@ -352,6 +352,9 @@ class Client(requests.Session):
             raise errors.InvalidVersion(
                 'dockerfile was only introduced in API version 1.17'
             )
+
+        if utils.compare_version('1.19', self._version) < 0:
+            pull = 1 if pull else 0
 
         u = self._url('/build')
         params = {
