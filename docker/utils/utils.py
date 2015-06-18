@@ -180,8 +180,21 @@ def convert_volume_binds(binds):
     result = []
     for k, v in binds.items():
         if isinstance(v, dict):
+            if 'ro' in v and 'mode' in v:
+                raise ValueError(
+                    'Binding cannot contain both "ro" and "mode": {}'
+                    .format(repr(v))
+                )
+
+            if 'ro' in v:
+                mode = 'ro' if v['ro'] else 'rw'
+            elif 'mode' in v:
+                mode = v['mode']
+            else:
+                mode = 'rw'
+
             result.append('{0}:{1}:{2}'.format(
-                k, v['bind'], 'ro' if v.get('ro', False) else 'rw'
+                k, v['bind'], mode
             ))
         else:
             result.append('{0}:{1}:rw'.format(k, v))
