@@ -10,11 +10,11 @@ container_id = c.create_container(
     host_config=docker.utils.create_host_config(binds={
         '/home/user1/': {
             'bind': '/mnt/vol2',
-            'ro': False
+            'mode': 'rw',
         },
         '/var/www': {
             'bind': '/mnt/vol1',
-            'ro': True
+            'mode': 'ro',
         }
     })
 )
