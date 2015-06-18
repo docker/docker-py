@@ -79,6 +79,31 @@ def resolve_authconfig(authconfig, registry=None):
     return None
 
 
+def write_authconfig(authconfig, config_path=None):
+    """
+    Write the authentification data from a given auth configuration to a file.
+    """
+    docker_conf = {}
+
+    config_file = config_path or os.path.join(os.environ.get('HOME', '.'),
+                                              DOCKER_CONFIG_FILENAME)
+
+    # if config path doesn't exist return False
+    if not os.path.exists(config_file):
+        return False
+
+    # Write docker_config file
+    with open(config_file) as f:
+        docker_conf = {}
+        for registry, entry in six.iteritems(authconfig):
+            docker_conf[registry] = {
+                'auth': encode_auth(entry),
+                'email': entry['email']
+            }
+        json.dump(docker_conf, f)
+        return True
+
+
 def convert_to_hostname(url):
     return url.replace('http://', '').replace('https://', '').split('/', 1)[0]
 
