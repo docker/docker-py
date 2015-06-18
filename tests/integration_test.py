@@ -1464,7 +1464,7 @@ class TestRegressions(BaseTestCase):
         self.client.start(
             self.client.create_container('busybox', ['true'])
         )
-        result = self.client.containers(trunc=True)
+        result = self.client.containers(all=True, trunc=True)
         self.assertEqual(len(result[0]['Id']), 12)
 
 
