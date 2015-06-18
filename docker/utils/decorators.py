@@ -1,7 +1,10 @@
+from functools import wraps
 from .. import errors
 
 
 def check_resource(f):
+
+    @wraps(f)
     def wrapped(self, resource_id=None, *args, **kwargs):
         if resource_id is None:
             if kwargs.get('container'):
