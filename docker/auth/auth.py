@@ -115,7 +115,7 @@ def load_config(config_path=None):
     conf = {}
     data = None
 
-    config_file = config_path or os.path.join(os.environ.get('HOME', '.'),
+    config_file = config_path or os.path.join(os.path.expanduser('~'),
                                               DOCKER_CONFIG_FILENAME)
 
     # if config path doesn't exist return empty config
