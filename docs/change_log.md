@@ -15,6 +15,7 @@ Change Log
 
 * Added support for `privileged` param in `Client.exec_create`
   (only available in API >= 1.19)
+* Volume binds can now also be specified as a list of strings.
 
 ### Bugfixes
 
