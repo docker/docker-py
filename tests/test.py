@@ -808,6 +808,36 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_binds_list(self):
+        try:
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    binds=[
+                        "/tmp:/mnt/1:ro",
+                        "/tmp:/mnt/2",
+                    ],
+                )
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0], url_prefix +
+                         'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig']['Binds'] = [
+            "/tmp:/mnt/1:ro",
+            "/tmp:/mnt/2",
+        ]
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_create_container_with_port_binds(self):
         self.maxDiff = None
         try:
