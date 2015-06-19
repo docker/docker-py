@@ -383,9 +383,20 @@ def create_host_config(
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
-    security_opt=None, ulimits=None, log_config=None
+    security_opt=None, ulimits=None, log_config=None, mem_limit=None,
+    memswap_limit=None
 ):
     host_config = {}
+
+    if mem_limit is not None:
+        if isinstance(mem_limit, six.string_types):
+            mem_limit = parse_bytes(mem_limit)
+        host_config['Memory'] = mem_limit
+
+    if memswap_limit is not None:
+        if isinstance(memswap_limit, six.string_types):
+            memswap_limit = parse_bytes(memswap_limit)
+        host_config['MemorySwap'] = memswap_limit
 
     if pid_mode not in (None, 'host'):
         raise errors.DockerException(
@@ -503,10 +514,10 @@ def create_host_config(
 
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
-    stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None,
+    stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
-    memswap_limit=0, cpuset=None, host_config=None, mac_address=None,
+    memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
     labels=None, volume_driver=None
 ):
     if isinstance(command, six.string_types):
@@ -522,10 +533,24 @@ def create_container_config(
             'labels were only introduced in API version 1.18'
         )
 
-    if volume_driver is not None and compare_version('1.19', version) < 0:
-        raise errors.InvalidVersion(
-            'Volume drivers were only introduced in API version 1.19'
-        )
+    if compare_version('1.19', version) < 0:
+        if volume_driver is not None:
+            raise errors.InvalidVersion(
+                'Volume drivers were only introduced in API version 1.19'
+            )
+        mem_limit = mem_limit if mem_limit is not None else 0
+        memswap_limit = memswap_limit if memswap_limit is not None else 0
+    else:
+        if mem_limit is not None:
+            raise errors.InvalidVersion(
+                'mem_limit has been moved to host_config in API version 1.19'
+            )
+
+        if memswap_limit is not None:
+            raise errors.InvalidVersion(
+                'memswap_limit has been moved to host_config in API '
+                'version 1.19'
+            )
 
     if isinstance(labels, list):
         labels = dict((lbl, six.text_type('')) for lbl in labels)

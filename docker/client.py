@@ -23,8 +23,6 @@ from datetime import datetime
 import requests
 import requests.exceptions
 import six
-import websocket
-
 
 from . import constants
 from . import errors
@@ -33,6 +31,10 @@ from .unixconn import unixconn
 from .ssladapter import ssladapter
 from .utils import utils, check_resource
 from .tls import TLSConfig
+
+
+if not six.PY3:
+    import websocket
 
 
 class Client(requests.Session):
@@ -152,6 +154,9 @@ class Client(requests.Session):
 
     @check_resource
     def _attach_websocket(self, container, params=None):
+        if six.PY3:
+            raise NotImplementedError("This method is not currently supported "
+                                      "under python 3")
         url = self._url("/containers/{0}/attach/ws".format(container))
         req = requests.Request("POST", url, params=self._attach_params(params))
         full_url = req.prepare().url
@@ -246,6 +251,8 @@ class Client(requests.Session):
     @check_resource
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {
             'logs': logs and 1 or 0,
             'stdout': stdout and 1 or 0,
@@ -290,6 +297,9 @@ class Client(requests.Session):
         if ws:
             return self._attach_websocket(container, params)
 
+        if isinstance(container, dict):
+            container = container.get('Id')
+
         u = self._url("/containers/{0}/attach".format(container))
         return self._get_raw_response_socket(self.post(
             u, None, params=self._attach_params(params), stream=True))
@@ -297,7 +307,8 @@ class Client(requests.Session):
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
-              forcerm=False, dockerfile=None, container_limits=None):
+              forcerm=False, dockerfile=None, container_limits=None,
+              decode=False):
         remote = context = headers = None
         container_limits = container_limits or {}
         if path is None and fileobj is None:
@@ -316,7 +327,7 @@ class Client(requests.Session):
         elif fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
         elif path.startswith(('http://', 'https://',
-                              'git://', 'github.com/', 'git@')):
+                              'git://', 'github.com/')):
             remote = path
         elif not os.path.isdir(path):
             raise TypeError("You must specify a directory to build in path")
@@ -342,11 +353,8 @@ class Client(requests.Session):
                 'dockerfile was only introduced in API version 1.17'
             )
 
-        # Docker server 1.6 only supports values 1 and 0 for pull
-        # parameter. This was later fixed to support a wider range of
-        # values, including true / false.
-        # See also https://github.com/docker/docker/issues/13631
-        pull = 1 if pull else 0
+        if utils.compare_version('1.19', self._version) < 0:
+            pull = 1 if pull else 0
 
         u = self._url('/build')
         params = {
@@ -394,7 +402,7 @@ class Client(requests.Session):
             context.close()
 
         if stream:
-            return self._stream_helper(response)
+            return self._stream_helper(response, decode=decode)
         else:
             output = self._result(response)
             srch = r'Successfully built ([0-9a-f]+)'
@@ -406,6 +414,8 @@ class Client(requests.Session):
     @check_resource
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, conf=None):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {
             'container': container,
             'repo': repository,
@@ -442,6 +452,8 @@ class Client(requests.Session):
 
     @check_resource
     def copy(self, container, resource):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self._post_json(
             self._url("/containers/{0}/copy".format(container)),
             data={"Resource": resource},
@@ -452,12 +464,12 @@ class Client(requests.Session):
 
     def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
-                         mem_limit=0, ports=None, environment=None, dns=None,
-                         volumes=None, volumes_from=None,
+                         mem_limit=None, ports=None, environment=None,
+                         dns=None, volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
-                         memswap_limit=0, cpuset=None, host_config=None,
-                         mac_address=None, labels=None):
+                         memswap_limit=None, cpuset=None, host_config=None,
+                         mac_address=None, labels=None, volume_driver=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -471,7 +483,8 @@ class Client(requests.Session):
             self._version, image, command, hostname, user, detach, stdin_open,
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset, host_config, mac_address, labels
+            memswap_limit, cpuset, host_config, mac_address, labels,
+            volume_driver
         )
         return self.create_container_from_config(config, name)
 
@@ -485,6 +498,8 @@ class Client(requests.Session):
 
     @check_resource
     def diff(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         return self._result(self._get(self._url("/containers/{0}/changes".
                             format(container))), True)
 
@@ -529,6 +544,8 @@ class Client(requests.Session):
             raise errors.InvalidVersion(
                 'Privileged exec is not supported in API < 1.19'
             )
+        if isinstance(container, dict):
+            container = container.get('Id')
         if isinstance(cmd, six.string_types):
             cmd = shlex.split(str(cmd))
 
@@ -593,6 +610,8 @@ class Client(requests.Session):
 
     @check_resource
     def export(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self._get(self._url("/containers/{0}/export".format(container)),
                         stream=True)
         self._raise_for_status(res)
@@ -730,12 +749,16 @@ class Client(requests.Session):
 
     @check_resource
     def inspect_container(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         return self._result(
             self._get(self._url("/containers/{0}/json".format(container))),
             True)
 
     @check_resource
     def inspect_image(self, image):
+        if isinstance(image, dict):
+            image = image.get('Id')
         return self._result(
             self._get(self._url("/images/{0}/json".format(image))),
             True
@@ -743,6 +766,8 @@ class Client(requests.Session):
 
     @check_resource
     def kill(self, container, signal=None):
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url("/containers/{0}/kill".format(container))
         params = {}
         if signal is not None:
@@ -790,6 +815,8 @@ class Client(requests.Session):
     @check_resource
     def logs(self, container, stdout=True, stderr=True, stream=False,
              timestamps=False, tail='all'):
+        if isinstance(container, dict):
+            container = container.get('Id')
         if utils.compare_version('1.11', self._version) >= 0:
             params = {'stderr': stderr and 1 or 0,
                       'stdout': stdout and 1 or 0,
@@ -822,6 +849,8 @@ class Client(requests.Session):
 
     @check_resource
     def pause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url('/containers/{0}/pause'.format(container))
         res = self._post(url)
         self._raise_for_status(res)
@@ -831,6 +860,8 @@ class Client(requests.Session):
 
     @check_resource
     def port(self, container, private_port):
+        if isinstance(container, dict):
+            container = container.get('Id')
         res = self._get(self._url("/containers/{0}/json".format(container)))
         self._raise_for_status(res)
         json_ = res.json()
@@ -884,13 +915,17 @@ class Client(requests.Session):
             else:
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
-        response = self._post(self._url('/images/create'), params=params,
-                              headers=headers, stream=stream, timeout=None)
+        response = self._post(
+            self._url('/images/create'), params=params, headers=headers,
+            stream=stream, timeout=None
+        )
+
+        self._raise_for_status(response)
 
         if stream:
             return self._stream_helper(response)
-        else:
-            return self._result(response)
+
+        return self._result(response)
 
     def push(self, repository, tag=None, stream=False,
              insecure_registry=False):
@@ -918,16 +953,21 @@ class Client(requests.Session):
             if authcfg:
                 headers['X-Registry-Auth'] = auth.encode_header(authcfg)
 
-            response = self._post_json(u, None, headers=headers,
-                                       stream=stream, params=params)
-        else:
-            response = self._post_json(u, None, stream=stream, params=params)
+        response = self._post_json(
+            u, None, headers=headers, stream=stream, params=params
+        )
 
-        return stream and self._stream_helper(response) \
-            or self._result(response)
+        self._raise_for_status(response)
+
+        if stream:
+            return self._stream_helper(response)
+
+        return self._result(response)
 
     @check_resource
     def remove_container(self, container, v=False, link=False, force=False):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {'v': v, 'link': link, 'force': force}
         res = self._delete(self._url("/containers/" + container),
                            params=params)
@@ -935,6 +975,8 @@ class Client(requests.Session):
 
     @check_resource
     def remove_image(self, image, force=False, noprune=False):
+        if isinstance(image, dict):
+            image = image.get('Id')
         params = {'force': force, 'noprune': noprune}
         res = self._delete(self._url("/images/" + image), params=params)
         self._raise_for_status(res)
@@ -945,6 +987,8 @@ class Client(requests.Session):
             raise errors.InvalidVersion(
                 'rename was only introduced in API version 1.17'
             )
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url("/containers/{0}/rename".format(container))
         params = {'name': name}
         res = self._post(url, params=params)
@@ -952,6 +996,9 @@ class Client(requests.Session):
 
     @check_resource
     def resize(self, container, height, width):
+        if isinstance(container, dict):
+            container = container.get('Id')
+
         params = {'h': height, 'w': width}
         url = self._url("/containers/{0}/resize".format(container))
         res = self._post(url, params=params)
@@ -959,6 +1006,8 @@ class Client(requests.Session):
 
     @check_resource
     def restart(self, container, timeout=10):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart".format(container))
         res = self._post(url, params=params)
@@ -1023,6 +1072,9 @@ class Client(requests.Session):
             ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits
         )
 
+        if isinstance(container, dict):
+            container = container.get('Id')
+
         url = self._url("/containers/{0}/start".format(container))
         if not start_config:
             start_config = None
@@ -1041,16 +1093,20 @@ class Client(requests.Session):
             raise errors.InvalidVersion(
                 'Stats retrieval is not supported in API < 1.17!')
 
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url("/containers/{0}/stats".format(container))
         return self._stream_helper(self._get(url, stream=True), decode=decode)
 
     @check_resource
     def stop(self, container, timeout=10):
+        if isinstance(container, dict):
+            container = container.get('Id')
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop".format(container))
 
         res = self._post(url, params=params,
-                         timeout=(timeout + (self.timeout or 0)))
+                         timeout=(timeout + self.timeout))
         self._raise_for_status(res)
 
     @check_resource
@@ -1067,6 +1123,8 @@ class Client(requests.Session):
 
     @check_resource
     def top(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         u = self._url("/containers/{0}/top".format(container))
         return self._result(self._get(u), True)
 
@@ -1076,12 +1134,16 @@ class Client(requests.Session):
 
     @check_resource
     def unpause(self, container):
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url('/containers/{0}/unpause'.format(container))
         res = self._post(url)
         self._raise_for_status(res)
 
     @check_resource
     def wait(self, container, timeout=None):
+        if isinstance(container, dict):
+            container = container.get('Id')
         url = self._url("/containers/{0}/wait".format(container))
         res = self._post(url, timeout=timeout)
         self._raise_for_status(res)
