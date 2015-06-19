@@ -129,7 +129,9 @@ def ping(url):
     except Exception:
         return False
     else:
-        return res.status_code < 400
+        # We don't send yet auth headers
+        # and a v2 registry will respond with status 401
+        return res.status_code == 401 or res.status_code < 400
 
 
 def _convert_port_binding(binding):
