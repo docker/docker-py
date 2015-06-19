@@ -23,6 +23,8 @@ from datetime import datetime
 import requests
 import requests.exceptions
 import six
+import websocket
+
 
 from . import constants
 from . import errors
@@ -31,10 +33,6 @@ from .unixconn import unixconn
 from .ssladapter import ssladapter
 from .utils import utils, check_resource
 from .tls import TLSConfig
-
-
-if not six.PY3:
-    import websocket
 
 
 class Client(requests.Session):
@@ -154,9 +152,6 @@ class Client(requests.Session):
 
     @check_resource
     def _attach_websocket(self, container, params=None):
-        if six.PY3:
-            raise NotImplementedError("This method is not currently supported "
-                                      "under python 3")
         url = self._url("/containers/{0}/attach/ws".format(container))
         req = requests.Request("POST", url, params=self._attach_params(params))
         full_url = req.prepare().url
