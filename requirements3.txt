@@ -1,2 +1,5 @@
 requests==2.5.3
 six>=1.3.0
+#pathspec >=0.3.3, <0.3.99
+# Currently use HEAD version until new pathspec release (0.3.4)
+-e git://github.com/cpburnz/python-path-specification.git#egg=pathspec
