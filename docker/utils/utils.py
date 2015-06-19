@@ -120,16 +120,21 @@ def compare_version(v1, v2):
 
 
 def ping_registry(url):
-    return ping(url + '/v2/') or ping(url + '/v1/_ping')
+    return ping(url + '/v2/', [401]) or ping(url + '/v1/_ping')
 
 
-def ping(url):
+def ping(url, valid_4xx_statuses=None):
     try:
         res = requests.get(url, timeout=3)
     except Exception:
         return False
     else:
-        return res.status_code < 400
+        # We don't send yet auth headers
+        # and a v2 registry will respond with status 401
+        return (
+            res.status_code < 400 or
+            (valid_4xx_statuses and res.status_code in valid_4xx_statuses)
+        )
 
 
 def _convert_port_binding(binding):
