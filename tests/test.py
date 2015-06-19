@@ -124,11 +124,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         if not cmd:
             cmd = ['true']
         return {"Tty": False, "Image": img, "Cmd": cmd,
-                "AttachStdin": False, "Memory": 0,
+                "AttachStdin": False,
                 "AttachStderr": True, "AttachStdout": True,
                 "StdinOnce": False,
                 "OpenStdin": False, "NetworkDisabled": False,
-                "MemorySwap": 0
                 }
 
     def test_ctor(self):
@@ -337,11 +336,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": false, "Memory": 0,
+                             "AttachStdin": false,
                              "AttachStderr": true, "AttachStdout": true,
                              "StdinOnce": false,
-                             "OpenStdin": false, "NetworkDisabled": false,
-                             "MemorySwap": 0}'''))
+                             "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -361,12 +359,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
-                             "Volumes": {"/mnt": {}}, "Memory": 0,
+                             "Volumes": {"/mnt": {}},
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "MemorySwap": 0}'''))
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -386,12 +383,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls", "/mnt"], "AttachStdin": false,
-                             "Volumes": {"/mnt": {}}, "Memory": 0,
+                             "Volumes": {"/mnt": {}},
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "MemorySwap": 0}'''))
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -409,7 +405,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls"], "AttachStdin": false,
-                             "Memory": 0, "ExposedPorts": {
+                             "ExposedPorts": {
                                 "1111/tcp": {},
                                 "2222/udp": {},
                                 "3333/tcp": {}
@@ -417,8 +413,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "MemorySwap": 0}'''))
+                             "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -436,13 +431,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["hello"], "AttachStdin": false,
-                             "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "Entrypoint": "cowsay",
-                             "MemorySwap": 0}'''))
+                             "Entrypoint": "cowsay"}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -460,13 +453,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls"], "AttachStdin": false,
-                             "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "CpuShares": 5,
-                             "MemorySwap": 0}'''))
+                             "CpuShares": 5}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -484,14 +475,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls"], "AttachStdin": false,
-                             "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
                              "Cpuset": "0,1",
-                             "CpusetCpus": "0,1",
-                             "MemorySwap": 0}'''))
+                             "CpusetCpus": "0,1"}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -509,13 +498,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          json.loads('''
                             {"Tty": false, "Image": "busybox",
                              "Cmd": ["ls"], "AttachStdin": false,
-                             "Memory": 0,
                              "AttachStderr": true,
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "WorkingDir": "/root",
-                             "MemorySwap": 0}'''))
+                             "WorkingDir": "/root"}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -531,11 +518,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": true, "Memory": 0,
+                             "AttachStdin": true,
                              "AttachStderr": true, "AttachStdout": true,
                              "StdinOnce": true,
-                             "OpenStdin": true, "NetworkDisabled": false,
-                             "MemorySwap": 0}'''))
+                             "OpenStdin": true, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -581,78 +567,95 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
                             {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": false, "Memory": 0,
+                             "AttachStdin": false,
                              "AttachStderr": true, "AttachStdout": true,
                              "StdinOnce": false,
-                             "OpenStdin": false, "NetworkDisabled": false,
-                             "MemorySwap": 0}'''))
+                             "OpenStdin": false, "NetworkDisabled": false}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
 
     def test_create_container_with_mem_limit_as_int(self):
         try:
-            self.client.create_container('busybox', 'true',
-                                         mem_limit=128.0)
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    mem_limit=128.0
+                )
+            )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['Memory'], 128.0)
+        self.assertEqual(data['HostConfig']['Memory'], 128.0)
 
     def test_create_container_with_mem_limit_as_string(self):
         try:
-            self.client.create_container('busybox', 'true',
-                                         mem_limit='128')
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    mem_limit='128'
+                )
+            )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['Memory'], 128.0)
+        self.assertEqual(data['HostConfig']['Memory'], 128.0)
 
     def test_create_container_with_mem_limit_as_string_with_k_unit(self):
         try:
-            self.client.create_container('busybox', 'true',
-                                         mem_limit='128k')
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    mem_limit='128k'
+                )
+            )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['Memory'], 128.0 * 1024)
+        self.assertEqual(data['HostConfig']['Memory'], 128.0 * 1024)
 
     def test_create_container_with_mem_limit_as_string_with_m_unit(self):
         try:
-            self.client.create_container('busybox', 'true',
-                                         mem_limit='128m')
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    mem_limit='128m'
+                )
+            )
+
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['Memory'], 128.0 * 1024 * 1024)
+        self.assertEqual(data['HostConfig']['Memory'], 128.0 * 1024 * 1024)
 
     def test_create_container_with_mem_limit_as_string_with_g_unit(self):
         try:
-            self.client.create_container('busybox', 'true',
-                                         mem_limit='128g')
+            self.client.create_container(
+                'busybox', 'true', host_config=create_host_config(
+                    mem_limit='128g'
+                )
+            )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['Memory'], 128.0 * 1024 * 1024 * 1024)
+        self.assertEqual(
+            data['HostConfig']['Memory'], 128.0 * 1024 * 1024 * 1024
+        )
 
     def test_create_container_with_mem_limit_as_string_with_wrong_value(self):
-        self.assertRaises(docker.errors.DockerException,
-                          self.client.create_container,
-                          'busybox', 'true', mem_limit='128p')
+        self.assertRaises(
+            docker.errors.DockerException, create_host_config, mem_limit='128p'
+        )
 
-        self.assertRaises(docker.errors.DockerException,
-                          self.client.create_container,
-                          'busybox', 'true', mem_limit='1f28')
+        self.assertRaises(
+            docker.errors.DockerException, create_host_config, mem_limit='1f28'
+        )
 
     def test_start_container(self):
         try:
