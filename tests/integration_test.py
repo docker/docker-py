@@ -1467,6 +1467,11 @@ class TestRegressions(BaseTestCase):
         result = self.client.containers(all=True, trunc=True)
         self.assertEqual(len(result[0]['Id']), 12)
 
+    def test_649(self):
+        self.client.timeout = None
+        ctnr = self.client.create_container('busybox', ['sleep', '2'])
+        self.client.start(ctnr)
+        self.client.stop(ctnr)
 
 if __name__ == '__main__':
     c = docker.Client(base_url=DEFAULT_BASE_URL)
