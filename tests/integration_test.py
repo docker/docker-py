@@ -1477,6 +1477,7 @@ class TestRegressions(BaseTestCase):
         self.client.start(ctnr)
         self.client.stop(ctnr)
 
+
 if __name__ == '__main__':
     c = docker.Client(base_url=DEFAULT_BASE_URL)
     c.pull('busybox')
