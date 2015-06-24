@@ -1095,7 +1095,7 @@ class Client(requests.Session):
         url = self._url("/containers/{0}/stop".format(container))
 
         res = self._post(url, params=params,
-                         timeout=(timeout + self.timeout))
+                         timeout=(timeout + (self.timeout or 0)))
         self._raise_for_status(res)
 
     @check_resource
