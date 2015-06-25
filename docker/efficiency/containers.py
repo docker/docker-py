@@ -2,7 +2,7 @@ import io
 import tarfile
 
 
-def copy_to_fs(client, container_id, path, target="."):
+def copy_to_fs(client, container, path, target="."):
     """
     Copy file from container to filesystem
 
@@ -12,7 +12,7 @@ def copy_to_fs(client, container_id, path, target="."):
         path: path to the file in the container
         target: folder where file will be copied (default ".")
     """
-    response = client.copy(container_id, path)
+    response = client.copy(container, path)
     buffer = io.BytesIO()
     buffer.write(response.data)
     buffer.seek(0)
