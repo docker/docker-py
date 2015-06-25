@@ -1,14 +1,4 @@
-import json
-
-from .. import errors
-
-
-def _generator_parser(gen):
-    for line in gen:
-        status = json.loads(line)
-        if status.get('error'):
-            raise errors.DockerException(status.get('error'))
-        yield status
+from . import tools
 
 
 def pull(client, repo, tag=None, insecure_registry=False, auth_config=None):
@@ -29,7 +19,7 @@ def pull(client, repo, tag=None, insecure_registry=False, auth_config=None):
         auth_config=auth_config
     )
 
-    return _generator_parser(gen)
+    return tools.generator_parser(gen)
 
 
 def push(client, repo, tag=None, insecure_registry=False):
@@ -48,4 +38,4 @@ def push(client, repo, tag=None, insecure_registry=False):
     gen = client.push(
         repo, tag=tag, stream=True, insecure_registry=insecure_registry
     )
-    return _generator_parser(gen)
+    return tools.generator_parser(gen)

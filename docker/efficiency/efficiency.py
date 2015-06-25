@@ -79,4 +79,24 @@ def push(repo, tag=None, insecure_registry=False):
     )
 
 
+def build(path, dockerfile='Dockerfile', **kwargs):
+    """
+    Build an image from the specified Dockerfile found in context indicated by
+    `path`. If an error is encountered during streaming, a DockerException
+    will be raised.
+
+    **Params:**
+        path: string pointing to the build context. Can be any of:
+            * A readable directory containing a valid Dockerfile
+            * A tarball (optionally compressed with gzip, xz or bzip2)
+            * A valid Dockerfile
+            * A valid URL for a remote build context.
+        dockerfile: Name of the Dockerfile inside the context path.
+                    Default: "Dockerfile"
+        kwargs: Additional `docker.Client.build` arguments
+    """
+    return builds.build(_client, path, dockerfile, **kwargs)
+
+
 get_build_id = builds.get_build_id
+create_context_from_path = builds.create_context_from_path

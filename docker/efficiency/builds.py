@@ -3,23 +3,13 @@ import os
 import re
 import six
 import tarfile
-from collections import namedtuple
+import collections
 
+from . import tools
 from .. import errors
 
 
 build_success_re = r'^Successfully built ([a-f0-9]+)\n$'
-
-
-INVALID_CONTEXT_FORMAT_LONG_FMT = """
-Build context at %s is not supported by Docker\\n
-The path must point to either:
-\t * A readable directory containing a valid Dockerfile
-\t * A tarball (optionally compressed with gzip, xz or bzip2)
-\t * A valid Dockerfile
-\t * A valid URL for a remote build context.
-%s"""
-
 
 # these prefixes are treated as remote by the docker daemon
 # (ref: pkg/urlutil/*) as of v1.6.0
@@ -59,8 +49,12 @@ def get_build_id(build_result, discard_logs=False):
     return image_id, parsed_lines
 
 
-class BuildContext(namedtuple('BuildContext',
-                              ['format', 'path', 'dockerfile', 'job_params'])):
+BuildCtxTuple = collections.namedtuple(
+    'BuildContext', ['format', 'path', 'dockerfile', 'job_params']
+)
+
+
+class BuildContext(BuildCtxTuple):
     def __new__(cls, context_format,
                 path,
                 dockerfile='Dockerfile',
@@ -139,7 +133,9 @@ def create_context_from_path(path, dockerfile='Dockerfile'):
     context_maker = detect_context_format(_path, _dockerfile)
     if context_maker is None:
         raise errors.ContextError(
-            "Format not supported at %s [dockerfile='%s']." % (path, dockerfile)
+            "Format not supported at {0} [dockerfile='{1}']".format(
+                path, dockerfile
+            )
         )
 
     return context_maker(path, dockerfile)
@@ -165,14 +161,16 @@ def detect_context_format(path, dockerfile='Dockerfile'):
     try:
         os.access(path, os.R_OK)
     except IOError as ioe:
-        raise errors.ContextError("%s: %s" % (path, ioe))
+        raise errors.ContextError("{0}: {1}".format(path, ioe))
 
     if os.path.isdir(path):
         if dockerfile in os.listdir(path):
             return context_builders['directory']
         else:
             raise errors.ContextError(
-                "Directory %s does not contain a Dockerfile with name %s" % (path, dockerfile)
+                "Directory {0} does not contain a Dockerfile named {1}".format(
+                    path, dockerfile
+                )
             )
     elif is_tarball_context(path):
         return context_builders['tarball']
@@ -198,3 +196,26 @@ def is_tarball_context(path):
 def is_directory_context(path, dockerfile='Dockerfile'):
     dockerfile_path = os.path.abspath(os.path.join(path, dockerfile))
     return os.path.isdir(path) and os.path.isfile(dockerfile_path)
+
+
+def build(client, path, dockerfile='Dockerfile', **kwargs):
+    """
+    Build an image from the specified Dockerfile found in context indicated by
+    `path`. If an error is encountered during streaming, a DockerException
+    will be raised.
+
+    **Params:**
+        client: a docker `Client` object
+        path: string pointing to the build context. Can be any of:
+            * A readable directory containing a valid Dockerfile
+            * A tarball (optionally compressed with gzip, xz or bzip2)
+            * A valid Dockerfile
+            * A valid URL for a remote build context.
+        dockerfile: Name of the Dockerfile inside the context path.
+                    Default: "Dockerfile"
+        kwargs: Additional `docker.Client.build` arguments
+    """
+    ctx = create_context_from_path(path, dockerfile)
+    kwargs.update(ctx.job_params)
+    gen = client.build(ctx.path, **kwargs)
+    return tools.generator_parser(gen)

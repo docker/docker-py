@@ -30,6 +30,7 @@ import time
 import random
 
 import docker
+import docker.efficiency
 import requests
 import six
 
@@ -2109,7 +2110,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             'testdata/context'
         )
         tarball_path = os.path.join(base_path, 'ctx.tar.gz')
-        context = docker.utils.context.create_context_from_path(tarball_path)
+        context = docker.efficiency.create_context_from_path(tarball_path)
         try:
             self.client.build(context.path, **context.job_params)
             if context.job_params['fileobj'] is not None:
@@ -2124,12 +2125,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         ))
         custom_dockerfile = 'custom_dockerfile'
         try:
-            context = docker.utils.context.create_context_from_path(
+            context = docker.efficiency.create_context_from_path(
                 base_path,
                 dockerfile=custom_dockerfile
             )
             self.client.build(context.path, **context.job_params)
-        except docker.utils.context.ContextError as ce:
+        except docker.errors.ContextError as ce:
             self.fail(ce.message)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
@@ -2137,11 +2138,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_build_container_from_remote_context(self):
         ctxurl = 'https://localhost/staging/context.tar.gz'
         try:
-            context = docker.utils.context.create_context_from_path(ctxurl)
+            context = docker.efficiency.create_context_from_path(ctxurl)
             self.assertEqual(context.path, ctxurl)
             self.assertEqual(context.format, 'remote')
             self.client.build(context.path, **context.job_params)
-        except docker.utils.context.ContextError as ce:
+        except docker.errors.ContextError as ce:
             self.fail(ce.message)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
