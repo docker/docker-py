@@ -5,7 +5,7 @@ import six
 import tarfile
 import collections
 
-from . import tools
+from . import commons
 from .. import errors
 
 
@@ -218,4 +218,4 @@ def build(client, path, dockerfile='Dockerfile', **kwargs):
     ctx = create_context_from_path(path, dockerfile)
     kwargs.update(ctx.job_params)
     gen = client.build(ctx.path, **kwargs)
-    return tools.generator_parser(gen)
+    return commons.generator_parser(gen)

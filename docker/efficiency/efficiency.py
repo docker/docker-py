@@ -100,3 +100,14 @@ def build(path, dockerfile='Dockerfile', **kwargs):
 
 get_build_id = builds.get_build_id
 create_context_from_path = builds.create_context_from_path
+
+Image = images.Image
+Container = containers.Container
+
+
+def get_image(id):
+    return Image(_client, id)
+
+
+def get_container(id):
+    return Container(_client, id)
