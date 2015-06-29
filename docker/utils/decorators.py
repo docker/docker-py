@@ -4,7 +4,6 @@ from .. import errors
 
 
 def check_resource(f):
-
     @functools.wraps(f)
     def wrapped(self, resource_id=None, *args, **kwargs):
         if resource_id is None:
@@ -16,5 +15,7 @@ def check_resource(f):
             raise errors.NullResource(
                 'image or container param is undefined'
             )
+        if isinstance(resource_id, dict):
+            resource_id = resource_id.get('Id')
         return f(self, resource_id, *args, **kwargs)
     return wrapped
