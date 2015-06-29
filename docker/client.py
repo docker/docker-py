@@ -233,7 +233,7 @@ class Client(requests.Session):
                 break
             _, length = struct.unpack('>BxxxL', header)
             if not length:
-                break
+                continue
             data = response.raw.read(length)
             if not data:
                 break
