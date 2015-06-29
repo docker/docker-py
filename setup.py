@@ -21,10 +21,10 @@ with open('./test-requirements.txt') as test_reqs_txt:
 
 
 setup(
-    name="docker-py",
+    name="gc-docker-py",
     version=version,
-    description="Python client for Docker.",
-    url='https://github.com/docker/docker-py/',
+    description="Cloned Python client for Docker.",
+    url='https://github.com/paetling/docker-py',
     packages=[
         'docker', 'docker.auth', 'docker.unixconn', 'docker.utils',
         'docker.utils.ports', 'docker.ssladapter'
