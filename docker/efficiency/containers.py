@@ -158,6 +158,7 @@ class Container(commons.Interactive):
 
     @property
     def status(self):
+        self._update()
         if self.state['Restarting']:
             return 'restarting'
         if self.state['Paused']:
