@@ -21,7 +21,7 @@ with open('./test-requirements.txt') as test_reqs_txt:
 
 
 setup(
-    name="docker-py-paetling",
+    name="gc-docker-py",
     version=version,
     description="Cloned Python client for Docker.",
     url='https://github.com/paetling/docker-py',
