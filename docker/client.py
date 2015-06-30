@@ -316,7 +316,7 @@ class Client(requests.Session):
         elif fileobj is not None:
             context = utils.mkbuildcontext(fileobj)
         elif path.startswith(('http://', 'https://',
-                              'git://', 'github.com/')):
+                              'git://', 'github.com/', 'git@')):
             remote = path
         elif not os.path.isdir(path):
             raise TypeError("You must specify a directory to build in path")
