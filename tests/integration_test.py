@@ -830,6 +830,23 @@ class TestExecuteCommandString(BaseTestCase):
 
 
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
+class TestExecuteCommandStringAsUser(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container('busybox', 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        res = self.client.exec_create(id, 'whoami', user='default')
+        self.assertIn('Id', res)
+
+        exec_log = self.client.exec_start(res)
+        expected = b'default' if six.PY3 else 'default\n'
+        self.assertEqual(exec_log, expected)
+
+
+@unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
 class TestExecuteCommandStreaming(BaseTestCase):
     def runTest(self):
         container = self.client.create_container('busybox', 'cat',
