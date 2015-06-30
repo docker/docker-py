@@ -282,6 +282,7 @@ Sets up an exec instance in a running container.
 * stdout (bool): Attach to stdout of the exec command if true. Default: True
 * stderr (bool): Attach to stderr of the exec command if true. Default: True
 * tty (bool): Allocate a pseudo-TTY. Default: False
+* user (str): User to execute command as. Default: root
 
 **Returns** (dict): A dictionary with an exec 'Id' key.
 
