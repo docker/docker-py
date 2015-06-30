@@ -52,15 +52,16 @@ class Client(requests.Session):
 
         base_url = utils.parse_host(base_url)
         if base_url.startswith('http+unix://'):
-            unix_socket_adapter = unixconn.UnixAdapter(base_url, timeout)
-            self.mount('http+docker://', unix_socket_adapter)
+            self._adapter = unixconn.UnixAdapter(base_url, timeout)
+            self.mount('http+docker://', self._adapter)
             self.base_url = 'http+docker://localunixsocket'
         else:
             # Use SSLAdapter for the ability to specify SSL version
             if isinstance(tls, TLSConfig):
                 tls.configure_client(self)
             elif tls:
-                self.mount('https://', ssladapter.SSLAdapter())
+                self._adapter = ssladapter.SSLAdapter()
+                self.mount('https://', self._adapter)
             self.base_url = base_url
 
         # version detection needs to be after unix adapter mounting
@@ -242,6 +243,14 @@ class Client(requests.Session):
     @property
     def api_version(self):
         return self._version
+
+    def get_adapter(self, url):
+        try:
+            return super(Client, self).get_adapter(url)
+        except requests.exceptions.InvalidSchema as e:
+            if self._adapter:
+                return self._adapter
+            raise e
 
     @check_resource
     def attach(self, container, stdout=True, stderr=True,
