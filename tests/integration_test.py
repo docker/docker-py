@@ -872,8 +872,8 @@ class TestRunContainerStreaming(BaseTestCase):
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        socket = self.client.attach_socket(container, ws=False)
-        self.assertTrue(socket.fileno() > -1)
+        sock = self.client.attach_socket(container, ws=False)
+        self.assertTrue(sock.fileno() > -1)
 
 
 class TestPauseUnpauseContainer(BaseTestCase):
@@ -1464,8 +1464,18 @@ class TestRegressions(BaseTestCase):
         self.client.start(
             self.client.create_container('busybox', ['true'])
         )
-        result = self.client.containers(trunc=True)
+        result = self.client.containers(all=True, trunc=True)
         self.assertEqual(len(result[0]['Id']), 12)
+
+    def test_647(self):
+        with self.assertRaises(docker.errors.APIError):
+            self.client.inspect_image('gensokyo.jp//kirisame')
+
+    def test_649(self):
+        self.client.timeout = None
+        ctnr = self.client.create_container('busybox', ['sleep', '2'])
+        self.client.start(ctnr)
+        self.client.stop(ctnr)
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ requirements = [
 ]
 
 if sys.version_info[0] < 3:
-    requirements.append('websocket-client >= 0.11.0')
+    requirements.append('websocket-client >= 0.32.0')
 
 exec(open('docker/version.py').read())
 

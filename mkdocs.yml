@@ -1,17 +1,17 @@
 site_name: docker-py Documentation
 site_description: An API client for Docker written in Python
 site_favicon: favicon_whale.png
-site_url: docker-py.readthedocs.org
+site_url: http://docker-py.readthedocs.org
 repo_url: https://github.com/docker/docker-py/
 theme: readthedocs
 pages:
-- [index.md, Home]
-- [api.md, Client API]
-- [port-bindings.md, Port Bindings]
-- [volumes.md, Using Volumes]
-- [tls.md, Using TLS]
-- [host-devices.md, Host devices]
-- [hostconfig.md, Host configuration]
-- [boot2docker.md, Using with boot2docker]
-- [change_log.md, Change Log]
-- [contributing.md, Contributing]
+- Home: index.md
+- Client API: api.md
+- Port Bindings: port-bindings.md
+- Using Volumes: volumes.md
+- Using TLS: tls.md
+- Host devices: host-devices.md
+- Host configuration: hostconfig.md
+- Using with boot2docker: boot2docker.md
+- Change Log: change_log.md
+- Contributing: contributing.md

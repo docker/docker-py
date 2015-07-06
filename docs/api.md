@@ -71,8 +71,10 @@ correct value (e.g `gzip`).
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
     - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
+* decode (bool): If set to `True`, the returned stream will be decoded into
+  dicts on the fly. Default `False`.
 
-**Returns** (generator): A generator of the build output
+**Returns** (generator): A generator for the build output
 
 ```python
 >>> from io import BytesIO
@@ -182,7 +184,7 @@ information on how to create port bindings and volume mappings.
 
 The `mem_limit` variable accepts float values (which represent the memory limit
 of the created container in bytes) or a string with a units identification char
-('100000b', 1000k', 128m', '1g'). If a string is specified without a units
+('100000b', '1000k', '128m', '1g'). If a string is specified without a units
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
@@ -219,6 +221,7 @@ from. Optionally a single string joining container id's with commas
 * host_config (dict): A [HostConfig](hostconfig.md) dictionary
 * mac_address (str): The Mac Address to assign the container
 * labels (dict or list): A dictionary of name-value labels (e.g. `{"label1": "value1", "label2": "value2"}`) or a list of names of labels to set with empty values (e.g. `["label1", "label2"]`)
+* volume_driver (str): The name of a volume driver/plugin.
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 

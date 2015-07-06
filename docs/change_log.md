@@ -1,6 +1,40 @@
 Change Log
 ==========
 
+1.2.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.2.3+is%3Aclosed)
+
+### Deprecation warning
+
+* Passing host config in the `Client.start` method is now deprecated. Please use the
+  `host_config` in `Client.create_container` instead.
+
+### Features
+
+* Added support for `privileged` param in `Client.exec_create`
+  (only available in API >= 1.19)
+* Volume binds can now also be specified as a list of strings.
+
+### Bugfixes
+
+* Fixed a bug where the `read_only` param in host_config wasn't handled
+  properly.
+* Fixed a bug in `Client.execute` (this method is still deprecated).
+* The `cpuset` param in `Client.create_container` is also passed as
+  the `CpusetCpus` param (`Cpuset` deprecated in recent versions of the API)
+* Fixed an issue with integration tests being run inside a container
+  (`make integration-test`)
+* Fixed a bug where an empty string would be considered a valid container ID
+  or image ID.
+* Fixed a bug in `Client.insert`
+
+
+### Documentation
+
+* Various fixes
+
 1.2.2
 -----
 

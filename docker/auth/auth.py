@@ -23,7 +23,8 @@ from ..utils import utils
 from .. import errors
 
 INDEX_URL = 'https://index.docker.io/v1/'
-DOCKER_CONFIG_FILENAME = '.dockercfg'
+DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
+LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 
 
 def expand_registry_url(hostname, insecure=False):
@@ -107,6 +108,29 @@ def encode_full_header(auth):
     return encode_header({'configs': auth})
 
 
+def parse_auth(entries):
+    """
+    Parses authentication entries
+
+    Args:
+      entries: Dict of authentication entries.
+
+    Returns:
+      Authentication registry.
+    """
+
+    conf = {}
+    for registry, entry in six.iteritems(entries):
+        username, password = decode_auth(entry['auth'])
+        conf[registry] = {
+            'username': username,
+            'password': password,
+            'email': entry['email'],
+            'serveraddress': registry,
+        }
+    return conf
+
+
 def load_config(config_path=None):
     """
     Loads authentication data from a Docker configuration file in the given
@@ -115,26 +139,34 @@ def load_config(config_path=None):
     conf = {}
     data = None
 
-    config_file = config_path or os.path.join(os.environ.get('HOME', '.'),
+    # Prefer ~/.docker/config.json.
+    config_file = config_path or os.path.join(os.path.expanduser('~'),
                                               DOCKER_CONFIG_FILENAME)
+
+    if os.path.exists(config_file):
+        try:
+            with open(config_file) as f:
+                for section, data in six.iteritems(json.load(f)):
+                    if section != 'auths':
+                        continue
+                    return parse_auth(data)
+        except (IOError, KeyError, ValueError):
+            # Likely missing new Docker config file or it's in an
+            # unknown format, continue to attempt to read old location
+            # and format.
+            pass
+
+    config_file = config_path or os.path.join(os.path.expanduser('~'),
+                                              LEGACY_DOCKER_CONFIG_FILENAME)
 
     # if config path doesn't exist return empty config
     if not os.path.exists(config_file):
         return {}
 
-    # First try as JSON
+    # Try reading legacy location as JSON.
     try:
         with open(config_file) as f:
-            conf = {}
-            for registry, entry in six.iteritems(json.load(f)):
-                username, password = decode_auth(entry['auth'])
-                conf[registry] = {
-                    'username': username,
-                    'password': password,
-                    'email': entry['email'],
-                    'serveraddress': registry,
-                }
-            return conf
+            return parse_auth(json.load(f))
     except:
         pass
 
