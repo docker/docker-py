@@ -69,6 +69,14 @@ def fake_resolve_authconfig(authconfig, registry=None):
     return None
 
 
+def fake_inspect_container(self, container, tty=False):
+    return fake_api.get_fake_inspect_container(tty=tty)[1]
+
+
+def fake_inspect_container_tty(self, container):
+    return fake_inspect_container(self, container, tty=True)
+
+
 def fake_resp(url, data=None, **kwargs):
     status_code, content = fake_api.fake_responses[url]()
     return response(status_code=status_code, content=content)
@@ -1546,7 +1554,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_logs(self):
         try:
-            logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
+            with mock.patch('docker.Client.inspect_container',
+                            fake_inspect_container):
+                logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1565,7 +1575,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_logs_with_dict_instead_of_id(self):
         try:
-            logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
+            with mock.patch('docker.Client.inspect_container',
+                            fake_inspect_container):
+                logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1584,7 +1596,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_log_streaming(self):
         try:
-            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
+            with mock.patch('docker.Client.inspect_container',
+                            fake_inspect_container):
+                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1598,7 +1612,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_log_tail(self):
         try:
-            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False, tail=10)
+            with mock.patch('docker.Client.inspect_container',
+                            fake_inspect_container):
+                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                                 tail=10)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -1608,6 +1625,27 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     'tail': 10},
             timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
+        )
+
+    def test_log_tty(self):
+        try:
+            m = mock.Mock()
+            with mock.patch('docker.Client.inspect_container',
+                            fake_inspect_container_tty):
+                with mock.patch('docker.Client._stream_raw_result',
+                                m):
+                    self.client.logs(fake_api.FAKE_CONTAINER_ID,
+                                     stream=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.assertTrue(m.called)
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=True
         )
 
     def test_diff(self):
