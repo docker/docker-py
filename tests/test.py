@@ -69,8 +69,12 @@ def fake_resolve_authconfig(authconfig, registry=None):
     return None
 
 
-def fake_inspect_container(self, container):
-    return fake_api.get_fake_inspect_container()[1]
+def fake_inspect_container(self, container, tty=False):
+    return fake_api.get_fake_inspect_container(tty=tty)[1]
+
+
+def fake_inspect_container_tty(self, container):
+    return fake_inspect_container(self, container, tty=True)
 
 
 def fake_resp(url, data=None, **kwargs):
@@ -1621,6 +1625,26 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     'tail': 10},
             timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
+        )
+
+    def test_log_tty(self):
+        try:
+            m = mock.Mock()
+            with mock.patch('docker.Client.inspect_container',
+                            fake_inspect_container_tty), \
+                 mock.patch('docker.Client._stream_raw_result',  # noqa
+                            m):
+                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.assertTrue(m.called)
+        fake_request.assert_called_with(
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=True
         )
 
     def test_diff(self):

@@ -40,7 +40,7 @@ class Client(clientbase.ClientBase):
         u = self._url("/containers/{0}/attach".format(container))
         response = self._post(u, params=params, stream=stream)
 
-        return self._stream_result(container, stream, response)
+        return self._get_result(container, stream, response)
 
     @check_resource
     def attach_socket(self, container, params=None, ws=False):
@@ -342,7 +342,7 @@ class Client(clientbase.ClientBase):
 
         res = self._post_json(self._url('/exec/{0}/start'.format(exec_id)),
                               data=data, stream=stream)
-        return self._stream_result_tty(stream, res, tty)
+        return self._get_result_tty(stream, res, tty)
 
     @check_resource
     def export(self, container):
@@ -557,7 +557,7 @@ class Client(clientbase.ClientBase):
                 params['tail'] = tail
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
-            return self._stream_result(container, stream, res)
+            return self._get_result(container, stream, res)
         return self.attach(
             container,
             stdout=stdout,

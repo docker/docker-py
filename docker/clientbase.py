@@ -236,18 +236,18 @@ class ClientBase(requests.Session):
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
 
-    def _stream_result(self, container, stream, res):
+    def _get_result(self, container, stream, res):
         cont = self.inspect_container(container)
-        return self._stream_result_tty(stream, res, cont['Config']['Tty'])
+        return self._get_result_tty(stream, res, cont['Config']['Tty'])
 
-    def _stream_result_tty(self, stream, res, is_tty):
+    def _get_result_tty(self, stream, res, is_tty):
         # Stream multi-plexing was only introduced in API v1.6. Anything
-        # before that needs old-style streaming. We should also use
-        # raw streaming (without keep-alives) if we're dealing with 
-        # a tty-enabled container.
+        # before that needs old-style streaming.
         if utils.compare_version('1.6', self._version) < 0:
             return self._stream_raw_result_old(res)
-            
+
+        # We should also use raw streaming (without keep-alives)
+        # if we're dealing with a tty-enabled container.
         if is_tty:
             return self._stream_raw_result(res) if stream else \
                 self._result(res, binary=True)
