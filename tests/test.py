@@ -1631,10 +1631,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             m = mock.Mock()
             with mock.patch('docker.Client.inspect_container',
-                            fake_inspect_container_tty), \
-                 mock.patch('docker.Client._stream_raw_result',  # noqa
-                            m):
-                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
+                            fake_inspect_container_tty):
+                with mock.patch('docker.Client._stream_raw_result',
+                                m):
+                    self.client.logs(fake_api.FAKE_CONTAINER_ID,
+                                     stream=True)
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
