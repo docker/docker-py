@@ -40,28 +40,7 @@ class Client(clientbase.ClientBase):
         u = self._url("/containers/{0}/attach".format(container))
         response = self._post(u, params=params, stream=stream)
 
-        # Stream multi-plexing was only introduced in API v1.6. Anything before
-        # that needs old-style streaming.
-        if utils.compare_version('1.6', self._version) < 0:
-            def stream_result():
-                self._raise_for_status(response)
-                for line in response.iter_lines(chunk_size=1,
-                                                decode_unicode=True):
-                    # filter out keep-alive new lines
-                    if line:
-                        yield line
-
-            return stream_result() if stream else \
-                self._result(response, binary=True)
-
-        sep = bytes() if six.PY3 else str()
-
-        if stream:
-            return self._multiplexed_response_stream_helper(response)
-        else:
-            return sep.join(
-                [x for x in self._multiplexed_buffer_helper(response)]
-            )
+        return self._get_result(container, stream, response)
 
     @check_resource
     def attach_socket(self, container, params=None, ws=False):
@@ -363,17 +342,7 @@ class Client(clientbase.ClientBase):
 
         res = self._post_json(self._url('/exec/{0}/start'.format(exec_id)),
                               data=data, stream=stream)
-        self._raise_for_status(res)
-        if stream:
-            return self._multiplexed_response_stream_helper(res)
-        elif six.PY3:
-            return bytes().join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
-        else:
-            return str().join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
+        return self._get_result_tty(stream, res, tty)
 
     @check_resource
     def export(self, container):
@@ -588,16 +557,7 @@ class Client(clientbase.ClientBase):
                 params['tail'] = tail
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
-            if stream:
-                return self._multiplexed_response_stream_helper(res)
-            elif six.PY3:
-                return bytes().join(
-                    [x for x in self._multiplexed_buffer_helper(res)]
-                )
-            else:
-                return str().join(
-                    [x for x in self._multiplexed_buffer_helper(res)]
-                )
+            return self._get_result(container, stream, res)
         return self.attach(
             container,
             stdout=stdout,
