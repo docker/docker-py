@@ -40,22 +40,7 @@ class Client(clientbase.ClientBase):
         u = self._url("/containers/{0}/attach".format(container))
         response = self._post(u, params=params, stream=stream)
 
-        # Stream multi-plexing was only introduced in API v1.6. Anything before
-        # that needs old-style streaming. We also should use old-style
-        # streaming if we're dealing with a tty-enabled container.
-        cont = self.inspect_container(container)
-        if utils.compare_version('1.6', self._version) < 0 or \
-           cont['Config']['Tty']:
-            return self._stream_raw_result(response) if stream else \
-                self._result(response, binary=True)
-
-        sep = bytes() if six.PY3 else str()
-        if stream:
-            return self._multiplexed_response_stream_helper(response)
-        else:
-            return sep.join(
-                [x for x in self._multiplexed_buffer_helper(response)]
-            )
+        return self._stream_result(container, stream, response)
 
     @check_resource
     def attach_socket(self, container, params=None, ws=False):
@@ -357,21 +342,7 @@ class Client(clientbase.ClientBase):
 
         res = self._post_json(self._url('/exec/{0}/start'.format(exec_id)),
                               data=data, stream=stream)
-        # Stream multi-plexing was only introduced in API v1.6. Anything before
-        # that needs old-style streaming. We also should use old-style
-        # streaming if we're dealing with a tty-enabled container.
-        if utils.compare_version('1.6', self._version) < 0 or tty:
-            return self._stream_raw_result(res) if stream else \
-                self._result(res, binary=True)
-
-        self._raise_for_status(res)
-        sep = bytes() if six.PY3 else str()
-        if stream:
-            return self._multiplexed_response_stream_helper(res)
-        else:
-            return sep.join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
+        return self._stream_result_tty(stream, res, tty)
 
     @check_resource
     def export(self, container):
@@ -586,23 +557,7 @@ class Client(clientbase.ClientBase):
                 params['tail'] = tail
             url = self._url("/containers/{0}/logs".format(container))
             res = self._get(url, params=params, stream=stream)
-            # Stream multi-plexing was only introduced in API v1.6. Anything
-            # before that needs old-style streaming. We also should use
-            # old-style streaming if we're dealing with a tty-enabled
-            # container.
-            cont = self.inspect_container(container)
-            if utils.compare_version('1.6', self._version) < 0 or \
-               cont['Config']['Tty']:
-                return self._stream_raw_result(res) if stream else \
-                    self._result(res, binary=True)
-
-            sep = bytes() if six.PY3 else str()
-            if stream:
-                return self._multiplexed_response_stream_helper(res)
-            else:
-                return sep.join(
-                    [x for x in self._multiplexed_buffer_helper(res)]
-                )
+            return self._stream_result(container, stream, res)
         return self.attach(
             container,
             stdout=stdout,
