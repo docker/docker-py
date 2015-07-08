@@ -9,10 +9,8 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 requirements = [
     'requests >= 2.5.2',
     'six >= 1.3.0',
+    'websocket-client >= 0.32.0',
 ]
-
-if sys.version_info[0] < 3:
-    requirements.append('websocket-client >= 0.32.0')
 
 exec(open('docker/version.py').read())
 
