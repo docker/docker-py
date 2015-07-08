@@ -1,6 +1,55 @@
 Change Log
 ==========
 
+1.3.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.3.0+is%3Aclosed)
+
+### Deprecation warning
+
+* As announced in the 1.2.0 release, `Client.execute` has been removed in favor of
+  `Client.exec_create` and `Client.exec_start`.
+
+### Features
+
+* `extra_hosts` parameter in host config can now also be provided as a list.
+* Added support for `memory_limit` and `memswap_limit` in host config to
+  comply with recent deprecations.
+* Added support for `volume_driver` in `Client.create_container`
+* Added support for advanced modes in volume binds (using the `mode` key)
+* Added support for `decode` in `Client.build` (decodes JSON stream on the fly)
+* docker-py will now look for login configuration under the new config path,
+  and fall back to the old `~/.dockercfg` path if not present.
+
+### Bugfixes
+
+* Configuration file lookup now also work on platforms that don't define a
+  `$HOME` environment variable.
+* Fixed an issue where pinging a v2 private registry wasn't working properly,
+  preventing users from pushing and pulling.
+* `pull` parameter in `Client.build` now defaults to `False`. Fixes a bug where
+  the default options would try to force a pull of non-remote images.
+* Fixed a bug where getting logs from tty-enabled containers wasn't working
+  properly with more recent versions of Docker
+* `Client.push` and `Client.pull` will now raise exceptions if the HTTP
+  status indicates an error.
+* Fixed a bug with adapter lookup when using the Unix socket adapter
+  (this affected some weird edge cases, see issue #647 for details)
+* Fixed a bug where providing `timeout=None` to `Client.stop` would result
+  in an exception despite the usecase being valid.
+* Added `git@` to the list of valid prefixes for remote build paths.
+
+### Dependencies
+
+* The websocket-client dependency has been updated to a more recent version.
+  This new version also supports Python 3.x, making `attach_socket` available
+  on those versions as well.
+
+### Documentation
+
+* Various fixes
+
 1.2.3
 -----
 
