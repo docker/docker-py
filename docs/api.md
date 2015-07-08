@@ -513,6 +513,15 @@ Kill a container or send a signal to a container
 * container (str): The container to kill
 * signal (str or int): The singal to send. Defaults to `SIGKILL`
 
+## load_image
+
+Load an image that was previously saved using `Client.get_image`
+(or `docker save`). Similar to `docker load`.
+
+**Params**:
+
+* data (binary): Image data to be loaded
+
 ## login
 
 Nearly identical to the `docker login` command, but non-interactive.
@@ -828,10 +837,13 @@ Nearly identical to the `docker version` command.
 
 ## wait
 Identical to the `docker wait` command. Block until a container stops, then
-print its exit code. Returns the value `-1` if no `StatusCode` is returned by
-the API.
+return its exit code. Returns the value `-1` if the API responds without a
+`StatusCode` attribute.
 
-If `container` a dict, the `Id` key is used.
+If `container` is a dict, the `Id` key is used.
+
+If the timeout value is exceeded, a `requests.exceptions.ReadTimeout`
+exception will be raised.
 
 **Params**:
 
