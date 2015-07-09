@@ -271,19 +271,6 @@ class Client(clientbase.ClientBase):
                                             params=params, stream=True),
                                    decode=decode)
 
-    @check_resource
-    def execute(self, container, cmd, detach=False, stdout=True, stderr=True,
-                stream=False, tty=False):
-        warnings.warn(
-            'Client.execute is being deprecated. Please use exec_create & '
-            'exec_start instead', DeprecationWarning
-        )
-        create_res = self.exec_create(
-            container, cmd, stdout, stderr, tty
-        )
-
-        return self.exec_start(create_res, detach, tty, stream)
-
     def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
                     privileged=False):
         if utils.compare_version('1.15', self._version) < 0:
