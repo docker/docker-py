@@ -242,6 +242,7 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
+@unittest.skipIf(NOT_ON_HOST, 'Tests running inside a container; no syslog')
 class TestCreateContainerWithLogConfig(BaseTestCase):
     def runTest(self):
         config = docker.utils.LogConfig(
@@ -1386,7 +1387,7 @@ class TestLoadJSONConfig(BaseTestCase):
 
 class TestAutoDetectVersion(unittest.TestCase):
     def test_client_init(self):
-        client = docker.Client(version='auto')
+        client = docker.Client(base_url=DEFAULT_BASE_URL, version='auto')
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -1395,7 +1396,7 @@ class TestAutoDetectVersion(unittest.TestCase):
         client.close()
 
     def test_auto_client(self):
-        client = docker.AutoVersionClient()
+        client = docker.AutoVersionClient(base_url=DEFAULT_BASE_URL)
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -1403,7 +1404,7 @@ class TestAutoDetectVersion(unittest.TestCase):
         self.assertEqual(client_version, api_version_2)
         client.close()
         with self.assertRaises(docker.errors.DockerException):
-            docker.AutoVersionClient(version='1.11')
+            docker.AutoVersionClient(base_url=DEFAULT_BASE_URL, version='1.11')
 
 
 class TestConnectionTimeout(unittest.TestCase):
