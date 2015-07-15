@@ -615,6 +615,16 @@ def create_container_config(
         if volumes_from is not None:
             raise errors.InvalidVersion(message.format('volumes_from'))
 
+    # NetworkMode must be present and valid in host config from 1.20 onwards
+    if compare_version('1.20', version) >= 0:
+        if host_config is None:
+            host_config = {'NetworkMode': 'default'}
+        else:
+            if 'NetworkMode' not in host_config:
+                host_config['NetworkMode'] = 'default'
+            elif host_config['NetworkMode'] == '':
+                host_config['NetworkMode'] = 'default'
+
     return {
         'Hostname': hostname,
         'Domainname': domainname,
