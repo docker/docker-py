@@ -181,7 +181,8 @@ class TestCreateContainerWithBinds(BaseTestCase):
             container = self.client.create_container(
                 'busybox',
                 ['ls', mount_dest], volumes={mount_dest: {}},
-                host_config=create_host_config(binds=binds)
+                host_config=create_host_config(
+                    binds=binds, network_mode='none')
             )
             container_id = container['Id']
             self.client.start(container_id)
@@ -221,7 +222,8 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
             container = self.client.create_container(
                 'busybox',
                 ['ls', mount_dest], volumes={mount_dest: {}},
-                host_config=create_host_config(binds=binds)
+                host_config=create_host_config(
+                    binds=binds, network_mode='none')
             )
             container_id = container['Id']
             self.client.start(container_id)
@@ -273,7 +275,8 @@ class TestCreateContainerReadOnlyFs(BaseTestCase):
     def runTest(self):
         ctnr = self.client.create_container(
             'busybox', ['mkdir', '/shrine'],
-            host_config=create_host_config(read_only=True)
+            host_config=create_host_config(
+                read_only=True, network_mode='none')
         )
         self.assertIn('Id', ctnr)
         self.tmp_containers.append(ctnr['Id'])
@@ -347,7 +350,8 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
 class TestCreateContainerPrivileged(BaseTestCase):
     def runTest(self):
         res = self.client.create_container(
-            'busybox', 'true', host_config=create_host_config(privileged=True)
+            'busybox', 'true', host_config=create_host_config(
+                privileged=True, network_mode='none')
         )
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
@@ -591,7 +595,8 @@ class TestPort(BaseTestCase):
 
         container = self.client.create_container(
             'busybox', ['sleep', '60'], ports=list(port_bindings.keys()),
-            host_config=create_host_config(port_bindings=port_bindings)
+            host_config=create_host_config(
+                port_bindings=port_bindings, network_mode='bridge')
         )
         id = container['Id']
 
@@ -717,7 +722,8 @@ class TestCreateContainerWithVolumesFrom(BaseTestCase):
             )
         res2 = self.client.create_container(
             'busybox', 'cat', detach=True, stdin_open=True,
-            host_config=create_host_config(volumes_from=vol_names)
+            host_config=create_host_config(
+                volumes_from=vol_names, network_mode='none')
         )
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
@@ -760,7 +766,8 @@ class TestCreateContainerWithLinks(BaseTestCase):
 
         res2 = self.client.create_container(
             'busybox', 'env', host_config=create_host_config(
-                links={link_path1: link_alias1, link_path2: link_alias2}
+                links={link_path1: link_alias1, link_path2: link_alias2},
+                network_mode='none'
             )
         )
         container3_id = res2['Id']
@@ -781,7 +788,8 @@ class TestRestartingContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container(
             'busybox', ['sleep', '2'], host_config=create_host_config(
-                restart_policy={"Name": "always", "MaximumRetryCount": 0}
+                restart_policy={"Name": "always", "MaximumRetryCount": 0},
+                network_mode='none'
             )
         )
         id = container['Id']
@@ -910,7 +918,7 @@ class TestCreateContainerWithHostPidMode(BaseTestCase):
     def runTest(self):
         ctnr = self.client.create_container(
             'busybox', 'true', host_config=create_host_config(
-                pid_mode='host'
+                pid_mode='host', network_mode='none'
             )
         )
         self.assertIn('Id', ctnr)
@@ -945,7 +953,7 @@ class TestRemoveLink(BaseTestCase):
 
         container2 = self.client.create_container(
             'busybox', 'cat', host_config=create_host_config(
-                links={link_path: link_alias}
+                links={link_path: link_alias}, network_mode='none'
             )
         )
         container2_id = container2['Id']
