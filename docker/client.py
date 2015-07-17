@@ -139,7 +139,7 @@ class Client(clientbase.ClientBase):
             if self._auth_configs:
                 if headers is None:
                     headers = {}
-                headers['X-Registry-Config'] = auth.encode_full_header(
+                headers['X-Registry-Config'] = auth.encode_header(
                     self._auth_configs
                 )
 
