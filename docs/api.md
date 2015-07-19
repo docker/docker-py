@@ -726,6 +726,10 @@ Identical to the `docker search` command.
 Similar to the `docker start` command, but doesn't support attach options. Use
 `.logs()` to recover `stdout`/`stderr`.
 
+**Params**:
+
+* container (str): The container to start
+
 **Deprecation warning:** For API version > 1.15, it is highly recommended to
   provide host config options in the
   [`host_config` parameter of `create_container`](#create_container)
@@ -748,7 +752,7 @@ This will stream statistics for a specific container.
 
 **Params**:
 
-* container (str): The container to start
+* container (str): The container to stream statistics for
 * decode (bool): If set to true, stream will be decoded into dicts on the
   fly. False by default.
 
