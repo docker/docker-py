@@ -511,7 +511,7 @@ Kill a container or send a signal to a container
 **Params**:
 
 * container (str): The container to kill
-* signal (str or int): The singal to send. Defaults to `SIGKILL`
+* signal (str or int): The signal to send. Defaults to `SIGKILL`
 
 ## load_image
 
