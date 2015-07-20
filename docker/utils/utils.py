@@ -19,6 +19,7 @@ import json
 import shlex
 import tarfile
 import tempfile
+import warnings
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
 from datetime import datetime
@@ -120,6 +121,11 @@ def compare_version(v1, v2):
 
 
 def ping_registry(url):
+    warnings.warn(
+        'The `ping_registry` method is deprecated and will be removed.',
+        DeprecationWarning
+    )
+
     return ping(url + '/v2/', [401]) or ping(url + '/v1/_ping')
 
 

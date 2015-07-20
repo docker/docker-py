@@ -9,7 +9,7 @@ from docker.utils import (
     create_host_config, Ulimit, LogConfig, parse_bytes
 )
 from docker.utils.ports import build_port_bindings, split_port
-from docker.auth import resolve_authconfig
+from docker.auth import resolve_repository_name, resolve_authconfig
 
 import base
 
@@ -167,6 +167,61 @@ class UtilsTest(base.BaseTestCase):
             type=LogConfig.types.JSON, config='helloworld'
         ))
 
+    def test_resolve_repository_name(self):
+        # docker hub library image
+        self.assertEqual(
+            resolve_repository_name('image'),
+            ('index.docker.io', 'image'),
+        )
+
+        # docker hub image
+        self.assertEqual(
+            resolve_repository_name('username/image'),
+            ('index.docker.io', 'username/image'),
+        )
+
+        # private registry
+        self.assertEqual(
+            resolve_repository_name('my.registry.net/image'),
+            ('my.registry.net', 'image'),
+        )
+
+        # private registry with port
+        self.assertEqual(
+            resolve_repository_name('my.registry.net:5000/image'),
+            ('my.registry.net:5000', 'image'),
+        )
+
+        # private registry with username
+        self.assertEqual(
+            resolve_repository_name('my.registry.net/username/image'),
+            ('my.registry.net', 'username/image'),
+        )
+
+        # no dots but port
+        self.assertEqual(
+            resolve_repository_name('hostname:5000/image'),
+            ('hostname:5000', 'image'),
+        )
+
+        # no dots but port and username
+        self.assertEqual(
+            resolve_repository_name('hostname:5000/username/image'),
+            ('hostname:5000', 'username/image'),
+        )
+
+        # localhost
+        self.assertEqual(
+            resolve_repository_name('localhost/image'),
+            ('localhost', 'image'),
+        )
+
+        # localhost with username
+        self.assertEqual(
+            resolve_repository_name('localhost/username/image'),
+            ('localhost', 'username/image'),
+        )
+
     def test_resolve_authconfig(self):
         auth_config = {
             'https://index.docker.io/v1/': {'auth': 'indexuser'},
@@ -229,6 +284,40 @@ class UtilsTest(base.BaseTestCase):
         # no matching entry
         self.assertTrue(
             resolve_authconfig(auth_config, 'does.not.exist') is None
+        )
+
+    def test_resolve_registry_and_auth(self):
+        auth_config = {
+            'https://index.docker.io/v1/': {'auth': 'indexuser'},
+            'my.registry.net': {'auth': 'privateuser'},
+        }
+
+        # library image
+        image = 'image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            {'auth': 'indexuser'},
+        )
+
+        # docker hub image
+        image = 'username/image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            {'auth': 'indexuser'},
+        )
+
+        # private registry
+        image = 'my.registry.net/image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            {'auth': 'privateuser'},
+        )
+
+        # unauthenticated registry
+        image = 'other.registry.net/image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            None,
         )
 
     def test_split_port_with_host_ip(self):

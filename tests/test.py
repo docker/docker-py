@@ -2424,9 +2424,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             f.write('auth = {0}\n'.format(auth_))
             f.write('email = sakuya@scarlet.net')
         cfg = docker.auth.load_config(dockercfg_path)
-        self.assertTrue(docker.auth.INDEX_URL in cfg)
-        self.assertNotEqual(cfg[docker.auth.INDEX_URL], None)
-        cfg = cfg[docker.auth.INDEX_URL]
+        self.assertTrue(docker.auth.INDEX_NAME in cfg)
+        self.assertNotEqual(cfg[docker.auth.INDEX_NAME], None)
+        cfg = cfg[docker.auth.INDEX_NAME]
         self.assertEqual(cfg['username'], 'sakuya')
         self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')

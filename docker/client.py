@@ -25,6 +25,7 @@ from . import constants
 from . import errors
 from .auth import auth
 from .utils import utils, check_resource
+from .constants import INSECURE_REGISTRY_DEPRECATION_WARNING
 
 
 class Client(clientbase.ClientBase):
@@ -267,9 +268,10 @@ class Client(clientbase.ClientBase):
             'filters': filters
         }
 
-        return self._stream_helper(self.get(self._url('/events'),
-                                            params=params, stream=True),
-                                   decode=decode)
+        return self._stream_helper(
+            self.get(self._url('/events'), params=params, stream=True),
+            decode=decode
+        )
 
     def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
                     privileged=False):
@@ -499,6 +501,12 @@ class Client(clientbase.ClientBase):
 
     def login(self, username, password=None, email=None, registry=None,
               reauth=False, insecure_registry=False, dockercfg_path=None):
+        if insecure_registry:
+            warnings.warn(
+                INSECURE_REGISTRY_DEPRECATION_WARNING.format('login()'),
+                DeprecationWarning
+            )
+
         # If we don't have any auth data so far, try reloading the config file
         # one more time in case anything showed up in there.
         # If dockercfg_path is passed check to see if the config file exists,
@@ -584,11 +592,15 @@ class Client(clientbase.ClientBase):
 
     def pull(self, repository, tag=None, stream=False,
              insecure_registry=False, auth_config=None):
+        if insecure_registry:
+            warnings.warn(
+                INSECURE_REGISTRY_DEPRECATION_WARNING.format('pull()'),
+                DeprecationWarning
+            )
+
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
-        registry, repo_name = auth.resolve_repository_name(
-            repository, insecure=insecure_registry
-        )
+        registry, repo_name = auth.resolve_repository_name(repository)
         if repo_name.count(":") == 1:
             repository, tag = repository.rsplit(":", 1)
 
@@ -631,11 +643,15 @@ class Client(clientbase.ClientBase):
 
     def push(self, repository, tag=None, stream=False,
              insecure_registry=False):
+        if insecure_registry:
+            warnings.warn(
+                INSECURE_REGISTRY_DEPRECATION_WARNING.format('push()'),
+                DeprecationWarning
+            )
+
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
-        registry, repo_name = auth.resolve_repository_name(
-            repository, insecure=insecure_registry
-        )
+        registry, repo_name = auth.resolve_repository_name(repository)
         u = self._url("/images/{0}/push".format(repository))
         params = {
             'tag': tag
