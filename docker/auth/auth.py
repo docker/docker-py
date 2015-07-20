@@ -20,6 +20,7 @@ import warnings
 
 import six
 
+from .. import constants
 from .. import errors
 
 INDEX_NAME = 'index.docker.io'
@@ -31,9 +32,9 @@ LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 def resolve_repository_name(repo_name, insecure=False):
     if insecure:
         warnings.warn(
-            'The `insecure` argument to resolve_repository_name() '
-            'is deprecated and non-functional. Please remove it.',
-            DeprecationWarning
+            constants.INSECURE_REGISTRY_DEPRECATION_WARNING.format(
+                'resolve_repository_name()'
+            ), DeprecationWarning
         )
 
     if '://' in repo_name:

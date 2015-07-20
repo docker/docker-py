@@ -268,9 +268,10 @@ class Client(clientbase.ClientBase):
             'filters': filters
         }
 
-        return self._stream_helper(self.get(self._url('/events'),
-                                            params=params, stream=True),
-                                   decode=decode)
+        return self._stream_helper(
+            self.get(self._url('/events'), params=params, stream=True),
+            decode=decode
+        )
 
     def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
                     privileged=False):
