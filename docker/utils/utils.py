@@ -333,9 +333,9 @@ def convert_filters(filters):
     return json.dumps(result)
 
 
-def datetime_to_timestamp(dt=datetime.now()):
-    """Convert a datetime in local timezone to a unix timestamp"""
-    delta = dt - datetime.fromtimestamp(0)
+def datetime_to_timestamp(dt):
+    """Convert a UTC datetime to a Unix timestamp"""
+    delta = dt - datetime.utcfromtimestamp(0)
     return delta.seconds + delta.days * 24 * 3600
 
 
