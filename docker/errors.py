@@ -53,6 +53,10 @@ class DockerException(Exception):
     pass
 
 
+class NotFound(APIError):
+    pass
+
+
 class InvalidVersion(DockerException):
     pass
 

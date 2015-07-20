@@ -99,6 +99,8 @@ class ClientBase(requests.Session):
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                raise errors.NotFound(e, response, explanation=explanation)
             raise errors.APIError(e, response, explanation=explanation)
 
     def _result(self, response, json=False, binary=False):
