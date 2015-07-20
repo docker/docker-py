@@ -98,12 +98,6 @@ def encode_header(auth):
     return base64.b64encode(auth_json)
 
 
-def encode_full_header(auth):
-    """ Returns the given auth block encoded for the X-Registry-Config header.
-    """
-    return encode_header({'configs': auth})
-
-
 def parse_auth(entries):
     """
     Parses authentication entries
