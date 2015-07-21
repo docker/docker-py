@@ -314,9 +314,15 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
     tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
 
     params = {}
+
     if host:
         params['base_url'] = (host.replace('tcp://', 'https://')
                               if tls_verify else host)
+
+    if tls_verify and not cert_path:
+        if 'HOME' in os.environ:
+            cert_path = os.path.join(os.environ['HOME'], '.docker')
+
     if tls_verify and cert_path:
         params['tls'] = tls.TLSConfig(
             client_cert=(os.path.join(cert_path, 'cert.pem'),
@@ -325,6 +331,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
             verify=True,
             ssl_version=ssl_version,
             assert_hostname=assert_hostname)
+
     return params
 
 

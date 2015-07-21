@@ -1,5 +1,7 @@
 import os
 import os.path
+import shutil
+import tempfile
 import unittest
 
 from docker.client import Client
@@ -12,6 +14,11 @@ from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_repository_name, resolve_authconfig
 
 import base
+
+TEST_CERT_DIR = os.path.join(
+    os.path.dirname(__file__),
+    'testdata/certs',
+)
 
 
 class UtilsTest(base.BaseTestCase):
@@ -75,11 +82,18 @@ class UtilsTest(base.BaseTestCase):
         for host, expected in valid_hosts.items():
             self.assertEqual(parse_host(host), expected, msg=host)
 
-    def test_kwargs_from_env(self):
+    def test_kwargs_from_env_empty(self):
+        os.environ.update(DOCKER_HOST='',
+                          DOCKER_CERT_PATH='',
+                          DOCKER_TLS_VERIFY='')
+
+        kwargs = kwargs_from_env()
+        self.assertEqual(None, kwargs.get('base_url'))
+        self.assertEqual(None, kwargs.get('tls'))
+
+    def test_kwargs_from_env_tls(self):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
-                          DOCKER_CERT_PATH=os.path.join(
-                              os.path.dirname(__file__),
-                              'testdata/certs'),
+                          DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
         kwargs = kwargs_from_env(assert_hostname=False)
         self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
@@ -94,6 +108,24 @@ class UtilsTest(base.BaseTestCase):
             self.assertEqual(kwargs['tls'].cert, client.cert)
         except TypeError as e:
             self.fail(e)
+
+    def test_kwargs_from_env_no_cert_path(self):
+        try:
+            temp_dir = tempfile.mkdtemp()
+            cert_dir = os.path.join(temp_dir, '.docker')
+            shutil.copytree(TEST_CERT_DIR, cert_dir)
+
+            os.environ.update(HOME=temp_dir,
+                              DOCKER_CERT_PATH='',
+                              DOCKER_TLS_VERIFY='1')
+
+            kwargs = kwargs_from_env()
+            self.assertIn(cert_dir, kwargs['tls'].verify)
+            self.assertIn(cert_dir, kwargs['tls'].cert[0])
+            self.assertIn(cert_dir, kwargs['tls'].cert[1])
+        finally:
+            if temp_dir:
+                shutil.rmtree(temp_dir)
 
     def test_convert_filters(self):
         tests = [
