@@ -273,6 +273,7 @@ class Client(clientbase.ClientBase):
             decode=decode
         )
 
+    @check_resource
     def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
                     privileged=False):
         if utils.compare_version('1.15', self._version) < 0:
