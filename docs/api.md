@@ -251,8 +251,8 @@ function return a blocking generator you can iterate over to retrieve events as 
 
 **Params**:
 
-* since (datetime or int): get events from this point
-* until (datetime or int): get events until this point
+* since (UTC datetime or int): get events from this point
+* until (UTC datetime or int): get events until this point
 * filters (dict): filter the events by event time, container or image
 * decode (bool): If set to true, stream will be decoded into dicts on the
   fly. False by default.

@@ -221,7 +221,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_events_with_since_until(self):
         ts = 1356048000
-        now = datetime.datetime.fromtimestamp(ts)
+        now = datetime.datetime.utcfromtimestamp(ts)
         since = now - datetime.timedelta(seconds=10)
         until = now + datetime.timedelta(seconds=10)
         try:
