@@ -140,9 +140,14 @@ class Client(clientbase.ClientBase):
             if self._auth_configs:
                 if headers is None:
                     headers = {}
-                headers['X-Registry-Config'] = auth.encode_full_header(
-                    self._auth_configs
-                )
+                if utils.compare_version('1.19', self._version) >= 0:
+                    headers['X-Registry-Config'] = auth.encode_header(
+                        self._auth_configs
+                    )
+                else:
+                    headers['X-Registry-Config'] = auth.encode_header({
+                        'configs': self._auth_configs
+                    })
 
         response = self._post(
             u,
