@@ -1,6 +1,28 @@
 Change Log
 ==========
 
+1.3.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.3.1+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed a bug where empty chunks in streams was misinterpreted as EOF.
+* `datetime` arguments passed to `Client.events` parameters `since` and
+  `until` are now always considered to be UTC.
+* Fixed a bug with Docker 1.7.x where the wrong auth headers were being passed
+  in `Client.build`, failing builds that depended on private images.
+* `Client.exec_create` can now retrieve the `Id` key from a dictionary for its
+  container param.
+
+### Miscellaneous
+
+* 404 API status now raises `docker.errors.NotFound`. This exception inherits
+  `APIError` which was used previously.
+* Docs fixes
+* Test ixes
+
 1.3.0
 -----
 
