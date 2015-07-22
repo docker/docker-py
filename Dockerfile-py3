@@ -1,4 +1,4 @@
-FROM python:2.7
+FROM python:3.4
 MAINTAINER Joffrey F <joffrey@docker.com>
 ADD . /home/docker-py
 WORKDIR /home/docker-py
