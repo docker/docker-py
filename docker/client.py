@@ -184,6 +184,8 @@ class Client(
         self._raise_for_status(response)
         if six.PY3:
             sock = response.raw._fp.fp.raw
+            if self.base_url.startswith("https://"):
+                sock = sock._sock
         else:
             sock = response.raw._fp.fp._sock
         try:
@@ -240,7 +242,7 @@ class Client(
         # Disable timeout on the underlying socket to prevent
         # Read timed out(s) for long running processes
         socket = self._get_raw_response_socket(response)
-        if six.PY3:
+        if six.PY3 and hasattr(socket, "_sock"):
             socket._sock.settimeout(None)
         else:
             socket.settimeout(None)
