@@ -30,7 +30,7 @@ the entire backlog.
 * container (str): The container to attach to
 * stdout (bool): Get STDOUT
 * stderr (bool): Get STDERR
-* stream (bool): Return an interator
+* stream (bool): Return an iterator
 * logs (bool): Get all previous output
 
 **Returns** (generator or str): The logs or output for the image
@@ -70,7 +70,7 @@ correct value (e.g `gzip`).
     - memory (int): set memory limit for build
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
-    - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
+    - cpusetcpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
 * decode (bool): If set to `True`, the returned stream will be decoded into
   dicts on the fly. Default `False`.
 
@@ -123,7 +123,7 @@ Identical to the `docker commit` command.
 * tag (str): The tag to push
 * message (str): A commit message
 * author (str): The name of the author
-* conf (dict): The configuraton for the container. See the [Docker remote api](
+* conf (dict): The configuration for the container. See the [Docker remote api](
 https://docs.docker.com/reference/api/docker_remote_api/) for full details.
 
 ## containers
@@ -397,7 +397,7 @@ src will be treated as a URL instead to fetch the image from. You can also pass
 an open file handle as 'src', in which case the data will be read from that
 file.
 
-If `src` is unset but `image` is set, the `image` paramater will be taken as
+If `src` is unset but `image` is set, the `image` parameter will be taken as
 the name of an existing image to import from.
 
 **Params**:
