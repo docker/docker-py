@@ -107,7 +107,7 @@ class UtilsTest(base.BaseTestCase):
             self.assertEqual(convert_filters(filters), expected)
 
     def test_create_empty_host_config(self):
-        empty_config = create_host_config()
+        empty_config = create_host_config(network_mode='')
         self.assertEqual(empty_config, {})
 
     def test_create_host_config_dict_ulimit(self):
