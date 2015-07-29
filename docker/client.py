@@ -780,7 +780,7 @@ class Client(clientbase.ClientBase):
             publish_all_ports=publish_all_ports, links=links, dns=dns,
             privileged=privileged, dns_search=dns_search, cap_add=cap_add,
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
-            network_mode=network_mode, restart_policy=restart_policy,
+            network_mode=network_mode or '', restart_policy=restart_policy,
             extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
             ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits
         )
