@@ -21,7 +21,7 @@ Change Log
 * 404 API status now raises `docker.errors.NotFound`. This exception inherits
   `APIError` which was used previously.
 * Docs fixes
-* Test ixes
+* Test fixes
 
 1.3.0
 -----
