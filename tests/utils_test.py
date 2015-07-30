@@ -1,12 +1,13 @@
 import os
 import os.path
 import unittest
+import tempfile
 
 from docker.client import Client
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
-    create_host_config, Ulimit, LogConfig, parse_bytes
+    create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file
 )
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_repository_name, resolve_authconfig
@@ -16,6 +17,17 @@ import base
 
 class UtilsTest(base.BaseTestCase):
     longMessage = True
+
+    def generate_tempfile(self, file_content=None):
+        """
+        Generates a temporary file for tests with the content
+        of 'file_content' and returns the filename.
+        Don't forget to unlink the file with os.unlink() after.
+        """
+        local_tempfile = tempfile.NamedTemporaryFile(delete=False)
+        local_tempfile.write(file_content.encode('UTF-8'))
+        local_tempfile.close()
+        return local_tempfile.name
 
     def setUp(self):
         self.os_environ = os.environ.copy()
@@ -94,6 +106,28 @@ class UtilsTest(base.BaseTestCase):
             self.assertEqual(kwargs['tls'].cert, client.cert)
         except TypeError as e:
             self.fail(e)
+
+    def test_parse_env_file_proper(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\nPASS=secret')
+        get_parse_env_file = parse_env_file(env_file)
+        self.assertEqual(get_parse_env_file,
+                         {'USER': 'jdoe', 'PASS': 'secret'})
+        os.unlink(env_file)
+
+    def test_parse_env_file_commented_line(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\n#PASS=secret')
+        get_parse_env_file = parse_env_file((env_file))
+        self.assertEqual(get_parse_env_file, {'USER': 'jdoe'})
+        os.unlink(env_file)
+
+    def test_parse_env_file_invalid_line(self):
+        env_file = self.generate_tempfile(
+            file_content='USER jdoe')
+        self.assertRaises(
+            DockerException, parse_env_file, env_file)
+        os.unlink(env_file)
 
     def test_convert_filters(self):
         tests = [
