@@ -5,6 +5,7 @@ class LogConfigTypesEnum(object):
     _values = (
         'json-file',
         'syslog',
+        'fluentd',
         'none'
     )
     JSON, SYSLOG, NONE = _values
