@@ -234,6 +234,27 @@ from. Optionally a single string joining container id's with commas
  'Warnings': None}
 ```
 
+### parse_env_file
+
+A utility for parsing an environment file.
+
+The expected format of the file is as follows:
+
+```
+USERNAME=jdoe
+PASSWORD=secret
+```
+
+The utility can be used as follows:
+
+```python
+>> import docker.utils
+>> my_envs = docker.utils.parse_env_file('/path/to/file')
+>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+```
+
+You can now use this with 'environment' for `create_container`.
+
 ## diff
 
 Inspect changes on a container's filesystem

@@ -518,6 +518,31 @@ def create_host_config(
     return host_config
 
 
+def parse_env_file(env_file):
+    """
+    Reads a line-separated environment file.
+    The format of each line should be "key=value".
+    """
+    environment = {}
+
+    with open(env_file, 'r') as f:
+        for line in f:
+
+            if line[0] == '#':
+                continue
+
+            parse_line = line.strip().split('=')
+            if len(parse_line) == 2:
+                k, v = parse_line
+                environment[k] = v
+            else:
+                raise errors.DockerException(
+                    'Invalid line in environment file {0}:\n{1}'.format(
+                        env_file, line))
+
+    return environment
+
+
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
     stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
@@ -528,6 +553,7 @@ def create_container_config(
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
+
     if isinstance(environment, dict):
         environment = [
             six.text_type('{0}={1}').format(k, v)
