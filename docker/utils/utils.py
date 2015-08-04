@@ -533,8 +533,7 @@ def parse_env_file(env_file):
 
             parse_line = line.strip().split('=')
             if len(parse_line) == 2:
-                k = parse_line[0]
-                v = parse_line[1]
+                k, v = parse_line
                 environment[k] = v
             else:
                 raise errors.DockerException(
