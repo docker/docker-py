@@ -6,9 +6,10 @@ class LogConfigTypesEnum(object):
         'json-file',
         'syslog',
         'journald',
+        'fluentd'
         'none'
     )
-    JSON, SYSLOG, JOURNALD, NONE = _values
+    JSON, SYSLOG, JOURNALD, FLUENTD, NONE = _values
 
 
 class DictType(dict):
