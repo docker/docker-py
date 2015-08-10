@@ -733,7 +733,7 @@ class Client(clientbase.ClientBase):
 
     @check_resource
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=False, links=None, privileged=False,
+              publish_all_ports=None, links=None, privileged=None,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
@@ -775,25 +775,27 @@ class Client(clientbase.ClientBase):
                     'ulimits is only supported for API version >= 1.18'
                 )
 
-        start_config = utils.create_host_config(
+        start_config_kwargs = dict(
             binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
             publish_all_ports=publish_all_ports, links=links, dns=dns,
             privileged=privileged, dns_search=dns_search, cap_add=cap_add,
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
-            network_mode=network_mode or '', restart_policy=restart_policy,
+            network_mode=network_mode, restart_policy=restart_policy,
             extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
             ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits
         )
+        start_config = None
+
+        if any(v is not None for v in start_config_kwargs.values()):
+            if utils.compare_version('1.15', self._version) > 0:
+                warnings.warn(
+                    'Passing host config parameters in start() is deprecated. '
+                    'Please use host_config in create_container instead!',
+                    DeprecationWarning
+                )
+            start_config = utils.create_host_config(**start_config_kwargs)
 
         url = self._url("/containers/{0}/start".format(container))
-        if not start_config:
-            start_config = None
-        elif utils.compare_version('1.15', self._version) > 0:
-            warnings.warn(
-                'Passing host config parameters in start() is deprecated. '
-                'Please use host_config in create_container instead!',
-                DeprecationWarning
-            )
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
