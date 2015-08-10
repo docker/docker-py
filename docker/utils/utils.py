@@ -428,6 +428,8 @@ def create_host_config(
 
     if network_mode:
         host_config['NetworkMode'] = network_mode
+    elif network_mode is None:
+        host_config['NetworkMode'] = 'default'
 
     if restart_policy:
         host_config['RestartPolicy'] = restart_policy
