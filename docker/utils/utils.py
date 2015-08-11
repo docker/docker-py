@@ -19,6 +19,7 @@ import json
 import shlex
 import tarfile
 import tempfile
+import warnings
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
 from datetime import datetime
@@ -120,16 +121,26 @@ def compare_version(v1, v2):
 
 
 def ping_registry(url):
-    return ping(url + '/v2/') or ping(url + '/v1/_ping')
+    warnings.warn(
+        'The `ping_registry` method is deprecated and will be removed.',
+        DeprecationWarning
+    )
+
+    return ping(url + '/v2/', [401]) or ping(url + '/v1/_ping')
 
 
-def ping(url):
+def ping(url, valid_4xx_statuses=None):
     try:
         res = requests.get(url, timeout=3)
     except Exception:
         return False
     else:
-        return res.status_code < 400
+        # We don't send yet auth headers
+        # and a v2 registry will respond with status 401
+        return (
+            res.status_code < 400 or
+            (valid_4xx_statuses and res.status_code in valid_4xx_statuses)
+        )
 
 
 def _convert_port_binding(binding):
@@ -174,11 +185,27 @@ def convert_port_bindings(port_bindings):
 
 
 def convert_volume_binds(binds):
+    if isinstance(binds, list):
+        return binds
+
     result = []
     for k, v in binds.items():
         if isinstance(v, dict):
+            if 'ro' in v and 'mode' in v:
+                raise ValueError(
+                    'Binding cannot contain both "ro" and "mode": {}'
+                    .format(repr(v))
+                )
+
+            if 'ro' in v:
+                mode = 'ro' if v['ro'] else 'rw'
+            elif 'mode' in v:
+                mode = v['mode']
+            else:
+                mode = 'rw'
+
             result.append('{0}:{1}:{2}'.format(
-                k, v['bind'], 'ro' if v.get('ro', False) else 'rw'
+                k, v['bind'], mode
             ))
         else:
             result.append('{0}:{1}:rw'.format(k, v))
@@ -312,9 +339,9 @@ def convert_filters(filters):
     return json.dumps(result)
 
 
-def datetime_to_timestamp(dt=datetime.now()):
-    """Convert a datetime in local timezone to a unix timestamp"""
-    delta = dt - datetime.fromtimestamp(0)
+def datetime_to_timestamp(dt):
+    """Convert a UTC datetime to a Unix timestamp"""
+    delta = dt - datetime.utcfromtimestamp(0)
     return delta.seconds + delta.days * 24 * 3600
 
 
@@ -362,9 +389,20 @@ def create_host_config(
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
-    security_opt=None, ulimits=None, log_config=None
+    security_opt=None, ulimits=None, log_config=None, mem_limit=None,
+    memswap_limit=None
 ):
     host_config = {}
+
+    if mem_limit is not None:
+        if isinstance(mem_limit, six.string_types):
+            mem_limit = parse_bytes(mem_limit)
+        host_config['Memory'] = mem_limit
+
+    if memswap_limit is not None:
+        if isinstance(memswap_limit, six.string_types):
+            memswap_limit = parse_bytes(memswap_limit)
+        host_config['MemorySwap'] = memswap_limit
 
     if pid_mode not in (None, 'host'):
         raise errors.DockerException(
@@ -390,6 +428,8 @@ def create_host_config(
 
     if network_mode:
         host_config['NetworkMode'] = network_mode
+    elif network_mode is None:
+        host_config['NetworkMode'] = 'default'
 
     if restart_policy:
         host_config['RestartPolicy'] = restart_policy
@@ -434,7 +474,7 @@ def create_host_config(
                 for k, v in sorted(six.iteritems(extra_hosts))
             ]
 
-            host_config['ExtraHosts'] = extra_hosts
+        host_config['ExtraHosts'] = extra_hosts
 
     if links is not None:
         if isinstance(links, dict):
@@ -480,16 +520,42 @@ def create_host_config(
     return host_config
 
 
+def parse_env_file(env_file):
+    """
+    Reads a line-separated environment file.
+    The format of each line should be "key=value".
+    """
+    environment = {}
+
+    with open(env_file, 'r') as f:
+        for line in f:
+
+            if line[0] == '#':
+                continue
+
+            parse_line = line.strip().split('=')
+            if len(parse_line) == 2:
+                k, v = parse_line
+                environment[k] = v
+            else:
+                raise errors.DockerException(
+                    'Invalid line in environment file {0}:\n{1}'.format(
+                        env_file, line))
+
+    return environment
+
+
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
-    stdin_open=False, tty=False, mem_limit=0, ports=None, environment=None,
+    stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
-    memswap_limit=0, cpuset=None, host_config=None, mac_address=None,
-    labels=None
+    memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
+    labels=None, volume_driver=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
+
     if isinstance(environment, dict):
         environment = [
             six.text_type('{0}={1}').format(k, v)
@@ -497,9 +563,28 @@ def create_container_config(
         ]
 
     if labels is not None and compare_version('1.18', version) < 0:
-        raise errors.DockerException(
+        raise errors.InvalidVersion(
             'labels were only introduced in API version 1.18'
         )
+
+    if compare_version('1.19', version) < 0:
+        if volume_driver is not None:
+            raise errors.InvalidVersion(
+                'Volume drivers were only introduced in API version 1.19'
+            )
+        mem_limit = mem_limit if mem_limit is not None else 0
+        memswap_limit = memswap_limit if memswap_limit is not None else 0
+    else:
+        if mem_limit is not None:
+            raise errors.InvalidVersion(
+                'mem_limit has been moved to host_config in API version 1.19'
+            )
+
+        if memswap_limit is not None:
+            raise errors.InvalidVersion(
+                'memswap_limit has been moved to host_config in API '
+                'version 1.19'
+            )
 
     if isinstance(labels, list):
         labels = dict((lbl, six.text_type('')) for lbl in labels)
@@ -554,9 +639,9 @@ def create_container_config(
         message = ('{0!r} parameter has no effect on create_container().'
                    ' It has been moved to start()')
         if dns is not None:
-            raise errors.DockerException(message.format('dns'))
+            raise errors.InvalidVersion(message.format('dns'))
         if volumes_from is not None:
-            raise errors.DockerException(message.format('volumes_from'))
+            raise errors.InvalidVersion(message.format('volumes_from'))
 
     return {
         'Hostname': hostname,
@@ -586,4 +671,5 @@ def create_container_config(
         'HostConfig': host_config,
         'MacAddress': mac_address,
         'Labels': labels,
+        'VolumeDriver': volume_driver,
     }

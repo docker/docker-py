@@ -14,7 +14,7 @@
 
 import fake_stat
 
-CURRENT_VERSION = 'v1.18'
+CURRENT_VERSION = 'v1.19'
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -129,11 +129,11 @@ def post_fake_create_container():
     return status_code, response
 
 
-def get_fake_inspect_container():
+def get_fake_inspect_container(tty=False):
     status_code = 200
     response = {
         'Id': FAKE_CONTAINER_ID,
-        'Config': {'Privileged': True},
+        'Config': {'Privileged': True, 'Tty': tty},
         'ID': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
         "State": {

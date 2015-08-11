@@ -10,12 +10,25 @@ container_id = c.create_container(
     host_config=docker.utils.create_host_config(binds={
         '/home/user1/': {
             'bind': '/mnt/vol2',
-            'ro': False
+            'mode': 'rw',
         },
         '/var/www': {
             'bind': '/mnt/vol1',
-            'ro': True
+            'mode': 'ro',
         }
     })
+)
+```
+
+You can alternatively specify binds as a list. This code is equivalent to the
+example above:
+
+```python
+container_id = c.create_container(
+    'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+    host_config=docker.utils.create_host_config(binds=[
+        '/home/user1/:/mnt/vol2',
+        '/var/www:/mnt/vol1:ro',
+    ])
 )
 ```

@@ -16,37 +16,34 @@ import base64
 import fileinput
 import json
 import os
+import warnings
 
 import six
 
-from ..utils import utils
+from .. import constants
 from .. import errors
 
-INDEX_URL = 'https://index.docker.io/v1/'
-DOCKER_CONFIG_FILENAME = '.dockercfg'
-
-
-def expand_registry_url(hostname, insecure=False):
-    if hostname.startswith('http:') or hostname.startswith('https:'):
-        return hostname
-    if utils.ping_registry('https://' + hostname):
-        return 'https://' + hostname
-    elif insecure:
-        return 'http://' + hostname
-    else:
-        raise errors.DockerException(
-            "HTTPS endpoint unresponsive and insecure mode isn't enabled."
-        )
+INDEX_NAME = 'index.docker.io'
+INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
+DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
+LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 
 
 def resolve_repository_name(repo_name, insecure=False):
+    if insecure:
+        warnings.warn(
+            constants.INSECURE_REGISTRY_DEPRECATION_WARNING.format(
+                'resolve_repository_name()'
+            ), DeprecationWarning
+        )
+
     if '://' in repo_name:
         raise errors.InvalidRepository(
             'Repository name cannot contain a scheme ({0})'.format(repo_name))
     parts = repo_name.split('/', 1)
     if '.' not in parts[0] and ':' not in parts[0] and parts[0] != 'localhost':
         # This is a docker index repo (ex: foo/bar or ubuntu)
-        return INDEX_URL, repo_name
+        return INDEX_NAME, repo_name
     if len(parts) < 2:
         raise errors.InvalidRepository(
             'Invalid repository name ({0})'.format(repo_name))
@@ -56,7 +53,7 @@ def resolve_repository_name(repo_name, insecure=False):
             'Invalid repository name, try "{0}" instead'.format(parts[1])
         )
 
-    return expand_registry_url(parts[0], insecure), parts[1]
+    return parts[0], parts[1]
 
 
 def resolve_authconfig(authconfig, registry=None):
@@ -67,7 +64,7 @@ def resolve_authconfig(authconfig, registry=None):
     Returns None if no match was found.
     """
     # Default to the public index server
-    registry = convert_to_hostname(registry) if registry else INDEX_URL
+    registry = convert_to_hostname(registry) if registry else INDEX_NAME
 
     if registry in authconfig:
         return authconfig[registry]
@@ -101,10 +98,27 @@ def encode_header(auth):
     return base64.b64encode(auth_json)
 
 
-def encode_full_header(auth):
-    """ Returns the given auth block encoded for the X-Registry-Config header.
+def parse_auth(entries):
     """
-    return encode_header({'configs': auth})
+    Parses authentication entries
+
+    Args:
+      entries: Dict of authentication entries.
+
+    Returns:
+      Authentication registry.
+    """
+
+    conf = {}
+    for registry, entry in six.iteritems(entries):
+        username, password = decode_auth(entry['auth'])
+        conf[registry] = {
+            'username': username,
+            'password': password,
+            'email': entry['email'],
+            'serveraddress': registry,
+        }
+    return conf
 
 
 def load_config(config_path=None):
@@ -115,26 +129,34 @@ def load_config(config_path=None):
     conf = {}
     data = None
 
-    config_file = config_path or os.path.join(os.environ.get('HOME', '.'),
+    # Prefer ~/.docker/config.json.
+    config_file = config_path or os.path.join(os.path.expanduser('~'),
                                               DOCKER_CONFIG_FILENAME)
+
+    if os.path.exists(config_file):
+        try:
+            with open(config_file) as f:
+                for section, data in six.iteritems(json.load(f)):
+                    if section != 'auths':
+                        continue
+                    return parse_auth(data)
+        except (IOError, KeyError, ValueError):
+            # Likely missing new Docker config file or it's in an
+            # unknown format, continue to attempt to read old location
+            # and format.
+            pass
+
+    config_file = config_path or os.path.join(os.path.expanduser('~'),
+                                              LEGACY_DOCKER_CONFIG_FILENAME)
 
     # if config path doesn't exist return empty config
     if not os.path.exists(config_file):
         return {}
 
-    # First try as JSON
+    # Try reading legacy location as JSON.
     try:
         with open(config_file) as f:
-            conf = {}
-            for registry, entry in six.iteritems(json.load(f)):
-                username, password = decode_auth(entry['auth'])
-                conf[registry] = {
-                    'username': username,
-                    'password': password,
-                    'email': entry['email'],
-                    'serveraddress': registry,
-                }
-            return conf
+            return parse_auth(json.load(f))
     except:
         pass
 
@@ -153,7 +175,7 @@ def load_config(config_path=None):
                 'Invalid or empty configuration file!')
 
         username, password = decode_auth(data[0])
-        conf[INDEX_URL] = {
+        conf[INDEX_NAME] = {
             'username': username,
             'password': password,
             'email': data[1],
