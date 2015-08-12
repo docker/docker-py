@@ -30,7 +30,7 @@ the entire backlog.
 * container (str): The container to attach to
 * stdout (bool): Get STDOUT
 * stderr (bool): Get STDERR
-* stream (bool): Return an interator
+* stream (bool): Return an iterator
 * logs (bool): Get all previous output
 
 **Returns** (generator or str): The logs or output for the image
@@ -70,7 +70,7 @@ correct value (e.g `gzip`).
     - memory (int): set memory limit for build
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
-    - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
+    - cpusetcpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
 * decode (bool): If set to `True`, the returned stream will be decoded into
   dicts on the fly. Default `False`.
 
@@ -123,7 +123,7 @@ Identical to the `docker commit` command.
 * tag (str): The tag to push
 * message (str): A commit message
 * author (str): The name of the author
-* conf (dict): The configuraton for the container. See the [Docker remote api](
+* conf (dict): The configuration for the container. See the [Docker remote api](
 https://docs.docker.com/reference/api/docker_remote_api/) for full details.
 
 ## containers
@@ -184,7 +184,7 @@ information on how to create port bindings and volume mappings.
 
 The `mem_limit` variable accepts float values (which represent the memory limit
 of the created container in bytes) or a string with a units identification char
-('100000b', 1000k', 128m', '1g'). If a string is specified without a units
+('100000b', '1000k', '128m', '1g'). If a string is specified without a units
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
@@ -234,6 +234,27 @@ from. Optionally a single string joining container id's with commas
  'Warnings': None}
 ```
 
+### parse_env_file
+
+A utility for parsing an environment file.
+
+The expected format of the file is as follows:
+
+```
+USERNAME=jdoe
+PASSWORD=secret
+```
+
+The utility can be used as follows:
+
+```python
+>> import docker.utils
+>> my_envs = docker.utils.parse_env_file('/path/to/file')
+>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+```
+
+You can now use this with 'environment' for `create_container`.
+
 ## diff
 
 Inspect changes on a container's filesystem
@@ -251,8 +272,8 @@ function return a blocking generator you can iterate over to retrieve events as 
 
 **Params**:
 
-* since (datetime or int): get events from this point
-* until (datetime or int): get events until this point
+* since (UTC datetime or int): get events from this point
+* until (UTC datetime or int): get events until this point
 * filters (dict): filter the events by event time, container or image
 * decode (bool): If set to true, stream will be decoded into dicts on the
   fly. False by default.
@@ -398,7 +419,7 @@ src will be treated as a URL instead to fetch the image from. You can also pass
 an open file handle as 'src', in which case the data will be read from that
 file.
 
-If `src` is unset but `image` is set, the `image` paramater will be taken as
+If `src` is unset but `image` is set, the `image` parameter will be taken as
 the name of an existing image to import from.
 
 **Params**:
@@ -512,7 +533,16 @@ Kill a container or send a signal to a container
 **Params**:
 
 * container (str): The container to kill
-* signal (str or int): The singal to send. Defaults to `SIGKILL`
+* signal (str or int): The signal to send. Defaults to `SIGKILL`
+
+## load_image
+
+Load an image that was previously saved using `Client.get_image`
+(or `docker save`). Similar to `docker load`.
+
+**Params**:
+
+* data (binary): Image data to be loaded
 
 ## login
 
@@ -718,6 +748,10 @@ Identical to the `docker search` command.
 Similar to the `docker start` command, but doesn't support attach options. Use
 `.logs()` to recover `stdout`/`stderr`.
 
+**Params**:
+
+* container (str): The container to start
+
 **Deprecation warning:** For API version > 1.15, it is highly recommended to
   provide host config options in the
   [`host_config` parameter of `create_container`](#create_container)
@@ -740,7 +774,7 @@ This will stream statistics for a specific container.
 
 **Params**:
 
-* container (str): The container to start
+* container (str): The container to stream statistics for
 * decode (bool): If set to true, stream will be decoded into dicts on the
   fly. False by default.
 
@@ -829,10 +863,13 @@ Nearly identical to the `docker version` command.
 
 ## wait
 Identical to the `docker wait` command. Block until a container stops, then
-print its exit code. Returns the value `-1` if no `StatusCode` is returned by
-the API.
+return its exit code. Returns the value `-1` if the API responds without a
+`StatusCode` attribute.
 
-If `container` a dict, the `Id` key is used.
+If `container` is a dict, the `Id` key is used.
+
+If the timeout value is exceeded, a `requests.exceptions.ReadTimeout`
+exception will be raised.
 
 **Params**:
 

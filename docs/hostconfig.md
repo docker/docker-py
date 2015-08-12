@@ -91,6 +91,8 @@ for example:
 * ulimits (list): A list of dicts or `docker.utils.Ulimit` objects. A list
   of ulimits to be set in the container.
 * log_config (`docker.utils.LogConfig` or dict): Logging configuration to container
+* mem_limit (str or num): Maximum amount of memory container is allowed to consume. (e.g. `'1g'`)
+* memswap_limit (str or num): Maximum amount of memory + swap a container is allowed to consume.
 
 **Returns** (dict) HostConfig dictionary
 
