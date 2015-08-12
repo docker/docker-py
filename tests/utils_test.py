@@ -1,21 +1,33 @@
 import os
 import os.path
 import unittest
+import tempfile
 
 from docker.client import Client
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
-    create_host_config, Ulimit, LogConfig, parse_bytes
+    create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file
 )
 from docker.utils.ports import build_port_bindings, split_port
-from docker.auth import resolve_authconfig
+from docker.auth import resolve_repository_name, resolve_authconfig
 
 import base
 
 
 class UtilsTest(base.BaseTestCase):
     longMessage = True
+
+    def generate_tempfile(self, file_content=None):
+        """
+        Generates a temporary file for tests with the content
+        of 'file_content' and returns the filename.
+        Don't forget to unlink the file with os.unlink() after.
+        """
+        local_tempfile = tempfile.NamedTemporaryFile(delete=False)
+        local_tempfile.write(file_content.encode('UTF-8'))
+        local_tempfile.close()
+        return local_tempfile.name
 
     def setUp(self):
         self.os_environ = os.environ.copy()
@@ -95,6 +107,28 @@ class UtilsTest(base.BaseTestCase):
         except TypeError as e:
             self.fail(e)
 
+    def test_parse_env_file_proper(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\nPASS=secret')
+        get_parse_env_file = parse_env_file(env_file)
+        self.assertEqual(get_parse_env_file,
+                         {'USER': 'jdoe', 'PASS': 'secret'})
+        os.unlink(env_file)
+
+    def test_parse_env_file_commented_line(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\n#PASS=secret')
+        get_parse_env_file = parse_env_file((env_file))
+        self.assertEqual(get_parse_env_file, {'USER': 'jdoe'})
+        os.unlink(env_file)
+
+    def test_parse_env_file_invalid_line(self):
+        env_file = self.generate_tempfile(
+            file_content='USER jdoe')
+        self.assertRaises(
+            DockerException, parse_env_file, env_file)
+        os.unlink(env_file)
+
     def test_convert_filters(self):
         tests = [
             ({'dangling': True}, '{"dangling": ["true"]}'),
@@ -107,7 +141,7 @@ class UtilsTest(base.BaseTestCase):
             self.assertEqual(convert_filters(filters), expected)
 
     def test_create_empty_host_config(self):
-        empty_config = create_host_config()
+        empty_config = create_host_config(network_mode='')
         self.assertEqual(empty_config, {})
 
     def test_create_host_config_dict_ulimit(self):
@@ -166,6 +200,61 @@ class UtilsTest(base.BaseTestCase):
         self.assertRaises(ValueError, lambda: LogConfig(
             type=LogConfig.types.JSON, config='helloworld'
         ))
+
+    def test_resolve_repository_name(self):
+        # docker hub library image
+        self.assertEqual(
+            resolve_repository_name('image'),
+            ('index.docker.io', 'image'),
+        )
+
+        # docker hub image
+        self.assertEqual(
+            resolve_repository_name('username/image'),
+            ('index.docker.io', 'username/image'),
+        )
+
+        # private registry
+        self.assertEqual(
+            resolve_repository_name('my.registry.net/image'),
+            ('my.registry.net', 'image'),
+        )
+
+        # private registry with port
+        self.assertEqual(
+            resolve_repository_name('my.registry.net:5000/image'),
+            ('my.registry.net:5000', 'image'),
+        )
+
+        # private registry with username
+        self.assertEqual(
+            resolve_repository_name('my.registry.net/username/image'),
+            ('my.registry.net', 'username/image'),
+        )
+
+        # no dots but port
+        self.assertEqual(
+            resolve_repository_name('hostname:5000/image'),
+            ('hostname:5000', 'image'),
+        )
+
+        # no dots but port and username
+        self.assertEqual(
+            resolve_repository_name('hostname:5000/username/image'),
+            ('hostname:5000', 'username/image'),
+        )
+
+        # localhost
+        self.assertEqual(
+            resolve_repository_name('localhost/image'),
+            ('localhost', 'image'),
+        )
+
+        # localhost with username
+        self.assertEqual(
+            resolve_repository_name('localhost/username/image'),
+            ('localhost', 'username/image'),
+        )
 
     def test_resolve_authconfig(self):
         auth_config = {
@@ -229,6 +318,40 @@ class UtilsTest(base.BaseTestCase):
         # no matching entry
         self.assertTrue(
             resolve_authconfig(auth_config, 'does.not.exist') is None
+        )
+
+    def test_resolve_registry_and_auth(self):
+        auth_config = {
+            'https://index.docker.io/v1/': {'auth': 'indexuser'},
+            'my.registry.net': {'auth': 'privateuser'},
+        }
+
+        # library image
+        image = 'image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            {'auth': 'indexuser'},
+        )
+
+        # docker hub image
+        image = 'username/image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            {'auth': 'indexuser'},
+        )
+
+        # private registry
+        image = 'my.registry.net/image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            {'auth': 'privateuser'},
+        )
+
+        # unauthenticated registry
+        image = 'other.registry.net/image'
+        self.assertEqual(
+            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
+            None,
         )
 
     def test_split_port_with_host_ip(self):
