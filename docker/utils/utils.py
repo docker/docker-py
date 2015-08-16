@@ -395,7 +395,7 @@ def create_host_config(
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
     security_opt=None, ulimits=None, log_config=None, mem_limit=None,
-    memswap_limit=None
+    memswap_limit=None, cgroup_parent=None
 ):
     host_config = {}
 
@@ -499,6 +499,9 @@ def create_host_config(
 
     if lxc_conf is not None:
         host_config['LxcConf'] = lxc_conf
+
+    if cgroup_parent is not None:
+        host_config['CgroupParent'] = cgroup_parent
 
     if ulimits is not None:
         if not isinstance(ulimits, list):
