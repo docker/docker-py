@@ -232,6 +232,7 @@ def parse_host(addr):
     proto = "http+unix"
     host = DEFAULT_HTTP_HOST
     port = None
+    path = ''
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
 
@@ -270,8 +271,12 @@ def parse_host(addr):
         if host_parts[0]:
             host = host_parts[0]
 
+        port = host_parts[1]
+        if '/' in port:
+            port, path = port.split('/', 1)
+            path = '/{0}'.format(path)
         try:
-            port = int(host_parts[1])
+            port = int(port)
         except Exception:
             raise errors.DockerException(
                 "Invalid port: %s", addr
@@ -285,7 +290,7 @@ def parse_host(addr):
 
     if proto == "http+unix":
         return "{0}://{1}".format(proto, host)
-    return "{0}://{1}:{2}".format(proto, host, port)
+    return "{0}://{1}:{2}{3}".format(proto, host, port, path)
 
 
 def parse_devices(devices):
