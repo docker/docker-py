@@ -34,6 +34,7 @@ from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
 from .test import Cleanup
+from docker.errors import APIError
 
 # FIXME: missing tests for
 # export; history; insert; port; push; tag; get; load; stats
@@ -264,6 +265,22 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
 
         self.assertEqual(container_log_config['Type'], log_config.type)
         self.assertEqual(container_log_config['Config'], log_config.config)
+
+    def test_invalid_log_driver_raises_exception(self):
+        log_config = docker.utils.LogConfig(
+            type='asdf-nope',
+            config={}
+        )
+
+        container = self.client.create_container(
+            'busybox', ['true'],
+            host_config=create_host_config(log_config=log_config)
+        )
+
+        expected_msg = "logger: no log driver named 'asdf-nope' is registered"
+        with self.assertRaisesRegexp(APIError, expected_msg):
+            # raises an internal server error 500
+            self.client.start(container)
 
 
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')

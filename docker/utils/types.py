@@ -20,21 +20,17 @@ class DictType(dict):
 
 
 class LogConfig(DictType):
-    types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
-        type_ = kwargs.get('type', kwargs.get('Type'))
-        config = kwargs.get('config', kwargs.get('Config'))
-        if type_ not in self.types._values:
-            raise ValueError("LogConfig.type must be one of ({0})".format(
-                ', '.join(self.types._values)
-            ))
+        log_driver_type = kwargs.get('type', kwargs.get('Type'))
+        config = kwargs.get('config', kwargs.get('Config')) or {}
+
         if config and not isinstance(config, dict):
             raise ValueError("LogConfig.config must be a dictionary")
 
         super(LogConfig, self).__init__({
-            'Type': type_,
-            'Config': config or {}
+            'Type': log_driver_type,
+            'Config': config
         })
 
     @property
@@ -43,10 +39,6 @@ class LogConfig(DictType):
 
     @type.setter
     def type(self, value):
-        if value not in self.types._values:
-            raise ValueError("LogConfig.type must be one of {0}".format(
-                ', '.join(self.types._values)
-            ))
         self['Type'] = value
 
     @property

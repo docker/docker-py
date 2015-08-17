@@ -192,28 +192,18 @@ class UtilsTest(base.BaseTestCase):
         self.assertRaises(ValueError, lambda: Ulimit(name='hello', hard='456'))
 
     def test_create_host_config_dict_logconfig(self):
-        dct = {'type': LogConfig.types.SYSLOG, 'config': {'key1': 'val1'}}
-        config = create_host_config(
-            log_config=dct, version=DEFAULT_DOCKER_API_VERSION
-        )
+        dct = {'type': 'syslog', 'config': {'key1': 'val1'}}
+        config = create_host_config(log_config=dct)
         self.assertIn('LogConfig', config)
         self.assertTrue(isinstance(config['LogConfig'], LogConfig))
         self.assertEqual(dct['type'], config['LogConfig'].type)
 
     def test_create_host_config_obj_logconfig(self):
-        obj = LogConfig(type=LogConfig.types.SYSLOG, config={'key1': 'val1'})
-        config = create_host_config(
-            log_config=obj, version=DEFAULT_DOCKER_API_VERSION
-        )
+        obj = LogConfig(type='syslog', config={'key1': 'val1'})
+        config = create_host_config(log_config=obj)
         self.assertIn('LogConfig', config)
         self.assertTrue(isinstance(config['LogConfig'], LogConfig))
         self.assertEqual(obj, config['LogConfig'])
-
-    def test_logconfig_invalid_type(self):
-        self.assertRaises(ValueError, lambda: LogConfig(type='xxx', config={}))
-        self.assertRaises(ValueError, lambda: LogConfig(
-            type=LogConfig.types.JSON, config='helloworld'
-        ))
 
     def test_resolve_repository_name(self):
         # docker hub library image
