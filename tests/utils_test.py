@@ -72,7 +72,10 @@ class UtilsTest(base.BaseTestCase):
             '': 'http+unix://var/run/docker.sock',
             None: 'http+unix://var/run/docker.sock',
             'unix:///var/run/docker.sock': 'http+unix:///var/run/docker.sock',
-            'unix://': 'http+unix://var/run/docker.sock'
+            'unix://': 'http+unix://var/run/docker.sock',
+            'somehost.net:80/service/swarm': (
+                'http://somehost.net:80/service/swarm'
+            ),
         }
 
         for host in invalid_hosts:
