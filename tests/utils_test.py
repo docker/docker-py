@@ -147,6 +147,14 @@ class UtilsTest(base.BaseTestCase):
         empty_config = create_host_config(network_mode='')
         self.assertEqual(empty_config, {})
 
+    def test_latest_api_version_network_mode_set_to_default(self):
+        config = create_host_config(version='1.20')
+        self.assertEqual(config['NetworkMode'], 'default')
+
+    def test_older_api_version_network_mode_not_set(self):
+        config = create_host_config(version='1.19')
+        self.assertFalse('NetworkMode' in config)
+
     def test_create_host_config_dict_ulimit(self):
         ulimit_dct = {'name': 'nofile', 'soft': 8096}
         config = create_host_config(ulimits=[ulimit_dct])

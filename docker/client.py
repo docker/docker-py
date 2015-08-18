@@ -794,6 +794,7 @@ class Client(clientbase.ClientBase):
                     DeprecationWarning
                 )
             start_config = utils.create_host_config(**start_config_kwargs)
+            start_config['version'] = self._version
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
