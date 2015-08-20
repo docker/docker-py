@@ -703,6 +703,16 @@ Rename a container. Similar to the `docker rename` command.
 * container (str): ID of the container to rename
 * name (str): New name for the container
 
+## resize
+
+Resize the tty session.
+
+**Params**:
+
+* exec_id (str): ID of the exec instance
+* height (int): Height of tty session
+* width (int): Width of tty session
+
 ## restart
 
 Restart a container. Similar to the `docker restart` command.
