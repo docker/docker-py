@@ -709,7 +709,7 @@ Resize the tty session.
 
 **Params**:
 
-* exec_id (str): ID of the exec instance
+* container (str or dict): The container to resize
 * height (int): Height of tty session
 * width (int): Width of tty session
 
