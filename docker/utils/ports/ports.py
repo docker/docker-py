@@ -1,5 +1,4 @@
 
-
 def add_port_mapping(port_bindings, internal_port, external):
     if internal_port in port_bindings:
         port_bindings[internal_port].append(external)
@@ -33,9 +32,8 @@ def to_port_range(port):
     if "/" in port:
         parts = port.split("/")
         if len(parts) != 2:
-            raise ValueError('Invalid port "%s", should be '
-                             '[[remote_ip:]remote_port[-remote_port]:]'
-                             'port[/protocol]' % port)
+            _raise_invalid_port(port)
+
         port, protocol = parts
         protocol = "/" + protocol
 
@@ -52,11 +50,17 @@ def to_port_range(port):
                      'port or startport-endport' % port)
 
 
+def _raise_invalid_port(port):
+    raise ValueError('Invalid port "%s", should be '
+                     '[[remote_ip:]remote_port[-remote_port]:]'
+                     'port[/protocol]' % port)
+
+
 def split_port(port):
     parts = str(port).split(':')
+
     if not 1 <= len(parts) <= 3:
-        raise ValueError('Invalid port "%s", should be '
-                         '[[remote_ip:]remote_port:]port[/protocol]' % port)
+        _raise_invalid_port(port)
 
     if len(parts) == 1:
         internal_port, = parts
@@ -66,6 +70,10 @@ def split_port(port):
 
         internal_range = to_port_range(internal_port)
         external_range = to_port_range(external_port)
+
+        if internal_range is None or external_range is None:
+            _raise_invalid_port(port)
+
         if len(internal_range) != len(external_range):
             raise ValueError('Port ranges don\'t match in length')
 

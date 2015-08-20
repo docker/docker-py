@@ -419,6 +419,14 @@ class UtilsTest(base.BaseTestCase):
         self.assertRaises(ValueError,
                           lambda: split_port("0.0.0.0:1000:2000-2002/tcp"))
 
+    def test_port_only_with_colon(self):
+        self.assertRaises(ValueError,
+                          lambda: split_port(":80"))
+
+    def test_host_only_with_colon(self):
+        self.assertRaises(ValueError,
+                          lambda: split_port("localhost:"))
+
     def test_build_port_bindings_with_one_port(self):
         port_bindings = build_port_bindings(["127.0.0.1:1000:1000"])
         self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
