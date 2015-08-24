@@ -492,6 +492,24 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_cgroup_parent(self):
+        try:
+            self.client.create_container(
+                'busybox', 'ls', host_config=create_host_config(
+                    cgroup_parent='test'
+                )
+            )
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][0],
+                         url_prefix + 'containers/create')
+        data = json.loads(args[1]['data'])
+        self.assertIn('HostConfig', data)
+        self.assertIn('CgroupParent', data['HostConfig'])
+        self.assertEqual(data['HostConfig']['CgroupParent'], 'test')
+
     def test_create_container_with_working_dir(self):
         try:
             self.client.create_container('busybox', 'ls',
