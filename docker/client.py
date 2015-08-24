@@ -248,14 +248,17 @@ class Client(clientbase.ClientBase):
                 'host_config is not supported in API < 1.15'
             )
 
-        config = utils.create_container_config(
-            self._version, image, command, hostname, user, detach, stdin_open,
+        config = self.create_container_config(
+            image, command, hostname, user, detach, stdin_open,
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
             volume_driver
         )
         return self.create_container_from_config(config, name)
+
+    def create_container_config(self, *args, **kwargs):
+        return utils.create_container_config(self._version, *args, **kwargs)
 
     def create_container_from_config(self, config, name=None):
         u = self._url("/containers/create")
@@ -264,6 +267,12 @@ class Client(clientbase.ClientBase):
         }
         res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
+
+    def create_host_config(self, *args, **kwargs):
+        if not kwargs:
+            kwargs = {}
+        kwargs['version'] = self._version
+        return utils.create_host_config(*args, **kwargs)
 
     @check_resource
     def diff(self, container):
@@ -815,7 +824,7 @@ class Client(clientbase.ClientBase):
                     'Please use host_config in create_container instead!',
                     DeprecationWarning
                 )
-            start_config = utils.create_host_config(**start_config_kwargs)
+            start_config = self.create_host_config(**start_config_kwargs)
 
         url = self._url("/containers/{0}/start".format(container))
         res = self._post_json(url, data=start_config)
