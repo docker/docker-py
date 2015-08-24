@@ -204,6 +204,10 @@ class UtilsTest(base.BaseTestCase):
             type=LogConfig.types.JSON, config='helloworld'
         ))
 
+    def test_set_cgroup_parent(self):
+        config = create_host_config(cgroup_parent="systemd.slice")
+        self.assertEqual("systemd.slice", config['CgroupParent'])
+
     def test_resolve_repository_name(self):
         # docker hub library image
         self.assertEqual(

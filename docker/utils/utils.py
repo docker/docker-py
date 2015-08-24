@@ -409,6 +409,9 @@ def create_host_config(
             memswap_limit = parse_bytes(memswap_limit)
         host_config['MemorySwap'] = memswap_limit
 
+    if cgroup_parent is not None:
+        host_config['CgroupParent'] = cgroup_parent
+
     if pid_mode not in (None, 'host'):
         raise errors.DockerException(
             'Invalid value for pid param: {0}'.format(pid_mode)
