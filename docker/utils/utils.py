@@ -395,7 +395,7 @@ def create_host_config(
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
     security_opt=None, ulimits=None, log_config=None, mem_limit=None,
-    memswap_limit=None
+    memswap_limit=None, cgroup_parent=None
 ):
     host_config = {}
 
@@ -500,6 +500,9 @@ def create_host_config(
     if lxc_conf is not None:
         host_config['LxcConf'] = lxc_conf
 
+    if cgroup_parent is not None:
+        host_config['CgroupParent'] = cgroup_parent
+
     if ulimits is not None:
         if not isinstance(ulimits, list):
             raise errors.DockerException(
@@ -556,7 +559,7 @@ def create_container_config(
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
-    labels=None, volume_driver=None
+    labels=None, volume_driver=None, cgroup_parent=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
@@ -677,4 +680,5 @@ def create_container_config(
         'MacAddress': mac_address,
         'Labels': labels,
         'VolumeDriver': volume_driver,
+        'CgroupParent': cgroup_parent,
     }

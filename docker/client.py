@@ -238,7 +238,8 @@ class Client(clientbase.ClientBase):
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=None, cpuset=None, host_config=None,
-                         mac_address=None, labels=None, volume_driver=None):
+                         mac_address=None, labels=None, volume_driver=None,
+                         cgroup_parent=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -253,7 +254,7 @@ class Client(clientbase.ClientBase):
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
-            volume_driver
+            volume_driver, cgroup_parent
         )
         return self.create_container_from_config(config, name)
 
@@ -759,7 +760,7 @@ class Client(clientbase.ClientBase):
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
-              security_opt=None, ulimits=None):
+              security_opt=None, ulimits=None, cgroup_parent=None):
 
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
@@ -797,6 +798,12 @@ class Client(clientbase.ClientBase):
                     'ulimits is only supported for API version >= 1.18'
                 )
 
+        if utils.compare_version('1.16', self._version) < 0:
+            if cgroup_parent is not None:
+                raise errors.InvalidVersion(
+                    'cgroup_parent is only supported for API version >= 1.16'
+                )
+
         start_config_kwargs = dict(
             binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
             publish_all_ports=publish_all_ports, links=links, dns=dns,
@@ -804,7 +811,8 @@ class Client(clientbase.ClientBase):
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
             network_mode=network_mode, restart_policy=restart_policy,
             extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
-            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits
+            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits,
+            cgroup_parent=cgroup_parent
         )
         start_config = None
 
