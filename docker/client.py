@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
 import re
 import shlex
@@ -26,6 +27,8 @@ from . import errors
 from .auth import auth
 from .utils import utils, check_resource
 from .constants import INSECURE_REGISTRY_DEPRECATION_WARNING
+
+log = logging.getLogger(__name__)
 
 
 class Client(clientbase.ClientBase):
@@ -130,14 +133,22 @@ class Client(clientbase.ClientBase):
                 headers['Content-Encoding'] = encoding
 
         if utils.compare_version('1.9', self._version) >= 0:
+            log.debug('Looking for auth config')
+
             # If we don't have any auth data so far, try reloading the config
             # file one more time in case anything showed up in there.
             if not self._auth_configs:
+                log.debug("No auth config in memory - loading from filesystem")
                 self._auth_configs = auth.load_config()
 
             # Send the full auth configuration (if any exists), since the build
             # could use any (or all) of the registries.
             if self._auth_configs:
+                log.debug(
+                    'Sending auth config ({0})'.format(
+                        ', '.join(repr(k) for k in self._auth_configs.keys())
+                    )
+                )
                 if headers is None:
                     headers = {}
                 if utils.compare_version('1.19', self._version) >= 0:
@@ -148,6 +159,8 @@ class Client(clientbase.ClientBase):
                     headers['X-Registry-Config'] = auth.encode_header({
                         'configs': self._auth_configs
                     })
+            else:
+                log.debug('No auth config found')
 
         response = self._post(
             u,
@@ -620,19 +633,26 @@ class Client(clientbase.ClientBase):
             # If we don't have any auth data so far, try reloading the config
             # file one more time in case anything showed up in there.
             if auth_config is None:
+                log.debug('Looking for auth config')
                 if not self._auth_configs:
+                    log.debug(
+                        "No auth config in memory - loading from filesystem")
                     self._auth_configs = auth.load_config()
                 authcfg = auth.resolve_authconfig(self._auth_configs, registry)
                 # Do not fail here if no authentication exists for this
                 # specific registry as we can have a readonly pull. Just
                 # put the header if we can.
                 if authcfg:
+                    log.debug('Found auth config')
                     # auth_config needs to be a dict in the format used by
                     # auth.py username , password, serveraddress, email
                     headers['X-Registry-Auth'] = auth.encode_header(
                         authcfg
                     )
+                else:
+                    log.debug('No auth config found')
             else:
+                log.debug('Sending supplied auth config')
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         response = self._post(
