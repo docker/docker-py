@@ -319,8 +319,10 @@ class Client(clientbase.ClientBase):
         return self._result(res, True)
 
     def exec_inspect(self, exec_id):
-        if utils.compare_version('1.15', self._version) < 0:
-            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
+        if utils.compare_version('1.16', self._version) < 0:
+            raise errors.InvalidVersion(
+                'exec_inspect is not supported in API < 1.16'
+            )
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
         res = self._get(self._url("/exec/{0}/json".format(exec_id)))
