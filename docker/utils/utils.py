@@ -69,6 +69,35 @@ def fnmatch_any(relpath, patterns):
     return any([fnmatch(relpath, pattern) for pattern in patterns])
 
 
+def _advanced_exclude(exclude):
+    result = {
+        'folders': [],
+        'files': []
+    }
+    for ex in exclude:
+        if ex[-1] == '/':
+            result['folders'].append(ex[:-1])
+        else:
+            result['files'].append(ex)
+    return result
+
+
+def _build_tar_list(dirnames, filenames, relpath, exclude):
+    exclude = _advanced_exclude(exclude)
+    dirnames[:] = [
+        d for d in dirnames if not fnmatch_any(
+            os.path.join(relpath, d),
+            exclude['folders'] + exclude['files']
+        )
+    ]
+    fnames = [
+        name for name in filenames if not fnmatch_any(
+            os.path.join(relpath, name), exclude['files']
+        )
+    ]
+    return sorted(dirnames), sorted(fnames)
+
+
 def tar(path, exclude=None):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
@@ -79,20 +108,17 @@ def tar(path, exclude=None):
         if exclude is None:
             fnames = filenames
         else:
-            dirnames[:] = [d for d in dirnames
-                           if not fnmatch_any(os.path.join(relpath, d),
-                                              exclude)]
-            fnames = [name for name in filenames
-                      if not fnmatch_any(os.path.join(relpath, name),
-                                         exclude)]
-        dirnames.sort()
-        for name in sorted(fnames):
+            dirnames, fnames = _build_tar_list(
+                dirnames, filenames, relpath, exclude
+            )
+        for name in fnames:
             arcname = os.path.join(relpath, name)
             t.add(os.path.join(path, arcname), arcname=arcname)
         for name in dirnames:
             arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname),
-                  arcname=arcname, recursive=False)
+            t.add(
+                os.path.join(path, arcname), arcname=arcname, recursive=False
+            )
     t.close()
     f.seek(0)
     return f
