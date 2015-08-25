@@ -27,6 +27,7 @@ from datetime import datetime
 import requests
 import six
 
+from .. constants import DEFAULT_DOCKER_API_VERSION
 from .. import errors
 from .. import tls
 from .types import Ulimit, LogConfig
@@ -389,6 +390,7 @@ def parse_bytes(s):
 
 
 def create_host_config(
+    version=DEFAULT_DOCKER_API_VERSION,
     binds=None, port_bindings=None, lxc_conf=None,
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
@@ -434,7 +436,8 @@ def create_host_config(
     if network_mode:
         host_config['NetworkMode'] = network_mode
     elif network_mode is None:
-        host_config['NetworkMode'] = 'default'
+        if compare_version('1.19', version) > 0:
+            host_config['NetworkMode'] = 'default'
 
     if restart_policy:
         host_config['RestartPolicy'] = restart_policy
