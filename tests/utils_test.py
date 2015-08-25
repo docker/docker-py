@@ -144,11 +144,13 @@ class UtilsTest(base.BaseTestCase):
         for filters, expected in tests:
             self.assertEqual(convert_filters(filters), expected)
 
-    def test_create_empty_host_config(self):
-        empty_config = create_host_config(
-            network_mode='', version=DEFAULT_DOCKER_API_VERSION
-        )
-        self.assertEqual(empty_config, {})
+    def test_create_host_config_no_options(self):
+        config = create_host_config(version='1.19')
+        self.assertFalse('NetworkMode' in config)
+
+    def test_create_host_config_no_options_newer_api_version(self):
+        config = create_host_config(version='1.20')
+        self.assertEqual(config['NetworkMode'], 'default')
 
     def test_create_host_config_dict_ulimit(self):
         ulimit_dct = {'name': 'nofile', 'soft': 8096}
