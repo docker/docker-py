@@ -27,7 +27,6 @@ import tarfile
 import tempfile
 import threading
 import time
-import unittest
 import warnings
 import random
 
@@ -35,8 +34,8 @@ import docker
 import requests
 import six
 
-import base
-import fake_api
+from . import base
+from . import fake_api
 
 try:
     from unittest import mock
@@ -2331,6 +2330,3 @@ class StreamTest(Cleanup, base.BaseTestCase):
 
             self.assertEqual(list(stream), [
                 str(i).encode() for i in range(50)])
-
-if __name__ == '__main__':
-    unittest.main()

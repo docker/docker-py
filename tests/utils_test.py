@@ -1,6 +1,5 @@
 import os
 import os.path
-import unittest
 import tempfile
 
 from docker.client import Client
@@ -13,7 +12,7 @@ from docker.utils import (
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_repository_name, resolve_authconfig
 
-import base
+from . import base
 
 
 class UtilsTest(base.BaseTestCase):
@@ -474,6 +473,3 @@ class UtilsTest(base.BaseTestCase):
             ["127.0.0.1:1000:1000", "127.0.0.1:2000:2000"])
         self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
         self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
-
-if __name__ == '__main__':
-    unittest.main()
