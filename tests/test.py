@@ -27,16 +27,16 @@ import tarfile
 import tempfile
 import threading
 import time
-import unittest
-import warnings
 import random
 
 import docker
 import requests
 import six
 
-import base
-import fake_api
+from . import base
+from . import fake_api
+
+import pytest
 
 try:
     from unittest import mock
@@ -45,9 +45,6 @@ except ImportError:
 
 
 DEFAULT_TIMEOUT_SECONDS = docker.client.constants.DEFAULT_TIMEOUT_SECONDS
-
-warnings.simplefilter('error')
-warnings.filterwarnings('error')
 
 
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
@@ -138,15 +135,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 }
 
     def test_ctor(self):
-        try:
+        with pytest.raises(docker.errors.DockerException) as excinfo:
             docker.Client(version=1.12)
-        except Exception as e:
-            self.assertTrue(isinstance(e, docker.errors.DockerException))
-            if not six.PY3:
-                self.assertEqual(
-                    str(e),
-                    'Version parameter must be a string or None. Found float'
-                )
+
+        self.assertEqual(
+            str(excinfo.value),
+            'Version parameter must be a string or None. Found float'
+        )
 
     #########################
     #   INFORMATION TESTS   #
@@ -187,11 +182,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_image_viz(self):
-        try:
+        with pytest.raises(Exception):
             self.client.images('busybox', viz=True)
             self.fail('Viz output should not be supported!')
-        except Exception:
-            pass
 
     def test_events(self):
         self.client.events()
@@ -615,19 +608,21 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_start_container_none(self):
-        try:
+        with pytest.raises(ValueError) as excinfo:
             self.client.start(container=None)
-        except ValueError as e:
-            self.assertEqual(str(e), 'image or container param is undefined')
-        else:
-            self.fail('Command should raise ValueError')
 
-        try:
+        self.assertEqual(
+            str(excinfo.value),
+            'image or container param is undefined',
+        )
+
+        with pytest.raises(ValueError) as excinfo:
             self.client.start(None)
-        except ValueError as e:
-            self.assertEqual(str(e), 'image or container param is undefined')
-        else:
-            self.fail('Command should raise ValueError')
+
+        self.assertEqual(
+            str(excinfo.value),
+            'image or container param is undefined',
+        )
 
     def test_start_container_regression_573(self):
         self.client.start(**{'container': fake_api.FAKE_CONTAINER_ID})
@@ -765,7 +760,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_binds_mode_and_ro_error(self):
-        try:
+        with pytest.raises(ValueError):
             mount_dest = '/mnt'
             mount_origin = '/tmp'
             self.client.create_container(
@@ -777,10 +772,6 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     }}
                 )
             )
-        except ValueError:
-            return
-
-        self.fail('Command should raise ValueError')
 
     def test_create_container_with_binds_list(self):
         self.client.create_container(
@@ -962,192 +953,93 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_start_container_with_lxc_conf(self):
-        if six.PY2:
-            try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
-                )
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
-                )
+        def call_start():
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID,
+                lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
+            )
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_lxc_conf_compat(self):
-        if six.PY2:
-            try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
-                )
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
-                )
+        def call_start():
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID,
+                lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
+            )
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_binds_ro(self):
-        mount_dest = '/mnt'
-        mount_origin = '/tmp'
+        def call_start():
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID, binds={
+                    '/tmp': {
+                        "bind": '/mnt',
+                        "ro": True
+                    }
+                }
+            )
 
-        if six.PY2:
-            try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID, binds={
-                        mount_origin: {
-                            "bind": mount_dest,
-                            "ro": True
-                        }
-                    }
-                )
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID, binds={
-                        mount_origin: {
-                            "bind": mount_dest,
-                            "ro": True
-                        }
-                    }
-                )
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_binds_rw(self):
-        mount_dest = '/mnt'
-        mount_origin = '/tmp'
-        if six.PY2:
-            try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID, binds={
-                        mount_origin: {"bind": mount_dest, "ro": False}
-                    }
-                )
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID, binds={
-                        mount_origin: {"bind": mount_dest, "ro": False}
-                    }
-                )
+        def call_start():
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID, binds={
+                    '/tmp': {"bind": '/mnt', "ro": False}
+                }
+            )
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_port_binds(self):
         self.maxDiff = None
-        if six.PY2:
-            try:
-                self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
-                    1111: None,
-                    2222: 2222,
-                    '3333/udp': (3333,),
-                    4444: ('127.0.0.1',),
-                    5555: ('127.0.0.1', 5555),
-                    6666: [('127.0.0.1',), ('192.168.0.1',)]
-                })
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
-                    1111: None,
-                    2222: 2222,
-                    '3333/udp': (3333,),
-                    4444: ('127.0.0.1',),
-                    5555: ('127.0.0.1', 5555),
-                    6666: [('127.0.0.1',), ('192.168.0.1',)]
-                })
+
+        def call_start():
+            self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
+                1111: None,
+                2222: 2222,
+                '3333/udp': (3333,),
+                4444: ('127.0.0.1',),
+                5555: ('127.0.0.1', 5555),
+                6666: [('127.0.0.1',), ('192.168.0.1',)]
+            })
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_links(self):
-        # one link
-        link_path = 'path'
-        alias = 'alias'
+        def call_start():
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID, links={'path': 'alias'}
+            )
 
-        if six.PY2:
-            try:
-                self.client.start(fake_api.FAKE_CONTAINER_ID,
-                                  links={link_path: alias})
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID, links={link_path: alias}
-                )
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_multiple_links(self):
-        link_path = 'path'
-        alias = 'alias'
-        if six.PY2:
-            try:
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    links={
-                        link_path + '1': alias + '1',
-                        link_path + '2': alias + '2'
-                    }
-                )
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(
-                    fake_api.FAKE_CONTAINER_ID,
-                    links={
-                        link_path + '1': alias + '1',
-                        link_path + '2': alias + '2'
-                    }
-                )
+        def call_start():
+            self.client.start(
+                fake_api.FAKE_CONTAINER_ID,
+                links={
+                    'path1': 'alias1',
+                    'path2': 'alias2'
+                }
+            )
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_links_as_list_of_tuples(self):
-        # one link
-        link_path = 'path'
-        alias = 'alias'
-        if six.PY2:
-            try:
-                self.client.start(fake_api.FAKE_CONTAINER_ID,
-                                  links=[(link_path, alias)])
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(fake_api.FAKE_CONTAINER_ID,
-                                  links=[(link_path, alias)])
+        def call_start():
+            self.client.start(fake_api.FAKE_CONTAINER_ID,
+                              links=[('path', 'alias')])
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_privileged(self):
-        if six.PY2:
-            try:
-                self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
-            except DeprecationWarning:
-                return
-            else:
-                self.fail('Expected a DeprecationWarning')
-        else:
-            with self.assertWarns(DeprecationWarning):
-                self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
+        def call_start():
+            self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
+
+        pytest.deprecated_call(call_start)
 
     def test_start_container_with_dict_instead_of_id(self):
         self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
@@ -1716,14 +1608,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_inspect_container_undefined_id(self):
         for arg in None, '', {True: True}:
-            try:
+            with pytest.raises(docker.errors.NullResource) as excinfo:
                 self.client.inspect_container(arg)
-            except docker.errors.NullResource as e:
-                self.assertEqual(
-                    e.args[0], 'image or container param is undefined'
-                )
-            else:
-                self.fail('Command expected NullResource exception')
+
+            self.assertEqual(
+                excinfo.value.args[0], 'image or container param is undefined'
+            )
 
     def test_container_stats(self):
         self.client.stats(fake_api.FAKE_CONTAINER_ID)
@@ -1869,14 +1759,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_inspect_image_undefined_id(self):
         for arg in None, '', {True: True}:
-            try:
+            with pytest.raises(docker.errors.NullResource) as excinfo:
                 self.client.inspect_image(arg)
-            except docker.errors.NullResource as e:
-                self.assertEqual(
-                    e.args[0], 'image or container param is undefined'
-                )
-            else:
-                self.fail('Command expected NullResource exception')
+
+            self.assertEqual(
+                excinfo.value.args[0], 'image or container param is undefined'
+            )
 
     def test_insert_image(self):
         try:
@@ -2331,6 +2219,3 @@ class StreamTest(Cleanup, base.BaseTestCase):
 
             self.assertEqual(list(stream), [
                 str(i).encode() for i in range(50)])
-
-if __name__ == '__main__':
-    unittest.main()
