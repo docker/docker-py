@@ -564,6 +564,9 @@ def create_container_config(
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
 
+    if isinstance(entrypoint, six.string_types):
+        entrypoint = shlex.split(str(entrypoint))
+
     if isinstance(environment, dict):
         environment = [
             six.text_type('{0}={1}').format(k, v)

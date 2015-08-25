@@ -428,7 +428,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_entrypoint(self):
         try:
             self.client.create_container('busybox', 'hello',
-                                         entrypoint='cowsay')
+                                         entrypoint='cowsay entry')
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
@@ -443,7 +443,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                              "AttachStdout": true, "OpenStdin": false,
                              "StdinOnce": false,
                              "NetworkDisabled": false,
-                             "Entrypoint": "cowsay"}'''))
+                             "Entrypoint": ["cowsay", "entry"]}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
