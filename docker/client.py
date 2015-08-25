@@ -271,6 +271,11 @@ class Client(clientbase.ClientBase):
     def create_host_config(self, *args, **kwargs):
         if not kwargs:
             kwargs = {}
+        if 'version' in kwargs:
+            raise TypeError(
+                "create_host_config() got an unexpected "
+                "keyword argument 'version'"
+            )
         kwargs['version'] = self._version
         return utils.create_host_config(*args, **kwargs)
 
