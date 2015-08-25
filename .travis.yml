@@ -1,7 +1,10 @@
-sudo: false
+sudo: required
 language: python
+services:
+    - docker
 python:
-  - "2.7"
+    - "2.7"
+
 env:
     - TOX_ENV=py26
     - TOX_ENV=py27
@@ -9,7 +12,13 @@ env:
     - TOX_ENV=py33
     - TOX_ENV=py34
     - TOX_ENV=flake8
-install:
-    - pip install tox
-script:
-    - tox -e $TOX_ENV
+    - MAKE_TASK=integration-test
+    - MAKE_TASK=integration-test-py3
+
+script: |
+    if [ -n "$TOX_ENV" ]; then
+        pip install tox
+        tox -e "$TOX_ENV"
+    elif [ -n "$MAKE_TASK" ]; then
+        make "$MAKE_TASK"
+    fi
