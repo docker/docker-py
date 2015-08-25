@@ -14,6 +14,8 @@ from docker.auth import resolve_repository_name, resolve_authconfig
 
 from . import base
 
+import pytest
+
 
 class UtilsTest(base.BaseTestCase):
     longMessage = True
@@ -79,13 +81,8 @@ class UtilsTest(base.BaseTestCase):
         }
 
         for host in invalid_hosts:
-            try:
-                parsed = parse_host(host)
-                self.fail('Expected to fail but success: %s -> %s' % (
-                    host, parsed
-                ))
-            except DockerException:
-                pass
+            with pytest.raises(DockerException):
+                parse_host(host)
 
         for host, expected in valid_hosts.items():
             self.assertEqual(parse_host(host), expected, msg=host)
