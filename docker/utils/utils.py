@@ -27,6 +27,7 @@ from datetime import datetime
 import requests
 import six
 
+from .. import constants
 from .. import errors
 from .. import tls
 from .types import Ulimit, LogConfig
@@ -395,9 +396,16 @@ def create_host_config(
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
     security_opt=None, ulimits=None, log_config=None, mem_limit=None,
-    memswap_limit=None, cgroup_parent=None
+    memswap_limit=None, cgroup_parent=None, version=None
 ):
     host_config = {}
+
+    if not version:
+        warnings.warn(
+            'docker.utils.create_host_config() is deprecated. Please use '
+            'Client.create_host_config() instead.'
+        )
+        version = constants.DEFAULT_DOCKER_API_VERSION
 
     if mem_limit is not None:
         if isinstance(mem_limit, six.string_types):
@@ -433,7 +441,7 @@ def create_host_config(
 
     if network_mode:
         host_config['NetworkMode'] = network_mode
-    elif network_mode is None:
+    elif network_mode is None and compare_version('1.19', version) > 0:
         host_config['NetworkMode'] = 'default'
 
     if restart_policy:

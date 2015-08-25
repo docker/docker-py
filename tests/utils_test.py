@@ -4,6 +4,7 @@ import unittest
 import tempfile
 
 from docker.client import Client
+from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
@@ -144,12 +145,16 @@ class UtilsTest(base.BaseTestCase):
             self.assertEqual(convert_filters(filters), expected)
 
     def test_create_empty_host_config(self):
-        empty_config = create_host_config(network_mode='')
+        empty_config = create_host_config(
+            network_mode='', version=DEFAULT_DOCKER_API_VERSION
+        )
         self.assertEqual(empty_config, {})
 
     def test_create_host_config_dict_ulimit(self):
         ulimit_dct = {'name': 'nofile', 'soft': 8096}
-        config = create_host_config(ulimits=[ulimit_dct])
+        config = create_host_config(
+            ulimits=[ulimit_dct], version=DEFAULT_DOCKER_API_VERSION
+        )
         self.assertIn('Ulimits', config)
         self.assertEqual(len(config['Ulimits']), 1)
         ulimit_obj = config['Ulimits'][0]
@@ -160,7 +165,9 @@ class UtilsTest(base.BaseTestCase):
 
     def test_create_host_config_dict_ulimit_capitals(self):
         ulimit_dct = {'Name': 'nofile', 'Soft': 8096, 'Hard': 8096 * 4}
-        config = create_host_config(ulimits=[ulimit_dct])
+        config = create_host_config(
+            ulimits=[ulimit_dct], version=DEFAULT_DOCKER_API_VERSION
+        )
         self.assertIn('Ulimits', config)
         self.assertEqual(len(config['Ulimits']), 1)
         ulimit_obj = config['Ulimits'][0]
@@ -172,7 +179,9 @@ class UtilsTest(base.BaseTestCase):
 
     def test_create_host_config_obj_ulimit(self):
         ulimit_dct = Ulimit(name='nofile', soft=8096)
-        config = create_host_config(ulimits=[ulimit_dct])
+        config = create_host_config(
+            ulimits=[ulimit_dct], version=DEFAULT_DOCKER_API_VERSION
+        )
         self.assertIn('Ulimits', config)
         self.assertEqual(len(config['Ulimits']), 1)
         ulimit_obj = config['Ulimits'][0]
@@ -186,14 +195,18 @@ class UtilsTest(base.BaseTestCase):
 
     def test_create_host_config_dict_logconfig(self):
         dct = {'type': LogConfig.types.SYSLOG, 'config': {'key1': 'val1'}}
-        config = create_host_config(log_config=dct)
+        config = create_host_config(
+            log_config=dct, version=DEFAULT_DOCKER_API_VERSION
+        )
         self.assertIn('LogConfig', config)
         self.assertTrue(isinstance(config['LogConfig'], LogConfig))
         self.assertEqual(dct['type'], config['LogConfig'].type)
 
     def test_create_host_config_obj_logconfig(self):
         obj = LogConfig(type=LogConfig.types.SYSLOG, config={'key1': 'val1'})
-        config = create_host_config(log_config=obj)
+        config = create_host_config(
+            log_config=obj, version=DEFAULT_DOCKER_API_VERSION
+        )
         self.assertIn('LogConfig', config)
         self.assertTrue(isinstance(config['LogConfig'], LogConfig))
         self.assertEqual(obj, config['LogConfig'])

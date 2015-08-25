@@ -48,7 +48,6 @@ DEFAULT_TIMEOUT_SECONDS = docker.client.constants.DEFAULT_TIMEOUT_SECONDS
 
 warnings.simplefilter('error')
 warnings.filterwarnings('error')
-create_host_config = docker.utils.create_host_config
 
 
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
@@ -495,7 +494,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_cgroup_parent(self):
         try:
             self.client.create_container(
-                'busybox', 'ls', host_config=create_host_config(
+                'busybox', 'ls', host_config=self.client.create_host_config(
                     cgroup_parent='test'
                 )
             )
@@ -604,7 +603,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_mem_limit_as_int(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     mem_limit=128.0
                 )
             )
@@ -618,7 +617,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_mem_limit_as_string(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     mem_limit='128'
                 )
             )
@@ -632,7 +631,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_mem_limit_as_string_with_k_unit(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     mem_limit='128k'
                 )
             )
@@ -646,7 +645,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_mem_limit_as_string_with_m_unit(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     mem_limit='128m'
                 )
             )
@@ -661,7 +660,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_mem_limit_as_string_with_g_unit(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     mem_limit='128g'
                 )
             )
@@ -676,11 +675,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_create_container_with_mem_limit_as_string_with_wrong_value(self):
         self.assertRaises(
-            docker.errors.DockerException, create_host_config, mem_limit='128p'
+            docker.errors.DockerException,
+            self.client.create_host_config, mem_limit='128p'
         )
 
         self.assertRaises(
-            docker.errors.DockerException, create_host_config, mem_limit='1f28'
+            docker.errors.DockerException,
+            self.client.create_host_config, mem_limit='1f28'
         )
 
     def test_start_container(self):
@@ -726,7 +727,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_lxc_conf(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
                 )
             )
@@ -738,7 +739,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'containers/create'
         )
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['LxcConf'] = [
             {"Value": "lxc.conf.value", "Key": "lxc.conf.k"}
         ]
@@ -756,7 +757,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_lxc_conf_compat(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
                 )
             )
@@ -766,7 +767,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['LxcConf'] = [
             {"Value": "lxc.conf.value", "Key": "lxc.conf.k"}
         ]
@@ -784,7 +785,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             mount_dest = '/mnt'
             mount_origin = '/tmp'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     binds={mount_origin: {
                         "bind": mount_dest,
                         "ro": True
@@ -798,7 +799,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:ro"]
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
@@ -813,7 +814,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             mount_dest = '/mnt'
             mount_origin = '/tmp'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     binds={mount_origin: {
                         "bind": mount_dest,
                         "ro": False
@@ -827,7 +828,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:rw"]
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
@@ -842,7 +843,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             mount_dest = '/mnt'
             mount_origin = '/tmp'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     binds={mount_origin: {
                         "bind": mount_dest,
                         "mode": "z",
@@ -856,7 +857,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:z"]
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
@@ -871,7 +872,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             mount_dest = '/mnt'
             mount_origin = '/tmp'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     binds={mount_origin: {
                         "bind": mount_dest,
                         "mode": "z",
@@ -887,7 +888,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_binds_list(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     binds=[
                         "/tmp:/mnt/1:ro",
                         "/tmp:/mnt/2",
@@ -901,7 +902,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = [
             "/tmp:/mnt/1:ro",
             "/tmp:/mnt/2",
@@ -918,7 +919,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.maxDiff = None
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     port_bindings={
                         1111: None,
                         2222: 2222,
@@ -987,7 +988,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             link_path = 'path'
             alias = 'alias'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     links={link_path: alias}
                 )
             )
@@ -999,7 +1000,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             args[0][0], url_prefix + 'containers/create'
         )
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = ['path:alias']
 
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
@@ -1012,7 +1013,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             link_path = 'path'
             alias = 'alias'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     links={
                         link_path + '1': alias + '1',
                         link_path + '2': alias + '2'
@@ -1025,7 +1026,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = [
             'path1:alias1', 'path2:alias2'
         ]
@@ -1039,7 +1040,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             link_path = 'path'
             alias = 'alias'
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     links=[(link_path, alias)]
                 )
             )
@@ -1049,7 +1050,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = ['path:alias']
 
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
@@ -1061,13 +1062,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             self.client.create_container(
                 'busybox', 'true',
-                host_config=create_host_config(privileged=True)
+                host_config=self.client.create_host_config(privileged=True)
             )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
 
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Privileged'] = True
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
@@ -1306,7 +1307,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_restart_policy(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     restart_policy={
                         "Name": "always",
                         "MaximumRetryCount": 0
@@ -1319,7 +1320,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
 
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['RestartPolicy'] = {
             "MaximumRetryCount": 0, "Name": "always"
         }
@@ -1336,14 +1337,14 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             self.client.create_container(
                 'busybox', 'true',
-                host_config=create_host_config(cap_add=['MKNOD'])
+                host_config=self.client.create_host_config(cap_add=['MKNOD'])
             )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['CapAdd'] = ['MKNOD']
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(
@@ -1357,14 +1358,14 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             self.client.create_container(
                 'busybox', 'true',
-                host_config=create_host_config(cap_drop=['MKNOD'])
+                host_config=self.client.create_host_config(cap_drop=['MKNOD'])
             )
         except Exception as e:
             self.fail('Command should not raise exception: {0}'.format(e))
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['CapDrop'] = ['MKNOD']
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(
@@ -1377,7 +1378,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_devices(self):
         try:
             self.client.create_container(
-                'busybox', 'true', host_config=create_host_config(
+                'busybox', 'true', host_config=self.client.create_host_config(
                     devices=['/dev/sda:/dev/xvda:rwm',
                              '/dev/sdb:/dev/xvdb',
                              '/dev/sdc']
@@ -1388,7 +1389,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Devices'] = [
             {'CgroupPermissions': 'rwm',
              'PathInContainer': '/dev/xvda',
@@ -1462,7 +1463,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             volume_name = 'name'
             self.client.create_container(
                 'busybox', 'true',
-                host_config=create_host_config(
+                host_config=self.client.create_host_config(
                     binds={volume_name: {
                         "bind": mount_dest,
                         "ro": False
@@ -1477,7 +1478,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['VolumeDriver'] = 'foodriver'
-        expected_payload['HostConfig'] = create_host_config()
+        expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["name:/mnt:rw"]
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
@@ -2536,12 +2537,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_create_host_config_secopt(self):
         security_opt = ['apparmor:test_profile']
-        result = create_host_config(security_opt=security_opt)
+        result = self.client.create_host_config(security_opt=security_opt)
         self.assertIn('SecurityOpt', result)
         self.assertEqual(result['SecurityOpt'], security_opt)
 
         self.assertRaises(
-            docker.errors.DockerException, create_host_config,
+            docker.errors.DockerException, self.client.create_host_config,
             security_opt='wrong'
         )
 

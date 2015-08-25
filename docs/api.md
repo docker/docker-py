@@ -234,7 +234,7 @@ from. Optionally a single string joining container id's with commas
  'Warnings': None}
 ```
 
-### parse_env_file
+### docker.utils.parse_env_file
 
 A utility for parsing an environment file.
 

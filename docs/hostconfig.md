@@ -6,7 +6,7 @@ The Docker Remote API introduced [support for HostConfig in version 1.15](http:/
 
 ## HostConfig helper
 
-### docker.utils.create_host_config
+### Client.create_host_config
 
 Creates a HostConfig dictionary to be used with `Client.create_container`.
 
@@ -97,7 +97,8 @@ for example:
 **Returns** (dict) HostConfig dictionary
 
 ```python
->>> from docker.utils import create_host_config
->>> create_host_config(privileged=True, cap_drop=['MKNOD'], volumes_from=['nostalgic_newton'])
+>>> from docker import Client
+>>> c = Client()
+>>> c.create_host_config(privileged=True, cap_drop=['MKNOD'], volumes_from=['nostalgic_newton'])
 {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True, 'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 ```
