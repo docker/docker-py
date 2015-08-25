@@ -152,10 +152,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     #   INFORMATION TESTS   #
     #########################
     def test_version(self):
-        try:
-            self.client.version()
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.version()
 
         fake_request.assert_called_with(
             url_prefix + 'version',
@@ -169,18 +166,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         client.close()
 
     def test_auto_retrieve_server_version(self):
-        try:
-            version = self.client._retrieve_server_version()
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
-        else:
-            self.assertTrue(isinstance(version, six.string_types))
+        version = self.client._retrieve_server_version()
+        self.assertTrue(isinstance(version, six.string_types))
 
     def test_info(self):
-        try:
-            self.client.info()
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.info()
 
         fake_request.assert_called_with(
             url_prefix + 'info',
@@ -188,10 +178,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_search(self):
-        try:
-            self.client.search('busybox')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.search('busybox')
 
         fake_request.assert_called_with(
             url_prefix + 'images/search',
@@ -207,10 +194,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             pass
 
     def test_events(self):
-        try:
-            self.client.events()
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.events()
 
         fake_request.assert_called_with(
             url_prefix + 'events',
@@ -223,10 +207,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         now = datetime.datetime.utcfromtimestamp(ts)
         since = now - datetime.timedelta(seconds=10)
         until = now + datetime.timedelta(seconds=10)
-        try:
-            self.client.events(since=since, until=until)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.events(since=since, until=until)
 
         fake_request.assert_called_with(
             url_prefix + 'events',
@@ -241,10 +223,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_events_with_filters(self):
         filters = {'event': ['die', 'stop'],
                    'container': fake_api.FAKE_CONTAINER_ID}
-        try:
-            self.client.events(filters=filters)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.events(filters=filters)
 
         expected_filters = docker.utils.convert_filters(filters)
         fake_request.assert_called_with(
@@ -262,10 +242,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     ###################
 
     def test_images(self):
-        try:
-            self.client.images(all=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.images(all=True)
+
         fake_request.assert_called_with(
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 0, 'all': 1},
@@ -273,10 +251,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_images_quiet(self):
-        try:
-            self.client.images(all=True, quiet=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.images(all=True, quiet=True)
+
         fake_request.assert_called_with(
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 1, 'all': 1},
@@ -284,10 +260,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_image_ids(self):
-        try:
-            self.client.images(quiet=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.images(quiet=True)
 
         fake_request.assert_called_with(
             url_prefix + 'images/json',
@@ -296,10 +269,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_images_filters(self):
-        try:
-            self.client.images(filters={'dangling': True})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.images(filters={'dangling': True})
 
         fake_request.assert_called_with(
             url_prefix + 'images/json',
@@ -309,10 +279,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_list_containers(self):
-        try:
-            self.client.containers(all=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.containers(all=True)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/json',
@@ -332,10 +299,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     #####################
 
     def test_create_container(self):
-        try:
-            self.client.create_container('busybox', 'true')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'true')
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -353,11 +317,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_binds(self):
         mount_dest = '/mnt'
 
-        try:
-            self.client.create_container('busybox', ['ls', mount_dest],
-                                         volumes=[mount_dest])
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', ['ls', mount_dest],
+                                     volumes=[mount_dest])
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -377,11 +338,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_create_container_with_volume_string(self):
         mount_dest = '/mnt'
 
-        try:
-            self.client.create_container('busybox', ['ls', mount_dest],
-                                         volumes=mount_dest)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', ['ls', mount_dest],
+                                     volumes=mount_dest)
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -399,11 +357,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_ports(self):
-        try:
-            self.client.create_container('busybox', 'ls',
-                                         ports=[1111, (2222, 'udp'), (3333,)])
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'ls',
+                                     ports=[1111, (2222, 'udp'), (3333,)])
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -425,11 +380,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_entrypoint(self):
-        try:
-            self.client.create_container('busybox', 'hello',
-                                         entrypoint='cowsay entry')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'hello',
+                                     entrypoint='cowsay entry')
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -447,11 +399,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_cpu_shares(self):
-        try:
-            self.client.create_container('busybox', 'ls',
-                                         cpu_shares=5)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'ls',
+                                     cpu_shares=5)
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -469,11 +418,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_cpuset(self):
-        try:
-            self.client.create_container('busybox', 'ls',
-                                         cpuset='0,1')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'ls',
+                                     cpuset='0,1')
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -492,14 +438,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_cgroup_parent(self):
-        try:
-            self.client.create_container(
-                'busybox', 'ls', host_config=self.client.create_host_config(
-                    cgroup_parent='test'
-                )
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cgroup_parent='test'
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -510,11 +453,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(data['HostConfig']['CgroupParent'], 'test')
 
     def test_create_container_with_working_dir(self):
-        try:
-            self.client.create_container('busybox', 'ls',
-                                         working_dir='/root')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'ls',
+                                     working_dir='/root')
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -532,10 +472,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_stdin_open(self):
-        try:
-            self.client.create_container('busybox', 'true', stdin_open=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'true', stdin_open=True)
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -555,13 +492,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             self.client.create_container('busybox', 'true',
                                          volumes_from=vol_names)
-        except docker.errors.DockerException as e:
+        except docker.errors.DockerException:
             self.assertTrue(
                 docker.utils.compare_version('1.10', self.client._version) >= 0
             )
             return
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['VolumesFrom'],
@@ -570,21 +506,15 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_empty_volumes_from(self):
-        try:
-            self.client.create_container('busybox', 'true', volumes_from=[])
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'true', volumes_from=[])
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
         self.assertTrue('VolumesFrom' not in data)
 
     def test_create_named_container(self):
-        try:
-            self.client.create_container('busybox', 'true',
-                                         name='marisa-kirisame')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container('busybox', 'true',
+                                     name='marisa-kirisame')
 
         args = fake_request.call_args
         self.assertEqual(args[0][0],
@@ -601,71 +531,55 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
 
     def test_create_container_with_mem_limit_as_int(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    mem_limit=128.0
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                mem_limit=128.0
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
         self.assertEqual(data['HostConfig']['Memory'], 128.0)
 
     def test_create_container_with_mem_limit_as_string(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    mem_limit='128'
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                mem_limit='128'
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
         self.assertEqual(data['HostConfig']['Memory'], 128.0)
 
     def test_create_container_with_mem_limit_as_string_with_k_unit(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    mem_limit='128k'
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                mem_limit='128k'
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
         self.assertEqual(data['HostConfig']['Memory'], 128.0 * 1024)
 
     def test_create_container_with_mem_limit_as_string_with_m_unit(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    mem_limit='128m'
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                mem_limit='128m'
             )
-
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
         self.assertEqual(data['HostConfig']['Memory'], 128.0 * 1024 * 1024)
 
     def test_create_container_with_mem_limit_as_string_with_g_unit(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    mem_limit='128g'
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                mem_limit='128g'
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
@@ -685,11 +599,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_start_container(self):
-        try:
-            self.client.start(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            raise e
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.start(fake_api.FAKE_CONTAINER_ID)
+
         args = fake_request.call_args
         self.assertEqual(
             args[0][0],
@@ -719,20 +630,15 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.fail('Command should raise ValueError')
 
     def test_start_container_regression_573(self):
-        try:
-            self.client.start(**{'container': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.start(**{'container': fake_api.FAKE_CONTAINER_ID})
 
     def test_create_container_with_lxc_conf(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
+
         args = fake_request.call_args
         self.assertEqual(
             args[0][0],
@@ -755,14 +661,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_lxc_conf_compat(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
@@ -781,19 +684,17 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_binds_ro(self):
-        try:
-            mount_dest = '/mnt'
-            mount_origin = '/tmp'
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    binds={mount_origin: {
-                        "bind": mount_dest,
-                        "ro": True
-                    }}
-                )
+        mount_dest = '/mnt'
+        mount_origin = '/tmp'
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                binds={mount_origin: {
+                    "bind": mount_dest,
+                    "ro": True
+                }}
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix +
@@ -810,19 +711,17 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_binds_rw(self):
-        try:
-            mount_dest = '/mnt'
-            mount_origin = '/tmp'
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    binds={mount_origin: {
-                        "bind": mount_dest,
-                        "ro": False
-                    }}
-                )
+        mount_dest = '/mnt'
+        mount_origin = '/tmp'
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                binds={mount_origin: {
+                    "bind": mount_dest,
+                    "ro": False
+                }}
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix +
@@ -839,19 +738,17 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_binds_mode(self):
-        try:
-            mount_dest = '/mnt'
-            mount_origin = '/tmp'
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    binds={mount_origin: {
-                        "bind": mount_dest,
-                        "mode": "z",
-                    }}
-                )
+        mount_dest = '/mnt'
+        mount_origin = '/tmp'
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                binds={mount_origin: {
+                    "bind": mount_dest,
+                    "mode": "z",
+                }}
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix +
@@ -886,17 +783,14 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.fail('Command should raise ValueError')
 
     def test_create_container_with_binds_list(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    binds=[
-                        "/tmp:/mnt/1:ro",
-                        "/tmp:/mnt/2",
-                    ],
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                binds=[
+                    "/tmp:/mnt/1:ro",
+                    "/tmp:/mnt/2",
+                ],
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix +
@@ -917,21 +811,19 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_create_container_with_port_binds(self):
         self.maxDiff = None
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    port_bindings={
-                        1111: None,
-                        2222: 2222,
-                        '3333/udp': (3333,),
-                        4444: ('127.0.0.1',),
-                        5555: ('127.0.0.1', 5555),
-                        6666: [('127.0.0.1',), ('192.168.0.1',)]
-                    }
-                )
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                port_bindings={
+                    1111: None,
+                    2222: 2222,
+                    '3333/udp': (3333,),
+                    4444: ('127.0.0.1',),
+                    5555: ('127.0.0.1', 5555),
+                    6666: [('127.0.0.1',), ('192.168.0.1',)]
+                }
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
@@ -972,28 +864,24 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_mac_address(self):
-        try:
-            mac_address_expected = "02:42:ac:11:00:0a"
-            container = self.client.create_container(
-                'busybox', ['sleep', '60'], mac_address=mac_address_expected)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        mac_address_expected = "02:42:ac:11:00:0a"
+
+        container = self.client.create_container(
+            'busybox', ['sleep', '60'], mac_address=mac_address_expected)
 
         res = self.client.inspect_container(container['Id'])
         self.assertEqual(mac_address_expected,
                          res['NetworkSettings']['MacAddress'])
 
     def test_create_container_with_links(self):
-        try:
-            link_path = 'path'
-            alias = 'alias'
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    links={link_path: alias}
-                )
+        link_path = 'path'
+        alias = 'alias'
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                links={link_path: alias}
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(
@@ -1009,19 +897,17 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_multiple_links(self):
-        try:
-            link_path = 'path'
-            alias = 'alias'
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    links={
-                        link_path + '1': alias + '1',
-                        link_path + '2': alias + '2'
-                    }
-                )
+        link_path = 'path'
+        alias = 'alias'
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                links={
+                    link_path + '1': alias + '1',
+                    link_path + '2': alias + '2'
+                }
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
@@ -1036,16 +922,14 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_links_as_list_of_tuples(self):
-        try:
-            link_path = 'path'
-            alias = 'alias'
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    links=[(link_path, alias)]
-                )
+        link_path = 'path'
+        alias = 'alias'
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                links=[(link_path, alias)]
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
@@ -1059,13 +943,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_privileged(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true',
-                host_config=self.client.create_host_config(privileged=True)
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container(
+            'busybox', 'true',
+            host_config=self.client.create_host_config(privileged=True)
+        )
 
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -1087,10 +968,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     fake_api.FAKE_CONTAINER_ID,
                     lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
                 )
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1107,10 +986,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     fake_api.FAKE_CONTAINER_ID,
                     lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
                 )
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1134,10 +1011,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                         }
                     }
                 )
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1161,10 +1036,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                         mount_origin: {"bind": mount_dest, "ro": False}
                     }
                 )
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1187,10 +1060,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                     5555: ('127.0.0.1', 5555),
                     6666: [('127.0.0.1',), ('192.168.0.1',)]
                 })
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1213,10 +1084,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             try:
                 self.client.start(fake_api.FAKE_CONTAINER_ID,
                                   links={link_path: alias})
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1237,10 +1106,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                         link_path + '2': alias + '2'
                     }
                 )
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1261,10 +1128,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             try:
                 self.client.start(fake_api.FAKE_CONTAINER_ID,
                                   links=[(link_path, alias)])
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1276,10 +1141,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         if six.PY2:
             try:
                 self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
-            except DeprecationWarning as e:
+            except DeprecationWarning:
                 return
-            except Exception as e:
-                self.fail('Command should not raise exception: {0}'.format(e))
             else:
                 self.fail('Expected a DeprecationWarning')
         else:
@@ -1287,10 +1150,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
 
     def test_start_container_with_dict_instead_of_id(self):
-        try:
-            self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
+
         args = fake_request.call_args
         self.assertEqual(
             args[0][0],
@@ -1305,17 +1166,15 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_restart_policy(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    restart_policy={
-                        "Name": "always",
-                        "MaximumRetryCount": 0
-                    }
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                restart_policy={
+                    "Name": "always",
+                    "MaximumRetryCount": 0
+                }
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
 
@@ -1334,13 +1193,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_added_capabilities(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true',
-                host_config=self.client.create_host_config(cap_add=['MKNOD'])
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container(
+            'busybox', 'true',
+            host_config=self.client.create_host_config(cap_add=['MKNOD'])
+        )
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
@@ -1355,13 +1212,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_dropped_capabilities(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true',
-                host_config=self.client.create_host_config(cap_drop=['MKNOD'])
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.create_container(
+            'busybox', 'true',
+            host_config=self.client.create_host_config(cap_drop=['MKNOD'])
+        )
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
@@ -1376,16 +1231,14 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_devices(self):
-        try:
-            self.client.create_container(
-                'busybox', 'true', host_config=self.client.create_host_config(
-                    devices=['/dev/sda:/dev/xvda:rwm',
-                             '/dev/sdb:/dev/xvdb',
-                             '/dev/sdc']
-                )
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                devices=['/dev/sda:/dev/xvda:rwm',
+                         '/dev/sdb:/dev/xvdb',
+                         '/dev/sdc']
             )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        )
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
@@ -1414,13 +1267,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             six.text_type('foo'): six.text_type('1'),
             six.text_type('bar'): six.text_type('2'),
         }
-        try:
-            self.client.create_container(
-                'busybox', 'true',
-                labels=labels_dict,
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.create_container(
+            'busybox', 'true',
+            labels=labels_dict,
+        )
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
@@ -1440,13 +1292,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             six.text_type('foo'): six.text_type(),
             six.text_type('bar'): six.text_type(),
         }
-        try:
-            self.client.create_container(
-                'busybox', 'true',
-                labels=labels_list,
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.create_container(
+            'busybox', 'true',
+            labels=labels_list,
+        )
+
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
@@ -1458,20 +1309,18 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_create_container_with_named_volume(self):
-        try:
-            mount_dest = '/mnt'
-            volume_name = 'name'
-            self.client.create_container(
-                'busybox', 'true',
-                host_config=self.client.create_host_config(
-                    binds={volume_name: {
-                        "bind": mount_dest,
-                        "ro": False
-                    }}),
-                volume_driver='foodriver',
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        mount_dest = '/mnt'
+        volume_name = 'name'
+
+        self.client.create_container(
+            'busybox', 'true',
+            host_config=self.client.create_host_config(
+                binds={volume_name: {
+                    "bind": mount_dest,
+                    "ro": False
+                }}),
+            volume_driver='foodriver',
+        )
 
         args = fake_request.call_args
         self.assertEqual(args[0][0], url_prefix +
@@ -1489,14 +1338,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_resize_container(self):
-        try:
-            self.client.resize(
-                {'Id': fake_api.FAKE_CONTAINER_ID},
-                height=15,
-                width=120
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.resize(
+            {'Id': fake_api.FAKE_CONTAINER_ID},
+            height=15,
+            width=120
+        )
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/resize',
@@ -1505,13 +1351,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_rename_container(self):
-        try:
-            self.client.rename(
-                {'Id': fake_api.FAKE_CONTAINER_ID},
-                name='foobar'
-            )
-        except Exception as e:
-            self.fail('Command shold not raise exception: {0}'.format(e))
+        self.client.rename(
+            {'Id': fake_api.FAKE_CONTAINER_ID},
+            name='foobar'
+        )
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/rename',
@@ -1520,10 +1363,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_wait(self):
-        try:
-            self.client.wait(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.wait(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/wait',
@@ -1531,11 +1371,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_wait_with_dict_instead_of_id(self):
-        try:
-            self.client.wait({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            raise e
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.wait({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/wait',
@@ -1572,12 +1408,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         assert c.base_url == "http://hostname:1234"
 
     def test_logs(self):
-        try:
-            with mock.patch('docker.Client.inspect_container',
-                            fake_inspect_container):
-                logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
@@ -1593,12 +1426,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_logs_with_dict_instead_of_id(self):
-        try:
-            with mock.patch('docker.Client.inspect_container',
-                            fake_inspect_container):
-                logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
@@ -1614,12 +1444,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_log_streaming(self):
-        try:
-            with mock.patch('docker.Client.inspect_container',
-                            fake_inspect_container):
-                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
@@ -1630,13 +1457,10 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_log_tail(self):
-        try:
-            with mock.patch('docker.Client.inspect_container',
-                            fake_inspect_container):
-                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
-                                 tail=10)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                             tail=10)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/logs',
@@ -1647,16 +1471,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_log_tty(self):
-        try:
-            m = mock.Mock()
-            with mock.patch('docker.Client.inspect_container',
-                            fake_inspect_container_tty):
-                with mock.patch('docker.Client._stream_raw_result',
-                                m):
-                    self.client.logs(fake_api.FAKE_CONTAINER_ID,
-                                     stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        m = mock.Mock()
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container_tty):
+            with mock.patch('docker.Client._stream_raw_result',
+                            m):
+                self.client.logs(fake_api.FAKE_CONTAINER_ID,
+                                 stream=True)
 
         self.assertTrue(m.called)
         fake_request.assert_called_with(
@@ -1668,10 +1489,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_diff(self):
-        try:
-            self.client.diff(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.diff(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/changes',
@@ -1679,10 +1497,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_diff_with_dict_instead_of_id(self):
-        try:
-            self.client.diff({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.diff({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/changes',
@@ -1690,10 +1505,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_port(self):
-        try:
-            self.client.port({'Id': fake_api.FAKE_CONTAINER_ID}, 1111)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.port({'Id': fake_api.FAKE_CONTAINER_ID}, 1111)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/json',
@@ -1702,10 +1514,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_stop_container(self):
         timeout = 2
-        try:
-            self.client.stop(fake_api.FAKE_CONTAINER_ID, timeout=timeout)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.stop(fake_api.FAKE_CONTAINER_ID, timeout=timeout)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stop',
@@ -1715,11 +1525,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_stop_container_with_dict_instead_of_id(self):
         timeout = 2
-        try:
-            self.client.stop({'Id': fake_api.FAKE_CONTAINER_ID},
-                             timeout=timeout)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.stop({'Id': fake_api.FAKE_CONTAINER_ID},
+                         timeout=timeout)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stop',
@@ -1728,10 +1536,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_exec_create(self):
-        try:
-            self.client.exec_create(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.exec_create(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
 
         args = fake_request.call_args
         self.assertEqual(
@@ -1757,10 +1562,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_exec_start(self):
-        try:
-            self.client.exec_start(fake_api.FAKE_EXEC_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.exec_start(fake_api.FAKE_EXEC_ID)
 
         args = fake_request.call_args
         self.assertEqual(
@@ -1780,10 +1582,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          {'Content-Type': 'application/json'})
 
     def test_exec_inspect(self):
-        try:
-            self.client.exec_inspect(fake_api.FAKE_EXEC_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.exec_inspect(fake_api.FAKE_EXEC_ID)
 
         args = fake_request.call_args
         self.assertEqual(
@@ -1793,10 +1592,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_exec_resize(self):
-        try:
-            self.client.exec_resize(fake_api.FAKE_EXEC_ID, height=20, width=60)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.exec_resize(fake_api.FAKE_EXEC_ID, height=20, width=60)
 
         fake_request.assert_called_with(
             url_prefix + 'exec/{0}/resize'.format(fake_api.FAKE_EXEC_ID),
@@ -1805,30 +1601,23 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_pause_container(self):
-        try:
-            self.client.pause(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.pause(fake_api.FAKE_CONTAINER_ID)
+
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/pause',
             timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_unpause_container(self):
-        try:
-            self.client.unpause(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.unpause(fake_api.FAKE_CONTAINER_ID)
+
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/unpause',
             timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_kill_container(self):
-        try:
-            self.client.kill(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.kill(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/kill',
@@ -1837,10 +1626,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_kill_container_with_dict_instead_of_id(self):
-        try:
-            self.client.kill({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.kill({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/kill',
@@ -1849,10 +1635,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_kill_container_with_signal(self):
-        try:
-            self.client.kill(fake_api.FAKE_CONTAINER_ID, signal=signal.SIGTERM)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.kill(fake_api.FAKE_CONTAINER_ID, signal=signal.SIGTERM)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/kill',
@@ -1861,10 +1644,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_restart_container(self):
-        try:
-            self.client.restart(fake_api.FAKE_CONTAINER_ID, timeout=2)
-        except Exception as e:
-            self.fail('Command should not raise exception : {0}'.format(e))
+        self.client.restart(fake_api.FAKE_CONTAINER_ID, timeout=2)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/restart',
@@ -1873,10 +1653,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_restart_container_with_dict_instead_of_id(self):
-        try:
-            self.client.restart({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=2)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.restart({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=2)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/restart',
@@ -1885,10 +1662,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_remove_container(self):
-        try:
-            self.client.remove_container(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.remove_container(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
@@ -1897,10 +1671,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_remove_container_with_dict_instead_of_id(self):
-        try:
-            self.client.remove_container({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.remove_container({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
@@ -1909,10 +1680,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_remove_link(self):
-        try:
-            self.client.remove_container(fake_api.FAKE_CONTAINER_ID, link=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.remove_container(fake_api.FAKE_CONTAINER_ID, link=True)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b',
@@ -1921,10 +1689,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_export(self):
-        try:
-            self.client.export(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.export(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/export',
@@ -1933,10 +1698,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_export_with_dict_instead_of_id(self):
-        try:
-            self.client.export({'Id': fake_api.FAKE_CONTAINER_ID})
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.export({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/export',
@@ -1945,10 +1707,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_inspect_container(self):
-        try:
-            self.client.inspect_container(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.inspect_container(fake_api.FAKE_CONTAINER_ID)
+
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1966,10 +1726,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 self.fail('Command expected NullResource exception')
 
     def test_container_stats(self):
-        try:
-            self.client.stats(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.stats(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'containers/3cc2351ab11b/stats',
@@ -1982,10 +1739,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     ##################
 
     def test_pull(self):
-        try:
-            self.client.pull('joffrey/test001')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.pull('joffrey/test001')
 
         args = fake_request.call_args
         self.assertEqual(
@@ -1999,10 +1753,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertFalse(args[1]['stream'])
 
     def test_pull_stream(self):
-        try:
-            self.client.pull('joffrey/test001', stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.pull('joffrey/test001', stream=True)
 
         args = fake_request.call_args
         self.assertEqual(
@@ -2016,10 +1767,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertTrue(args[1]['stream'])
 
     def test_commit(self):
-        try:
-            self.client.commit(fake_api.FAKE_CONTAINER_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.commit(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'commit',
@@ -2036,10 +1784,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_remove_image(self):
-        try:
-            self.client.remove_image(fake_api.FAKE_IMAGE_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.remove_image(fake_api.FAKE_IMAGE_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128',
@@ -2048,10 +1793,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_image_history(self):
-        try:
-            self.client.history(fake_api.FAKE_IMAGE_NAME)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.history(fake_api.FAKE_IMAGE_NAME)
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/history',
@@ -2059,14 +1801,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_import_image(self):
-        try:
-            self.client.import_image(
-                fake_api.FAKE_TARBALL_PATH,
-                repository=fake_api.FAKE_REPO_NAME,
-                tag=fake_api.FAKE_TAG_NAME
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.import_image(
+            fake_api.FAKE_TARBALL_PATH,
+            repository=fake_api.FAKE_REPO_NAME,
+            tag=fake_api.FAKE_TAG_NAME
+        )
 
         fake_request.assert_called_with(
             url_prefix + 'images/create',
@@ -2081,14 +1820,12 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
     def test_import_image_from_bytes(self):
         stream = (i for i in range(0, 100))
-        try:
-            self.client.import_image(
-                stream,
-                repository=fake_api.FAKE_REPO_NAME,
-                tag=fake_api.FAKE_TAG_NAME
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.import_image(
+            stream,
+            repository=fake_api.FAKE_REPO_NAME,
+            tag=fake_api.FAKE_TAG_NAME
+        )
 
         fake_request.assert_called_with(
             url_prefix + 'images/create',
@@ -2105,14 +1842,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_import_image_from_image(self):
-        try:
-            self.client.import_image(
-                image=fake_api.FAKE_IMAGE_NAME,
-                repository=fake_api.FAKE_REPO_NAME,
-                tag=fake_api.FAKE_TAG_NAME
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.import_image(
+            image=fake_api.FAKE_IMAGE_NAME,
+            repository=fake_api.FAKE_REPO_NAME,
+            tag=fake_api.FAKE_TAG_NAME
+        )
 
         fake_request.assert_called_with(
             url_prefix + 'images/create',
@@ -2126,10 +1860,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_inspect_image(self):
-        try:
-            self.client.inspect_image(fake_api.FAKE_IMAGE_NAME)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.inspect_image(fake_api.FAKE_IMAGE_NAME)
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/json',
@@ -2151,13 +1882,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         try:
             self.client.insert(fake_api.FAKE_IMAGE_NAME,
                                fake_api.FAKE_URL, fake_api.FAKE_PATH)
-        except docker.errors.DeprecatedMethod as e:
+        except docker.errors.DeprecatedMethod:
             self.assertTrue(
                 docker.utils.compare_version('1.12', self.client._version) >= 0
             )
             return
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/insert',
@@ -2169,12 +1898,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_push_image(self):
-        try:
-            with mock.patch('docker.auth.auth.resolve_authconfig',
-                            fake_resolve_authconfig):
-                self.client.push(fake_api.FAKE_IMAGE_NAME)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.auth.auth.resolve_authconfig',
+                        fake_resolve_authconfig):
+            self.client.push(fake_api.FAKE_IMAGE_NAME)
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/push',
@@ -2188,14 +1914,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_push_image_with_tag(self):
-        try:
-            with mock.patch('docker.auth.auth.resolve_authconfig',
-                            fake_resolve_authconfig):
-                self.client.push(
-                    fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME
-                )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.auth.auth.resolve_authconfig',
+                        fake_resolve_authconfig):
+            self.client.push(
+                fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME
+            )
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/push',
@@ -2209,12 +1932,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_push_image_stream(self):
-        try:
-            with mock.patch('docker.auth.auth.resolve_authconfig',
-                            fake_resolve_authconfig):
-                self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        with mock.patch('docker.auth.auth.resolve_authconfig',
+                        fake_resolve_authconfig):
+            self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
 
         fake_request.assert_called_with(
             url_prefix + 'images/test_image/push',
@@ -2228,10 +1948,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_tag_image(self):
-        try:
-            self.client.tag(fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.tag(fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME)
 
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128/tag',
@@ -2244,14 +1961,11 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_tag_image_tag(self):
-        try:
-            self.client.tag(
-                fake_api.FAKE_IMAGE_ID,
-                fake_api.FAKE_REPO_NAME,
-                tag=fake_api.FAKE_TAG_NAME
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.tag(
+            fake_api.FAKE_IMAGE_ID,
+            fake_api.FAKE_REPO_NAME,
+            tag=fake_api.FAKE_TAG_NAME
+        )
 
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128/tag',
@@ -2264,11 +1978,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_tag_image_force(self):
-        try:
-            self.client.tag(
-                fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME, force=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.tag(
+            fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME, force=True)
 
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128/tag',
@@ -2281,10 +1992,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_get_image(self):
-        try:
-            self.client.get_image(fake_api.FAKE_IMAGE_ID)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.get_image(fake_api.FAKE_IMAGE_ID)
 
         fake_request.assert_called_with(
             url_prefix + 'images/e9aa60c60128/get',
@@ -2293,10 +2001,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_load_image(self):
-        try:
-            self.client.load_image('Byte Stream....')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.load_image('Byte Stream....')
 
         fake_request.assert_called_with(
             url_prefix + 'images/load',
@@ -2317,10 +2022,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
-        try:
-            self.client.build(fileobj=script)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.build(fileobj=script)
 
     def test_build_container_pull(self):
         script = io.BytesIO('\n'.join([
@@ -2331,10 +2034,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
-        try:
-            self.client.build(fileobj=script, pull=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.build(fileobj=script, pull=True)
 
     def test_build_container_stream(self):
         script = io.BytesIO('\n'.join([
@@ -2345,10 +2046,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
-        try:
-            self.client.build(fileobj=script, stream=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.build(fileobj=script, stream=True)
 
     def test_build_container_custom_context(self):
         script = io.BytesIO('\n'.join([
@@ -2360,10 +2059,8 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
         context = docker.utils.mkbuildcontext(script)
-        try:
-            self.client.build(fileobj=context, custom_context=True)
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.build(fileobj=context, custom_context=True)
 
     def test_build_container_custom_context_gzip(self):
         script = io.BytesIO('\n'.join([
@@ -2376,45 +2073,34 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         ]).encode('ascii'))
         context = docker.utils.mkbuildcontext(script)
         gz_context = gzip.GzipFile(fileobj=context)
-        try:
-            self.client.build(
-                fileobj=gz_context,
-                custom_context=True,
-                encoding="gzip"
-            )
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+
+        self.client.build(
+            fileobj=gz_context,
+            custom_context=True,
+            encoding="gzip"
+        )
 
     def test_build_remote_with_registry_auth(self):
-        try:
-            self.client._auth_configs = {
-                'https://example.com': {
-                    'user': 'example',
-                    'password': 'example',
-                    'email': 'example@example.com'
-                }
+        self.client._auth_configs = {
+            'https://example.com': {
+                'user': 'example',
+                'password': 'example',
+                'email': 'example@example.com'
             }
+        }
 
-            self.client.build(path='https://github.com/docker-library/mongo')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.build(path='https://github.com/docker-library/mongo')
 
     def test_build_container_with_named_dockerfile(self):
-        try:
-            self.client.build('.', dockerfile='nameddockerfile')
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.build('.', dockerfile='nameddockerfile')
 
     def test_build_container_with_container_limits(self):
-        try:
-            self.client.build('.', container_limits={
-                'memory': 1024 * 1024,
-                'cpusetcpus': 1,
-                'cpushares': 1000,
-                'memswap': 1024 * 1024 * 8
-            })
-        except Exception as e:
-            self.fail('Command should not raise exception: {0}'.format(e))
+        self.client.build('.', container_limits={
+            'memory': 1024 * 1024,
+            'cpusetcpus': 1,
+            'cpushares': 1000,
+            'memswap': 1024 * 1024 * 8
+        })
 
     def test_build_container_invalid_container_limits(self):
         self.assertRaises(
