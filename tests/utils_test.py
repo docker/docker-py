@@ -1,5 +1,6 @@
 import os
 import os.path
+import shutil
 import tempfile
 
 from docker.client import Client
@@ -7,12 +8,14 @@ from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
-    create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file
+    create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
+    exclude_paths,
 )
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_repository_name, resolve_authconfig
 
 from . import base
+from .helpers import make_tree
 
 import pytest
 
@@ -472,3 +475,141 @@ class UtilsTest(base.BaseTestCase):
             ["127.0.0.1:1000:1000", "127.0.0.1:2000:2000"])
         self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
         self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
+
+
+class ExcludePathsTest(base.BaseTestCase):
+    dirs = [
+        'foo',
+        'foo/bar',
+        'bar',
+    ]
+
+    files = [
+        'Dockerfile',
+        'Dockerfile.alt',
+        '.dockerignore',
+        'a.py',
+        'a.go',
+        'b.py',
+        'cde.py',
+        'foo/a.py',
+        'foo/b.py',
+        'foo/bar/a.py',
+        'bar/a.py',
+    ]
+
+    all_paths = set(dirs + files)
+
+    def setUp(self):
+        self.base = make_tree(self.dirs, self.files)
+
+    def tearDown(self):
+        shutil.rmtree(self.base)
+
+    def exclude(self, patterns, dockerfile=None):
+        return set(exclude_paths(self.base, patterns, dockerfile=dockerfile))
+
+    def test_no_excludes(self):
+        assert self.exclude(['']) == self.all_paths
+
+    def test_no_dupes(self):
+        paths = exclude_paths(self.base, ['!a.py'])
+        assert sorted(paths) == sorted(set(paths))
+
+    def test_wildcard_exclude(self):
+        assert self.exclude(['*']) == set(['Dockerfile', '.dockerignore'])
+
+    def test_exclude_dockerfile_dockerignore(self):
+        """
+        Even if the .dockerignore file explicitly says to exclude
+        Dockerfile and/or .dockerignore, don't exclude them from
+        the actual tar file.
+        """
+        assert self.exclude(['Dockerfile', '.dockerignore']) == self.all_paths
+
+    def test_exclude_custom_dockerfile(self):
+        """
+        If we're using a custom Dockerfile, make sure that's not
+        excluded.
+        """
+        assert self.exclude(['*'], dockerfile='Dockerfile.alt') == \
+            set(['Dockerfile.alt', '.dockerignore'])
+
+    def test_single_filename(self):
+        assert self.exclude(['a.py']) == self.all_paths - set(['a.py'])
+
+    # As odd as it sounds, a filename pattern with a trailing slash on the
+    # end *will* result in that file being excluded.
+    def test_single_filename_trailing_slash(self):
+        assert self.exclude(['a.py/']) == self.all_paths - set(['a.py'])
+
+    def test_wildcard_filename_start(self):
+        assert self.exclude(['*.py']) == self.all_paths - set([
+            'a.py', 'b.py', 'cde.py',
+        ])
+
+    def test_wildcard_with_exception(self):
+        assert self.exclude(['*.py', '!b.py']) == self.all_paths - set([
+            'a.py', 'cde.py',
+        ])
+
+    def test_wildcard_with_wildcard_exception(self):
+        assert self.exclude(['*.*', '!*.go']) == self.all_paths - set([
+            'a.py', 'b.py', 'cde.py', 'Dockerfile.alt',
+        ])
+
+    def test_wildcard_filename_end(self):
+        assert self.exclude(['a.*']) == self.all_paths - set(['a.py', 'a.go'])
+
+    def test_question_mark(self):
+        assert self.exclude(['?.py']) == self.all_paths - set(['a.py', 'b.py'])
+
+    def test_single_subdir_single_filename(self):
+        assert self.exclude(['foo/a.py']) == self.all_paths - set(['foo/a.py'])
+
+    def test_single_subdir_wildcard_filename(self):
+        assert self.exclude(['foo/*.py']) == self.all_paths - set([
+            'foo/a.py', 'foo/b.py',
+        ])
+
+    def test_wildcard_subdir_single_filename(self):
+        assert self.exclude(['*/a.py']) == self.all_paths - set([
+            'foo/a.py', 'bar/a.py',
+        ])
+
+    def test_wildcard_subdir_wildcard_filename(self):
+        assert self.exclude(['*/*.py']) == self.all_paths - set([
+            'foo/a.py', 'foo/b.py', 'bar/a.py',
+        ])
+
+    def test_directory(self):
+        assert self.exclude(['foo']) == self.all_paths - set([
+            'foo', 'foo/a.py', 'foo/b.py',
+            'foo/bar', 'foo/bar/a.py',
+        ])
+
+    def test_directory_with_trailing_slash(self):
+        assert self.exclude(['foo']) == self.all_paths - set([
+            'foo', 'foo/a.py', 'foo/b.py',
+            'foo/bar', 'foo/bar/a.py',
+        ])
+
+    def test_directory_with_single_exception(self):
+        assert self.exclude(['foo', '!foo/bar/a.py']) == self.all_paths - set([
+            'foo/a.py', 'foo/b.py',
+        ])
+
+    def test_directory_with_subdir_exception(self):
+        assert self.exclude(['foo', '!foo/bar']) == self.all_paths - set([
+            'foo/a.py', 'foo/b.py',
+        ])
+
+    def test_directory_with_wildcard_exception(self):
+        assert self.exclude(['foo', '!foo/*.py']) == self.all_paths - set([
+            'foo/bar', 'foo/bar/a.py',
+        ])
+
+    def test_subdirectory(self):
+        assert self.exclude(['foo/bar']) == self.all_paths - set([
+            'foo/bar', 'foo/bar/a.py',
+        ])

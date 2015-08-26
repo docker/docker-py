@@ -35,6 +35,7 @@ import six
 
 from . import base
 from . import fake_api
+from .helpers import make_tree
 
 import pytest
 
@@ -2054,26 +2055,50 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(cfg.get('auth'), None)
 
     def test_tar_with_excludes(self):
-        base = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, base)
-        for d in ['test/foo', 'bar']:
-            os.makedirs(os.path.join(base, d))
-            for f in ['a.txt', 'b.py', 'other.png']:
-                with open(os.path.join(base, d, f), 'w') as f:
-                    f.write("content")
+        dirs = [
+            'foo',
+            'foo/bar',
+            'bar',
+        ]
 
-        for exclude, names in (
-                (['*.py'], ['bar', 'bar/a.txt', 'bar/other.png',
-                            'test', 'test/foo', 'test/foo/a.txt',
-                            'test/foo/other.png']),
-                (['*.png', 'bar'], ['test', 'test/foo', 'test/foo/a.txt',
-                                    'test/foo/b.py']),
-                (['test/foo', 'a.txt'], ['bar', 'bar/a.txt', 'bar/b.py',
-                                         'bar/other.png', 'test']),
-        ):
-            with docker.utils.tar(base, exclude=exclude) as archive:
-                tar = tarfile.open(fileobj=archive)
-                self.assertEqual(sorted(tar.getnames()), names)
+        files = [
+            'Dockerfile',
+            'Dockerfile.alt',
+            '.dockerignore',
+            'a.py',
+            'a.go',
+            'b.py',
+            'cde.py',
+            'foo/a.py',
+            'foo/b.py',
+            'foo/bar/a.py',
+            'bar/a.py',
+        ]
+
+        exclude = [
+            '*.py',
+            '!b.py',
+            '!a.go',
+            'foo',
+            'Dockerfile*',
+            '.dockerignore',
+        ]
+
+        expected_names = set([
+            'Dockerfile',
+            '.dockerignore',
+            'a.go',
+            'b.py',
+            'bar',
+            'bar/a.py',
+        ])
+
+        base = make_tree(dirs, files)
+        self.addCleanup(shutil.rmtree, base)
+
+        with docker.utils.tar(base, exclude=exclude) as archive:
+            tar = tarfile.open(fileobj=archive)
+            assert sorted(tar.getnames()) == sorted(expected_names)
 
     def test_tar_with_empty_directory(self):
         base = tempfile.mkdtemp()

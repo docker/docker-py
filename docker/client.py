@@ -95,13 +95,7 @@ class Client(clientbase.ClientBase):
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
                     exclude = list(filter(bool, f.read().splitlines()))
-                    # These are handled by the docker daemon and should not be
-                    # excluded on the client
-                    if 'Dockerfile' in exclude:
-                        exclude.remove('Dockerfile')
-                    if '.dockerignore' in exclude:
-                        exclude.remove(".dockerignore")
-            context = utils.tar(path, exclude=exclude)
+            context = utils.tar(path, exclude=exclude, dockerfile=dockerfile)
 
         if utils.compare_version('1.8', self._version) >= 0:
             stream = True
