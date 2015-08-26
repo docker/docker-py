@@ -301,19 +301,23 @@ class Client(clientbase.ClientBase):
 
     @check_resource
     def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
-                    privileged=False):
+                    privileged=False, user=''):
         if utils.compare_version('1.15', self._version) < 0:
             raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if privileged and utils.compare_version('1.19', self._version) < 0:
             raise errors.InvalidVersion(
                 'Privileged exec is not supported in API < 1.19'
             )
+        if user and utils.compare_version('1.19', self._version) < 0:
+            raise errors.InvalidVersion(
+                'User-specific exec is not supported in API < 1.19'
+            )
         if isinstance(cmd, six.string_types):
             cmd = shlex.split(str(cmd))
 
         data = {
             'Container': container,
-            'User': '',
+            'User': user,
             'Privileged': privileged,
             'Tty': tty,
             'AttachStdin': False,
