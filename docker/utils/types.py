@@ -20,6 +20,7 @@ class DictType(dict):
 
 
 class LogConfig(DictType):
+    types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
         log_driver_type = kwargs.get('type', kwargs.get('Type'))
