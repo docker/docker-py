@@ -66,37 +66,80 @@ def mkbuildcontext(dockerfile):
     return f
 
 
-def fnmatch_any(relpath, patterns):
-    return any([fnmatch(relpath, pattern) for pattern in patterns])
-
-
-def tar(path, exclude=None):
+def tar(path, exclude=None, dockerfile=None):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
-    for dirpath, dirnames, filenames in os.walk(path):
-        relpath = os.path.relpath(dirpath, path)
-        if relpath == '.':
-            relpath = ''
-        if exclude is None:
-            fnames = filenames
-        else:
-            dirnames[:] = [d for d in dirnames
-                           if not fnmatch_any(os.path.join(relpath, d),
-                                              exclude)]
-            fnames = [name for name in filenames
-                      if not fnmatch_any(os.path.join(relpath, name),
-                                         exclude)]
-        dirnames.sort()
-        for name in sorted(fnames):
-            arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname), arcname=arcname)
-        for name in dirnames:
-            arcname = os.path.join(relpath, name)
-            t.add(os.path.join(path, arcname),
-                  arcname=arcname, recursive=False)
+
+    root = os.path.abspath(path)
+    exclude = exclude or []
+
+    for path in sorted(exclude_paths(root, exclude, dockerfile=dockerfile)):
+        t.add(os.path.join(root, path), arcname=path, recursive=False)
+
     t.close()
     f.seek(0)
     return f
+
+
+def exclude_paths(root, patterns, dockerfile=None):
+    """
+    Given a root directory path and a list of .dockerignore patterns, return
+    an iterator of all paths (both regular files and directories) in the root
+    directory that do *not* match any of the patterns.
+
+    All paths returned are relative to the root.
+    """
+    if dockerfile is None:
+        dockerfile = 'Dockerfile'
+
+    exceptions = [p for p in patterns if p.startswith('!')]
+
+    include_patterns = [p[1:] for p in exceptions]
+    include_patterns += [dockerfile, '.dockerignore']
+
+    exclude_patterns = list(set(patterns) - set(exceptions))
+
+    all_paths = get_paths(root)
+
+    # Remove all paths that are matched by any exclusion pattern
+    paths = [
+        p for p in all_paths
+        if not any(match_path(p, pattern) for pattern in exclude_patterns)
+    ]
+
+    # Add back the set of paths that are matched by any inclusion pattern.
+    # Include parent dirs - if we add back 'foo/bar', add 'foo' as well
+    for p in all_paths:
+        if any(match_path(p, pattern) for pattern in include_patterns):
+            components = p.split('/')
+            paths += [
+                '/'.join(components[:end])
+                for end in range(1, len(components)+1)
+            ]
+
+    return set(paths)
+
+
+def get_paths(root):
+    paths = []
+
+    for parent, dirs, files in os.walk(root, followlinks=False):
+        parent = os.path.relpath(parent, root)
+        if parent == '.':
+            parent = ''
+        for path in dirs:
+            paths.append(os.path.join(parent, path))
+        for path in files:
+            paths.append(os.path.join(parent, path))
+
+    return paths
+
+
+def match_path(path, pattern):
+    pattern = pattern.rstrip('/')
+    pattern_components = pattern.split('/')
+    path_components = path.split('/')[:len(pattern_components)]
+    return fnmatch('/'.join(path_components), pattern)
 
 
 def compare_version(v1, v2):
