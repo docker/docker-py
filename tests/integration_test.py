@@ -34,6 +34,7 @@ from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
 from .test import Cleanup
+from docker.errors import APIError
 
 # FIXME: missing tests for
 # export; history; insert; port; push; tag; get; load; stats
@@ -245,30 +246,80 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
-@unittest.skipIf(NOT_ON_HOST, 'Tests running inside a container; no syslog')
-class TestCreateContainerWithLogConfig(BaseTestCase):
-    def runTest(self):
-        config = docker.utils.LogConfig(
-            type=docker.utils.LogConfig.types.SYSLOG,
-            config={'key1': 'val1'}
+class CreateContainerWithLogConfigTest(BaseTestCase):
+    def test_valid_log_driver_and_log_opt(self):
+        log_config = docker.utils.LogConfig(
+            type='json-file',
+            config={'max-file': '100'}
         )
-        ctnr = self.client.create_container(
+
+        container = self.client.create_container(
             'busybox', ['true'],
-            host_config=self.client.create_host_config(log_config=config)
+            host_config=self.client.create_host_config(log_config=log_config)
         )
-        self.assertIn('Id', ctnr)
-        self.tmp_containers.append(ctnr['Id'])
-        self.client.start(ctnr)
-        info = self.client.inspect_container(ctnr)
-        self.assertIn('HostConfig', info)
-        host_config = info['HostConfig']
-        self.assertIn('LogConfig', host_config)
-        log_config = host_config['LogConfig']
-        self.assertIn('Type', log_config)
-        self.assertEqual(log_config['Type'], config.type)
-        self.assertIn('Config', log_config)
-        self.assertEqual(type(log_config['Config']), dict)
-        self.assertEqual(log_config['Config'], config.config)
+        self.tmp_containers.append(container['Id'])
+        self.client.start(container)
+
+        info = self.client.inspect_container(container)
+        container_log_config = info['HostConfig']['LogConfig']
+
+        self.assertEqual(container_log_config['Type'], log_config.type)
+        self.assertEqual(container_log_config['Config'], log_config.config)
+
+    def test_invalid_log_driver_raises_exception(self):
+        log_config = docker.utils.LogConfig(
+            type='asdf-nope',
+            config={}
+        )
+
+        container = self.client.create_container(
+            'busybox', ['true'],
+            host_config=self.client.create_host_config(log_config=log_config)
+        )
+
+        expected_msg = "logger: no log driver named 'asdf-nope' is registered"
+        with self.assertRaisesRegexp(APIError, expected_msg):
+            # raises an internal server error 500
+            self.client.start(container)
+
+    @unittest.skip("Reason: https://github.com/docker/docker/issues/15633")
+    def test_valid_no_log_driver_specified(self):
+        log_config = docker.utils.LogConfig(
+            type="",
+            config={'max-file': '100'}
+        )
+
+        container = self.client.create_container(
+            'busybox', ['true'],
+            host_config=self.client.create_host_config(log_config=log_config)
+        )
+        self.tmp_containers.append(container['Id'])
+        self.client.start(container)
+
+        info = self.client.inspect_container(container)
+        container_log_config = info['HostConfig']['LogConfig']
+
+        self.assertEqual(container_log_config['Type'], "json-file")
+        self.assertEqual(container_log_config['Config'], log_config.config)
+
+    def test_valid_no_config_specified(self):
+        log_config = docker.utils.LogConfig(
+            type="json-file",
+            config=None
+        )
+
+        container = self.client.create_container(
+            'busybox', ['true'],
+            host_config=self.client.create_host_config(log_config=log_config)
+        )
+        self.tmp_containers.append(container['Id'])
+        self.client.start(container)
+
+        info = self.client.inspect_container(container)
+        container_log_config = info['HostConfig']['LogConfig']
+
+        self.assertEqual(container_log_config['Type'], "json-file")
+        self.assertEqual(container_log_config['Config'], {})
 
 
 @unittest.skipIf(not EXEC_DRIVER_IS_NATIVE, 'Exec driver not native')
