@@ -27,6 +27,7 @@ import time
 import unittest
 import warnings
 
+import pytest
 import docker
 import six
 
@@ -1578,10 +1579,11 @@ class TestRegressions(BaseTestCase):
         self.client.stop(ctnr)
 
 
-if __name__ == '__main__':
+@pytest.fixture(scope="session", autouse=True)
+def execute_before_any_test():
     c = docker.Client(base_url=DEFAULT_BASE_URL)
     c.pull('busybox')
     exec_driver = c.info()['ExecutionDriver']
+    global EXEC_DRIVER_IS_NATIVE
     EXEC_DRIVER_IS_NATIVE = exec_driver.startswith('native')
     c.close()
-    unittest.main()
