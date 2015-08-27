@@ -114,7 +114,7 @@ def exclude_paths(root, patterns, dockerfile=None):
             components = p.split('/')
             paths += [
                 '/'.join(components[:end])
-                for end in range(1, len(components)+1)
+                for end in range(1, len(components) + 1)
             ]
 
     return set(paths)
@@ -363,9 +363,14 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
     tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
 
     params = {}
+
     if host:
         params['base_url'] = (host.replace('tcp://', 'https://')
                               if tls_verify else host)
+
+    if tls_verify and not cert_path:
+        cert_path = os.path.join(os.path.expanduser('~'), '.docker')
+
     if tls_verify and cert_path:
         params['tls'] = tls.TLSConfig(
             client_cert=(os.path.join(cert_path, 'cert.pem'),
@@ -374,6 +379,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
             verify=True,
             ssl_version=ssl_version,
             assert_hostname=assert_hostname)
+
     return params
 
 
