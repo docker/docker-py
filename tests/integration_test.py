@@ -1388,35 +1388,41 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
                 'FROM busybox',
                 'MAINTAINER docker-py',
                 'ADD . /test',
-                'RUN ls -A /test',
             ]))
 
         with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
             f.write("\n".join([
-                'node_modules',
+                'ignored',
                 'Dockerfile',
-                '.dockerginore',
+                '.dockerignore',
                 '',  # empty line
             ]))
 
         with open(os.path.join(base_dir, 'not-ignored'), 'w') as f:
             f.write("this file should not be ignored")
 
-        subdir = os.path.join(base_dir, 'node_modules', 'grunt-cli')
+        subdir = os.path.join(base_dir, 'ignored', 'subdir')
         os.makedirs(subdir)
-        with open(os.path.join(subdir, 'grunt'), 'w') as f:
-            f.write("grunt")
+        with open(os.path.join(subdir, 'file'), 'w') as f:
+            f.write("this file should be ignored")
 
-        stream = self.client.build(path=base_dir, stream=True)
-        logs = ''
+        tag = 'docker-py-test-build-with-dockerignore'
+        stream = self.client.build(
+            path=base_dir,
+            tag=tag,
+        )
         for chunk in stream:
-            if six.PY3:
-                chunk = chunk.decode('utf-8')
-            logs += chunk
-        self.assertFalse('node_modules' in logs)
-        self.assertFalse('Dockerfile' in logs)
-        self.assertFalse('.dockerginore' in logs)
-        self.assertTrue('not-ignored' in logs)
+            pass
+
+        c = self.client.create_container(tag, ['ls', '-1A', '/test'])
+        self.client.start(c)
+        self.client.wait(c)
+        logs = self.client.logs(c)
+
+        self.assertEqual(
+            filter(None, logs.split('\n')),
+            ['not-ignored'],
+        )
 
 #######################
 #  PY SPECIFIC TESTS  #
