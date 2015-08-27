@@ -1407,7 +1407,7 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
         with open(os.path.join(subdir, 'grunt'), 'w') as f:
             f.write("grunt")
 
-        stream = self.client.build(path=base_dir, stream=True)
+        stream = self.client.build(path=base_dir, stream=True, nocache=True)
         logs = ''
         for chunk in stream:
             if six.PY3:
