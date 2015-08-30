@@ -624,7 +624,7 @@ class Client(clientbase.ClientBase):
         return h_ports
 
     def pull(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None):
+             insecure_registry=False, auth_config=None, timeout=None):
         if insecure_registry:
             warnings.warn(
                 INSECURE_REGISTRY_DEPRECATION_WARNING.format('pull()'),
@@ -671,7 +671,7 @@ class Client(clientbase.ClientBase):
 
         response = self._post(
             self._url('/images/create'), params=params, headers=headers,
-            stream=stream, timeout=None
+            stream=stream, timeout=timeout
         )
 
         self._raise_for_status(response)
