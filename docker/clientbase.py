@@ -18,7 +18,8 @@ from .tls import TLSConfig
 
 class ClientBase(requests.Session):
     def __init__(self, base_url=None, version=None,
-                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
+                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
+                 **adapter_kwargs):
         super(ClientBase, self).__init__()
 
         if tls and not base_url.startswith('https://'):
@@ -33,7 +34,8 @@ class ClientBase(requests.Session):
 
         base_url = utils.parse_host(base_url)
         if base_url.startswith('http+unix://'):
-            self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
+            self._custom_adapter = unixconn.UnixAdapter(base_url, timeout,
+                                                        **adapter_kwargs)
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localunixsocket'
         else:
@@ -41,7 +43,7 @@ class ClientBase(requests.Session):
             if isinstance(tls, TLSConfig):
                 tls.configure_client(self)
             elif tls:
-                self._custom_adapter = ssladapter.SSLAdapter()
+                self._custom_adapter = ssladapter.SSLAdapter(**adapter_kwargs)
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
 
