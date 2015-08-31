@@ -1418,7 +1418,6 @@ class TestBuildFromStringIO(BaseTestCase):
 
 
 class TestBuildWithDockerignore(Cleanup, BaseTestCase):
-    @pytest.mark.skipif(True, reason='Test is brittle - FIXME')
     def runTest(self):
         if compare_version(self.client._version, '1.8') >= 0:
             return
