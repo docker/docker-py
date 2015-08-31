@@ -1624,3 +1624,6 @@ class TestRegressions(BaseTestCase):
         ctnr = self.client.create_container('busybox', ['sleep', '2'])
         self.client.start(ctnr)
         self.client.stop(ctnr)
+
+    def test_715(self):
+        self.client.create_container('busybox', 'true', user=1000)
