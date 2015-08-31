@@ -88,11 +88,21 @@ class ClientBase(requests.Session):
     def _delete(self, url, **kwargs):
         return self.delete(url, **self._set_request_timeout(kwargs))
 
-    def _url(self, path, versioned_api=True):
+    def _url(self, pathfmt, resource_id=None, versioned_api=True):
+        if resource_id and not isinstance(resource_id, six.string_types):
+            raise ValueError(
+                'Expected a resource ID string but found {0} ({1}) '
+                'instead'.format(resource_id, type(resource_id))
+            )
+        elif resource_id:
+            resource_id = six.moves.urllib.parse.quote_plus(resource_id)
+
         if versioned_api:
-            return '{0}/v{1}{2}'.format(self.base_url, self._version, path)
+            return '{0}/v{1}{2}'.format(
+                self.base_url, self._version, pathfmt.format(resource_id)
+            )
         else:
-            return '{0}{1}'.format(self.base_url, path)
+            return '{0}{1}'.format(self.base_url, pathfmt.format(resource_id))
 
     def _raise_for_status(self, response, explanation=None):
         """Raises stored :class:`APIError`, if one occurred."""
@@ -136,7 +146,7 @@ class ClientBase(requests.Session):
 
     @check_resource
     def _attach_websocket(self, container, params=None):
-        url = self._url("/containers/{0}/attach/ws".format(container))
+        url = self._url("/containers/{0}/attach/ws", container)
         req = requests.Request("POST", url, params=self._attach_params(params))
         full_url = req.prepare().url
         full_url = full_url.replace("http://", "ws://", 1)
