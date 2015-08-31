@@ -144,6 +144,28 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             'Version parameter must be a string or None. Found float'
         )
 
+    def test_url_valid_resource(self):
+        url = self.client._url('/hello/{0}/world', 'somename')
+        self.assertEqual(
+            url, '{0}{1}'.format(url_prefix, 'hello/somename/world')
+        )
+
+        url = self.client._url('/hello/{0}/world', '/some?name')
+        self.assertEqual(
+            url, '{0}{1}'.format(url_prefix, 'hello/%2Fsome%3Fname/world')
+        )
+
+    def test_url_invalid_resource(self):
+        with pytest.raises(ValueError):
+            self.client._url('/hello/{0}/world', ['sakuya', 'izayoi'])
+
+    def test_url_no_resource(self):
+        url = self.client._url('/simple')
+        self.assertEqual(url, '{0}{1}'.format(url_prefix, 'simple'))
+
+        url = self.client._url('/simple', None)
+        self.assertEqual(url, '{0}{1}'.format(url_prefix, 'simple'))
+
     #########################
     #   INFORMATION TESTS   #
     #########################
