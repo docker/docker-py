@@ -1,5 +1,6 @@
 import json
 import struct
+import sys
 
 import requests
 import requests.exceptions
@@ -31,7 +32,7 @@ class ClientBase(requests.Session):
 
         self._auth_configs = auth.load_config()
 
-        base_url = utils.parse_host(base_url)
+        base_url = utils.parse_host(base_url, sys.platform)
         if base_url.startswith('http+unix://'):
             self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
