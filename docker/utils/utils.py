@@ -272,11 +272,15 @@ def parse_repository_tag(repo):
 # fd:// protocol unsupported (for obvious reasons)
 # Added support for http and https
 # Protocol translation: tcp -> http, unix -> http+unix
-def parse_host(addr):
+def parse_host(addr, platform=None):
     proto = "http+unix"
     host = DEFAULT_HTTP_HOST
     port = None
     path = ''
+
+    if not addr and platform == 'win32':
+        addr = '{0}:{1}'.format(DEFAULT_HTTP_HOST, 2375)
+
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
 

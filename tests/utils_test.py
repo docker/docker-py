@@ -79,8 +79,6 @@ class UtilsTest(base.BaseTestCase):
             'tcp://:7777': 'http://127.0.0.1:7777',
             'http://:7777': 'http://127.0.0.1:7777',
             'https://kokia.jp:2375': 'https://kokia.jp:2375',
-            '': 'http+unix://var/run/docker.sock',
-            None: 'http+unix://var/run/docker.sock',
             'unix:///var/run/docker.sock': 'http+unix:///var/run/docker.sock',
             'unix://': 'http+unix://var/run/docker.sock',
             'somehost.net:80/service/swarm': (
@@ -90,10 +88,20 @@ class UtilsTest(base.BaseTestCase):
 
         for host in invalid_hosts:
             with pytest.raises(DockerException):
-                parse_host(host)
+                parse_host(host, None)
 
         for host, expected in valid_hosts.items():
-            self.assertEqual(parse_host(host), expected, msg=host)
+            self.assertEqual(parse_host(host, None), expected, msg=host)
+
+    def test_parse_host_empty_value(self):
+        unix_socket = 'http+unix://var/run/docker.sock'
+        tcp_port = 'http://127.0.0.1:2375'
+
+        for val in [None, '']:
+            for platform in ['darwin', 'linux2', None]:
+                assert parse_host(val, platform) == unix_socket
+
+            assert parse_host(val, 'win32') == tcp_port
 
     def test_kwargs_from_env_empty(self):
         os.environ.update(DOCKER_HOST='',
