@@ -41,7 +41,7 @@ class Client(clientbase.ClientBase):
             'stderr': stderr and 1 or 0,
             'stream': stream and 1 or 0,
         }
-        u = self._url("/containers/{0}/attach".format(container))
+        u = self._url("/containers/{0}/attach", container)
         response = self._post(u, params=params, stream=stream)
 
         return self._get_result(container, stream, response)
@@ -58,7 +58,7 @@ class Client(clientbase.ClientBase):
         if ws:
             return self._attach_websocket(container, params)
 
-        u = self._url("/containers/{0}/attach".format(container))
+        u = self._url("/containers/{0}/attach", container)
         return self._get_raw_response_socket(self.post(
             u, None, params=self._attach_params(params), stream=True))
 
@@ -275,8 +275,9 @@ class Client(clientbase.ClientBase):
 
     @check_resource
     def diff(self, container):
-        return self._result(self._get(self._url("/containers/{0}/changes".
-                            format(container))), True)
+        return self._result(
+            self._get(self._url("/containers/{0}/changes", container)), True
+        )
 
     def events(self, since=None, until=None, filters=None, decode=None):
         if isinstance(since, datetime):
@@ -326,7 +327,7 @@ class Client(clientbase.ClientBase):
             'Cmd': cmd
         }
 
-        url = self._url('/containers/{0}/exec'.format(container))
+        url = self._url('/containers/{0}/exec', container)
         res = self._post_json(url, data=data)
         return self._result(res, True)
 
@@ -337,7 +338,7 @@ class Client(clientbase.ClientBase):
             )
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
-        res = self._get(self._url("/exec/{0}/json".format(exec_id)))
+        res = self._get(self._url("/exec/{0}/json", exec_id))
         return self._result(res, True)
 
     def exec_resize(self, exec_id, height=None, width=None):
@@ -347,7 +348,7 @@ class Client(clientbase.ClientBase):
             exec_id = exec_id.get('Id')
 
         params = {'h': height, 'w': width}
-        url = self._url("/exec/{0}/resize".format(exec_id))
+        url = self._url("/exec/{0}/resize", exec_id)
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
@@ -362,27 +363,28 @@ class Client(clientbase.ClientBase):
             'Detach': detach
         }
 
-        res = self._post_json(self._url('/exec/{0}/start'.format(exec_id)),
-                              data=data, stream=stream)
+        res = self._post_json(
+            self._url('/exec/{0}/start', exec_id), data=data, stream=stream
+        )
         return self._get_result_tty(stream, res, tty)
 
     @check_resource
     def export(self, container):
-        res = self._get(self._url("/containers/{0}/export".format(container)),
-                        stream=True)
+        res = self._get(
+            self._url("/containers/{0}/export", container), stream=True
+        )
         self._raise_for_status(res)
         return res.raw
 
     @check_resource
     def get_image(self, image):
-        res = self._get(self._url("/images/{0}/get".format(image)),
-                        stream=True)
+        res = self._get(self._url("/images/{0}/get", image), stream=True)
         self._raise_for_status(res)
         return res.raw
 
     @check_resource
     def history(self, image):
-        res = self._get(self._url("/images/{0}/history".format(image)))
+        res = self._get(self._url("/images/{0}/history", image))
         return self._result(res, True)
 
     def images(self, name=None, quiet=False, all=False, viz=False,
@@ -496,7 +498,7 @@ class Client(clientbase.ClientBase):
             raise errors.DeprecatedMethod(
                 'insert is not available for API version >=1.12'
             )
-        api_url = self._url("/images/{0}/insert".format(image))
+        api_url = self._url("/images/{0}/insert", image)
         params = {
             'url': url,
             'path': path
@@ -506,21 +508,18 @@ class Client(clientbase.ClientBase):
     @check_resource
     def inspect_container(self, container):
         return self._result(
-            self._get(self._url("/containers/{0}/json".format(container))),
-            True)
+            self._get(self._url("/containers/{0}/json", container)), True
+        )
 
     @check_resource
     def inspect_image(self, image):
         return self._result(
-            self._get(
-                self._url("/images/{0}/json".format(image.replace('/', '%2F')))
-            ),
-            True
+            self._get(self._url("/images/{0}/json", image)), True
         )
 
     @check_resource
     def kill(self, container, signal=None):
-        url = self._url("/containers/{0}/kill".format(container))
+        url = self._url("/containers/{0}/kill", container)
         params = {}
         if signal is not None:
             params['signal'] = signal
@@ -583,7 +582,7 @@ class Client(clientbase.ClientBase):
                 if tail != 'all' and (not isinstance(tail, int) or tail <= 0):
                     tail = 'all'
                 params['tail'] = tail
-            url = self._url("/containers/{0}/logs".format(container))
+            url = self._url("/containers/{0}/logs", container)
             res = self._get(url, params=params, stream=stream)
             return self._get_result(container, stream, res)
         return self.attach(
@@ -596,7 +595,7 @@ class Client(clientbase.ClientBase):
 
     @check_resource
     def pause(self, container):
-        url = self._url('/containers/{0}/pause'.format(container))
+        url = self._url('/containers/{0}/pause', container)
         res = self._post(url)
         self._raise_for_status(res)
 
@@ -605,7 +604,7 @@ class Client(clientbase.ClientBase):
 
     @check_resource
     def port(self, container, private_port):
-        res = self._get(self._url("/containers/{0}/json".format(container)))
+        res = self._get(self._url("/containers/{0}/json", container))
         self._raise_for_status(res)
         json_ = res.json()
         s_port = str(private_port)
@@ -692,7 +691,7 @@ class Client(clientbase.ClientBase):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
-        u = self._url("/images/{0}/push".format(repository))
+        u = self._url("/images/{0}/push", repository)
         params = {
             'tag': tag
         }
@@ -725,14 +724,15 @@ class Client(clientbase.ClientBase):
     @check_resource
     def remove_container(self, container, v=False, link=False, force=False):
         params = {'v': v, 'link': link, 'force': force}
-        res = self._delete(self._url("/containers/" + container),
-                           params=params)
+        res = self._delete(
+            self._url("/containers/{0}", container), params=params
+        )
         self._raise_for_status(res)
 
     @check_resource
     def remove_image(self, image, force=False, noprune=False):
         params = {'force': force, 'noprune': noprune}
-        res = self._delete(self._url("/images/" + image), params=params)
+        res = self._delete(self._url("/images/{0}", image), params=params)
         self._raise_for_status(res)
 
     @check_resource
@@ -741,7 +741,7 @@ class Client(clientbase.ClientBase):
             raise errors.InvalidVersion(
                 'rename was only introduced in API version 1.17'
             )
-        url = self._url("/containers/{0}/rename".format(container))
+        url = self._url("/containers/{0}/rename", container)
         params = {'name': name}
         res = self._post(url, params=params)
         self._raise_for_status(res)
@@ -749,21 +749,22 @@ class Client(clientbase.ClientBase):
     @check_resource
     def resize(self, container, height, width):
         params = {'h': height, 'w': width}
-        url = self._url("/containers/{0}/resize".format(container))
+        url = self._url("/containers/{0}/resize", container)
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
     @check_resource
     def restart(self, container, timeout=10):
         params = {'t': timeout}
-        url = self._url("/containers/{0}/restart".format(container))
+        url = self._url("/containers/{0}/restart", container)
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
     def search(self, term):
-        return self._result(self._get(self._url("/images/search"),
-                                      params={'term': term}),
-                            True)
+        return self._result(
+            self._get(self._url("/images/search"), params={'term': term}),
+            True
+        )
 
     @check_resource
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
@@ -829,7 +830,7 @@ class Client(clientbase.ClientBase):
                 )
             start_config = self.create_host_config(**start_config_kwargs)
 
-        url = self._url("/containers/{0}/start".format(container))
+        url = self._url("/containers/{0}/start", container)
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
@@ -839,13 +840,13 @@ class Client(clientbase.ClientBase):
             raise errors.InvalidVersion(
                 'Stats retrieval is not supported in API < 1.17!')
 
-        url = self._url("/containers/{0}/stats".format(container))
+        url = self._url("/containers/{0}/stats", container)
         return self._stream_helper(self._get(url, stream=True), decode=decode)
 
     @check_resource
     def stop(self, container, timeout=10):
         params = {'t': timeout}
-        url = self._url("/containers/{0}/stop".format(container))
+        url = self._url("/containers/{0}/stop", container)
 
         res = self._post(url, params=params,
                          timeout=(timeout + (self.timeout or 0)))
@@ -858,14 +859,14 @@ class Client(clientbase.ClientBase):
             'repo': repository,
             'force': 1 if force else 0
         }
-        url = self._url("/images/{0}/tag".format(image))
+        url = self._url("/images/{0}/tag", image)
         res = self._post(url, params=params)
         self._raise_for_status(res)
         return res.status_code == 201
 
     @check_resource
     def top(self, container):
-        u = self._url("/containers/{0}/top".format(container))
+        u = self._url("/containers/{0}/top", container)
         return self._result(self._get(u), True)
 
     def version(self, api_version=True):
@@ -874,13 +875,13 @@ class Client(clientbase.ClientBase):
 
     @check_resource
     def unpause(self, container):
-        url = self._url('/containers/{0}/unpause'.format(container))
+        url = self._url('/containers/{0}/unpause', container)
         res = self._post(url)
         self._raise_for_status(res)
 
     @check_resource
     def wait(self, container, timeout=None):
-        url = self._url("/containers/{0}/wait".format(container))
+        url = self._url("/containers/{0}/wait", container)
         res = self._post(url, timeout=timeout)
         self._raise_for_status(res)
         json_ = res.json()
