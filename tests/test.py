@@ -2021,6 +2021,49 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             })
         )
 
+    def test_build_container_from_context_object_with_tarball(self):
+        base_path = os.path.join(
+            os.path.dirname(__file__),
+            'testdata/context'
+        )
+        tarball_path = os.path.join(base_path, 'ctx.tar.gz')
+        context = docker.utils.context.create_context_from_path(tarball_path)
+        try:
+            self.client.build(context.path, **context.job_params)
+            if context.job_params['fileobj'] is not None:
+                context.job_params['fileobj'].close()
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_from_context_object_with_custom_dockerfile(self):
+        base_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__),
+            'testdata/context'
+        ))
+        custom_dockerfile = 'custom_dockerfile'
+        try:
+            context = docker.utils.context.create_context_from_path(
+                base_path,
+                dockerfile=custom_dockerfile
+            )
+            self.client.build(context.path, **context.job_params)
+        except docker.utils.context.ContextError as ce:
+            self.fail(ce.message)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
+    def test_build_container_from_remote_context(self):
+        ctxurl = 'https://localhost/staging/context.tar.gz'
+        try:
+            context = docker.utils.context.create_context_from_path(ctxurl)
+            self.assertEqual(context.path, ctxurl)
+            self.assertEqual(context.format, 'remote')
+            self.client.build(context.path, **context.job_params)
+        except docker.utils.context.ContextError as ce:
+            self.fail(ce.message)
+        except Exception as e:
+            self.fail('Command should not raise exception: {0}'.format(e))
+
     #######################
     #  PY SPECIFIC TESTS  #
     #######################
