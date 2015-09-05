@@ -557,6 +557,9 @@ class Client(clientbase.ClientBase):
                 and not reauth:
             return authcfg
 
+        if authcfg and not password:
+            password = authcfg.get('password', None)
+
         req_data = {
             'username': username,
             'password': password,
