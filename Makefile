@@ -23,3 +23,7 @@ integration-test: build
 
 integration-test-py3: build-py3
 	docker run -v `$(HOST_TMPDIR)`:/tmp -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test -rxs tests/integration_test.py
+
+integration-ci:
+	docker build -t dpy-tests -f ./tests/Dockerfile .
+	docker run --privileged -t dpy-tests

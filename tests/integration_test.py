@@ -190,7 +190,6 @@ class TestCreateContainer(BaseTestCase):
 
 
 class TestCreateContainerWithBinds(BaseTestCase):
-    @pytest.mark.skipif(True, reason="Doesn't work inside a container - FIXME")
     def runTest(self):
         mount_dest = '/mnt'
         mount_origin = tempfile.mkdtemp()
@@ -233,7 +232,6 @@ class TestCreateContainerWithBinds(BaseTestCase):
 
 
 class TestCreateContainerWithRoBinds(BaseTestCase):
-    @pytest.mark.skipif(True, reason="Doesn't work inside a container - FIXME")
     def runTest(self):
         mount_dest = '/mnt'
         mount_origin = tempfile.mkdtemp()
@@ -1461,8 +1459,11 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
         self.client.wait(c)
         logs = self.client.logs(c)
 
+        if six.PY3:
+            logs = logs.decode('utf-8')
+
         self.assertEqual(
-            filter(None, logs.split('\n')),
+            list(filter(None, logs.split('\n'))),
             ['not-ignored'],
         )
 
