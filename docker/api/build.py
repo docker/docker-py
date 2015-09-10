@@ -77,7 +77,7 @@ class BuildApiMixin(object):
                 headers['Content-Encoding'] = encoding
 
         if utils.compare_version('1.9', self._version) >= 0:
-            self._set_auth_headers(self, headers)
+            self._set_auth_headers(headers)
 
         response = self._post(
             u,
