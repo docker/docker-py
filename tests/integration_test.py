@@ -82,7 +82,7 @@ class BaseTestCase(unittest.TestCase):
         if six.PY2:
             self.assertRegex = self.assertRegexpMatches
             self.assertCountEqual = self.assertItemsEqual
-        self.client = docker_client(timeout=5)
+        self.client = docker_client(timeout=60)
         self.tmp_imgs = []
         self.tmp_containers = []
         self.tmp_folders = []
@@ -1115,38 +1115,36 @@ class TestRemoveLink(BaseTestCase):
 
 class TestPull(BaseTestCase):
     def runTest(self):
-        self.client.close()
-        self.client = docker_client(timeout=10)
         try:
-            self.client.remove_image('busybox')
+            self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        res = self.client.pull('busybox')
+        res = self.client.pull('hello-world')
+        self.tmp_imgs.append('hello-world')
         self.assertEqual(type(res), six.text_type)
         self.assertGreaterEqual(
-            len(self.client.images('busybox')), 1
+            len(self.client.images('hello-world')), 1
         )
-        img_info = self.client.inspect_image('busybox')
+        img_info = self.client.inspect_image('hello-world')
         self.assertIn('Id', img_info)
 
 
 class TestPullStream(BaseTestCase):
     def runTest(self):
-        self.client.close()
-        self.client = docker_client(timeout=10)
         try:
-            self.client.remove_image('busybox')
+            self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        stream = self.client.pull('busybox', stream=True)
+        stream = self.client.pull('hello-world', stream=True)
+        self.tmp_imgs.append('hello-world')
         for chunk in stream:
             if six.PY3:
                 chunk = chunk.decode('utf-8')
             json.loads(chunk)  # ensure chunk is a single, valid JSON blob
         self.assertGreaterEqual(
-            len(self.client.images('busybox')), 1
+            len(self.client.images('hello-world')), 1
         )
-        img_info = self.client.inspect_image('busybox')
+        img_info = self.client.inspect_image('hello-world')
         self.assertIn('Id', img_info)
 
 
@@ -1195,9 +1193,7 @@ class TestRemoveImage(BaseTestCase):
 class ImportTestCase(BaseTestCase):
     '''Base class for `docker import` test cases.'''
 
-    # Use a large file size to increase the chance of triggering any
-    # MemoryError exceptions we might hit.
-    TAR_SIZE = 512 * 1024 * 1024
+    TAR_SIZE = 512 * 1024
 
     def write_dummy_tar_content(self, n_bytes, tar_fd):
         def extend_file(f, n_bytes):
