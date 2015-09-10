@@ -1120,6 +1120,7 @@ class TestPull(BaseTestCase):
         except docker.errors.APIError:
             pass
         res = self.client.pull('hello-world')
+        self.tmp_imgs.append('hello-world')
         self.assertEqual(type(res), six.text_type)
         self.assertGreaterEqual(
             len(self.client.images('hello-world')), 1
@@ -1135,6 +1136,7 @@ class TestPullStream(BaseTestCase):
         except docker.errors.APIError:
             pass
         stream = self.client.pull('hello-world', stream=True)
+        self.tmp_imgs.append('hello-world')
         for chunk in stream:
             if six.PY3:
                 chunk = chunk.decode('utf-8')
