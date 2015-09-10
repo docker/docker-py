@@ -1,6 +1,43 @@
 Change Log
 ==========
 
+1.4.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.4.0+is%3Aclosed)
+
+### Deprecation warning
+
+* `docker.utils.create_host_config` is deprecated in favor of
+  `Client.create_host_config`.
+
+### Features
+
+* Added `utils.parse_env_file` to support env-files.
+  See [docs](http://docker-py.readthedocs.org/en/latest/api/#create_container)
+  for usage.
+* Added support for arbitrary log drivers
+* Added support for URL paths in the docker host URL (`base_url`)
+* Drastically improved support for .dockerignore syntax
+
+### Bugfixes
+
+* Fixed a bug where exec_inspect would allow invocation when the API version
+  was too low.
+* Fixed a bug where `docker.utils.ports.split_port` would break if an open
+  range was provided.
+* Fixed a bug where invalid image IDs / container IDs could be provided to
+  bypass or reroute request URLs
+* Default `base_url` now adapts depending on the OS (better Windows support)
+* Fixed a bug where using an integer as the user param in
+  `Client.create_container` would result in a failure.
+
+### Miscellaneous
+
+* Docs fixes
+* Integration tests are now run as part of our continuous integration.
+* Updated dependency on `six` library
+
 1.3.1
 -----
 
@@ -30,8 +67,8 @@ Change Log
 
 ### Deprecation warning
 
-* As announced in the 1.2.0 release, `Client.execute` has been removed in favor of
-  `Client.exec_create` and `Client.exec_start`.
+* As announced in the 1.2.0 release, `Client.execute` has been removed in favor
+  of `Client.exec_create` and `Client.exec_start`.
 
 ### Features
 
@@ -79,8 +116,8 @@ Change Log
 
 ### Deprecation warning
 
-* Passing host config in the `Client.start` method is now deprecated. Please use the
-  `host_config` in `Client.create_container` instead.
+* Passing host config in the `Client.start` method is now deprecated. Please
+  use the `host_config` in `Client.create_container` instead.
 
 ### Features
 

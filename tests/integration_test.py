@@ -1626,4 +1626,7 @@ class TestRegressions(BaseTestCase):
         ctnr = self.client.create_container('busybox', ['id', '-u'], user=1000)
         self.client.start(ctnr)
         self.client.wait(ctnr)
-        assert self.client.logs(ctnr) == '1000\n'
+        logs = self.client.logs(ctnr)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        assert logs == '1000\n'
