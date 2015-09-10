@@ -719,7 +719,7 @@ def create_container_config(
         'Hostname': hostname,
         'Domainname': domainname,
         'ExposedPorts': ports,
-        'User': user,
+        'User': six.text_type(user) if user else None,
         'Tty': tty,
         'OpenStdin': stdin_open,
         'StdinOnce': stdin_once,
