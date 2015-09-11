@@ -77,6 +77,7 @@ class BaseTestCase(unittest.TestCase):
     tmp_imgs = []
     tmp_containers = []
     tmp_folders = []
+    tmp_volumes = []
 
     def setUp(self):
         if six.PY2:
@@ -101,6 +102,13 @@ class BaseTestCase(unittest.TestCase):
                 pass
         for folder in self.tmp_folders:
             shutil.rmtree(folder)
+
+        for volume in self.tmp_volumes:
+            try:
+                self.client.remove_volume(volume)
+            except docker.errors.APIError:
+                pass
+
         self.client.close()
 
 #########################
@@ -223,6 +231,8 @@ class TestCreateContainerWithBinds(BaseTestCase):
         if six.PY3:
             logs = logs.decode('utf-8')
         self.assertIn(filename, logs)
+
+        # FIXME: format changes in API version >= 1.20
         inspect_data = self.client.inspect_container(container_id)
         self.assertIn('Volumes', inspect_data)
         self.assertIn(mount_dest, inspect_data['Volumes'])
@@ -265,6 +275,8 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
         if six.PY3:
             logs = logs.decode('utf-8')
         self.assertIn(filename, logs)
+
+        # FIXME: format changes in API version >= 1.20
         inspect_data = self.client.inspect_container(container_id)
         self.assertIn('Volumes', inspect_data)
         self.assertIn(mount_dest, inspect_data['Volumes'])
@@ -1370,9 +1382,65 @@ class TestImportFromURL(ImportTestCase):
 
 
 #################
-# BUILDER TESTS #
+# VOLUMES TESTS #
 #################
 
+@pytest.mark.skipif(docker.utils.compare_version(
+    '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+) < 0, reason="Volume API available for version >=1.21")
+class TestVolumes(BaseTestCase):
+    def test_create_volume(self):
+        name = 'perfectcherryblossom'
+        result = self.client.create_volume(name)
+        self.tmp_volumes.append(name)
+        self.assertIn('Name', result)
+        self.assertEqual(result['Name'], name)
+        self.assertIn('Driver', result)
+        self.assertEqual(result['Driver'], 'local')
+
+    def test_create_volume_invalid_driver(self):
+        driver_name = 'invalid.driver'
+
+        with pytest.raises(docker.errors.NotFound):
+            self.client.create_volume('perfectcherryblossom', driver_name)
+
+    def test_list_volumes(self):
+        name = 'imperishablenight'
+        volume_info = self.client.create_volume(name)
+        self.tmp_volumes.append(name)
+        result = self.client.volumes()
+        self.assertIn('Volumes', result)
+        volumes = result['Volumes']
+        self.assertIn(volume_info, volumes)
+
+    def test_inspect_volume(self):
+        name = 'embodimentofscarletdevil'
+        volume_info = self.client.create_volume(name)
+        self.tmp_volumes.append(name)
+        result = self.client.inspect_volume(name)
+        self.assertEqual(volume_info, result)
+
+    def test_inspect_nonexistent_volume(self):
+        name = 'embodimentofscarletdevil'
+        with pytest.raises(docker.errors.NotFound):
+            self.client.inspect_volume(name)
+
+    def test_remove_volume(self):
+        name = 'shootthebullet'
+        self.client.create_volume(name)
+        self.tmp_volumes.append(name)
+        result = self.client.remove_volume(name)
+        self.assertTrue(result)
+
+    def test_remove_nonexistent_volume(self):
+        name = 'shootthebullet'
+        with pytest.raises(docker.errors.NotFound):
+            self.client.remove_volume(name)
+
+
+#################
+# BUILDER TESTS #
+#################
 
 class TestBuild(BaseTestCase):
     def runTest(self):

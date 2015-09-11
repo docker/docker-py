@@ -74,12 +74,36 @@ def fake_inspect_container_tty(self, container):
     return fake_inspect_container(self, container, tty=True)
 
 
-def fake_resp(url, data=None, **kwargs):
-    status_code, content = fake_api.fake_responses[url]()
+def fake_resp(method, url, *args, **kwargs):
+    key = None
+    if url in fake_api.fake_responses:
+        key = url
+    elif (url, method) in fake_api.fake_responses:
+        key = (url, method)
+    if not key:
+        raise Exception('{0} {1}'.format(method, url))
+    status_code, content = fake_api.fake_responses[key]()
     return response(status_code=status_code, content=content)
 
 
 fake_request = mock.Mock(side_effect=fake_resp)
+
+
+def fake_get(self, url, *args, **kwargs):
+    return fake_request('GET', url, *args, **kwargs)
+
+
+def fake_post(self, url, *args, **kwargs):
+    return fake_request('POST', url, *args, **kwargs)
+
+
+def fake_put(self, url, *args, **kwargs):
+    return fake_request('PUT', url, *args, **kwargs)
+
+
+def fake_delete(self, url, *args, **kwargs):
+    return fake_request('DELETE', url, *args, **kwargs)
+
 url_prefix = 'http+docker://localunixsocket/v{0}/'.format(
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
@@ -109,8 +133,8 @@ class Cleanup(object):
             self._cleanups.append((function, args, kwargs))
 
 
-@mock.patch.multiple('docker.Client', get=fake_request, post=fake_request,
-                     put=fake_request, delete=fake_request)
+@mock.patch.multiple('docker.Client', get=fake_get, post=fake_post,
+                     put=fake_put, delete=fake_delete)
 class DockerClientTest(Cleanup, base.BaseTestCase):
     def setUp(self):
         self.client = docker.Client()
@@ -173,6 +197,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.version()
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'version',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -191,6 +216,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.info()
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'info',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -199,6 +225,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.search('busybox')
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/search',
             params={'term': 'busybox'},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -213,6 +240,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.events()
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'events',
             params={'since': None, 'until': None, 'filters': None},
             stream=True
@@ -227,6 +255,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.events(since=since, until=until)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'events',
             params={
                 'since': ts - 10,
@@ -244,6 +273,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         expected_filters = docker.utils.convert_filters(filters)
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'events',
             params={
                 'since': None,
@@ -261,6 +291,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.images(all=True)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 0, 'all': 1},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -270,6 +301,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.images(all=True, quiet=True)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 1, 'all': 1},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -279,6 +311,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.images(quiet=True)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 1, 'all': 0},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -288,6 +321,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.images(filters={'dangling': True})
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/json',
             params={'filter': None, 'only_ids': 0, 'all': 0,
                     'filters': '{"dangling": ["true"]}'},
@@ -298,6 +332,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.containers(all=True)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/json',
             params={
                 'all': 1,
@@ -318,7 +353,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.create_container('busybox', 'true')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -337,7 +372,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      volumes=[mount_dest])
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -358,7 +393,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      volumes=mount_dest)
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -377,7 +412,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      ports=[1111, (2222, 'udp'), (3333,)])
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -400,7 +435,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      entrypoint='cowsay entry')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -419,7 +454,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      cpu_shares=5)
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -438,7 +473,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      cpuset='0,1')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -461,7 +496,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         data = json.loads(args[1]['data'])
         self.assertIn('HostConfig', data)
@@ -473,7 +508,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      working_dir='/root')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -491,7 +526,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.create_container('busybox', 'true', stdin_open=True)
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -515,7 +550,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             return
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['VolumesFrom'],
                          ','.join(vol_names))
         self.assertEqual(args[1]['headers'],
@@ -533,7 +568,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                                      name='marisa-kirisame')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0],
+        self.assertEqual(args[0][1],
                          url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']),
                          json.loads('''
@@ -619,7 +654,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0],
+            args[0][1],
             url_prefix + 'containers/3cc2351ab11b/start'
         )
         self.assertEqual(json.loads(args[1]['data']), {})
@@ -659,7 +694,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0],
+            args[0][1],
             url_prefix + 'containers/create'
         )
         expected_payload = self.base_create_payload()
@@ -686,7 +721,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['LxcConf'] = [
@@ -715,7 +750,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
+        self.assertEqual(args[0][1], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -742,7 +777,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
+        self.assertEqual(args[0][1], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -769,7 +804,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
+        self.assertEqual(args[0][1], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -807,7 +842,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
+        self.assertEqual(args[0][1], url_prefix +
                          'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -840,7 +875,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         data = json.loads(args[1]['data'])
         port_bindings = data['HostConfig']['PortBindings']
         self.assertTrue('1111/tcp' in port_bindings)
@@ -899,7 +934,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0], url_prefix + 'containers/create'
+            args[0][1], url_prefix + 'containers/create'
         )
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -924,7 +959,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = [
@@ -946,7 +981,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = ['path:alias']
@@ -966,7 +1001,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Privileged'] = True
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
@@ -1069,7 +1104,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0],
+            args[0][1],
             url_prefix + 'containers/3cc2351ab11b/start'
         )
         self.assertEqual(json.loads(args[1]['data']), {})
@@ -1091,7 +1126,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
 
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -1114,7 +1149,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['CapAdd'] = ['MKNOD']
@@ -1133,7 +1168,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['CapDrop'] = ['MKNOD']
@@ -1155,7 +1190,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Devices'] = [
@@ -1189,7 +1224,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
         self.assertEqual(
             args[1]['headers'], {'Content-Type': 'application/json'}
@@ -1214,7 +1249,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix + 'containers/create')
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
         self.assertEqual(
             args[1]['headers'], {'Content-Type': 'application/json'}
@@ -1238,8 +1273,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][0], url_prefix +
-                         'containers/create')
+        self.assertEqual(
+            args[0][1], url_prefix + 'containers/create'
+        )
         expected_payload = self.base_create_payload()
         expected_payload['VolumeDriver'] = 'foodriver'
         expected_payload['HostConfig'] = self.client.create_host_config()
@@ -1260,6 +1296,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/resize',
             params={'h': 15, 'w': 120},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1272,6 +1309,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/rename',
             params={'name': 'foobar'},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1281,6 +1319,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.wait(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/wait',
             timeout=None
         )
@@ -1289,6 +1328,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.wait({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/wait',
             timeout=None
         )
@@ -1328,6 +1368,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
@@ -1346,6 +1387,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
@@ -1364,6 +1406,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
@@ -1378,6 +1421,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                              tail=10)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 10},
@@ -1396,6 +1440,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         self.assertTrue(m.called)
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
@@ -1407,6 +1452,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.diff(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/changes',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1415,6 +1461,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.diff({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/changes',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1423,6 +1470,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.port({'Id': fake_api.FAKE_CONTAINER_ID}, 1111)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1433,6 +1481,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.stop(fake_api.FAKE_CONTAINER_ID, timeout=timeout)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
             timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
@@ -1445,6 +1494,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                          timeout=timeout)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
             timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
@@ -1455,6 +1505,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
+            'POST',
             args[0][0], url_prefix + 'containers/{0}/exec'.format(
                 fake_api.FAKE_CONTAINER_ID
             )
@@ -1481,7 +1532,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0], url_prefix + 'exec/{0}/start'.format(
+            args[0][1], url_prefix + 'exec/{0}/start'.format(
                 fake_api.FAKE_EXEC_ID
             )
         )
@@ -1501,7 +1552,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0], url_prefix + 'exec/{0}/json'.format(
+            args[0][1], url_prefix + 'exec/{0}/json'.format(
                 fake_api.FAKE_EXEC_ID
             )
         )
@@ -1510,6 +1561,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.exec_resize(fake_api.FAKE_EXEC_ID, height=20, width=60)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'exec/{0}/resize'.format(fake_api.FAKE_EXEC_ID),
             params={'h': 20, 'w': 60},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1519,6 +1571,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.pause(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/pause',
             timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
@@ -1527,6 +1580,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.unpause(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/unpause',
             timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
@@ -1535,6 +1589,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.kill(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/kill',
             params={},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1544,6 +1599,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.kill({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/kill',
             params={},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1553,6 +1609,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.kill(fake_api.FAKE_CONTAINER_ID, signal=signal.SIGTERM)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/kill',
             params={'signal': signal.SIGTERM},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1562,6 +1619,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.restart(fake_api.FAKE_CONTAINER_ID, timeout=2)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/restart',
             params={'t': 2},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1571,6 +1629,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.restart({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=2)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'containers/3cc2351ab11b/restart',
             params={'t': 2},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1580,6 +1639,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.remove_container(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'DELETE',
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': False, 'force': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1589,6 +1649,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.remove_container({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
+            'DELETE',
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': False, 'force': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1598,6 +1659,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.remove_container(fake_api.FAKE_CONTAINER_ID, link=True)
 
         fake_request.assert_called_with(
+            'DELETE',
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': True, 'force': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1607,6 +1669,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.export(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/export',
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1616,6 +1679,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.export({'Id': fake_api.FAKE_CONTAINER_ID})
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/export',
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1625,6 +1689,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.inspect_container(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1642,6 +1707,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.stats(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'containers/3cc2351ab11b/stats',
             timeout=60,
             stream=True
@@ -1656,7 +1722,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0],
+            args[0][1],
             url_prefix + 'images/create'
         )
         self.assertEqual(
@@ -1670,7 +1736,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         args = fake_request.call_args
         self.assertEqual(
-            args[0][0],
+            args[0][1],
             url_prefix + 'images/create'
         )
         self.assertEqual(
@@ -1683,6 +1749,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.commit(fake_api.FAKE_CONTAINER_ID)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'commit',
             data='{}',
             headers={'Content-Type': 'application/json'},
@@ -1700,6 +1767,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.remove_image(fake_api.FAKE_IMAGE_ID)
 
         fake_request.assert_called_with(
+            'DELETE',
             url_prefix + 'images/e9aa60c60128',
             params={'force': False, 'noprune': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1709,6 +1777,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.history(fake_api.FAKE_IMAGE_NAME)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/test_image/history',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1721,6 +1790,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/create',
             params={
                 'repo': fake_api.FAKE_REPO_NAME,
@@ -1741,6 +1811,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/create',
             params={
                 'repo': fake_api.FAKE_REPO_NAME,
@@ -1762,6 +1833,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/create',
             params={
                 'repo': fake_api.FAKE_REPO_NAME,
@@ -1776,6 +1848,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.inspect_image(fake_api.FAKE_IMAGE_NAME)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/test_image/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1800,6 +1873,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             return
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/test_image/insert',
             params={
                 'url': fake_api.FAKE_URL,
@@ -1814,6 +1888,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.client.push(fake_api.FAKE_IMAGE_NAME)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/test_image/push',
             params={
                 'tag': None
@@ -1832,6 +1907,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/test_image/push',
             params={
                 'tag': fake_api.FAKE_TAG_NAME,
@@ -1848,6 +1924,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/test_image/push',
             params={
                 'tag': None
@@ -1862,6 +1939,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.tag(fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/e9aa60c60128/tag',
             params={
                 'tag': None,
@@ -1879,6 +1957,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/e9aa60c60128/tag',
             params={
                 'tag': 'tag',
@@ -1893,6 +1972,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME, force=True)
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/e9aa60c60128/tag',
             params={
                 'tag': None,
@@ -1906,6 +1986,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.get_image(fake_api.FAKE_IMAGE_ID)
 
         fake_request.assert_called_with(
+            'GET',
             url_prefix + 'images/e9aa60c60128/get',
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -1915,6 +1996,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.client.load_image('Byte Stream....')
 
         fake_request.assert_called_with(
+            'POST',
             url_prefix + 'images/load',
             data='Byte Stream....',
             timeout=DEFAULT_TIMEOUT_SECONDS
@@ -2020,6 +2102,100 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'foo': 'bar'
             })
         )
+
+    ###################
+    #  VOLUMES TESTS  #
+    ###################
+
+    @pytest.mark.skipif(docker.utils.compare_version(
+        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+    ) < 0, reason="API version too low")
+    def test_list_volumes(self):
+        volumes = self.client.volumes()
+        self.assertIn('Volumes', volumes)
+        self.assertEqual(len(volumes['Volumes']), 2)
+        args = fake_request.call_args
+
+        self.assertEqual(args[0][0], 'GET')
+        self.assertEqual(args[0][1], url_prefix + 'volumes')
+
+    @pytest.mark.skipif(docker.utils.compare_version(
+        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+    ) < 0, reason="API version too low")
+    def test_create_volume(self):
+        name = 'perfectcherryblossom'
+        result = self.client.create_volume(name)
+        self.assertIn('Name', result)
+        self.assertEqual(result['Name'], name)
+        self.assertIn('Driver', result)
+        self.assertEqual(result['Driver'], 'local')
+        args = fake_request.call_args
+
+        self.assertEqual(args[0][0], 'POST')
+        self.assertEqual(args[0][1], url_prefix + 'volumes')
+        self.assertEqual(args[1]['data'], {
+            'Name': name, 'Driver': None, 'DriverOpts': None
+        })
+
+    @pytest.mark.skipif(docker.utils.compare_version(
+        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+    ) < 0, reason="API version too low")
+    def test_create_volume_with_driver(self):
+        name = 'perfectcherryblossom'
+        driver_name = 'sshfs'
+        self.client.create_volume(name, driver=driver_name)
+        args = fake_request.call_args
+
+        self.assertEqual(args[0][0], 'POST')
+        self.assertEqual(args[0][1], url_prefix + 'volumes')
+        self.assertIn('Driver', args[1]['data'])
+        self.assertEqual(args[1]['data']['Driver'], driver_name)
+
+    @pytest.mark.skipif(docker.utils.compare_version(
+        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+    ) < 0, reason="API version too low")
+    def test_create_volume_invalid_opts_type(self):
+        with pytest.raises(TypeError):
+            self.client.create_volume(
+                'perfectcherryblossom', driver_opts='hello=world'
+            )
+
+        with pytest.raises(TypeError):
+            self.client.create_volume(
+                'perfectcherryblossom', driver_opts=['hello=world']
+            )
+
+        with pytest.raises(TypeError):
+            self.client.create_volume(
+                'perfectcherryblossom', driver_opts=''
+            )
+
+    @pytest.mark.skipif(docker.utils.compare_version(
+        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+    ) < 0, reason="API version too low")
+    def test_inspect_volume(self):
+        name = 'perfectcherryblossom'
+        result = self.client.inspect_volume(name)
+        self.assertIn('Name', result)
+        self.assertEqual(result['Name'], name)
+        self.assertIn('Driver', result)
+        self.assertEqual(result['Driver'], 'local')
+        args = fake_request.call_args
+
+        self.assertEqual(args[0][0], 'GET')
+        self.assertEqual(args[0][1], '{0}volumes/{1}'.format(url_prefix, name))
+
+    @pytest.mark.skipif(docker.utils.compare_version(
+        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
+    ) < 0, reason="API version too low")
+    def test_remove_volume(self):
+        name = 'perfectcherryblossom'
+        result = self.client.remove_volume(name)
+        self.assertIsNone(result)
+        args = fake_request.call_args
+
+        self.assertEqual(args[0][0], 'DELETE')
+        self.assertEqual(args[0][1], '{0}volumes/{1}'.format(url_prefix, name))
 
     #######################
     #  PY SPECIFIC TESTS  #

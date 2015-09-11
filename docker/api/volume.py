@@ -27,7 +27,7 @@ class VolumeApiMixin(object):
     @check_api_version
     def create_volume(self, name, driver=None, driver_opts=None):
         url = self._url('/volumes')
-        if not isinstance(driver_opts, dict):
+        if driver_opts is not None and not isinstance(driver_opts, dict):
             raise TypeError('driver_opts must be a dictionary')
 
         data = {
@@ -35,7 +35,7 @@ class VolumeApiMixin(object):
             'Driver': driver,
             'DriverOpts': driver_opts,
         }
-        return self._result(self._post(url, data=data), True)
+        return self._result(self._post_json(url, data=data), True)
 
     @check_api_version
     def inspect_volume(self, name):
@@ -45,4 +45,6 @@ class VolumeApiMixin(object):
     @check_api_version
     def remove_volume(self, name):
         url = self._url('/volumes/{0}', name)
-        return self._result(self._delete(url), True)
+        resp = self._delete(url)
+        self._raise_for_status(resp)
+        return True
