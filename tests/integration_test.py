@@ -264,14 +264,25 @@ class TestCreateContainerWithBinds(BaseTestCase):
         if six.PY3:
             logs = logs.decode('utf-8')
         self.assertIn(self.filename, logs)
-
-        # FIXME: format changes in API version >= 1.20
         inspect_data = self.client.inspect_container(container)
-        self.assertEqual(
-            self.mount_origin,
-            inspect_data['Volumes'][self.mount_dest]
-        )
-        self.assertTrue(inspect_data['VolumesRW'][self.mount_dest])
+        if docker.utils.compare_version('1.20', self.client._version) < 0:
+            self.assertIn('Volumes', inspect_data)
+            self.assertIn(self.mount_dest, inspect_data['Volumes'])
+            self.assertEqual(
+                self.mount_origin, inspect_data['Volumes'][self.mount_dest]
+            )
+            self.assertIn(self.mount_dest, inspect_data['VolumesRW'])
+            self.assertTrue(inspect_data['VolumesRW'][self.mount_dest])
+        else:
+            self.assertIn('Mounts', inspect_data)
+            filtered = filter(
+                lambda x: x['Destination'] == self.mount_dest,
+                inspect_data['Mounts']
+            )
+            self.assertEqual(len(filtered), 1)
+            mount_data = filtered[0]
+            self.assertEqual(mount_data['Source'], self.mount_origin)
+            self.assertTrue(mount_data['RW'])
 
     def test_ro(self):
         container = self.run_with_volume(
@@ -285,13 +296,26 @@ class TestCreateContainerWithBinds(BaseTestCase):
             logs = logs.decode('utf-8')
         self.assertIn(self.filename, logs)
 
-        # FIXME: format changes in API version >= 1.20
+        self.assertIn(self.filename, logs)
         inspect_data = self.client.inspect_container(container)
-        self.assertEqual(
-            self.mount_origin,
-            inspect_data['Volumes'][self.mount_dest]
-        )
-        self.assertFalse(inspect_data['VolumesRW'][self.mount_dest])
+        if docker.utils.compare_version('1.20', self.client._version) < 0:
+            self.assertIn('Volumes', inspect_data)
+            self.assertIn(self.mount_dest, inspect_data['Volumes'])
+            self.assertEqual(
+                self.mount_origin, inspect_data['Volumes'][self.mount_dest]
+            )
+            self.assertIn(self.mount_dest, inspect_data['VolumesRW'])
+            self.assertFalse(inspect_data['VolumesRW'][self.mount_dest])
+        else:
+            self.assertIn('Mounts', inspect_data)
+            filtered = filter(
+                lambda x: x['Destination'] == self.mount_dest,
+                inspect_data['Mounts']
+            )
+            self.assertEqual(len(filtered), 1)
+            mount_data = filtered[0]
+            self.assertEqual(mount_data['Source'], self.mount_origin)
+            self.assertFalse(mount_data['RW'])
 
 
 @requires_api_version('1.20')
@@ -325,6 +349,7 @@ class CreateContainerWithGroupAddTest(BaseTestCase):
         logs = self.client.logs(container)
         if six.PY3:
             logs = logs.decode('utf-8')
+
         groups = logs.strip().split(' ')
         self.assertIn('1000', groups)
         self.assertIn('1001', groups)
