@@ -45,7 +45,7 @@ except ImportError:
     import mock
 
 
-DEFAULT_TIMEOUT_SECONDS = docker.client.constants.DEFAULT_TIMEOUT_SECONDS
+DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS
 
 
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
@@ -81,7 +81,7 @@ def fake_resp(url, data=None, **kwargs):
 
 fake_request = mock.Mock(side_effect=fake_resp)
 url_prefix = 'http+docker://localunixsocket/v{0}/'.format(
-    docker.client.constants.DEFAULT_DOCKER_API_VERSION)
+    docker.constants.DEFAULT_DOCKER_API_VERSION)
 
 
 class Cleanup(object):
