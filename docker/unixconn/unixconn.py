@@ -43,9 +43,9 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
 
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, base_url, socket_path, timeout=60):
+    def __init__(self, base_url, socket_path, timeout=60, maxsize=1):
         urllib3.connectionpool.HTTPConnectionPool.__init__(
-            self, 'localhost', timeout=timeout
+            self, 'localhost', timeout=timeout, maxsize=maxsize
         )
         self.base_url = base_url
         self.socket_path = socket_path
@@ -57,12 +57,13 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 
 
 class UnixAdapter(requests.adapters.HTTPAdapter):
-    def __init__(self, socket_url, timeout=60):
+    def __init__(self, socket_url, timeout=60, maxsize=1):
         socket_path = socket_url.replace('http+unix://', '')
         if not socket_path.startswith('/'):
             socket_path = '/' + socket_path
         self.socket_path = socket_path
         self.timeout = timeout
+        self.maxsize = maxsize
         self.pools = RecentlyUsedContainer(10,
                                            dispose_func=lambda p: p.close())
         super(UnixAdapter, self).__init__()
@@ -75,7 +76,8 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
 
             pool = UnixHTTPConnectionPool(url,
                                           self.socket_path,
-                                          self.timeout)
+                                          self.timeout,
+                                          self.maxsize)
             self.pools[url] = pool
 
         return pool
