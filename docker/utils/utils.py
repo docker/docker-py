@@ -449,7 +449,7 @@ def create_host_config(
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
     security_opt=None, ulimits=None, log_config=None, mem_limit=None,
-    memswap_limit=None, cgroup_parent=None, version=None
+    memswap_limit=None, cgroup_parent=None, group_add=None, version=None
 ):
     host_config = {}
 
@@ -508,6 +508,13 @@ def create_host_config(
 
     if devices:
         host_config['Devices'] = parse_devices(devices)
+
+    if group_add:
+        if compare_version(version, '1.20') < 0:
+            raise errors.InvalidVersion(
+                'group_add param not supported for API version < 1.20'
+            )
+        host_config['GroupAdd'] = [str(grp) for grp in group_add]
 
     if dns is not None:
         host_config['Dns'] = dns
