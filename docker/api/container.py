@@ -2,11 +2,11 @@ import six
 import warnings
 
 from .. import errors
-from ..utils import utils, check_resource
+from .. import utils
 
 
 class ContainerApiMixin(object):
-    @check_resource
+    @utils.check_resource
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
         params = {
@@ -20,7 +20,7 @@ class ContainerApiMixin(object):
 
         return self._get_result(container, stream, response)
 
-    @check_resource
+    @utils.check_resource
     def attach_socket(self, container, params=None, ws=False):
         if params is None:
             params = {
@@ -36,7 +36,7 @@ class ContainerApiMixin(object):
         return self._get_raw_response_socket(self.post(
             u, None, params=self._attach_params(params), stream=True))
 
-    @check_resource
+    @utils.check_resource
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, conf=None):
         params = {
@@ -73,7 +73,7 @@ class ContainerApiMixin(object):
                 x['Id'] = x['Id'][:12]
         return res
 
-    @check_resource
+    @utils.check_resource
     def copy(self, container, resource):
         res = self._post_json(
             self._url("/containers/{0}/copy".format(container)),
@@ -131,13 +131,13 @@ class ContainerApiMixin(object):
         kwargs['version'] = self._version
         return utils.create_host_config(*args, **kwargs)
 
-    @check_resource
+    @utils.check_resource
     def diff(self, container):
         return self._result(
             self._get(self._url("/containers/{0}/changes", container)), True
         )
 
-    @check_resource
+    @utils.check_resource
     def export(self, container):
         res = self._get(
             self._url("/containers/{0}/export", container), stream=True
@@ -145,13 +145,13 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
         return res.raw
 
-    @check_resource
+    @utils.check_resource
     def inspect_container(self, container):
         return self._result(
             self._get(self._url("/containers/{0}/json", container)), True
         )
 
-    @check_resource
+    @utils.check_resource
     def kill(self, container, signal=None):
         url = self._url("/containers/{0}/kill", container)
         params = {}
@@ -161,7 +161,7 @@ class ContainerApiMixin(object):
 
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def logs(self, container, stdout=True, stderr=True, stream=False,
              timestamps=False, tail='all'):
         if utils.compare_version('1.11', self._version) >= 0:
@@ -185,13 +185,13 @@ class ContainerApiMixin(object):
             logs=True
         )
 
-    @check_resource
+    @utils.check_resource
     def pause(self, container):
         url = self._url('/containers/{0}/pause', container)
         res = self._post(url)
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def port(self, container, private_port):
         res = self._get(self._url("/containers/{0}/json", container))
         self._raise_for_status(res)
@@ -211,7 +211,7 @@ class ContainerApiMixin(object):
 
         return h_ports
 
-    @check_resource
+    @utils.check_resource
     def remove_container(self, container, v=False, link=False, force=False):
         params = {'v': v, 'link': link, 'force': force}
         res = self._delete(
@@ -219,32 +219,29 @@ class ContainerApiMixin(object):
         )
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.minimum_version('1.17')
+    @utils.check_resource
     def rename(self, container, name):
-        if utils.compare_version('1.17', self._version) < 0:
-            raise errors.InvalidVersion(
-                'rename was only introduced in API version 1.17'
-            )
         url = self._url("/containers/{0}/rename", container)
         params = {'name': name}
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def resize(self, container, height, width):
         params = {'h': height, 'w': width}
         url = self._url("/containers/{0}/resize", container)
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def restart(self, container, timeout=10):
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart", container)
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
               publish_all_ports=None, links=None, privileged=None,
               dns=None, dns_search=None, volumes_from=None, network_mode=None,
@@ -312,16 +309,13 @@ class ContainerApiMixin(object):
         res = self._post_json(url, data=start_config)
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.minimum_version('1.17')
+    @utils.check_resource
     def stats(self, container, decode=None):
-        if utils.compare_version('1.17', self._version) < 0:
-            raise errors.InvalidVersion(
-                'Stats retrieval is not supported in API < 1.17!')
-
         url = self._url("/containers/{0}/stats", container)
         return self._stream_helper(self._get(url, stream=True), decode=decode)
 
-    @check_resource
+    @utils.check_resource
     def stop(self, container, timeout=10):
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop", container)
@@ -330,18 +324,18 @@ class ContainerApiMixin(object):
                          timeout=(timeout + (self.timeout or 0)))
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def top(self, container):
         u = self._url("/containers/{0}/top", container)
         return self._result(self._get(u), True)
 
-    @check_resource
+    @utils.check_resource
     def unpause(self, container):
         url = self._url('/containers/{0}/unpause', container)
         res = self._post(url)
         self._raise_for_status(res)
 
-    @check_resource
+    @utils.check_resource
     def wait(self, container, timeout=None):
         url = self._url("/containers/{0}/wait", container)
         res = self._post(url, timeout=timeout)

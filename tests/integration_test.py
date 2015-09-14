@@ -27,17 +27,18 @@ import time
 import unittest
 import warnings
 
-import docker
-from docker.utils import kwargs_from_env
+import pytest
 import six
-
 from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
-from .test import Cleanup
+import docker
 from docker.errors import APIError
+from docker.utils import kwargs_from_env
 
-import pytest
+from .base import requires_api_version
+from .test import Cleanup
+
 
 # FIXME: missing tests for
 # export; history; insert; port; push; tag; get; load; stats
@@ -285,6 +286,7 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
+@requires_api_version('1.20')
 class CreateContainerWithGroupAddTest(BaseTestCase):
     def test_group_id_ints(self):
         container = self.client.create_container(
@@ -1385,9 +1387,7 @@ class TestImportFromURL(ImportTestCase):
 # VOLUMES TESTS #
 #################
 
-@pytest.mark.skipif(docker.utils.compare_version(
-    '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-) < 0, reason="Volume API available for version >=1.21")
+@requires_api_version('1.21')
 class TestVolumes(BaseTestCase):
     def test_create_volume(self):
         name = 'perfectcherryblossom'

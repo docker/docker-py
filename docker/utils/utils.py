@@ -164,6 +164,14 @@ def compare_version(v1, v2):
         return 1
 
 
+def version_lt(v1, v2):
+    return compare_version(v1, v2) > 0
+
+
+def version_gte(v1, v2):
+    return not version_lt(v1, v2)
+
+
 def ping_registry(url):
     warnings.warn(
         'The `ping_registry` method is deprecated and will be removed.',

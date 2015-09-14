@@ -2107,9 +2107,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     #  VOLUMES TESTS  #
     ###################
 
-    @pytest.mark.skipif(docker.utils.compare_version(
-        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-    ) < 0, reason="API version too low")
+    @base.requires_api_version('1.21')
     def test_list_volumes(self):
         volumes = self.client.volumes()
         self.assertIn('Volumes', volumes)
@@ -2119,9 +2117,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], 'GET')
         self.assertEqual(args[0][1], url_prefix + 'volumes')
 
-    @pytest.mark.skipif(docker.utils.compare_version(
-        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-    ) < 0, reason="API version too low")
+    @base.requires_api_version('1.21')
     def test_create_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.create_volume(name)
@@ -2137,9 +2133,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             'Name': name, 'Driver': None, 'DriverOpts': None
         })
 
-    @pytest.mark.skipif(docker.utils.compare_version(
-        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-    ) < 0, reason="API version too low")
+    @base.requires_api_version('1.21')
     def test_create_volume_with_driver(self):
         name = 'perfectcherryblossom'
         driver_name = 'sshfs'
@@ -2151,9 +2145,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertIn('Driver', args[1]['data'])
         self.assertEqual(args[1]['data']['Driver'], driver_name)
 
-    @pytest.mark.skipif(docker.utils.compare_version(
-        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-    ) < 0, reason="API version too low")
+    @base.requires_api_version('1.21')
     def test_create_volume_invalid_opts_type(self):
         with pytest.raises(TypeError):
             self.client.create_volume(
@@ -2170,9 +2162,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 'perfectcherryblossom', driver_opts=''
             )
 
-    @pytest.mark.skipif(docker.utils.compare_version(
-        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-    ) < 0, reason="API version too low")
+    @base.requires_api_version('1.21')
     def test_inspect_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.inspect_volume(name)
@@ -2185,9 +2175,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0], 'GET')
         self.assertEqual(args[0][1], '{0}volumes/{1}'.format(url_prefix, name))
 
-    @pytest.mark.skipif(docker.utils.compare_version(
-        '1.21', docker.constants.DEFAULT_DOCKER_API_VERSION
-    ) < 0, reason="API version too low")
+    @base.requires_api_version('1.21')
     def test_remove_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.remove_volume(name)
