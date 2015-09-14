@@ -1,6 +1,7 @@
 # HostConfig object
 
-The Docker Remote API introduced [support for HostConfig in version 1.15](http://docs.docker.com/reference/api/docker_remote_api_v1.15/#create-a-container). This object contains all the parameters you could previously pass to `Client.start`.
+The Docker Remote API introduced [support for HostConfig in version 1.15](http://docs.docker.com/reference/api/docker_remote_api_v1.15/#create-a-container).
+This object contains all the parameters you could previously pass to `Client.start`.
 *It is highly recommended that users pass the HostConfig in the `host_config`*
 *param of `Client.create_container` instead of `Client.start`*
 
@@ -71,15 +72,16 @@ for example:
   for more information.
 * lxc_conf (dict): LXC config
 * publish_all_ports (bool): Whether to publish all ports to the host
-* links (dict or list of tuples): either as a dictionary mapping name to alias or
-  as a list of `(name, alias)` tuples
+* links (dict or list of tuples): either as a dictionary mapping name to alias
+  or as a list of `(name, alias)` tuples
 * privileged (bool): Give extended privileges to this container
 * dns (list): Set custom DNS servers
 * dns_search (list): DNS search domains
 * volumes_from (str or list): List of container names or Ids to get volumes
   from. Optionally a single string joining container id's with commas
 * network_mode (str): One of `['bridge', None, 'container:<name|id>', 'host']`
-* restart_policy (dict):  "Name" param must be one of `['on-failure', 'always']`
+* restart_policy (dict):  "Name" param must be one of
+  `['on-failure', 'always']`
 * cap_add (list of str): Add kernel capabilities
 * cap_drop (list of str): Drop kernel capabilities
 * extra_hosts (dict): custom host-to-IP mappings (host:ip)
@@ -91,9 +93,14 @@ for example:
   systems, such as SELinux.
 * ulimits (list): A list of dicts or `docker.utils.Ulimit` objects. A list
   of ulimits to be set in the container.
-* log_config (`docker.utils.LogConfig` or dict): Logging configuration to container
-* mem_limit (str or num): Maximum amount of memory container is allowed to consume. (e.g. `'1g'`)
-* memswap_limit (str or num): Maximum amount of memory + swap a container is allowed to consume.
+* log_config (`docker.utils.LogConfig` or dict): Logging configuration to
+  container
+* mem_limit (str or num): Maximum amount of memory container is allowed to
+  consume. (e.g. `'1g'`)
+* memswap_limit (str or num): Maximum amount of memory + swap a container is
+  allowed to consume.
+* group_add (list): List of additional group names and/or IDs that the
+  container process will run as.
 
 **Returns** (dict) HostConfig dictionary
 
