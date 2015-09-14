@@ -255,6 +255,29 @@ The utility can be used as follows:
 
 You can now use this with 'environment' for `create_container`.
 
+
+## create_volume
+
+Create and register a named volume
+
+**Params**:
+
+* name (str): Name of the volume
+* driver (str): Name of the driver used to create the volume
+* driver_opts (dict): Driver options as a key-value dictionary
+
+**Returns** (dict): The created volume reference object
+
+```python
+>>> from docker import Client
+>>> cli = Client()
+>>> volume = cli.create_volume(
+  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'}
+)
+>>> print(volume)
+{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+```
+
 ## diff
 
 Inspect changes on a container's filesystem
@@ -526,6 +549,21 @@ Identical to the `docker inspect` command, but only for images
 **Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
 
+## inspect_volume
+
+Retrieve volume info by name.
+
+**Params**:
+
+* name (str): volume name
+
+**Returns** (dict): Volume information dictionary
+
+```python
+>>> cli.inspect_volume('foobar')
+{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+```
+
 ## kill
 
 Kill a container or send a signal to a container
@@ -695,6 +733,16 @@ Remove an image. Similar to the `docker rmi` command.
 * force (bool): Force removal of the image
 * noprune (bool): Do not delete untagged parents
 
+## remove_volume
+
+Remove a volume. Similar to the `docker volume rm` command.
+
+**Params**:
+
+* name (str): The volume's name
+
+**Returns** (bool): True on successful removal. Failure will raise an exception.
+
 ## rename
 
 Rename a container. Similar to the `docker rename` command.
@@ -851,6 +899,7 @@ Unpauses all processes within a container.
 * container (str): The container to unpause
 
 ## version
+
 Nearly identical to the `docker version` command.
 
 **Returns** (dict): The server version information
@@ -870,6 +919,23 @@ Nearly identical to the `docker version` command.
 }
 ```
 
+## volumes
+
+List volumes currently registered by the docker daemon. Similar to the `docker volume ls` command.
+
+**Params**
+
+* filters (dict): Server-side list filtering options.
+
+**Returns** (dict): Dictionary with list of volume objects as value of the `Volumes` key.
+
+```python
+>>> cli.volumes()
+{u'Volumes': [
+  {u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'},
+  {u'Mountpoint': u'/var/lib/docker/volumes/baz/_data', u'Driver': u'local', u'Name': u'baz'}
+]}
+```
 
 ## wait
 Identical to the `docker wait` command. Block until a container stops, then
@@ -893,6 +959,5 @@ exception will be raised.
 TODO:
 
 * load_image
-* resize
 
 -->
