@@ -514,7 +514,7 @@ def create_host_config(
             raise errors.InvalidVersion(
                 'group_add param not supported for API version < 1.20'
             )
-        host_config['GroupAdd'] = [str(grp) for grp in group_add]
+        host_config['GroupAdd'] = [six.text_type(grp) for grp in group_add]
 
     if dns is not None:
         host_config['Dns'] = dns

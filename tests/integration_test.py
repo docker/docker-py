@@ -273,6 +273,41 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
         self.assertFalse(inspect_data['VolumesRW'][mount_dest])
 
 
+class CreateContainerWithGroupAddTest(BaseTestCase):
+    def test_group_id_ints(self):
+        container = self.client.create_container(
+            'busybox', 'id -G',
+            host_config=self.client.create_host_config(group_add=[1000, 1001])
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        self.client.wait(container)
+
+        logs = self.client.logs(container)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        groups = logs.strip().split(' ')
+        self.assertIn('1000', groups)
+        self.assertIn('1001', groups)
+
+    def test_group_id_strings(self):
+        container = self.client.create_container(
+            'busybox', 'id -G', host_config=self.client.create_host_config(
+                group_add=['1000', '1001']
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        self.client.wait(container)
+
+        logs = self.client.logs(container)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        groups = logs.strip().split(' ')
+        self.assertIn('1000', groups)
+        self.assertIn('1001', groups)
+
+
 class CreateContainerWithLogConfigTest(BaseTestCase):
     def test_valid_log_driver_and_log_opt(self):
         log_config = docker.utils.LogConfig(
