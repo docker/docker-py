@@ -519,7 +519,7 @@ def create_host_config(
         host_config['Devices'] = parse_devices(devices)
 
     if group_add:
-        if compare_version(version, '1.20') < 0:
+        if version_lt(version, '1.20'):
             raise errors.InvalidVersion(
                 'group_add param not supported for API version < 1.20'
             )
@@ -602,20 +602,28 @@ def create_host_config(
             log_config = LogConfig(**log_config)
         host_config['LogConfig'] = log_config
 
-    if cpu_quota and not isinstance(cpu_quota, int):
-        raise TypeError(
-            'Invalid type for cpu_quota param: expected int but'
-            ' found {0}'.format(type(cpu_quota))
-        )
-    elif cpu_quota:
+    if cpu_quota:
+        if not isinstance(cpu_quota, int):
+            raise TypeError(
+                'Invalid type for cpu_quota param: expected int but'
+                ' found {0}'.format(type(cpu_quota))
+            )
+        if version_lt(version, '1.19'):
+            raise errors.InvalidVersion(
+                'cpu_quota param not supported for API version < 1.19'
+            )
         host_config['CpuQuota'] = cpu_quota
 
-    if cpu_period and not isinstance(cpu_period, int):
-        raise TypeError(
-            'Invalid type for cpu_period param: expected int but'
-            ' found {0}'.format(type(cpu_period))
-        )
-    elif cpu_period:
+    if cpu_period:
+        if not isinstance(cpu_period, int):
+            raise TypeError(
+                'Invalid type for cpu_period param: expected int but'
+                ' found {0}'.format(type(cpu_period))
+            )
+        if version_lt(version, '1.19'):
+            raise errors.InvalidVersion(
+                'cpu_period param not supported for API version < 1.19'
+            )
         host_config['CpuPeriod'] = cpu_period
 
     return host_config
