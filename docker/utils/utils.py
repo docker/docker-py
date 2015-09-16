@@ -249,7 +249,7 @@ def convert_volume_binds(binds):
                 mode = 'rw'
 
             result.append('{0}:{1}:{2}'.format(
-                k, v['bind'], mode
+                k.encode('utf8'), v['bind'].encode('utf8'), mode
             ))
         else:
             result.append('{0}:{1}:rw'.format(k, v))
