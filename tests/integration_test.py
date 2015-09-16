@@ -37,6 +37,7 @@ import docker
 from docker.errors import APIError, NotFound
 from docker.utils import kwargs_from_env
 
+from . import helpers
 from .base import requires_api_version
 from .test import Cleanup
 
@@ -425,6 +426,90 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
 
         self.assertEqual(container_log_config['Type'], "json-file")
         self.assertEqual(container_log_config['Config'], {})
+
+
+@requires_api_version('1.20')
+class GetArchiveTest(BaseTestCase):
+    def test_get_file_archive_from_container(self):
+        data = 'The Maid and the Pocket Watch of Blood'
+        ctnr = self.client.create_container(
+            BUSYBOX, 'sh -c "echo {0} > /vol1/data.txt"'.format(data),
+            volumes=['/vol1']
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        self.client.wait(ctnr)
+        with tempfile.NamedTemporaryFile() as destination:
+            strm, stat = self.client.get_archive(ctnr, '/vol1/data.txt')
+            for d in strm:
+                destination.write(d)
+            destination.seek(0)
+            retrieved_data = helpers.untar_file(destination, 'data.txt')
+            if six.PY3:
+                retrieved_data = retrieved_data.decode('utf-8')
+            self.assertEqual(data, retrieved_data.strip())
+
+    def test_get_file_stat_from_container(self):
+        data = 'The Maid and the Pocket Watch of Blood'
+        ctnr = self.client.create_container(
+            BUSYBOX, 'sh -c "echo -n {0} > /vol1/data.txt"'.format(data),
+            volumes=['/vol1']
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        self.client.wait(ctnr)
+        strm, stat = self.client.get_archive(ctnr, '/vol1/data.txt')
+        self.assertIn('name', stat)
+        self.assertEqual(stat['name'], 'data.txt')
+        self.assertIn('size', stat)
+        self.assertEqual(stat['size'], len(data))
+
+
+@requires_api_version('1.20')
+class PutArchiveTest(BaseTestCase):
+    def test_copy_file_to_container(self):
+        data = b'Deaf To All But The Song'
+        with tempfile.NamedTemporaryFile() as test_file:
+            test_file.write(data)
+            test_file.seek(0)
+            ctnr = self.client.create_container(
+                BUSYBOX,
+                'cat {0}'.format(
+                    os.path.join('/vol1', os.path.basename(test_file.name))
+                ),
+                volumes=['/vol1']
+            )
+            self.tmp_containers.append(ctnr)
+            with helpers.simple_tar(test_file.name) as test_tar:
+                self.client.put_archive(ctnr, '/vol1', test_tar)
+        self.client.start(ctnr)
+        self.client.wait(ctnr)
+        logs = self.client.logs(ctnr)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+            data = data.decode('utf-8')
+        self.assertEqual(logs.strip(), data)
+
+    def test_copy_directory_to_container(self):
+        files = ['a.py', 'b.py', 'foo/b.py']
+        dirs = ['foo', 'bar']
+        base = helpers.make_tree(dirs, files)
+        ctnr = self.client.create_container(
+            BUSYBOX, 'ls -p /vol1', volumes=['/vol1']
+        )
+        self.tmp_containers.append(ctnr)
+        with docker.utils.tar(base) as test_tar:
+            self.client.put_archive(ctnr, '/vol1', test_tar)
+        self.client.start(ctnr)
+        self.client.wait(ctnr)
+        logs = self.client.logs(ctnr)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        results = logs.strip().split()
+        self.assertIn('a.py', results)
+        self.assertIn('b.py', results)
+        self.assertIn('foo/', results)
+        self.assertIn('bar/', results)
 
 
 class TestCreateContainerReadOnlyFs(BaseTestCase):
