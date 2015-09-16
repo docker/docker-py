@@ -3,15 +3,14 @@ import shlex
 import six
 
 from .. import errors
-from ..utils import utils, check_resource
+from .. import utils
 
 
 class ExecApiMixin(object):
-    @check_resource
+    @utils.minimum_version('1.15')
+    @utils.check_resource
     def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
                     privileged=False, user=''):
-        if utils.compare_version('1.15', self._version) < 0:
-            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if privileged and utils.compare_version('1.19', self._version) < 0:
             raise errors.InvalidVersion(
                 'Privileged exec is not supported in API < 1.19'
@@ -38,19 +37,15 @@ class ExecApiMixin(object):
         res = self._post_json(url, data=data)
         return self._result(res, True)
 
+    @utils.minimum_version('1.16')
     def exec_inspect(self, exec_id):
-        if utils.compare_version('1.16', self._version) < 0:
-            raise errors.InvalidVersion(
-                'exec_inspect is not supported in API < 1.16'
-            )
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
         res = self._get(self._url("/exec/{0}/json", exec_id))
         return self._result(res, True)
 
+    @utils.minimum_version('1.15')
     def exec_resize(self, exec_id, height=None, width=None):
-        if utils.compare_version('1.15', self._version) < 0:
-            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
 
@@ -59,9 +54,8 @@ class ExecApiMixin(object):
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
+    @utils.minimum_version('1.15')
     def exec_start(self, exec_id, detach=False, tty=False, stream=False):
-        if utils.compare_version('1.15', self._version) < 0:
-            raise errors.InvalidVersion('Exec is not supported in API < 1.15')
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
 

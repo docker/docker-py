@@ -4,7 +4,7 @@ import warnings
 
 from ..auth import auth
 from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
-from ..utils import utils, check_resource
+from .. import utils
 from .. import errors
 
 log = logging.getLogger(__name__)
@@ -12,13 +12,13 @@ log = logging.getLogger(__name__)
 
 class ImageApiMixin(object):
 
-    @check_resource
+    @utils.check_resource
     def get_image(self, image):
         res = self._get(self._url("/images/{0}/get", image), stream=True)
         self._raise_for_status(res)
         return res.raw
 
-    @check_resource
+    @utils.check_resource
     def history(self, image):
         res = self._get(self._url("/images/{0}/history", image))
         return self._result(res, True)
@@ -124,7 +124,7 @@ class ImageApiMixin(object):
         return self._result(
             self._post(u, data=None, params=params))
 
-    @check_resource
+    @utils.check_resource
     def insert(self, image, url, path):
         if utils.compare_version('1.12', self._version) >= 0:
             raise errors.DeprecatedMethod(
@@ -137,7 +137,7 @@ class ImageApiMixin(object):
         }
         return self._result(self._post(api_url, params=params))
 
-    @check_resource
+    @utils.check_resource
     def inspect_image(self, image):
         return self._result(
             self._get(self._url("/images/{0}/json", image)), True
@@ -246,7 +246,7 @@ class ImageApiMixin(object):
 
         return self._result(response)
 
-    @check_resource
+    @utils.check_resource
     def remove_image(self, image, force=False, noprune=False):
         params = {'force': force, 'noprune': noprune}
         res = self._delete(self._url("/images/{0}", image), params=params)
@@ -258,7 +258,7 @@ class ImageApiMixin(object):
             True
         )
 
-    @check_resource
+    @utils.check_resource
     def tag(self, image, repository, tag=None, force=False):
         params = {
             'tag': tag,

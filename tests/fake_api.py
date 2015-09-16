@@ -13,8 +13,9 @@
 #    limitations under the License.
 
 from . import fake_stat
+from docker import constants
 
-CURRENT_VERSION = 'v1.19'
+CURRENT_VERSION = 'v{0}'.format(constants.DEFAULT_DOCKER_API_VERSION)
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -26,6 +27,7 @@ FAKE_TAG_NAME = 'tag'
 FAKE_FILE_NAME = 'file'
 FAKE_URL = 'myurl'
 FAKE_PATH = '/path'
+FAKE_VOLUME_NAME = 'perfectcherryblossom'
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
@@ -380,6 +382,38 @@ def get_fake_stats():
     response = fake_stat.OBJ
     return status_code, response
 
+
+def get_fake_volume_list():
+    status_code = 200
+    response = {
+        'Volumes': [
+            {
+                'Name': 'perfectcherryblossom',
+                'Driver': 'local',
+                'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+            }, {
+                'Name': 'subterraneananimism',
+                'Driver': 'local',
+                'Mountpoint': '/var/lib/docker/volumes/subterraneananimism'
+            }
+        ]
+    }
+    return status_code, response
+
+
+def get_fake_volume():
+    status_code = 200
+    response = {
+        'Name': 'perfectcherryblossom',
+        'Driver': 'local',
+        'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+    }
+    return status_code, response
+
+
+def fake_remove_volume():
+    return 204, None
+
 # Maps real api url to fake response callback
 prefix = 'http+docker://localunixsocket'
 fake_responses = {
@@ -463,5 +497,17 @@ fake_responses = {
     '{1}/{0}/build'.format(CURRENT_VERSION, prefix):
     post_fake_build_container,
     '{1}/{0}/events'.format(CURRENT_VERSION, prefix):
-    get_fake_events
+    get_fake_events,
+    ('{1}/{0}/volumes'.format(CURRENT_VERSION, prefix), 'GET'):
+    get_fake_volume_list,
+    ('{1}/{0}/volumes'.format(CURRENT_VERSION, prefix), 'POST'):
+    get_fake_volume,
+    ('{1}/{0}/volumes/{2}'.format(
+        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
+    ), 'GET'):
+    get_fake_volume,
+    ('{1}/{0}/volumes/{2}'.format(
+        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
+    ), 'DELETE'):
+    fake_remove_volume,
 }

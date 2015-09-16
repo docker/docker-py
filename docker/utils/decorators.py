@@ -1,6 +1,7 @@
 import functools
 
 from .. import errors
+from . import utils
 
 
 def check_resource(f):
@@ -19,3 +20,18 @@ def check_resource(f):
             )
         return f(self, resource_id, *args, **kwargs)
     return wrapped
+
+
+def minimum_version(version):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(self, *args, **kwargs):
+            if utils.version_lt(self._version, version):
+                raise errors.InvalidVersion(
+                    '{0} is not available for version < {1}'.format(
+                        f.__name__, version
+                    )
+                )
+            return f(self, *args, **kwargs)
+        return wrapper
+    return decorator

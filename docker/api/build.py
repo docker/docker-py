@@ -4,8 +4,8 @@ import re
 
 from .. import constants
 from .. import errors
-from ..auth import auth
-from ..utils import utils
+from .. import auth
+from .. import utils
 
 
 log = logging.getLogger(__name__)
