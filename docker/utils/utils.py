@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import base64
 import io
 import os
 import os.path
@@ -170,6 +171,11 @@ def version_lt(v1, v2):
 
 def version_gte(v1, v2):
     return not version_lt(v1, v2)
+
+
+def decode_json_header(header):
+    data = base64.b64decode(header).decode('utf-8')
+    return json.loads(data)
 
 
 def ping_registry(url):
