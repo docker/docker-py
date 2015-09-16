@@ -741,7 +741,8 @@ Remove a volume. Similar to the `docker volume rm` command.
 
 * name (str): The volume's name
 
-**Returns** (bool): True on successful removal. Failure will raise an exception.
+**Returns** (bool): True on successful removal. Failure will raise a
+`docker.errors.APIError` exception.
 
 ## rename
 
