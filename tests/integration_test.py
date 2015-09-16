@@ -88,6 +88,7 @@ class BaseTestCase(unittest.TestCase):
         self.tmp_imgs = []
         self.tmp_containers = []
         self.tmp_folders = []
+        self.tmp_volumes = []
 
     def tearDown(self):
         for img in self.tmp_imgs:
@@ -1391,8 +1392,8 @@ class TestImportFromURL(ImportTestCase):
 class TestVolumes(BaseTestCase):
     def test_create_volume(self):
         name = 'perfectcherryblossom'
-        result = self.client.create_volume(name)
         self.tmp_volumes.append(name)
+        result = self.client.create_volume(name)
         self.assertIn('Name', result)
         self.assertEqual(result['Name'], name)
         self.assertIn('Driver', result)
@@ -1406,8 +1407,8 @@ class TestVolumes(BaseTestCase):
 
     def test_list_volumes(self):
         name = 'imperishablenight'
-        volume_info = self.client.create_volume(name)
         self.tmp_volumes.append(name)
+        volume_info = self.client.create_volume(name)
         result = self.client.volumes()
         self.assertIn('Volumes', result)
         volumes = result['Volumes']
@@ -1415,8 +1416,8 @@ class TestVolumes(BaseTestCase):
 
     def test_inspect_volume(self):
         name = 'embodimentofscarletdevil'
-        volume_info = self.client.create_volume(name)
         self.tmp_volumes.append(name)
+        volume_info = self.client.create_volume(name)
         result = self.client.inspect_volume(name)
         self.assertEqual(volume_info, result)
 
@@ -1427,8 +1428,8 @@ class TestVolumes(BaseTestCase):
 
     def test_remove_volume(self):
         name = 'shootthebullet'
-        self.client.create_volume(name)
         self.tmp_volumes.append(name)
+        self.client.create_volume(name)
         result = self.client.remove_volume(name)
         self.assertTrue(result)
 
