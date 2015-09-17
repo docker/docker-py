@@ -361,7 +361,7 @@ Start a previously set up exec instance.
 * exec_id (str): ID of the exec instance
 * detach (bool): If true, detach from the exec command. Default: False
 * tty (bool): Allocate a pseudo-TTY. Default: False
-* stream (bool): Stream response data
+* stream (bool): Stream response data. Default: False
 
 **Returns** (generator or str): If `stream=True`, a generator yielding response
 chunks. A string containing response data otherwise.
