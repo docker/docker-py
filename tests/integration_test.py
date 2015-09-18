@@ -47,6 +47,7 @@ warnings.simplefilter('error')
 compare_version = docker.utils.compare_version
 
 EXEC_DRIVER = []
+BUSYBOX = 'busybox:buildroot-2014.02'
 
 
 def exec_driver_is_native():
@@ -70,7 +71,7 @@ def docker_client_kwargs(**kwargs):
 
 def setup_module():
     c = docker_client()
-    c.pull('busybox')
+    c.pull(BUSYBOX)
     c.close()
 
 
@@ -172,7 +173,7 @@ class TestListContainers(BaseTestCase):
     def runTest(self):
         res0 = self.client.containers(all=True)
         size = len(res0)
-        res1 = self.client.create_container('busybox:latest', 'true')
+        res1 = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res1)
         self.client.start(res1['Id'])
         self.tmp_containers.append(res1['Id'])
@@ -194,7 +195,7 @@ class TestListContainers(BaseTestCase):
 
 class TestCreateContainer(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', 'true')
+        res = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
 
@@ -216,7 +217,7 @@ class TestCreateContainerWithBinds(BaseTestCase):
 
         with open(shared_file, 'w'):
             container = self.client.create_container(
-                'busybox',
+                BUSYBOX,
                 ['ls', mount_dest], volumes={mount_dest: {}},
                 host_config=self.client.create_host_config(
                     binds=binds, network_mode='none'
@@ -260,7 +261,7 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
 
         with open(shared_file, 'w'):
             container = self.client.create_container(
-                'busybox',
+                BUSYBOX,
                 ['ls', mount_dest], volumes={mount_dest: {}},
                 host_config=self.client.create_host_config(
                     binds=binds, network_mode='none'
@@ -291,7 +292,7 @@ class TestCreateContainerWithRoBinds(BaseTestCase):
 class CreateContainerWithGroupAddTest(BaseTestCase):
     def test_group_id_ints(self):
         container = self.client.create_container(
-            'busybox', 'id -G',
+            BUSYBOX, 'id -G',
             host_config=self.client.create_host_config(group_add=[1000, 1001])
         )
         self.tmp_containers.append(container)
@@ -307,7 +308,7 @@ class CreateContainerWithGroupAddTest(BaseTestCase):
 
     def test_group_id_strings(self):
         container = self.client.create_container(
-            'busybox', 'id -G', host_config=self.client.create_host_config(
+            BUSYBOX, 'id -G', host_config=self.client.create_host_config(
                 group_add=['1000', '1001']
             )
         )
@@ -331,7 +332,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
         )
 
         container = self.client.create_container(
-            'busybox', ['true'],
+            BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
         self.tmp_containers.append(container['Id'])
@@ -350,7 +351,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
         )
 
         container = self.client.create_container(
-            'busybox', ['true'],
+            BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
 
@@ -371,7 +372,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
         )
 
         container = self.client.create_container(
-            'busybox', ['true'],
+            BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
         self.tmp_containers.append(container['Id'])
@@ -390,7 +391,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
         )
 
         container = self.client.create_container(
-            'busybox', ['true'],
+            BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
         self.tmp_containers.append(container['Id'])
@@ -409,7 +410,7 @@ class TestCreateContainerReadOnlyFs(BaseTestCase):
             pytest.skip('Exec driver not native')
 
         ctnr = self.client.create_container(
-            'busybox', ['mkdir', '/shrine'],
+            BUSYBOX, ['mkdir', '/shrine'],
             host_config=self.client.create_host_config(
                 read_only=True, network_mode='none'
             )
@@ -423,7 +424,7 @@ class TestCreateContainerReadOnlyFs(BaseTestCase):
 
 class TestCreateContainerWithName(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', 'true', name='foobar')
+        res = self.client.create_container(BUSYBOX, 'true', name='foobar')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
         inspect = self.client.inspect_container(res['Id'])
@@ -435,7 +436,7 @@ class TestRenameContainer(BaseTestCase):
     def runTest(self):
         version = self.client.version()['Version']
         name = 'hong_meiling'
-        res = self.client.create_container('busybox', 'true')
+        res = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
         self.client.rename(res, name)
@@ -449,7 +450,7 @@ class TestRenameContainer(BaseTestCase):
 
 class TestStartContainer(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', 'true')
+        res = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
         self.client.start(res['Id'])
@@ -467,7 +468,7 @@ class TestStartContainer(BaseTestCase):
 
 class TestStartContainerWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', 'true')
+        res = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res)
         self.tmp_containers.append(res['Id'])
         self.client.start(res)
@@ -486,7 +487,7 @@ class TestStartContainerWithDictInsteadOfId(BaseTestCase):
 class TestCreateContainerPrivileged(BaseTestCase):
     def runTest(self):
         res = self.client.create_container(
-            'busybox', 'true', host_config=self.client.create_host_config(
+            BUSYBOX, 'true', host_config=self.client.create_host_config(
                 privileged=True, network_mode='none'
             )
         )
@@ -512,7 +513,7 @@ class TestCreateContainerPrivileged(BaseTestCase):
 
 class TestWait(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', ['sleep', '3'])
+        res = self.client.create_container(BUSYBOX, ['sleep', '3'])
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
@@ -527,7 +528,7 @@ class TestWait(BaseTestCase):
 
 class TestWaitWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        res = self.client.create_container('busybox', ['sleep', '3'])
+        res = self.client.create_container(BUSYBOX, ['sleep', '3'])
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(res)
@@ -544,7 +545,7 @@ class TestLogs(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
-            'busybox', 'echo {0}'.format(snippet)
+            BUSYBOX, 'echo {0}'.format(snippet)
         )
         id = container['Id']
         self.client.start(id)
@@ -560,7 +561,7 @@ class TestLogsWithTailOption(BaseTestCase):
         snippet = '''Line1
 Line2'''
         container = self.client.create_container(
-            'busybox', 'echo "{0}"'.format(snippet)
+            BUSYBOX, 'echo "{0}"'.format(snippet)
         )
         id = container['Id']
         self.client.start(id)
@@ -575,7 +576,7 @@ Line2'''
 #     def runTest(self):
 #         snippet = 'Flowering Nights (Sakuya Iyazoi)'
 #         container = self.client.create_container(
-#             'busybox', 'echo {0}'.format(snippet)
+#             BUSYBOX, 'echo {0}'.format(snippet)
 #         )
 #         id = container['Id']
 #         self.client.start(id)
@@ -594,7 +595,7 @@ class TestLogsWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
-            'busybox', 'echo {0}'.format(snippet)
+            BUSYBOX, 'echo {0}'.format(snippet)
         )
         id = container['Id']
         self.client.start(id)
@@ -607,7 +608,7 @@ class TestLogsWithDictInsteadOfId(BaseTestCase):
 
 class TestDiff(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
+        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -622,7 +623,7 @@ class TestDiff(BaseTestCase):
 
 class TestDiffWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
+        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -637,7 +638,7 @@ class TestDiffWithDictInsteadOfId(BaseTestCase):
 
 class TestStop(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -654,7 +655,7 @@ class TestStop(BaseTestCase):
 
 class TestStopWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.assertIn('Id', container)
         id = container['Id']
         self.client.start(container)
@@ -672,7 +673,7 @@ class TestStopWithDictInsteadOfId(BaseTestCase):
 
 class TestKill(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -689,7 +690,7 @@ class TestKill(BaseTestCase):
 
 class TestKillWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -706,7 +707,7 @@ class TestKillWithDictInsteadOfId(BaseTestCase):
 
 class TestKillWithSignal(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '60'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '60'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -731,7 +732,7 @@ class TestPort(BaseTestCase):
         }
 
         container = self.client.create_container(
-            'busybox', ['sleep', '60'], ports=list(port_bindings.keys()),
+            BUSYBOX, ['sleep', '60'], ports=list(port_bindings.keys()),
             host_config=self.client.create_host_config(
                 port_bindings=port_bindings, network_mode='bridge'
             )
@@ -757,7 +758,7 @@ class TestMacAddress(BaseTestCase):
     def runTest(self):
         mac_address_expected = "02:42:ac:11:00:0a"
         container = self.client.create_container(
-            'busybox', ['sleep', '60'], mac_address=mac_address_expected)
+            BUSYBOX, ['sleep', '60'], mac_address=mac_address_expected)
 
         id = container['Id']
 
@@ -771,7 +772,7 @@ class TestMacAddress(BaseTestCase):
 
 class TestRestart(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -792,7 +793,7 @@ class TestRestart(BaseTestCase):
 
 class TestRestartWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.assertIn('Id', container)
         id = container['Id']
         self.client.start(container)
@@ -814,7 +815,7 @@ class TestRestartWithDictInsteadOfId(BaseTestCase):
 
 class TestRemoveContainer(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['true'])
+        container = self.client.create_container(BUSYBOX, ['true'])
         id = container['Id']
         self.client.start(id)
         self.client.wait(id)
@@ -826,7 +827,7 @@ class TestRemoveContainer(BaseTestCase):
 
 class TestRemoveContainerWithDictInsteadOfId(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['true'])
+        container = self.client.create_container(BUSYBOX, ['true'])
         id = container['Id']
         self.client.start(id)
         self.client.wait(id)
@@ -841,25 +842,25 @@ class TestCreateContainerWithVolumesFrom(BaseTestCase):
         vol_names = ['foobar_vol0', 'foobar_vol1']
 
         res0 = self.client.create_container(
-            'busybox', 'true', name=vol_names[0]
+            BUSYBOX, 'true', name=vol_names[0]
         )
         container1_id = res0['Id']
         self.tmp_containers.append(container1_id)
         self.client.start(container1_id)
 
         res1 = self.client.create_container(
-            'busybox', 'true', name=vol_names[1]
+            BUSYBOX, 'true', name=vol_names[1]
         )
         container2_id = res1['Id']
         self.tmp_containers.append(container2_id)
         self.client.start(container2_id)
         with self.assertRaises(docker.errors.DockerException):
             self.client.create_container(
-                'busybox', 'cat', detach=True, stdin_open=True,
+                BUSYBOX, 'cat', detach=True, stdin_open=True,
                 volumes_from=vol_names
             )
         res2 = self.client.create_container(
-            'busybox', 'cat', detach=True, stdin_open=True,
+            BUSYBOX, 'cat', detach=True, stdin_open=True,
             host_config=self.client.create_host_config(
                 volumes_from=vol_names, network_mode='none'
             )
@@ -875,7 +876,7 @@ class TestCreateContainerWithVolumesFrom(BaseTestCase):
 class TestCreateContainerWithLinks(BaseTestCase):
     def runTest(self):
         res0 = self.client.create_container(
-            'busybox', 'cat',
+            BUSYBOX, 'cat',
             detach=True, stdin_open=True,
             environment={'FOO': '1'})
 
@@ -885,7 +886,7 @@ class TestCreateContainerWithLinks(BaseTestCase):
         self.client.start(container1_id)
 
         res1 = self.client.create_container(
-            'busybox', 'cat',
+            BUSYBOX, 'cat',
             detach=True, stdin_open=True,
             environment={'FOO': '1'})
 
@@ -904,7 +905,7 @@ class TestCreateContainerWithLinks(BaseTestCase):
         link_env_prefix2 = link_alias2.upper()
 
         res2 = self.client.create_container(
-            'busybox', 'env', host_config=self.client.create_host_config(
+            BUSYBOX, 'env', host_config=self.client.create_host_config(
                 links={link_path1: link_alias1, link_path2: link_alias2},
                 network_mode='none'
             )
@@ -926,7 +927,7 @@ class TestCreateContainerWithLinks(BaseTestCase):
 class TestRestartingContainer(BaseTestCase):
     def runTest(self):
         container = self.client.create_container(
-            'busybox', ['sleep', '2'],
+            BUSYBOX, ['sleep', '2'],
             host_config=self.client.create_host_config(
                 restart_policy={"Name": "always", "MaximumRetryCount": 0},
                 network_mode='none'
@@ -949,7 +950,7 @@ class TestExecuteCommand(BaseTestCase):
         if not exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
-        container = self.client.create_container('busybox', 'cat',
+        container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -967,7 +968,7 @@ class TestExecuteCommandString(BaseTestCase):
         if not exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
-        container = self.client.create_container('busybox', 'cat',
+        container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -985,7 +986,7 @@ class TestExecuteCommandStringAsUser(BaseTestCase):
         if not exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
-        container = self.client.create_container('busybox', 'cat',
+        container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -1003,7 +1004,7 @@ class TestExecuteCommandStringAsRoot(BaseTestCase):
         if not exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
-        container = self.client.create_container('busybox', 'cat',
+        container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -1021,7 +1022,7 @@ class TestExecuteCommandStreaming(BaseTestCase):
         if not exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
-        container = self.client.create_container('busybox', 'cat',
+        container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -1041,7 +1042,7 @@ class TestExecInspect(BaseTestCase):
         if not exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
-        container = self.client.create_container('busybox', 'cat',
+        container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -1057,7 +1058,7 @@ class TestExecInspect(BaseTestCase):
 
 class TestRunContainerStreaming(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', '/bin/sh',
+        container = self.client.create_container(BUSYBOX, '/bin/sh',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -1068,7 +1069,7 @@ class TestRunContainerStreaming(BaseTestCase):
 
 class TestPauseUnpauseContainer(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['sleep', '9999'])
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(container)
@@ -1098,7 +1099,7 @@ class TestPauseUnpauseContainer(BaseTestCase):
 class TestCreateContainerWithHostPidMode(BaseTestCase):
     def runTest(self):
         ctnr = self.client.create_container(
-            'busybox', 'true', host_config=self.client.create_host_config(
+            BUSYBOX, 'true', host_config=self.client.create_host_config(
                 pid_mode='host', network_mode='none'
             )
         )
@@ -1121,7 +1122,7 @@ class TestRemoveLink(BaseTestCase):
     def runTest(self):
         # Create containers
         container1 = self.client.create_container(
-            'busybox', 'cat', detach=True, stdin_open=True
+            BUSYBOX, 'cat', detach=True, stdin_open=True
         )
         container1_id = container1['Id']
         self.tmp_containers.append(container1_id)
@@ -1133,7 +1134,7 @@ class TestRemoveLink(BaseTestCase):
         link_alias = 'mylink'
 
         container2 = self.client.create_container(
-            'busybox', 'cat', host_config=self.client.create_host_config(
+            BUSYBOX, 'cat', host_config=self.client.create_host_config(
                 links={link_path: link_alias}, network_mode='none'
             )
         )
@@ -1200,7 +1201,7 @@ class TestPullStream(BaseTestCase):
 
 class TestCommit(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
+        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -1213,15 +1214,15 @@ class TestCommit(BaseTestCase):
         self.assertTrue(img['Container'].startswith(id))
         self.assertIn('ContainerConfig', img)
         self.assertIn('Image', img['ContainerConfig'])
-        self.assertEqual('busybox', img['ContainerConfig']['Image'])
-        busybox_id = self.client.inspect_image('busybox')['Id']
+        self.assertEqual(BUSYBOX, img['ContainerConfig']['Image'])
+        busybox_id = self.client.inspect_image(BUSYBOX)['Id']
         self.assertIn('Parent', img)
         self.assertEqual(img['Parent'], busybox_id)
 
 
 class TestRemoveImage(BaseTestCase):
     def runTest(self):
-        container = self.client.create_container('busybox', ['touch', '/test'])
+        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -1443,37 +1444,6 @@ class TestVolumes(BaseTestCase):
 # BUILDER TESTS #
 #################
 
-class TestBuild(BaseTestCase):
-    def runTest(self):
-        if compare_version(self.client._version, '1.8') < 0:
-            return
-        script = io.BytesIO('\n'.join([
-            'FROM busybox',
-            'MAINTAINER docker-py',
-            'RUN mkdir -p /tmp/test',
-            'EXPOSE 8080',
-            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
-            ' /tmp/silence.tar.gz'
-        ]).encode('ascii'))
-        img, logs = self.client.build(fileobj=script)
-        self.assertNotEqual(img, None)
-        self.assertNotEqual(img, '')
-        self.assertNotEqual(logs, '')
-        container1 = self.client.create_container(img, 'test -d /tmp/test')
-        id1 = container1['Id']
-        self.client.start(id1)
-        self.tmp_containers.append(id1)
-        exitcode1 = self.client.wait(id1)
-        self.assertEqual(exitcode1, 0)
-        container2 = self.client.create_container(img, 'test -d /tmp/test')
-        id2 = container2['Id']
-        self.client.start(id2)
-        self.tmp_containers.append(id2)
-        exitcode2 = self.client.wait(id2)
-        self.assertEqual(exitcode2, 0)
-        self.tmp_imgs.append(img)
-
-
 class TestBuildStream(BaseTestCase):
     def runTest(self):
         script = io.BytesIO('\n'.join([
@@ -1515,11 +1485,9 @@ class TestBuildFromStringIO(BaseTestCase):
         self.assertNotEqual(logs, '')
 
 
+@requires_api_version('1.8')
 class TestBuildWithDockerignore(Cleanup, BaseTestCase):
     def runTest(self):
-        if compare_version(self.client._version, '1.8') >= 0:
-            return
-
         base_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base_dir)
 
@@ -1586,7 +1554,7 @@ class TestRunShlex(BaseTestCase):
             'true && echo "Night of Nights"'
         ]
         for cmd in commands:
-            container = self.client.create_container('busybox', cmd)
+            container = self.client.create_container(BUSYBOX, cmd)
             id = container['Id']
             self.client.start(id)
             self.tmp_containers.append(id)
@@ -1711,7 +1679,7 @@ class TestRegressions(BaseTestCase):
 
     def test_542(self):
         self.client.start(
-            self.client.create_container('busybox', ['true'])
+            self.client.create_container(BUSYBOX, ['true'])
         )
         result = self.client.containers(all=True, trunc=True)
         self.assertEqual(len(result[0]['Id']), 12)
@@ -1722,12 +1690,12 @@ class TestRegressions(BaseTestCase):
 
     def test_649(self):
         self.client.timeout = None
-        ctnr = self.client.create_container('busybox', ['sleep', '2'])
+        ctnr = self.client.create_container(BUSYBOX, ['sleep', '2'])
         self.client.start(ctnr)
         self.client.stop(ctnr)
 
     def test_715(self):
-        ctnr = self.client.create_container('busybox', ['id', '-u'], user=1000)
+        ctnr = self.client.create_container(BUSYBOX, ['id', '-u'], user=1000)
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
