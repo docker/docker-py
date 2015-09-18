@@ -27,3 +27,11 @@ def simple_tar(path):
     t.close()
     f.seek(0)
     return f
+
+
+def untar_file(tardata, filename):
+    with tarfile.open(mode='r', fileobj=tardata) as t:
+        f = t.extractfile(filename)
+        result = f.read()
+        f.close()
+    return result

@@ -429,6 +429,28 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
 
 
 @requires_api_version('1.20')
+class GetArchiveTest(BaseTestCase):
+    def test_get_file_archive_from_container(self):
+        data = 'The Maid and the Pocket Watch of Blood'
+        ctnr = self.client.create_container(
+            BUSYBOX, 'sh -c "echo {0} > /vol1/data.txt"'.format(data),
+            volumes=['/vol1']
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        self.client.wait(ctnr)
+        with tempfile.NamedTemporaryFile() as destination:
+            strm, stat = self.client.get_archive(ctnr, '/vol1/data.txt')
+            for d in strm:
+                destination.write(d)
+            destination.seek(0)
+            retrieved_data = helpers.untar_file(destination, 'data.txt')
+            if six.PY3:
+                retrieved_data = retrieved_data.decode('utf-8')
+            self.assertEqual(data, retrieved_data.strip())
+
+
+@requires_api_version('1.20')
 class PutArchiveTest(BaseTestCase):
     def test_copy_file_to_container(self):
         data = b'Deaf To All But The Song'
