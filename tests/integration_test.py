@@ -431,12 +431,12 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
 @requires_api_version('1.20')
 class PutArchiveTest(BaseTestCase):
     def test_copy_file_to_container(self):
-        data = 'Deaf To All But The Song'
+        data = b'Deaf To All But The Song'
         with tempfile.NamedTemporaryFile() as test_file:
             test_file.write(data)
             test_file.seek(0)
             ctnr = self.client.create_container(
-                'busybox',
+                BUSYBOX,
                 'cat {0}'.format(
                     os.path.join('/vol1', os.path.basename(test_file.name))
                 ),
@@ -450,6 +450,7 @@ class PutArchiveTest(BaseTestCase):
         logs = self.client.logs(ctnr)
         if six.PY3:
             logs = logs.decode('utf-8')
+            data = data.decode('utf-8')
         self.assertEqual(logs.strip(), data)
 
     def test_copy_directory_to_container(self):
@@ -457,7 +458,7 @@ class PutArchiveTest(BaseTestCase):
         dirs = ['foo', 'bar']
         base = helpers.make_tree(dirs, files)
         ctnr = self.client.create_container(
-            'busybox', 'ls -p /vol1', volumes=['/vol1']
+            BUSYBOX, 'ls -p /vol1', volumes=['/vol1']
         )
         self.tmp_containers.append(ctnr)
         with docker.utils.tar(base) as test_tar:
