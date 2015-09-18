@@ -180,11 +180,6 @@ def version_gte(v1, v2):
     return not version_lt(v1, v2)
 
 
-def decode_json_header(header):
-    data = base64.b64decode(header).decode('utf-8')
-    return json.loads(data)
-
-
 def ping_registry(url):
     warnings.warn(
         'The `ping_registry` method is deprecated and will be removed.',
