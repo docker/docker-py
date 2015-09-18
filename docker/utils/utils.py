@@ -67,6 +67,13 @@ def mkbuildcontext(dockerfile):
     return f
 
 
+def decode_json_header(header):
+    data = base64.b64decode(header)
+    if six.PY3:
+        data = data.decode('utf-8')
+    return json.loads(data)
+
+
 def tar(path, exclude=None, dockerfile=None):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
