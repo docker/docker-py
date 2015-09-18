@@ -449,6 +449,21 @@ class GetArchiveTest(BaseTestCase):
                 retrieved_data = retrieved_data.decode('utf-8')
             self.assertEqual(data, retrieved_data.strip())
 
+    def test_get_file_stat_from_container(self):
+        data = 'The Maid and the Pocket Watch of Blood'
+        ctnr = self.client.create_container(
+            BUSYBOX, 'sh -c "echo -n {0} > /vol1/data.txt"'.format(data),
+            volumes=['/vol1']
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        self.client.wait(ctnr)
+        strm, stat = self.client.get_archive(ctnr, '/vol1/data.txt')
+        self.assertIn('name', stat)
+        self.assertEqual(stat['name'], 'data.txt')
+        self.assertIn('size', stat)
+        self.assertEqual(stat['size'], len(data))
+
 
 @requires_api_version('1.20')
 class PutArchiveTest(BaseTestCase):
