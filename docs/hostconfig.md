@@ -79,7 +79,7 @@ for example:
 * dns_search (list): DNS search domains
 * volumes_from (str or list): List of container names or Ids to get volumes
   from. Optionally a single string joining container id's with commas
-* network_mode (str): One of `['bridge', None, 'container:<name|id>', 'host']`
+* network_mode (str): One of `['bridge', 'none', 'container:<name|id>', 'host']`
 * restart_policy (dict):  "Name" param must be one of
   `['on-failure', 'always']`
 * cap_add (list of str): Add kernel capabilities
