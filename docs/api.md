@@ -280,7 +280,7 @@ Create and register a named volume
 
 ## diff
 
-Inspect changes on a container's filesystem
+Inspect changes on a container's filesystem.
 
 **Params**:
 
@@ -368,7 +368,7 @@ chunks. A string containing response data otherwise.
 
 ## export
 
-Export the contents of a filesystem as a tar archive to STDOUT
+Export the contents of a filesystem as a tar archive to STDOUT.
 
 **Params**:
 
@@ -398,7 +398,7 @@ An example of how to get (save) an image to a file.
 
 ## history
 
-Show the history of an image
+Show the history of an image.
 
 **Params**:
 
@@ -540,7 +540,7 @@ single dict
 
 ## inspect_image
 
-Identical to the `docker inspect` command, but only for images
+Identical to the `docker inspect` command, but only for images.
 
 **Params**:
 
@@ -566,7 +566,7 @@ Retrieve volume info by name.
 
 ## kill
 
-Kill a container or send a signal to a container
+Kill a container or send a signal to a container.
 
 **Params**:
 
@@ -686,7 +686,7 @@ Identical to the `docker pull` command.
 ## push
 
 Push an image or a repository to the registry. Identical to the `docker push`
-command
+command.
 
 **Params**:
 
@@ -873,7 +873,7 @@ Tag an image into a repository. Identical to the `docker tag` command.
 **Returns** (bool): True if successful
 
 ## top
-Display the running processes of a container
+Display the running processes of a container.
 
 **Params**:
 
