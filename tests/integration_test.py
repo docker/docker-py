@@ -33,7 +33,7 @@ from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
 import docker
-from docker.errors import APIError
+from docker.errors import APIError, NotFound
 from docker.utils import kwargs_from_env
 
 from .base import requires_api_version
@@ -71,7 +71,11 @@ def docker_client_kwargs(**kwargs):
 
 def setup_module():
     c = docker_client()
-    c.pull(BUSYBOX)
+    try:
+        c.inspect_image(BUSYBOX)
+    except NotFound:
+        c.pull(BUSYBOX)
+        c.inspect_image(BUSYBOX)
     c.close()
 
 
