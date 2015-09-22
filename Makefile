@@ -11,7 +11,7 @@ build:
 build-py3:
 	docker build -t docker-py3 -f Dockerfile-py3 .
 
-test: unit-test integration-test unit-test-py3 integration-test-py3
+test: flake8 unit-test unit-test-py3 integration-dind
 
 unit-test: build
 	docker run docker-py py.test tests/test.py tests/utils_test.py
@@ -30,3 +30,6 @@ integration-dind: build build-py3
 	docker run --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-py py.test -rxs tests/integration_test.py
 	docker run --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-py3 py.test -rxs tests/integration_test.py
 	docker rm -vf dpy-dind
+
+flake8: build
+	docker run docker-py flake8 docker tests
