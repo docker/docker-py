@@ -33,7 +33,7 @@ from six.moves import BaseHTTPServer
 from six.moves import socketserver
 
 import docker
-from docker.errors import APIError
+from docker.errors import APIError, NotFound
 from docker.utils import kwargs_from_env
 
 from .base import requires_api_version
@@ -71,7 +71,11 @@ def docker_client_kwargs(**kwargs):
 
 def setup_module():
     c = docker_client()
-    c.pull(BUSYBOX)
+    try:
+        c.inspect_image(BUSYBOX)
+    except NotFound:
+        c.pull(BUSYBOX)
+        c.inspect_image(BUSYBOX)
     c.close()
 
 
@@ -113,6 +117,21 @@ class BaseTestCase(unittest.TestCase):
                 pass
 
         self.client.close()
+
+    def run_container(self, *args, **kwargs):
+        container = self.client.create_container(*args, **kwargs)
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        exitcode = self.client.wait(container)
+
+        if exitcode != 0:
+            output = self.client.logs(container)
+            raise Exception(
+                "Container exited with code {}:\n{}"
+                .format(exitcode, output))
+
+        return container
+
 
 #########################
 #   INFORMATION TESTS   #
@@ -201,91 +220,76 @@ class TestCreateContainer(BaseTestCase):
 
 
 class TestCreateContainerWithBinds(BaseTestCase):
-    def runTest(self):
-        mount_dest = '/mnt'
-        mount_origin = tempfile.mkdtemp()
-        self.tmp_folders.append(mount_origin)
+    def setUp(self):
+        super(TestCreateContainerWithBinds, self).setUp()
 
-        filename = 'shared.txt'
-        shared_file = os.path.join(mount_origin, filename)
-        binds = {
-            mount_origin: {
-                'bind': mount_dest,
-                'ro': False,
-            },
-        }
+        self.mount_dest = '/mnt'
 
-        with open(shared_file, 'w'):
-            container = self.client.create_container(
-                BUSYBOX,
-                ['ls', mount_dest], volumes={mount_dest: {}},
-                host_config=self.client.create_host_config(
-                    binds=binds, network_mode='none'
-                )
-            )
-            container_id = container['Id']
-            self.client.start(container_id)
-            self.tmp_containers.append(container_id)
-            exitcode = self.client.wait(container_id)
-            self.assertEqual(exitcode, 0)
-            logs = self.client.logs(container_id)
+        # Get a random pathname - we don't need it to exist locally
+        self.mount_origin = tempfile.mkdtemp()
+        shutil.rmtree(self.mount_origin)
 
-        os.unlink(shared_file)
+        self.filename = 'shared.txt'
+
+        self.run_with_volume(
+            False,
+            BUSYBOX,
+            ['touch', os.path.join(self.mount_dest, self.filename)],
+        )
+
+    def run_with_volume(self, ro, *args, **kwargs):
+        return self.run_container(
+            *args,
+            volumes={self.mount_dest: {}},
+            host_config=self.client.create_host_config(
+                binds={
+                    self.mount_origin: {
+                        'bind': self.mount_dest,
+                        'ro': ro,
+                    },
+                },
+                network_mode='none'
+            ),
+            **kwargs
+        )
+
+    def test_rw(self):
+        container = self.run_with_volume(
+            False,
+            BUSYBOX,
+            ['ls', self.mount_dest],
+        )
+        logs = self.client.logs(container)
+
         if six.PY3:
             logs = logs.decode('utf-8')
-        self.assertIn(filename, logs)
+        self.assertIn(self.filename, logs)
 
         # FIXME: format changes in API version >= 1.20
-        inspect_data = self.client.inspect_container(container_id)
-        self.assertIn('Volumes', inspect_data)
-        self.assertIn(mount_dest, inspect_data['Volumes'])
-        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
-        self.assertIn(mount_dest, inspect_data['VolumesRW'])
-        self.assertTrue(inspect_data['VolumesRW'][mount_dest])
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(
+            self.mount_origin,
+            inspect_data['Volumes'][self.mount_dest])
+        self.assertTrue(inspect_data['VolumesRW'][self.mount_dest])
 
+    def test_ro(self):
+        container = self.run_with_volume(
+            True,
+            BUSYBOX,
+            ['ls', self.mount_dest],
+        )
+        logs = self.client.logs(container)
 
-class TestCreateContainerWithRoBinds(BaseTestCase):
-    def runTest(self):
-        mount_dest = '/mnt'
-        mount_origin = tempfile.mkdtemp()
-        self.tmp_folders.append(mount_origin)
-
-        filename = 'shared.txt'
-        shared_file = os.path.join(mount_origin, filename)
-        binds = {
-            mount_origin: {
-                'bind': mount_dest,
-                'ro': True,
-            },
-        }
-
-        with open(shared_file, 'w'):
-            container = self.client.create_container(
-                BUSYBOX,
-                ['ls', mount_dest], volumes={mount_dest: {}},
-                host_config=self.client.create_host_config(
-                    binds=binds, network_mode='none'
-                )
-            )
-            container_id = container['Id']
-            self.client.start(container_id)
-            self.tmp_containers.append(container_id)
-            exitcode = self.client.wait(container_id)
-            self.assertEqual(exitcode, 0)
-            logs = self.client.logs(container_id)
-
-        os.unlink(shared_file)
         if six.PY3:
             logs = logs.decode('utf-8')
-        self.assertIn(filename, logs)
+        self.assertIn(self.filename, logs)
 
         # FIXME: format changes in API version >= 1.20
-        inspect_data = self.client.inspect_container(container_id)
-        self.assertIn('Volumes', inspect_data)
-        self.assertIn(mount_dest, inspect_data['Volumes'])
-        self.assertEqual(mount_origin, inspect_data['Volumes'][mount_dest])
-        self.assertIn(mount_dest, inspect_data['VolumesRW'])
-        self.assertFalse(inspect_data['VolumesRW'][mount_dest])
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(
+            self.mount_origin,
+            inspect_data['Volumes'][self.mount_dest])
+        self.assertFalse(inspect_data['VolumesRW'][self.mount_dest])
 
 
 @requires_api_version('1.20')
