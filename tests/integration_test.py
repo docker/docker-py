@@ -341,7 +341,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
             BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
-        self.tmp_containers.append(container['Id'])
+        self.tmp_containers.append(container['ID'])
         self.client.start(container)
 
         info = self.client.inspect_container(container)
@@ -381,7 +381,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
             BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
-        self.tmp_containers.append(container['Id'])
+        self.tmp_containers.append(container['ID'])
         self.client.start(container)
 
         info = self.client.inspect_container(container)
@@ -400,7 +400,7 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
             BUSYBOX, ['true'],
             host_config=self.client.create_host_config(log_config=log_config)
         )
-        self.tmp_containers.append(container['Id'])
+        self.tmp_containers.append(container['ID'])
         self.client.start(container)
 
         info = self.client.inspect_container(container)
@@ -1012,12 +1012,12 @@ class TestExecuteCommandStringAsRoot(BaseTestCase):
 
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
-        id = container['Id']
+        id = container['ID']
         self.client.start(id)
         self.tmp_containers.append(id)
 
         res = self.client.exec_create(id, 'whoami')
-        self.assertIn('Id', res)
+        self.assertIn('ID', res)
 
         exec_log = self.client.exec_start(res)
         self.assertEqual(exec_log, b'root\n')
@@ -1030,12 +1030,12 @@ class TestExecuteCommandStreaming(BaseTestCase):
 
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
-        id = container['Id']
+        id = container['ID']
         self.client.start(id)
         self.tmp_containers.append(id)
 
         exec_id = self.client.exec_create(id, ['echo', 'hello\nworld'])
-        self.assertIn('Id', exec_id)
+        self.assertIn('ID', exec_id)
 
         res = b''
         for chunk in self.client.exec_start(exec_id, stream=True):
@@ -1050,12 +1050,12 @@ class TestExecInspect(BaseTestCase):
 
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
-        id = container['Id']
+        id = container['ID']
         self.client.start(id)
         self.tmp_containers.append(id)
 
         exec_id = self.client.exec_create(id, ['mkdir', '/does/not/exist'])
-        self.assertIn('Id', exec_id)
+        self.assertIn('ID', exec_id)
         self.client.exec_start(exec_id)
         exec_info = self.client.exec_inspect(exec_id)
         self.assertIn('ExitCode', exec_info)
