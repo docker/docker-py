@@ -265,24 +265,7 @@ class TestCreateContainerWithBinds(BaseTestCase):
             logs = logs.decode('utf-8')
         self.assertIn(self.filename, logs)
         inspect_data = self.client.inspect_container(container)
-        if docker.utils.compare_version('1.20', self.client._version) < 0:
-            self.assertIn('Volumes', inspect_data)
-            self.assertIn(self.mount_dest, inspect_data['Volumes'])
-            self.assertEqual(
-                self.mount_origin, inspect_data['Volumes'][self.mount_dest]
-            )
-            self.assertIn(self.mount_dest, inspect_data['VolumesRW'])
-            self.assertTrue(inspect_data['VolumesRW'][self.mount_dest])
-        else:
-            self.assertIn('Mounts', inspect_data)
-            filtered = filter(
-                lambda x: x['Destination'] == self.mount_dest,
-                inspect_data['Mounts']
-            )
-            self.assertEqual(len(filtered), 1)
-            mount_data = filtered[0]
-            self.assertEqual(mount_data['Source'], self.mount_origin)
-            self.assertTrue(mount_data['RW'])
+        self.check_container_data(inspect_data, True)
 
     def test_ro(self):
         container = self.run_with_volume(
@@ -298,6 +281,9 @@ class TestCreateContainerWithBinds(BaseTestCase):
 
         self.assertIn(self.filename, logs)
         inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False)
+
+    def check_container_data(self, inspect_data, rw):
         if docker.utils.compare_version('1.20', self.client._version) < 0:
             self.assertIn('Volumes', inspect_data)
             self.assertIn(self.mount_dest, inspect_data['Volumes'])
@@ -308,14 +294,14 @@ class TestCreateContainerWithBinds(BaseTestCase):
             self.assertFalse(inspect_data['VolumesRW'][self.mount_dest])
         else:
             self.assertIn('Mounts', inspect_data)
-            filtered = filter(
+            filtered = list(filter(
                 lambda x: x['Destination'] == self.mount_dest,
                 inspect_data['Mounts']
-            )
+            ))
             self.assertEqual(len(filtered), 1)
             mount_data = filtered[0]
             self.assertEqual(mount_data['Source'], self.mount_origin)
-            self.assertFalse(mount_data['RW'])
+            self.assertEqual(mount_data['RW'], rw)
 
 
 @requires_api_version('1.20')
