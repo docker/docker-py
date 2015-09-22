@@ -75,7 +75,17 @@ def setup_module():
     try:
         c.inspect_image(BUSYBOX)
     except NotFound:
-        c.pull(BUSYBOX)
+        os.write(2, "\npulling busybox\n".encode('utf-8'))
+        for data in c.pull('busybox', stream=True):
+            data = json.loads(data.decode('utf-8'))
+            os.write(2, ("%c[2K\r" % 27).encode('utf-8'))
+            status = data.get("status")
+            progress = data.get("progress")
+            detail = "{0} - {1}".format(status, progress).encode('utf-8')
+            os.write(2, detail)
+        os.write(2, "\npulled busybox\n".encode('utf-8'))
+
+        # Double make sure we now have busybox
         c.inspect_image(BUSYBOX)
     c.close()
 
