@@ -279,7 +279,6 @@ class TestCreateContainerWithBinds(BaseTestCase):
             logs = logs.decode('utf-8')
         self.assertIn(self.filename, logs)
 
-        self.assertIn(self.filename, logs)
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
 
