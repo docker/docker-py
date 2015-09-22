@@ -242,10 +242,14 @@ class Client(
         # Disable timeout on the underlying socket to prevent
         # Read timed out(s) for long running processes
         socket = self._get_raw_response_socket(response)
-        if six.PY3 and hasattr(socket, "_sock"):
-            socket._sock.settimeout(None)
-        else:
+
+        # Depending on a few factors we might need to access
+        # _sock or not and on other factors either might not
+        # have settimeout, so let's try both
+        if hasattr(socket, "settimeout"):
             socket.settimeout(None)
+        if hasattr(socket, "_sock") and hasattr(socket._sock, "settimeout"):
+            socket._sock.settimeout(None)
 
         while True:
             header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
