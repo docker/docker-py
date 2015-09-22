@@ -12,7 +12,7 @@ build-py3:
 	docker build -t docker-py3 -f Dockerfile-py3 .
 
 build-dind-certs:
-	docker build -t dpy-dind-certs -f Dockerfile-dind-certs .
+	docker build -t dpy-dind-certs -f tests/Dockerfile-dind-certs .
 
 test: flake8 unit-test unit-test-py3 integration-dind integration-dind-ssl
 
