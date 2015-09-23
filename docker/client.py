@@ -39,7 +39,8 @@ class Client(
         api.DaemonApiMixin,
         api.ExecApiMixin,
         api.ImageApiMixin,
-        api.VolumeApiMixin):
+        api.VolumeApiMixin,
+        api.NetworkApiMixin):
     def __init__(self, base_url=None, version=None,
                  timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
