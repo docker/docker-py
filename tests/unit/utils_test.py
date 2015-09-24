@@ -14,8 +14,8 @@ from docker.utils import (
 from docker.utils.ports import build_port_bindings, split_port
 from docker.auth import resolve_repository_name, resolve_authconfig
 
-from . import base
-from .helpers import make_tree
+from .. import base
+from ..helpers import make_tree
 
 import pytest
 
