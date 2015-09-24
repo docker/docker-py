@@ -34,9 +34,9 @@ import docker.efficiency
 import requests
 import six
 
-from . import base
+from .. import base
 from . import fake_api
-from .helpers import make_tree
+from ..helpers import make_tree
 
 import pytest
 
@@ -109,34 +109,9 @@ url_prefix = 'http+docker://localunixsocket/v{0}/'.format(
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
 
-class Cleanup(object):
-    if sys.version_info < (2, 7):
-        # Provide a basic implementation of addCleanup for Python < 2.7
-        def __init__(self, *args, **kwargs):
-            super(Cleanup, self).__init__(*args, **kwargs)
-            self._cleanups = []
-
-        def tearDown(self):
-            super(Cleanup, self).tearDown()
-            ok = True
-            while self._cleanups:
-                fn, args, kwargs = self._cleanups.pop(-1)
-                try:
-                    fn(*args, **kwargs)
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    ok = False
-            if not ok:
-                raise
-
-        def addCleanup(self, function, *args, **kwargs):
-            self._cleanups.append((function, args, kwargs))
-
-
 @mock.patch.multiple('docker.Client', get=fake_get, post=fake_post,
                      put=fake_put, delete=fake_delete)
-class DockerClientTest(Cleanup, base.BaseTestCase):
+class DockerClientTest(base.Cleanup, base.BaseTestCase):
     def setUp(self):
         self.client = docker.Client()
         # Force-clear authconfig to avoid tampering with the tests
@@ -2376,7 +2351,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
 
-class StreamTest(Cleanup, base.BaseTestCase):
+class StreamTest(base.Cleanup, base.BaseTestCase):
 
     def setUp(self):
         socket_dir = tempfile.mkdtemp()
