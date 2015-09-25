@@ -457,7 +457,8 @@ def create_host_config(
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
     extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
     security_opt=None, ulimits=None, log_config=None, mem_limit=None,
-    memswap_limit=None, cgroup_parent=None, group_add=None, version=None
+    memswap_limit=None, cgroup_parent=None, group_add=None, cpu_quota=None,
+    cpu_period=None, version=None
 ):
     host_config = {}
 
@@ -518,7 +519,7 @@ def create_host_config(
         host_config['Devices'] = parse_devices(devices)
 
     if group_add:
-        if compare_version(version, '1.20') < 0:
+        if version_lt(version, '1.20'):
             raise errors.InvalidVersion(
                 'group_add param not supported for API version < 1.20'
             )
@@ -600,6 +601,30 @@ def create_host_config(
                 )
             log_config = LogConfig(**log_config)
         host_config['LogConfig'] = log_config
+
+    if cpu_quota:
+        if not isinstance(cpu_quota, int):
+            raise TypeError(
+                'Invalid type for cpu_quota param: expected int but'
+                ' found {0}'.format(type(cpu_quota))
+            )
+        if version_lt(version, '1.19'):
+            raise errors.InvalidVersion(
+                'cpu_quota param not supported for API version < 1.19'
+            )
+        host_config['CpuQuota'] = cpu_quota
+
+    if cpu_period:
+        if not isinstance(cpu_period, int):
+            raise TypeError(
+                'Invalid type for cpu_period param: expected int but'
+                ' found {0}'.format(type(cpu_period))
+            )
+        if version_lt(version, '1.19'):
+            raise errors.InvalidVersion(
+                'cpu_period param not supported for API version < 1.19'
+            )
+        host_config['CpuPeriod'] = cpu_period
 
     return host_config
 
