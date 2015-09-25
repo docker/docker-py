@@ -104,7 +104,9 @@ def fake_put(self, url, *args, **kwargs):
 def fake_delete(self, url, *args, **kwargs):
     return fake_request('DELETE', url, *args, **kwargs)
 
-url_prefix = 'http+docker://localunixsocket/v{0}/'.format(
+url_base = 'http+docker://localunixsocket/'
+url_prefix = '{0}v{1}/'.format(
+    url_base,
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
 
@@ -174,6 +176,14 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url, '{0}{1}'.format(url_prefix, 'hello/somename/world')
         )
 
+        url = self.client._url(
+            '/hello/{0}/world/{1}', 'somename', 'someothername'
+        )
+        self.assertEqual(
+            url,
+            '{0}{1}'.format(url_prefix, 'hello/somename/world/someothername')
+        )
+
         url = self.client._url('/hello/{0}/world', '/some?name')
         self.assertEqual(
             url, '{0}{1}'.format(url_prefix, 'hello/%2Fsome%3Fname/world')
@@ -187,8 +197,13 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         url = self.client._url('/simple')
         self.assertEqual(url, '{0}{1}'.format(url_prefix, 'simple'))
 
-        url = self.client._url('/simple', None)
-        self.assertEqual(url, '{0}{1}'.format(url_prefix, 'simple'))
+    def test_url_unversioned_api(self):
+        url = self.client._url(
+            '/hello/{0}/world', 'somename', versioned_api=False
+        )
+        self.assertEqual(
+            url, '{0}{1}'.format(url_base, 'hello/somename/world')
+        )
 
     #########################
     #   INFORMATION TESTS   #
@@ -199,6 +214,15 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'version',
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_version_no_api_version(self):
+        self.client.version(False)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_base + 'version',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 

@@ -111,21 +111,22 @@ class Client(
     def _delete(self, url, **kwargs):
         return self.delete(url, **self._set_request_timeout(kwargs))
 
-    def _url(self, pathfmt, resource_id=None, versioned_api=True):
-        if resource_id and not isinstance(resource_id, six.string_types):
-            raise ValueError(
-                'Expected a resource ID string but found {0} ({1}) '
-                'instead'.format(resource_id, type(resource_id))
-            )
-        elif resource_id:
-            resource_id = six.moves.urllib.parse.quote_plus(resource_id)
+    def _url(self, pathfmt, *args, **kwargs):
+        for arg in args:
+            if not isinstance(arg, six.string_types):
+                raise ValueError(
+                    'Expected a string but found {0} ({1}) '
+                    'instead'.format(arg, type(arg))
+                )
 
-        if versioned_api:
+        args = map(six.moves.urllib.parse.quote_plus, args)
+
+        if kwargs.get('versioned_api', True):
             return '{0}/v{1}{2}'.format(
-                self.base_url, self._version, pathfmt.format(resource_id)
+                self.base_url, self._version, pathfmt.format(*args)
             )
         else:
-            return '{0}{1}'.format(self.base_url, pathfmt.format(resource_id))
+            return '{0}{1}'.format(self.base_url, pathfmt.format(*args))
 
     def _raise_for_status(self, response, explanation=None):
         """Raises stored :class:`APIError`, if one occurred."""
