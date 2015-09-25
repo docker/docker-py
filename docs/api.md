@@ -878,6 +878,7 @@ Display the running processes of a container.
 **Params**:
 
 * container (str): The container to inspect
+* ps_args (str): An optional arguments passed to ps (e.g., aux)
 
 **Returns** (str): The output of the top
 
