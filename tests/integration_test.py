@@ -786,6 +786,44 @@ class TestMacAddress(BaseTestCase):
         self.client.kill(id)
 
 
+class TestContainerTop(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container(
+            BUSYBOX, ['sleep', '60'])
+
+        id = container['Id']
+
+        self.client.start(container)
+        res = self.client.top(container['Id'])
+        print(res)
+        self.assertEqual(
+            res['Titles'],
+            ['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD']
+        )
+        self.assertEqual(len(res['Processes']), 1)
+        self.assertEqual(res['Processes'][0][7], 'sleep 60')
+        self.client.kill(id)
+
+
+class TestContainerTopWithPsArgs(BaseTestCase):
+    def runTest(self):
+        container = self.client.create_container(
+            BUSYBOX, ['sleep', '60'])
+
+        id = container['Id']
+
+        self.client.start(container)
+        res = self.client.top(container['Id'], 'waux')
+        self.assertEqual(
+            res['Titles'],
+            ['USER', 'PID', '%CPU', '%MEM', 'VSZ', 'RSS',
+                'TTY', 'STAT', 'START', 'TIME', 'COMMAND'],
+        )
+        self.assertEqual(len(res['Processes']), 1)
+        self.assertEqual(res['Processes'][0][10], 'sleep 60')
+        self.client.kill(id)
+
+
 class TestRestart(BaseTestCase):
     def runTest(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])

@@ -1713,6 +1713,26 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             stream=True
         )
 
+    def test_container_top(self):
+        self.client.top(fake_api.FAKE_CONTAINER_ID)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/top',
+            params={},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_container_top_with_psargs(self):
+        self.client.top(fake_api.FAKE_CONTAINER_ID, 'waux')
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/top',
+            params={'ps_args': 'waux'},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
     ##################
     #  IMAGES TESTS  #
     ##################
