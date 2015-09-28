@@ -196,7 +196,7 @@ class ContainerApiMixin(object):
         res = self._get(self._url("/containers/{0}/json", container))
         self._raise_for_status(res)
         json_ = res.json()
-        s_port = str(private_port)
+        private_port = str(private_port)
         h_ports = None
 
         # Port settings is None when the container is running with
@@ -205,9 +205,12 @@ class ContainerApiMixin(object):
         if port_settings is None:
             return None
 
-        h_ports = port_settings.get(s_port + '/udp')
+        if '/' in private_port:
+            return port_settings.get(private_port)
+
+        h_ports = port_settings.get(private_port + '/tcp')
         if h_ports is None:
-            h_ports = port_settings.get(s_port + '/tcp')
+            h_ports = port_settings.get(private_port + '/udp')
 
         return h_ports
 
