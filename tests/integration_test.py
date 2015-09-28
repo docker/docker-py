@@ -17,6 +17,7 @@ import contextlib
 import json
 import io
 import os
+import random
 import shutil
 import signal
 import socket
@@ -1718,3 +1719,27 @@ class TestRegressions(BaseTestCase):
         if six.PY3:
             logs = logs.decode('utf-8')
         assert logs == '1000\n'
+
+    def test_792_explicit_port_protocol(self):
+
+        tcp_port, udp_port = random.sample(range(9999, 32000), 2)
+        ctnr = self.client.create_container(
+            BUSYBOX, 'true', ports=[2000, (2000, 'udp')],
+            host_config=self.client.create_host_config(
+                port_bindings={'2000/tcp': tcp_port, '2000/udp': udp_port}
+            )
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        self.assertEqual(
+            self.client.port(ctnr, 2000)[0]['HostPort'],
+            six.text_type(tcp_port)
+        )
+        self.assertEqual(
+            self.client.port(ctnr, '2000/tcp')[0]['HostPort'],
+            six.text_type(tcp_port)
+        )
+        self.assertEqual(
+            self.client.port(ctnr, '2000/udp')[0]['HostPort'],
+            six.text_type(udp_port)
+        )
