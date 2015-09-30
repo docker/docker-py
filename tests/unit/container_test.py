@@ -651,7 +651,8 @@ class CreateContainerTest(DockerClientTest):
                     '3333/udp': (3333,),
                     4444: ('127.0.0.1',),
                     5555: ('127.0.0.1', 5555),
-                    6666: [('127.0.0.1',), ('192.168.0.1',)]
+                    6666: [('127.0.0.1',), ('192.168.0.1',)],
+                    7777: ('localhost', 7777),
                 }
             )
         )
@@ -666,6 +667,7 @@ class CreateContainerTest(DockerClientTest):
         self.assertTrue('4444/tcp' in port_bindings)
         self.assertTrue('5555/tcp' in port_bindings)
         self.assertTrue('6666/tcp' in port_bindings)
+        self.assertTrue('7777/tcp' in port_bindings)
         self.assertEqual(
             [{"HostPort": "", "HostIp": ""}],
             port_bindings['1111/tcp']
@@ -687,6 +689,10 @@ class CreateContainerTest(DockerClientTest):
             port_bindings['5555/tcp']
         )
         self.assertEqual(len(port_bindings['6666/tcp']), 2)
+        self.assertEqual(
+            [{"HostPort": "7777", "HostIp": "127.0.0.1"}],
+            port_bindings['7777/tcp']
+        )
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
         self.assertEqual(

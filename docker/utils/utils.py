@@ -18,6 +18,7 @@ import os
 import os.path
 import json
 import shlex
+import socket
 import tarfile
 import tempfile
 import warnings
@@ -281,6 +282,15 @@ def _convert_port_binding(binding):
         result['HostPort'] = ''
     else:
         result['HostPort'] = str(result['HostPort'])
+
+    if result['HostIp']:
+        try:
+            # Try to convert a hostname (if provided) to an IPv4 address.  Port
+            # binding IPv6 addresses is not supported in docker, so using
+            # gethostbyname is sufficient.
+            result['HostIp'] = socket.gethostbyname(result['HostIp'])
+        except socket.gaierror:
+            pass
 
     return result
 
