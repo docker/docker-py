@@ -1762,7 +1762,7 @@ class TestRegressions(BaseTestCase):
 
         tcp_port, udp_port = random.sample(range(9999, 32000), 2)
         ctnr = self.client.create_container(
-            BUSYBOX, 'true', ports=[2000, (2000, 'udp')],
+            BUSYBOX, ['sleep', '9999'], ports=[2000, (2000, 'udp')],
             host_config=self.client.create_host_config(
                 port_bindings={'2000/tcp': tcp_port, '2000/udp': udp_port}
             )
