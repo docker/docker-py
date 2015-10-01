@@ -1,5 +1,6 @@
 import six
 import warnings
+from datetime import datetime
 
 from .. import errors
 from .. import utils
@@ -163,7 +164,7 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def logs(self, container, stdout=True, stderr=True, stream=False,
-             timestamps=False, tail='all'):
+             timestamps=False, tail='all', since=None):
         if utils.compare_version('1.11', self._version) >= 0:
             params = {'stderr': stderr and 1 or 0,
                       'stdout': stdout and 1 or 0,
@@ -174,6 +175,17 @@ class ContainerApiMixin(object):
                 if tail != 'all' and (not isinstance(tail, int) or tail <= 0):
                     tail = 'all'
                 params['tail'] = tail
+
+            if since is not None:
+                if utils.compare_version('1.19', self._version) < 0:
+                    raise errors.InvalidVersion(
+                        'since is not supported in API < 1.19'
+                    )
+                else:
+                    if isinstance(since, datetime):
+                        params['since'] = utils.datetime_to_timestamp(since)
+                    elif (isinstance(since, int) and since > 0):
+                        params['since'] = since
             url = self._url("/containers/{0}/logs", container)
             res = self._get(url, params=params, stream=stream)
             return self._get_result(container, stream, res)

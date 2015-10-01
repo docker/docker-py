@@ -1439,6 +1439,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         )
 
     def test_log_tail(self):
+
         with mock.patch('docker.Client.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
@@ -1449,6 +1450,39 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             url_prefix + 'containers/3cc2351ab11b/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 10},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+    def test_log_since(self):
+        ts = 809222400
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                             since=ts)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all', 'since': ts},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+    def test_log_since_with_datetime(self):
+        ts = 809222400
+        time = datetime.datetime.utcfromtimestamp(ts)
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                             since=time)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all', 'since': ts},
             timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
