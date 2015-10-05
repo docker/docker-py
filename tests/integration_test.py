@@ -808,7 +808,6 @@ class TestContainerTop(BaseTestCase):
 
         self.client.start(container)
         res = self.client.top(container['Id'])
-        print(res)
         self.assertEqual(
             res['Titles'],
             ['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD']
