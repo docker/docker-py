@@ -242,12 +242,19 @@ def convert_volume_binds(binds):
 
     result = []
     for k, v in binds.items():
+        if isinstance(k, six.binary_type):
+            k = k.decode('utf-8')
+
         if isinstance(v, dict):
             if 'ro' in v and 'mode' in v:
                 raise ValueError(
                     'Binding cannot contain both "ro" and "mode": {}'
                     .format(repr(v))
                 )
+
+            bind = v['bind']
+            if isinstance(bind, six.binary_type):
+                bind = bind.decode('utf-8')
 
             if 'ro' in v:
                 mode = 'ro' if v['ro'] else 'rw'
@@ -256,11 +263,15 @@ def convert_volume_binds(binds):
             else:
                 mode = 'rw'
 
-            result.append('{0}:{1}:{2}'.format(
-                k, v['bind'], mode
-            ))
+            result.append(
+                six.text_type('{0}:{1}:{2}').format(k, bind, mode)
+            )
         else:
-            result.append('{0}:{1}:rw'.format(k, v))
+            if isinstance(v, six.binary_type):
+                v = v.decode('utf-8')
+            result.append(
+                six.text_type('{0}:{1}:rw').format(k, v)
+            )
     return result
 
 
