@@ -242,14 +242,7 @@ class Client(
         # Disable timeout on the underlying socket to prevent
         # Read timed out(s) for long running processes
         socket = self._get_raw_response_socket(response)
-
-        # Depending on a few factors we might need to access
-        # _sock or not and on other factors either might not
-        # have settimeout, so let's try both
-        if hasattr(socket, "settimeout"):
-            socket.settimeout(None)
-        if hasattr(socket, "_sock") and hasattr(socket._sock, "settimeout"):
-            socket._sock.settimeout(None)
+        self._disable_socket_timeout(socket)
 
         while True:
             header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
@@ -277,6 +270,19 @@ class Client(
         self._raise_for_status(response)
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
+
+    def _disable_socket_timeout(self, socket):
+        """ Depending on the combination of python version and whether we're
+        connecting over http or https, we might need to access _sock, which
+        may or may not exist; or we may need to just settimeout on socket itself
+        , which also may or may not have settimeout on it.
+
+        To avoid missing the correct one, we try both.
+        """
+        if hasattr(socket, "settimeout"):
+            socket.settimeout(None)
+        if hasattr(socket, "_sock") and hasattr(socket._sock, "settimeout"):
+            socket._sock.settimeout(None)
 
     def _get_result(self, container, stream, res):
         cont = self.inspect_container(container)
