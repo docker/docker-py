@@ -21,7 +21,6 @@ import random
 import shutil
 import signal
 import socket
-import sys
 import tarfile
 import tempfile
 import threading
@@ -1606,7 +1605,7 @@ class TestBuildWithDockerignore(Cleanup, BaseTestCase):
 @requires_api_version('1.21')
 class TestNetworks(BaseTestCase):
     def create_network(self, *args, **kwargs):
-        net_name = 'dockerpy{}'.format(random.randrange(sys.maxint))[:14]
+        net_name = 'dockerpy{}'.format(random.getrandbits(24))[:14]
         net_id = self.client.create_network(net_name, *args, **kwargs)['id']
         self.tmp_networks.append(net_id)
         return (net_name, net_id)
@@ -1639,7 +1638,7 @@ class TestNetworks(BaseTestCase):
         })
 
     def test_create_network_with_host_driver_fails(self):
-        net_name = 'dockerpy{}'.format(random.randrange(sys.maxint))[:14]
+        net_name = 'dockerpy{}'.format(random.getrandbits(24))[:14]
 
         with pytest.raises(APIError):
             self.client.create_network(net_name, driver='host')

@@ -369,6 +369,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
+    @base.requires_api_version('1.21')
     def test_list_networks(self):
         networks = [
             {
@@ -2208,9 +2209,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         self.assertEqual(args[0][0], 'POST')
         self.assertEqual(args[0][1], url_prefix + 'volumes')
-        self.assertEqual(args[1]['data'], {
-            'Name': name, 'Driver': None, 'DriverOpts': None
-        })
+        self.assertEqual(json.loads(args[1]['data']), {'Name': name})
 
     @base.requires_api_version('1.21')
     def test_create_volume_with_driver(self):
@@ -2221,8 +2220,9 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
 
         self.assertEqual(args[0][0], 'POST')
         self.assertEqual(args[0][1], url_prefix + 'volumes')
-        self.assertIn('Driver', args[1]['data'])
-        self.assertEqual(args[1]['data']['Driver'], driver_name)
+        data = json.loads(args[1]['data'])
+        self.assertIn('Driver', data)
+        self.assertEqual(data['Driver'], driver_name)
 
     @base.requires_api_version('1.21')
     def test_create_volume_invalid_opts_type(self):
@@ -2258,7 +2258,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     def test_remove_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.remove_volume(name)
-        self.assertIsNone(result)
+        self.assertTrue(result)
         args = fake_request.call_args
 
         self.assertEqual(args[0][0], 'DELETE')
@@ -2268,6 +2268,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
     #   NETWORK TESTS   #
     #####################
 
+    @base.requires_api_version('1.21')
     def test_create_network(self):
         network_data = {
             "id": 'abc12345',
@@ -2295,6 +2296,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
                 json.loads(post.call_args[1]['data']),
                 {"name": "foo", "driver": "bridge"})
 
+    @base.requires_api_version('1.21')
     def test_remove_network(self):
         network_id = 'abc12345'
         delete = mock.Mock(return_value=response(status_code=200))
@@ -2306,6 +2308,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0],
                          url_prefix + 'networks/{0}'.format(network_id))
 
+    @base.requires_api_version('1.21')
     def test_inspect_network(self):
         network_id = 'abc12345'
         network_name = 'foo'
@@ -2327,6 +2330,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[0][0],
                          url_prefix + 'networks/{0}'.format(network_id))
 
+    @base.requires_api_version('1.21')
     def test_connect_container_to_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'
@@ -2345,6 +2349,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             json.loads(post.call_args[1]['data']),
             {'container': container_id})
 
+    @base.requires_api_version('1.21')
     def test_disconnect_container_from_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'
