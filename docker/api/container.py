@@ -75,6 +75,12 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def copy(self, container, resource):
+        if utils.version_gte(self._version, '1.20'):
+            warnings.warn(
+                'Client.copy() is deprecated for API version >= 1.20, '
+                'please use get_archive() instead',
+                DeprecationWarning
+            )
         res = self._post_json(
             self._url("/containers/{0}/copy".format(container)),
             data={"Resource": resource},
@@ -146,6 +152,20 @@ class ContainerApiMixin(object):
         return res.raw
 
     @utils.check_resource
+    def get_archive(self, container, path):
+        params = {
+            'path': path
+        }
+        url = self._url('/containers/{0}/archive', container)
+        res = self._get(url, params=params, stream=True)
+        self._raise_for_status(res)
+        encoded_stat = res.headers.get('x-docker-container-path-stat')
+        return (
+            res.raw,
+            utils.decode_json_header(encoded_stat) if encoded_stat else None
+        )
+
+    @utils.check_resource
     def inspect_container(self, container):
         return self._result(
             self._get(self._url("/containers/{0}/json", container)), True
@@ -213,6 +233,15 @@ class ContainerApiMixin(object):
             h_ports = port_settings.get(private_port + '/udp')
 
         return h_ports
+
+    @utils.check_resource
+    @utils.minimum_version('1.20')
+    def put_archive(self, container, path, data):
+        params = {'path': path}
+        url = self._url('/containers/{0}/archive', container)
+        res = self._put(url, params=params, data=data)
+        self._raise_for_status(res)
+        return res.status_code == 200
 
     @utils.check_resource
     def remove_container(self, container, v=False, link=False, force=False):
