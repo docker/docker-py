@@ -873,6 +873,8 @@ This will stream statistics for a specific container.
 * container (str): The container to stream statistics for
 * decode (bool): If set to true, stream will be decoded into dicts on the
   fly. False by default.
+* stream (bool): If set to false, only the current stats will be returned
+  instead of a stream. True by default.
 
 ```python
 >>> from docker import Client
