@@ -19,7 +19,9 @@ from docker.utils import (
     exclude_paths, convert_volume_binds, decode_json_header
 )
 from docker.utils.ports import build_port_bindings, split_port
-from docker.auth import resolve_repository_name, resolve_authconfig
+from docker.auth import (
+    resolve_repository_name, resolve_authconfig, encode_header
+)
 
 from . import base
 from .helpers import make_tree
@@ -376,11 +378,20 @@ class UtilsTest(base.BaseTestCase):
         obj = {'a': 'b', 'c': 1}
         data = None
         if six.PY3:
-            data = base64.b64encode(bytes(json.dumps(obj), 'utf-8'))
+            data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
         else:
-            data = base64.b64encode(json.dumps(obj))
+            data = base64.urlsafe_b64encode(json.dumps(obj))
         decoded_data = decode_json_header(data)
         self.assertEqual(obj, decoded_data)
+
+    def test_803_urlsafe_encode(self):
+        auth_data = {
+            'username': 'root',
+            'password': 'GR?XGR?XGR?XGR?X'
+        }
+        encoded = encode_header(auth_data)
+        assert b'/' not in encoded
+        assert b'_' in encoded
 
     def test_resolve_repository_name(self):
         # docker hub library image
