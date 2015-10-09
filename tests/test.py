@@ -2387,7 +2387,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
             f.write('auth = {0}\n'.format(auth_))
             f.write('email = sakuya@scarlet.net')
         cfg = docker.auth.load_config(dockercfg_path)
-        self.assertTrue(docker.auth.INDEX_NAME in cfg)
+        assert docker.auth.INDEX_NAME in cfg
         self.assertNotEqual(cfg[docker.auth.INDEX_NAME], None)
         cfg = cfg[docker.auth.INDEX_NAME]
         self.assertEqual(cfg['username'], 'sakuya')
@@ -2412,16 +2412,43 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         }
 
         with open(dockercfg_path, 'w') as f:
-            f.write(json.dumps(config))
+            json.dump(config, f)
 
         cfg = docker.auth.load_config(dockercfg_path)
-        self.assertTrue(registry in cfg)
+        assert registry in cfg
         self.assertNotEqual(cfg[registry], None)
         cfg = cfg[registry]
         self.assertEqual(cfg['username'], 'sakuya')
         self.assertEqual(cfg['password'], 'izayoi')
         self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
         self.assertEqual(cfg.get('auth'), None)
+
+    def test_load_config_custom_config_env(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+
+        dockercfg_path = os.path.join(folder, 'config.json')
+        registry = 'https://your.private.registry.io'
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        config = {
+            registry: {
+                'auth': '{0}'.format(auth_),
+                'email': 'sakuya@scarlet.net'
+            }
+        }
+
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config, f)
+
+        with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
+            cfg = docker.auth.load_config(None)
+            assert registry in cfg
+            self.assertNotEqual(cfg[registry], None)
+            cfg = cfg[registry]
+            self.assertEqual(cfg['username'], 'sakuya')
+            self.assertEqual(cfg['password'], 'izayoi')
+            self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
+            self.assertEqual(cfg.get('auth'), None)
 
     def test_tar_with_excludes(self):
         dirs = [
