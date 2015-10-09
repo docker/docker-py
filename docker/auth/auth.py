@@ -102,7 +102,7 @@ def decode_auth(auth):
 
 def encode_header(auth):
     auth_json = json.dumps(auth).encode('ascii')
-    return base64.b64encode(auth_json)
+    return base64.urlsafe_b64encode(auth_json)
 
 
 def parse_auth(entries):
