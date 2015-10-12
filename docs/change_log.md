@@ -1,6 +1,43 @@
 Change Log
 ==========
 
+1.5.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.5.0+is%3Aclosed)
+
+### Features
+
+* Added support for the networking API introduced in Docker 1.9.0
+  (`Client.networks`, `Client.create_network`, `Client.remove_network`,
+  `Client.inspect_network`, `Client.connect_container_to_network`,
+  `Client.disconnect_container_from_network`).
+* Added support for the volumes API introduced in Docker 1.9.0
+  (`Client.volumes`, `Client.create_volume`, `Client.inspect_volume`,
+  `Client.remove_volume`).
+* Added support for the `group_add` parameter in `create_host_config`.
+* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameteres
+  in `create_host_config`.
+* Added support for the archive API endpoint (`Client.get_archive`,
+  `Client.put_archive`).
+* Added support for `ps_args` parameter in `Client.top`.
+
+
+### Bugfixes
+
+* Fixed a bug where specifying volume binds with unicode characters would
+  fail.
+* Fixed a bug where providing an explicit protocol in `Client.port` would fail
+  to yield the expected result.
+* Fixed a bug where the priority protocol returned by `Client.port` would be UDP
+  instead of the expected TCP.
+
+### Miscellaneous
+
+* Broke up Client code into several files to facilitate maintenance and
+  contribution.
+* Added contributing guidelines to the repository.
+
 1.4.0
 -----
 

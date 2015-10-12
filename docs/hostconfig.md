@@ -101,6 +101,14 @@ for example:
   allowed to consume.
 * group_add (list): List of additional group names and/or IDs that the
   container process will run as.
+* devices (list): A list of devices to add to the container specified as dicts
+  in the form:
+  ```
+    { "PathOnHost": "/dev/deviceName",
+      "PathInContainer": "/dev/deviceName",
+      "CgroupPermissions": "mrw"
+    }
+  ```
 
 **Returns** (dict) HostConfig dictionary
 
