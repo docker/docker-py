@@ -4,9 +4,9 @@ open inside the container in the `Client().create_container()` method.
 Bindings are declared in the `host_config` parameter.
 
 ```python
-container_id = c.create_container(
+container_id = cli.create_container(
     'busybox', 'ls', ports=[1111, 2222],
-    host_config=docker.utils.create_host_config(port_bindings={
+    host_config=cli.create_host_config(port_bindings={
         1111: 4567,
         2222: None
     })
@@ -17,22 +17,22 @@ container_id = c.create_container(
 You can limit the host address on which the port will be exposed like such:
 
 ```python
-docker.utils.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+cli.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
 ```
 
 Or without host port assignment:
 
 ```python
-docker.utils.create_host_config(port_bindings={1111: ('127.0.0.1',)})
+cli.create_host_config(port_bindings={1111: ('127.0.0.1',)})
 ```
 
 If you wish to use UDP instead of TCP (default), you need to declare ports
 as such in both the config and host config:
 
 ```python
-container_id = c.create_container(
+container_id = cli.create_container(
 	'busybox', 'ls', ports=[(1111, 'udp'), 2222],
-    host_config=docker.utils.create_host_config(port_bindings={
+    host_config=cli.create_host_config(port_bindings={
         '1111/udp': 4567, 2222: None
     })
 )

@@ -114,7 +114,7 @@ for example:
 
 ```python
 >>> from docker import Client
->>> c = Client()
->>> c.create_host_config(privileged=True, cap_drop=['MKNOD'], volumes_from=['nostalgic_newton'])
+>>> cli = Client()
+>>> cli.create_host_config(privileged=True, cap_drop=['MKNOD'], volumes_from=['nostalgic_newton'])
 {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True, 'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 ```

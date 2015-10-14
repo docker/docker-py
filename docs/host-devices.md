@@ -5,8 +5,8 @@ the devices parameter in the `host_config` param in `Client.create_container`
 as shown below:
 
 ```python
-c.create_container(
-    'busybox', 'true', host_config=docker.utils.create_host_config(devices=[
+cli.create_container(
+    'busybox', 'true', host_config=cli.create_host_config(devices=[
         '/dev/sda:/dev/xvda:rwm'
     ])
 )

@@ -15,8 +15,8 @@ You can then instantiate `docker.Client` like this:
 from docker.client import Client
 from docker.utils import kwargs_from_env
 
-client = Client(**kwargs_from_env())
-print client.version()
+cli = Client(**kwargs_from_env())
+print cli.version()
 ```
 
 If you're encountering the following error:
@@ -33,6 +33,6 @@ from docker.utils import kwargs_from_env
 kwargs = kwargs_from_env()
 kwargs['tls'].assert_hostname = False
 
-client = Client(**kwargs)
-print client.version()
+cli = Client(**kwargs)
+print cli.version()
 ```
