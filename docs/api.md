@@ -4,8 +4,8 @@ To instantiate a `Client` class that will allow you to communicate with a
 Docker daemon, simply do:
 
 ```python
-from docker import Client
-c = Client(base_url='unix://var/run/docker.sock')
+>>> from docker import Client
+>>> cli = Client(base_url='unix://var/run/docker.sock')
 ```
 
 **Params**:
@@ -250,9 +250,9 @@ PASSWORD=secret
 The utility can be used as follows:
 
 ```python
->> import docker.utils
->> my_envs = docker.utils.parse_env_file('/path/to/file')
->> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+>>> import docker.utils
+>>> my_envs = docker.utils.parse_env_file('/path/to/file')
+>>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
 ```
 
 You can now use this with 'environment' for `create_container`.
@@ -392,9 +392,9 @@ a dict containing `stat` information on the specified `path`.
 
 ```python
 >>> import docker
->>> c = docker.Client()
->>> ctnr = c.create_container('busybox', 'true')
->>> strm, stat = c.get_archive(ctnr, '/bin/sh')
+>>> cli = docker.Client()
+>>> ctnr = cli.create_container('busybox', 'true')
+>>> strm, stat = cli.get_archive(ctnr, '/bin/sh')
 >>> print(stat)
 {u'linkTarget': u'', u'mode': 493, u'mtime': u'2015-09-16T12:34:23-07:00', u'name': u'sh', u'size': 962860}
 ```
