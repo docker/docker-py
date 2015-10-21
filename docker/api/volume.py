@@ -12,7 +12,7 @@ class VolumeApiMixin(object):
 
     @utils.minimum_version('1.21')
     def create_volume(self, name, driver=None, driver_opts=None):
-        url = self._url('/volumes')
+        url = self._url('/volumes/create')
         if driver_opts is not None and not isinstance(driver_opts, dict):
             raise TypeError('driver_opts must be a dictionary')
 
