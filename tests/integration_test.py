@@ -399,8 +399,6 @@ class CreateContainerWithLogConfigTest(BaseTestCase):
 
         assert expected_msg in str(excinfo.value)
 
-    @pytest.mark.skipif(True,
-                        reason="https://github.com/docker/docker/issues/15633")
     def test_valid_no_log_driver_specified(self):
         log_config = docker.utils.LogConfig(
             type="",
