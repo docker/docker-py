@@ -997,19 +997,16 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
 
     @utils.check_resource
-    def start(self, container, binds=None, port_bindings=None, lxc_conf=None,
-              publish_all_ports=None, links=None, privileged=None,
-              dns=None, dns_search=None, volumes_from=None, network_mode=None,
-              restart_policy=None, cap_add=None, cap_drop=None, devices=None,
-              extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
-              security_opt=None, ulimits=None):
+    def start(self, container, *args, **kwargs):
         """
         Start a container. Similar to the ``docker start`` command, but
         doesn't support attach options.
 
-        **Deprecation warning:** For API version > 1.15, it is highly
-        recommended to provide host config options in the ``host_config``
-        parameter of :py:meth:`~ContainerApiMixin.create_container`.
+        **Deprecation warning:** Passing configuration options in ``start`` is
+        no longer supported. Users are expected to provide host config options
+        in the ``host_config`` parameter of
+        :py:meth:`~ContainerApiMixin.create_container`.
+
 
         Args:
             container (str): The container to start
@@ -1017,6 +1014,8 @@ class ContainerApiMixin(object):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+            :py:class:`docker.errors.DeprecatedMethod`
+                If any argument besides ``container`` are provided.
 
         Example:
 
@@ -1025,64 +1024,14 @@ class ContainerApiMixin(object):
             ...     command='/bin/sleep 30')
             >>> cli.start(container=container.get('Id'))
         """
-        if utils.compare_version('1.10', self._version) < 0:
-            if dns is not None:
-                raise errors.InvalidVersion(
-                    'dns is only supported for API version >= 1.10'
-                )
-            if volumes_from is not None:
-                raise errors.InvalidVersion(
-                    'volumes_from is only supported for API version >= 1.10'
-                )
-
-        if utils.compare_version('1.15', self._version) < 0:
-            if security_opt is not None:
-                raise errors.InvalidVersion(
-                    'security_opt is only supported for API version >= 1.15'
-                )
-            if ipc_mode:
-                raise errors.InvalidVersion(
-                    'ipc_mode is only supported for API version >= 1.15'
-                )
-
-        if utils.compare_version('1.17', self._version) < 0:
-            if read_only is not None:
-                raise errors.InvalidVersion(
-                    'read_only is only supported for API version >= 1.17'
-                )
-            if pid_mode is not None:
-                raise errors.InvalidVersion(
-                    'pid_mode is only supported for API version >= 1.17'
-                )
-
-        if utils.compare_version('1.18', self._version) < 0:
-            if ulimits is not None:
-                raise errors.InvalidVersion(
-                    'ulimits is only supported for API version >= 1.18'
-                )
-
-        start_config_kwargs = dict(
-            binds=binds, port_bindings=port_bindings, lxc_conf=lxc_conf,
-            publish_all_ports=publish_all_ports, links=links, dns=dns,
-            privileged=privileged, dns_search=dns_search, cap_add=cap_add,
-            cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
-            network_mode=network_mode, restart_policy=restart_policy,
-            extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
-            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits,
-        )
-        start_config = None
-
-        if any(v is not None for v in start_config_kwargs.values()):
-            if utils.compare_version('1.15', self._version) > 0:
-                warnings.warn(
-                    'Passing host config parameters in start() is deprecated. '
-                    'Please use host_config in create_container instead!',
-                    DeprecationWarning
-                )
-            start_config = self.create_host_config(**start_config_kwargs)
-
+        if args or kwargs:
+            raise errors.DeprecatedMethod(
+                'Providing configuration in the start() method is no longer '
+                'supported. Use the host_config param in create_container '
+                'instead.'
+            )
         url = self._url("/containers/{0}/start", container)
-        res = self._post_json(url, data=start_config)
+        res = self._post(url)
         self._raise_for_status(res)
 
     @utils.minimum_version('1.17')
