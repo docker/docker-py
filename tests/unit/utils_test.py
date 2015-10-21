@@ -18,7 +18,7 @@ from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
-    split_command,
+    split_command, create_ipam_config, create_ipam_pool
 )
 from docker.utils.ports import build_port_bindings, split_port
 
@@ -427,6 +427,21 @@ class UtilsTest(base.BaseTestCase):
             data = base64.urlsafe_b64encode(json.dumps(obj))
         decoded_data = decode_json_header(data)
         self.assertEqual(obj, decoded_data)
+
+    def test_create_ipam_config(self):
+        ipam_pool = create_ipam_pool(subnet='192.168.52.0/24',
+                                     gateway='192.168.52.254')
+
+        ipam_config = create_ipam_config(pool_configs=[ipam_pool])
+        self.assertEqual(ipam_config, {
+            'driver': 'default',
+            'config': [{
+                'subnet': '192.168.52.0/24',
+                'gateway': '192.168.52.254',
+                'auxaddresses': None,
+                'iprange': None
+            }]
+        })
 
 
 class SplitCommandTest(base.BaseTestCase):
