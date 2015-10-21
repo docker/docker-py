@@ -678,8 +678,8 @@ def create_container_config(
     stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
-    memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
-    labels=None, volume_driver=None
+    memswap_limit=None, cpuset=None, cpuset_cpus=None, cpuset_mems=None,
+    host_config=None, mac_address=None, labels=None, volume_driver=None
 ):
     if isinstance(command, six.string_types):
         command = shlex.split(str(command))
@@ -796,7 +796,8 @@ def create_container_config(
         'Entrypoint': entrypoint,
         'CpuShares': cpu_shares,
         'Cpuset': cpuset,
-        'CpusetCpus': cpuset,
+        'CpusetCpus': cpuset or cpuset_cpus,
+        'CpusetMems': cpuset_mems,
         'WorkingDir': working_dir,
         'MemorySwap': memswap_limit,
         'HostConfig': host_config,

@@ -548,6 +548,44 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    def test_create_container_with_cpuset_cpus(self):
+        self.client.create_container('busybox', 'ls',
+                                     cpuset_cpus='0,1')
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "CpusetCpus": "0,1"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    def test_create_container_with_cpuset_mems(self):
+        self.client.create_container('busybox', 'ls',
+                                     cpuset_mems='0,1')
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "CpusetMems": "0,1"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_cgroup_parent(self):
         self.client.create_container(
             'busybox', 'ls', host_config=self.client.create_host_config(

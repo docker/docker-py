@@ -71,6 +71,7 @@ correct value (e.g `gzip`).
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
     - cpusetcpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
+    - cpusetmems (str): Memory nodes in which to allow execution, e.g., `"0-3"`, `"0,1"`
 * decode (bool): If set to `True`, the returned stream will be decoded into
   dicts on the fly. Default `False`.
 
@@ -217,6 +218,8 @@ from. Optionally a single string joining container id's with commas
 * name (str): A name for the container
 * entrypoint (str or list): An entrypoint
 * cpu_shares (int): CPU shares (relative weight)
+* cpuset_cpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
+* cpuset_mems (str): Memory nodes in which to allow execution, e.g., `"0-3"`, `"0,1"`
 * working_dir (str): Path to the working directory
 * domainname (str or list): Set custom DNS search domains
 * memswap_limit (int):
