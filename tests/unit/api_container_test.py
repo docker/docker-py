@@ -34,10 +34,7 @@ class StartContainerTest(BaseAPIClientTest):
             args[0][1],
             url_prefix + 'containers/3cc2351ab11b/start'
         )
-        self.assertEqual(json.loads(args[1]['data']), {})
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        assert 'data' not in args[1]
         self.assertEqual(
             args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
@@ -63,25 +60,21 @@ class StartContainerTest(BaseAPIClientTest):
         self.client.start(**{'container': fake_api.FAKE_CONTAINER_ID})
 
     def test_start_container_with_lxc_conf(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(
                 fake_api.FAKE_CONTAINER_ID,
                 lxc_conf={'lxc.conf.k': 'lxc.conf.value'}
             )
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_lxc_conf_compat(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(
                 fake_api.FAKE_CONTAINER_ID,
                 lxc_conf=[{'Key': 'lxc.conf.k', 'Value': 'lxc.conf.value'}]
             )
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_binds_ro(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(
                 fake_api.FAKE_CONTAINER_ID, binds={
                     '/tmp': {
@@ -91,22 +84,18 @@ class StartContainerTest(BaseAPIClientTest):
                 }
             )
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_binds_rw(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(
                 fake_api.FAKE_CONTAINER_ID, binds={
                     '/tmp': {"bind": '/mnt', "ro": False}
                 }
             )
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_port_binds(self):
         self.maxDiff = None
 
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(fake_api.FAKE_CONTAINER_ID, port_bindings={
                 1111: None,
                 2222: 2222,
@@ -116,18 +105,14 @@ class StartContainerTest(BaseAPIClientTest):
                 6666: [('127.0.0.1',), ('192.168.0.1',)]
             })
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_links(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(
                 fake_api.FAKE_CONTAINER_ID, links={'path': 'alias'}
             )
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_multiple_links(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(
                 fake_api.FAKE_CONTAINER_ID,
                 links={
@@ -136,20 +121,14 @@ class StartContainerTest(BaseAPIClientTest):
                 }
             )
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_with_links_as_list_of_tuples(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(fake_api.FAKE_CONTAINER_ID,
                               links=[('path', 'alias')])
 
-        pytest.deprecated_call(call_start)
-
     def test_start_container_privileged(self):
-        def call_start():
+        with pytest.raises(docker.errors.DeprecatedMethod):
             self.client.start(fake_api.FAKE_CONTAINER_ID, privileged=True)
-
-        pytest.deprecated_call(call_start)
 
     def test_start_container_with_dict_instead_of_id(self):
         self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
@@ -159,10 +138,7 @@ class StartContainerTest(BaseAPIClientTest):
             args[0][1],
             url_prefix + 'containers/3cc2351ab11b/start'
         )
-        self.assertEqual(json.loads(args[1]['data']), {})
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        assert 'data' not in args[1]
         self.assertEqual(
             args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
