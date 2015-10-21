@@ -2208,7 +2208,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         args = fake_request.call_args
 
         self.assertEqual(args[0][0], 'POST')
-        self.assertEqual(args[0][1], url_prefix + 'volumes')
+        self.assertEqual(args[0][1], url_prefix + 'volumes/create')
         self.assertEqual(json.loads(args[1]['data']), {'Name': name})
 
     @base.requires_api_version('1.21')
@@ -2219,7 +2219,7 @@ class DockerClientTest(Cleanup, base.BaseTestCase):
         args = fake_request.call_args
 
         self.assertEqual(args[0][0], 'POST')
-        self.assertEqual(args[0][1], url_prefix + 'volumes')
+        self.assertEqual(args[0][1], url_prefix + 'volumes/create')
         data = json.loads(args[1]['data'])
         self.assertIn('Driver', data)
         self.assertEqual(data['Driver'], driver_name)

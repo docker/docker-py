@@ -529,7 +529,7 @@ fake_responses = {
     get_fake_events,
     ('{1}/{0}/volumes'.format(CURRENT_VERSION, prefix), 'GET'):
     get_fake_volume_list,
-    ('{1}/{0}/volumes'.format(CURRENT_VERSION, prefix), 'POST'):
+    ('{1}/{0}/volumes/create'.format(CURRENT_VERSION, prefix), 'POST'):
     get_fake_volume,
     ('{1}/{0}/volumes/{2}'.format(
         CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
