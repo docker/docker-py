@@ -991,7 +991,7 @@ class PauseTest(api_test.BaseTestCase):
         self.assertEqual(state['Paused'], False)
 
 
-class GetContainerStatsTest(BaseTestCase):
+class GetContainerStatsTest(api_test.BaseTestCase):
     @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
         container = self.client.create_container(
@@ -1002,7 +1002,21 @@ class GetContainerStatsTest(BaseTestCase):
         response = self.client.stats(container, stream=0)
         self.client.kill(container)
 
-        self.assertEquals(type(response), dict)
+        self.assertEqual(type(response), dict)
         for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
                     'memory_stats', 'blkio_stats']:
             self.assertIn(key, response)
+
+        @requires_api_version('1.17')
+        def test_get_container_stats_stream(self):
+            container = self.client.create_container(
+                BUSYBOX, ['sleep', '60'],
+            )
+            self.tmp_containers.append(container)
+            self.client.start(container)
+            stream = self.client.stats(container)
+            for chunk in stream:
+                self.assertEqual(type(chunk), dict)
+                for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
+                            'memory_stats', 'blkio_stats']:
+                    self.assertIn(key, chunk)
