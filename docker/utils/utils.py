@@ -673,6 +673,12 @@ def parse_env_file(env_file):
     return environment
 
 
+def split_command(command):
+    if six.PY2:
+        command = command.encode('utf-8')
+    return shlex.split(command)
+
+
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
     stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
@@ -682,10 +688,10 @@ def create_container_config(
     labels=None, volume_driver=None
 ):
     if isinstance(command, six.string_types):
-        command = shlex.split(str(command))
+        command = split_command(command)
 
     if isinstance(entrypoint, six.string_types):
-        entrypoint = shlex.split(str(entrypoint))
+        entrypoint = split_command(entrypoint)
 
     if isinstance(environment, dict):
         environment = [
