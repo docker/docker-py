@@ -172,7 +172,7 @@ def load_config(config_path=None):
             data = json.load(f)
             if data.get('auths'):
                 log.debug("Found 'auths' section")
-                return parse_auth(data)
+                return parse_auth(data['auths'])
             else:
                 log.debug("Couldn't find 'auths' section")
                 f.seek(0)
