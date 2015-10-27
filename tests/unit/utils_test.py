@@ -17,7 +17,8 @@ from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
-    exclude_paths, convert_volume_binds, decode_json_header, tar
+    exclude_paths, convert_volume_binds, decode_json_header, tar,
+    split_command,
 )
 from docker.utils.ports import build_port_bindings, split_port
 
@@ -387,6 +388,18 @@ class UtilsTest(base.BaseTestCase):
             data = base64.urlsafe_b64encode(json.dumps(obj))
         decoded_data = decode_json_header(data)
         self.assertEqual(obj, decoded_data)
+
+
+class SplitCommandTest(base.BaseTestCase):
+
+    @pytest.mark.skipif(six.PY2, reason="shlex doesn't support unicode in py2")
+    def test_split_command_with_unicode(self):
+        self.assertEqual(split_command('echo μ'), ['echo', 'μ'])
+
+    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support unicode in py2")
+    def test_split_command_with_bytes(self):
+        expected = ['echo', u'μ'.encode('utf-8')]
+        self.assertEqual(split_command(u'echo μ'), expected)
 
 
 class PortsTest(base.BaseTestCase):

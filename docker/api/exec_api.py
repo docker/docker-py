@@ -1,5 +1,3 @@
-import shlex
-
 import six
 
 from .. import errors
@@ -20,7 +18,7 @@ class ExecApiMixin(object):
                 'User-specific exec is not supported in API < 1.19'
             )
         if isinstance(cmd, six.string_types):
-            cmd = shlex.split(str(cmd))
+            cmd = utils.split_command(cmd)
 
         data = {
             'Container': container,
