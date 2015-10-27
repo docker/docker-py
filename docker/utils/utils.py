@@ -674,7 +674,7 @@ def parse_env_file(env_file):
 
 
 def split_command(command):
-    if six.PY2:
+    if six.PY2 and not isinstance(command, six.binary_type):
         command = command.encode('utf-8')
     return shlex.split(command)
 

@@ -392,14 +392,18 @@ class UtilsTest(base.BaseTestCase):
 
 class SplitCommandTest(base.BaseTestCase):
 
-    @pytest.mark.skipif(six.PY2, reason="shlex doesn't support unicode in py2")
     def test_split_command_with_unicode(self):
-        self.assertEqual(split_command('echo μ'), ['echo', 'μ'])
+        if six.PY2:
+            self.assertEqual(
+                split_command(unicode('echo μμ', 'utf-8')),
+                ['echo', 'μμ']
+            )
+        else:
+            self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
 
-    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support unicode in py2")
+    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
     def test_split_command_with_bytes(self):
-        expected = ['echo', u'μ'.encode('utf-8')]
-        self.assertEqual(split_command(u'echo μ'), expected)
+        self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
 
 
 class PortsTest(base.BaseTestCase):
