@@ -107,7 +107,7 @@ class CreateContainerTest(api_test.BaseTestCase):
         res2 = self.client.create_container(
             BUSYBOX, 'env', host_config=self.client.create_host_config(
                 links={link_path1: link_alias1, link_path2: link_alias2},
-                network_mode='none'
+                network_mode='bridge'
             )
         )
         container3_id = res2['Id']
