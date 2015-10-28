@@ -263,8 +263,16 @@ class CreateContainerTest(api_test.BaseTestCase):
 
         self.client.start(container)
         res = self.client.inspect_container(container['Id'])
-        self.assertEqual(mac_address_expected,
-                         res['NetworkSettings']['MacAddress'])
+        try:
+            self.assertEqual(
+                mac_address_expected,
+                res['NetworkSettings']['Networks']['bridge']['MacAddress']
+            )
+        except KeyError:
+            self.assertEqual(
+                mac_address_expected,
+                res['NetworkSettings']['MacAddress']
+            )
 
         self.client.kill(id)
 

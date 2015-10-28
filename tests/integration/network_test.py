@@ -38,8 +38,11 @@ class TestNetworks(api_test.BaseTestCase):
         self.assertEqual(net, {
             u'name': net_name,
             u'id': net_id,
-            u'driver': 'bridge',
+            u'driver': u'bridge',
             u'containers': {},
+            u'ipam': {u'config': [{}], u'driver': u'default'},
+            u'options': {},
+            u'scope': u'local'
         })
 
     def test_create_network_with_host_driver_fails(self):
