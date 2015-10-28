@@ -37,22 +37,6 @@ class ListContainersTest(api_test.BaseTestCase):
 
 
 class CreateContainerTest(api_test.BaseTestCase):
-    def setUp(self):
-        super(CreateContainerTest, self).setUp()
-
-        self.mount_dest = '/mnt'
-
-        # Get a random pathname - we don't need it to exist locally
-        self.mount_origin = tempfile.mkdtemp()
-        shutil.rmtree(self.mount_origin)
-
-        self.filename = 'shared.txt'
-
-        self.run_with_volume(
-            False,
-            BUSYBOX,
-            ['touch', os.path.join(self.mount_dest, self.filename)],
-        )
 
     def test_create(self):
         res = self.client.create_container(BUSYBOX, 'true')
@@ -175,35 +159,6 @@ class CreateContainerTest(api_test.BaseTestCase):
 
         info = self.client.inspect_container(res2['Id'])
         self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
-
-    def test_create_with_binds_rw(self):
-        container = self.run_with_volume(
-            False,
-            BUSYBOX,
-            ['ls', self.mount_dest],
-        )
-        logs = self.client.logs(container)
-
-        if six.PY3:
-            logs = logs.decode('utf-8')
-        self.assertIn(self.filename, logs)
-        inspect_data = self.client.inspect_container(container)
-        self.check_container_data(inspect_data, True)
-
-    def test_create_with_binds_ro(self):
-        container = self.run_with_volume(
-            True,
-            BUSYBOX,
-            ['ls', self.mount_dest],
-        )
-        logs = self.client.logs(container)
-
-        if six.PY3:
-            logs = logs.decode('utf-8')
-        self.assertIn(self.filename, logs)
-
-        inspect_data = self.client.inspect_container(container)
-        self.check_container_data(inspect_data, False)
 
     def create_container_readonly_fs(self):
         if not api_test.exec_driver_is_native():
@@ -381,6 +336,59 @@ class CreateContainerTest(api_test.BaseTestCase):
 
         self.assertEqual(container_log_config['Type'], "json-file")
         self.assertEqual(container_log_config['Config'], {})
+
+
+class VolumeBindTest(api_test.BaseTestCase):
+    def setUp(self):
+        super(VolumeBindTest, self).setUp()
+
+        self.mount_dest = '/mnt'
+
+        # Get a random pathname - we don't need it to exist locally
+        self.mount_origin = tempfile.mkdtemp()
+        shutil.rmtree(self.mount_origin)
+        self.filename = 'shared.txt'
+
+        self.run_with_volume(
+            False,
+            BUSYBOX,
+            ['touch', os.path.join(self.mount_dest, self.filename)],
+        )
+
+    def test_create_with_binds_rw(self):
+
+        container = self.run_with_volume(
+            False,
+            BUSYBOX,
+            ['ls', self.mount_dest],
+        )
+        logs = self.client.logs(container)
+
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        self.assertIn(self.filename, logs)
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, True)
+
+    def test_create_with_binds_ro(self):
+        self.run_with_volume(
+            False,
+            BUSYBOX,
+            ['touch', os.path.join(self.mount_dest, self.filename)],
+        )
+        container = self.run_with_volume(
+            True,
+            BUSYBOX,
+            ['ls', self.mount_dest],
+        )
+        logs = self.client.logs(container)
+
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        self.assertIn(self.filename, logs)
+
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False)
 
     def check_container_data(self, inspect_data, rw):
         if docker.utils.compare_version('1.20', self.client._version) < 0:
