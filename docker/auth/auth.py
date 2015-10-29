@@ -96,7 +96,7 @@ def decode_auth(auth):
         auth = auth.encode('ascii')
     s = base64.b64decode(auth)
     login, pwd = s.split(b':', 1)
-    return login.decode('ascii'), pwd.decode('ascii')
+    return login.decode('utf8'), pwd.decode('utf8')
 
 
 def encode_header(auth):
