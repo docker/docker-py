@@ -337,6 +337,39 @@ class CreateContainerTest(api_test.BaseTestCase):
         self.assertEqual(container_log_config['Type'], "json-file")
         self.assertEqual(container_log_config['Config'], {})
 
+    def test_create_with_memory_constraints_with_str(self):
+        ctnr = self.client.create_container(
+            BUSYBOX, 'true',
+            host_config=self.client.create_host_config(
+                memswap_limit='1G',
+                mem_swappiness='40',
+                mem_limit='700M'
+            )
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr)
+        inspect = self.client.inspect_container(ctnr)
+
+        self.assertIn('HostConfig', inspect)
+        host_config = inspect['HostConfig']
+        for limit in ['Memory', 'MemorySwappiness', 'MemorySwap']:
+            self.assertIn(limit, host_config)
+
+    def test_create_with_memory_constraints_with_int(self):
+        ctnr = self.client.create_container(
+            BUSYBOX, 'true',
+            host_config=self.client.create_host_config(mem_swappiness=40)
+        )
+        self.assertIn('Id', ctnr)
+        self.tmp_containers.append(ctnr['Id'])
+        self.client.start(ctnr)
+        inspect = self.client.inspect_container(ctnr)
+
+        self.assertIn('HostConfig', inspect)
+        host_config = inspect['HostConfig']
+        self.assertIn('MemorySwappiness', host_config)
+
 
 class VolumeBindTest(api_test.BaseTestCase):
     def setUp(self):
