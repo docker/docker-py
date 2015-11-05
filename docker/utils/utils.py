@@ -513,14 +513,10 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if mem_swappiness is not None:
         if version_lt(version, '1.20'):
-            raise errors.InvalidVersion(
-                'mem_swappiness param not supported for API version < 1.20'
-            )
+            raise host_config_version_error('mem_swappiness', '1.20')
         if not isinstance(mem_swappiness, int):
-            raise TypeError(
-                'Invalid type for mem_swappiness param: expected int but'
-                ' found {0}'.format(type(mem_swappiness))
-            )
+            raise host_config_type_error(mem_swappiness, 'int')
+
         host_config['MemorySwappiness'] = mem_swappiness
 
     if pid_mode not in (None, 'host'):
@@ -571,9 +567,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if group_add:
         if version_lt(version, '1.20'):
-            raise errors.InvalidVersion(
-                'group_add param not supported for API version < 1.20'
-            )
+            raise host_config_version_error('group_add', '1.20')
         host_config['GroupAdd'] = [six.text_type(grp) for grp in group_add]
 
     if dns is not None:
@@ -581,10 +575,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if security_opt is not None:
         if not isinstance(security_opt, list):
-            raise errors.DockerException(
-                'Invalid type for security_opt param: expected list but found'
-                ' {0}'.format(type(security_opt))
-            )
+            raise host_config_type_error(security_opt, 'list')
         host_config['SecurityOpt'] = security_opt
 
     if volumes_from is not None:
@@ -633,10 +624,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if ulimits is not None:
         if not isinstance(ulimits, list):
-            raise errors.DockerException(
-                'Invalid type for ulimits param: expected list but found'
-                ' {0}'.format(type(ulimits))
-            )
+            raise host_config_type_error(ulimits, 'list')
         host_config['Ulimits'] = []
         for l in ulimits:
             if not isinstance(l, Ulimit):
@@ -646,35 +634,24 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
     if log_config is not None:
         if not isinstance(log_config, LogConfig):
             if not isinstance(log_config, dict):
-                raise errors.DockerException(
-                    'Invalid type for log_config param: expected LogConfig but'
-                    ' found {0}'.format(type(log_config))
-                )
+                raise host_config_type_error(log_config, 'LogConfig')
             log_config = LogConfig(**log_config)
         host_config['LogConfig'] = log_config
 
     if cpu_quota:
         if not isinstance(cpu_quota, int):
-            raise TypeError(
-                'Invalid type for cpu_quota param: expected int but'
-                ' found {0}'.format(type(cpu_quota))
-            )
+            raise host_config_type_error(cpu_quota, 'int')
         if version_lt(version, '1.19'):
-            raise errors.InvalidVersion(
-                'cpu_quota param not supported for API version < 1.19'
-            )
+            raise host_config_version_error('cpu_quota', '1.19')
+
         host_config['CpuQuota'] = cpu_quota
 
     if cpu_period:
         if not isinstance(cpu_period, int):
-            raise TypeError(
-                'Invalid type for cpu_period param: expected int but'
-                ' found {0}'.format(type(cpu_period))
-            )
+            raise host_config_type_error(cpu_period, 'int')
         if version_lt(version, '1.19'):
-            raise errors.InvalidVersion(
-                'cpu_period param not supported for API version < 1.19'
-            )
+            raise host_config_version_error('cpu_period', '1.19')
+
         host_config['CpuPeriod'] = cpu_period
 
     return host_config
