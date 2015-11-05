@@ -342,7 +342,6 @@ class CreateContainerTest(api_test.BaseTestCase):
             BUSYBOX, 'true',
             host_config=self.client.create_host_config(
                 memswap_limit='1G',
-                mem_swappiness='40',
                 mem_limit='700M'
             )
         )
@@ -353,7 +352,7 @@ class CreateContainerTest(api_test.BaseTestCase):
 
         self.assertIn('HostConfig', inspect)
         host_config = inspect['HostConfig']
-        for limit in ['Memory', 'MemorySwappiness', 'MemorySwap']:
+        for limit in ['Memory', 'MemorySwap']:
             self.assertIn(limit, host_config)
 
     def test_create_with_memory_constraints_with_int(self):
