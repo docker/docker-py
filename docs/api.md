@@ -4,8 +4,8 @@ To instantiate a `Client` class that will allow you to communicate with a
 Docker daemon, simply do:
 
 ```python
-from docker import Client
-c = Client(base_url='unix://var/run/docker.sock')
+>>> from docker import Client
+>>> cli = Client(base_url='unix://var/run/docker.sock')
 ```
 
 **Params**:
@@ -165,6 +165,8 @@ non-running ones
 
 ## copy
 Identical to the `docker cp` command. Get files/folders from the container.
+**Deprecated for API version >= 1.20** &ndash; Consider using
+[`get_archive`](#get_archive) **instead.**
 
 **Params**:
 
@@ -214,7 +216,7 @@ from. Optionally a single string joining container id's with commas
 * network_disabled (bool): Disable networking
 * name (str): A name for the container
 * entrypoint (str or list): An entrypoint
-* cpu_shares (int or float): CPU shares (relative weight)
+* cpu_shares (int): CPU shares (relative weight)
 * working_dir (str): Path to the working directory
 * domainname (str or list): Set custom DNS search domains
 * memswap_limit (int):
@@ -248,9 +250,9 @@ PASSWORD=secret
 The utility can be used as follows:
 
 ```python
->> import docker.utils
->> my_envs = docker.utils.parse_env_file('/path/to/file')
->> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+>>> import docker.utils
+>>> my_envs = docker.utils.parse_env_file('/path/to/file')
+>>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
 ```
 
 You can now use this with 'environment' for `create_container`.
@@ -376,6 +378,27 @@ Export the contents of a filesystem as a tar archive to STDOUT.
 * container (str): The container to export
 
 **Returns** (str): The filesystem tar archive as a str
+
+## get_archive
+
+Retrieve a file or folder from a container in the form of a tar archive.
+
+**Params**:
+
+* container (str): The container where the file is located
+* path (str): Path to the file or folder to retrieve
+
+**Returns** (tuple): First element is a raw tar data stream. Second element is
+a dict containing `stat` information on the specified `path`.
+
+```python
+>>> import docker
+>>> cli = docker.Client()
+>>> ctnr = cli.create_container('busybox', 'true')
+>>> strm, stat = cli.get_archive(ctnr, '/bin/sh')
+>>> print(stat)
+{u'linkTarget': u'', u'mode': 493, u'mtime': u'2015-09-16T12:34:23-07:00', u'name': u'sh', u'size': 962860}
+```
 
 ## get_image
 
@@ -712,6 +735,20 @@ command.
     https://cdn-registry-1.docker.io/v1/repositories/
     yourname/app/tags/latest}"}\\n']
 ```
+
+## put_archive
+
+Insert a file or folder in an existing container using a tar archive as source.
+
+**Params**:
+
+* container (str): The container where the file(s) will be extracted
+* path (str): Path inside the container where the file(s) will be extracted.
+  Must exist.
+* data (bytes): tar data to be extracted
+
+**Returns** (bool): True if the call succeeds. `docker.errors.APIError` will
+be raised if an error occurs.
 
 ## remove_container
 

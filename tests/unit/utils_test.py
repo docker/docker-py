@@ -1,7 +1,15 @@
+# -*- coding: utf-8 -*-
+
+import base64
+import json
 import os
 import os.path
 import shutil
+import tarfile
 import tempfile
+
+import pytest
+import six
 
 from docker.client import Client
 from docker.constants import DEFAULT_DOCKER_API_VERSION
@@ -9,15 +17,14 @@ from docker.errors import DockerException
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
-    exclude_paths,
+    exclude_paths, convert_volume_binds, decode_json_header, tar,
+    split_command,
 )
 from docker.utils.ports import build_port_bindings, split_port
-from docker.auth import resolve_repository_name, resolve_authconfig
 
-from . import base
-from .helpers import make_tree
+from .. import base
+from ..helpers import make_tree
 
-import pytest
 
 TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -178,9 +185,92 @@ class KwargsFromEnvTest(base.BaseTestCase):
                 shutil.rmtree(temp_dir)
 
 
-class UtilsTest(base.BaseTestCase):
-    longMessage = True
+class ConverVolumeBindsTest(base.BaseTestCase):
+    def test_convert_volume_binds_empty(self):
+        self.assertEqual(convert_volume_binds({}), [])
+        self.assertEqual(convert_volume_binds([]), [])
 
+    def test_convert_volume_binds_list(self):
+        data = ['/a:/a:ro', '/b:/c:z']
+        self.assertEqual(convert_volume_binds(data), data)
+
+    def test_convert_volume_binds_complete(self):
+        data = {
+            '/mnt/vol1': {
+                'bind': '/data',
+                'mode': 'ro'
+            }
+        }
+        self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:ro'])
+
+    def test_convert_volume_binds_compact(self):
+        data = {
+            '/mnt/vol1': '/data'
+        }
+        self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
+
+    def test_convert_volume_binds_no_mode(self):
+        data = {
+            '/mnt/vol1': {
+                'bind': '/data'
+            }
+        }
+        self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
+
+    def test_convert_volume_binds_unicode_bytes_input(self):
+        if six.PY2:
+            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+
+            data = {
+                '/mnt/지연': {
+                    'bind': '/unicode/박',
+                    'mode': 'rw'
+                }
+            }
+            self.assertEqual(
+                convert_volume_binds(data), expected
+            )
+        else:
+            expected = ['/mnt/지연:/unicode/박:rw']
+
+            data = {
+                bytes('/mnt/지연', 'utf-8'): {
+                    'bind': bytes('/unicode/박', 'utf-8'),
+                    'mode': 'rw'
+                }
+            }
+            self.assertEqual(
+                convert_volume_binds(data), expected
+            )
+
+    def test_convert_volume_binds_unicode_unicode_input(self):
+        if six.PY2:
+            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+
+            data = {
+                unicode('/mnt/지연', 'utf-8'): {
+                    'bind': unicode('/unicode/박', 'utf-8'),
+                    'mode': 'rw'
+                }
+            }
+            self.assertEqual(
+                convert_volume_binds(data), expected
+            )
+        else:
+            expected = ['/mnt/지연:/unicode/박:rw']
+
+            data = {
+                '/mnt/지연': {
+                    'bind': '/unicode/박',
+                    'mode': 'rw'
+                }
+            }
+            self.assertEqual(
+                convert_volume_binds(data), expected
+            )
+
+
+class ParseEnvFileTest(base.BaseTestCase):
     def generate_tempfile(self, file_content=None):
         """
         Generates a temporary file for tests with the content
@@ -192,26 +282,30 @@ class UtilsTest(base.BaseTestCase):
         local_tempfile.close()
         return local_tempfile.name
 
-    def test_parse_repository_tag(self):
-        self.assertEqual(parse_repository_tag("root"),
-                         ("root", None))
-        self.assertEqual(parse_repository_tag("root:tag"),
-                         ("root", "tag"))
-        self.assertEqual(parse_repository_tag("user/repo"),
-                         ("user/repo", None))
-        self.assertEqual(parse_repository_tag("user/repo:tag"),
-                         ("user/repo", "tag"))
-        self.assertEqual(parse_repository_tag("url:5000/repo"),
-                         ("url:5000/repo", None))
-        self.assertEqual(parse_repository_tag("url:5000/repo:tag"),
-                         ("url:5000/repo", "tag"))
+    def test_parse_env_file_proper(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\nPASS=secret')
+        get_parse_env_file = parse_env_file(env_file)
+        self.assertEqual(get_parse_env_file,
+                         {'USER': 'jdoe', 'PASS': 'secret'})
+        os.unlink(env_file)
 
-    def test_parse_bytes(self):
-        self.assertEqual(parse_bytes("512MB"), (536870912))
-        self.assertEqual(parse_bytes("512M"), (536870912))
-        self.assertRaises(DockerException, parse_bytes, "512MK")
-        self.assertRaises(DockerException, parse_bytes, "512L")
+    def test_parse_env_file_commented_line(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\n#PASS=secret')
+        get_parse_env_file = parse_env_file((env_file))
+        self.assertEqual(get_parse_env_file, {'USER': 'jdoe'})
+        os.unlink(env_file)
 
+    def test_parse_env_file_invalid_line(self):
+        env_file = self.generate_tempfile(
+            file_content='USER jdoe')
+        self.assertRaises(
+            DockerException, parse_env_file, env_file)
+        os.unlink(env_file)
+
+
+class ParseHostTest(base.BaseTestCase):
     def test_parse_host(self):
         invalid_hosts = [
             '0.0.0.0',
@@ -250,27 +344,29 @@ class UtilsTest(base.BaseTestCase):
 
             assert parse_host(val, 'win32') == tcp_port
 
-    def test_parse_env_file_proper(self):
-        env_file = self.generate_tempfile(
-            file_content='USER=jdoe\nPASS=secret')
-        get_parse_env_file = parse_env_file(env_file)
-        self.assertEqual(get_parse_env_file,
-                         {'USER': 'jdoe', 'PASS': 'secret'})
-        os.unlink(env_file)
 
-    def test_parse_env_file_commented_line(self):
-        env_file = self.generate_tempfile(
-            file_content='USER=jdoe\n#PASS=secret')
-        get_parse_env_file = parse_env_file((env_file))
-        self.assertEqual(get_parse_env_file, {'USER': 'jdoe'})
-        os.unlink(env_file)
+class UtilsTest(base.BaseTestCase):
+    longMessage = True
 
-    def test_parse_env_file_invalid_line(self):
-        env_file = self.generate_tempfile(
-            file_content='USER jdoe')
-        self.assertRaises(
-            DockerException, parse_env_file, env_file)
-        os.unlink(env_file)
+    def test_parse_repository_tag(self):
+        self.assertEqual(parse_repository_tag("root"),
+                         ("root", None))
+        self.assertEqual(parse_repository_tag("root:tag"),
+                         ("root", "tag"))
+        self.assertEqual(parse_repository_tag("user/repo"),
+                         ("user/repo", None))
+        self.assertEqual(parse_repository_tag("user/repo:tag"),
+                         ("user/repo", "tag"))
+        self.assertEqual(parse_repository_tag("url:5000/repo"),
+                         ("url:5000/repo", None))
+        self.assertEqual(parse_repository_tag("url:5000/repo:tag"),
+                         ("url:5000/repo", "tag"))
+
+    def test_parse_bytes(self):
+        self.assertEqual(parse_bytes("512MB"), (536870912))
+        self.assertEqual(parse_bytes("512M"), (536870912))
+        self.assertRaises(DockerException, parse_bytes, "512MK")
+        self.assertRaises(DockerException, parse_bytes, "512L")
 
     def test_convert_filters(self):
         tests = [
@@ -283,158 +379,31 @@ class UtilsTest(base.BaseTestCase):
         for filters, expected in tests:
             self.assertEqual(convert_filters(filters), expected)
 
-    def test_resolve_repository_name(self):
-        # docker hub library image
-        self.assertEqual(
-            resolve_repository_name('image'),
-            ('index.docker.io', 'image'),
-        )
+    def test_decode_json_header(self):
+        obj = {'a': 'b', 'c': 1}
+        data = None
+        if six.PY3:
+            data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
+        else:
+            data = base64.urlsafe_b64encode(json.dumps(obj))
+        decoded_data = decode_json_header(data)
+        self.assertEqual(obj, decoded_data)
 
-        # docker hub image
-        self.assertEqual(
-            resolve_repository_name('username/image'),
-            ('index.docker.io', 'username/image'),
-        )
 
-        # private registry
-        self.assertEqual(
-            resolve_repository_name('my.registry.net/image'),
-            ('my.registry.net', 'image'),
-        )
+class SplitCommandTest(base.BaseTestCase):
 
-        # private registry with port
-        self.assertEqual(
-            resolve_repository_name('my.registry.net:5000/image'),
-            ('my.registry.net:5000', 'image'),
-        )
+    def test_split_command_with_unicode(self):
+        if six.PY2:
+            self.assertEqual(
+                split_command(unicode('echo μμ', 'utf-8')),
+                ['echo', 'μμ']
+            )
+        else:
+            self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
 
-        # private registry with username
-        self.assertEqual(
-            resolve_repository_name('my.registry.net/username/image'),
-            ('my.registry.net', 'username/image'),
-        )
-
-        # no dots but port
-        self.assertEqual(
-            resolve_repository_name('hostname:5000/image'),
-            ('hostname:5000', 'image'),
-        )
-
-        # no dots but port and username
-        self.assertEqual(
-            resolve_repository_name('hostname:5000/username/image'),
-            ('hostname:5000', 'username/image'),
-        )
-
-        # localhost
-        self.assertEqual(
-            resolve_repository_name('localhost/image'),
-            ('localhost', 'image'),
-        )
-
-        # localhost with username
-        self.assertEqual(
-            resolve_repository_name('localhost/username/image'),
-            ('localhost', 'username/image'),
-        )
-
-    def test_resolve_authconfig(self):
-        auth_config = {
-            'https://index.docker.io/v1/': {'auth': 'indexuser'},
-            'my.registry.net': {'auth': 'privateuser'},
-            'http://legacy.registry.url/v1/': {'auth': 'legacyauth'}
-        }
-        # hostname only
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'my.registry.net'),
-            {'auth': 'privateuser'}
-        )
-        # no protocol
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'my.registry.net/v1/'),
-            {'auth': 'privateuser'}
-        )
-        # no path
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'http://my.registry.net'),
-            {'auth': 'privateuser'}
-        )
-        # no path, trailing slash
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'http://my.registry.net/'),
-            {'auth': 'privateuser'}
-        )
-        # no path, wrong secure protocol
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'https://my.registry.net'),
-            {'auth': 'privateuser'}
-        )
-        # no path, wrong insecure protocol
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'http://index.docker.io'),
-            {'auth': 'indexuser'}
-        )
-        # with path, wrong protocol
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'https://my.registry.net/v1/'),
-            {'auth': 'privateuser'}
-        )
-        # default registry
-        self.assertEqual(
-            resolve_authconfig(auth_config), {'auth': 'indexuser'}
-        )
-        # default registry (explicit None)
-        self.assertEqual(
-            resolve_authconfig(auth_config, None), {'auth': 'indexuser'}
-        )
-        # fully explicit
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'http://my.registry.net/v1/'),
-            {'auth': 'privateuser'}
-        )
-        # legacy entry in config
-        self.assertEqual(
-            resolve_authconfig(auth_config, 'legacy.registry.url'),
-            {'auth': 'legacyauth'}
-        )
-        # no matching entry
-        self.assertTrue(
-            resolve_authconfig(auth_config, 'does.not.exist') is None
-        )
-
-    def test_resolve_registry_and_auth(self):
-        auth_config = {
-            'https://index.docker.io/v1/': {'auth': 'indexuser'},
-            'my.registry.net': {'auth': 'privateuser'},
-        }
-
-        # library image
-        image = 'image'
-        self.assertEqual(
-            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
-            {'auth': 'indexuser'},
-        )
-
-        # docker hub image
-        image = 'username/image'
-        self.assertEqual(
-            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
-            {'auth': 'indexuser'},
-        )
-
-        # private registry
-        image = 'my.registry.net/image'
-        self.assertEqual(
-            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
-            {'auth': 'privateuser'},
-        )
-
-        # unauthenticated registry
-        image = 'other.registry.net/image'
-        self.assertEqual(
-            resolve_authconfig(auth_config, resolve_repository_name(image)[0]),
-            None,
-        )
+    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
+    def test_split_command_with_bytes(self):
+        self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
 
 
 class PortsTest(base.BaseTestCase):
@@ -680,3 +649,85 @@ class ExcludePathsTest(base.BaseTestCase):
         assert self.exclude(['foo/bar']) == self.all_paths - set([
             'foo/bar', 'foo/bar/a.py',
         ])
+
+
+class TarTest(base.Cleanup, base.BaseTestCase):
+    def test_tar_with_excludes(self):
+        dirs = [
+            'foo',
+            'foo/bar',
+            'bar',
+        ]
+
+        files = [
+            'Dockerfile',
+            'Dockerfile.alt',
+            '.dockerignore',
+            'a.py',
+            'a.go',
+            'b.py',
+            'cde.py',
+            'foo/a.py',
+            'foo/b.py',
+            'foo/bar/a.py',
+            'bar/a.py',
+        ]
+
+        exclude = [
+            '*.py',
+            '!b.py',
+            '!a.go',
+            'foo',
+            'Dockerfile*',
+            '.dockerignore',
+        ]
+
+        expected_names = set([
+            'Dockerfile',
+            '.dockerignore',
+            'a.go',
+            'b.py',
+            'bar',
+            'bar/a.py',
+        ])
+
+        base = make_tree(dirs, files)
+        self.addCleanup(shutil.rmtree, base)
+
+        with tar(base, exclude=exclude) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            assert sorted(tar_data.getnames()) == sorted(expected_names)
+
+    def test_tar_with_empty_directory(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            self.assertEqual(sorted(tar_data.getnames()), ['bar', 'foo'])
+
+    def test_tar_with_file_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        with open(os.path.join(base, 'foo'), 'w') as f:
+            f.write("content")
+        os.makedirs(os.path.join(base, 'bar'))
+        os.symlink('../foo', os.path.join(base, 'bar/foo'))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            self.assertEqual(
+                sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
+            )
+
+    def test_tar_with_directory_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        os.symlink('../foo', os.path.join(base, 'bar/foo'))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            self.assertEqual(
+                sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
+            )

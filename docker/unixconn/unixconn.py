@@ -73,12 +73,20 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
             if pool:
                 return pool
 
-            pool = UnixHTTPConnectionPool(url,
-                                          self.socket_path,
-                                          self.timeout)
+            pool = UnixHTTPConnectionPool(
+                url, self.socket_path, self.timeout
+            )
             self.pools[url] = pool
 
         return pool
+
+    def request_url(self, request, proxies):
+        # The select_proxy utility in requests errors out when the provided URL
+        # doesn't have a hostname, like is the case when using a UNIX socket.
+        # Since proxies are an irrelevant notion in the case of UNIX sockets
+        # anyway, we simply return the path URL directly.
+        # See also: https://github.com/docker/docker-py/issues/811
+        return request.path_url
 
     def close(self):
         self.pools.clear()

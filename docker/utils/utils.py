@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import base64
 import io
 import os
 import os.path
@@ -64,6 +65,13 @@ def mkbuildcontext(dockerfile):
     t.close()
     f.seek(0)
     return f
+
+
+def decode_json_header(header):
+    data = base64.b64decode(header)
+    if six.PY3:
+        data = data.decode('utf-8')
+    return json.loads(data)
 
 
 def tar(path, exclude=None, dockerfile=None):
@@ -242,12 +250,19 @@ def convert_volume_binds(binds):
 
     result = []
     for k, v in binds.items():
+        if isinstance(k, six.binary_type):
+            k = k.decode('utf-8')
+
         if isinstance(v, dict):
             if 'ro' in v and 'mode' in v:
                 raise ValueError(
                     'Binding cannot contain both "ro" and "mode": {}'
                     .format(repr(v))
                 )
+
+            bind = v['bind']
+            if isinstance(bind, six.binary_type):
+                bind = bind.decode('utf-8')
 
             if 'ro' in v:
                 mode = 'ro' if v['ro'] else 'rw'
@@ -256,11 +271,15 @@ def convert_volume_binds(binds):
             else:
                 mode = 'rw'
 
-            result.append('{0}:{1}:{2}'.format(
-                k, v['bind'], mode
-            ))
+            result.append(
+                six.text_type('{0}:{1}:{2}').format(k, bind, mode)
+            )
         else:
-            result.append('{0}:{1}:rw'.format(k, v))
+            if isinstance(v, six.binary_type):
+                v = v.decode('utf-8')
+            result.append(
+                six.text_type('{0}:{1}:rw').format(k, v)
+            )
     return result
 
 
@@ -654,6 +673,12 @@ def parse_env_file(env_file):
     return environment
 
 
+def split_command(command):
+    if six.PY2 and not isinstance(command, six.binary_type):
+        command = command.encode('utf-8')
+    return shlex.split(command)
+
+
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
     stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
@@ -663,10 +688,10 @@ def create_container_config(
     labels=None, volume_driver=None
 ):
     if isinstance(command, six.string_types):
-        command = shlex.split(str(command))
+        command = split_command(command)
 
     if isinstance(entrypoint, six.string_types):
-        entrypoint = shlex.split(str(entrypoint))
+        entrypoint = split_command(entrypoint)
 
     if isinstance(environment, dict):
         environment = [

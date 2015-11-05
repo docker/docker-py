@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import base64
-import fileinput
 import json
 import logging
 import os
@@ -102,7 +101,7 @@ def decode_auth(auth):
 
 def encode_header(auth):
     auth_json = json.dumps(auth).encode('ascii')
-    return base64.b64encode(auth_json)
+    return base64.urlsafe_b64encode(auth_json)
 
 
 def parse_auth(entries):
@@ -132,78 +131,79 @@ def parse_auth(entries):
     return conf
 
 
+def find_config_file(config_path=None):
+    environment_path = os.path.join(
+        os.environ.get('DOCKER_CONFIG'),
+        os.path.basename(DOCKER_CONFIG_FILENAME)
+    ) if os.environ.get('DOCKER_CONFIG') else None
+
+    paths = [
+        config_path,  # 1
+        environment_path,  # 2
+        os.path.join(os.path.expanduser('~'), DOCKER_CONFIG_FILENAME),  # 3
+        os.path.join(
+            os.path.expanduser('~'), LEGACY_DOCKER_CONFIG_FILENAME
+        )  # 4
+    ]
+
+    for path in paths:
+        if path and os.path.exists(path):
+            return path
+    return None
+
+
 def load_config(config_path=None):
     """
     Loads authentication data from a Docker configuration file in the given
     root directory or if config_path is passed use given path.
+    Lookup priority:
+        explicit config_path parameter > DOCKER_CONFIG environment variable >
+        ~/.docker/config.json > ~/.dockercfg
     """
-    conf = {}
-    data = None
 
-    # Prefer ~/.docker/config.json.
-    config_file = config_path or os.path.join(os.path.expanduser('~'),
-                                              DOCKER_CONFIG_FILENAME)
+    config_file = find_config_file(config_path)
 
-    log.debug("Trying {0}".format(config_file))
-
-    if os.path.exists(config_file):
-        try:
-            with open(config_file) as f:
-                for section, data in six.iteritems(json.load(f)):
-                    if section != 'auths':
-                        continue
-                    log.debug("Found 'auths' section")
-                    return parse_auth(data)
-            log.debug("Couldn't find 'auths' section")
-        except (IOError, KeyError, ValueError) as e:
-            # Likely missing new Docker config file or it's in an
-            # unknown format, continue to attempt to read old location
-            # and format.
-            log.debug(e)
-            pass
-    else:
+    if not config_file:
         log.debug("File doesn't exist")
-
-    config_file = config_path or os.path.join(os.path.expanduser('~'),
-                                              LEGACY_DOCKER_CONFIG_FILENAME)
-
-    log.debug("Trying {0}".format(config_file))
-
-    if not os.path.exists(config_file):
-        log.debug("File doesn't exist - returning empty config")
         return {}
 
-    log.debug("Attempting to parse as JSON")
     try:
         with open(config_file) as f:
-            return parse_auth(json.load(f))
-    except Exception as e:
+            data = json.load(f)
+            if data.get('auths'):
+                log.debug("Found 'auths' section")
+                return parse_auth(data['auths'])
+            else:
+                log.debug("Couldn't find 'auths' section")
+                f.seek(0)
+                return parse_auth(json.load(f))
+    except (IOError, KeyError, ValueError) as e:
+        # Likely missing new Docker config file or it's in an
+        # unknown format, continue to attempt to read old location
+        # and format.
         log.debug(e)
-        pass
 
-    # If that fails, we assume the configuration file contains a single
-    # authentication token for the public registry in the following format:
-    #
-    # auth = AUTH_TOKEN
-    # email = email@domain.com
     log.debug("Attempting to parse legacy auth file format")
     try:
         data = []
-        for line in fileinput.input(config_file):
-            data.append(line.strip().split(' = ')[1])
-        if len(data) < 2:
-            # Not enough data
-            raise errors.InvalidConfigFile(
-                'Invalid or empty configuration file!')
+        with open(config_file) as f:
+            for line in f.readlines():
+                data.append(line.strip().split(' = ')[1])
+            if len(data) < 2:
+                # Not enough data
+                raise errors.InvalidConfigFile(
+                    'Invalid or empty configuration file!'
+                )
 
         username, password = decode_auth(data[0])
-        conf[INDEX_NAME] = {
-            'username': username,
-            'password': password,
-            'email': data[1],
-            'serveraddress': INDEX_URL,
+        return {
+            INDEX_NAME: {
+                'username': username,
+                'password': password,
+                'email': data[1],
+                'serveraddress': INDEX_URL,
+            }
         }
-        return conf
     except Exception as e:
         log.debug(e)
         pass
