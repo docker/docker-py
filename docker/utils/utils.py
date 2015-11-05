@@ -467,16 +467,29 @@ def parse_bytes(s):
     return s
 
 
-def create_host_config(
-    binds=None, port_bindings=None, lxc_conf=None, publish_all_ports=False,
-    links=None, privileged=False, dns=None, dns_search=None, volumes_from=None,
-    network_mode=None, restart_policy=None, cap_add=None, cap_drop=None,
-    devices=None, extra_hosts=None, read_only=None, pid_mode=None,
-    ipc_mode=None, security_opt=None, ulimits=None, log_config=None,
-    mem_limit=None, memswap_limit=None, mem_swappiness=None,
-    cgroup_parent=None, group_add=None, cpu_quota=None, cpu_period=None,
-    oom_kill_disable=False, version=None
-):
+def host_config_type_error(param_value=None, expected=None):
+    return TypeError(
+        'Invalid type for {0} param: expected {1} but found {2}'.format(param_value, expected,
+                                                                        type(param_value))
+    )
+
+
+def host_config_version_error(param=None, version=None):
+    return errors.InvalidVersion(
+        '{0} param is not supported in API versions < {1}'.format(param, version)
+    )
+
+
+def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
+                       publish_all_ports=False, links=None, privileged=False,
+                       dns=None, dns_search=None, volumes_from=None,
+                       network_mode=None, restart_policy=None, cap_add=None,
+                       cap_drop=None, devices=None, extra_hosts=None,
+                       read_only=None, pid_mode=None, ipc_mode=None,
+                       security_opt=None, ulimits=None, log_config=None,
+                       mem_limit=None, memswap_limit=None, mem_swappiness=None,
+                       cgroup_parent=None, group_add=None, cpu_quota=None,
+                       cpu_period=None, oom_kill_disable=False, version=None):
 
     host_config = {}
 
