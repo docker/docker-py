@@ -71,6 +71,7 @@ for example:
 * port_bindings (dict): Port bindings. See [Port bindings](port-bindings.md)
   for more information.
 * lxc_conf (dict): LXC config
+* oom_kill_disable (bool): Whether to disable OOM killer
 * publish_all_ports (bool): Whether to publish all ports to the host
 * links (dict or list of tuples): either as a dictionary mapping name to alias
   or as a list of `(name, alias)` tuples

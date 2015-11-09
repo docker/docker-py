@@ -470,7 +470,7 @@ def parse_bytes(s):
 
 
 def create_host_config(
-    binds=None, port_bindings=None, lxc_conf=None,
+    binds=None, port_bindings=None, lxc_conf=None, oom_kill_disable=False,
     publish_all_ports=False, links=None, privileged=False,
     dns=None, dns_search=None, volumes_from=None, network_mode=None,
     restart_policy=None, cap_add=None, cap_drop=None, devices=None,
@@ -510,6 +510,13 @@ def create_host_config(
 
     if privileged:
         host_config['Privileged'] = privileged
+
+    if oom_kill_disable:
+        if not version_gte(version, '1.19'):
+            raise errors.InvalidVersion(
+                'oom_kill_disable param not supported for API version < 1.19'
+            )
+        host_config['OomKillDisable'] = oom_kill_disable
 
     if publish_all_ports:
         host_config['PublishAllPorts'] = publish_all_ports
