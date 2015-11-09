@@ -100,7 +100,7 @@ for example:
   consume. (e.g. `'1G'`)
 * memswap_limit (str or int): Maximum amount of memory + swap a container is
   allowed to consume.
-* mem_swappiness (str or int): Tune a container's memory swappiness behavior.
+* mem_swappiness (int): Tune a container's memory swappiness behavior.
   Accepts number between 0 and 100.
 * group_add (list): List of additional group names and/or IDs that the
   container process will run as.
