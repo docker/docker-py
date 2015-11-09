@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import json
 
 from .. import constants
 from .. import errors
@@ -16,7 +17,7 @@ class BuildApiMixin(object):
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
-              decode=False):
+              decode=False, buildargs=None):
         remote = context = headers = None
         container_limits = container_limits or {}
         if path is None and fileobj is None:
@@ -70,6 +71,14 @@ class BuildApiMixin(object):
             'dockerfile': dockerfile,
         }
         params.update(container_limits)
+
+        if buildargs:
+            if utils.version_gte(self._version, '1.21'):
+                params.update({'buildargs': json.dumps(buildargs)})
+            else:
+                raise errors.InvalidVersion(
+                    'buildargs was only introduced in API version 1.21'
+                )
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}

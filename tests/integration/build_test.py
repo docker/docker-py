@@ -96,3 +96,18 @@ class BuildTest(api_test.BaseTestCase):
             list(filter(None, logs.split('\n'))),
             ['not-ignored'],
         )
+
+    @requires_api_version('1.21')
+    def test_build_with_buildargs(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+            'ARG test',
+            'USER $test'
+        ]).encode('ascii'))
+
+        self.client.build(fileobj=script, tag='buildargs',
+                          buildargs={'test': 'OK'}, stream=True)
+        self.tmp_imgs.append('buildargs')
+
+        info = self.client.inspect_image('buildargs')
+        self.assertEqual(info['Config']['User'], 'OK')
