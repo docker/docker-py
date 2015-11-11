@@ -192,7 +192,7 @@ class ContainerApiMixin(object):
                       'follow': stream and 1 or 0,
                       }
             if utils.compare_version('1.13', self._version) >= 0:
-                if tail != 'all' and (not isinstance(tail, int) or tail <= 0):
+                if tail != 'all' and (not isinstance(tail, int) or tail < 0):
                     tail = 'all'
                 params['tail'] = tail
             url = self._url("/containers/{0}/logs", container)
