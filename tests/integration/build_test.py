@@ -105,9 +105,12 @@ class BuildTest(api_test.BaseTestCase):
             'USER $test'
         ]).encode('ascii'))
 
-        self.client.build(fileobj=script, tag='buildargs',
-                          buildargs={'test': 'OK'}, stream=True)
+        stream = self.client.build(
+            fileobj=script, tag='buildargs', buildargs={'test': 'OK'}
+        )
         self.tmp_imgs.append('buildargs')
+        for chunk in stream:
+            pass
 
         info = self.client.inspect_image('buildargs')
         self.assertEqual(info['Config']['User'], 'OK')
