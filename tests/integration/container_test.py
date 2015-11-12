@@ -613,8 +613,8 @@ class LogsTest(api_test.BaseTestCase):
             BUSYBOX, 'echo {0}'.format(snippet)
         )
         id = container['Id']
-        self.client.start(id)
         self.tmp_containers.append(id)
+        self.client.start(id)
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(id)
@@ -627,29 +627,29 @@ Line2'''
             BUSYBOX, 'echo "{0}"'.format(snippet)
         )
         id = container['Id']
-        self.client.start(id)
         self.tmp_containers.append(id)
+        self.client.start(id)
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(id, tail=1)
-        self.assertEqual(logs, ('Line2\n').encode(encoding='ascii'))
+        self.assertEqual(logs, 'Line2\n'.encode(encoding='ascii'))
 
-#     def test_logs_streaming(self):
-#         snippet = 'Flowering Nights (Sakuya Iyazoi)'
-#         container = self.client.create_container(
-#             BUSYBOX, 'echo {0}'.format(snippet)
-#         )
-#         id = container['Id']
-#         self.client.start(id)
-#         self.tmp_containers.append(id)
-#         logs = bytes() if six.PY3 else str()
-#         for chunk in self.client.logs(id, stream=True):
-#             logs += chunk
+    def test_logs_streaming(self):
+        snippet = 'Flowering Nights (Sakuya Iyazoi)'
+        container = self.client.create_container(
+            BUSYBOX, 'echo {0}'.format(snippet)
+        )
+        id = container['Id']
+        self.tmp_containers.append(id)
+        self.client.start(id)
+        logs = six.binary_type()
+        for chunk in self.client.logs(id, stream=True):
+            logs += chunk
 
-#         exitcode = self.client.wait(id)
-#         self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)
+        self.assertEqual(exitcode, 0)
 
-#         self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
+        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
 
     def test_logs_with_dict_instead_of_id(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -657,12 +657,25 @@ Line2'''
             BUSYBOX, 'echo {0}'.format(snippet)
         )
         id = container['Id']
-        self.client.start(id)
         self.tmp_containers.append(id)
+        self.client.start(id)
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(container)
         self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
+
+    def test_logs_with_tail_0(self):
+        snippet = 'Flowering Nights (Sakuya Iyazoi)'
+        container = self.client.create_container(
+            BUSYBOX, 'echo "{0}"'.format(snippet)
+        )
+        id = container['Id']
+        self.tmp_containers.append(id)
+        self.client.start(id)
+        exitcode = self.client.wait(id)
+        self.assertEqual(exitcode, 0)
+        logs = self.client.logs(id, tail=0)
+        self.assertEqual(logs, ''.encode(encoding='ascii'))
 
 
 class DiffTest(api_test.BaseTestCase):
