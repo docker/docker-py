@@ -327,6 +327,7 @@ Sets up an exec instance in a running container.
 * cmd (str or list): Command to be executed
 * stdout (bool): Attach to stdout of the exec command if true. Default: True
 * stderr (bool): Attach to stderr of the exec command if true. Default: True
+* since (UTC datetime or int): Output logs from this timestamp. Default: `None` (all logs are given)
 * tty (bool): Allocate a pseudo-TTY. Default: False
 * user (str): User to execute command as. Default: root
 
