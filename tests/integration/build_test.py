@@ -114,3 +114,22 @@ class BuildTest(api_test.BaseTestCase):
 
         info = self.client.inspect_image('buildargs')
         self.assertEqual(info['Config']['User'], 'OK')
+
+    def test_build_stderr_data(self):
+        control_chars = ['\x1b[91m', '\x1b[0m']
+        snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'
+        script = io.BytesIO(b'\n'.join([
+            b'FROM busybox',
+            'RUN sh -c ">&2 echo \'{0}\'"'.format(snippet).encode('utf-8')
+        ]))
+
+        stream = self.client.build(
+            fileobj=script, stream=True, decode=True, nocache=True
+        )
+        lines = []
+        for chunk in stream:
+            lines.append(chunk.get('stream'))
+        expected = '{0}{2}\n{1}'.format(
+            control_chars[0], control_chars[1], snippet
+        )
+        self.assertTrue(any([line == expected for line in lines]))

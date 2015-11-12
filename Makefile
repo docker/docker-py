@@ -3,6 +3,8 @@
 all: test
 
 clean:
+	rm -rf tests/__pycache__
+	rm -rf tests/*/__pycache__
 	docker rm -vf dpy-dind
 
 build:
