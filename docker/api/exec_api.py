@@ -7,8 +7,8 @@ from .. import utils
 class ExecApiMixin(object):
     @utils.minimum_version('1.15')
     @utils.check_resource
-    def exec_create(self, container, cmd, stdout=True, stderr=True, tty=False,
-                    privileged=False, user=''):
+    def exec_create(self, container, cmd, stdout=True, stderr=True,
+                    stdin=False, tty=False, privileged=False, user=''):
         if privileged and utils.compare_version('1.19', self._version) < 0:
             raise errors.InvalidVersion(
                 'Privileged exec is not supported in API < 1.19'
@@ -25,7 +25,7 @@ class ExecApiMixin(object):
             'User': user,
             'Privileged': privileged,
             'Tty': tty,
-            'AttachStdin': False,
+            'AttachStdin': stdin,
             'AttachStdout': stdout,
             'AttachStderr': stderr,
             'Cmd': cmd
@@ -53,7 +53,11 @@ class ExecApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.15')
-    def exec_start(self, exec_id, detach=False, tty=False, stream=False):
+    def exec_start(self, exec_id, detach=False, tty=False, stream=False,
+                   socket=False):
+        # we want opened socket if socket == True
+        if socket:
+            stream = True
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
 
@@ -65,4 +69,7 @@ class ExecApiMixin(object):
         res = self._post_json(
             self._url('/exec/{0}/start', exec_id), data=data, stream=stream
         )
+
+        if socket:
+            return self._get_raw_response_socket(res)
         return self._get_result_tty(stream, res, tty)

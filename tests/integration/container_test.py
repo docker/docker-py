@@ -1,8 +1,6 @@
-import errno
 import os
 import shutil
 import signal
-import struct
 import tempfile
 
 import docker
@@ -957,7 +955,8 @@ class AttachContainerTest(helpers.BaseTestCase):
 
     def test_run_container_reading_socket(self):
         line = 'hi there and stuff and things, words!'
-        command = "echo '{0}'".format(line)
+        # `echo` appends CRLF, `printf` doesn't
+        command = "printf '{0}'".format(line)
         container = self.client.create_container(BUSYBOX, command,
                                                  detach=True, tty=False)
         ident = container['Id']
@@ -965,51 +964,14 @@ class AttachContainerTest(helpers.BaseTestCase):
 
         opts = {"stdout": 1, "stream": 1, "logs": 1}
         pty_stdout = self.client.attach_socket(ident, opts)
+        self.addCleanup(pty_stdout.close)
+
         self.client.start(ident)
 
-        recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
-
-        def read(n=4096):
-            """Code stolen from dockerpty to read the socket"""
-            try:
-                if hasattr(pty_stdout, 'recv'):
-                    return pty_stdout.recv(n)
-                return os.read(pty_stdout.fileno(), n)
-            except EnvironmentError as e:
-                if e.errno not in recoverable_errors:
-                    raise
-
-        def next_packet_size():
-            """Code stolen from dockerpty to get the next packet size"""
-            data = six.binary_type()
-            while len(data) < 8:
-                next_data = read(8 - len(data))
-                if not next_data:
-                    return 0
-                data = data + next_data
-
-            if data is None:
-                return 0
-
-            if len(data) == 8:
-                _, actual = struct.unpack('>BxxxL', data)
-                return actual
-
-        next_size = next_packet_size()
-        self.assertEqual(next_size, len(line) + 1)
-
-        data = six.binary_type()
-        while len(data) < next_size:
-            next_data = read(next_size - len(data))
-            if not next_data:
-                assert False, "Failed trying to read in the dataz"
-            data += next_data
-        self.assertEqual(data.decode('utf-8'), "{0}\n".format(line))
-        pty_stdout.close()
-
-        # Prevent segfault at the end of the test run
-        if hasattr(pty_stdout, "_response"):
-            del pty_stdout._response
+        next_size = helpers.next_packet_size(pty_stdout)
+        self.assertEqual(next_size, len(line))
+        data = helpers.read_data(pty_stdout, next_size)
+        self.assertEqual(data.decode('utf-8'), line)
 
 
 class PauseTest(helpers.BaseTestCase):
