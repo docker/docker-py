@@ -34,10 +34,11 @@ Docker bridge, 'none': no networking for this container, 'container:[name|id]':
 reuses another container network stack), 'host': use the host network stack
 inside the container.
 
-`restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a
-container should or should not be restarted on exit. By default the policy is
-set to no meaning do not restart the container when it exits. The user may
-specify the restart policy as a dictionary for example:
+`restart_policy` is available since v1.2.0 and sets the container's *RestartPolicy*
+which defines the conditions under which a container should be restarted upon exit.
+If no *RestartPolicy* is defined, the container will not be restarted when it exits.
+The *RestartPolicy* is specified as a dict. For example, if the container
+should always be restarted:
 ```python
 {
     "MaximumRetryCount": 0,
@@ -45,8 +46,8 @@ specify the restart policy as a dictionary for example:
 }
 ```
 
-For always restarting the container on exit or can specify to restart the
-container to restart on failure and can limit number of restarts. For example:
+It is possible to restart the container only on failure as well as limit the number
+of restarts. For example:
 ```python
 {
     "MaximumRetryCount": 5,
@@ -95,10 +96,12 @@ for example:
   of ulimits to be set in the container.
 * log_config (`docker.utils.LogConfig` or dict): Logging configuration to
   container
-* mem_limit (str or num): Maximum amount of memory container is allowed to
-  consume. (e.g. `'1g'`)
-* memswap_limit (str or num): Maximum amount of memory + swap a container is
+* mem_limit (str or int): Maximum amount of memory container is allowed to
+  consume. (e.g. `'1G'`)
+* memswap_limit (str or int): Maximum amount of memory + swap a container is
   allowed to consume.
+* mem_swappiness (int): Tune a container's memory swappiness behavior.
+  Accepts number between 0 and 100.
 * group_add (list): List of additional group names and/or IDs that the
   container process will run as.
 * devices (list): A list of devices to add to the container specified as dicts
