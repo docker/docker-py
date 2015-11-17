@@ -3,12 +3,12 @@ import random
 import docker
 import pytest
 
-from . import api_test
+from .. import helpers
 from ..base import requires_api_version
 
 
 @requires_api_version('1.21')
-class TestNetworks(api_test.BaseTestCase):
+class TestNetworks(helpers.BaseTestCase):
     def create_network(self, *args, **kwargs):
         net_name = u'dockerpy{}'.format(random.getrandbits(24))[:14]
         net_id = self.client.create_network(net_name, *args, **kwargs)['Id']

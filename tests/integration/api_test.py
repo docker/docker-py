@@ -1,125 +1,16 @@
 import base64
-import json
 import os
-import shutil
 import tempfile
 import time
 import unittest
 import warnings
 
 import docker
-import six
 
-BUSYBOX = 'busybox:buildroot-2014.02'
-EXEC_DRIVER = []
+from .. import helpers
 
 
-def exec_driver_is_native():
-    global EXEC_DRIVER
-    if not EXEC_DRIVER:
-        c = docker_client()
-        EXEC_DRIVER = c.info()['ExecutionDriver']
-        c.close()
-    return EXEC_DRIVER.startswith('native')
-
-
-def docker_client(**kwargs):
-    return docker.Client(**docker_client_kwargs(**kwargs))
-
-
-def docker_client_kwargs(**kwargs):
-    client_kwargs = docker.utils.kwargs_from_env(assert_hostname=False)
-    client_kwargs.update(kwargs)
-    return client_kwargs
-
-
-def setup_module():
-    warnings.simplefilter('error')
-    c = docker_client()
-    try:
-        c.inspect_image(BUSYBOX)
-    except docker.errors.NotFound:
-        os.write(2, "\npulling busybox\n".encode('utf-8'))
-        for data in c.pull(BUSYBOX, stream=True):
-            data = json.loads(data.decode('utf-8'))
-            os.write(2, ("%c[2K\r" % 27).encode('utf-8'))
-            status = data.get("status")
-            progress = data.get("progress")
-            detail = "{0} - {1}".format(status, progress).encode('utf-8')
-            os.write(2, detail)
-        os.write(2, "\npulled busybox\n".encode('utf-8'))
-
-        # Double make sure we now have busybox
-        c.inspect_image(BUSYBOX)
-    c.close()
-
-
-class BaseTestCase(unittest.TestCase):
-    tmp_imgs = []
-    tmp_containers = []
-    tmp_folders = []
-    tmp_volumes = []
-
-    def setUp(self):
-        if six.PY2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertCountEqual = self.assertItemsEqual
-        self.client = docker_client(timeout=60)
-        self.tmp_imgs = []
-        self.tmp_containers = []
-        self.tmp_folders = []
-        self.tmp_volumes = []
-        self.tmp_networks = []
-
-    def tearDown(self):
-        for img in self.tmp_imgs:
-            try:
-                self.client.remove_image(img)
-            except docker.errors.APIError:
-                pass
-        for container in self.tmp_containers:
-            try:
-                self.client.stop(container, timeout=1)
-                self.client.remove_container(container)
-            except docker.errors.APIError:
-                pass
-        for network in self.tmp_networks:
-            try:
-                self.client.remove_network(network)
-            except docker.errors.APIError:
-                pass
-        for folder in self.tmp_folders:
-            shutil.rmtree(folder)
-
-        for volume in self.tmp_volumes:
-            try:
-                self.client.remove_volume(volume)
-            except docker.errors.APIError:
-                pass
-
-        self.client.close()
-
-    def run_container(self, *args, **kwargs):
-        container = self.client.create_container(*args, **kwargs)
-        self.tmp_containers.append(container)
-        self.client.start(container)
-        exitcode = self.client.wait(container)
-
-        if exitcode != 0:
-            output = self.client.logs(container)
-            raise Exception(
-                "Container exited with code {}:\n{}"
-                .format(exitcode, output))
-
-        return container
-
-
-#########################
-#   INFORMATION TESTS   #
-#########################
-
-
-class InformationTest(BaseTestCase):
+class InformationTest(helpers.BaseTestCase):
     def test_version(self):
         res = self.client.version()
         self.assertIn('GoVersion', res)
@@ -133,7 +24,7 @@ class InformationTest(BaseTestCase):
         self.assertIn('Debug', res)
 
     def test_search(self):
-        self.client = docker_client(timeout=10)
+        self.client = helpers.docker_client(timeout=10)
         res = self.client.search('busybox')
         self.assertTrue(len(res) >= 1)
         base_img = [x for x in res if x['name'] == 'busybox']
@@ -141,16 +32,11 @@ class InformationTest(BaseTestCase):
         self.assertIn('description', base_img[0])
 
 
-#################
-#  LINKS TESTS  #
-#################
-
-
-class LinkTest(BaseTestCase):
+class LinkTest(helpers.BaseTestCase):
     def test_remove_link(self):
         # Create containers
         container1 = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
+            helpers.BUSYBOX, 'cat', detach=True, stdin_open=True
         )
         container1_id = container1['Id']
         self.tmp_containers.append(container1_id)
@@ -162,7 +48,7 @@ class LinkTest(BaseTestCase):
         link_alias = 'mylink'
 
         container2 = self.client.create_container(
-            BUSYBOX, 'cat', host_config=self.client.create_host_config(
+            helpers.BUSYBOX, 'cat', host_config=self.client.create_host_config(
                 links={link_path: link_alias}, network_mode='none'
             )
         )
@@ -188,11 +74,7 @@ class LinkTest(BaseTestCase):
         self.assertEqual(len(retrieved), 2)
 
 
-#######################
-#  PY SPECIFIC TESTS  #
-#######################
-
-class LoadConfigTest(BaseTestCase):
+class LoadConfigTest(helpers.BaseTestCase):
     def test_load_legacy_config(self):
         folder = tempfile.mkdtemp()
         self.tmp_folders.append(folder)
@@ -231,7 +113,7 @@ class LoadConfigTest(BaseTestCase):
 
 class AutoDetectVersionTest(unittest.TestCase):
     def test_client_init(self):
-        client = docker_client(version='auto')
+        client = helpers.docker_client(version='auto')
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -240,7 +122,7 @@ class AutoDetectVersionTest(unittest.TestCase):
         client.close()
 
     def test_auto_client(self):
-        client = docker.AutoVersionClient(**docker_client_kwargs())
+        client = docker.AutoVersionClient(**helpers.docker_client_kwargs())
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -248,7 +130,9 @@ class AutoDetectVersionTest(unittest.TestCase):
         self.assertEqual(client_version, api_version_2)
         client.close()
         with self.assertRaises(docker.errors.DockerException):
-            docker.AutoVersionClient(**docker_client_kwargs(version='1.11'))
+            docker.AutoVersionClient(
+                **helpers.docker_client_kwargs(version='1.11')
+            )
 
 
 class ConnectionTimeoutTest(unittest.TestCase):
@@ -283,7 +167,7 @@ class UnixconnTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
 
-            client = docker_client()
+            client = helpers.docker_client()
             client.images()
             client.close()
             del client
