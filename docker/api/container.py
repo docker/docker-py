@@ -356,9 +356,14 @@ class ContainerApiMixin(object):
 
     @utils.minimum_version('1.17')
     @utils.check_resource
-    def stats(self, container, decode=None):
+    def stats(self, container, decode=None, stream=True):
         url = self._url("/containers/{0}/stats", container)
-        return self._stream_helper(self._get(url, stream=True), decode=decode)
+        if stream:
+            return self._stream_helper(self._get(url, stream=True),
+                                       decode=decode)
+        else:
+            return self._result(self._get(url, params={'stream': False}),
+                                json=True)
 
     @utils.check_resource
     def stop(self, container, timeout=10):
