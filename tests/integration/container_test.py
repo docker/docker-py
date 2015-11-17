@@ -365,21 +365,11 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.assertIn('MemorySwappiness', host_config)
 
     def test_create_host_config_exception_raising(self):
-        with self.assertRaises(TypeError) as exc:
-            ctnr1 = self.client.create_container(
-                BUSYBOX, 'true',
-                host_config=self.client.create_host_config(mem_swappiness='40')
-            )
-        self.assertIn('Invalid type for', exc.exception.response.text)
-        self.client.remove_container(ctnr1.get('Id', ctnr1), force=True)
+        self.assertRaises(TypeError,
+                          self.client.create_host_config, mem_swappiness='40')
 
-        with self.assertRaises(docker.errors.InvalidVersion) as exc:
-            ctnr2 = self.client.create_container(
-                BUSYBOX, 'true',
-                host_config=self.client.create_host_config(version='1.18', mem_swappiness=40)
-            )
-        self.assertIn('param is not supported in', exc.exception.response.text)
-        self.client.remove_container(ctnr2.get('Id', ctnr2), force=True)
+        self.assertRaises(ValueError,
+                          self.client.create_host_config, pid_mode='40')
 
 
 class VolumeBindTest(helpers.BaseTestCase):
