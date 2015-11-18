@@ -469,16 +469,16 @@ def parse_bytes(s):
     return s
 
 
-def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
-                       publish_all_ports=False, links=None, privileged=False,
-                       dns=None, dns_search=None, volumes_from=None,
-                       network_mode=None, restart_policy=None, cap_add=None,
-                       cap_drop=None, devices=None, extra_hosts=None,
-                       read_only=None, pid_mode=None, ipc_mode=None,
-                       security_opt=None, ulimits=None, log_config=None,
-                       mem_limit=None, memswap_limit=None, mem_swappiness=None,
-                       cgroup_parent=None, group_add=None, cpu_quota=None,
-                       cpu_period=None, version=None):
+def create_host_config(
+    binds=None, port_bindings=None, lxc_conf=None, publish_all_ports=False,
+    links=None, privileged=False, dns=None, dns_search=None, volumes_from=None,
+    network_mode=None, restart_policy=None, cap_add=None, cap_drop=None,
+    devices=None, extra_hosts=None, read_only=None, pid_mode=None,
+    ipc_mode=None, security_opt=None, ulimits=None, log_config=None,
+    mem_limit=None, memswap_limit=None, mem_swappiness=None,
+    cgroup_parent=None, group_add=None, cpu_quota=None, cpu_period=None,
+    oom_kill_disable=False, version=None
+):
 
     host_config = {}
 
@@ -524,6 +524,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if privileged:
         host_config['Privileged'] = privileged
+
+    if oom_kill_disable:
+        if version_lt(version, '1.19'):
+            raise errors.InvalidVersion(
+                'oom_kill_disable param not supported for API version < 1.19'
+            )
+        host_config['OomKillDisable'] = oom_kill_disable
 
     if publish_all_ports:
         host_config['PublishAllPorts'] = publish_all_ports
