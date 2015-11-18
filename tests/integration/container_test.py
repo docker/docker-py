@@ -1041,7 +1041,7 @@ class PauseTest(helpers.BaseTestCase):
         self.assertEqual(state['Paused'], False)
 
 
-class GetContainerStatsTest(api_test.BaseTestCase):
+class GetContainerStatsTest(helpers.BaseTestCase):
     @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
         container = self.client.create_container(
