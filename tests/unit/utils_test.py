@@ -13,7 +13,7 @@ import six
 
 from docker.client import Client
 from docker.constants import DEFAULT_DOCKER_API_VERSION
-from docker.errors import DockerException
+from docker.errors import DockerException, InvalidVersion
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
@@ -61,6 +61,13 @@ class HostConfigTest(base.BaseTestCase):
     def test_create_host_config_with_cpu_period(self):
         config = create_host_config(version='1.20', cpu_period=1999)
         self.assertEqual(config.get('CpuPeriod'), 1999)
+
+    def test_create_host_config_with_oom_kill_disable(self):
+        config = create_host_config(version='1.20', oom_kill_disable=True)
+        self.assertEqual(config.get('OomKillDisable'), True)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.18.3',
+                                                       oom_kill_disable=True))
 
 
 class UlimitTest(base.BaseTestCase):
