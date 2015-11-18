@@ -1054,7 +1054,7 @@ class GetContainerStatsTest(api_test.BaseTestCase):
         self.client.kill(container)
 
         self.assertEqual(type(response), dict)
-        for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
+        for key in ['read', 'networks', 'precpu_stats', 'cpu_stats',
                     'memory_stats', 'blkio_stats']:
             self.assertIn(key, response)
 
