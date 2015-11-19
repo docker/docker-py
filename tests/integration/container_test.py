@@ -9,14 +9,13 @@ import docker
 import pytest
 import six
 
-from . import api_test
 from ..base import requires_api_version
 from .. import helpers
 
-BUSYBOX = api_test.BUSYBOX
+BUSYBOX = helpers.BUSYBOX
 
 
-class ListContainersTest(api_test.BaseTestCase):
+class ListContainersTest(helpers.BaseTestCase):
     def test_list_containers(self):
         res0 = self.client.containers(all=True)
         size = len(res0)
@@ -36,7 +35,7 @@ class ListContainersTest(api_test.BaseTestCase):
         self.assertIn('Status', retrieved)
 
 
-class CreateContainerTest(api_test.BaseTestCase):
+class CreateContainerTest(helpers.BaseTestCase):
 
     def test_create(self):
         res = self.client.create_container(BUSYBOX, 'true')
@@ -161,7 +160,7 @@ class CreateContainerTest(api_test.BaseTestCase):
         self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
     def create_container_readonly_fs(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         ctnr = self.client.create_container(
@@ -368,7 +367,7 @@ class CreateContainerTest(api_test.BaseTestCase):
         self.assertIn('MemorySwappiness', host_config)
 
 
-class VolumeBindTest(api_test.BaseTestCase):
+class VolumeBindTest(helpers.BaseTestCase):
     def setUp(self):
         super(VolumeBindTest, self).setUp()
 
@@ -458,7 +457,7 @@ class VolumeBindTest(api_test.BaseTestCase):
 
 
 @requires_api_version('1.20')
-class ArchiveTest(api_test.BaseTestCase):
+class ArchiveTest(helpers.BaseTestCase):
     def test_get_file_archive_from_container(self):
         data = 'The Maid and the Pocket Watch of Blood'
         ctnr = self.client.create_container(
@@ -538,7 +537,7 @@ class ArchiveTest(api_test.BaseTestCase):
         self.assertIn('bar/', results)
 
 
-class RenameContainerTest(api_test.BaseTestCase):
+class RenameContainerTest(helpers.BaseTestCase):
     def test_rename_container(self):
         version = self.client.version()['Version']
         name = 'hong_meiling'
@@ -554,7 +553,7 @@ class RenameContainerTest(api_test.BaseTestCase):
             self.assertEqual('/{0}'.format(name), inspect['Name'])
 
 
-class StartContainerTest(api_test.BaseTestCase):
+class StartContainerTest(helpers.BaseTestCase):
     def test_start_container(self):
         res = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res)
@@ -608,7 +607,7 @@ class StartContainerTest(api_test.BaseTestCase):
             self.assertEqual(exitcode, 0, msg=cmd)
 
 
-class WaitTest(api_test.BaseTestCase):
+class WaitTest(helpers.BaseTestCase):
     def test_wait(self):
         res = self.client.create_container(BUSYBOX, ['sleep', '3'])
         id = res['Id']
@@ -636,7 +635,7 @@ class WaitTest(api_test.BaseTestCase):
         self.assertEqual(inspect['State']['ExitCode'], exitcode)
 
 
-class LogsTest(api_test.BaseTestCase):
+class LogsTest(helpers.BaseTestCase):
     def test_logs(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
@@ -708,7 +707,7 @@ Line2'''
         self.assertEqual(logs, ''.encode(encoding='ascii'))
 
 
-class DiffTest(api_test.BaseTestCase):
+class DiffTest(helpers.BaseTestCase):
     def test_diff(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -736,7 +735,7 @@ class DiffTest(api_test.BaseTestCase):
         self.assertEqual(test_diff[0]['Kind'], 1)
 
 
-class StopTest(api_test.BaseTestCase):
+class StopTest(helpers.BaseTestCase):
     def test_stop(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -747,7 +746,7 @@ class StopTest(api_test.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if api_test.exec_driver_is_native():
+        if helpers.exec_driver_is_native():
             self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
@@ -763,13 +762,13 @@ class StopTest(api_test.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if api_test.exec_driver_is_native():
+        if helpers.exec_driver_is_native():
             self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
 
-class KillTest(api_test.BaseTestCase):
+class KillTest(helpers.BaseTestCase):
     def test_kill(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -780,7 +779,7 @@ class KillTest(api_test.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if api_test.exec_driver_is_native():
+        if helpers.exec_driver_is_native():
             self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
@@ -795,7 +794,7 @@ class KillTest(api_test.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if api_test.exec_driver_is_native():
+        if helpers.exec_driver_is_native():
             self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
@@ -817,7 +816,7 @@ class KillTest(api_test.BaseTestCase):
         self.assertEqual(state['Running'], False, state)
 
 
-class PortTest(api_test.BaseTestCase):
+class PortTest(helpers.BaseTestCase):
     def test_port(self):
 
         port_bindings = {
@@ -848,7 +847,7 @@ class PortTest(api_test.BaseTestCase):
         self.client.kill(id)
 
 
-class ContainerTopTest(api_test.BaseTestCase):
+class ContainerTopTest(helpers.BaseTestCase):
     def test_top(self):
         container = self.client.create_container(
             BUSYBOX, ['sleep', '60'])
@@ -883,7 +882,7 @@ class ContainerTopTest(api_test.BaseTestCase):
         self.client.kill(id)
 
 
-class RestartContainerTest(api_test.BaseTestCase):
+class RestartContainerTest(helpers.BaseTestCase):
     def test_restart(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -924,7 +923,7 @@ class RestartContainerTest(api_test.BaseTestCase):
         self.client.kill(id)
 
 
-class RemoveContainerTest(api_test.BaseTestCase):
+class RemoveContainerTest(helpers.BaseTestCase):
     def test_remove(self):
         container = self.client.create_container(BUSYBOX, ['true'])
         id = container['Id']
@@ -946,7 +945,7 @@ class RemoveContainerTest(api_test.BaseTestCase):
         self.assertEqual(len(res), 0)
 
 
-class AttachContainerTest(api_test.BaseTestCase):
+class AttachContainerTest(helpers.BaseTestCase):
     def test_run_container_streaming(self):
         container = self.client.create_container(BUSYBOX, '/bin/sh',
                                                  detach=True, stdin_open=True)
@@ -1013,7 +1012,7 @@ class AttachContainerTest(api_test.BaseTestCase):
             del pty_stdout._response
 
 
-class PauseTest(api_test.BaseTestCase):
+class PauseTest(helpers.BaseTestCase):
     def test_pause_unpause(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -1042,7 +1041,7 @@ class PauseTest(api_test.BaseTestCase):
         self.assertEqual(state['Paused'], False)
 
 
-class GetContainerStatsTest(api_test.BaseTestCase):
+class GetContainerStatsTest(helpers.BaseTestCase):
     @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
         container = self.client.create_container(

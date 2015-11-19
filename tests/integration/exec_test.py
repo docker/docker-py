@@ -1,13 +1,13 @@
 import pytest
 
-from . import api_test
+from .. import helpers
 
-BUSYBOX = api_test.BUSYBOX
+BUSYBOX = helpers.BUSYBOX
 
 
-class ExecTest(api_test.BaseTestCase):
+class ExecTest(helpers.BaseTestCase):
     def test_execute_command(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -23,7 +23,7 @@ class ExecTest(api_test.BaseTestCase):
         self.assertEqual(exec_log, b'hello\n')
 
     def test_exec_command_string(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -39,7 +39,7 @@ class ExecTest(api_test.BaseTestCase):
         self.assertEqual(exec_log, b'hello world\n')
 
     def test_exec_command_as_user(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -55,7 +55,7 @@ class ExecTest(api_test.BaseTestCase):
         self.assertEqual(exec_log, b'default\n')
 
     def test_exec_command_as_root(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -71,7 +71,7 @@ class ExecTest(api_test.BaseTestCase):
         self.assertEqual(exec_log, b'root\n')
 
     def test_exec_command_streaming(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -89,7 +89,7 @@ class ExecTest(api_test.BaseTestCase):
         self.assertEqual(res, b'hello\nworld\n')
 
     def test_exec_inspect(self):
-        if not api_test.exec_driver_is_native():
+        if not helpers.exec_driver_is_native():
             pytest.skip('Exec driver not native')
 
         container = self.client.create_container(BUSYBOX, 'cat',

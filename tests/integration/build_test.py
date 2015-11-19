@@ -6,11 +6,11 @@ import tempfile
 
 import six
 
-from . import api_test
+from .. import helpers
 from ..base import requires_api_version
 
 
-class BuildTest(api_test.BaseTestCase):
+class BuildTest(helpers.BaseTestCase):
     def test_build_streaming(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',

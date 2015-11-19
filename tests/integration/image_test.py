@@ -14,12 +14,12 @@ from six.moves import socketserver
 
 import docker
 
-from . import api_test
+from .. import helpers
 
-BUSYBOX = api_test.BUSYBOX
+BUSYBOX = helpers.BUSYBOX
 
 
-class ListImagesTest(api_test.BaseTestCase):
+class ListImagesTest(helpers.BaseTestCase):
     def test_images(self):
         res1 = self.client.images(all=True)
         self.assertIn('Id', res1[0])
@@ -37,7 +37,7 @@ class ListImagesTest(api_test.BaseTestCase):
         self.assertEqual(type(res1[0]), six.text_type)
 
 
-class PullImageTest(api_test.BaseTestCase):
+class PullImageTest(helpers.BaseTestCase):
     def test_pull(self):
         try:
             self.client.remove_image('hello-world')
@@ -70,7 +70,7 @@ class PullImageTest(api_test.BaseTestCase):
         self.assertIn('Id', img_info)
 
 
-class CommitTest(api_test.BaseTestCase):
+class CommitTest(helpers.BaseTestCase):
     def test_commit(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -91,7 +91,7 @@ class CommitTest(api_test.BaseTestCase):
         self.assertEqual(img['Parent'], busybox_id)
 
 
-class RemoveImageTest(api_test.BaseTestCase):
+class RemoveImageTest(helpers.BaseTestCase):
     def test_remove(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -107,7 +107,7 @@ class RemoveImageTest(api_test.BaseTestCase):
         self.assertEqual(len(res), 0)
 
 
-class ImportImageTest(api_test.BaseTestCase):
+class ImportImageTest(helpers.BaseTestCase):
     '''Base class for `docker import` test cases.'''
 
     TAR_SIZE = 512 * 1024
