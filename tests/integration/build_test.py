@@ -65,6 +65,7 @@ class BuildTest(helpers.BaseTestCase):
                 'ignored',
                 'Dockerfile',
                 '.dockerignore',
+                '!ignored/subdir/excepted-file',
                 '',  # empty line
             ]))
 
@@ -76,6 +77,9 @@ class BuildTest(helpers.BaseTestCase):
         with open(os.path.join(subdir, 'file'), 'w') as f:
             f.write("this file should be ignored")
 
+        with open(os.path.join(subdir, 'excepted-file'), 'w') as f:
+            f.write("this file should not be ignored")
+
         tag = 'docker-py-test-build-with-dockerignore'
         stream = self.client.build(
             path=base_dir,
@@ -84,7 +88,7 @@ class BuildTest(helpers.BaseTestCase):
         for chunk in stream:
             pass
 
-        c = self.client.create_container(tag, ['ls', '-1A', '/test'])
+        c = self.client.create_container(tag, ['find', '/test', '-type', 'f'])
         self.client.start(c)
         self.client.wait(c)
         logs = self.client.logs(c)
@@ -93,8 +97,9 @@ class BuildTest(helpers.BaseTestCase):
             logs = logs.decode('utf-8')
 
         self.assertEqual(
-            list(filter(None, logs.split('\n'))),
-            ['not-ignored'],
+            sorted(list(filter(None, logs.split('\n')))),
+            sorted(['/test/ignored/subdir/excepted-file',
+                    '/test/not-ignored']),
         )
 
     @requires_api_version('1.21')
