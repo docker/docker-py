@@ -1,6 +1,42 @@
 Change Log
 ==========
 
+1.6.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.6.0+is%3Aclosed)
+
+### Features
+
+* Added support for the `since` param in `Client.logs` (introduced in API
+  version 1.19)
+* Added support for the `DOCKER_CONFIG` environment variable when looking up
+  auth config
+* Added support for the `stream` param in `Client.stats` (when set to `False`,
+  allows user to retrieve a single snapshot instead of a constant data stream)
+* Added support for the `mem_swappiness`, `oom_kill_disable` params
+  in `Client.create_host_config`
+* Added support for build arguments in `Client.build` through the `buildargs`
+  param.
+
+
+
+### Bugfixes
+
+* Fixed a bug where streaming data over HTTPS would sometimes behave
+  incorrectly with Python 3.x
+* Fixed a bug where commands containing unicode characters would be incorrectly
+  handled by `Client.create_container`.
+* Fixed a bug where auth config credentials containing unicode characters would
+  cause failures when pushing / pulling images.
+* Setting `tail=0` in `Client.logs` no longer shows past logs.
+
+### Miscellaneous
+
+* Default API version is now 1.21 (introduced in Docker 1.9.0)
+* Several test improvements and cleanup that should make the suite easier to
+  expand and maintain moving forward.
+
 1.5.0
 -----
 
