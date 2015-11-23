@@ -950,8 +950,8 @@ class AttachContainerTest(helpers.BaseTestCase):
         container = self.client.create_container(BUSYBOX, '/bin/sh',
                                                  detach=True, stdin_open=True)
         id = container['Id']
-        self.client.start(id)
         self.tmp_containers.append(id)
+        self.client.start(id)
         sock = self.client.attach_socket(container, ws=False)
         self.assertTrue(sock.fileno() > -1)
 
