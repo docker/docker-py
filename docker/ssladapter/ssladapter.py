@@ -46,6 +46,19 @@ class SSLAdapter(HTTPAdapter):
 
         self.poolmanager = PoolManager(**kwargs)
 
+    def get_connection(self, *args, **kwargs):
+        """
+        Ensure assert_hostname is set correctly on our pool
+
+        We already take care of a normal poolmanager via init_poolmanager
+
+        But we still need to take care of when there is a proxy poolmanager
+        """
+        conn = super(SSLAdapter, self).get_connection(*args, **kwargs)
+        if conn.assert_hostname != self.assert_hostname:
+            conn.assert_hostname = self.assert_hostname
+        return conn
+
     def can_override_ssl_version(self):
         urllib_ver = urllib3.__version__.split('-')[0]
         if urllib_ver is None:
