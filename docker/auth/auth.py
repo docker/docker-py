@@ -16,11 +16,9 @@ import base64
 import json
 import logging
 import os
-import warnings
 
 import six
 
-from .. import constants
 from .. import errors
 
 INDEX_NAME = 'index.docker.io'
@@ -31,31 +29,29 @@ LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 log = logging.getLogger(__name__)
 
 
-def resolve_repository_name(repo_name, insecure=False):
-    if insecure:
-        warnings.warn(
-            constants.INSECURE_REGISTRY_DEPRECATION_WARNING.format(
-                'resolve_repository_name()'
-            ), DeprecationWarning
-        )
-
+def resolve_repository_name(repo_name):
     if '://' in repo_name:
         raise errors.InvalidRepository(
-            'Repository name cannot contain a scheme ({0})'.format(repo_name))
-    parts = repo_name.split('/', 1)
-    if '.' not in parts[0] and ':' not in parts[0] and parts[0] != 'localhost':
-        # This is a docker index repo (ex: foo/bar or ubuntu)
-        return INDEX_NAME, repo_name
-    if len(parts) < 2:
-        raise errors.InvalidRepository(
-            'Invalid repository name ({0})'.format(repo_name))
-
-    if 'index.docker.io' in parts[0]:
-        raise errors.InvalidRepository(
-            'Invalid repository name, try "{0}" instead'.format(parts[1])
+            'Repository name cannot contain a scheme ({0})'.format(repo_name)
         )
 
-    return parts[0], parts[1]
+    index_name, remote_name = split_repo_name(repo_name)
+    if index_name[0] == '-' or index_name[-1] == '-':
+        raise errors.InvalidRepository(
+            'Invalid index name ({0}). Cannot begin or end with a'
+            ' hyphen.'.format(index_name)
+        )
+    return index_name, remote_name
+
+
+def split_repo_name(repo_name):
+    parts = repo_name.split('/', 1)
+    if len(parts) == 1 or (
+        '.' not in parts[0] and ':' not in parts[0] and parts[0] != 'localhost'
+    ):
+        # This is a docker index repo (ex: username/foobar or ubuntu)
+        return INDEX_NAME, repo_name
+    return tuple(parts)
 
 
 def resolve_authconfig(authconfig, registry=None):
