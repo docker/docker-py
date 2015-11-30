@@ -352,22 +352,54 @@ class ParseHostTest(base.BaseTestCase):
             assert parse_host(val, 'win32') == tcp_port
 
 
+class ParseRepositoryTagTest(base.BaseTestCase):
+    sha = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+
+    def test_index_image_no_tag(self):
+        self.assertEqual(
+            parse_repository_tag("root"), ("root", None)
+        )
+
+    def test_index_image_tag(self):
+        self.assertEqual(
+            parse_repository_tag("root:tag"), ("root", "tag")
+        )
+
+    def test_index_user_image_no_tag(self):
+        self.assertEqual(
+            parse_repository_tag("user/repo"), ("user/repo", None)
+        )
+
+    def test_index_user_image_tag(self):
+        self.assertEqual(
+            parse_repository_tag("user/repo:tag"), ("user/repo", "tag")
+        )
+
+    def test_private_reg_image_no_tag(self):
+        self.assertEqual(
+            parse_repository_tag("url:5000/repo"), ("url:5000/repo", None)
+        )
+
+    def test_private_reg_image_tag(self):
+        self.assertEqual(
+            parse_repository_tag("url:5000/repo:tag"), ("url:5000/repo", "tag")
+        )
+
+    def test_index_image_sha(self):
+        self.assertEqual(
+            parse_repository_tag("root@sha256:{0}".format(self.sha)),
+            ("root", "sha256:{0}".format(self.sha))
+        )
+
+    def test_private_reg_image_sha(self):
+        self.assertEqual(
+            parse_repository_tag("url:5000/repo@sha256:{0}".format(self.sha)),
+            ("url:5000/repo", "sha256:{0}".format(self.sha))
+        )
+
+
 class UtilsTest(base.BaseTestCase):
     longMessage = True
-
-    def test_parse_repository_tag(self):
-        self.assertEqual(parse_repository_tag("root"),
-                         ("root", None))
-        self.assertEqual(parse_repository_tag("root:tag"),
-                         ("root", "tag"))
-        self.assertEqual(parse_repository_tag("user/repo"),
-                         ("user/repo", None))
-        self.assertEqual(parse_repository_tag("user/repo:tag"),
-                         ("user/repo", "tag"))
-        self.assertEqual(parse_repository_tag("url:5000/repo"),
-                         ("url:5000/repo", None))
-        self.assertEqual(parse_repository_tag("url:5000/repo:tag"),
-                         ("url:5000/repo", "tag"))
 
     def test_parse_bytes(self):
         self.assertEqual(parse_bytes("512MB"), (536870912))

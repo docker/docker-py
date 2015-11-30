@@ -9,6 +9,7 @@ import shutil
 import tempfile
 
 from docker import auth
+from docker import errors
 
 from .. import base
 
@@ -29,23 +30,29 @@ class RegressionTest(base.BaseTestCase):
         assert b'_' in encoded
 
 
-class ResolveAuthTest(base.BaseTestCase):
-    auth_config = {
-        'https://index.docker.io/v1/': {'auth': 'indexuser'},
-        'my.registry.net': {'auth': 'privateuser'},
-        'http://legacy.registry.url/v1/': {'auth': 'legacyauth'}
-    }
-
+class ResolveRepositoryNameTest(base.BaseTestCase):
     def test_resolve_repository_name_hub_library_image(self):
         self.assertEqual(
             auth.resolve_repository_name('image'),
             ('index.docker.io', 'image'),
         )
 
+    def test_resolve_repository_name_dotted_hub_library_image(self):
+        self.assertEqual(
+            auth.resolve_repository_name('image.valid'),
+            ('index.docker.io', 'image.valid')
+        )
+
     def test_resolve_repository_name_hub_image(self):
         self.assertEqual(
             auth.resolve_repository_name('username/image'),
             ('index.docker.io', 'username/image'),
+        )
+
+    def test_explicit_hub_index_library_image(self):
+        self.assertEqual(
+            auth.resolve_repository_name('index.docker.io/image'),
+            ('index.docker.io', 'image')
         )
 
     def test_resolve_repository_name_private_registry(self):
@@ -89,6 +96,20 @@ class ResolveAuthTest(base.BaseTestCase):
             auth.resolve_repository_name('localhost/username/image'),
             ('localhost', 'username/image'),
         )
+
+    def test_invalid_index_name(self):
+        self.assertRaises(
+            errors.InvalidRepository,
+            lambda: auth.resolve_repository_name('-gecko.com/image')
+        )
+
+
+class ResolveAuthTest(base.BaseTestCase):
+    auth_config = {
+        'https://index.docker.io/v1/': {'auth': 'indexuser'},
+        'my.registry.net': {'auth': 'privateuser'},
+        'http://legacy.registry.url/v1/': {'auth': 'legacyauth'}
+    }
 
     def test_resolve_authconfig_hostname_only(self):
         self.assertEqual(

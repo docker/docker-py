@@ -158,8 +158,6 @@ class ImageApiMixin(object):
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
-        if repo_name.count(":") == 1:
-            repository, tag = repository.rsplit(":", 1)
 
         params = {
             'tag': tag,
@@ -174,7 +172,8 @@ class ImageApiMixin(object):
                 log.debug('Looking for auth config')
                 if not self._auth_configs:
                     log.debug(
-                        "No auth config in memory - loading from filesystem")
+                        "No auth config in memory - loading from filesystem"
+                    )
                     self._auth_configs = auth.load_config()
                 authcfg = auth.resolve_authconfig(self._auth_configs, registry)
                 # Do not fail here if no authentication exists for this

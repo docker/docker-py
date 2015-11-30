@@ -283,16 +283,14 @@ def convert_volume_binds(binds):
     return result
 
 
-def parse_repository_tag(repo):
-    column_index = repo.rfind(':')
-    if column_index < 0:
-        return repo, None
-    tag = repo[column_index + 1:]
-    slash_index = tag.find('/')
-    if slash_index < 0:
-        return repo[:column_index], tag
-
-    return repo, None
+def parse_repository_tag(repo_name):
+    parts = repo_name.rsplit('@', 1)
+    if len(parts) == 2:
+        return tuple(parts)
+    parts = repo_name.rsplit(':', 1)
+    if len(parts) == 2 and '/' not in parts[1]:
+        return tuple(parts)
+    return repo_name, None
 
 
 # Based on utils.go:ParseHost http://tinyurl.com/nkahcfh
