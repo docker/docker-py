@@ -20,7 +20,6 @@ Change Log
   param.
 
 
-
 ### Bugfixes
 
 * Fixed a bug where streaming data over HTTPS would sometimes behave
@@ -30,12 +29,16 @@ Change Log
 * Fixed a bug where auth config credentials containing unicode characters would
   cause failures when pushing / pulling images.
 * Setting `tail=0` in `Client.logs` no longer shows past logs.
+* Fixed a bug where `Client.pull` and `Client.push` couldn't handle image names
+  containing a dot.
+
 
 ### Miscellaneous
 
 * Default API version is now 1.21 (introduced in Docker 1.9.0)
 * Several test improvements and cleanup that should make the suite easier to
   expand and maintain moving forward.
+
 
 1.5.0
 -----
