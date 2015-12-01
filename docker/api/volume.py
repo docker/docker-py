@@ -5,7 +5,7 @@ class VolumeApiMixin(object):
     @utils.minimum_version('1.21')
     def volumes(self, filters=None):
         params = {
-            'filter': utils.convert_filters(filters) if filters else None
+            'filters': utils.convert_filters(filters) if filters else None
         }
         url = self._url('/volumes')
         return self._result(self._get(url, params=params), True)
