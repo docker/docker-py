@@ -18,6 +18,18 @@ class VolumeTest(DockerClientTest):
         self.assertEqual(args[0][1], url_prefix + 'volumes')
 
     @base.requires_api_version('1.21')
+    def test_list_volumes_and_filters(self):
+        volumes = self.client.volumes(filters={'dangling': True})
+        assert 'Volumes' in volumes
+        assert len(volumes['Volumes']) == 2
+        args = fake_request.call_args
+
+        assert args[0][0] == 'GET'
+        assert args[0][1] == url_prefix + 'volumes'
+        assert args[1] == {'params': {'filters': '{"dangling": ["true"]}'},
+                           'timeout': 60}
+
+    @base.requires_api_version('1.21')
     def test_create_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.create_volume(name)
