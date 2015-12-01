@@ -31,8 +31,8 @@ of docker remote API. Otherwise they are ignored.
 `network_mode` is available since v1.11 and sets the Network mode for the
 container ('bridge': creates a new network stack for the container on the
 Docker bridge, 'none': no networking for this container, 'container:[name|id]':
-reuses another container network stack), 'host': use the host network stack
-inside the container.
+reuses another container network stack, 'host': use the host network stack
+inside the container or any name that identifies an existing Docker network).
 
 `restart_policy` is available since v1.2.0 and sets the container's *RestartPolicy*
 which defines the conditions under which a container should be restarted upon exit.
