@@ -704,7 +704,7 @@ def create_container_config(
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
-    labels=None, volume_driver=None
+    labels=None, volume_driver=None, stop_signal=None
 ):
     if isinstance(command, six.string_types):
         command = split_command(command)
@@ -721,6 +721,11 @@ def create_container_config(
     if labels is not None and compare_version('1.18', version) < 0:
         raise errors.InvalidVersion(
             'labels were only introduced in API version 1.18'
+        )
+
+    if stop_signal is not None and compare_version('1.21', version) < 0:
+        raise errors.InvalidVersion(
+            'stop_signal was only introduced in API version 1.21'
         )
 
     if compare_version('1.19', version) < 0:
@@ -828,4 +833,5 @@ def create_container_config(
         'MacAddress': mac_address,
         'Labels': labels,
         'VolumeDriver': volume_driver,
+        'StopSignal': stop_signal
     }
