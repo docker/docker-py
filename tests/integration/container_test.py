@@ -364,6 +364,13 @@ class CreateContainerTest(helpers.BaseTestCase):
         host_config = inspect['HostConfig']
         self.assertIn('MemorySwappiness', host_config)
 
+    def test_create_host_config_exception_raising(self):
+        self.assertRaises(TypeError,
+                          self.client.create_host_config, mem_swappiness='40')
+
+        self.assertRaises(ValueError,
+                          self.client.create_host_config, pid_mode='40')
+
 
 class VolumeBindTest(helpers.BaseTestCase):
     def setUp(self):

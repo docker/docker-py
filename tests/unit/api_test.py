@@ -314,8 +314,7 @@ class DockerApiTest(DockerClientTest):
         self.assertIn('SecurityOpt', result)
         self.assertEqual(result['SecurityOpt'], security_opt)
         self.assertRaises(
-            docker.errors.DockerException, self.client.create_host_config,
-            security_opt='wrong'
+            TypeError, self.client.create_host_config, security_opt='wrong'
         )
 
 
