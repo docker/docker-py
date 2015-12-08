@@ -33,4 +33,3 @@ class VolumeApiMixin(object):
         url = self._url('/volumes/{0}', name)
         resp = self._delete(url)
         self._raise_for_status(resp)
-        return True
