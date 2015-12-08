@@ -97,7 +97,8 @@ class ContainerApiMixin(object):
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=None, cpuset=None, host_config=None,
-                         mac_address=None, labels=None, volume_driver=None):
+                         mac_address=None, labels=None, volume_driver=None,
+                         stop_signal=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -112,7 +113,7 @@ class ContainerApiMixin(object):
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
-            volume_driver
+            volume_driver, stop_signal
         )
         return self.create_container_from_config(config, name)
 

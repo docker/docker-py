@@ -964,6 +964,25 @@ class CreateContainerTest(DockerClientTest):
             DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_create_container_with_stop_signal(self):
+        self.client.create_container('busybox', 'ls',
+                                     stop_signal='SIGINT')
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "StopSignal": "SIGINT"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
 
 class ContainerTest(DockerClientTest):
     def test_list_containers(self):
