@@ -163,6 +163,15 @@ non-running ones
   'Status': 'Up 1 seconds'}]
 ```
 
+## connect_container_to_network
+
+Connect a container to a network.
+
+**Params**:
+
+* container (str): container-id/name to be connected to the network
+* net_id (str): network id
+
 ## copy
 Identical to the `docker cp` command. Get files/folders from the container.
 **Deprecated for API version >= 1.20** &ndash; Consider using
@@ -259,6 +268,19 @@ The utility can be used as follows:
 You can now use this with 'environment' for `create_container`.
 
 
+## create_network
+
+Create a network, similar to the `docker network create` command.
+
+**Params**:
+
+* name (str): Name of the network
+* driver (str): Name of the driver used to create the network
+
+* options (dict): Driver options as a key-value dictionary
+
+**Returns** (dict): The created network reference object
+
 ## create_volume
 
 Create and register a named volume
@@ -290,6 +312,13 @@ Inspect changes on a container's filesystem.
 * container (str): The container to diff
 
 **Returns** (str):
+
+## disconnect_container_from_network
+
+**Params**:
+
+* container (str): container-id/name to be disconnected from a network
+* net_id (str): network id
 
 ## events
 
@@ -574,6 +603,16 @@ Identical to the `docker inspect` command, but only for images.
 **Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
 
+## inspect_network
+
+Retrieve network info by id.
+
+**Params**:
+
+* net_id (str): network id
+
+**Returns** (dict): Network information dictionary
+
 ## inspect_volume
 
 Retrieve volume info by name.
@@ -639,6 +678,19 @@ output as it happens.
 * tail (str or int): Output specified number of lines at the end of logs: `"all"` or `number`. Default `"all"`
 
 **Returns** (generator or str):
+
+## networks
+
+List networks currently registered by the docker daemon. Similar to the `docker networks ls` command.
+
+**Params**
+
+* names (list): List of names to filter by
+* ids (list): List of ids to filter by
+
+The above are combined to create a filters dict.
+
+**Returns** (dict): List of network objects.
 
 ## pause
 
@@ -772,6 +824,16 @@ Remove an image. Similar to the `docker rmi` command.
 * force (bool): Force removal of the image
 * noprune (bool): Do not delete untagged parents
 
+## remove_network
+
+Remove a network. Similar to the `docker network rm` command.
+
+**Params**:
+
+* net_id (str): The network's id
+
+Failure to remove will raise a `docker.errors.APIError` exception.
+
 ## remove_volume
 
 Remove a volume. Similar to the `docker volume rm` command.
@@ -780,8 +842,7 @@ Remove a volume. Similar to the `docker volume rm` command.
 
 * name (str): The volume's name
 
-**Returns** (bool): True on successful removal. Failure will raise a
-`docker.errors.APIError` exception.
+Failure to remove will raise a `docker.errors.APIError` exception.
 
 ## rename
 

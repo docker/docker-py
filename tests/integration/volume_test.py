@@ -47,8 +47,7 @@ class TestVolumes(helpers.BaseTestCase):
         name = 'shootthebullet'
         self.tmp_volumes.append(name)
         self.client.create_volume(name)
-        result = self.client.remove_volume(name)
-        self.assertTrue(result)
+        self.client.remove_volume(name)
 
     def test_remove_nonexistent_volume(self):
         name = 'shootthebullet'

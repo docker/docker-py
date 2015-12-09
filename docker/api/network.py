@@ -19,10 +19,14 @@ class NetworkApiMixin(object):
         return self._result(res, json=True)
 
     @minimum_version('1.21')
-    def create_network(self, name, driver=None):
+    def create_network(self, name, driver=None, options=None):
+        if options is not None and not isinstance(options, dict):
+            raise TypeError('options must be a dictionary')
+
         data = {
             'name': name,
             'driver': driver,
+            'options': options
         }
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)

@@ -70,11 +70,15 @@ class NetworkTest(DockerClientTest):
                 json.loads(post.call_args[1]['data']),
                 {"name": "foo"})
 
-            self.client.create_network('foo', 'bridge')
+            opts = {
+                'com.docker.network.bridge.enable_icc': False,
+                'com.docker.network.bridge.enable_ip_masquerade': False,
+            }
+            self.client.create_network('foo', 'bridge', opts)
 
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
-                {"name": "foo", "driver": "bridge"})
+                {"name": "foo", "driver": "bridge", "options": opts})
 
     @base.requires_api_version('1.21')
     def test_remove_network(self):

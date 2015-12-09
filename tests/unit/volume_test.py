@@ -89,8 +89,7 @@ class VolumeTest(DockerClientTest):
     @base.requires_api_version('1.21')
     def test_remove_volume(self):
         name = 'perfectcherryblossom'
-        result = self.client.remove_volume(name)
-        self.assertTrue(result)
+        self.client.remove_volume(name)
         args = fake_request.call_args
 
         self.assertEqual(args[0][0], 'DELETE')
