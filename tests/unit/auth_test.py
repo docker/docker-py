@@ -35,25 +35,31 @@ class ResolveRepositoryNameTest(base.BaseTestCase):
     def test_resolve_repository_name_hub_library_image(self):
         self.assertEqual(
             auth.resolve_repository_name('image'),
-            ('index.docker.io', 'image'),
+            ('docker.io', 'image'),
         )
 
     def test_resolve_repository_name_dotted_hub_library_image(self):
         self.assertEqual(
             auth.resolve_repository_name('image.valid'),
-            ('index.docker.io', 'image.valid')
+            ('docker.io', 'image.valid')
         )
 
     def test_resolve_repository_name_hub_image(self):
         self.assertEqual(
             auth.resolve_repository_name('username/image'),
-            ('index.docker.io', 'username/image'),
+            ('docker.io', 'username/image'),
         )
 
     def test_explicit_hub_index_library_image(self):
         self.assertEqual(
+            auth.resolve_repository_name('docker.io/image'),
+            ('docker.io', 'image')
+        )
+
+    def test_explicit_legacy_hub_index_library_image(self):
+        self.assertEqual(
             auth.resolve_repository_name('index.docker.io/image'),
-            ('index.docker.io', 'image')
+            ('docker.io', 'image')
         )
 
     def test_resolve_repository_name_private_registry(self):
@@ -228,6 +234,23 @@ class ResolveAuthTest(base.BaseTestCase):
             )['username'],
             'indexuser',
         )
+
+    def test_resolve_registry_and_auth_explicit_hub(self):
+        image = 'docker.io/username/image'
+        self.assertEqual(
+            auth.resolve_authconfig(
+                self.auth_config, auth.resolve_repository_name(image)[0]
+            )['username'],
+            'indexuser',
+        )
+
+    def test_resolve_registry_and_auth_explicit_legacy_hub(self):
+        image = 'index.docker.io/username/image'
+        self.assertEqual(
+            auth.resolve_authconfig(
+                self.auth_config, auth.resolve_repository_name(image)[0]
+            )['username'],
+            'indexuser',
         )
 
     def test_resolve_registry_and_auth_private_registry(self):
