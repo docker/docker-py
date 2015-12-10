@@ -9,6 +9,7 @@ import shutil
 import tempfile
 
 from docker import auth
+from docker.auth.auth import parse_auth
 from docker import errors
 
 from .. import base
@@ -104,88 +105,105 @@ class ResolveRepositoryNameTest(base.BaseTestCase):
         )
 
 
+def encode_auth(auth_info):
+    return base64.b64encode(
+        auth_info.get('username', '').encode('utf-8') + b':' +
+        auth_info.get('password', '').encode('utf-8'))
+
+
 class ResolveAuthTest(base.BaseTestCase):
-    auth_config = {
-        'https://index.docker.io/v1/': {'auth': 'indexuser'},
-        'my.registry.net': {'auth': 'privateuser'},
-        'http://legacy.registry.url/v1/': {'auth': 'legacyauth'}
-    }
+    index_config = {'auth': encode_auth({'username': 'indexuser'})}
+    private_config = {'auth': encode_auth({'username': 'privateuser'})}
+    legacy_config = {'auth': encode_auth({'username': 'legacyauth'})}
+
+    auth_config = parse_auth({
+        'https://index.docker.io/v1/': index_config,
+        'my.registry.net': private_config,
+        'http://legacy.registry.url/v1/': legacy_config,
+    })
 
     def test_resolve_authconfig_hostname_only(self):
         self.assertEqual(
-            auth.resolve_authconfig(self.auth_config, 'my.registry.net'),
-            {'auth': 'privateuser'}
+            auth.resolve_authconfig(
+                self.auth_config, 'my.registry.net'
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_no_protocol(self):
         self.assertEqual(
-            auth.resolve_authconfig(self.auth_config, 'my.registry.net/v1/'),
-            {'auth': 'privateuser'}
+            auth.resolve_authconfig(
+                self.auth_config, 'my.registry.net/v1/'
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_no_path(self):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, 'http://my.registry.net'
-            ),
-            {'auth': 'privateuser'}
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_no_path_trailing_slash(self):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, 'http://my.registry.net/'
-            ),
-            {'auth': 'privateuser'}
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_no_path_wrong_secure_proto(self):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, 'https://my.registry.net'
-            ),
-            {'auth': 'privateuser'}
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_no_path_wrong_insecure_proto(self):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, 'http://index.docker.io'
-            ),
-            {'auth': 'indexuser'}
+            )['username'],
+            'indexuser'
         )
 
     def test_resolve_authconfig_path_wrong_proto(self):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, 'https://my.registry.net/v1/'
-            ),
-            {'auth': 'privateuser'}
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_default_registry(self):
         self.assertEqual(
-            auth.resolve_authconfig(self.auth_config), {'auth': 'indexuser'}
+            auth.resolve_authconfig(self.auth_config)['username'],
+            'indexuser'
         )
 
     def test_resolve_authconfig_default_explicit_none(self):
         self.assertEqual(
-            auth.resolve_authconfig(self.auth_config, None),
-            {'auth': 'indexuser'}
+            auth.resolve_authconfig(self.auth_config, None)['username'],
+            'indexuser'
         )
 
     def test_resolve_authconfig_fully_explicit(self):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, 'http://my.registry.net/v1/'
-            ),
-            {'auth': 'privateuser'}
+            )['username'],
+            'privateuser'
         )
 
     def test_resolve_authconfig_legacy_config(self):
         self.assertEqual(
-            auth.resolve_authconfig(self.auth_config, 'legacy.registry.url'),
-            {'auth': 'legacyauth'}
+            auth.resolve_authconfig(
+                self.auth_config, 'legacy.registry.url'
+            )['username'],
+            'legacyauth'
         )
 
     def test_resolve_authconfig_no_match(self):
@@ -198,8 +216,8 @@ class ResolveAuthTest(base.BaseTestCase):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, auth.resolve_repository_name(image)[0]
-            ),
-            {'auth': 'indexuser'},
+            )['username'],
+            'indexuser',
         )
 
     def test_resolve_registry_and_auth_hub_image(self):
@@ -207,8 +225,9 @@ class ResolveAuthTest(base.BaseTestCase):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, auth.resolve_repository_name(image)[0]
-            ),
-            {'auth': 'indexuser'},
+            )['username'],
+            'indexuser',
+        )
         )
 
     def test_resolve_registry_and_auth_private_registry(self):
@@ -216,8 +235,8 @@ class ResolveAuthTest(base.BaseTestCase):
         self.assertEqual(
             auth.resolve_authconfig(
                 self.auth_config, auth.resolve_repository_name(image)[0]
-            ),
-            {'auth': 'privateuser'},
+            )['username'],
+            'privateuser',
         )
 
     def test_resolve_registry_and_auth_unauthenticated_registry(self):

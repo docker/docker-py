@@ -82,11 +82,6 @@ def convert_to_hostname(url):
     return url.replace('http://', '').replace('https://', '').split('/', 1)[0]
 
 
-def encode_auth(auth_info):
-    return base64.b64encode(auth_info.get('username', '') + b':' +
-                            auth_info.get('password', ''))
-
-
 def decode_auth(auth):
     if isinstance(auth, six.string_types):
         auth = auth.encode('ascii')
@@ -121,7 +116,7 @@ def parse_auth(entries):
         conf[registry] = {
             'username': username,
             'password': password,
-            'email': entry['email'],
+            'email': entry.get('email'),
             'serveraddress': registry,
         }
     return conf
