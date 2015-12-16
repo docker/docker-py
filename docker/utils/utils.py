@@ -108,38 +108,68 @@ def exclude_paths(root, patterns, dockerfile=None):
 
     exclude_patterns = list(set(patterns) - set(exceptions))
 
-    all_paths = get_paths(root)
-
-    # Remove all paths that are matched by any exclusion pattern
-    paths = [
-        p for p in all_paths
-        if not any(match_path(p, pattern) for pattern in exclude_patterns)
-    ]
-
-    # Add back the set of paths that are matched by any inclusion pattern.
-    # Include parent dirs - if we add back 'foo/bar', add 'foo' as well
-    for p in all_paths:
-        if any(match_path(p, pattern) for pattern in include_patterns):
-            components = p.split('/')
-            paths += [
-                '/'.join(components[:end])
-                for end in range(1, len(components) + 1)
-            ]
+    paths = get_paths(root, exclude_patterns, include_patterns,
+                      has_exceptions=len(exceptions) > 0)
 
     return set(paths)
 
 
-def get_paths(root):
+def should_include(path, exclude_patterns, include_patterns):
+    """
+    Given a path, a list of exclude patterns, and a list of inclusion patterns:
+
+    1. Returns True if the path doesn't match any exclusion pattern
+    2. Returns False if the path matches an exclusion pattern and doesn't match
+       an inclusion pattern
+    3. Returns true if the path matches an exclusion pattern and matches an
+       inclusion pattern
+    """
+    for pattern in exclude_patterns:
+        if match_path(path, pattern):
+            for pattern in include_patterns:
+                if match_path(path, pattern):
+                    return True
+            return False
+    return True
+
+
+def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
     paths = []
 
-    for parent, dirs, files in os.walk(root, followlinks=False):
+    for parent, dirs, files in os.walk(root, topdown=True, followlinks=False):
         parent = os.path.relpath(parent, root)
         if parent == '.':
             parent = ''
+
+        # If exception rules exist, we can't skip recursing into ignored
+        # directories, as we need to look for exceptions in them.
+        #
+        # It may be possible to optimize this further for exception patterns
+        # that *couldn't* match within ignored directores.
+        #
+        # This matches the current docker logic (as of 2015-11-24):
+        # https://github.com/docker/docker/blob/37ba67bf636b34dc5c0c0265d62a089d0492088f/pkg/archive/archive.go#L555-L557
+
+        if not has_exceptions:
+
+            # Remove excluded patterns from the list of directories to traverse
+            # by mutating the dirs we're iterating over.
+            # This looks strange, but is considered the correct way to skip
+            # traversal. See https://docs.python.org/2/library/os.html#os.walk
+
+            dirs[:] = [d for d in dirs if
+                       should_include(os.path.join(parent, d),
+                                      exclude_patterns, include_patterns)]
+
         for path in dirs:
-            paths.append(os.path.join(parent, path))
+            if should_include(os.path.join(parent, path),
+                              exclude_patterns, include_patterns):
+                paths.append(os.path.join(parent, path))
+
         for path in files:
-            paths.append(os.path.join(parent, path))
+            if should_include(os.path.join(parent, path),
+                              exclude_patterns, include_patterns):
+                paths.append(os.path.join(parent, path))
 
     return paths
 

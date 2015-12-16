@@ -671,17 +671,17 @@ class ExcludePathsTest(base.BaseTestCase):
 
     def test_directory_with_single_exception(self):
         assert self.exclude(['foo', '!foo/bar/a.py']) == self.all_paths - set([
-            'foo/a.py', 'foo/b.py',
+            'foo/a.py', 'foo/b.py', 'foo', 'foo/bar'
         ])
 
     def test_directory_with_subdir_exception(self):
         assert self.exclude(['foo', '!foo/bar']) == self.all_paths - set([
-            'foo/a.py', 'foo/b.py',
+            'foo/a.py', 'foo/b.py', 'foo'
         ])
 
     def test_directory_with_wildcard_exception(self):
         assert self.exclude(['foo', '!foo/*.py']) == self.all_paths - set([
-            'foo/bar', 'foo/bar/a.py',
+            'foo/bar', 'foo/bar/a.py', 'foo'
         ])
 
     def test_subdirectory(self):
