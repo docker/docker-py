@@ -103,6 +103,8 @@ for example:
   allowed to consume.
 * mem_swappiness (int): Tune a container's memory swappiness behavior.
   Accepts number between 0 and 100.
+* cpu_group (int): The length of a CPU period in microseconds.
+* cpu_period (int): Microseconds of CPU time that the container can get in a CPU period.
 * group_add (list): List of additional group names and/or IDs that the
   container process will run as.
 * devices (list): A list of devices to add to the container specified as dicts
