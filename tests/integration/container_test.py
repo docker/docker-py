@@ -750,9 +750,6 @@ class StopTest(helpers.BaseTestCase):
         container_info = self.client.inspect_container(id)
         self.assertIn('State', container_info)
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -766,9 +763,6 @@ class StopTest(helpers.BaseTestCase):
         container_info = self.client.inspect_container(id)
         self.assertIn('State', container_info)
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
