@@ -7,4 +7,4 @@ from .utils import (
 )  # flake8: noqa
 
 from .types import Ulimit, LogConfig # flake8: noqa
-from .decorators import check_resource, minimum_version  # flake8: noqa
+from .decorators import check_resource, minimum_version, update_headers #flake8: noqa

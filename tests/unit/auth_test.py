@@ -409,3 +409,27 @@ class LoadConfigTest(base.Cleanup, base.BaseTestCase):
             self.assertEqual(cfg['password'], b'izayoi\xc3\xa6'.decode('utf8'))
             self.assertEqual(cfg['email'], 'sakuya@scarlet.net')
             self.assertEqual(cfg.get('auth'), None)
+
+    def test_load_config_custom_config_env_with_headers(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+
+        dockercfg_path = os.path.join(folder, 'config.json')
+        config = {
+            'HttpHeaders': {
+                'Name': 'Spike',
+                'Surname': 'Spiegel'
+            },
+        }
+
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config, f)
+
+        with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
+            cfg = auth.load_config(None)
+            assert 'HttpHeaders' in cfg
+            self.assertNotEqual(cfg['HttpHeaders'], None)
+            cfg = cfg['HttpHeaders']
+
+            self.assertEqual(cfg['Name'], 'Spike')
+            self.assertEqual(cfg['Surname'], 'Spiegel')
