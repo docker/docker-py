@@ -12,6 +12,7 @@ pages:
 - Using TLS: tls.md
 - Host devices: host-devices.md
 - Host configuration: hostconfig.md
+- Network configuration: networks.md
 - Using with boot2docker: boot2docker.md
 - Change Log: change_log.md
 - Contributing: contributing.md
