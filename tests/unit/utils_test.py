@@ -18,7 +18,7 @@ from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
-    split_command, create_ipam_config, create_ipam_pool,
+    split_command, create_ipam_config, create_ipam_pool, parse_devices,
 )
 from docker.utils.utils import create_endpoint_config
 from docker.utils.ports import build_port_bindings, split_port
@@ -404,6 +404,65 @@ class ParseRepositoryTagTest(base.BaseTestCase):
             parse_repository_tag("url:5000/repo@sha256:{0}".format(self.sha)),
             ("url:5000/repo", "sha256:{0}".format(self.sha))
         )
+
+
+class ParseDeviceTest(base.BaseTestCase):
+    def test_dict(self):
+        devices = parse_devices([{
+            'PathOnHost': '/dev/sda1',
+            'PathInContainer': '/dev/mnt1',
+            'CgroupPermissions': 'r'
+        }])
+        self.assertEqual(devices[0], {
+            'PathOnHost': '/dev/sda1',
+            'PathInContainer': '/dev/mnt1',
+            'CgroupPermissions': 'r'
+        })
+
+    def test_partial_string_definition(self):
+        devices = parse_devices(['/dev/sda1'])
+        self.assertEqual(devices[0], {
+            'PathOnHost': '/dev/sda1',
+            'PathInContainer': '/dev/sda1',
+            'CgroupPermissions': 'rwm'
+        })
+
+    def test_permissionless_string_definition(self):
+        devices = parse_devices(['/dev/sda1:/dev/mnt1'])
+        self.assertEqual(devices[0], {
+            'PathOnHost': '/dev/sda1',
+            'PathInContainer': '/dev/mnt1',
+            'CgroupPermissions': 'rwm'
+        })
+
+    def test_full_string_definition(self):
+        devices = parse_devices(['/dev/sda1:/dev/mnt1:r'])
+        self.assertEqual(devices[0], {
+            'PathOnHost': '/dev/sda1',
+            'PathInContainer': '/dev/mnt1',
+            'CgroupPermissions': 'r'
+        })
+
+    def test_hybrid_list(self):
+        devices = parse_devices([
+            '/dev/sda1:/dev/mnt1:rw',
+            {
+                'PathOnHost': '/dev/sda2',
+                'PathInContainer': '/dev/mnt2',
+                'CgroupPermissions': 'r'
+            }
+        ])
+
+        self.assertEqual(devices[0], {
+            'PathOnHost': '/dev/sda1',
+            'PathInContainer': '/dev/mnt1',
+            'CgroupPermissions': 'rw'
+        })
+        self.assertEqual(devices[1], {
+            'PathOnHost': '/dev/sda2',
+            'PathInContainer': '/dev/mnt2',
+            'CgroupPermissions': 'r'
+        })
 
 
 class UtilsTest(base.BaseTestCase):
