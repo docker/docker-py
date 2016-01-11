@@ -35,15 +35,11 @@ class TestNetworks(helpers.BaseTestCase):
         net_name, net_id = self.create_network()
 
         net = self.client.inspect_network(net_id)
-        self.assertEqual(net, {
-            u'Name': net_name,
-            u'Id': net_id,
-            u'Driver': 'bridge',
-            u'Containers': {},
-            u'IPAM': {u'Config': [{}], u'Driver': 'default'},
-            u'Options': {},
-            u'Scope': 'local'
-        })
+        self.assertEqual(net['Id'], net_id)
+        self.assertEqual(net['Name'], net_name)
+        self.assertEqual(net['Driver'], 'bridge')
+        self.assertEqual(net['Scope'], 'local')
+        self.assertEqual(net['IPAM']['Driver'], 'default')
 
     def test_create_network_with_host_driver_fails(self):
         net_name = 'dockerpy{}'.format(random.getrandbits(24))[:14]

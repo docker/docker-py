@@ -4,6 +4,7 @@ import six
 
 from .. import base
 from .api_test import DockerClientTest, url_prefix, response
+from docker.utils import create_ipam_config, create_ipam_pool
 
 try:
     from unittest import mock
@@ -79,6 +80,29 @@ class NetworkTest(DockerClientTest):
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
                 {"name": "foo", "driver": "bridge", "options": opts})
+
+            ipam_pool_config = create_ipam_pool(subnet="192.168.52.0/24",
+                                                gateway="192.168.52.254")
+            ipam_config = create_ipam_config(pool_configs=[ipam_pool_config])
+
+            self.client.create_network("bar", driver="bridge",
+                                       ipam=ipam_config)
+
+            self.assertEqual(
+                json.loads(post.call_args[1]['data']),
+                {
+                    "name": "bar",
+                    "driver": "bridge",
+                    "ipam": {
+                        "driver": "default",
+                        "config": [{
+                            "iprange": None,
+                            "gateway": "192.168.52.254",
+                            "subnet": "192.168.52.0/24",
+                            "auxaddresses": None
+                        }]
+                    }
+                })
 
     @base.requires_api_version('1.21')
     def test_remove_network(self):
