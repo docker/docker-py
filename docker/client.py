@@ -45,7 +45,7 @@ class Client(
                  timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
 
-        if tls and not base_url.startswith('https://'):
+        if tls and (not base_url or not base_url.startswith('https://')):
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must begin with '
                 '"https://".')
