@@ -47,8 +47,13 @@ class NetworkApiMixin(object):
 
     @check_resource
     @minimum_version('1.21')
-    def connect_container_to_network(self, container, net_id):
-        data = {"container": container}
+    def connect_container_to_network(self, container, net_id, aliases=None):
+        data = {
+            "Container": container,
+            "EndpointConfig": {
+                "Aliases": aliases,
+            },
+        }
         url = self._url("/networks/{0}/connect", net_id)
         self._post_json(url, data=data)
 

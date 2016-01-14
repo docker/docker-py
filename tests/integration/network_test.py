@@ -7,7 +7,6 @@ from .. import helpers
 from ..base import requires_api_version
 
 
-@requires_api_version('1.21')
 class TestNetworks(helpers.BaseTestCase):
     def create_network(self, *args, **kwargs):
         net_name = u'dockerpy{}'.format(random.getrandbits(24))[:14]
@@ -15,6 +14,7 @@ class TestNetworks(helpers.BaseTestCase):
         self.tmp_networks.append(net_id)
         return (net_name, net_id)
 
+    @requires_api_version('1.21')
     def test_list_networks(self):
         networks = self.client.networks()
         initial_size = len(networks)
@@ -31,6 +31,7 @@ class TestNetworks(helpers.BaseTestCase):
         networks_by_partial_id = self.client.networks(ids=[net_id[:8]])
         self.assertEqual([n['Id'] for n in networks_by_partial_id], [net_id])
 
+    @requires_api_version('1.21')
     def test_inspect_network(self):
         net_name, net_id = self.create_network()
 
@@ -41,12 +42,14 @@ class TestNetworks(helpers.BaseTestCase):
         self.assertEqual(net['Scope'], 'local')
         self.assertEqual(net['IPAM']['Driver'], 'default')
 
+    @requires_api_version('1.21')
     def test_create_network_with_host_driver_fails(self):
         net_name = 'dockerpy{}'.format(random.getrandbits(24))[:14]
 
         with pytest.raises(docker.errors.APIError):
             self.client.create_network(net_name, driver='host')
 
+    @requires_api_version('1.21')
     def test_remove_network(self):
         initial_size = len(self.client.networks())
 
@@ -56,6 +59,7 @@ class TestNetworks(helpers.BaseTestCase):
         self.client.remove_network(net_id)
         self.assertEqual(len(self.client.networks()), initial_size)
 
+    @requires_api_version('1.21')
     def test_connect_and_disconnect_container(self):
         net_name, net_id = self.create_network()
 
@@ -76,6 +80,22 @@ class TestNetworks(helpers.BaseTestCase):
         network_data = self.client.inspect_network(net_id)
         self.assertFalse(network_data.get('Containers'))
 
+    @requires_api_version('1.22')
+    def test_connect_with_aliases(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container('busybox', 'top')
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        self.client.connect_container_to_network(
+            container, net_id, aliases=['foo', 'bar'])
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
+            ['foo', 'bar'])
+
+    @requires_api_version('1.21')
     def test_connect_on_container_create(self):
         net_name, net_id = self.create_network()
 
@@ -95,3 +115,27 @@ class TestNetworks(helpers.BaseTestCase):
         self.client.disconnect_container_from_network(container, net_id)
         network_data = self.client.inspect_network(net_id)
         self.assertFalse(network_data.get('Containers'))
+
+    @requires_api_version('1.22')
+    def test_create_with_aliases(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container(
+            image='busybox',
+            command='top',
+            host_config=self.client.create_host_config(
+                network_mode=net_name,
+            ),
+            networking_config=self.client.create_networking_config({
+                net_name: self.client.create_endpoint_config(
+                    aliases=['foo', 'bar'],
+                ),
+            }),
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
+            ['foo', 'bar'])
