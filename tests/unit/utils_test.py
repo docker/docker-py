@@ -18,8 +18,9 @@ from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
-    split_command, create_ipam_config, create_ipam_pool
+    split_command, create_ipam_config, create_ipam_pool,
 )
+from docker.utils.utils import create_endpoint_config
 from docker.utils.ports import build_port_bindings, split_port
 
 from .. import base
@@ -68,6 +69,13 @@ class HostConfigTest(base.BaseTestCase):
         self.assertRaises(
             InvalidVersion, lambda: create_host_config(version='1.18.3',
                                                        oom_kill_disable=True))
+
+    def test_create_endpoint_config_with_aliases(self):
+        config = create_endpoint_config(version='1.22', aliases=['foo', 'bar'])
+        assert config == {'Aliases': ['foo', 'bar']}
+
+        with pytest.raises(InvalidVersion):
+            create_endpoint_config(version='1.21', aliases=['foo', 'bar'])
 
 
 class UlimitTest(base.BaseTestCase):

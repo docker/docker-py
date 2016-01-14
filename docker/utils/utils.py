@@ -715,6 +715,26 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
     return host_config
 
 
+def create_networking_config(endpoints_config=None):
+    networking_config = {}
+
+    if endpoints_config:
+        networking_config["EndpointsConfig"] = endpoints_config
+
+    return networking_config
+
+
+def create_endpoint_config(version, aliases=None):
+    endpoint_config = {}
+
+    if aliases:
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('endpoint_config.aliases', '1.22')
+        endpoint_config["Aliases"] = aliases
+
+    return endpoint_config
+
+
 def parse_env_file(env_file):
     """
     Reads a line-separated environment file.
@@ -752,7 +772,7 @@ def create_container_config(
     dns=None, volumes=None, volumes_from=None, network_disabled=False,
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
-    labels=None, volume_driver=None, stop_signal=None
+    labels=None, volume_driver=None, stop_signal=None, networking_config=None,
 ):
     if isinstance(command, six.string_types):
         command = split_command(command)
@@ -878,6 +898,7 @@ def create_container_config(
         'WorkingDir': working_dir,
         'MemorySwap': memswap_limit,
         'HostConfig': host_config,
+        'NetworkingConfig': networking_config,
         'MacAddress': mac_address,
         'Labels': labels,
         'VolumeDriver': volume_driver,

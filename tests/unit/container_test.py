@@ -7,6 +7,7 @@ import pytest
 import six
 
 from . import fake_api
+from ..base import requires_api_version
 from .api_test import (
     DockerClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
     fake_inspect_container
@@ -982,6 +983,38 @@ class CreateContainerTest(DockerClientTest):
                              "StopSignal": "SIGINT"}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
+
+    @requires_api_version('1.22')
+    def test_create_container_with_aliases(self):
+        self.client.create_container(
+            'busybox', 'ls',
+            host_config=self.client.create_host_config(
+                network_mode='some-network',
+            ),
+            networking_config=self.client.create_networking_config({
+                'some-network': self.client.create_endpoint_config(
+                    aliases=['foo', 'bar'],
+                ),
+            }),
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                               "NetworkMode": "some-network"
+                             },
+                             "NetworkingConfig": {
+                               "EndpointsConfig": {
+                                 "some-network": {"Aliases": ["foo", "bar"]}
+                               }
+                             }}'''))
 
 
 class ContainerTest(DockerClientTest):

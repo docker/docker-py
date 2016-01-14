@@ -4,6 +4,7 @@ from datetime import datetime
 
 from .. import errors
 from .. import utils
+from ..utils.utils import create_networking_config, create_endpoint_config
 
 
 class ContainerApiMixin(object):
@@ -98,7 +99,7 @@ class ContainerApiMixin(object):
                          cpu_shares=None, working_dir=None, domainname=None,
                          memswap_limit=None, cpuset=None, host_config=None,
                          mac_address=None, labels=None, volume_driver=None,
-                         stop_signal=None):
+                         stop_signal=None, networking_config=None):
 
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
@@ -113,7 +114,7 @@ class ContainerApiMixin(object):
             tty, mem_limit, ports, environment, dns, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
-            volume_driver, stop_signal
+            volume_driver, stop_signal, networking_config,
         )
         return self.create_container_from_config(config, name)
 
@@ -138,6 +139,12 @@ class ContainerApiMixin(object):
             )
         kwargs['version'] = self._version
         return utils.create_host_config(*args, **kwargs)
+
+    def create_networking_config(self, *args, **kwargs):
+        return create_networking_config(*args, **kwargs)
+
+    def create_endpoint_config(self, *args, **kwargs):
+        return create_endpoint_config(self._version, *args, **kwargs)
 
     @utils.check_resource
     def diff(self, container):
