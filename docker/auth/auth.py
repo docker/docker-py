@@ -158,7 +158,6 @@ def load_config(config_path=None):
         explicit config_path parameter > DOCKER_CONFIG environment variable >
         ~/.docker/config.json > ~/.dockercfg
     """
-
     config_file = find_config_file(config_path)
 
     if not config_file:
@@ -168,11 +167,17 @@ def load_config(config_path=None):
     try:
         with open(config_file) as f:
             data = json.load(f)
+            res = {}
             if data.get('auths'):
                 log.debug("Found 'auths' section")
-                return parse_auth(data['auths'])
+                res.update(parse_auth(data['auths']))
+            if data.get('HttpHeaders'):
+                log.debug("Found 'HttpHeaders' section")
+                res.update({'HttpHeaders': data['HttpHeaders']})
+            if res:
+                return res
             else:
-                log.debug("Couldn't find 'auths' section")
+                log.debug("Couldn't find 'auths' or 'HttpHeaders' sections")
                 f.seek(0)
                 return parse_auth(json.load(f))
     except (IOError, KeyError, ValueError) as e:

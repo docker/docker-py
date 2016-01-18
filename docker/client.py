@@ -28,7 +28,7 @@ from . import errors
 from .auth import auth
 from .unixconn import unixconn
 from .ssladapter import ssladapter
-from .utils import utils, check_resource
+from .utils import utils, check_resource, update_headers
 from .tls import TLSConfig
 
 
@@ -103,15 +103,19 @@ class Client(
         kwargs.setdefault('timeout', self.timeout)
         return kwargs
 
+    @update_headers
     def _post(self, url, **kwargs):
         return self.post(url, **self._set_request_timeout(kwargs))
 
+    @update_headers
     def _get(self, url, **kwargs):
         return self.get(url, **self._set_request_timeout(kwargs))
 
+    @update_headers
     def _put(self, url, **kwargs):
         return self.put(url, **self._set_request_timeout(kwargs))
 
+    @update_headers
     def _delete(self, url, **kwargs):
         return self.delete(url, **self._set_request_timeout(kwargs))
 
