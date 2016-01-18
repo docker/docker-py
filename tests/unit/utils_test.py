@@ -442,12 +442,12 @@ class UtilsTest(base.BaseTestCase):
 
         ipam_config = create_ipam_config(pool_configs=[ipam_pool])
         self.assertEqual(ipam_config, {
-            'driver': 'default',
-            'config': [{
-                'subnet': '192.168.52.0/24',
-                'gateway': '192.168.52.254',
-                'auxaddresses': None,
-                'iprange': None
+            'Driver': 'default',
+            'Config': [{
+                'Subnet': '192.168.52.0/24',
+                'Gateway': '192.168.52.254',
+                'AuxiliaryAddresses': None,
+                'IPRange': None,
             }]
         })
 
