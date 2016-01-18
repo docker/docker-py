@@ -400,7 +400,7 @@ def parse_host(addr, platform=None):
             port = int(port)
         except Exception:
             raise errors.DockerException(
-                "Invalid port: %s", addr
+                "Invalid port: {0}".format(addr)
             )
 
     elif proto in ("http", "https") and ':' not in addr:
@@ -417,7 +417,14 @@ def parse_host(addr, platform=None):
 def parse_devices(devices):
     device_list = []
     for device in devices:
-        device_mapping = device.split(":")
+        if isinstance(device, dict):
+            device_list.append(device)
+            continue
+        if not isinstance(device, six.string_types):
+            raise errors.DockerException(
+                'Invalid device type {0}'.format(type(device))
+            )
+        device_mapping = device.split(':')
         if device_mapping:
             path_on_host = device_mapping[0]
             if len(device_mapping) > 1:
@@ -428,9 +435,11 @@ def parse_devices(devices):
                 permissions = device_mapping[2]
             else:
                 permissions = 'rwm'
-            device_list.append({"PathOnHost": path_on_host,
-                                "PathInContainer": path_in_container,
-                                "CgroupPermissions": permissions})
+            device_list.append({
+                'PathOnHost': path_on_host,
+                'PathInContainer': path_in_container,
+                'CgroupPermissions': permissions
+            })
     return device_list
 
 
