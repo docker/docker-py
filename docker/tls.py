@@ -13,7 +13,7 @@ class TLSConfig(object):
                  ssl_version=None, assert_hostname=None,
                  assert_fingerprint=None):
         # Argument compatibility/mapping with
-        # http://docs.docker.com/examples/https/
+        # https://docs.docker.com/engine/articles/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
         # here, but also disable any public/default CA pool verification by
         # leaving tls_verify=False

@@ -80,8 +80,8 @@ class TLSParameterError(DockerException):
     def __str__(self):
         return self.msg + (". TLS configurations should map the Docker CLI "
                            "client configurations. See "
-                           "http://docs.docker.com/examples/https/ for "
-                           "API details.")
+                           "https://docs.docker.com/engine/articles/https/ "
+                           "for API details.")
 
 
 class NullResource(DockerException, ValueError):
