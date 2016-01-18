@@ -486,6 +486,12 @@ def datetime_to_timestamp(dt):
     return delta.seconds + delta.days * 24 * 3600
 
 
+def longint(n):
+    if six.PY3:
+        return int(n)
+    return long(n)
+
+
 def parse_bytes(s):
     if len(s) == 0:
         s = 0
@@ -506,20 +512,21 @@ def parse_bytes(s):
 
         if suffix in units.keys() or suffix.isdigit():
             try:
-                digits = int(digits_part)
+                digits = longint(digits_part)
             except ValueError:
-                message = ('Failed converting the string value for'
-                           'memory ({0}) to a number.')
-                formatted_message = message.format(digits_part)
-                raise errors.DockerException(formatted_message)
+                raise errors.DockerException(
+                    'Failed converting the string value for memory ({0}) to'
+                    ' an integer.'.format(digits_part)
+                )
 
-            s = digits * units[suffix]
+            # Reconvert to long for the final result
+            s = longint(digits * units[suffix])
         else:
-            message = ('The specified value for memory'
-                       ' ({0}) should specify the units. The postfix'
-                       ' should be one of the `b` `k` `m` `g`'
-                       ' characters')
-            raise errors.DockerException(message.format(s))
+            raise errors.DockerException(
+                'The specified value for memory ({0}) should specify the'
+                ' units. The postfix should be one of the `b` `k` `m` `g`'
+                ' characters'.format(s)
+            )
 
     return s
 

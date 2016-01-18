@@ -5,6 +5,7 @@ import json
 import os
 import os.path
 import shutil
+import sys
 import tarfile
 import tempfile
 
@@ -465,14 +466,28 @@ class ParseDeviceTest(base.BaseTestCase):
         })
 
 
-class UtilsTest(base.BaseTestCase):
-    longMessage = True
+class ParseBytesTest(base.BaseTestCase):
+    def test_parse_bytes_valid(self):
+        self.assertEqual(parse_bytes("512MB"), 536870912)
+        self.assertEqual(parse_bytes("512M"), 536870912)
+        self.assertEqual(parse_bytes("512m"), 536870912)
 
-    def test_parse_bytes(self):
-        self.assertEqual(parse_bytes("512MB"), (536870912))
-        self.assertEqual(parse_bytes("512M"), (536870912))
+    def test_parse_bytes_invalid(self):
         self.assertRaises(DockerException, parse_bytes, "512MK")
         self.assertRaises(DockerException, parse_bytes, "512L")
+        self.assertRaises(DockerException, parse_bytes, "127.0.0.1K")
+
+    def test_parse_bytes_float(self):
+        self.assertRaises(DockerException, parse_bytes, "1.5k")
+
+    def test_parse_bytes_maxint(self):
+        self.assertEqual(
+            parse_bytes("{0}k".format(sys.maxsize)), sys.maxsize * 1024
+        )
+
+
+class UtilsTest(base.BaseTestCase):
+    longMessage = True
 
     def test_convert_filters(self):
         tests = [
