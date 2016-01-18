@@ -1,6 +1,8 @@
 import random
 
 import docker
+from docker.utils import create_ipam_config
+from docker.utils import create_ipam_pool
 import pytest
 
 from .. import helpers
@@ -41,6 +43,45 @@ class TestNetworks(helpers.BaseTestCase):
         self.assertEqual(net['Driver'], 'bridge')
         self.assertEqual(net['Scope'], 'local')
         self.assertEqual(net['IPAM']['Driver'], 'default')
+
+    @requires_api_version('1.21')
+    def test_create_network_with_ipam_config(self):
+        _, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[
+                    create_ipam_pool(
+                        subnet="172.28.0.0/16",
+                        iprange="172.28.5.0/24",
+                        gateway="172.28.5.254",
+                        aux_addresses={
+                            "a": "172.28.1.5",
+                            "b": "172.28.1.6",
+                            "c": "172.28.1.7",
+                        },
+                    ),
+                ],
+            ),
+        )
+
+        net = self.client.inspect_network(net_id)
+        ipam = net['IPAM']
+
+        assert ipam.pop('Options', None) is None
+
+        assert ipam == {
+            'Driver': 'default',
+            'Config': [{
+                'Subnet': "172.28.0.0/16",
+                'IPRange': "172.28.5.0/24",
+                'Gateway': "172.28.5.254",
+                'AuxiliaryAddresses': {
+                    "a": "172.28.1.5",
+                    "b": "172.28.1.6",
+                    "c": "172.28.1.7",
+                },
+            }],
+        }
 
     @requires_api_version('1.21')
     def test_create_network_with_host_driver_fails(self):

@@ -47,17 +47,17 @@ BYTE_UNITS = {
 def create_ipam_pool(subnet=None, iprange=None, gateway=None,
                      aux_addresses=None):
     return {
-        'subnet': subnet,
-        'iprange': iprange,
-        'gateway': gateway,
-        'auxaddresses': aux_addresses
+        'Subnet': subnet,
+        'IPRange': iprange,
+        'Gateway': gateway,
+        'AuxiliaryAddresses': aux_addresses
     }
 
 
 def create_ipam_config(driver='default', pool_configs=None):
     return {
-        'driver': driver,
-        'config': pool_configs or []
+        'Driver': driver,
+        'Config': pool_configs or []
     }
 
 

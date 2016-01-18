@@ -24,10 +24,10 @@ class NetworkApiMixin(object):
             raise TypeError('options must be a dictionary')
 
         data = {
-            'name': name,
-            'driver': driver,
-            'options': options,
-            'ipam': ipam,
+            'Name': name,
+            'Driver': driver,
+            'Options': options,
+            'IPAM': ipam,
         }
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)
