@@ -678,7 +678,7 @@ Line2'''
         self.client.start(id)
         logs = six.binary_type()
         for chunk in self.client.logs(id, stream=True):
-            logs += chunk
+            logs += chunk.payload
 
         exitcode = self.client.wait(id)
         self.assertEqual(exitcode, 0)

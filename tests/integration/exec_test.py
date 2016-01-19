@@ -85,7 +85,7 @@ class ExecTest(helpers.BaseTestCase):
 
         res = b''
         for chunk in self.client.exec_start(exec_id, stream=True):
-            res += chunk
+            res += chunk.payload
         self.assertEqual(res, b'hello\nworld\n')
 
     def test_exec_start_socket(self):

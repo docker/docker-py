@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 import six
 
 
@@ -94,3 +96,20 @@ class Ulimit(DictType):
     @hard.setter
     def hard(self, value):
         self['Hard'] = value
+
+
+AttachedOutputStreamHeader = namedtuple(
+    'AttachedOutputStreamHeader',
+    (
+        'stream_type',
+    )
+)
+
+
+AttachedOutputStream = namedtuple(
+    'AttachedOutputStream',
+    (
+        'header',
+        'payload',
+    )
+)

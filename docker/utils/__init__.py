@@ -7,5 +7,7 @@ from .utils import (
     create_ipam_config, create_ipam_pool, parse_devices
 ) # flake8: noqa
 
-from .types import Ulimit, LogConfig # flake8: noqa
+from .types import (
+    Ulimit, LogConfig, AttachedOutputStreamHeader, AttachedOutputStream
+) # flake8: noqa
 from .decorators import check_resource, minimum_version, update_headers #flake8: noqa

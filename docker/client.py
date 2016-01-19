@@ -28,7 +28,10 @@ from . import errors
 from .auth import auth
 from .unixconn import unixconn
 from .ssladapter import ssladapter
-from .utils import utils, check_resource, update_headers
+from .utils import (
+    utils, check_resource, update_headers, AttachedOutputStream,
+    AttachedOutputStreamHeader
+)
 from .tls import TLSConfig
 
 
@@ -233,15 +236,32 @@ class Client(
         """A generator of multiplexed data blocks read from a buffered
         response."""
         buf = self._result(response, binary=True)
+
+        # Use `memoryview` (`buffer` in Python 2.x) to prevent completely
+        # unnecessary data-copying when slicing the buffer while parsing
+        if six.PY3:
+            _memoryview = memoryview
+        else:
+            _memoryview = buffer
+        buf_view = _memoryview(buf)
+
         walker = 0
         while True:
-            if len(buf[walker:]) < 8:
+            if len(buf_view[walker:]) < constants.STREAM_HEADER_SIZE_BYTES:
                 break
-            _, length = struct.unpack_from('>BxxxL', buf[walker:])
+            stream_type, length = struct.unpack_from(
+                '>BxxxL',
+                buf_view[walker:]
+            )
             start = walker + constants.STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end
-            yield buf[start:end]
+            yield AttachedOutputStream(
+                header=AttachedOutputStreamHeader(
+                    stream_type=stream_type,
+                ),
+                payload=buf_view[start:end]
+            )
 
     def _multiplexed_response_stream_helper(self, response):
         """A generator of multiplexed data blocks coming from a response
@@ -253,16 +273,21 @@ class Client(
         self._disable_socket_timeout(socket)
 
         while True:
-            header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
-            if not header:
+            raw_header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
+            if not raw_header:
                 break
-            _, length = struct.unpack('>BxxxL', header)
+            stream_type, length = struct.unpack('>BxxxL', raw_header)
             if not length:
                 continue
-            data = response.raw.read(length)
-            if not data:
+            payload = response.raw.read(length)
+            if not payload:
                 break
-            yield data
+            yield AttachedOutputStream(
+                header=AttachedOutputStreamHeader(
+                    stream_type=stream_type,
+                ),
+                payload=payload
+            )
 
     def _stream_raw_result_old(self, response):
         ''' Stream raw output for API versions below 1.6 '''
@@ -314,7 +339,7 @@ class Client(
             return self._multiplexed_response_stream_helper(res)
         else:
             return sep.join(
-                [x for x in self._multiplexed_buffer_helper(res)]
+                [x.payload for x in self._multiplexed_buffer_helper(res)]
             )
 
     def get_adapter(self, url):
