@@ -260,7 +260,7 @@ def post_fake_exec_start():
     status_code = 200
     response = (b'\x01\x00\x00\x00\x00\x00\x00\x11bin\nboot\ndev\netc\n'
                 b'\x01\x00\x00\x00\x00\x00\x00\x12lib\nmnt\nproc\nroot\n'
-                b'\x01\x00\x00\x00\x00\x00\x00\x0csbin\nusr\nvar\n')
+                b'\x01\x00\x00\x00\x00\x00\x00\x0dsbin\nusr\nvar\n')
     return status_code, response
 
 
