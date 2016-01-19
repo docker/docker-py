@@ -236,31 +236,27 @@ class Client(
         """A generator of multiplexed data blocks read from a buffered
         response."""
         buf = self._result(response, binary=True)
-
-        # Use `memoryview` (`buffer` in Python 2.x) to prevent completely
-        # unnecessary data-copying when slicing the buffer while parsing
-        if six.PY3:
-            _memoryview = memoryview
-        else:
-            _memoryview = buffer
-        buf_view = _memoryview(buf)
-
+        buf_size = len(buf)
+        stream_header_size_bytes = struct.calcsize(
+            constants.ATTACHED_OUTPUT_STREAM_HEADER_FORMAT
+        )
         walker = 0
-        while True:
-            if len(buf_view[walker:]) < constants.STREAM_HEADER_SIZE_BYTES:
-                break
-            stream_type, length = struct.unpack_from(
-                '>BxxxL',
-                buf_view[walker:]
+        while walker < buf_size:
+            stream_type, payload_length = struct.unpack_from(
+                constants.ATTACHED_OUTPUT_STREAM_HEADER_FORMAT,
+                buf,
+                offset=walker
             )
-            start = walker + constants.STREAM_HEADER_SIZE_BYTES
-            end = start + length
-            walker = end
+            payload_start = walker + stream_header_size_bytes
+            payload_end = payload_start + payload_length
+            walker = payload_end
+            if buf_size < payload_end:
+                raise Exception("received data is incomplete.")
             yield AttachedOutputStream(
                 header=AttachedOutputStreamHeader(
                     stream_type=stream_type,
                 ),
-                payload=buf_view[start:end]
+                payload=buf[payload_start:payload_end]
             )
 
     def _multiplexed_response_stream_helper(self, response):
@@ -272,16 +268,21 @@ class Client(
         socket = self._get_raw_response_socket(response)
         self._disable_socket_timeout(socket)
 
+        stream_header_size_bytes = struct.calcsize(
+            constants.ATTACHED_OUTPUT_STREAM_HEADER_FORMAT
+        )
+
         while True:
-            raw_header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
+            raw_header = response.raw.read(stream_header_size_bytes)
             if not raw_header:
                 break
-            stream_type, length = struct.unpack('>BxxxL', raw_header)
-            if not length:
-                continue
-            payload = response.raw.read(length)
-            if not payload:
-                break
+            stream_type, payload_length = struct.unpack_from(
+                constants.ATTACHED_OUTPUT_STREAM_HEADER_FORMAT,
+                raw_header
+            )
+            payload = response.raw.read(payload_length)
+            if len(payload) != payload_length:
+                raise Exception("received data is incomplete.")
             yield AttachedOutputStream(
                 header=AttachedOutputStreamHeader(
                     stream_type=stream_type,
