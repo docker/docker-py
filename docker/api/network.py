@@ -1,6 +1,6 @@
 import json
 
-from ..utils import check_resource, minimum_version
+from ..utils import check_resource, minimum_version, normalize_links
 
 
 class NetworkApiMixin(object):
@@ -47,11 +47,13 @@ class NetworkApiMixin(object):
 
     @check_resource
     @minimum_version('1.21')
-    def connect_container_to_network(self, container, net_id, aliases=None):
+    def connect_container_to_network(self, container, net_id,
+                                     aliases=None, links=None):
         data = {
             "Container": container,
             "EndpointConfig": {
                 "Aliases": aliases,
+                "Links": normalize_links(links) if links else None,
             },
         }
         url = self._url("/networks/{0}/connect", net_id)

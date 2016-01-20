@@ -150,6 +150,7 @@ class NetworkTest(DockerClientTest):
                 {'Id': container_id},
                 network_id,
                 aliases=['foo', 'bar'],
+                links=[('baz', 'quux')]
             )
 
         self.assertEqual(
@@ -162,6 +163,7 @@ class NetworkTest(DockerClientTest):
                 'Container': container_id,
                 'EndpointConfig': {
                     'Aliases': ['foo', 'bar'],
+                    'Links': ['baz:quux'],
                 },
             })
 

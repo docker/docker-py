@@ -180,3 +180,52 @@ class TestNetworks(helpers.BaseTestCase):
         self.assertEqual(
             container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
             ['foo', 'bar'])
+
+    @requires_api_version('1.22')
+    def test_create_with_links(self):
+        net_name, net_id = self.create_network()
+
+        container = self.create_and_start(
+            host_config=self.client.create_host_config(network_mode=net_name),
+            networking_config=self.client.create_networking_config({
+                net_name: self.client.create_endpoint_config(
+                    links=[('docker-py-test-upstream', 'bar')],
+                ),
+            }),
+        )
+
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data['NetworkSettings']['Networks'][net_name]['Links'],
+            ['docker-py-test-upstream:bar'])
+
+        self.create_and_start(
+            name='docker-py-test-upstream',
+            host_config=self.client.create_host_config(network_mode=net_name),
+        )
+
+        self.execute(container, ['nslookup', 'bar'])
+
+    @requires_api_version('1.22')
+    def test_connect_with_links(self):
+        net_name, net_id = self.create_network()
+
+        container = self.create_and_start(
+            host_config=self.client.create_host_config(network_mode=net_name))
+
+        self.client.disconnect_container_from_network(container, net_name)
+        self.client.connect_container_to_network(
+            container, net_name,
+            links=[('docker-py-test-upstream', 'bar')])
+
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data['NetworkSettings']['Networks'][net_name]['Links'],
+            ['docker-py-test-upstream:bar'])
+
+        self.create_and_start(
+            name='docker-py-test-upstream',
+            host_config=self.client.create_host_config(network_mode=net_name),
+        )
+
+        self.execute(container, ['nslookup', 'bar'])
