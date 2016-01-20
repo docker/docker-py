@@ -168,3 +168,18 @@ class BaseTestCase(unittest.TestCase):
                 .format(exitcode, output))
 
         return container
+
+    def create_and_start(self, image='busybox', command='top', **kwargs):
+        container = self.client.create_container(
+            image=image, command=command, **kwargs)
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        return container
+
+    def execute(self, container, cmd, exit_code=0, **kwargs):
+        exc = self.client.exec_create(container, cmd, **kwargs)
+        output = self.client.exec_start(exc)
+        actual_exit_code = self.client.exec_inspect(exc)['ExitCode']
+        msg = "Expected `{}` to exit with code {} but returned {}:\n{}".format(
+            " ".join(cmd), exit_code, actual_exit_code, output)
+        assert actual_exit_code == exit_code, msg

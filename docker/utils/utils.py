@@ -674,12 +674,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         host_config['ExtraHosts'] = extra_hosts
 
     if links is not None:
-        if isinstance(links, dict):
-            links = six.iteritems(links)
-
-        formatted_links = ['{0}:{1}'.format(k, v) for k, v in sorted(links)]
-
-        host_config['Links'] = formatted_links
+        host_config['Links'] = normalize_links(links)
 
     if isinstance(lxc_conf, dict):
         formatted = []
@@ -731,6 +726,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
     return host_config
 
 
+def normalize_links(links):
+    if isinstance(links, dict):
+        links = six.iteritems(links)
+
+    return ['{0}:{1}'.format(k, v) for k, v in sorted(links)]
+
+
 def create_networking_config(endpoints_config=None):
     networking_config = {}
 
@@ -740,13 +742,18 @@ def create_networking_config(endpoints_config=None):
     return networking_config
 
 
-def create_endpoint_config(version, aliases=None):
+def create_endpoint_config(version, aliases=None, links=None):
     endpoint_config = {}
 
     if aliases:
         if version_lt(version, '1.22'):
             raise host_config_version_error('endpoint_config.aliases', '1.22')
         endpoint_config["Aliases"] = aliases
+
+    if links:
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('endpoint_config.links', '1.22')
+        endpoint_config["Links"] = normalize_links(links)
 
     return endpoint_config
 
