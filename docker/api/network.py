@@ -57,11 +57,13 @@ class NetworkApiMixin(object):
             },
         }
         url = self._url("/networks/{0}/connect", net_id)
-        self._post_json(url, data=data)
+        res = self._post_json(url, data=data)
+        self._raise_for_status(res)
 
     @check_resource
     @minimum_version('1.21')
     def disconnect_container_from_network(self, container, net_id):
         data = {"container": container}
         url = self._url("/networks/{0}/disconnect", net_id)
-        self._post_json(url, data=data)
+        res = self._post_json(url, data=data)
+        self._raise_for_status(res)

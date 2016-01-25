@@ -117,9 +117,15 @@ class TestNetworks(helpers.BaseTestCase):
             list(network_data['Containers'].keys()),
             [container['Id']])
 
+        with pytest.raises(docker.errors.APIError):
+            self.client.connect_container_to_network(container, net_id)
+
         self.client.disconnect_container_from_network(container, net_id)
         network_data = self.client.inspect_network(net_id)
         self.assertFalse(network_data.get('Containers'))
+
+        with pytest.raises(docker.errors.APIError):
+            self.client.disconnect_container_from_network(container, net_id)
 
     @requires_api_version('1.22')
     def test_connect_with_aliases(self):
