@@ -379,8 +379,7 @@ class VolumeBindTest(helpers.BaseTestCase):
         self.mount_dest = '/mnt'
 
         # Get a random pathname - we don't need it to exist locally
-        self.mount_origin = tempfile.mkdtemp()
-        shutil.rmtree(self.mount_origin)
+        self.mount_origin = '/tmp'
         self.filename = 'shared.txt'
 
         self.run_with_volume(
