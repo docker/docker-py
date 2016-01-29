@@ -360,6 +360,11 @@ class ParseHostTest(base.BaseTestCase):
 
             assert parse_host(val, 'win32') == tcp_port
 
+    def test_parse_host_tls(self):
+        host_value = 'myhost.docker.net:3348'
+        expected_result = 'https://myhost.docker.net:3348'
+        self.assertEqual(parse_host(host_value, None, True), expected_result)
+
 
 class ParseRepositoryTagTest(base.BaseTestCase):
     sha = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'

@@ -345,7 +345,7 @@ def parse_repository_tag(repo_name):
 # fd:// protocol unsupported (for obvious reasons)
 # Added support for http and https
 # Protocol translation: tcp -> http, unix -> http+unix
-def parse_host(addr, platform=None):
+def parse_host(addr, platform=None, tls=False):
     proto = "http+unix"
     host = DEFAULT_HTTP_HOST
     port = None
@@ -381,7 +381,7 @@ def parse_host(addr, platform=None):
             raise errors.DockerException(
                 "Invalid bind address protocol: {0}".format(addr)
             )
-        proto = "http"
+        proto = "https" if tls else "http"
 
     if proto != "http+unix" and ":" in addr:
         host_parts = addr.split(':')
