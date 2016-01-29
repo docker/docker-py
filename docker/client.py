@@ -45,17 +45,17 @@ class Client(
                  timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
         super(Client, self).__init__()
 
-        if tls and (not base_url or not base_url.startswith('https://')):
+        if tls and not base_url:
             raise errors.TLSParameterError(
-                'If using TLS, the base_url argument must begin with '
-                '"https://".')
+                'If using TLS, the base_url argument must be provided.'
+            )
 
         self.base_url = base_url
         self.timeout = timeout
 
         self._auth_configs = auth.load_config()
 
-        base_url = utils.parse_host(base_url, sys.platform)
+        base_url = utils.parse_host(base_url, sys.platform, tls=bool(tls))
         if base_url.startswith('http+unix://'):
             self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
