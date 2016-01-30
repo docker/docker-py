@@ -1031,3 +1031,21 @@ class GetContainerStatsTest(helpers.BaseTestCase):
                 for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
                             'memory_stats', 'blkio_stats']:
                     self.assertIn(key, chunk)
+
+
+class ContainerUpdateTest(helpers.BaseTestCase):
+    @requires_api_version('1.22')
+    def test_update_container(self):
+        old_mem_limit = 400 * 1024 * 1024
+        new_mem_limit = 300 * 1024 * 1024
+        container = self.client.create_container(
+            BUSYBOX, 'top', host_config=self.client.create_host_config(
+                mem_limit=old_mem_limit
+            ), cpu_shares=102
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        print(self.client.update_container(container, mem_limit=new_mem_limit))
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
+        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 102)

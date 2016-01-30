@@ -397,6 +397,38 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
 
     @utils.check_resource
+    def update_container(
+        self, container, blkio_weight=None, cpu_period=None, cpu_quota=None,
+        cpu_shares=None, cpuset_cpus=None, cpuset_mems=None, mem_limit=None,
+        mem_reservation=None, memswap_limit=None, kernel_memory=None
+    ):
+        url = self._url('/containers/{0}/update', container)
+        data = {}
+        if blkio_weight:
+            data['BlkioWeight'] = blkio_weight
+        if cpu_period:
+            data['CpuPeriod'] = cpu_period
+        if cpu_shares:
+            data['CpuShares'] = cpu_shares
+        if cpu_quota:
+            data['CpuQuota'] = cpu_quota
+        if cpuset_cpus:
+            data['CpusetCpus'] = cpuset_cpus
+        if cpuset_mems:
+            data['CpusetMems'] = cpuset_mems
+        if mem_limit:
+            data['Memory'] = mem_limit
+        if mem_reservation:
+            data['MemoryReservation'] = mem_reservation
+        if memswap_limit:
+            data['MemorySwap'] = memswap_limit
+        if kernel_memory:
+            data['KernelMemory'] = kernel_memory
+
+        res = self._post_json(url, data=data)
+        return self._result(res, True)
+
+    @utils.check_resource
     def wait(self, container, timeout=None):
         url = self._url("/containers/{0}/wait", container)
         res = self._post(url, timeout=timeout)
