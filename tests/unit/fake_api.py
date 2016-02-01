@@ -441,6 +441,11 @@ def get_fake_volume():
 def fake_remove_volume():
     return 204, None
 
+
+def post_fake_update_container():
+    return 200, {'Warnings': []}
+
+
 # Maps real api url to fake response callback
 prefix = 'http+docker://localunixsocket'
 fake_responses = {
@@ -478,6 +483,8 @@ fake_responses = {
     get_fake_diff,
     '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
     get_fake_export,
+    '{1}/{0}/containers/3cc2351ab11b/update'.format(CURRENT_VERSION, prefix):
+    post_fake_update_container,
     '{1}/{0}/containers/3cc2351ab11b/exec'.format(CURRENT_VERSION, prefix):
     post_fake_exec_create,
     '{1}/{0}/exec/d5d177f121dc/start'.format(CURRENT_VERSION, prefix):
