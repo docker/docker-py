@@ -889,7 +889,7 @@ def create_container_config(
 
     if compare_version('1.10', version) >= 0:
         message = ('{0!r} parameter has no effect on create_container().'
-                   ' It has been moved to start()')
+                   ' It has been moved to host_config')
         if dns is not None:
             raise errors.InvalidVersion(message.format('dns'))
         if volumes_from is not None:
