@@ -396,6 +396,7 @@ class ContainerApiMixin(object):
         res = self._post(url)
         self._raise_for_status(res)
 
+    @utils.minimum_version('1.22')
     @utils.check_resource
     def update_container(
         self, container, blkio_weight=None, cpu_period=None, cpu_quota=None,
@@ -417,13 +418,13 @@ class ContainerApiMixin(object):
         if cpuset_mems:
             data['CpusetMems'] = cpuset_mems
         if mem_limit:
-            data['Memory'] = mem_limit
+            data['Memory'] = utils.parse_bytes(mem_limit)
         if mem_reservation:
-            data['MemoryReservation'] = mem_reservation
+            data['MemoryReservation'] = utils.parse_bytes(mem_reservation)
         if memswap_limit:
-            data['MemorySwap'] = memswap_limit
+            data['MemorySwap'] = utils.parse_bytes(memswap_limit)
         if kernel_memory:
-            data['KernelMemory'] = kernel_memory
+            data['KernelMemory'] = utils.parse_bytes(kernel_memory)
 
         res = self._post_json(url, data=data)
         return self._result(res, True)
