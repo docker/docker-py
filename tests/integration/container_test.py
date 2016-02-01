@@ -1045,7 +1045,7 @@ class ContainerUpdateTest(helpers.BaseTestCase):
         )
         self.tmp_containers.append(container)
         self.client.start(container)
-        print(self.client.update_container(container, mem_limit=new_mem_limit))
+        self.client.update_container(container, mem_limit=new_mem_limit)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
         self.assertEqual(inspect_data['HostConfig']['CpuShares'], 102)

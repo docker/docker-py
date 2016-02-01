@@ -518,40 +518,42 @@ def longint(n):
 
 
 def parse_bytes(s):
+    if isinstance(s, six.integer_types + (float,)):
+        return s
     if len(s) == 0:
-        s = 0
+        return 0
+
+    if s[-2:-1].isalpha() and s[-1].isalpha():
+        if s[-1] == "b" or s[-1] == "B":
+            s = s[:-1]
+    units = BYTE_UNITS
+    suffix = s[-1].lower()
+
+    # Check if the variable is a string representation of an int
+    # without a units part. Assuming that the units are bytes.
+    if suffix.isdigit():
+        digits_part = s
+        suffix = 'b'
     else:
-        if s[-2:-1].isalpha() and s[-1].isalpha():
-            if s[-1] == "b" or s[-1] == "B":
-                s = s[:-1]
-        units = BYTE_UNITS
-        suffix = s[-1].lower()
+        digits_part = s[:-1]
 
-        # Check if the variable is a string representation of an int
-        # without a units part. Assuming that the units are bytes.
-        if suffix.isdigit():
-            digits_part = s
-            suffix = 'b'
-        else:
-            digits_part = s[:-1]
-
-        if suffix in units.keys() or suffix.isdigit():
-            try:
-                digits = longint(digits_part)
-            except ValueError:
-                raise errors.DockerException(
-                    'Failed converting the string value for memory ({0}) to'
-                    ' an integer.'.format(digits_part)
-                )
-
-            # Reconvert to long for the final result
-            s = longint(digits * units[suffix])
-        else:
+    if suffix in units.keys() or suffix.isdigit():
+        try:
+            digits = longint(digits_part)
+        except ValueError:
             raise errors.DockerException(
-                'The specified value for memory ({0}) should specify the'
-                ' units. The postfix should be one of the `b` `k` `m` `g`'
-                ' characters'.format(s)
+                'Failed converting the string value for memory ({0}) to'
+                ' an integer.'.format(digits_part)
             )
+
+        # Reconvert to long for the final result
+        s = longint(digits * units[suffix])
+    else:
+        raise errors.DockerException(
+            'The specified value for memory ({0}) should specify the'
+            ' units. The postfix should be one of the `b` `k` `m` `g`'
+            ' characters'.format(s)
+        )
 
     return s
 
@@ -594,16 +596,10 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         version = constants.DEFAULT_DOCKER_API_VERSION
 
     if mem_limit is not None:
-        if isinstance(mem_limit, six.string_types):
-            mem_limit = parse_bytes(mem_limit)
-
-        host_config['Memory'] = mem_limit
+        host_config['Memory'] = parse_bytes(mem_limit)
 
     if memswap_limit is not None:
-        if isinstance(memswap_limit, six.string_types):
-            memswap_limit = parse_bytes(memswap_limit)
-
-        host_config['MemorySwap'] = memswap_limit
+        host_config['MemorySwap'] = parse_bytes(memswap_limit)
 
     if mem_swappiness is not None:
         if version_lt(version, '1.20'):
@@ -873,9 +869,9 @@ def create_container_config(
     if isinstance(labels, list):
         labels = dict((lbl, six.text_type('')) for lbl in labels)
 
-    if isinstance(mem_limit, six.string_types):
+    if mem_limit is not None:
         mem_limit = parse_bytes(mem_limit)
-    if isinstance(memswap_limit, six.string_types):
+    if memswap_limit is not None:
         memswap_limit = parse_bytes(memswap_limit)
 
     if isinstance(ports, list):
