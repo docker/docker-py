@@ -997,11 +997,31 @@ Display the running processes of a container.
 
 ## unpause
 
-Unpauses all processes within a container.
+Unpause all processes within a container.
 
 **Params**:
 
 * container (str): The container to unpause
+
+## update_container
+
+Update resource configs of one or more containers.
+
+**Params**:
+
+* container (str): The container to inspect
+* blkio_weight (int): Block IO (relative weight), between 10 and 1000
+* cpu_period (int): Limit CPU CFS (Completely Fair Scheduler) period
+* cpu_quota (int): Limit CPU CFS (Completely Fair Scheduler) quota
+* cpu_shares (int): CPU shares (relative weight)
+* cpuset_cpus (str): CPUs in which to allow execution
+* cpuset_mems (str): MEMs in which to allow execution
+* mem_limit (int or str): Memory limit
+* mem_reservation (int or str): Memory soft limit
+* memswap_limit (int or str): Total memory (memory + swap), -1 to disable swap
+* kernel_memory (int or str): Kernel memory limit
+
+**Returns** (dict): Dictionary containing a `Warnings` key.
 
 ## version
 
