@@ -1,6 +1,39 @@
 Change Log
 ==========
 
+1.7.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.7.0+is%3Aclosed)
+
+### Features
+
+* Added support for cusom IPAM configuration in `Client.create_network`
+* Added input support to `Client.exec_create`
+* Added support for `stop_signal` in `Client.create_host_config`
+* Added support for custom HTTP headers in Docker config file.
+* Added support for unspecified transfer protocol in `base_url` when TLS is
+  enabled.
+
+
+### Bugfixes
+
+* Fixed a bug where the `filters` parameter in `Client.volumes` would not be
+  applied properly.
+* Fixed a bug where memory limits would parse to incorrect values.
+* Fixed a bug where the `devices` parameter in `Client.create_host_config`
+  would sometimes be misinterpreted.
+* Fixed a bug where instantiating a `Client` object would sometimes crash if
+  `base_url` was unspecified.
+* Fixed a bug where an error message related to TLS configuration would link
+  to a non-existent (outdated) docs page.
+
+
+### Miscellaneous
+
+* Processing of `.dockerignore` has been made significantly faster.
+* Dropped explicit support for Python 3.2
+
 1.6.0
 -----
 
