@@ -64,6 +64,14 @@ class HostConfigTest(base.BaseTestCase):
         config = create_host_config(version='1.20', cpu_period=1999)
         self.assertEqual(config.get('CpuPeriod'), 1999)
 
+    def test_create_host_config_with_shm_size(self):
+        config = create_host_config(version='1.22', shm_size=67108864)
+        self.assertEqual(config.get('ShmSize'), 67108864)
+
+    def test_create_host_config_with_shm_size_in_mb(self):
+        config = create_host_config(version='1.22', shm_size='64M')
+        self.assertEqual(config.get('ShmSize'), 67108864)
+
     def test_create_host_config_with_oom_kill_disable(self):
         config = create_host_config(version='1.20', oom_kill_disable=True)
         self.assertEqual(config.get('OomKillDisable'), True)

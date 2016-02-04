@@ -556,7 +556,8 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        security_opt=None, ulimits=None, log_config=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
-                       cpu_period=None, oom_kill_disable=False, version=None):
+                       cpu_period=None, oom_kill_disable=False, shm_size=None,
+                       version=None):
 
     host_config = {}
 
@@ -588,6 +589,12 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             )
 
         host_config['MemorySwappiness'] = mem_swappiness
+
+    if shm_size is not None:
+        if isinstance(shm_size, six.string_types):
+            shm_size = parse_bytes(shm_size)
+
+        host_config['ShmSize'] = shm_size
 
     if pid_mode not in (None, 'host'):
         raise host_config_value_error('pid_mode', pid_mode)
