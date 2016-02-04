@@ -165,8 +165,8 @@ class KwargsFromEnvTest(base.BaseTestCase):
 
     def test_kwargs_from_env_empty(self):
         os.environ.update(DOCKER_HOST='',
-                          DOCKER_CERT_PATH='',
-                          DOCKER_TLS_VERIFY='')
+                          DOCKER_CERT_PATH='')
+        os.environ.pop('DOCKER_TLS_VERIFY', None)
 
         kwargs = kwargs_from_env()
         self.assertEqual(None, kwargs.get('base_url'))
@@ -178,15 +178,61 @@ class KwargsFromEnvTest(base.BaseTestCase):
                           DOCKER_TLS_VERIFY='1')
         kwargs = kwargs_from_env(assert_hostname=False)
         self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
-        self.assertTrue('ca.pem' in kwargs['tls'].verify)
+        self.assertTrue('ca.pem' in kwargs['tls'].ca_cert)
         self.assertTrue('cert.pem' in kwargs['tls'].cert[0])
         self.assertTrue('key.pem' in kwargs['tls'].cert[1])
         self.assertEqual(False, kwargs['tls'].assert_hostname)
+        self.assertTrue(kwargs['tls'].verify)
         try:
             client = Client(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
             self.assertEqual(kwargs['tls'].verify, client.verify)
             self.assertEqual(kwargs['tls'].cert, client.cert)
+        except TypeError as e:
+            self.fail(e)
+
+    def test_kwargs_from_env_tls_verify_false(self):
+        os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
+                          DOCKER_CERT_PATH=TEST_CERT_DIR,
+                          DOCKER_TLS_VERIFY='')
+        kwargs = kwargs_from_env(assert_hostname=True)
+        self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
+        self.assertTrue('ca.pem' in kwargs['tls'].ca_cert)
+        self.assertTrue('cert.pem' in kwargs['tls'].cert[0])
+        self.assertTrue('key.pem' in kwargs['tls'].cert[1])
+        self.assertEqual(True, kwargs['tls'].assert_hostname)
+        self.assertEqual(False, kwargs['tls'].verify)
+        try:
+            client = Client(**kwargs)
+            self.assertEqual(kwargs['base_url'], client.base_url)
+            self.assertEqual(kwargs['tls'].ca_cert, client.ca_cert)
+            self.assertEqual(kwargs['tls'].cert, client.cert)
+            self.assertFalse(kwargs['tls'].verify)
+        except TypeError as e:
+            self.fail(e)
+
+    def test_kwargs_from_env_tls_verify_false_no_cert(self):
+        temp_dir = tempfile.mkdtemp()
+        cert_dir = os.path.join(temp_dir, '.docker')
+        shutil.copytree(TEST_CERT_DIR, cert_dir)
+
+        os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
+                          HOME=temp_dir,
+                          DOCKER_TLS_VERIFY='')
+        os.environ.pop('DOCKER_CERT_PATH', None)
+        kwargs = kwargs_from_env(assert_hostname=True)
+        self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
+        self.assertTrue('ca.pem' in kwargs['tls'].ca_cert)
+        self.assertTrue('cert.pem' in kwargs['tls'].cert[0])
+        self.assertTrue('key.pem' in kwargs['tls'].cert[1])
+        self.assertEqual(True, kwargs['tls'].assert_hostname)
+        self.assertEqual(False, kwargs['tls'].verify)
+        try:
+            client = Client(**kwargs)
+            self.assertEqual(kwargs['base_url'], client.base_url)
+            self.assertEqual(kwargs['tls'].ca_cert, client.ca_cert)
+            self.assertEqual(kwargs['tls'].cert, client.cert)
+            self.assertFalse(kwargs['tls'].verify)
         except TypeError as e:
             self.fail(e)
 
@@ -201,7 +247,8 @@ class KwargsFromEnvTest(base.BaseTestCase):
                               DOCKER_TLS_VERIFY='1')
 
             kwargs = kwargs_from_env()
-            self.assertIn(cert_dir, kwargs['tls'].verify)
+            self.assertTrue(kwargs['tls'].verify)
+            self.assertIn(cert_dir, kwargs['tls'].ca_cert)
             self.assertIn(cert_dir, kwargs['tls'].cert[0])
             self.assertIn(cert_dir, kwargs['tls'].cert[1])
         finally:
