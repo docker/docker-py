@@ -4,7 +4,6 @@
 """
 from distutils.version import StrictVersion
 from requests.adapters import HTTPAdapter
-import ssl
 
 try:
     import requests.packages.urllib3 as urllib3
@@ -14,20 +13,10 @@ except ImportError:
 PoolManager = urllib3.poolmanager.PoolManager
 
 
-def get_max_tls_protocol():
-    protocols = ('PROTOCOL_TLSv1_2',
-                 'PROTOCOL_TLSv1_1',
-                 'PROTOCOL_TLSv1')
-    for proto in protocols:
-        if hasattr(ssl, proto):
-            return getattr(ssl, proto)
-
-
 class SSLAdapter(HTTPAdapter):
     '''An HTTPS Transport Adapter that uses an arbitrary SSL version.'''
     def __init__(self, ssl_version=None, assert_hostname=None,
                  assert_fingerprint=None, **kwargs):
-        ssl_version = ssl_version or get_max_tls_protocol()
         self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
@@ -41,7 +30,7 @@ class SSLAdapter(HTTPAdapter):
             'assert_hostname': self.assert_hostname,
             'assert_fingerprint': self.assert_fingerprint,
         }
-        if self.can_override_ssl_version():
+        if self.ssl_version and self.can_override_ssl_version():
             kwargs['ssl_version'] = self.ssl_version
 
         self.poolmanager = PoolManager(**kwargs)
