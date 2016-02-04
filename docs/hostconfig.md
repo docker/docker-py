@@ -103,6 +103,7 @@ for example:
   allowed to consume.
 * mem_swappiness (int): Tune a container's memory swappiness behavior.
   Accepts number between 0 and 100.
+* shm_size (str or int): Size of /dev/shm. (e.g. `'1G'`)
 * cpu_group (int): The length of a CPU period in microseconds.
 * cpu_period (int): Microseconds of CPU time that the container can get in a
   CPU period.
