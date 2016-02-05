@@ -445,26 +445,45 @@ def parse_devices(devices):
 
 def kwargs_from_env(ssl_version=None, assert_hostname=None):
     host = os.environ.get('DOCKER_HOST')
-    cert_path = os.environ.get('DOCKER_CERT_PATH')
+
+    # empty string for cert path is the same as unset.
+    cert_path = os.environ.get('DOCKER_CERT_PATH') or None
+
+    # empty string for tls verify counts as "false".
+    # Any value or 'unset' counts as true.
     tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
+    if tls_verify == '':
+        tls_verify = False
+        enable_tls = True
+    else:
+        tls_verify = tls_verify is not None
+        enable_tls = cert_path or tls_verify
 
     params = {}
 
     if host:
         params['base_url'] = (host.replace('tcp://', 'https://')
-                              if tls_verify else host)
+                              if enable_tls else host)
 
-    if tls_verify and not cert_path:
+    if not enable_tls:
+        return params
+
+    if not cert_path:
         cert_path = os.path.join(os.path.expanduser('~'), '.docker')
 
-    if tls_verify and cert_path:
-        params['tls'] = tls.TLSConfig(
-            client_cert=(os.path.join(cert_path, 'cert.pem'),
-                         os.path.join(cert_path, 'key.pem')),
-            ca_cert=os.path.join(cert_path, 'ca.pem'),
-            verify=True,
-            ssl_version=ssl_version,
-            assert_hostname=assert_hostname)
+    if not tls_verify and assert_hostname is None:
+        # assert_hostname is a subset of TLS verification,
+        # so if it's not set already then set it to false.
+        assert_hostname = False
+
+    params['tls'] = tls.TLSConfig(
+        client_cert=(os.path.join(cert_path, 'cert.pem'),
+                     os.path.join(cert_path, 'key.pem')),
+        ca_cert=os.path.join(cert_path, 'ca.pem'),
+        verify=tls_verify,
+        ssl_version=ssl_version,
+        assert_hostname=assert_hostname,
+        assert_fingerprint=tls_verify)
 
     return params
 

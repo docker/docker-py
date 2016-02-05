@@ -6,6 +6,7 @@ from .ssladapter import ssladapter
 
 class TLSConfig(object):
     cert = None
+    ca_cert = None
     verify = None
     ssl_version = None
 
@@ -48,27 +49,18 @@ class TLSConfig(object):
                 )
             self.cert = (tls_cert, tls_key)
 
-        # Either set verify to True (public/default CA checks) or to the
-        # path of a CA Cert file.
-        if verify is not None:
-            if not ca_cert:
-                self.verify = verify
-            elif os.path.isfile(ca_cert):
-                if not verify:
-                    raise errors.TLSParameterError(
-                        'verify can not be False when a CA cert is'
-                        ' provided.'
-                    )
-                self.verify = ca_cert
-            else:
-                raise errors.TLSParameterError(
-                    'Invalid CA certificate provided for `tls_ca_cert`.'
-                )
+        # If verify is set, make sure the cert exists
+        self.verify = verify
+        self.ca_cert = ca_cert
+        if self.verify and self.ca_cert and not os.path.isfile(self.ca_cert):
+            raise errors.TLSParameterError(
+                'Invalid CA certificate provided for `tls_ca_cert`.'
+            )
 
     def configure_client(self, client):
         client.ssl_version = self.ssl_version
-        if self.verify is not None:
-            client.verify = self.verify
+        client.verify = self.verify
+        client.ca_cert = self.ca_cert
         if self.cert:
             client.cert = self.cert
         client.mount('https://', ssladapter.SSLAdapter(
