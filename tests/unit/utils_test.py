@@ -12,9 +12,17 @@ import tempfile
 import pytest
 import six
 
+try:
+    from ssl import OP_NO_SSLv3, OP_NO_SSLv2, OP_NO_TLSv1
+except ImportError:
+    OP_NO_SSLv2 = 0x1000000
+    OP_NO_SSLv3 = 0x2000000
+    OP_NO_TLSv1 = 0x4000000
+
 from docker.client import Client
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException, InvalidVersion
+from docker.ssladapter import ssladapter
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
@@ -927,3 +935,12 @@ class TarTest(base.Cleanup, base.BaseTestCase):
             self.assertEqual(
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
             )
+
+
+class SSLAdapterTest(base.BaseTestCase):
+    def test_only_uses_tls(self):
+        ssl_context = ssladapter.urllib3.util.ssl_.create_urllib3_context()
+
+        assert ssl_context.options & OP_NO_SSLv3
+        assert ssl_context.options & OP_NO_SSLv2
+        assert not ssl_context.options & OP_NO_TLSv1
