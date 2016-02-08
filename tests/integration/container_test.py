@@ -1,5 +1,4 @@
 import os
-import shutil
 import signal
 import tempfile
 
@@ -380,7 +379,6 @@ class VolumeBindTest(helpers.BaseTestCase):
 
         # Get a random pathname - we don't need it to exist locally
         self.mount_origin = tempfile.mkdtemp()
-        shutil.rmtree(self.mount_origin)
         self.filename = 'shared.txt'
 
         self.run_with_volume(
