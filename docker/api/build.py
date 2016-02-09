@@ -46,7 +46,11 @@ class FileUploadBuffer(object):
         if not len(out):
             raise StopIteration
         return out
-        
+    
+    def __next__(self):
+        # For python 3
+        return self.next()
+    
     def read(self, *args, **kwargs):
         return self.chk_print(fn = lambda: self.file.read(*args, **kwargs))
         
@@ -84,7 +88,7 @@ class BuildApiMixin(object):
         else:
             dockerignore = os.path.join(path, '.dockerignore')
             # If there are a lot of files, this takes time. Tell the user.
-            log.debug('taring and gzipping files: %s'%path)
+            log.debug("taring files: %s" % path)
             exclude = None
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
