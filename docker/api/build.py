@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import json
+import datetime
 
 from .. import constants
 from .. import errors
@@ -11,7 +12,47 @@ from .. import utils
 
 log = logging.getLogger(__name__)
 
-
+class FileUploadBuffer(object):
+    '''
+    Wrap a file object, buffer, and print progress.
+    '''
+    BUFFER_SIZE = 1024*32
+    def __init__(self, file):
+        self.read_so_far = 0
+        self.num_reads = 0
+        self.starttime = datetime.datetime.utcnow()
+        self.file = file
+    
+    def __iter__(self, *args, **kwargs):
+        self.starttime = datetime.datetime.utcnow()
+        return self
+    
+    def chk_print(self, fn):
+        '''
+        Debug function that prints out how long we've been uploading.
+        '''
+        old_megs = self.read_so_far / 1024 / 1024
+        out = fn()
+        self.num_reads += 1
+        self.read_so_far += len(out)
+        new_megs = self.read_so_far / 1024 / 1024
+        if old_megs != new_megs:
+            log.debug('Sent %sMB, %d file reads, time elapsed: %s'%(new_megs,
+                self.num_reads, datetime.datetime.utcnow() - self.starttime))
+        return out
+        
+    def next(self):
+        out = self.read(self.BUFFER_SIZE)
+        if not len(out):
+            raise StopIteration
+        return out
+        
+    def read(self, *args, **kwargs):
+        return self.chk_print(fn = lambda: self.file.read(*args, **kwargs))
+        
+    def close(self, *args, **kwargs):
+        return self.file.close(*args, **kwargs)
+    
 class BuildApiMixin(object):
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
@@ -42,11 +83,15 @@ class BuildApiMixin(object):
             raise TypeError("You must specify a directory to build in path")
         else:
             dockerignore = os.path.join(path, '.dockerignore')
+            # If there are a lot of files, this takes time. Tell the user.
+            log.debug('taring and gzipping files: %s'%path)
             exclude = None
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
                     exclude = list(filter(bool, f.read().splitlines()))
-            context = utils.tar(path, exclude=exclude, dockerfile=dockerfile)
+            context = utils.tar(path, exclude=exclude, dockerfile=dockerfile, 
+                gzip=True)
+            encoding = 'gzip'
 
         if utils.compare_version('1.8', self._version) >= 0:
             stream = True
@@ -88,6 +133,11 @@ class BuildApiMixin(object):
         if utils.compare_version('1.9', self._version) >= 0:
             self._set_auth_headers(headers)
 
+        # This send can take a while, alert the user.
+        log.debug('sending Docker Files to %s (timeout=%s)'%(u, timeout))
+        
+        if context:
+            context = FileUploadBuffer(context)
         response = self._post(
             u,
             data=context,
