@@ -433,3 +433,32 @@ class LoadConfigTest(base.Cleanup, base.BaseTestCase):
 
             self.assertEqual(cfg['Name'], 'Spike')
             self.assertEqual(cfg['Surname'], 'Spiegel')
+
+    def test_load_config_unknown_keys(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        dockercfg_path = os.path.join(folder, 'config.json')
+        config = {
+            'detachKeys': 'ctrl-q, ctrl-u, ctrl-i'
+        }
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config, f)
+
+        cfg = auth.load_config(dockercfg_path)
+        assert cfg == {}
+
+    def test_load_config_invalid_auth_dict(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        dockercfg_path = os.path.join(folder, 'config.json')
+        config = {
+            'auths': {
+                'scarlet.net': {'sakuya': 'izayoi'}
+            }
+        }
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config, f)
+
+        self.assertRaises(
+            errors.InvalidConfigFile, auth.load_config, dockercfg_path
+        )
