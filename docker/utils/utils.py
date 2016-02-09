@@ -128,7 +128,13 @@ def exclude_paths(root, patterns, dockerfile=None):
     paths = get_paths(root, exclude_patterns, include_patterns,
                       has_exceptions=len(exceptions) > 0)
 
-    return set(paths)
+    return set(paths).union(
+        # If the Dockerfile is in a subdirectory that is excluded, get_paths
+        # will not descend into it and the file will be skipped. This ensures
+        # it doesn't happen.
+        set([dockerfile])
+        if os.path.exists(os.path.join(root, dockerfile)) else set()
+    )
 
 
 def should_include(path, exclude_patterns, include_patterns):

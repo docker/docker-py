@@ -736,6 +736,7 @@ class ExcludePathsTest(base.BaseTestCase):
         'foo/b.py',
         'foo/bar/a.py',
         'bar/a.py',
+        'foo/Dockerfile3',
     ]
 
     all_paths = set(dirs + files)
@@ -774,6 +775,14 @@ class ExcludePathsTest(base.BaseTestCase):
         """
         assert self.exclude(['*'], dockerfile='Dockerfile.alt') == \
             set(['Dockerfile.alt', '.dockerignore'])
+
+        assert self.exclude(['*'], dockerfile='foo/Dockerfile3') == \
+            set(['foo/Dockerfile3', '.dockerignore'])
+
+    def test_exclude_dockerfile_child(self):
+        includes = self.exclude(['foo/'], dockerfile='foo/Dockerfile3')
+        assert 'foo/Dockerfile3' in includes
+        assert 'foo/a.py' not in includes
 
     def test_single_filename(self):
         assert self.exclude(['a.py']) == self.all_paths - set(['a.py'])
@@ -825,28 +834,31 @@ class ExcludePathsTest(base.BaseTestCase):
     def test_directory(self):
         assert self.exclude(['foo']) == self.all_paths - set([
             'foo', 'foo/a.py', 'foo/b.py',
-            'foo/bar', 'foo/bar/a.py',
+            'foo/bar', 'foo/bar/a.py', 'foo/Dockerfile3'
         ])
 
     def test_directory_with_trailing_slash(self):
         assert self.exclude(['foo']) == self.all_paths - set([
             'foo', 'foo/a.py', 'foo/b.py',
-            'foo/bar', 'foo/bar/a.py',
+            'foo/bar', 'foo/bar/a.py', 'foo/Dockerfile3'
         ])
 
     def test_directory_with_single_exception(self):
         assert self.exclude(['foo', '!foo/bar/a.py']) == self.all_paths - set([
-            'foo/a.py', 'foo/b.py', 'foo', 'foo/bar'
+            'foo/a.py', 'foo/b.py', 'foo', 'foo/bar',
+            'foo/Dockerfile3'
         ])
 
     def test_directory_with_subdir_exception(self):
         assert self.exclude(['foo', '!foo/bar']) == self.all_paths - set([
-            'foo/a.py', 'foo/b.py', 'foo'
+            'foo/a.py', 'foo/b.py', 'foo',
+            'foo/Dockerfile3'
         ])
 
     def test_directory_with_wildcard_exception(self):
         assert self.exclude(['foo', '!foo/*.py']) == self.all_paths - set([
-            'foo/bar', 'foo/bar/a.py', 'foo'
+            'foo/bar', 'foo/bar/a.py', 'foo',
+            'foo/Dockerfile3'
         ])
 
     def test_subdirectory(self):
