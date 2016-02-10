@@ -4,6 +4,7 @@ import os
 import os.path
 import json
 import shlex
+import sys
 import tarfile
 import tempfile
 import warnings
@@ -92,7 +93,10 @@ def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
     exclude = exclude or []
 
     for path in sorted(exclude_paths(root, exclude, dockerfile=dockerfile)):
-        t.add(os.path.join(root, path), arcname=path, recursive=False)
+        i = t.gettarinfo(os.path.join(root, path), arcname=path)
+        if sys.platform == 'win32':
+            i.mode = i.mode & 0o755 | 0o111
+        t.addfile(i)
 
     t.close()
     fileobj.seek(0)
