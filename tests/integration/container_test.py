@@ -666,7 +666,7 @@ Line2'''
         logs = self.client.logs(id, tail=1)
         self.assertEqual(logs, 'Line2\n'.encode(encoding='ascii'))
 
-    def test_logs_streaming(self):
+    def test_logs_streaming_and_follow(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
             BUSYBOX, 'echo {0}'.format(snippet)
@@ -675,7 +675,7 @@ Line2'''
         self.tmp_containers.append(id)
         self.client.start(id)
         logs = six.binary_type()
-        for chunk in self.client.logs(id, stream=True):
+        for chunk in self.client.logs(id, stream=True, follow=True):
             logs += chunk
 
         exitcode = self.client.wait(id)
