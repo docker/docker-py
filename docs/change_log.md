@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+1.7.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.7.1+is%3Aclosed)
+
+### Features
+
+* Added support for `shm_size` in `Client.create_host_config`
+
+### Bugfixes
+
+* Fixed a bug where Dockerfile would sometimes be excluded from the build
+  context.
+* Fixed a bug where a docker config file containing unknown keys would raise
+  an exception.
+* Fixed an issue with SSL connections behaving improperly when pyOpenSSL
+  was installed in the same environment.
+* Several TLS configuration improvements
+
+
 1.7.0
 -----
 
