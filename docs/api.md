@@ -30,6 +30,7 @@ the entire backlog.
 * container (str): The container to attach to
 * stdout (bool): Get STDOUT
 * stderr (bool): Get STDERR
+* stdin (str or bytes): STDIN input
 * stream (bool): Return an iterator
 * logs (bool): Get all previous output
 

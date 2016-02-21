@@ -231,6 +231,13 @@ def get_fake_logs():
     return status_code, response
 
 
+def post_fake_attach():
+    status_code = 200
+    response = (b'\x01\x00\x00\x00\x00\x00\x00\x11Flowering Nights\n'
+                b'\x01\x00\x00\x00\x00\x00\x00\x10(Sakuya Iyazoi)\n')
+    return status_code, response
+
+
 def get_fake_diff():
     status_code = 200
     response = [{'Path': '/test', 'Kind': 1}]
@@ -474,6 +481,8 @@ fake_responses = {
     get_fake_wait,
     '{1}/{0}/containers/3cc2351ab11b/logs'.format(CURRENT_VERSION, prefix):
     get_fake_logs,
+    '{1}/{0}/containers/3cc2351ab11b/attach'.format(CURRENT_VERSION, prefix):
+    post_fake_attach,
     '{1}/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION, prefix):
     get_fake_diff,
     '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
