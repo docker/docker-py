@@ -194,7 +194,7 @@ class KwargsFromEnvTest(base.BaseTestCase):
         try:
             client = Client(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
-            self.assertEqual(kwargs['tls'].verify, client.verify)
+            self.assertEqual(kwargs['tls'].ca_cert, client.verify)
             self.assertEqual(kwargs['tls'].cert, client.cert)
         except TypeError as e:
             self.fail(e)
@@ -213,7 +213,6 @@ class KwargsFromEnvTest(base.BaseTestCase):
         try:
             client = Client(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
-            self.assertEqual(kwargs['tls'].ca_cert, client.ca_cert)
             self.assertEqual(kwargs['tls'].cert, client.cert)
             self.assertFalse(kwargs['tls'].verify)
         except TypeError as e:
@@ -238,7 +237,6 @@ class KwargsFromEnvTest(base.BaseTestCase):
         try:
             client = Client(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
-            self.assertEqual(kwargs['tls'].ca_cert, client.ca_cert)
             self.assertEqual(kwargs['tls'].cert, client.cert)
             self.assertFalse(kwargs['tls'].verify)
         except TypeError as e:

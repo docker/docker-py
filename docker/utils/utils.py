@@ -489,7 +489,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
         verify=tls_verify,
         ssl_version=ssl_version,
         assert_hostname=assert_hostname,
-        assert_fingerprint=tls_verify)
+    )
 
     return params
 

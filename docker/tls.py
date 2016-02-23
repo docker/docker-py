@@ -54,10 +54,15 @@ class TLSConfig(object):
 
     def configure_client(self, client):
         client.ssl_version = self.ssl_version
-        client.verify = self.verify
-        client.ca_cert = self.ca_cert
+
+        if self.verify and self.ca_cert:
+            client.verify = self.ca_cert
+        else:
+            client.verify = self.verify
+
         if self.cert:
             client.cert = self.cert
+
         client.mount('https://', ssladapter.SSLAdapter(
             ssl_version=self.ssl_version,
             assert_hostname=self.assert_hostname,
