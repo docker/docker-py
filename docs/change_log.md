@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+1.7.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.7.2+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed a bug where TLS verification was improperly executed when providing
+  a custom CA certificate.
+
 1.7.1
 -----
 
