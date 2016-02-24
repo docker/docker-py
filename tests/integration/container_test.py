@@ -374,11 +374,14 @@ class CreateContainerTest(helpers.BaseTestCase):
         container = self.client.create_container(
             BUSYBOX,
             ['echo'],
-            environment={'Foo': None, 'Other': 'one'},
+            environment={'Foo': None, 'Other': 'one', 'Blank': ''},
         )
         self.tmp_containers.append(container['Id'])
         config = self.client.inspect_container(container['Id'])
-        assert sorted(config['Config']['Env']) == sorted(['Foo', 'Other=one'])
+        assert (
+            sorted(config['Config']['Env']) ==
+            sorted(['Foo', 'Other=one', 'Blank='])
+        )
 
 
 class VolumeBindTest(helpers.BaseTestCase):
