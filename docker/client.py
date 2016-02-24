@@ -28,8 +28,12 @@ from . import errors
 from .auth import auth
 from .unixconn import unixconn
 from .ssladapter import ssladapter
-from .utils import utils, check_resource, update_headers
+from .utils import utils, check_resource, update_headers, kwargs_from_env
 from .tls import TLSConfig
+
+
+def from_env(**kwargs):
+    return Client.from_env(**kwargs)
 
 
 class Client(
@@ -83,6 +87,10 @@ class Client(
                     type(version).__name__
                 )
             )
+
+    @classmethod
+    def from_env(cls, **kwargs):
+        return cls(**kwargs_from_env(**kwargs))
 
     def _retrieve_server_version(self):
         try:
