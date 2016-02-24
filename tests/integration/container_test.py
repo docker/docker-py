@@ -370,6 +370,16 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.assertRaises(ValueError,
                           self.client.create_host_config, pid_mode='40')
 
+    def test_create_with_environment_variable_no_value(self):
+        container = self.client.create_container(
+            BUSYBOX,
+            ['echo'],
+            environment={'Foo': None, 'Other': 'one'},
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container['Id'])
+        assert sorted(config['Config']['Env']) == sorted(['Foo', 'Other=one'])
+
 
 class VolumeBindTest(helpers.BaseTestCase):
     def setUp(self):

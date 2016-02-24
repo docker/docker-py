@@ -821,6 +821,14 @@ def split_command(command):
     return shlex.split(command)
 
 
+def format_environment(environment):
+    def format_env(key, value):
+        if not value:
+            return key
+        return '{key}={value}'.format(key=key, value=value)
+    return [format_env(*var) for var in six.iteritems(environment)]
+
+
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
     stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
@@ -836,10 +844,7 @@ def create_container_config(
         entrypoint = split_command(entrypoint)
 
     if isinstance(environment, dict):
-        environment = [
-            six.text_type('{0}={1}').format(k, v)
-            for k, v in six.iteritems(environment)
-        ]
+        environment = format_environment(environment)
 
     if labels is not None and compare_version('1.18', version) < 0:
         raise errors.InvalidVersion(
