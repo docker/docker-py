@@ -10,15 +10,19 @@ from ..utils.utils import create_networking_config, create_endpoint_config
 class ContainerApiMixin(object):
     @utils.check_resource
     def attach(self, container, stdout=True, stderr=True,
-               stream=False, logs=False):
+               stdin=None, stream=False, logs=False):
         params = {
             'logs': logs and 1 or 0,
+            'stdin': stdin is not None and 1 or 0,
             'stdout': stdout and 1 or 0,
             'stderr': stderr and 1 or 0,
             'stream': stream and 1 or 0,
         }
         u = self._url("/containers/{0}/attach", container)
         response = self._post(u, params=params, stream=stream)
+
+        if stream and stdin is not None:
+            self._send_stdin(response, stdin)
 
         return self._get_result(container, stream, response)
 

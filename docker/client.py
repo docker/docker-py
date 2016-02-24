@@ -292,6 +292,19 @@ class Client(
         if hasattr(socket, "_sock") and hasattr(socket._sock, "settimeout"):
             socket._sock.settimeout(None)
 
+    def _send_stdin(self, response, stdin):
+        s = self._get_raw_response_socket(response)
+        self._disable_socket_timeout(s)
+
+        if six.PY3:
+            if type(stdin) == str:
+                stdin = stdin.encode("utf-8")
+
+        if six.PY3 and not self.base_url.startswith("https://"):
+            s._sock.sendall(stdin)
+        else:
+            s.sendall(stdin)
+
     def _get_result(self, container, stream, res):
         cont = self.inspect_container(container)
         return self._get_result_tty(stream, res, cont['Config']['Tty'])

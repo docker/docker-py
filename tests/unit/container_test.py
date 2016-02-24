@@ -1407,3 +1407,74 @@ class ContainerTest(DockerClientTest):
             params={'ps_args': 'waux'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
+
+    def test_attach(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            out = self.client.attach(fake_api.FAKE_CONTAINER_ID)
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'containers/3cc2351ab11b/attach',
+            params={'logs': 0, 'stdin': 0, 'stderr': 1, 'stdout': 1,
+                    'stream': 0},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+        self.assertEqual(
+            out,
+            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        )
+
+    def test_attach_with_dict_instead_of_id(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            out = self.client.attach({'Id': fake_api.FAKE_CONTAINER_ID})
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'containers/3cc2351ab11b/attach',
+            params={'logs': 0, 'stdin': 0, 'stderr': 1, 'stdout': 1,
+                    'stream': 0},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+        self.assertEqual(
+            out,
+            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        )
+
+    def test_attach_streaming(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.attach(fake_api.FAKE_CONTAINER_ID, stream=True)
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'containers/3cc2351ab11b/attach',
+            params={'logs': 0, 'stdin': 0, 'stderr': 1, 'stdout': 1,
+                    'stream': 1},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=True
+        )
+
+    def test_attach_stdin(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            out = self.client.attach(fake_api.FAKE_CONTAINER_ID, stdin="input")
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'containers/3cc2351ab11b/attach',
+            params={'logs': 0, 'stdin': 1, 'stderr': 1, 'stdout': 1,
+                    'stream': 0},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+        self.assertEqual(
+            out,
+            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        )

@@ -972,6 +972,51 @@ class AttachContainerTest(helpers.BaseTestCase):
         data = helpers.read_data(pty_stdout, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
+    def test_run_container_stdin_tty(self):
+        line = 'hi there and stuff and things, words!'
+        command = "cat -"
+        container = self.client.create_container(BUSYBOX, command,
+                                                 stdin_open=True, tty=True)
+        ident = container['Id']
+        self.tmp_containers.append(ident)
+
+        self.client.start(ident)
+
+        data = self.client.attach(ident, stdin=line, logs=True, stream=True)
+
+        output = "".join([next(data).decode("utf-8") for _ in
+                          range(len(line))])
+
+        self.assertEqual(output, line)
+
+    def test_run_container_stdin_string(self):
+        line = 'hi there and stuff and things, words!'
+        command = "cat -"
+        container = self.client.create_container(BUSYBOX, command,
+                                                 stdin_open=True, tty=False)
+        ident = container['Id']
+        self.tmp_containers.append(ident)
+
+        self.client.start(ident)
+
+        data = self.client.attach(ident, stdin=line, logs=True, stream=True)
+        output = next(data).decode("utf-8")
+        self.assertEqual(output, line)
+
+    def test_run_container_stdin_bytes(self):
+        line = b'hi there and stuff and things, words!'
+        command = "cat -"
+        container = self.client.create_container(BUSYBOX, command,
+                                                 stdin_open=True, tty=False)
+        ident = container['Id']
+        self.tmp_containers.append(ident)
+
+        self.client.start(ident)
+
+        data = self.client.attach(ident, stdin=line, logs=True, stream=True)
+        output = next(data)
+        self.assertEqual(output, line)
+
 
 class PauseTest(helpers.BaseTestCase):
     def test_pause_unpause(self):
