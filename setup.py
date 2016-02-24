@@ -22,6 +22,7 @@ setup(
     name="docker-py",
     version=version,
     description="Python client for Docker.",
+    long_description=(read('README.rst')),
     url='https://github.com/docker/docker-py/',
     packages=[
         'docker', 'docker.api', 'docker.auth', 'docker.unixconn',
