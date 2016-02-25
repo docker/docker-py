@@ -677,6 +677,7 @@ output as it happens.
 * timestamps (bool): Show timestamps
 * tail (str or int): Output specified number of lines at the end of logs: `"all"` or `number`. Default `"all"`
 * since (datetime or int): Show logs since a given datetime or integer epoch (in seconds)
+* follow (bool): Follow log output
 
 **Returns** (generator or str):
 

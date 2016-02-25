@@ -193,12 +193,14 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def logs(self, container, stdout=True, stderr=True, stream=False,
-             timestamps=False, tail='all', since=None):
+             timestamps=False, tail='all', since=None, follow=None):
         if utils.compare_version('1.11', self._version) >= 0:
+            if follow is None:
+                follow = stream
             params = {'stderr': stderr and 1 or 0,
                       'stdout': stdout and 1 or 0,
                       'timestamps': timestamps and 1 or 0,
-                      'follow': stream and 1 or 0,
+                      'follow': follow and 1 or 0,
                       }
             if utils.compare_version('1.13', self._version) >= 0:
                 if tail != 'all' and (not isinstance(tail, int) or tail < 0):

@@ -1121,7 +1121,52 @@ class ContainerTest(DockerClientTest):
     def test_log_streaming(self):
         with mock.patch('docker.Client.inspect_container',
                         fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True,
+                             follow=False)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=True
+        )
+
+    def test_log_following(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                             follow=True)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+    def test_log_following_backwards(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/3cc2351ab11b/logs',
+            params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all'},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=True
+        )
+
+    def test_log_streaming_and_following(self):
+        with mock.patch('docker.Client.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True,
+                             follow=True)
 
         fake_request.assert_called_with(
             'GET',
@@ -1137,7 +1182,7 @@ class ContainerTest(DockerClientTest):
         with mock.patch('docker.Client.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
-                             tail=10)
+                             follow=False, tail=10)
 
         fake_request.assert_called_with(
             'GET',
@@ -1153,7 +1198,7 @@ class ContainerTest(DockerClientTest):
         with mock.patch('docker.Client.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
-                             since=ts)
+                             follow=False, since=ts)
 
         fake_request.assert_called_with(
             'GET',
@@ -1170,7 +1215,7 @@ class ContainerTest(DockerClientTest):
         with mock.patch('docker.Client.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
-                             since=time)
+                             follow=False, since=time)
 
         fake_request.assert_called_with(
             'GET',
@@ -1188,7 +1233,7 @@ class ContainerTest(DockerClientTest):
             with mock.patch('docker.Client._stream_raw_result',
                             m):
                 self.client.logs(fake_api.FAKE_CONTAINER_ID,
-                                 stream=True)
+                                 follow=True, stream=True)
 
         self.assertTrue(m.called)
         fake_request.assert_called_with(
