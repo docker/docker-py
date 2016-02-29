@@ -122,11 +122,23 @@ class ContainerApiMixin(object):
         return utils.create_container_config(self._version, *args, **kwargs)
 
     def create_container_from_config(self, config, name=None):
+        container_id_file = ""
+        if config['HostConfig'] is not None:
+            if ('ContainerIDFile' in config['HostConfig'] and
+                    config['HostConfig']['ContainerIDFile']):
+                container_id_file = config['HostConfig']['ContainerIDFile']
+                utils.new_cid_file(container_id_file)
+
         u = self._url("/containers/create")
         params = {
             'name': name
         }
         res = self._post_json(u, data=config, params=params)
+
+        if container_id_file:
+            with open(container_id_file, 'a') as file:
+                file.write(res.json()['Id'])
+
         return self._result(res, True)
 
     def create_host_config(self, *args, **kwargs):

@@ -5,6 +5,7 @@ import signal
 import docker
 import pytest
 import six
+import os
 
 from . import fake_api
 from ..base import requires_api_version
@@ -1015,6 +1016,48 @@ class CreateContainerTest(DockerClientTest):
                                  "some-network": {"Aliases": ["foo", "bar"]}
                                }
                              }}'''))
+
+    def test_create_container_with_container_id_file(self):
+        container_id_file = '/tmp/my-container.cid'
+
+        container = self.client.create_container(
+            'busybox', 'ls',
+            host_config=self.client.create_host_config(
+                container_id_file=container_id_file
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        self.assertEqual(
+            args[1]['headers'],
+            {'Content-Type': 'application/json'}
+        )
+
+        self.assertEqual(
+            json.loads(args[1]['data'])['HostConfig']['ContainerIDFile'],
+            container_id_file
+        )
+
+        self.assertTrue(os.path.exists(container_id_file))
+        cid_file = open(container_id_file, 'r')
+        self.assertEqual(cid_file.read(), container['Id'])
+        cid_file.close()
+
+        os.remove(container_id_file)
+
+    def test_create_container_with_existing_container_id_file(self):
+        container_id_file = '/tmp/my-container.cid'
+        open(container_id_file, 'a').close()
+
+        with pytest.raises(IOError):
+            self.client.create_container(
+                'busybox', 'ls',
+                host_config=self.client.create_host_config(
+                    container_id_file=container_id_file
+                )
+            )
+        os.remove(container_id_file)
 
 
 class ContainerTest(DockerClientTest):
