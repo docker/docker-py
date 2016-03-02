@@ -1,4 +1,5 @@
 import os
+import ssl
 
 from . import errors
 from .ssladapter import ssladapter
@@ -19,9 +20,13 @@ class TLSConfig(object):
         # here, but also disable any public/default CA pool verification by
         # leaving tls_verify=False
 
-        self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
+
+        # TLS v1.0 seems to be the safest default; SSLv23 fails in mysterious
+        # ways: https://github.com/docker/docker-py/issues/963
+
+        self.ssl_version = ssl_version or ssl.PROTOCOL_TLSv1
 
         # "tls" and "tls_verify" must have both or neither cert/key files
         # In either case, Alert the user when both are expected, but any are
