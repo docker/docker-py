@@ -30,7 +30,8 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):
     def __init__(self, base_url, unix_socket, timeout=60):
-        httplib.HTTPConnection.__init__(self, 'localhost', timeout=timeout)
+        super(UnixHTTPConnection, self).__init__(
+                'localhost', timeout=timeout)
         self.base_url = base_url
         self.unix_socket = unix_socket
         self.timeout = timeout
@@ -44,9 +45,8 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     def __init__(self, base_url, socket_path, timeout=60):
-        urllib3.connectionpool.HTTPConnectionPool.__init__(
-            self, 'localhost', timeout=timeout
-        )
+        super(UnixHTTPConnectionPool, self).__init__(
+                'localhost', timeout=timeout)
         self.base_url = base_url
         self.socket_path = socket_path
         self.timeout = timeout
