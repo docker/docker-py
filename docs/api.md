@@ -222,6 +222,7 @@ following format `["PASSWORD=xxx"]` or `{"PASSWORD": "xxx"}`.
 * volumes (str or list):
 * volumes_from (str or list): List of container names or Ids to get volumes
 from. Optionally a single string joining container id's with commas
+* tmpfs (str or list): Paths to mount tmpfs filesystems
 * network_disabled (bool): Disable networking
 * name (str): A name for the container
 * entrypoint (str or list): An entrypoint

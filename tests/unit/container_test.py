@@ -225,6 +225,28 @@ class CreateContainerTest(DockerClientTest):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    @requires_api_version('1.22')
+    def test_create_container_with_tmpfs(self):
+        tmpfs_dest = '/tmpdir'
+
+        self.client.create_container('busybox', ['ls', tmpfs_dest],
+                                     tmpfs=tmpfs_dest)
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls", "/tmpdir"], "AttachStdin": false,
+                             "Tmpfs": {"/tmpdir": ""},
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_ports(self):
         self.client.create_container('busybox', 'ls',
                                      ports=[1111, (2222, 'udp'), (3333,)])
