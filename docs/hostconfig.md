@@ -111,6 +111,7 @@ for example:
   container process will run as.
 * devices (list): Host device bindings. See [host devices](host-devices.md)
   for more information.
+* container_id_file (str): Write the container ID to the file
 
 **Returns** (dict) HostConfig dictionary
 

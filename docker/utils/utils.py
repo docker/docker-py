@@ -584,7 +584,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
                        cpu_period=None, oom_kill_disable=False, shm_size=None,
-                       version=None):
+                       version=None, container_id_file=None):
 
     host_config = {}
 
@@ -661,6 +661,9 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if cap_drop:
         host_config['CapDrop'] = cap_drop
+
+    if container_id_file:
+        host_config['ContainerIDFile'] = container_id_file
 
     if devices:
         host_config['Devices'] = parse_devices(devices)
@@ -752,6 +755,14 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         host_config['CpuPeriod'] = cpu_period
 
     return host_config
+
+
+def new_cid_file(path):
+    if os.path.exists(path):
+        raise IOError(
+            'Container ID file found, make sure the other container'
+            'isn\'t running or delete {0}'.format(path))
+    open(path, 'a').close()
 
 
 def normalize_links(links):
