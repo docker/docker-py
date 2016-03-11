@@ -49,7 +49,7 @@ class HostConfigTest(base.BaseTestCase):
 
     def test_create_host_config_no_options_newer_api_version(self):
         config = create_host_config(version='1.20')
-        self.assertEqual(config['NetworkMode'], 'default')
+        self.assertEqual(config['NetworkMode'], 'bridge')
 
     def test_create_host_config_invalid_cpu_cfs_types(self):
         with pytest.raises(TypeError):
