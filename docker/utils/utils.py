@@ -457,13 +457,8 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
 
     # empty string for tls verify counts as "false".
     # Any value or 'unset' counts as true.
-    tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
-    if tls_verify == '':
-        tls_verify = False
-        enable_tls = True
-    else:
-        tls_verify = tls_verify is not None
-        enable_tls = cert_path or tls_verify
+    tls_verify = os.environ.get('DOCKER_TLS_VERIFY') or False
+    enable_tls = tls_verify or cert_path or False
 
     params = {}
 
