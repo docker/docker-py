@@ -111,6 +111,8 @@ for example:
   container process will run as.
 * devices (list): Host device bindings. See [host devices](host-devices.md)
   for more information.
+* tmpfs: Temporary filesystems to mouunt. See [Using tmpfs](tmpfs.md) for more
+  information.
 
 **Returns** (dict) HostConfig dictionary
 
