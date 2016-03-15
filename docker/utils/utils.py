@@ -460,16 +460,16 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None):
     tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
     if tls_verify == '':
         tls_verify = False
-        enable_tls = True
     else:
         tls_verify = tls_verify is not None
-        enable_tls = cert_path or tls_verify
+    enable_tls = cert_path or tls_verify
 
     params = {}
 
     if host:
-        params['base_url'] = (host.replace('tcp://', 'https://')
-                              if enable_tls else host)
+        params['base_url'] = (
+            host.replace('tcp://', 'https://') if enable_tls else host
+        )
 
     if not enable_tls:
         return params
