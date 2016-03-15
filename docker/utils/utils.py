@@ -646,7 +646,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
     if network_mode:
         host_config['NetworkMode'] = network_mode
     elif network_mode is None and compare_version('1.19', version) > 0:
-        host_config['NetworkMode'] = 'default'
+        host_config['NetworkMode'] = 'bridge'
 
     if restart_policy:
         if not isinstance(restart_policy, dict):
