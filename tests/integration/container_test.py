@@ -280,15 +280,14 @@ class CreateContainerTest(helpers.BaseTestCase):
             config={}
         )
 
-        container = self.client.create_container(
-            BUSYBOX, ['true'],
-            host_config=self.client.create_host_config(log_config=log_config)
-        )
-
         expected_msg = "logger: no log driver named 'asdf-nope' is registered"
-
         with pytest.raises(docker.errors.APIError) as excinfo:
             # raises an internal server error 500
+            container = self.client.create_container(
+                BUSYBOX, ['true'], host_config=self.client.create_host_config(
+                    log_config=log_config
+                )
+            )
             self.client.start(container)
 
         assert expected_msg in str(excinfo.value)
