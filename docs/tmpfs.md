@@ -1,30 +1,31 @@
-# Using Tmpfs
+# Using tmpfs
 
-Tmpfs declaration is done with the `Client().create_container()`
-method by declaring the mountpoints in the `host_config` section.
+When creating a container, you can specify paths to be mounted with tmpfs using
+the `tmpfs` argument to `create_host_config`, similarly to the `--tmpfs`
+argument to `docker run`.
 
-This is available from docker 1.10.
+This capability is supported in Docker Engine 1.10 and up.
 
-You can provide a list of declarations similar to the `--tmpfs`
-option of the docker commandline client:
+`tmpfs` can be either a list or a dictionary. If it's a list, each item is a
+string specifying the path and (optionally) any configuration for the mount:
 
 ```python
-container_id = cli.create_container(
+client.create_container(
     'busybox', 'ls',
-    host_config=cli.create_host_config(tmpfs=[
+    host_config=client.create_host_config(tmpfs=[
         '/mnt/vol2',
         '/mnt/vol1:size=3G,uid=1000'
     ])
 )
 ```
 
-You can alternatively specify tmpfs as a dict the docker remote
-API uses:
+Alternatively, if it's a dictionary, each key is a path and each value contains
+the mount options:
 
 ```python
-container_id = cli.create_container(
+client.create_container(
     'busybox', 'ls',
-    host_config=cli.create_host_config(tmpfs={
+    host_config=client.create_host_config(tmpfs={
         '/mnt/vol2': '',
         '/mnt/vol1': 'size=3G,uid=1000'
     })
