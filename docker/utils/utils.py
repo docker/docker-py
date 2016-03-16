@@ -781,6 +781,8 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         host_config['CpuPeriod'] = cpu_period
 
     if tmpfs:
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('tmpfs', '1.22')
         host_config["Tmpfs"] = convert_tmpfs_mounts(tmpfs)
 
     return host_config

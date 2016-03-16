@@ -1016,6 +1016,7 @@ class CreateContainerTest(DockerClientTest):
                                }
                              }}'''))
 
+    @requires_api_version('1.22')
     def test_create_container_with_tmpfs_list(self):
 
         self.client.create_container(
@@ -1044,6 +1045,7 @@ class CreateContainerTest(DockerClientTest):
             DEFAULT_TIMEOUT_SECONDS
         )
 
+    @requires_api_version('1.22')
     def test_create_container_with_tmpfs_dict(self):
 
         self.client.create_container(
