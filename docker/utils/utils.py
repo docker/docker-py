@@ -343,7 +343,8 @@ def convert_tmpfs_mounts(tmpfs):
 
     if not isinstance(tmpfs, list):
         raise ValueError(
-            'Tmpfs spec must be a list'
+            'Expected tmpfs value to be either a list or a dict, found: {}'
+            .format(type(tmpfs).__name__)
         )
 
     result = {}
@@ -357,7 +358,8 @@ def convert_tmpfs_mounts(tmpfs):
 
         else:
             raise ValueError(
-                "Tmpfs spec have to be str, unicode or tuple"
+                "Expected item in tmpfs list to be a string, found: {}"
+                .format(type(mount).__name__)
             )
 
         result[name] = options
