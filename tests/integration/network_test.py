@@ -238,48 +238,56 @@ class TestNetworks(helpers.BaseTestCase):
 
     @requires_api_version('1.22')
     def test_connect_with_ipv4_address(self):
-        net_name, net_id = self.create_network()
+        net_name, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[
+                    create_ipam_pool(
+                        subnet="172.28.0.0/16", iprange="172.28.5.0/24",
+                        gateway="172.28.5.254"
+                    )
+                ]
+            )
+        )
 
         container = self.create_and_start(
             host_config=self.client.create_host_config(network_mode=net_name))
 
         self.client.disconnect_container_from_network(container, net_name)
         self.client.connect_container_to_network(
-            container, net_name,
-            ipv4_address='192.168.0.1')
+            container, net_name, ipv4_address='172.28.5.24'
+        )
 
         container_data = self.client.inspect_container(container)
+        net_data = container_data['NetworkSettings']['Networks'][net_name]
         self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]
-                          ['IPAMConfig']['IPv4Address'],
-            '192.168.0.1')
-
-        self.create_and_start(
-            name='docker-py-test-upstream',
-            host_config=self.client.create_host_config(network_mode=net_name))
-
-        self.execute(container, ['nslookup', 'bar'])
+            net_data['IPAMConfig']['IPv4Address'], '172.28.5.24'
+        )
 
     @requires_api_version('1.22')
     def test_connect_with_ipv6_address(self):
-        net_name, net_id = self.create_network()
+        net_name, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[
+                    create_ipam_pool(
+                        subnet="2001:389::1/64", iprange="2001:389::0/96",
+                        gateway="2001:389::ffff"
+                    )
+                ]
+            )
+        )
 
         container = self.create_and_start(
             host_config=self.client.create_host_config(network_mode=net_name))
 
         self.client.disconnect_container_from_network(container, net_name)
         self.client.connect_container_to_network(
-            container, net_name,
-            ipv6_address='2001:389::1')
+            container, net_name, ipv6_address='2001:389::f00d'
+        )
 
         container_data = self.client.inspect_container(container)
+        net_data = container_data['NetworkSettings']['Networks'][net_name]
         self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]
-                          ['IPAMConfig']['IPv6Address'],
-            '2001:389::1')
-
-        self.create_and_start(
-            name='docker-py-test-upstream',
-            host_config=self.client.create_host_config(network_mode=net_name))
-
-        self.execute(container, ['nslookup', 'bar'])
+            net_data['IPAMConfig']['IPv6Address'], '2001:389::f00d'
+        )
