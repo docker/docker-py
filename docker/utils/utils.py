@@ -866,6 +866,7 @@ def create_container_config(
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
     labels=None, volume_driver=None, stop_signal=None, networking_config=None,
+    tmpfs=None
 ):
     if isinstance(command, six.string_types):
         command = split_command(command)
@@ -884,6 +885,11 @@ def create_container_config(
     if stop_signal is not None and compare_version('1.21', version) < 0:
         raise errors.InvalidVersion(
             'stop_signal was only introduced in API version 1.21'
+        )
+
+    if tmpfs is not None and compare_version('1.22', version) < 0:
+        raise errors.InvalidVersion(
+            'tmpfs was only introduced in API version 1.22'
         )
 
     if compare_version('1.19', version) < 0:
@@ -933,6 +939,15 @@ def create_container_config(
         for vol in volumes:
             volumes_dict[vol] = {}
         volumes = volumes_dict
+
+    if isinstance(tmpfs, six.string_types):
+        tmpfs = [tmpfs, ]
+
+    if isinstance(tmpfs, list):
+        tmpfs_dict = {}
+        for tmpdir in tmpfs:
+            tmpfs_dict[tmpdir] = ''
+        tmpfs = tmpfs_dict
 
     if volumes_from:
         if not isinstance(volumes_from, six.string_types):
@@ -992,5 +1007,6 @@ def create_container_config(
         'MacAddress': mac_address,
         'Labels': labels,
         'VolumeDriver': volume_driver,
-        'StopSignal': stop_signal
+        'StopSignal': stop_signal,
+        'Tmpfs': tmpfs
     }
