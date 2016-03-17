@@ -382,6 +382,22 @@ class CreateContainerTest(helpers.BaseTestCase):
             sorted(['Foo', 'Other=one', 'Blank='])
         )
 
+    @requires_api_version('1.22')
+    def test_create_with_tmpfs(self):
+        tmpfs = {
+            '/tmp1': 'size=3M'
+        }
+
+        container = self.client.create_container(
+            BUSYBOX,
+            ['echo'],
+            host_config=self.client.create_host_config(
+                tmpfs=tmpfs))
+
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['Tmpfs'] == tmpfs
+
 
 class VolumeBindTest(helpers.BaseTestCase):
     def setUp(self):

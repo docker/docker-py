@@ -337,6 +337,35 @@ def convert_volume_binds(binds):
     return result
 
 
+def convert_tmpfs_mounts(tmpfs):
+    if isinstance(tmpfs, dict):
+        return tmpfs
+
+    if not isinstance(tmpfs, list):
+        raise ValueError(
+            'Expected tmpfs value to be either a list or a dict, found: {}'
+            .format(type(tmpfs).__name__)
+        )
+
+    result = {}
+    for mount in tmpfs:
+        if isinstance(mount, six.string_types):
+            if ":" in mount:
+                name, options = mount.split(":", 1)
+            else:
+                name = mount
+                options = ""
+
+        else:
+            raise ValueError(
+                "Expected item in tmpfs list to be a string, found: {}"
+                .format(type(mount).__name__)
+            )
+
+        result[name] = options
+    return result
+
+
 def parse_repository_tag(repo_name):
     parts = repo_name.rsplit('@', 1)
     if len(parts) == 2:
@@ -584,7 +613,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
                        cpu_period=None, oom_kill_disable=False, shm_size=None,
-                       version=None):
+                       version=None, tmpfs=None):
 
     host_config = {}
 
@@ -750,6 +779,11 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             raise host_config_version_error('cpu_period', '1.19')
 
         host_config['CpuPeriod'] = cpu_period
+
+    if tmpfs:
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('tmpfs', '1.22')
+        host_config["Tmpfs"] = convert_tmpfs_mounts(tmpfs)
 
     return host_config
 

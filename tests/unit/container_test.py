@@ -1016,6 +1016,64 @@ class CreateContainerTest(DockerClientTest):
                                }
                              }}'''))
 
+    @requires_api_version('1.22')
+    def test_create_container_with_tmpfs_list(self):
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                tmpfs=[
+                    "/tmp",
+                    "/mnt:size=3G,uid=100"
+                ]
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix +
+                         'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['Tmpfs'] = {
+            "/tmp": "",
+            "/mnt": "size=3G,uid=100"
+        }
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            DEFAULT_TIMEOUT_SECONDS
+        )
+
+    @requires_api_version('1.22')
+    def test_create_container_with_tmpfs_dict(self):
+
+        self.client.create_container(
+            'busybox', 'true', host_config=self.client.create_host_config(
+                tmpfs={
+                    "/tmp": "",
+                    "/mnt": "size=3G,uid=100"
+                }
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix +
+                         'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['Tmpfs'] = {
+            "/tmp": "",
+            "/mnt": "size=3G,uid=100"
+        }
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['timeout'],
+            DEFAULT_TIMEOUT_SECONDS
+        )
+
 
 class ContainerTest(DockerClientTest):
     def test_list_containers(self):
