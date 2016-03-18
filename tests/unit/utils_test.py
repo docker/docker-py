@@ -412,7 +412,12 @@ class ParseHostTest(base.BaseTestCase):
     def test_parse_host_tls(self):
         host_value = 'myhost.docker.net:3348'
         expected_result = 'https://myhost.docker.net:3348'
-        self.assertEqual(parse_host(host_value, None, True), expected_result)
+        assert parse_host(host_value, tls=True) == expected_result
+
+    def test_parse_host_tls_tcp_proto(self):
+        host_value = 'tcp://myhost.docker.net:3348'
+        expected_result = 'https://myhost.docker.net:3348'
+        assert parse_host(host_value, tls=True) == expected_result
 
 
 class ParseRepositoryTagTest(base.BaseTestCase):

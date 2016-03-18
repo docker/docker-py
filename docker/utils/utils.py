@@ -400,11 +400,12 @@ def parse_host(addr, platform=None, tls=False):
 
     if addr == 'tcp://':
         raise errors.DockerException(
-            "Invalid bind address format: {0}".format(addr))
+            "Invalid bind address format: {0}".format(addr)
+        )
     elif addr.startswith('unix://'):
         addr = addr[7:]
     elif addr.startswith('tcp://'):
-        proto = "http"
+        proto = 'http{0}'.format('s' if tls else '')
         addr = addr[6:]
     elif addr.startswith('https://'):
         proto = "https"
