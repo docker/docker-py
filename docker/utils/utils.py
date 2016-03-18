@@ -616,7 +616,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
                        cpu_period=None, oom_kill_disable=False, shm_size=None,
-                       version=None, tmpfs=None):
+                       version=None, tmpfs=None, oom_score_adj=None):
 
     host_config = {}
 
@@ -665,6 +665,15 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             raise host_config_version_error('oom_kill_disable', '1.19')
 
         host_config['OomKillDisable'] = oom_kill_disable
+
+    if oom_score_adj:
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('oom_score_adj', '1.22')
+        if not isinstance(oom_score_adj, int):
+            raise host_config_type_error(
+                'oom_score_adj', oom_score_adj, 'int'
+            )
+        host_config['OomScoreAdj'] = oom_score_adj
 
     if publish_all_ports:
         host_config['PublishAllPorts'] = publish_all_ports
