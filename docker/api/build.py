@@ -29,6 +29,9 @@ class BuildApiMixin(object):
                     'Invalid container_limits key {0}'.format(key)
                 )
 
+        if tag and re.search(r'[^a-z0-9_\-./]+', tag):
+            raise AttributeError('Tag should only contain a-z0-9-_. .')
+
         if custom_context:
             if not fileobj:
                 raise TypeError("You must specify fileobj with custom_context")
