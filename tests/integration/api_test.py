@@ -49,7 +49,7 @@ class LinkTest(helpers.BaseTestCase):
 
         container2 = self.client.create_container(
             helpers.BUSYBOX, 'cat', host_config=self.client.create_host_config(
-                links={link_path: link_alias}, network_mode='none'
+                links={link_path: link_alias}
             )
         )
         container2_id = container2['Id']
