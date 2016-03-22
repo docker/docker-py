@@ -249,6 +249,20 @@ class KwargsFromEnvTest(base.BaseTestCase):
             if temp_dir:
                 shutil.rmtree(temp_dir)
 
+    def test_kwargs_from_env_alternate_env(self):
+        # Values in os.environ are entirely ignored if an alternate is
+        # provided
+        os.environ.update(
+            DOCKER_HOST='tcp://192.168.59.103:2376',
+            DOCKER_CERT_PATH=TEST_CERT_DIR,
+            DOCKER_TLS_VERIFY=''
+        )
+        kwargs = kwargs_from_env(environment={
+            'DOCKER_HOST': 'http://docker.gensokyo.jp:2581',
+        })
+        assert 'http://docker.gensokyo.jp:2581' == kwargs['base_url']
+        assert 'tls' not in kwargs
+
 
 class ConverVolumeBindsTest(base.BaseTestCase):
     def test_convert_volume_binds_empty(self):
