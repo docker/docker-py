@@ -479,15 +479,17 @@ def parse_devices(devices):
     return device_list
 
 
-def kwargs_from_env(ssl_version=None, assert_hostname=None):
-    host = os.environ.get('DOCKER_HOST')
+def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
+    if not environment:
+        environment = os.environ
+    host = environment.get('DOCKER_HOST')
 
     # empty string for cert path is the same as unset.
-    cert_path = os.environ.get('DOCKER_CERT_PATH') or None
+    cert_path = environment.get('DOCKER_CERT_PATH') or None
 
     # empty string for tls verify counts as "false".
     # Any value or 'unset' counts as true.
-    tls_verify = os.environ.get('DOCKER_TLS_VERIFY')
+    tls_verify = environment.get('DOCKER_TLS_VERIFY')
     if tls_verify == '':
         tls_verify = False
     else:
