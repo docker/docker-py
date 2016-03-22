@@ -73,6 +73,8 @@ for example:
   for more information.
 * lxc_conf (dict): LXC config
 * oom_kill_disable (bool): Whether to disable OOM killer
+* oom_score_adj (int): An integer value containing the score given to the
+  container in order to tune OOM killer preferences
 * publish_all_ports (bool): Whether to publish all ports to the host
 * links (dict or list of tuples): either as a dictionary mapping name to alias
   or as a list of `(name, alias)` tuples

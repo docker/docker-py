@@ -87,6 +87,16 @@ class HostConfigTest(base.BaseTestCase):
             InvalidVersion, lambda: create_host_config(version='1.18.3',
                                                        oom_kill_disable=True))
 
+    def test_create_host_config_with_oom_score_adj(self):
+        config = create_host_config(version='1.22', oom_score_adj=100)
+        self.assertEqual(config.get('OomScoreAdj'), 100)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.21',
+                                                       oom_score_adj=100))
+        self.assertRaises(
+            TypeError, lambda: create_host_config(version='1.22',
+                                                  oom_score_adj='100'))
+
     def test_create_endpoint_config_with_aliases(self):
         config = create_endpoint_config(version='1.22', aliases=['foo', 'bar'])
         assert config == {'Aliases': ['foo', 'bar']}
