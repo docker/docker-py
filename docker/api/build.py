@@ -46,7 +46,9 @@ class BuildApiMixin(object):
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
                     exclude = list(filter(bool, f.read().splitlines()))
-            context = utils.tar(path, exclude=exclude, dockerfile=dockerfile)
+            context = utils.tar(path, exclude=exclude, dockerfile=dockerfile,
+                gzip=True)
+            encoding = 'gizp'
 
         if utils.compare_version('1.8', self._version) >= 0:
             stream = True
