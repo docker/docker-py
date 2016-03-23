@@ -27,8 +27,7 @@ fi
 
 
 pandoc -f markdown -t rst README.md -o README.rst || exit 1
-python setup.py sdist bdist_wheel || exit 1
 if [[ $2 == 'upload' ]]; then
     echo "##> Uploading sdist to pypi"
-    python setup.py upload
+    python setup.py sdist bdist_wheel upload
 fi
