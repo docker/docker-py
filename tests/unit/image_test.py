@@ -101,7 +101,8 @@ class ImageTest(DockerClientTest):
                 'comment': None,
                 'tag': None,
                 'container': '3cc2351ab11b',
-                'author': None
+                'author': None,
+                'changes': None
             },
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

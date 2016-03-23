@@ -40,13 +40,14 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def commit(self, container, repository=None, tag=None, message=None,
-               author=None, conf=None):
+               author=None, changes=None, conf=None):
         params = {
             'container': container,
             'repo': repository,
             'tag': tag,
             'comment': message,
-            'author': author
+            'author': author,
+            'changes': changes
         }
         u = self._url("/commit")
         return self._result(self._post_json(u, data=conf, params=params),

@@ -123,6 +123,7 @@ Identical to the `docker commit` command.
 * tag (str): The tag to push
 * message (str): A commit message
 * author (str): The name of the author
+* changes (str): Dockerfile instructions to apply while committing
 * conf (dict): The configuration for the container. See the [Docker remote api](
 https://docs.docker.com/reference/api/docker_remote_api/) for full details.
 

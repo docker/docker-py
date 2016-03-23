@@ -90,6 +90,20 @@ class CommitTest(helpers.BaseTestCase):
         self.assertIn('Parent', img)
         self.assertEqual(img['Parent'], busybox_id)
 
+    def test_commit_with_changes(self):
+        cid = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        self.tmp_containers.append(cid)
+        self.client.start(cid)
+        img_id = self.client.commit(
+            cid, changes=['EXPOSE 8000', 'CMD ["bash"]']
+        )
+        self.tmp_imgs.append(img_id)
+        img = self.client.inspect_image(img_id)
+        assert 'Container' in img
+        assert img['Container'].startswith(cid['Id'])
+        assert '8000/tcp' in img['Config']['ExposedPorts']
+        assert img['Config']['Cmd'] == ['bash']
+
 
 class RemoveImageTest(helpers.BaseTestCase):
     def test_remove(self):
