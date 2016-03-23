@@ -10,7 +10,7 @@ dist
 .tox
 .coverage
 html/*
-tests/__pycache__
+__pycache__
 
 # Compiled Documentation
 site/
