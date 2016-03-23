@@ -212,6 +212,13 @@ class TestNetworks(helpers.BaseTestCase):
 
         self.execute(container, ['nslookup', 'bar'])
 
+    @requires_api_version('1.21')
+    def test_create_check_duplicate(self):
+        net_name, net_id = self.create_network()
+        with self.assertRaises(docker.errors.APIError):
+            self.client.create_network(net_name, check_duplicate=True)
+        self.client.create_network(net_name, check_duplicate=False)
+
     @requires_api_version('1.22')
     def test_connect_with_links(self):
         net_name, net_id = self.create_network()
