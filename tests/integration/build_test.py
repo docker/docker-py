@@ -6,6 +6,8 @@ import tempfile
 
 import six
 
+from docker import errors
+
 from .. import helpers
 from ..base import requires_api_version
 
@@ -138,3 +140,29 @@ class BuildTest(helpers.BaseTestCase):
             control_chars[0], control_chars[1], snippet
         )
         self.assertTrue(any([line == expected for line in lines]))
+
+    def test_build_gzip_encoding(self):
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+
+        with open(os.path.join(base_dir, 'Dockerfile'), 'w') as f:
+            f.write("\n".join([
+                'FROM busybox',
+                'MAINTAINER docker-py',
+                'ADD . /test',
+            ]))
+
+        stream = self.client.build(
+            path=base_dir, stream=True, decode=True, nocache=True,
+            gzip=True
+        )
+
+        lines = []
+        for chunk in stream:
+            lines.append(chunk)
+
+        assert 'Successfully built' in lines[-1]['stream']
+
+    def test_build_gzip_custom_encoding(self):
+        with self.assertRaises(errors.DockerException):
+            self.client.build(path='.', gzip=True, encoding='text/html')

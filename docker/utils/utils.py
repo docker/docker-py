@@ -91,10 +91,10 @@ def decode_json_header(header):
     return json.loads(data)
 
 
-def tar(path, exclude=None, dockerfile=None, fileobj=None):
+def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
     if not fileobj:
         fileobj = tempfile.NamedTemporaryFile()
-    t = tarfile.open(mode='w', fileobj=fileobj)
+    t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
 
     root = os.path.abspath(path)
     exclude = exclude or []

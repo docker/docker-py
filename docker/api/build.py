@@ -17,11 +17,15 @@ class BuildApiMixin(object):
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
-              decode=False, buildargs=None):
+              decode=False, buildargs=None, gzip=False):
         remote = context = headers = None
         container_limits = container_limits or {}
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
+        if gzip and encoding is not None:
+            raise errors.DockerException(
+                'Can not use custom encoding if gzip is enabled'
+            )
 
         for key in container_limits.keys():
             if key not in constants.CONTAINER_LIMITS_KEYS:
@@ -46,7 +50,10 @@ class BuildApiMixin(object):
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
                     exclude = list(filter(bool, f.read().splitlines()))
-            context = utils.tar(path, exclude=exclude, dockerfile=dockerfile)
+            context = utils.tar(
+                path, exclude=exclude, dockerfile=dockerfile, gzip=gzip
+            )
+            encoding = 'gzip' if gzip else encoding
 
         if utils.compare_version('1.8', self._version) >= 0:
             stream = True
