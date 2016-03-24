@@ -962,7 +962,7 @@ Stops a container. Similar to the `docker stop` command.
 
 * container (str): The container to stop
 * timeout (int): Timeout in seconds to wait for the container to stop before
-sending a `SIGKILL`
+sending a `SIGKILL`. Default: 10
 
 ## tag
 
