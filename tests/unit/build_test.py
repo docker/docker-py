@@ -1,5 +1,6 @@
 import gzip
 import io
+import pytest
 
 import docker
 
@@ -103,3 +104,41 @@ class BuildTest(DockerClientTest):
                 'foo': 'bar'
             })
         )
+
+    def test_build_container_with_tag(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+
+        self.client.build(fileobj=script, tag='complex_tag-1.0')
+
+    def test_build_container_with_invalid_tag1(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+
+        with pytest.raises(AttributeError):
+            self.client.build(fileobj=script, tag='compleX_tag-1.0')
+
+    def test_build_container_with_invalid_tag2(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'MAINTAINER docker-py',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
+            ' /tmp/silence.tar.gz'
+        ]).encode('ascii'))
+
+        with pytest.raises(AttributeError):
+            self.client.build(fileobj=script, tag='complex!_tag-1.0')
