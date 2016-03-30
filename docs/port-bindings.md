@@ -38,19 +38,21 @@ container_id = cli.create_container(
 )
 ```
 
-If trying to bind several IPs to the same port, you may use the following syntax:
+To bind multiple host ports to a single container port, use the following syntax:
+
+```python
+cli.create_host_config(port_bindings={
+    1111: [1234, 4567]
+})
+```
+
+You can also bind multiple IPs to a single container port:
+
 ```python
 cli.create_host_config(port_bindings={
     1111: [
         ('192.168.0.100', 1234),
         ('192.168.0.101', 1234)
     ]
-})
-```
-
-Similarly for several container ports bound to a single host port:
-```python
-cli.create_host_config(port_bindings={
-    1111: [1234, 4567]
 })
 ```
