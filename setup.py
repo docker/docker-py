@@ -12,6 +12,9 @@ requirements = [
     'websocket-client >= 0.32.0',
 ]
 
+if sys.version_info[0] == 2:
+    requirements.append('py2-ipaddress >= 3.4.1')
+
 exec(open('docker/version.py').read())
 
 with open('./test-requirements.txt') as test_reqs_txt:
