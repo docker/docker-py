@@ -148,6 +148,11 @@ non-running ones
     - `exited` (int): Only containers with specified exit code
     - `status` (str): One of `restarting`, `running`, `paused`, `exited`
     - `label` (str): format either `"key"` or `"key=value"`
+    - `id` (str): The id of the container.
+    - `name` (str): The name of the container.
+    - `ancestor` (str): Filter by container ancestor. Format of `<image-name>[:tag]`, `<image-id>`, or `<image@digest>`.
+    - `before` (str): Only containers created before a particular container. Give the container name or id.
+    - `since` (str): Only containers created after a particular container. Give container name or id.
 
 **Returns** (dict): The system's containers
 
