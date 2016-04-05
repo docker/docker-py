@@ -17,7 +17,7 @@ Documentation
 
 [![Documentation Status](https://readthedocs.org/projects/docker-py/badge/?version=latest)](https://readthedocs.org/projects/docker-py/?badge=latest)
 
-[Read the full documentation here.](http://docker-py.readthedocs.org/en/latest/).
+[Read the full documentation here](http://docker-py.readthedocs.org/en/latest/).
 The source is available in the `docs/` directory.
 
 
