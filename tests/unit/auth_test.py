@@ -459,6 +459,5 @@ class LoadConfigTest(base.Cleanup, base.BaseTestCase):
         with open(dockercfg_path, 'w') as f:
             json.dump(config, f)
 
-        self.assertRaises(
-            errors.InvalidConfigFile, auth.load_config, dockercfg_path
-        )
+        cfg = auth.load_config(dockercfg_path)
+        assert cfg == {}
