@@ -27,16 +27,19 @@ Change Log
 
 ### Bugfixes
 
-* Fixed a bug where some environment variables specified through
-  `create_container` would be improperly formatted
+* Fixed a bug where TLS verification would fail when using IP addresses
+  in the certificate's `subjectAltName` fields
 * Fixed an issue where the default TLS version in TLSConfig would
   break in some environments. `docker-py` now uses TLSv1 by default
   This setting can be overridden using the `ssl_version` param in
   `kwargs_from_env` or the `TLSConfig` constructor
+* Fixed a bug where `tcp` hosts would fail to connect to TLS-enabled
+  endpoints
+* Fixed a bug where loading a valid docker configuration file would fail
+* Fixed a bug where some environment variables specified through
+  `create_container` would be improperly formatted
 * Fixed a bug where using the unix socket connection would raise
   an error in some edge-case situations
-* Fixed a bug where `tcp` hosts would fail to connect to TLS-enabled
-  endpoints.
 
 ### Miscellaneous
 
