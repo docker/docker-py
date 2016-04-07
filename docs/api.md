@@ -109,7 +109,7 @@ correct value (e.g `gzip`).
 ```
 
 **Raises:** [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) if `path` nor
+https://docs.python.org/3.5/library/exceptions.html#TypeError) if `path` nor
 `fileobj` are specified
 
 ## commit
@@ -200,7 +200,7 @@ of the created container in bytes) or a string with a units identification char
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if
+https://docs.python.org/3.5/library/exceptions.html#TypeError) exception if
 they are used against v1.10 and above of the Docker remote API. Those
 arguments should be passed as part of the `host_config` dictionary.
 
