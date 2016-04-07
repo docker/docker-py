@@ -12,7 +12,7 @@ first.*
 * ca_cert (str): Path to CA cert file
 * verify (bool or str): This can be `False` or a path to a CA Cert file
 * ssl_version (int): A valid [SSL version](
-https://docs.python.org/3.4/library/ssl.html#ssl.PROTOCOL_TLSv1)
+https://docs.python.org/3.5/library/ssl.html#ssl.PROTOCOL_TLSv1)
 * assert_hostname (bool): Verify hostname of docker daemon
 
 ### configure_client
