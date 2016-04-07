@@ -14,6 +14,7 @@ requirements = [
 
 extras_require = {
     ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
+    ':python_version < "3.5"': 'ipaddress',
 }
 
 exec(open('docker/version.py').read())
