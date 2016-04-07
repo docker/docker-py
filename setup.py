@@ -13,7 +13,7 @@ requirements = [
 ]
 
 extras_require = {
-    ':python_version < "3"': 'py2-ipaddress >= 3.4.1',
+    ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
 }
 
 exec(open('docker/version.py').read())
