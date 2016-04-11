@@ -3,3 +3,5 @@ pytest==2.7.2
 coverage==3.7.1
 pytest-cov==2.1.0
 flake8==2.4.1
+py2-ipaddress==3.4.1 ; python_version < '3.2'
+setuptools>=20.0
