@@ -3,8 +3,12 @@
 # Changed to make code python 2.x compatible (unicode strings for ip_address
 # and 3.5-specific var assignment syntax)
 
-import ipaddress
 import re
+
+try:
+    import ipaddress as _ipaddress
+except ImportError:
+    _ipaddress = None
 
 try:
     from ssl import CertificateError
@@ -20,8 +24,10 @@ def _ipaddress_match(ipname, host_ip):
     RFC 6125 explicitly doesn't define an algorithm for this
     (section 1.7.2 - "Out of Scope").
     """
+    if not _ipaddress:
+        raise ImportError('ImportError: No module named ipaddress')
     # OpenSSL may add a trailing newline to a subjectAltName's IP address
-    ip = ipaddress.ip_address(six.text_type(ipname.rstrip()))
+    ip = _ipaddress.ip_address(six.text_type(ipname.rstrip()))
     return ip == host_ip
 
 
@@ -87,8 +93,10 @@ def match_hostname(cert, hostname):
         raise ValueError("empty or no certificate, match_hostname needs a "
                          "SSL socket or SSL context with either "
                          "CERT_OPTIONAL or CERT_REQUIRED")
+    if not _ipaddress:
+        raise ImportError('ImportError: No module named ipaddress')
     try:
-        host_ip = ipaddress.ip_address(six.text_type(hostname))
+        host_ip = _ipaddress.ip_address(six.text_type(hostname))
     except ValueError:
         # Not an IP address (common case)
         host_ip = None
