@@ -76,13 +76,16 @@ def resolve_authconfig(authconfig, registry=None):
         log.debug("Found {0}".format(repr(registry)))
         return authconfig[registry]
 
+    response = {}
     for key, config in six.iteritems(authconfig):
         if resolve_index_name(key) == registry:
             log.debug("Found {0}".format(repr(key)))
-            return config
+            response = config
+    if not response:
+        log.debug("No entries found, using empty entry")
+        response = {registry: {}}
 
-    log.debug("No entry found")
-    return None
+    return response
 
 
 def convert_to_hostname(url):
