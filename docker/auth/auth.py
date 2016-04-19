@@ -117,7 +117,7 @@ def parse_auth(entries, raise_on_error=False):
 
     conf = {}
     for registry, entry in six.iteritems(entries):
-        if not (isinstance(entry, dict) and 'auth' in entry):
+        if not isinstance(entry, dict):
             log.debug(
                 'Config entry for key {0} is not auth config'.format(registry)
             )
@@ -130,6 +130,16 @@ def parse_auth(entries, raise_on_error=False):
                     'Invalid configuration for registry {0}'.format(registry)
                 )
             return {}
+        if 'auth' not in entry:
+            # Starting with engine v1.11 (API 1.23), an empty dictionary is
+            # a valid value in the auths config.
+            # https://github.com/docker/compose/issues/3265
+            log.debug(
+                'Auth data for {0} is absent. Client might be using a '
+                'credentials store instead.'
+            )
+            return {}
+
         username, password = decode_auth(entry['auth'])
         log.debug(
             'Found entry (registry={0}, username={1})'
@@ -189,6 +199,9 @@ def load_config(config_path=None):
             if data.get('HttpHeaders'):
                 log.debug("Found 'HttpHeaders' section")
                 res.update({'HttpHeaders': data['HttpHeaders']})
+            if data.get('credsStore'):
+                log.debug("Found 'credsStore' section")
+                res.update({'credsStore': data['credsStore']})
             if res:
                 return res
             else:
