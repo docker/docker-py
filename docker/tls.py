@@ -1,4 +1,5 @@
 import os
+import ssl
 
 from . import errors
 from .ssladapter import ssladapter
@@ -6,6 +7,7 @@ from .ssladapter import ssladapter
 
 class TLSConfig(object):
     cert = None
+    ca_cert = None
     verify = None
     ssl_version = None
 
@@ -13,19 +15,18 @@ class TLSConfig(object):
                  ssl_version=None, assert_hostname=None,
                  assert_fingerprint=None):
         # Argument compatibility/mapping with
-        # http://docs.docker.com/examples/https/
+        # https://docs.docker.com/engine/articles/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
         # here, but also disable any public/default CA pool verification by
         # leaving tls_verify=False
 
-        # urllib3 sets a default ssl_version if ssl_version is None,
-        # but that default is the vulnerable PROTOCOL_SSLv23 selection,
-        # so we override the default with the maximum supported in the running
-        # Python interpeter up to TLS 1.2. (see: http://tinyurl.com/kxga8hb)
-        ssl_version = ssl_version or ssladapter.get_max_tls_protocol()
-        self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
+
+        # TLS v1.0 seems to be the safest default; SSLv23 fails in mysterious
+        # ways: https://github.com/docker/docker-py/issues/963
+
+        self.ssl_version = ssl_version or ssl.PROTOCOL_TLSv1
 
         # "tls" and "tls_verify" must have both or neither cert/key files
         # In either case, Alert the user when both are expected, but any are
@@ -48,29 +49,25 @@ class TLSConfig(object):
                 )
             self.cert = (tls_cert, tls_key)
 
-        # Either set verify to True (public/default CA checks) or to the
-        # path of a CA Cert file.
-        if verify is not None:
-            if not ca_cert:
-                self.verify = verify
-            elif os.path.isfile(ca_cert):
-                if not verify:
-                    raise errors.TLSParameterError(
-                        'verify can not be False when a CA cert is'
-                        ' provided.'
-                    )
-                self.verify = ca_cert
-            else:
-                raise errors.TLSParameterError(
-                    'Invalid CA certificate provided for `tls_ca_cert`.'
-                )
+        # If verify is set, make sure the cert exists
+        self.verify = verify
+        self.ca_cert = ca_cert
+        if self.verify and self.ca_cert and not os.path.isfile(self.ca_cert):
+            raise errors.TLSParameterError(
+                'Invalid CA certificate provided for `tls_ca_cert`.'
+            )
 
     def configure_client(self, client):
         client.ssl_version = self.ssl_version
-        if self.verify is not None:
+
+        if self.verify and self.ca_cert:
+            client.verify = self.ca_cert
+        else:
             client.verify = self.verify
+
         if self.cert:
             client.cert = self.cert
+
         client.mount('https://', ssladapter.SSLAdapter(
             ssl_version=self.ssl_version,
             assert_hostname=self.assert_hostname,

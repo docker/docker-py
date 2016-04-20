@@ -1,25 +1,34 @@
 # Using volumes
 
-Volume declaration is done in two parts. First, you have to provide
-a list of mountpoints to the `Client().create_container()` method.
+Volume declaration is done in two parts.  Provide a list of mountpoints to
+the `Client().create_container()` method, and declare mappings in the
+`host_config` section.
 
 ```python
-container_id = c.create_container('busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'])
+container_id = cli.create_container(
+    'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+    host_config=cli.create_host_config(binds={
+        '/home/user1/': {
+            'bind': '/mnt/vol2',
+            'mode': 'rw',
+        },
+        '/var/www': {
+            'bind': '/mnt/vol1',
+            'mode': 'ro',
+        }
+    })
+)
 ```
 
-Volume mappings are then declared inside the `Client.start` method like this:
+You can alternatively specify binds as a list. This code is equivalent to the
+example above:
 
 ```python
-c.start(container_id, binds={
-    '/home/user1/':
-        {
-            'bind': '/mnt/vol2',
-            'ro': False
-        },
-    '/var/www':
-        {
-            'bind': '/mnt/vol1',
-            'ro': True
-        }
-})
+container_id = cli.create_container(
+    'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+    host_config=cli.create_host_config(binds=[
+        '/home/user1/:/mnt/vol2',
+        '/var/www:/mnt/vol1:ro',
+    ])
+)
 ```

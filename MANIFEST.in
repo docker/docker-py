@@ -1,6 +1,7 @@
 include test-requirements.txt
 include requirements.txt
-include requirements3.txt
 include README.md
+include README.rst
 include LICENSE
 recursive-include tests *.py
+recursive-include tests/unit/testdata *

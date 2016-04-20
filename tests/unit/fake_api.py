@@ -12,9 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import fake_stat
+from . import fake_stat
+from docker import constants
 
-CURRENT_VERSION = 'v1.18'
+CURRENT_VERSION = 'v{0}'.format(constants.DEFAULT_DOCKER_API_VERSION)
 
 FAKE_CONTAINER_ID = '3cc2351ab11b'
 FAKE_IMAGE_ID = 'e9aa60c60128'
@@ -26,6 +27,7 @@ FAKE_TAG_NAME = 'tag'
 FAKE_FILE_NAME = 'file'
 FAKE_URL = 'myurl'
 FAKE_PATH = '/path'
+FAKE_VOLUME_NAME = 'perfectcherryblossom'
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
@@ -129,11 +131,11 @@ def post_fake_create_container():
     return status_code, response
 
 
-def get_fake_inspect_container():
+def get_fake_inspect_container(tty=False):
     status_code = 200
     response = {
         'Id': FAKE_CONTAINER_ID,
-        'Config': {'Privileged': True},
+        'Config': {'Privileged': True, 'Tty': tty},
         'ID': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
         "State": {
@@ -380,6 +382,70 @@ def get_fake_stats():
     response = fake_stat.OBJ
     return status_code, response
 
+
+def get_fake_top():
+    return 200, {
+        'Processes': [
+            [
+                'root',
+                '26501',
+                '6907',
+                '0',
+                '10:32',
+                'pts/55',
+                '00:00:00',
+                'sleep 60',
+            ],
+        ],
+        'Titles': [
+            'UID',
+            'PID',
+            'PPID',
+            'C',
+            'STIME',
+            'TTY',
+            'TIME',
+            'CMD',
+        ],
+    }
+
+
+def get_fake_volume_list():
+    status_code = 200
+    response = {
+        'Volumes': [
+            {
+                'Name': 'perfectcherryblossom',
+                'Driver': 'local',
+                'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+            }, {
+                'Name': 'subterraneananimism',
+                'Driver': 'local',
+                'Mountpoint': '/var/lib/docker/volumes/subterraneananimism'
+            }
+        ]
+    }
+    return status_code, response
+
+
+def get_fake_volume():
+    status_code = 200
+    response = {
+        'Name': 'perfectcherryblossom',
+        'Driver': 'local',
+        'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+    }
+    return status_code, response
+
+
+def fake_remove_volume():
+    return 204, None
+
+
+def post_fake_update_container():
+    return 200, {'Warnings': []}
+
+
 # Maps real api url to fake response callback
 prefix = 'http+docker://localunixsocket'
 fake_responses = {
@@ -417,6 +483,8 @@ fake_responses = {
     get_fake_diff,
     '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
     get_fake_export,
+    '{1}/{0}/containers/3cc2351ab11b/update'.format(CURRENT_VERSION, prefix):
+    post_fake_update_container,
     '{1}/{0}/containers/3cc2351ab11b/exec'.format(CURRENT_VERSION, prefix):
     post_fake_exec_create,
     '{1}/{0}/exec/d5d177f121dc/start'.format(CURRENT_VERSION, prefix):
@@ -428,6 +496,8 @@ fake_responses = {
 
     '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
     get_fake_stats,
+    '{1}/{0}/containers/3cc2351ab11b/top'.format(CURRENT_VERSION, prefix):
+    get_fake_top,
     '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):
     post_fake_stop_container,
     '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):
@@ -463,5 +533,17 @@ fake_responses = {
     '{1}/{0}/build'.format(CURRENT_VERSION, prefix):
     post_fake_build_container,
     '{1}/{0}/events'.format(CURRENT_VERSION, prefix):
-    get_fake_events
+    get_fake_events,
+    ('{1}/{0}/volumes'.format(CURRENT_VERSION, prefix), 'GET'):
+    get_fake_volume_list,
+    ('{1}/{0}/volumes/create'.format(CURRENT_VERSION, prefix), 'POST'):
+    get_fake_volume,
+    ('{1}/{0}/volumes/{2}'.format(
+        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
+    ), 'GET'):
+    get_fake_volume,
+    ('{1}/{0}/volumes/{2}'.format(
+        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
+    ), 'DELETE'):
+    fake_remove_volume,
 }

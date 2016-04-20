@@ -1,10 +1,13 @@
 # HostConfig object
 
-The Docker Remote API introduced [support for HostConfig in version 1.15](http://docs.docker.com/reference/api/docker_remote_api_v1.15/#create-a-container). This object contains all the parameters you can pass to `Client.start`.
+The Docker Remote API introduced [support for HostConfig in version 1.15](http://docs.docker.com/reference/api/docker_remote_api_v1.15/#create-a-container).
+This object contains all the parameters you could previously pass to `Client.start`.
+*It is highly recommended that users pass the HostConfig in the `host_config`*
+*param of `Client.create_container` instead of `Client.start`*
 
 ## HostConfig helper
 
-### docker.utils.create_host_config
+### Client.create_host_config
 
 Creates a HostConfig dictionary to be used with `Client.create_container`.
 
@@ -28,13 +31,14 @@ of docker remote API. Otherwise they are ignored.
 `network_mode` is available since v1.11 and sets the Network mode for the
 container ('bridge': creates a new network stack for the container on the
 Docker bridge, 'none': no networking for this container, 'container:[name|id]':
-reuses another container network stack), 'host': use the host network stack
-inside the container.
+reuses another container network stack, 'host': use the host network stack
+inside the container or any name that identifies an existing Docker network).
 
-`restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a
-container should or should not be restarted on exit. By default the policy is
-set to no meaning do not restart the container when it exits. The user may
-specify the restart policy as a dictionary for example:
+`restart_policy` is available since v1.2.0 and sets the container's *RestartPolicy*
+which defines the conditions under which a container should be restarted upon exit.
+If no *RestartPolicy* is defined, the container will not be restarted when it exits.
+The *RestartPolicy* is specified as a dict. For example, if the container
+should always be restarted:
 ```python
 {
     "MaximumRetryCount": 0,
@@ -42,8 +46,8 @@ specify the restart policy as a dictionary for example:
 }
 ```
 
-For always restarting the container on exit or can specify to restart the
-container to restart on failure and can limit number of restarts. For example:
+It is possible to restart the container only on failure as well as limit the number
+of restarts. For example:
 ```python
 {
     "MaximumRetryCount": 5,
@@ -64,37 +68,59 @@ for example:
 
 **Params**
 
-* container (str): The container to start
 * binds: Volumes to bind. See [Using volumes](volumes.md) for more information.
 * port_bindings (dict): Port bindings. See [Port bindings](port-bindings.md)
   for more information.
 * lxc_conf (dict): LXC config
+* oom_kill_disable (bool): Whether to disable OOM killer
+* oom_score_adj (int): An integer value containing the score given to the
+  container in order to tune OOM killer preferences
 * publish_all_ports (bool): Whether to publish all ports to the host
-* links (dict or list of tuples): either as a dictionary mapping name to alias or
-  as a list of `(name, alias)` tuples
+* links (dict or list of tuples): either as a dictionary mapping name to alias
+  or as a list of `(name, alias)` tuples
 * privileged (bool): Give extended privileges to this container
 * dns (list): Set custom DNS servers
 * dns_search (list): DNS search domains
 * volumes_from (str or list): List of container names or Ids to get volumes
   from. Optionally a single string joining container id's with commas
-* network_mode (str): One of `['bridge', None, 'container:<name|id>', 'host']`
-* restart_policy (dict):  "Name" param must be one of `['on-failure', 'always']`
+* network_mode (str): One of `['bridge', 'none', 'container:<name|id>', 'host']`
+* restart_policy (dict):  "Name" param must be one of
+  `['on-failure', 'always']`
 * cap_add (list of str): Add kernel capabilities
 * cap_drop (list of str): Drop kernel capabilities
 * extra_hosts (dict): custom host-to-IP mappings (host:ip)
 * read_only (bool): mount the container's root filesystem as read only
 * pid_mode (str): if set to "host", use the host PID namespace inside the
   container
+* ipc_mode (str): Set the IPC mode for the container
 * security_opt (list): A list of string values to customize labels for MLS
   systems, such as SELinux.
 * ulimits (list): A list of dicts or `docker.utils.Ulimit` objects. A list
   of ulimits to be set in the container.
-* log_config (`docker.utils.LogConfig` or dict): Logging configuration to container
+* log_config (`docker.utils.LogConfig` or dict): Logging configuration to
+  container
+* mem_limit (str or int): Maximum amount of memory container is allowed to
+  consume. (e.g. `'1G'`)
+* memswap_limit (str or int): Maximum amount of memory + swap a container is
+  allowed to consume.
+* mem_swappiness (int): Tune a container's memory swappiness behavior.
+  Accepts number between 0 and 100.
+* shm_size (str or int): Size of /dev/shm. (e.g. `'1G'`)
+* cpu_group (int): The length of a CPU period in microseconds.
+* cpu_period (int): Microseconds of CPU time that the container can get in a
+  CPU period.
+* group_add (list): List of additional group names and/or IDs that the
+  container process will run as.
+* devices (list): Host device bindings. See [host devices](host-devices.md)
+  for more information.
+* tmpfs: Temporary filesystems to mouunt. See [Using tmpfs](tmpfs.md) for more
+  information.
 
 **Returns** (dict) HostConfig dictionary
 
 ```python
->>> from docker.utils import create_host_config
->>> create_host_config(privileged=True, cap_drop=['MKNOD'], volumes_from=['nostalgic_newton'])
+>>> from docker import Client
+>>> cli = Client()
+>>> cli.create_host_config(privileged=True, cap_drop=['MKNOD'], volumes_from=['nostalgic_newton'])
 {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True, 'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 ```

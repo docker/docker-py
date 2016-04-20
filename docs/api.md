@@ -4,8 +4,8 @@ To instantiate a `Client` class that will allow you to communicate with a
 Docker daemon, simply do:
 
 ```python
-from docker import Client
-c = Client(base_url='unix://var/run/docker.sock')
+>>> from docker import Client
+>>> cli = Client(base_url='unix://var/run/docker.sock')
 ```
 
 **Params**:
@@ -30,7 +30,7 @@ the entire backlog.
 * container (str): The container to attach to
 * stdout (bool): Get STDOUT
 * stderr (bool): Get STDERR
-* stream (bool): Return an interator
+* stream (bool): Return an iterator
 * logs (bool): Get all previous output
 
 **Returns** (generator or str): The logs or output for the image
@@ -70,9 +70,11 @@ correct value (e.g `gzip`).
     - memory (int): set memory limit for build
     - memswap (int): Total memory (memory + swap), -1 to disable swap
     - cpushares (int): CPU shares (relative weight)
-    - cpusetcpus (str): CPUs in which to allow exection, e.g., `"0-3"`, `"0,1"`
+    - cpusetcpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
+* decode (bool): If set to `True`, the returned stream will be decoded into
+  dicts on the fly. Default `False`.
 
-**Returns** (generator): A generator of the build output
+**Returns** (generator): A generator for the build output
 
 ```python
 >>> from io import BytesIO
@@ -121,7 +123,8 @@ Identical to the `docker commit` command.
 * tag (str): The tag to push
 * message (str): A commit message
 * author (str): The name of the author
-* conf (dict): The configuraton for the container. See the [Docker remote api](
+* changes (str): Dockerfile instructions to apply while committing
+* conf (dict): The configuration for the container. See the [Docker remote api](
 https://docs.docker.com/reference/api/docker_remote_api/) for full details.
 
 ## containers
@@ -161,8 +164,19 @@ non-running ones
   'Status': 'Up 1 seconds'}]
 ```
 
+## connect_container_to_network
+
+Connect a container to a network.
+
+**Params**:
+
+* container (str): container-id/name to be connected to the network
+* net_id (str): network id
+
 ## copy
 Identical to the `docker cp` command. Get files/folders from the container.
+**Deprecated for API version >= 1.20** &ndash; Consider using
+[`get_archive`](#get_archive) **instead.**
 
 **Params**:
 
@@ -182,14 +196,13 @@ information on how to create port bindings and volume mappings.
 
 The `mem_limit` variable accepts float values (which represent the memory limit
 of the created container in bytes) or a string with a units identification char
-('100000b', 1000k', 128m', '1g'). If a string is specified without a units
+('100000b', '1000k', '128m', '1g'). If a string is specified without a units
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
 https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if
 they are used against v1.10 and above of the Docker remote API. Those
-arguments should be passed to `start()` instead, or as part of the `host_config`
-dictionary.
+arguments should be passed as part of the `host_config` dictionary.
 
 **Params**:
 
@@ -213,13 +226,15 @@ from. Optionally a single string joining container id's with commas
 * network_disabled (bool): Disable networking
 * name (str): A name for the container
 * entrypoint (str or list): An entrypoint
-* cpu_shares (int or float): CPU shares (relative weight)
+* cpu_shares (int): CPU shares (relative weight)
 * working_dir (str): Path to the working directory
 * domainname (str or list): Set custom DNS search domains
 * memswap_limit (int):
 * host_config (dict): A [HostConfig](hostconfig.md) dictionary
 * mac_address (str): The Mac Address to assign the container
 * labels (dict or list): A dictionary of name-value labels (e.g. `{"label1": "value1", "label2": "value2"}`) or a list of names of labels to set with empty values (e.g. `["label1", "label2"]`)
+* volume_driver (str): The name of a volume driver/plugin.
+* stop_signal (str): The stop signal to use to stop the container (e.g. `SIGINT`).
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 
@@ -232,15 +247,79 @@ from. Optionally a single string joining container id's with commas
  'Warnings': None}
 ```
 
+### docker.utils.parse_env_file
+
+A utility for parsing an environment file.
+
+The expected format of the file is as follows:
+
+```
+USERNAME=jdoe
+PASSWORD=secret
+```
+
+The utility can be used as follows:
+
+```python
+>>> import docker.utils
+>>> my_envs = docker.utils.parse_env_file('/path/to/file')
+>>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+```
+
+You can now use this with 'environment' for `create_container`.
+
+
+## create_network
+
+Create a network, similar to the `docker network create` command.
+
+**Params**:
+
+* name (str): Name of the network
+* driver (str): Name of the driver used to create the network
+
+* options (dict): Driver options as a key-value dictionary
+
+**Returns** (dict): The created network reference object
+
+## create_volume
+
+Create and register a named volume
+
+**Params**:
+
+* name (str): Name of the volume
+* driver (str): Name of the driver used to create the volume
+* driver_opts (dict): Driver options as a key-value dictionary
+
+**Returns** (dict): The created volume reference object
+
+```python
+>>> from docker import Client
+>>> cli = Client()
+>>> volume = cli.create_volume(
+  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'}
+)
+>>> print(volume)
+{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+```
+
 ## diff
 
-Inspect changes on a container's filesystem
+Inspect changes on a container's filesystem.
 
 **Params**:
 
 * container (str): The container to diff
 
 **Returns** (str):
+
+## disconnect_container_from_network
+
+**Params**:
+
+* container (str): container-id/name to be disconnected from a network
+* net_id (str): network id
 
 ## events
 
@@ -249,11 +328,11 @@ function return a blocking generator you can iterate over to retrieve events as 
 
 **Params**:
 
-* since (datetime or int): get events from this point
-
-* until (datetime or int): get events until this point
-
+* since (UTC datetime or int): get events from this point
+* until (UTC datetime or int): get events until this point
 * filters (dict): filter the events by event time, container or image
+* decode (bool): If set to true, stream will be decoded into dicts on the
+  fly. False by default.
 
 **Returns** (generator):
 
@@ -279,7 +358,9 @@ Sets up an exec instance in a running container.
 * cmd (str or list): Command to be executed
 * stdout (bool): Attach to stdout of the exec command if true. Default: True
 * stderr (bool): Attach to stderr of the exec command if true. Default: True
+* since (UTC datetime or int): Output logs from this timestamp. Default: `None` (all logs are given)
 * tty (bool): Allocate a pseudo-TTY. Default: False
+* user (str): User to execute command as. Default: root
 
 **Returns** (dict): A dictionary with an exec 'Id' key.
 
@@ -314,20 +395,41 @@ Start a previously set up exec instance.
 * exec_id (str): ID of the exec instance
 * detach (bool): If true, detach from the exec command. Default: False
 * tty (bool): Allocate a pseudo-TTY. Default: False
-* stream (bool): Stream response data
+* stream (bool): Stream response data. Default: False
 
 **Returns** (generator or str): If `stream=True`, a generator yielding response
 chunks. A string containing response data otherwise.
 
 ## export
 
-Export the contents of a filesystem as a tar archive to STDOUT
+Export the contents of a filesystem as a tar archive to STDOUT.
 
 **Params**:
 
 * container (str): The container to export
 
 **Returns** (str): The filesystem tar archive as a str
+
+## get_archive
+
+Retrieve a file or folder from a container in the form of a tar archive.
+
+**Params**:
+
+* container (str): The container where the file is located
+* path (str): Path to the file or folder to retrieve
+
+**Returns** (tuple): First element is a raw tar data stream. Second element is
+a dict containing `stat` information on the specified `path`.
+
+```python
+>>> import docker
+>>> cli = docker.Client()
+>>> ctnr = cli.create_container('busybox', 'true')
+>>> strm, stat = cli.get_archive(ctnr, '/bin/sh')
+>>> print(stat)
+{u'linkTarget': u'', u'mode': 493, u'mtime': u'2015-09-16T12:34:23-07:00', u'name': u'sh', u'size': 962860}
+```
 
 ## get_image
 
@@ -351,7 +453,7 @@ An example of how to get (save) an image to a file.
 
 ## history
 
-Show the history of an image
+Show the history of an image.
 
 **Params**:
 
@@ -395,7 +497,7 @@ src will be treated as a URL instead to fetch the image from. You can also pass
 an open file handle as 'src', in which case the data will be read from that
 file.
 
-If `src` is unset but `image` is set, the `image` paramater will be taken as
+If `src` is unset but `image` is set, the `image` parameter will be taken as
 the name of an existing image to import from.
 
 **Params**:
@@ -493,7 +595,7 @@ single dict
 
 ## inspect_image
 
-Identical to the `docker inspect` command, but only for images
+Identical to the `docker inspect` command, but only for images.
 
 **Params**:
 
@@ -502,14 +604,48 @@ Identical to the `docker inspect` command, but only for images
 **Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
 
+## inspect_network
+
+Retrieve network info by id.
+
+**Params**:
+
+* net_id (str): network id
+
+**Returns** (dict): Network information dictionary
+
+## inspect_volume
+
+Retrieve volume info by name.
+
+**Params**:
+
+* name (str): volume name
+
+**Returns** (dict): Volume information dictionary
+
+```python
+>>> cli.inspect_volume('foobar')
+{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+```
+
 ## kill
 
-Kill a container or send a signal to a container
+Kill a container or send a signal to a container.
 
 **Params**:
 
 * container (str): The container to kill
-* signal (str or int): The singal to send. Defaults to `SIGKILL`
+* signal (str or int): The signal to send. Defaults to `SIGKILL`
+
+## load_image
+
+Load an image that was previously saved using `Client.get_image`
+(or `docker save`). Similar to `docker load`.
+
+**Params**:
+
+* data (binary): Image data to be loaded
 
 ## login
 
@@ -541,8 +677,23 @@ output as it happens.
 * stream (bool): Stream the response
 * timestamps (bool): Show timestamps
 * tail (str or int): Output specified number of lines at the end of logs: `"all"` or `number`. Default `"all"`
+* since (datetime or int): Show logs since a given datetime or integer epoch (in seconds)
+* follow (bool): Follow log output
 
 **Returns** (generator or str):
+
+## networks
+
+List networks currently registered by the docker daemon. Similar to the `docker networks ls` command.
+
+**Params**
+
+* names (list): List of names to filter by
+* ids (list): List of ids to filter by
+
+The above are combined to create a filters dict.
+
+**Returns** (dict): List of network objects.
 
 ## pause
 
@@ -615,7 +766,7 @@ Identical to the `docker pull` command.
 ## push
 
 Push an image or a repository to the registry. Identical to the `docker push`
-command
+command.
 
 **Params**:
 
@@ -641,6 +792,20 @@ command
     yourname/app/tags/latest}"}\\n']
 ```
 
+## put_archive
+
+Insert a file or folder in an existing container using a tar archive as source.
+
+**Params**:
+
+* container (str): The container where the file(s) will be extracted
+* path (str): Path inside the container where the file(s) will be extracted.
+  Must exist.
+* data (bytes): tar data to be extracted
+
+**Returns** (bool): True if the call succeeds. `docker.errors.APIError` will
+be raised if an error occurs.
+
 ## remove_container
 
 Remove a container. Similar to the `docker rm` command.
@@ -662,6 +827,26 @@ Remove an image. Similar to the `docker rmi` command.
 * force (bool): Force removal of the image
 * noprune (bool): Do not delete untagged parents
 
+## remove_network
+
+Remove a network. Similar to the `docker network rm` command.
+
+**Params**:
+
+* net_id (str): The network's id
+
+Failure to remove will raise a `docker.errors.APIError` exception.
+
+## remove_volume
+
+Remove a volume. Similar to the `docker volume rm` command.
+
+**Params**:
+
+* name (str): The volume's name
+
+Failure to remove will raise a `docker.errors.APIError` exception.
+
 ## rename
 
 Rename a container. Similar to the `docker rename` command.
@@ -670,6 +855,16 @@ Rename a container. Similar to the `docker rename` command.
 
 * container (str): ID of the container to rename
 * name (str): New name for the container
+
+## resize
+
+Resize the tty session.
+
+**Params**:
+
+* container (str or dict): The container to resize
+* height (int): Height of tty session
+* width (int): Width of tty session
 
 ## restart
 
@@ -715,83 +910,13 @@ Identical to the `docker search` command.
 Similar to the `docker start` command, but doesn't support attach options. Use
 `.logs()` to recover `stdout`/`stderr`.
 
-`binds` allows to bind a directory in the host to the container. See [Using
-volumes](volumes.md) for more information.
-
-`port_bindings` exposes container ports to the host.
-See [Port bindings](port-bindings.md) for more information.
-
-`lxc_conf` allows to pass LXC configuration options using a dictionary.
-
-`privileged` starts the container in privileged mode.
-
-[Links](http://docs.docker.io/en/latest/use/working_with_links_names/) can be
-specified with the `links` argument. They can either be specified as a
-dictionary mapping name to alias or as a list of `(name, alias)` tuples.
-
-`dns` and `volumes_from` are only available if they are used with version v1.10
-of docker remote API. Otherwise they are ignored.
-
-`network_mode` is available since v1.11 and sets the Network mode for the
-container ('bridge': creates a new network stack for the container on the
-Docker bridge, 'none': no networking for this container, 'container:[name|id]':
-reuses another container network stack), 'host': use the host network stack
-inside the container.
-
-`restart_policy` is available since v1.2.0 and sets the RestartPolicy for how a
-container should or should not be restarted on exit. By default the policy is
-set to no meaning do not restart the container when it exits. The user may
-specify the restart policy as a dictionary for example:
-```python
-{
-    "MaximumRetryCount": 0,
-    "Name": "always"
-}
-```
-
-For always restarting the container on exit or can specify to restart the
-container to restart on failure and can limit number of restarts. For example:
-```python
-{
-    "MaximumRetryCount": 5,
-    "Name": "on-failure"
-}
-```
-
-`cap_add` and `cap_drop` are available since v1.2.0 and can be used to add or
-drop certain capabilities. The user may specify the capabilities as an array
-for example:
-```python
-[
-    "SYS_ADMIN",
-    "MKNOD"
-]
-```
-
 **Params**:
 
 * container (str): The container to start
-* binds: Volumes to bind
-* port_bindings (dict): Port bindings. See note above
-* lxc_conf (dict): LXC config
-* publish_all_ports (bool): Whether to publish all ports to the host
-* links (dict or list of tuples): See note above
-* privileged (bool): Give extended privileges to this container
-* dns (list): Set custom DNS servers
-* dns_search (list): DNS search  domains
-* volumes_from (str or list): List of container names or Ids to get volumes
-from. Optionally a single string joining container id's with commas
-* network_mode (str): One of `['bridge', None, 'container:<name|id>',
-'host']`
-* restart_policy (dict): See note above. "Name" param must be one of
-`['on-failure', 'always']`
-* cap_add (list of str): See note above
-* cap_drop (list of str): See note above
-* extra_hosts (dict): custom host-to-IP mappings (host:ip)
-* pid_mode (str): if set to "host", use the host PID namespace inside the
-  container
-* security_opt (list): A list of string values to customize labels for MLS systems, such as SELinux.
-* ulimits (list): A list of dicts or `docker.utils.Ulimit` objects.
+
+**Deprecation warning:** For API version > 1.15, it is highly recommended to
+  provide host config options in the
+  [`host_config` parameter of `create_container`](#create_container)
 
 ```python
 >>> from docker import Client
@@ -811,7 +936,11 @@ This will stream statistics for a specific container.
 
 **Params**:
 
-* container (str): The container to start
+* container (str): The container to stream statistics for
+* decode (bool): If set to true, stream will be decoded into dicts on the
+  fly. False by default.
+* stream (bool): If set to false, only the current stats will be returned
+  instead of a stream. True by default.
 
 ```python
 >>> from docker import Client
@@ -819,7 +948,7 @@ This will stream statistics for a specific container.
 >>> stats_obj = cli.stats('elasticsearch')
 >>> for stat in stats_obj:
 >>>     print(stat)
-{"read":"2015-02-11T21:47:30.49388286+02:00","network":{"rx_bytes":666052,"rx_packets":4409 ...
+{"read":"2015-02-11T21:47:30.49388286+02:00","networks":{"eth0":{"rx_bytes":648,"rx_packets":8 ...
 ...
 ...
 ...
@@ -833,7 +962,7 @@ Stops a container. Similar to the `docker stop` command.
 
 * container (str): The container to stop
 * timeout (int): Timeout in seconds to wait for the container to stop before
-sending a `SIGKILL`
+sending a `SIGKILL`. Default: 10
 
 ## tag
 
@@ -849,11 +978,12 @@ Tag an image into a repository. Identical to the `docker tag` command.
 **Returns** (bool): True if successful
 
 ## top
-Display the running processes of a container
+Display the running processes of a container.
 
 **Params**:
 
 * container (str): The container to inspect
+* ps_args (str): An optional arguments passed to ps (e.g., aux)
 
 **Returns** (str): The output of the top
 
@@ -869,13 +999,34 @@ Display the running processes of a container
 
 ## unpause
 
-Unpauses all processes within a container.
+Unpause all processes within a container.
 
 **Params**:
 
 * container (str): The container to unpause
 
+## update_container
+
+Update resource configs of one or more containers.
+
+**Params**:
+
+* container (str): The container to inspect
+* blkio_weight (int): Block IO (relative weight), between 10 and 1000
+* cpu_period (int): Limit CPU CFS (Completely Fair Scheduler) period
+* cpu_quota (int): Limit CPU CFS (Completely Fair Scheduler) quota
+* cpu_shares (int): CPU shares (relative weight)
+* cpuset_cpus (str): CPUs in which to allow execution
+* cpuset_mems (str): MEMs in which to allow execution
+* mem_limit (int or str): Memory limit
+* mem_reservation (int or str): Memory soft limit
+* memswap_limit (int or str): Total memory (memory + swap), -1 to disable swap
+* kernel_memory (int or str): Kernel memory limit
+
+**Returns** (dict): Dictionary containing a `Warnings` key.
+
 ## version
+
 Nearly identical to the `docker version` command.
 
 **Returns** (dict): The server version information
@@ -895,13 +1046,33 @@ Nearly identical to the `docker version` command.
 }
 ```
 
+## volumes
+
+List volumes currently registered by the docker daemon. Similar to the `docker volume ls` command.
+
+**Params**
+
+* filters (dict): Server-side list filtering options.
+
+**Returns** (dict): Dictionary with list of volume objects as value of the `Volumes` key.
+
+```python
+>>> cli.volumes()
+{u'Volumes': [
+  {u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'},
+  {u'Mountpoint': u'/var/lib/docker/volumes/baz/_data', u'Driver': u'local', u'Name': u'baz'}
+]}
+```
 
 ## wait
 Identical to the `docker wait` command. Block until a container stops, then
-print its exit code. Returns the value `-1` if no `StatusCode` is returned by
-the API.
+return its exit code. Returns the value `-1` if the API responds without a
+`StatusCode` attribute.
 
-If `container` a dict, the `Id` key is used.
+If `container` is a dict, the `Id` key is used.
+
+If the timeout value is exceeded, a `requests.exceptions.ReadTimeout`
+exception will be raised.
 
 **Params**:
 
@@ -914,8 +1085,6 @@ If `container` a dict, the `Id` key is used.
 <!---
 TODO:
 
-* events
 * load_image
-* resize
 
 -->

@@ -8,11 +8,13 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
     'requests >= 2.5.2',
-    'six >= 1.3.0',
+    'six >= 1.4.0',
+    'websocket-client >= 0.32.0',
 ]
 
-if sys.version_info[0] < 3:
-    requirements.append('websocket-client >= 0.11.0')
+extras_require = {
+    ':python_version < "3"': 'py2-ipaddress >= 3.4.1',
+}
 
 exec(open('docker/version.py').read())
 
@@ -26,11 +28,12 @@ setup(
     description="Python client for Docker.",
     url='https://github.com/docker/docker-py/',
     packages=[
-        'docker', 'docker.auth', 'docker.unixconn', 'docker.utils',
-        'docker.utils.ports', 'docker.ssladapter'
+        'docker', 'docker.api', 'docker.auth', 'docker.unixconn',
+        'docker.utils', 'docker.utils.ports', 'docker.ssladapter'
     ],
     install_requires=requirements,
     tests_require=test_requirements,
+    extras_require=extras_require,
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -41,7 +44,6 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.2',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Topic :: Utilities',

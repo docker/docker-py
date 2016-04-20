@@ -1,13 +1,29 @@
 # Access to devices on the host
 
 If you need to directly expose some host devices to a container, you can use
-the devices parameter in the `Client.start` method as shown below
+the devices parameter in the `host_config` param in `Client.create_container`
+as shown below:
 
 ```python
-c.start(container_id, devices=['/dev/sda:/dev/xvda:rwm'])
+cli.create_container(
+    'busybox', 'true', host_config=cli.create_host_config(devices=[
+        '/dev/sda:/dev/xvda:rwm'
+    ])
+)
 ```
 
-Each string is a single mapping using the colon (':') as the separator. So the
-above example essentially allow the container to have read write permissions to
-access the host's /dev/sda via a node named /dev/xvda in the container. The
-devices parameter is a list to allow multiple devices to be mapped.
+Each string is a single mapping using the following format:
+`<path_on_host>:<path_in_container>:<cgroup_permissions>`
+The above example allows the container to have read-write access to
+the host's `/dev/sda` via a node named `/dev/xvda` inside the container.
+
+As a more verbose alternative, each host device definition can be specified as
+a dictionary with the following keys:
+
+```python
+{
+    'PathOnHost': '/dev/sda1',
+    'PathInContainer': '/dev/xvda',
+    'CgroupPermissions': 'rwm'
+}
+```

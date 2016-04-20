@@ -10,6 +10,8 @@ dist
 .tox
 .coverage
 html/*
+__pycache__
 
 # Compiled Documentation
 site/
+Makefile

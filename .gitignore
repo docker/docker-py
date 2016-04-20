@@ -11,6 +11,7 @@ html/*
 
 # Compiled Documentation
 site/
+README.rst
 
 env/
 venv/
