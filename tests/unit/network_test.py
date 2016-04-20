@@ -69,7 +69,7 @@ class NetworkTest(DockerClientTest):
 
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
-                {"Name": "foo"})
+                {"Name": "foo", "Internal": False})
 
             opts = {
                 'com.docker.network.bridge.enable_icc': False,
@@ -79,7 +79,12 @@ class NetworkTest(DockerClientTest):
 
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
-                {"Name": "foo", "Driver": "bridge", "Options": opts})
+                {
+                    "Name": "foo",
+                    "Driver": "bridge",
+                    "Options": opts,
+                    "Internal": False
+                })
 
             ipam_pool_config = create_ipam_pool(subnet="192.168.52.0/24",
                                                 gateway="192.168.52.254")
@@ -101,7 +106,8 @@ class NetworkTest(DockerClientTest):
                             "Subnet": "192.168.52.0/24",
                             "AuxiliaryAddresses": None,
                         }]
-                    }
+                    },
+                    "Internal": False
                 })
 
     @base.requires_api_version('1.21')
