@@ -154,6 +154,8 @@ non-running ones
     - `before` (str): Only containers created before a particular container. Give the container name or id.
     - `since` (str): Only containers created after a particular container. Give container name or id.
 
+  A comprehensive list can be found [here](https://docs.docker.com/engine/reference/commandline/ps/)
+
 **Returns** (dict): The system's containers
 
 ```python
