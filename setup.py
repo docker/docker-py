@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import sys
 from setuptools import setup
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -13,7 +12,8 @@ requirements = [
 ]
 
 extras_require = {
-    ':python_version < "3"': 'py2-ipaddress >= 3.4.1',
+    ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
+    ':python_version < "3.3"': 'ipaddress >= 1.0.16',
 }
 
 exec(open('docker/version.py').read())
