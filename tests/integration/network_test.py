@@ -280,6 +280,7 @@ class TestNetworks(helpers.BaseTestCase):
         with self.assertRaises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
         self.client.create_network(net_name, check_duplicate=False)
+        self.tmp_networks.append(net_name)
 
     @requires_api_version('1.22')
     def test_connect_with_links(self):
