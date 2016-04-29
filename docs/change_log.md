@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+1.8.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.8.0+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed a bug where calling `login()` against the default registry would fail
+  with the 1.10.x engine
+* Fixed a bug where values in environment files would be parsed incorrectly if
+  they contained an equal sign.
+* Switched to a better supported backport of the `match_hostname` function,
+  fixing dependency issues in some environments.
+
+
 1.8.0
 -----
 
