@@ -49,8 +49,6 @@ class DaemonApiMixin(object):
         elif not self._auth_configs:
             self._auth_configs = auth.load_config()
 
-        registry = registry or auth.INDEX_URL
-
         authcfg = auth.resolve_authconfig(self._auth_configs, registry)
         # If we found an existing auth config for this registry and username
         # combination, we can return it immediately unless reauth is requested.
@@ -67,7 +65,7 @@ class DaemonApiMixin(object):
 
         response = self._post_json(self._url('/auth'), data=req_data)
         if response.status_code == 200:
-            self._auth_configs[registry] = req_data
+            self._auth_configs[registry or auth.INDEX_NAME] = req_data
         return self._result(response, json=True)
 
     def ping(self):
