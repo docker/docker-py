@@ -874,10 +874,11 @@ def format_environment(environment):
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
     stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
-    dns=None, volumes=None, volumes_from=None, network_disabled=False,
-    entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
-    memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
-    labels=None, volume_driver=None, stop_signal=None, networking_config=None,
+    dns=None, dns_search=None, volumes=None, volumes_from=None,
+    network_disabled=False, entrypoint=None, cpu_shares=None, working_dir=None,
+    domainname=None, memswap_limit=None, cpuset=None, host_config=None,
+    mac_address=None, labels=None, volume_driver=None, stop_signal=None,
+    networking_config=None,
 ):
     if isinstance(command, six.string_types):
         command = split_command(command)
@@ -989,6 +990,7 @@ def create_container_config(
         'Env': environment,
         'Cmd': command,
         'Dns': dns,
+        'DnsSearch': dns_search,
         'Image': image,
         'Volumes': volumes,
         'VolumesFrom': volumes_from,
