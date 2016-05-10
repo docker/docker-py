@@ -24,3 +24,47 @@ class ClientTest(base.BaseTestCase):
                           DOCKER_TLS_VERIFY='1')
         client = Client.from_env()
         self.assertEqual(client.base_url, "https://192.168.59.103:2376")
+
+
+class DisableSocketTest(base.BaseTestCase):
+    class DummySocket(object):
+        def __init__(self, timeout=60):
+            self.timeout = timeout
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def gettimeout(self):
+            return self.timeout
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_disable_socket_timeout(self):
+        """Test that the timeout is disabled on a generic socket object."""
+        socket = self.DummySocket()
+
+        self.client._disable_socket_timeout(socket)
+
+        self.assertEqual(socket.timeout, None)
+
+    def test_disable_socket_timeout2(self):
+        """Test that the timeouts are disabled on a generic socket object
+        and it's _sock object if present."""
+        socket = self.DummySocket()
+        socket._sock = self.DummySocket()
+
+        self.client._disable_socket_timeout(socket)
+
+        self.assertEqual(socket.timeout, None)
+        self.assertEqual(socket._sock.timeout, None)
+
+    def test_disable_socket_timout_non_blocking(self):
+        """Test that a non-blocking socket does not get set to blocking."""
+        socket = self.DummySocket()
+        socket._sock = self.DummySocket(0.0)
+
+        self.client._disable_socket_timeout(socket)
+
+        self.assertEqual(socket.timeout, None)
+        self.assertEqual(socket._sock.timeout, 0.0)

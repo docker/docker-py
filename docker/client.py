@@ -291,14 +291,29 @@ class Client(
         """ Depending on the combination of python version and whether we're
         connecting over http or https, we might need to access _sock, which
         may or may not exist; or we may need to just settimeout on socket
-         itself, which also may or may not have settimeout on it.
+        itself, which also may or may not have settimeout on it. To avoid
+        missing the correct one, we try both.
 
-        To avoid missing the correct one, we try both.
+        We also do not want to set the timeout if it is already disabled, as
+        you run the risk of changing a socket that was non-blocking to
+        blocking, for example when using gevent.
         """
-        if hasattr(socket, "settimeout"):
-            socket.settimeout(None)
-        if hasattr(socket, "_sock") and hasattr(socket._sock, "settimeout"):
-            socket._sock.settimeout(None)
+        sockets = [socket, getattr(socket, '_sock', None)]
+
+        for s in sockets:
+            if not hasattr(s, 'settimeout'):
+                continue
+
+            timeout = -1
+
+            if hasattr(s, 'gettimeout'):
+                timeout = s.gettimeout()
+
+            # Don't change the timeout if it is already disabled.
+            if timeout is None or timeout == 0.0:
+                continue
+
+            s.settimeout(None)
 
     def _get_result(self, container, stream, res):
         cont = self.inspect_container(container)
