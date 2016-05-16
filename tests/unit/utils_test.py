@@ -802,6 +802,9 @@ class ExcludePathsTest(base.BaseTestCase):
     def test_single_filename(self):
         assert self.exclude(['a.py']) == self.all_paths - set(['a.py'])
 
+    def test_single_filename_leading_dot_slash(self):
+        assert self.exclude(['./a.py']) == self.all_paths - set(['a.py'])
+
     # As odd as it sounds, a filename pattern with a trailing slash on the
     # end *will* result in that file being excluded.
     def test_single_filename_trailing_slash(self):
@@ -830,6 +833,11 @@ class ExcludePathsTest(base.BaseTestCase):
 
     def test_single_subdir_single_filename(self):
         assert self.exclude(['foo/a.py']) == self.all_paths - set(['foo/a.py'])
+
+    def test_single_subdir_with_path_traversal(self):
+        assert self.exclude(['foo/whoops/../a.py']) == self.all_paths - set([
+            'foo/a.py',
+        ])
 
     def test_single_subdir_wildcard_filename(self):
         assert self.exclude(['foo/*.py']) == self.all_paths - set([
