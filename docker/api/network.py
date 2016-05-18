@@ -22,7 +22,7 @@ class NetworkApiMixin(object):
 
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
-                       check_duplicate=None):
+                       check_duplicate=None, internal=False):
         if options is not None and not isinstance(options, dict):
             raise TypeError('options must be a dictionary')
 
@@ -33,6 +33,13 @@ class NetworkApiMixin(object):
             'IPAM': ipam,
             'CheckDuplicate': check_duplicate
         }
+
+        if internal:
+            if version_lt(self._version, '1.22'):
+                raise InvalidVersion('Internal networks are not '
+                                     'supported in API version < 1.22')
+            data['Internal'] = True
+
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)
         return self._result(res, json=True)

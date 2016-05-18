@@ -18,3 +18,10 @@ ipam_config = docker.utils.create_ipam_config(subnet='192.168.52.0/24', gateway=
 
 docker_client.create_network("network1", driver="bridge", ipam=ipam_config)
 ```
+
+With Docker 1.10 you can now also create internal networks
+
+```python
+
+docker_client.create_network("network1", driver="bridge", internal=True)
+```

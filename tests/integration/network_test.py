@@ -298,3 +298,9 @@ class TestNetworks(helpers.BaseTestCase):
         self.assertEqual(
             net_data['IPAMConfig']['IPv6Address'], '2001:389::f00d'
         )
+
+    @requires_api_version('1.23')
+    def test_create_internal_networks(self):
+        _, net_id = self.create_network(internal=True)
+        net = self.client.inspect_network(net_id)
+        assert net['Internal'] is True
