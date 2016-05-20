@@ -56,3 +56,21 @@ cli.create_host_config(port_bindings={
     ]
 })
 ```
+
+You can also bind range of ports:
+```python
+container_id = cli.create_container(
+    'busybox', 'ls', ports=[5000,('31230-31250','udp'),'31230-31250'],
+    host_config=cli.create_host_config(port_bindings={
+        5000: 5000,
+        '31230-31250/udp': [ 
+            ('192.168.0.100','31230-31250'),
+            ('192.168.0.101','31230-31250'),
+        ],
+        '31230-31250' :  [ 
+            ('192.168.0.100','31230-31250'),
+            ('192.168.0.101','31230-31250'),
+        ]
+    })
+)
+```
