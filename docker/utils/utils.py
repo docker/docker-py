@@ -937,7 +937,13 @@ def create_container_config(
                 if len(port_definition) == 2:
                     proto = port_definition[1]
                 port = port_definition[0]
-            exposed_ports['{0}/{1}'.format(port, proto)] = {}
+            range_ports = str(port).split("-")
+            start_port = int(range_ports[0])
+            end_port = int(range_ports[0])
+            if (len(range_ports)>1):
+                end_port = int(range_ports[1])
+            for port in range(start_port,end_port+1):
+                exposed_ports['{0}/{1}'.format(port, proto)] = {}
         ports = exposed_ports
 
     if isinstance(volumes, six.string_types):
