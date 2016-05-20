@@ -287,7 +287,17 @@ def _convert_port_binding(binding):
 
     return result
 
-
+def _parse_ports(ports,default=None):
+    if ports=='' or ports is None:
+        return default
+    range_ports = ports.split("-")
+    start_port = int(range_ports[0])
+    end_port = start_port
+    if len(range_ports)>1:
+        end_port = int(range_ports[1])
+    count = end_port - start_port + 1
+    return start_port,end_port,count
+    
 def convert_port_bindings(port_bindings):
     result = {}
     for k, v in six.iteritems(port_bindings):
@@ -295,11 +305,28 @@ def convert_port_bindings(port_bindings):
         if '/' not in key:
             key += '/tcp'
         if isinstance(v, list):
-            result[key] = [_convert_port_binding(binding) for binding in v]
+            host_port_bindings = [_convert_port_binding(binding) for binding in v]
         else:
-            result[key] = [_convert_port_binding(v)]
+            host_port_bindings = [_convert_port_binding(v)]
+        key_items = str(key).split("/")
+        start_port,end_port, ports_count = _parse_ports(key_items[0])
+            
+        proto = key_items[1]
+        if ports_count>1:
+            for i in range(ports_count):
+                key = '{0}/{1}'.format(start_port+i, proto)
+                new_host_port_bindings = []
+                for host_port_binding in host_port_bindings:
+                    binding_start_port, binding_end_port, binding_ports_count = _parse_ports(host_port_binding['HostPort'],(start_port,end_port, ports_count))
+                    if binding_ports_count!=ports_count:
+                        raise ValueError('binding ports range count is not consistent!')
+                    new_host_port_binding = host_port_binding.copy()
+                    new_host_port_binding['HostPort'] = str(binding_start_port+i)
+                    new_host_port_bindings.append(new_host_port_binding)
+                result[key] = new_host_port_bindings
+        else:
+            result[key] = host_port_bindings
     return result
-
 
 def convert_volume_binds(binds):
     if isinstance(binds, list):
