@@ -64,6 +64,25 @@ class HostConfigTest(base.BaseTestCase):
         config = create_host_config(version='1.20', cpu_period=1999)
         self.assertEqual(config.get('CpuPeriod'), 1999)
 
+    def test_create_host_config_with_blkio_constraints(self):
+        blkio_rate = [{"Path": "/dev/sda", "Rate": 1000}]
+        config = create_host_config(version='1.22',
+                                    blkio_weight=1999,
+                                    blkio_weight_device=blkio_rate,
+                                    device_read_bps=blkio_rate,
+                                    device_write_bps=blkio_rate,
+                                    device_read_iops=blkio_rate,
+                                    device_write_iops=blkio_rate)
+
+        self.assertEqual(config.get('BlkioWeight'), 1999)
+        self.assertTrue(config.get('BlkioWeightDevice') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceReadBps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceWriteBps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceReadIOps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceWriteIOps') is blkio_rate)
+        self.assertEqual(blkio_rate[0]['Path'], "/dev/sda")
+        self.assertEqual(blkio_rate[0]['Rate'], 1000)
+
     def test_create_host_config_with_shm_size(self):
         config = create_host_config(version='1.22', shm_size=67108864)
         self.assertEqual(config.get('ShmSize'), 67108864)
