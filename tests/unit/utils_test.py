@@ -299,56 +299,30 @@ class ConverVolumeBindsTest(base.BaseTestCase):
         self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
 
     def test_convert_volume_binds_unicode_bytes_input(self):
-        if six.PY2:
-            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+        expected = [u'/mnt/지연:/unicode/박:rw']
 
-            data = {
-                '/mnt/지연': {
-                    'bind': '/unicode/박',
-                    'mode': 'rw'
-                }
+        data = {
+            u'/mnt/지연'.encode('utf-8'): {
+                'bind': u'/unicode/박'.encode('utf-8'),
+                'mode': 'rw'
             }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
-        else:
-            expected = ['/mnt/지연:/unicode/박:rw']
-
-            data = {
-                bytes('/mnt/지연', 'utf-8'): {
-                    'bind': bytes('/unicode/박', 'utf-8'),
-                    'mode': 'rw'
-                }
-            }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
+        }
+        self.assertEqual(
+            convert_volume_binds(data), expected
+        )
 
     def test_convert_volume_binds_unicode_unicode_input(self):
-        if six.PY2:
-            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+        expected = [u'/mnt/지연:/unicode/박:rw']
 
-            data = {
-                unicode('/mnt/지연', 'utf-8'): {
-                    'bind': unicode('/unicode/박', 'utf-8'),
-                    'mode': 'rw'
-                }
+        data = {
+            u'/mnt/지연': {
+                'bind': u'/unicode/박',
+                'mode': 'rw'
             }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
-        else:
-            expected = ['/mnt/지연:/unicode/박:rw']
-
-            data = {
-                '/mnt/지연': {
-                    'bind': '/unicode/박',
-                    'mode': 'rw'
-                }
-            }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
+        }
+        self.assertEqual(
+            convert_volume_binds(data), expected
+        )
 
 
 class ParseEnvFileTest(base.BaseTestCase):
@@ -612,13 +586,7 @@ class UtilsTest(base.BaseTestCase):
 class SplitCommandTest(base.BaseTestCase):
 
     def test_split_command_with_unicode(self):
-        if six.PY2:
-            self.assertEqual(
-                split_command(unicode('echo μμ', 'utf-8')),
-                ['echo', 'μμ']
-            )
-        else:
-            self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
+        self.assertEqual(split_command(u'echo μμ'), ['echo', 'μμ'])
 
     @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
     def test_split_command_with_bytes(self):
