@@ -27,6 +27,10 @@ from . import constants
 from . import errors
 from .auth import auth
 from .unixconn import unixconn
+try:
+    from .npipeconn import npipeconn
+except ImportError:
+    pass
 from .ssladapter import ssladapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
 from .tls import TLSConfig
@@ -64,6 +68,14 @@ class Client(
             self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localunixsocket'
+        elif base_url.startswith('npipe://'):
+            if not constants.IS_WINDOWS_PLATFORM:
+                raise errors.DockerException(
+                    'The npipe:// protocol is only supported on Windows'
+                )
+            self._custom_adapter = npipeconn.NpipeAdapter(base_url, timeout)
+            self.mount('http+docker://', self._custom_adapter)
+            self.base_url = 'http+docker://localnpipe'
         else:
             # Use SSLAdapter for the ability to specify SSL version
             if isinstance(tls, TLSConfig):

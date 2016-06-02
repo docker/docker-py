@@ -413,6 +413,9 @@ def parse_host(addr, platform=None, tls=False):
     elif addr.startswith('https://'):
         proto = "https"
         addr = addr[8:]
+    elif addr.startswith('npipe://'):
+        proto = 'npipe'
+        addr = addr[8:]
     elif addr.startswith('fd://'):
         raise errors.DockerException("fd protocol is not implemented")
     else:
@@ -448,7 +451,7 @@ def parse_host(addr, platform=None, tls=False):
     else:
         host = addr
 
-    if proto == "http+unix":
+    if proto == "http+unix" or proto == 'npipe':
         return "{0}://{1}".format(proto, host)
     return "{0}://{1}:{2}{3}".format(proto, host, port, path)
 
