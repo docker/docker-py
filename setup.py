@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import os
+import sys
+
 from setuptools import setup
+
 
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
@@ -10,6 +13,9 @@ requirements = [
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
 ]
+
+if sys.platform == 'win32':
+    requirements.append('pypiwin32 >= 219')
 
 extras_require = {
     ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
