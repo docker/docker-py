@@ -14,7 +14,6 @@
 
 import json
 import struct
-import sys
 
 import requests
 import requests.exceptions
@@ -63,7 +62,9 @@ class Client(
 
         self._auth_configs = auth.load_config()
 
-        base_url = utils.parse_host(base_url, sys.platform, tls=bool(tls))
+        base_url = utils.parse_host(
+            base_url, constants.IS_WINDOWS_PLATFORM, tls=bool(tls)
+        )
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
