@@ -26,14 +26,14 @@ from . import api
 from . import constants
 from . import errors
 from .auth import auth
-from .unixconn import unixconn
+from .ssladapter import ssladapter
+from .tls import TLSConfig
+from .transport import UnixAdapter
+from .utils import utils, check_resource, update_headers, kwargs_from_env
 try:
-    from .npipeconn import npipeconn
+    from .transport import NpipeAdapter
 except ImportError:
     pass
-from .ssladapter import ssladapter
-from .utils import utils, check_resource, update_headers, kwargs_from_env
-from .tls import TLSConfig
 
 
 def from_env(**kwargs):
@@ -65,7 +65,7 @@ class Client(
 
         base_url = utils.parse_host(base_url, sys.platform, tls=bool(tls))
         if base_url.startswith('http+unix://'):
-            self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
+            self._custom_adapter = UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localunixsocket'
         elif base_url.startswith('npipe://'):
@@ -73,7 +73,12 @@ class Client(
                 raise errors.DockerException(
                     'The npipe:// protocol is only supported on Windows'
                 )
-            self._custom_adapter = npipeconn.NpipeAdapter(base_url, timeout)
+            try:
+                self._custom_adapter = NpipeAdapter(base_url, timeout)
+            except NameError:
+                raise errors.DockerException(
+                    'Install pypiwin32 package to enable npipe:// support'
+                )
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localnpipe'
         else:
