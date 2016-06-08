@@ -17,10 +17,12 @@ For example, setting the subnet to `192.168.52.0/24` and gateway address
 to `192.168.52.254`
 
 ```python
-
-ipam_config = docker.utils.create_ipam_config(
+ipam_pool = docker.utils.create_ipam_pool(
     subnet='192.168.52.0/24',
     gateway='192.168.52.254'
+)
+ipam_config = docker.utils.create_ipam_config(
+    pool_configs=[ipam_pool]
 )
 
 docker_client.create_network("network1", driver="bridge", ipam=ipam_config)
@@ -160,7 +162,7 @@ in `docker.utils.create_ipam_config`.
 ```python
 ipam_pool = docker.utils.create_ipam_pool(
     subnet='124.42.0.0/16',
-    iprange='124.42.0.0/8',
+    iprange='124.42.0.0/24',
     gateway='124.42.0.254',
     aux_addresses={
         'reserved1': '124.42.1.1'

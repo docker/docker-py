@@ -1,7 +1,7 @@
 import json
 
 from ..errors import InvalidVersion
-from ..utils import check_resource, minimum_version, normalize_links
+from ..utils import check_resource, minimum_version
 from ..utils import version_lt
 
 
@@ -63,25 +63,11 @@ class NetworkApiMixin(object):
                                      aliases=None, links=None):
         data = {
             "Container": container,
-            "EndpointConfig": {
-                "Aliases": aliases,
-                "Links": normalize_links(links) if links else None,
-            },
+            "EndpointConfig": self.create_endpoint_config(
+                aliases=aliases, links=links, ipv4_address=ipv4_address,
+                ipv6_address=ipv6_address
+            ),
         }
-
-        # IPv4 or IPv6 or neither:
-        if ipv4_address or ipv6_address:
-            if version_lt(self._version, '1.22'):
-                raise InvalidVersion('IP address assignment is not '
-                                     'supported in API version < 1.22')
-
-            data['EndpointConfig']['IPAMConfig'] = dict()
-            if ipv4_address:
-                data['EndpointConfig']['IPAMConfig']['IPv4Address'] = \
-                    ipv4_address
-            if ipv6_address:
-                data['EndpointConfig']['IPAMConfig']['IPv6Address'] = \
-                    ipv6_address
 
         url = self._url("/networks/{0}/connect", net_id)
         res = self._post_json(url, data=data)
