@@ -213,7 +213,7 @@ Change Log
 ### Features
 
 * Added `utils.parse_env_file` to support env-files.
-  See [docs](http://docker-py.readthedocs.org/en/latest/api/#create_container)
+  See [docs](https://docker-py.readthedocs.io/en/latest/api/#create_container)
   for usage.
 * Added support for arbitrary log drivers
 * Added support for URL paths in the docker host URL (`base_url`)
@@ -577,7 +577,7 @@ Change Log
 ### Documentation
 
 * Added new MkDocs documentation. Currently hosted on
-  [ReadTheDocs](http://docker-py.readthedocs.org/en/latest/)
+  [ReadTheDocs](https://docker-py.readthedocs.io/en/latest/)
 
 ### Miscellaneous
 
