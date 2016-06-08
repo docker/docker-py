@@ -242,6 +242,7 @@ from. Optionally a single string joining container id's with commas
 * labels (dict or list): A dictionary of name-value labels (e.g. `{"label1": "value1", "label2": "value2"}`) or a list of names of labels to set with empty values (e.g. `["label1", "label2"]`)
 * volume_driver (str): The name of a volume driver/plugin.
 * stop_signal (str): The stop signal to use to stop the container (e.g. `SIGINT`).
+* networking_config (dict): A [NetworkingConfig](networks.md) dictionary
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 

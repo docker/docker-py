@@ -813,18 +813,29 @@ def create_networking_config(endpoints_config=None):
     return networking_config
 
 
-def create_endpoint_config(version, aliases=None, links=None):
+def create_endpoint_config(version, aliases=None, links=None,
+                           ipv4_address=None, ipv6_address=None):
+    if version_lt(version, '1.22'):
+        raise errors.InvalidVersion(
+            'Endpoint config is not supported for API version < 1.22'
+        )
     endpoint_config = {}
 
     if aliases:
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('endpoint_config.aliases', '1.22')
         endpoint_config["Aliases"] = aliases
 
     if links:
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('endpoint_config.links', '1.22')
         endpoint_config["Links"] = normalize_links(links)
+
+    ipam_config = {}
+    if ipv4_address:
+        ipam_config['IPv4Address'] = ipv4_address
+
+    if ipv6_address:
+        ipam_config['IPv6Address'] = ipv6_address
+
+    if ipam_config:
+        endpoint_config['IPAMConfig'] = ipam_config
 
     return endpoint_config
 

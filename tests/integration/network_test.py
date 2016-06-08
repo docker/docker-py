@@ -185,7 +185,66 @@ class TestNetworks(helpers.BaseTestCase):
         container_data = self.client.inspect_container(container)
         self.assertEqual(
             container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
-            ['foo', 'bar'])
+            ['foo', 'bar']
+        )
+
+    @requires_api_version('1.22')
+    def test_create_with_ipv4_address(self):
+        net_name, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[create_ipam_pool(subnet="132.124.0.0/16")],
+            ),
+        )
+        container = self.client.create_container(
+            image='busybox', command='top',
+            host_config=self.client.create_host_config(network_mode=net_name),
+            networking_config=self.client.create_networking_config({
+                net_name: self.client.create_endpoint_config(
+                    ipv4_address='132.124.0.23'
+                )
+            })
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data[
+                'NetworkSettings']['Networks'][net_name]['IPAMConfig'][
+                'IPv4Address'
+            ],
+            '132.124.0.23'
+        )
+
+    @requires_api_version('1.22')
+    def test_create_with_ipv6_address(self):
+        net_name, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[create_ipam_pool(subnet="2001:389::1/64")],
+            ),
+        )
+        container = self.client.create_container(
+            image='busybox', command='top',
+            host_config=self.client.create_host_config(network_mode=net_name),
+            networking_config=self.client.create_networking_config({
+                net_name: self.client.create_endpoint_config(
+                    ipv6_address='2001:389::f00d'
+                )
+            })
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data[
+                'NetworkSettings']['Networks'][net_name]['IPAMConfig'][
+                'IPv6Address'
+            ],
+            '2001:389::f00d'
+        )
 
     @requires_api_version('1.22')
     def test_create_with_links(self):
