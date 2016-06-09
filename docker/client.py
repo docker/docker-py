@@ -60,6 +60,7 @@ class Client(
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
+            self._unmount('http://', 'https://')
             self.base_url = 'http+docker://localunixsocket'
         elif base_url.startswith('npipe://'):
             if not constants.IS_WINDOWS_PLATFORM:
@@ -367,6 +368,10 @@ class Client(
             return sep.join(
                 [x for x in self._multiplexed_buffer_helper(res)]
             )
+
+    def _unmount(self, *args):
+        for proto in args:
+            self.adapters.pop(proto)
 
     def get_adapter(self, url):
         try:
