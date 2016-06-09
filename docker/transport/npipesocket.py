@@ -54,10 +54,7 @@ class NpipeSocket(object):
             0
         )
         self.flags = win32pipe.GetNamedPipeInfo(handle)[0]
-        # self.state = win32pipe.GetNamedPipeHandleState(handle)[0]
 
-        # if self.state & cPIPE_READMODE_MESSAGE != 0:
-        #     raise RuntimeError("message readmode pipes not supported")
         self._handle = handle
         self._address = address
 
