@@ -606,7 +606,7 @@ Identical to the `docker inspect` command, but only for images.
 
 **Params**:
 
-* image_id (str): The image to inspect
+* image (str): The image to inspect
 
 **Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
