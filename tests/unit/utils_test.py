@@ -388,6 +388,7 @@ class ParseHostTest(base.BaseTestCase):
             'somehost.net:80/service/swarm': (
                 'http://somehost.net:80/service/swarm'
             ),
+            'npipe:////./pipe/docker_engine': 'npipe:////./pipe/docker_engine',
         }
 
         for host in invalid_hosts:
@@ -402,10 +403,8 @@ class ParseHostTest(base.BaseTestCase):
         tcp_port = 'http://127.0.0.1:2375'
 
         for val in [None, '']:
-            for platform in ['darwin', 'linux2', None]:
-                assert parse_host(val, platform) == unix_socket
-
-            assert parse_host(val, 'win32') == tcp_port
+            assert parse_host(val, is_win32=False) == unix_socket
+            assert parse_host(val, is_win32=True) == tcp_port
 
     def test_parse_host_tls(self):
         host_value = 'myhost.docker.net:3348'

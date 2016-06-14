@@ -383,13 +383,13 @@ def parse_repository_tag(repo_name):
 # fd:// protocol unsupported (for obvious reasons)
 # Added support for http and https
 # Protocol translation: tcp -> http, unix -> http+unix
-def parse_host(addr, platform=None, tls=False):
+def parse_host(addr, is_win32=False, tls=False):
     proto = "http+unix"
     host = DEFAULT_HTTP_HOST
     port = None
     path = ''
 
-    if not addr and platform == 'win32':
+    if not addr and is_win32:
         addr = '{0}:{1}'.format(DEFAULT_HTTP_HOST, 2375)
 
     if not addr or addr.strip() == 'unix://':
@@ -412,6 +412,9 @@ def parse_host(addr, platform=None, tls=False):
         addr = addr[6:]
     elif addr.startswith('https://'):
         proto = "https"
+        addr = addr[8:]
+    elif addr.startswith('npipe://'):
+        proto = 'npipe'
         addr = addr[8:]
     elif addr.startswith('fd://'):
         raise errors.DockerException("fd protocol is not implemented")
@@ -448,7 +451,7 @@ def parse_host(addr, platform=None, tls=False):
     else:
         host = addr
 
-    if proto == "http+unix":
+    if proto == "http+unix" or proto == 'npipe':
         return "{0}://{1}".format(proto, host)
     return "{0}://{1}:{2}{3}".format(proto, host, port, path)
 

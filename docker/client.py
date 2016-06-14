@@ -14,7 +14,6 @@
 
 import json
 import struct
-import sys
 
 import requests
 import requests.exceptions
@@ -26,10 +25,14 @@ from . import api
 from . import constants
 from . import errors
 from .auth import auth
-from .unixconn import unixconn
 from .ssladapter import ssladapter
-from .utils import utils, check_resource, update_headers, kwargs_from_env
 from .tls import TLSConfig
+from .transport import UnixAdapter
+from .utils import utils, check_resource, update_headers, kwargs_from_env
+try:
+    from .transport import NpipeAdapter
+except ImportError:
+    pass
 
 
 def from_env(**kwargs):
@@ -59,11 +62,26 @@ class Client(
 
         self._auth_configs = auth.load_config()
 
-        base_url = utils.parse_host(base_url, sys.platform, tls=bool(tls))
+        base_url = utils.parse_host(
+            base_url, constants.IS_WINDOWS_PLATFORM, tls=bool(tls)
+        )
         if base_url.startswith('http+unix://'):
-            self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
+            self._custom_adapter = UnixAdapter(base_url, timeout)
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localunixsocket'
+        elif base_url.startswith('npipe://'):
+            if not constants.IS_WINDOWS_PLATFORM:
+                raise errors.DockerException(
+                    'The npipe:// protocol is only supported on Windows'
+                )
+            try:
+                self._custom_adapter = NpipeAdapter(base_url, timeout)
+            except NameError:
+                raise errors.DockerException(
+                    'Install pypiwin32 package to enable npipe:// support'
+                )
+            self.mount('http+docker://', self._custom_adapter)
+            self.base_url = 'http+docker://localnpipe'
         else:
             # Use SSLAdapter for the ability to specify SSL version
             if isinstance(tls, TLSConfig):
