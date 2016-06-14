@@ -40,9 +40,12 @@ docker_client.create_network("network1", driver="bridge", internal=True)
 
 ## Container network configuration
 
-In order to specify which network(s) a container will be connected to and
+In order to specify which network a container will be connected to, and
 additional configuration, use the `networking_config` parameter in
-`Client.create_container`
+`Client.create_container`. Note that at the time of creation, you can
+only connect a container to a single network. Later on, you may create more
+connections using `Client.connect_container_to_network`.
+
 
 ```python
 networking_config = docker_client.create_networking_config({
