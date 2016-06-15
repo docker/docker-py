@@ -3,9 +3,8 @@
 all: test
 
 clean:
-	rm -rf tests/__pycache__
-	rm -rf tests/*/__pycache__
-	docker rm -vf dpy-dind
+	-docker rm -vf dpy-dind
+	find -name "__pycache__" | xargs rm -rf
 
 build:
 	docker build -t docker-py .
