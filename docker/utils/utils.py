@@ -615,8 +615,12 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        security_opt=None, ulimits=None, log_config=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
-                       cpu_period=None, oom_kill_disable=False, shm_size=None,
-                       version=None, tmpfs=None, oom_score_adj=None):
+                       cpu_period=None, blkio_weight=None,
+                       blkio_weight_device=None, device_read_bps=None,
+                       device_write_bps=None, device_read_iops=None,
+                       device_write_iops=None, oom_kill_disable=False,
+                       shm_size=None, version=None, tmpfs=None,
+                       oom_score_adj=None):
 
     host_config = {}
 
@@ -791,6 +795,58 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             raise host_config_version_error('cpu_period', '1.19')
 
         host_config['CpuPeriod'] = cpu_period
+
+    if blkio_weight:
+        if not isinstance(blkio_weight, int):
+            raise host_config_type_error('blkio_weight', blkio_weight, 'int')
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('blkio_weight', '1.22')
+        host_config["BlkioWeight"] = blkio_weight
+
+    if blkio_weight_device:
+        if not isinstance(blkio_weight_device, list):
+            raise host_config_type_error(
+                'blkio_weight_device', blkio_weight_device, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('blkio_weight_device', '1.22')
+        host_config["BlkioWeightDevice"] = blkio_weight_device
+
+    if device_read_bps:
+        if not isinstance(device_read_bps, list):
+            raise host_config_type_error(
+                'device_read_bps', device_read_bps, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_read_bps', '1.22')
+        host_config["BlkioDeviceReadBps"] = device_read_bps
+
+    if device_write_bps:
+        if not isinstance(device_write_bps, list):
+            raise host_config_type_error(
+                'device_write_bps', device_write_bps, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_write_bps', '1.22')
+        host_config["BlkioDeviceWriteBps"] = device_write_bps
+
+    if device_read_iops:
+        if not isinstance(device_read_iops, list):
+            raise host_config_type_error(
+                'device_read_iops', device_read_iops, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_read_iops', '1.22')
+        host_config["BlkioDeviceReadIOps"] = device_read_iops
+
+    if device_write_iops:
+        if not isinstance(device_write_iops, list):
+            raise host_config_type_error(
+                'device_write_iops', device_write_iops, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_write_iops', '1.22')
+        host_config["BlkioDeviceWriteIOps"] = device_write_iops
 
     if tmpfs:
         if version_lt(version, '1.22'):
