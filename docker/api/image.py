@@ -1,4 +1,5 @@
 import logging
+import os
 import six
 import warnings
 
@@ -42,87 +43,79 @@ class ImageApiMixin(object):
             return [x['Id'] for x in res]
         return res
 
-    def import_image(self, src=None, repository=None, tag=None, image=None):
-        if src:
-            if isinstance(src, six.string_types):
-                try:
-                    result = self.import_image_from_file(
-                        src, repository=repository, tag=tag)
-                except IOError:
-                    result = self.import_image_from_url(
-                        src, repository=repository, tag=tag)
-            else:
-                result = self.import_image_from_data(
-                    src, repository=repository, tag=tag)
-        elif image:
-            result = self.import_image_from_image(
-                image, repository=repository, tag=tag)
-        else:
-            raise Exception("Must specify a src or image")
+    def import_image(self, src=None, repository=None, tag=None, image=None,
+                     changes=None, stream_src=False):
+        if not (src or image):
+            raise errors.DockerException(
+                'Must specify src or image to import from'
+            )
+        u = self._url('/images/create')
 
-        return result
+        params = _import_image_params(
+            repository, tag, image,
+            src=(src if isinstance(src, six.string_types) else None),
+            changes=changes
+        )
+        headers = {'Content-Type': 'application/tar'}
 
-    def import_image_from_data(self, data, repository=None, tag=None):
-        u = self._url("/images/create")
-        params = {
-            'fromSrc': '-',
-            'repo': repository,
-            'tag': tag
-        }
-        headers = {
-            'Content-Type': 'application/tar',
-        }
-        return self._result(
-            self._post(u, data=data, params=params, headers=headers))
-
-    def import_image_from_file(self, filename, repository=None, tag=None):
-        u = self._url("/images/create")
-        params = {
-            'fromSrc': '-',
-            'repo': repository,
-            'tag': tag
-        }
-        headers = {
-            'Content-Type': 'application/tar',
-        }
-        with open(filename, 'rb') as f:
+        if image or params.get('fromSrc') != '-':  # from image or URL
             return self._result(
-                self._post(u, data=f, params=params, headers=headers,
-                           timeout=None))
+                self._post(u, data=None, params=params)
+            )
+        elif isinstance(src, six.string_types):  # from file path
+            with open(src, 'rb') as f:
+                return self._result(
+                    self._post(
+                        u, data=f, params=params, headers=headers, timeout=None
+                    )
+                )
+        else:  # from raw data
+            if stream_src:
+                headers['Transfer-Encoding'] = 'chunked'
+            return self._result(
+                self._post(u, data=src, params=params, headers=headers)
+            )
 
-    def import_image_from_stream(self, stream, repository=None, tag=None):
-        u = self._url("/images/create")
-        params = {
-            'fromSrc': '-',
-            'repo': repository,
-            'tag': tag
-        }
-        headers = {
-            'Content-Type': 'application/tar',
-            'Transfer-Encoding': 'chunked',
-        }
+    def import_image_from_data(self, data, repository=None, tag=None,
+                               changes=None):
+        u = self._url('/images/create')
+        params = _import_image_params(
+            repository, tag, src='-', changes=changes
+        )
+        headers = {'Content-Type': 'application/tar'}
         return self._result(
-            self._post(u, data=stream, params=params, headers=headers))
+            self._post(
+                u, data=data, params=params, headers=headers, timeout=None
+            )
+        )
+        return self.import_image(
+            src=data, repository=repository, tag=tag, changes=changes
+        )
 
-    def import_image_from_url(self, url, repository=None, tag=None):
-        u = self._url("/images/create")
-        params = {
-            'fromSrc': url,
-            'repo': repository,
-            'tag': tag
-        }
-        return self._result(
-            self._post(u, data=None, params=params))
+    def import_image_from_file(self, filename, repository=None, tag=None,
+                               changes=None):
+        return self.import_image(
+            src=filename, repository=repository, tag=tag, changes=changes
+        )
 
-    def import_image_from_image(self, image, repository=None, tag=None):
-        u = self._url("/images/create")
-        params = {
-            'fromImage': image,
-            'repo': repository,
-            'tag': tag
-        }
-        return self._result(
-            self._post(u, data=None, params=params))
+    def import_image_from_stream(self, stream, repository=None, tag=None,
+                                 changes=None):
+        return self.import_image(
+            src=stream, stream_src=True, repository=repository, tag=tag,
+            changes=changes
+        )
+
+    def import_image_from_url(self, url, repository=None, tag=None,
+                              changes=None):
+        return self.import_image(
+            src=url, repository=repository, tag=tag, changes=changes
+        )
+
+    def import_image_from_image(self, image, repository=None, tag=None,
+                                changes=None):
+        return self.import_image(
+            image=image, repository=repository, tag=tag, changes=changes
+        )
 
     @utils.check_resource
     def insert(self, image, url, path):
@@ -246,3 +239,32 @@ class ImageApiMixin(object):
         res = self._post(url, params=params)
         self._raise_for_status(res)
         return res.status_code == 201
+
+
+def is_file(src):
+    try:
+        return (
+            isinstance(src, six.string_types) and
+            os.path.isfile(src)
+        )
+    except TypeError:  # a data string will make isfile() raise a TypeError
+        return False
+
+
+def _import_image_params(repo, tag, image=None, src=None,
+                         changes=None):
+    params = {
+        'repo': repo,
+        'tag': tag,
+    }
+    if image:
+        params['fromImage'] = image
+    elif src and not is_file(src):
+        params['fromSrc'] = src
+    else:
+        params['fromSrc'] = '-'
+
+    if changes:
+        params['changes'] = changes
+
+    return params
