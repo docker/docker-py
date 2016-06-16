@@ -20,7 +20,7 @@ class NetworkApiMixin(object):
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
-    @minimum_version('1.22')
+    @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False):
         if options is not None and not isinstance(options, dict):
@@ -31,7 +31,6 @@ class NetworkApiMixin(object):
             'Driver': driver,
             'Options': options,
             'IPAM': ipam,
-            'Internal': internal,
             'CheckDuplicate': check_duplicate
         }
 

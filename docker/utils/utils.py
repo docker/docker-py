@@ -615,7 +615,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        security_opt=None, ulimits=None, log_config=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
-                       cpu_period=None, blkio_weight=None,
+                       cpu_period=None, blkio_weight=None, pids_limit=None,
                        blkio_weight_device=None, device_read_bps=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
@@ -802,6 +802,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         if version_lt(version, '1.22'):
             raise host_config_version_error('blkio_weight', '1.22')
         host_config["BlkioWeight"] = blkio_weight
+
+    if pids_limit:
+        if not isinstance(pids_limit, int):
+            raise host_config_type_error('pids_limit', pids_limit, 'int')
+        if version_lt(version, '1.23'):
+            raise host_config_version_error('pids_limit', '1.23')
+        host_config["PidsLimit"] = pids_limit
 
     if blkio_weight_device:
         if not isinstance(blkio_weight_device, list):
