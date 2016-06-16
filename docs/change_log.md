@@ -1,10 +1,32 @@
 Change Log
 ==========
 
+1.9.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.9.0+is%3Aclosed)
+
+### Features
+
+* Added **experimental** support for Windows named pipes (`npipe://` protocol).
+* Added support for Block IO constraints in `Client.create_host_config`. This
+  includes parameters `blkio_weight`, `blkio_weight_device`, `device_read_bps`,
+  `device_write_bps`, `device_read_iops` and `device_write_iops`.
+* Added support for the `internal` param in `Client.create_network`.
+* Added support for `ipv4_address` and `ipv6_address` in utils function
+  `create_endpoint_config`.
+
+### Bugfixes
+
+* Fixed an issue where the HTTP timeout on streaming responses would sometimes
+  be set incorrectly.
+* Fixed an issue where explicit relative paths in `.dockerignore` files were
+  not being recognized.
+
 1.8.1
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.8.0+is%3Aclosed)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.8.1+is%3Aclosed)
 
 ### Bugfixes
 
