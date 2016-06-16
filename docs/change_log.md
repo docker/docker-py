@@ -1,6 +1,21 @@
 Change Log
 ==========
 
+1.8.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.8.0+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed a bug where calling `login()` against the default registry would fail
+  with the 1.10.x engine
+* Fixed a bug where values in environment files would be parsed incorrectly if
+  they contained an equal sign.
+* Switched to a better supported backport of the `match_hostname` function,
+  fixing dependency issues in some environments.
+
+
 1.8.0
 -----
 
@@ -198,7 +213,7 @@ Change Log
 ### Features
 
 * Added `utils.parse_env_file` to support env-files.
-  See [docs](http://docker-py.readthedocs.org/en/latest/api/#create_container)
+  See [docs](https://docker-py.readthedocs.io/en/latest/api/#create_container)
   for usage.
 * Added support for arbitrary log drivers
 * Added support for URL paths in the docker host URL (`base_url`)
@@ -562,7 +577,7 @@ Change Log
 ### Documentation
 
 * Added new MkDocs documentation. Currently hosted on
-  [ReadTheDocs](http://docker-py.readthedocs.org/en/latest/)
+  [ReadTheDocs](https://docker-py.readthedocs.io/en/latest/)
 
 ### Miscellaneous
 

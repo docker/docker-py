@@ -109,7 +109,7 @@ correct value (e.g `gzip`).
 ```
 
 **Raises:** [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) if `path` nor
+https://docs.python.org/3.5/library/exceptions.html#TypeError) if `path` nor
 `fileobj` are specified
 
 ## commit
@@ -148,6 +148,13 @@ non-running ones
     - `exited` (int): Only containers with specified exit code
     - `status` (str): One of `restarting`, `running`, `paused`, `exited`
     - `label` (str): format either `"key"` or `"key=value"`
+    - `id` (str): The id of the container.
+    - `name` (str): The name of the container.
+    - `ancestor` (str): Filter by container ancestor. Format of `<image-name>[:tag]`, `<image-id>`, or `<image@digest>`.
+    - `before` (str): Only containers created before a particular container. Give the container name or id.
+    - `since` (str): Only containers created after a particular container. Give container name or id.
+
+  A comprehensive list can be found [here](https://docs.docker.com/engine/reference/commandline/ps/)
 
 **Returns** (dict): The system's containers
 
@@ -200,7 +207,7 @@ of the created container in bytes) or a string with a units identification char
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if
+https://docs.python.org/3.5/library/exceptions.html#TypeError) exception if
 they are used against v1.10 and above of the Docker remote API. Those
 arguments should be passed as part of the `host_config` dictionary.
 
@@ -235,6 +242,7 @@ from. Optionally a single string joining container id's with commas
 * labels (dict or list): A dictionary of name-value labels (e.g. `{"label1": "value1", "label2": "value2"}`) or a list of names of labels to set with empty values (e.g. `["label1", "label2"]`)
 * volume_driver (str): The name of a volume driver/plugin.
 * stop_signal (str): The stop signal to use to stop the container (e.g. `SIGINT`).
+* networking_config (dict): A [NetworkingConfig](networks.md) dictionary
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 
@@ -599,7 +607,7 @@ Identical to the `docker inspect` command, but only for images.
 
 **Params**:
 
-* image_id (str): The image to inspect
+* image (str): The image to inspect
 
 **Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict

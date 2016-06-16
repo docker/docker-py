@@ -199,6 +199,9 @@ def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
 
 def match_path(path, pattern):
     pattern = pattern.rstrip('/')
+    if pattern:
+        pattern = os.path.relpath(pattern)
+
     pattern_components = pattern.split('/')
     path_components = path.split('/')[:len(pattern_components)]
     return fnmatch('/'.join(path_components), pattern)
@@ -380,13 +383,13 @@ def parse_repository_tag(repo_name):
 # fd:// protocol unsupported (for obvious reasons)
 # Added support for http and https
 # Protocol translation: tcp -> http, unix -> http+unix
-def parse_host(addr, platform=None, tls=False):
+def parse_host(addr, is_win32=False, tls=False):
     proto = "http+unix"
     host = DEFAULT_HTTP_HOST
     port = None
     path = ''
 
-    if not addr and platform == 'win32':
+    if not addr and is_win32:
         addr = '{0}:{1}'.format(DEFAULT_HTTP_HOST, 2375)
 
     if not addr or addr.strip() == 'unix://':
@@ -409,6 +412,9 @@ def parse_host(addr, platform=None, tls=False):
         addr = addr[6:]
     elif addr.startswith('https://'):
         proto = "https"
+        addr = addr[8:]
+    elif addr.startswith('npipe://'):
+        proto = 'npipe'
         addr = addr[8:]
     elif addr.startswith('fd://'):
         raise errors.DockerException("fd protocol is not implemented")
@@ -445,7 +451,7 @@ def parse_host(addr, platform=None, tls=False):
     else:
         host = addr
 
-    if proto == "http+unix":
+    if proto == "http+unix" or proto == 'npipe':
         return "{0}://{1}".format(proto, host)
     return "{0}://{1}:{2}{3}".format(proto, host, port, path)
 
@@ -543,12 +549,6 @@ def datetime_to_timestamp(dt):
     return delta.seconds + delta.days * 24 * 3600
 
 
-def longint(n):
-    if six.PY3:
-        return int(n)
-    return long(n)
-
-
 def parse_bytes(s):
     if isinstance(s, six.integer_types + (float,)):
         return s
@@ -571,7 +571,7 @@ def parse_bytes(s):
 
     if suffix in units.keys() or suffix.isdigit():
         try:
-            digits = longint(digits_part)
+            digits = int(digits_part)
         except ValueError:
             raise errors.DockerException(
                 'Failed converting the string value for memory ({0}) to'
@@ -579,7 +579,7 @@ def parse_bytes(s):
             )
 
         # Reconvert to long for the final result
-        s = longint(digits * units[suffix])
+        s = int(digits * units[suffix])
     else:
         raise errors.DockerException(
             'The specified value for memory ({0}) should specify the'
@@ -615,8 +615,12 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        security_opt=None, ulimits=None, log_config=None,
                        mem_limit=None, memswap_limit=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
-                       cpu_period=None, oom_kill_disable=False, shm_size=None,
-                       version=None, tmpfs=None, oom_score_adj=None):
+                       cpu_period=None, blkio_weight=None,
+                       blkio_weight_device=None, device_read_bps=None,
+                       device_write_bps=None, device_read_iops=None,
+                       device_write_iops=None, oom_kill_disable=False,
+                       shm_size=None, version=None, tmpfs=None,
+                       oom_score_adj=None):
 
     host_config = {}
 
@@ -792,6 +796,58 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
         host_config['CpuPeriod'] = cpu_period
 
+    if blkio_weight:
+        if not isinstance(blkio_weight, int):
+            raise host_config_type_error('blkio_weight', blkio_weight, 'int')
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('blkio_weight', '1.22')
+        host_config["BlkioWeight"] = blkio_weight
+
+    if blkio_weight_device:
+        if not isinstance(blkio_weight_device, list):
+            raise host_config_type_error(
+                'blkio_weight_device', blkio_weight_device, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('blkio_weight_device', '1.22')
+        host_config["BlkioWeightDevice"] = blkio_weight_device
+
+    if device_read_bps:
+        if not isinstance(device_read_bps, list):
+            raise host_config_type_error(
+                'device_read_bps', device_read_bps, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_read_bps', '1.22')
+        host_config["BlkioDeviceReadBps"] = device_read_bps
+
+    if device_write_bps:
+        if not isinstance(device_write_bps, list):
+            raise host_config_type_error(
+                'device_write_bps', device_write_bps, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_write_bps', '1.22')
+        host_config["BlkioDeviceWriteBps"] = device_write_bps
+
+    if device_read_iops:
+        if not isinstance(device_read_iops, list):
+            raise host_config_type_error(
+                'device_read_iops', device_read_iops, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_read_iops', '1.22')
+        host_config["BlkioDeviceReadIOps"] = device_read_iops
+
+    if device_write_iops:
+        if not isinstance(device_write_iops, list):
+            raise host_config_type_error(
+                'device_write_iops', device_write_iops, 'list'
+            )
+        if version_lt(version, '1.22'):
+            raise host_config_version_error('device_write_iops', '1.22')
+        host_config["BlkioDeviceWriteIOps"] = device_write_iops
+
     if tmpfs:
         if version_lt(version, '1.22'):
             raise host_config_version_error('tmpfs', '1.22')
@@ -816,18 +872,29 @@ def create_networking_config(endpoints_config=None):
     return networking_config
 
 
-def create_endpoint_config(version, aliases=None, links=None):
+def create_endpoint_config(version, aliases=None, links=None,
+                           ipv4_address=None, ipv6_address=None):
+    if version_lt(version, '1.22'):
+        raise errors.InvalidVersion(
+            'Endpoint config is not supported for API version < 1.22'
+        )
     endpoint_config = {}
 
     if aliases:
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('endpoint_config.aliases', '1.22')
         endpoint_config["Aliases"] = aliases
 
     if links:
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('endpoint_config.links', '1.22')
         endpoint_config["Links"] = normalize_links(links)
+
+    ipam_config = {}
+    if ipv4_address:
+        ipam_config['IPv4Address'] = ipv4_address
+
+    if ipv6_address:
+        ipam_config['IPv6Address'] = ipv6_address
+
+    if ipam_config:
+        endpoint_config['IPAMConfig'] = ipam_config
 
     return endpoint_config
 
@@ -845,7 +912,7 @@ def parse_env_file(env_file):
             if line[0] == '#':
                 continue
 
-            parse_line = line.strip().split('=')
+            parse_line = line.strip().split('=', 1)
             if len(parse_line) == 2:
                 k, v = parse_line
                 environment[k] = v

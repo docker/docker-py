@@ -64,6 +64,25 @@ class HostConfigTest(base.BaseTestCase):
         config = create_host_config(version='1.20', cpu_period=1999)
         self.assertEqual(config.get('CpuPeriod'), 1999)
 
+    def test_create_host_config_with_blkio_constraints(self):
+        blkio_rate = [{"Path": "/dev/sda", "Rate": 1000}]
+        config = create_host_config(version='1.22',
+                                    blkio_weight=1999,
+                                    blkio_weight_device=blkio_rate,
+                                    device_read_bps=blkio_rate,
+                                    device_write_bps=blkio_rate,
+                                    device_read_iops=blkio_rate,
+                                    device_write_iops=blkio_rate)
+
+        self.assertEqual(config.get('BlkioWeight'), 1999)
+        self.assertTrue(config.get('BlkioWeightDevice') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceReadBps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceWriteBps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceReadIOps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceWriteIOps') is blkio_rate)
+        self.assertEqual(blkio_rate[0]['Path'], "/dev/sda")
+        self.assertEqual(blkio_rate[0]['Rate'], 1000)
+
     def test_create_host_config_with_shm_size(self):
         config = create_host_config(version='1.22', shm_size=67108864)
         self.assertEqual(config.get('ShmSize'), 67108864)
@@ -299,56 +318,30 @@ class ConverVolumeBindsTest(base.BaseTestCase):
         self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
 
     def test_convert_volume_binds_unicode_bytes_input(self):
-        if six.PY2:
-            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+        expected = [u'/mnt/지연:/unicode/박:rw']
 
-            data = {
-                '/mnt/지연': {
-                    'bind': '/unicode/박',
-                    'mode': 'rw'
-                }
+        data = {
+            u'/mnt/지연'.encode('utf-8'): {
+                'bind': u'/unicode/박'.encode('utf-8'),
+                'mode': 'rw'
             }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
-        else:
-            expected = ['/mnt/지연:/unicode/박:rw']
-
-            data = {
-                bytes('/mnt/지연', 'utf-8'): {
-                    'bind': bytes('/unicode/박', 'utf-8'),
-                    'mode': 'rw'
-                }
-            }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
+        }
+        self.assertEqual(
+            convert_volume_binds(data), expected
+        )
 
     def test_convert_volume_binds_unicode_unicode_input(self):
-        if six.PY2:
-            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+        expected = [u'/mnt/지연:/unicode/박:rw']
 
-            data = {
-                unicode('/mnt/지연', 'utf-8'): {
-                    'bind': unicode('/unicode/박', 'utf-8'),
-                    'mode': 'rw'
-                }
+        data = {
+            u'/mnt/지연': {
+                'bind': u'/unicode/박',
+                'mode': 'rw'
             }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
-        else:
-            expected = ['/mnt/지연:/unicode/박:rw']
-
-            data = {
-                '/mnt/지연': {
-                    'bind': '/unicode/박',
-                    'mode': 'rw'
-                }
-            }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
+        }
+        self.assertEqual(
+            convert_volume_binds(data), expected
+        )
 
 
 class ParseEnvFileTest(base.BaseTestCase):
@@ -369,6 +362,14 @@ class ParseEnvFileTest(base.BaseTestCase):
         get_parse_env_file = parse_env_file(env_file)
         self.assertEqual(get_parse_env_file,
                          {'USER': 'jdoe', 'PASS': 'secret'})
+        os.unlink(env_file)
+
+    def test_parse_env_file_with_equals_character(self):
+        env_file = self.generate_tempfile(
+            file_content='USER=jdoe\nPASS=sec==ret')
+        get_parse_env_file = parse_env_file(env_file)
+        self.assertEqual(get_parse_env_file,
+                         {'USER': 'jdoe', 'PASS': 'sec==ret'})
         os.unlink(env_file)
 
     def test_parse_env_file_commented_line(self):
@@ -406,6 +407,7 @@ class ParseHostTest(base.BaseTestCase):
             'somehost.net:80/service/swarm': (
                 'http://somehost.net:80/service/swarm'
             ),
+            'npipe:////./pipe/docker_engine': 'npipe:////./pipe/docker_engine',
         }
 
         for host in invalid_hosts:
@@ -420,10 +422,8 @@ class ParseHostTest(base.BaseTestCase):
         tcp_port = 'http://127.0.0.1:2375'
 
         for val in [None, '']:
-            for platform in ['darwin', 'linux2', None]:
-                assert parse_host(val, platform) == unix_socket
-
-            assert parse_host(val, 'win32') == tcp_port
+            assert parse_host(val, is_win32=False) == unix_socket
+            assert parse_host(val, is_win32=True) == tcp_port
 
     def test_parse_host_tls(self):
         host_value = 'myhost.docker.net:3348'
@@ -604,13 +604,7 @@ class UtilsTest(base.BaseTestCase):
 class SplitCommandTest(base.BaseTestCase):
 
     def test_split_command_with_unicode(self):
-        if six.PY2:
-            self.assertEqual(
-                split_command(unicode('echo μμ', 'utf-8')),
-                ['echo', 'μμ']
-            )
-        else:
-            self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
+        self.assertEqual(split_command(u'echo μμ'), ['echo', 'μμ'])
 
     @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
     def test_split_command_with_bytes(self):
@@ -794,6 +788,9 @@ class ExcludePathsTest(base.BaseTestCase):
     def test_single_filename(self):
         assert self.exclude(['a.py']) == self.all_paths - set(['a.py'])
 
+    def test_single_filename_leading_dot_slash(self):
+        assert self.exclude(['./a.py']) == self.all_paths - set(['a.py'])
+
     # As odd as it sounds, a filename pattern with a trailing slash on the
     # end *will* result in that file being excluded.
     def test_single_filename_trailing_slash(self):
@@ -822,6 +819,11 @@ class ExcludePathsTest(base.BaseTestCase):
 
     def test_single_subdir_single_filename(self):
         assert self.exclude(['foo/a.py']) == self.all_paths - set(['foo/a.py'])
+
+    def test_single_subdir_with_path_traversal(self):
+        assert self.exclude(['foo/whoops/../a.py']) == self.all_paths - set([
+            'foo/a.py',
+        ])
 
     def test_single_subdir_wildcard_filename(self):
         assert self.exclude(['foo/*.py']) == self.all_paths - set([

@@ -1,7 +1,13 @@
 from docker.ssladapter import ssladapter
-from docker.ssladapter.ssl_match_hostname import (
-    match_hostname, CertificateError
-)
+
+try:
+    from backports.ssl_match_hostname import (
+        match_hostname, CertificateError
+    )
+except ImportError:
+    from ssl import (
+        match_hostname, CertificateError
+    )
 
 try:
     from ssl import OP_NO_SSLv3, OP_NO_SSLv2, OP_NO_TLSv1

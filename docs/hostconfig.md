@@ -109,6 +109,14 @@ for example:
 * cpu_group (int): The length of a CPU period in microseconds.
 * cpu_period (int): Microseconds of CPU time that the container can get in a
   CPU period.
+* blkio_weight: Block IO weight (relative weight), accepts a weight value between 10 and 1000.
+* blkio_weight_device: Block IO weight (relative device weight) in the form of:
+  `[{"Path": "device_path", "Weight": weight}]`
+* device_read_bps: Limit read rate (bytes per second) from a device in the form of:
+  `[{"Path": "device_path", "Rate": rate}]`
+* device_write_bps: Limit write rate (bytes per second) from a device.
+* device_read_iops: Limit read rate (IO per second) from a device.
+* device_write_iops: Limit write rate (IO per second) from a device.
 * group_add (list): List of additional group names and/or IDs that the
   container process will run as.
 * devices (list): Host device bindings. See [host devices](host-devices.md)
