@@ -620,7 +620,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
                        shm_size=None, version=None, tmpfs=None,
-                       oom_score_adj=None):
+                       oom_score_adj=None, pids_limit=None,):
 
     host_config = {}
 
@@ -852,6 +852,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         if version_lt(version, '1.22'):
             raise host_config_version_error('tmpfs', '1.22')
         host_config["Tmpfs"] = convert_tmpfs_mounts(tmpfs)
+
+    if pids_limit:
+        if not isinstance(pids_limit, int):
+            raise host_config_type_error('pids_limit', pids_limit, 'int')
+        if version_lt(version, '1.23'):
+            raise host_config_version_error('pids_limit', '1.23')
+        host_config["PidsLimit"] = pids_limit
 
     return host_config
 
