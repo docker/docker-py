@@ -13,7 +13,7 @@ def check_resource(f):
             elif kwargs.get('image'):
                 resource_id = kwargs.pop('image')
         if isinstance(resource_id, dict):
-            resource_id = resource_id.get('Id')
+            resource_id = resource_id.get('Id', resource_id.get('ID'))
         if not resource_id:
             raise errors.NullResource(
                 'image or container param is undefined'
