@@ -873,7 +873,8 @@ def create_networking_config(endpoints_config=None):
 
 
 def create_endpoint_config(version, aliases=None, links=None,
-                           ipv4_address=None, ipv6_address=None):
+                           ipv4_address=None, ipv6_address=None,
+                           link_local_ips=None):
     if version_lt(version, '1.22'):
         raise errors.InvalidVersion(
             'Endpoint config is not supported for API version < 1.22'
@@ -895,6 +896,13 @@ def create_endpoint_config(version, aliases=None, links=None,
 
     if ipam_config:
         endpoint_config['IPAMConfig'] = ipam_config
+
+    if link_local_ips is not None:
+        if version_lt(version, '1.24'):
+            raise errors.InvalidVersion(
+                'link_local_ips is not supported for API version < 1.24'
+            )
+        endpoint_config['LinkLocalIPs'] = link_local_ips
 
     return endpoint_config
 
