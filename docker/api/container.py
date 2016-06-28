@@ -187,7 +187,9 @@ class ContainerApiMixin(object):
         url = self._url("/containers/{0}/kill", container)
         params = {}
         if signal is not None:
-            params['signal'] = int(signal)
+            if not isinstance(signal, six.string_types):
+                signal = int(signal)
+            params['signal'] = signal
         res = self._post(url, params=params)
 
         self._raise_for_status(res)
