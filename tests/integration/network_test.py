@@ -138,9 +138,11 @@ class TestNetworks(helpers.BaseTestCase):
         self.client.connect_container_to_network(
             container, net_id, aliases=['foo', 'bar'])
         container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
-            ['foo', 'bar'])
+        aliases = (
+            container_data['NetworkSettings']['Networks'][net_name]['Aliases']
+        )
+        assert 'foo' in aliases
+        assert 'bar' in aliases
 
     @requires_api_version('1.21')
     def test_connect_on_container_create(self):
@@ -183,10 +185,11 @@ class TestNetworks(helpers.BaseTestCase):
         self.client.start(container)
 
         container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
-            ['foo', 'bar']
+        aliases = (
+            container_data['NetworkSettings']['Networks'][net_name]['Aliases']
         )
+        assert 'foo' in aliases
+        assert 'bar' in aliases
 
     @requires_api_version('1.22')
     def test_create_with_ipv4_address(self):
