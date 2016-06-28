@@ -840,6 +840,36 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False, state)
 
+    def test_kill_with_signal_name(self):
+        id = self.client.create_container(BUSYBOX, ['sleep', '60'])
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(id, signal='SIGKILL')
+        exitcode = self.client.wait(id)
+        self.assertNotEqual(exitcode, 0)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False, state)
+
+    def test_kill_with_signal_integer(self):
+        id = self.client.create_container(BUSYBOX, ['sleep', '60'])
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(id, signal=9)
+        exitcode = self.client.wait(id)
+        self.assertNotEqual(exitcode, 0)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False, state)
+
 
 class PortTest(helpers.BaseTestCase):
     def test_port(self):
