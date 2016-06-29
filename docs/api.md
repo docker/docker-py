@@ -179,6 +179,16 @@ Connect a container to a network.
 
 * container (str): container-id/name to be connected to the network
 * net_id (str): network id
+* aliases (list): A list of aliases for this endpoint. Names in that list can
+  be used within the network to reach the container. Defaults to `None`.
+* links (list): A list of links for this endpoint. Containers declared in this
+  list will be [linked](https://docs.docker.com/engine/userguide/networking/work-with-networks/#linking-containers-in-user-defined-networks)
+  to this container. Defaults to `None`.
+* ipv4_address (str): The IP address of this container on the network,
+  using the IPv4 protocol. Defaults to `None`.
+* ipv6_address (str): The IP address of this container on the network,
+  using the IPv6 protocol. Defaults to `None`.
+* link_local_ips (list): A list of link-local (IPv4/IPv6) addresses.
 
 ## copy
 Identical to the `docker cp` command. Get files/folders from the container.

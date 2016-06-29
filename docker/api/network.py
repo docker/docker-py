@@ -60,12 +60,13 @@ class NetworkApiMixin(object):
     @minimum_version('1.21')
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
-                                     aliases=None, links=None):
+                                     aliases=None, links=None,
+                                     link_local_ips=None):
         data = {
             "Container": container,
             "EndpointConfig": self.create_endpoint_config(
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
-                ipv6_address=ipv6_address
+                ipv6_address=ipv6_address, link_local_ips=link_local_ips
             ),
         }
 
