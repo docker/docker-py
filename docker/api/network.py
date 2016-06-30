@@ -22,6 +22,7 @@ class NetworkApiMixin(object):
 
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
+                       enable_ipv6=None, labels=None,
                        check_duplicate=None, internal=False):
         if options is not None and not isinstance(options, dict):
             raise TypeError('options must be a dictionary')
@@ -31,6 +32,8 @@ class NetworkApiMixin(object):
             'Driver': driver,
             'Options': options,
             'IPAM': ipam,
+            'EnableIPv6': enable_ipv6,
+            'Labels': labels,
             'CheckDuplicate': check_duplicate
         }
 
@@ -76,8 +79,11 @@ class NetworkApiMixin(object):
 
     @check_resource
     @minimum_version('1.21')
-    def disconnect_container_from_network(self, container, net_id):
-        data = {"container": container}
+    def disconnect_container_from_network(self, container, net_id, force=None):
+        data = {
+            "Container": container,
+            "Force": force
+        }
         url = self._url("/networks/{0}/disconnect", net_id)
         res = self._post_json(url, data=data)
         self._raise_for_status(res)
