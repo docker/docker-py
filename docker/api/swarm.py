@@ -25,7 +25,7 @@ class SwarmApiMixin(object):
     @utils.minimum_version('1.24')
     def swarm_join(self, remote_address, listen_address=None,
                    secret=None, ca_cert_hash=None, manager=False):
-        data ={
+        data = {
             "RemoteAddr": remote_address,
             "ListenAddr": listen_address,
             "Secret": secret,
