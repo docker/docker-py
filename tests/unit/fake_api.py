@@ -433,7 +433,10 @@ def get_fake_volume():
     response = {
         'Name': 'perfectcherryblossom',
         'Driver': 'local',
-        'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+        'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom',
+        'Labels': {
+            'com.example.some-label': 'some-value'
+        }
     }
     return status_code, response
 
