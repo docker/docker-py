@@ -123,6 +123,8 @@ for example:
   for more information.
 * tmpfs: Temporary filesystems to mouunt. See [Using tmpfs](tmpfs.md) for more
   information.
+* userns_mode: Sets the user namespace mode for the container when user namespace remapping option
+  is enabled. supported values are: host
 
 **Returns** (dict) HostConfig dictionary
 

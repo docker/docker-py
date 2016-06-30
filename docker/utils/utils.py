@@ -620,7 +620,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
                        shm_size=None, version=None, tmpfs=None,
-                       oom_score_adj=None):
+                       oom_score_adj=None, userns_mode=None):
 
     host_config = {}
 
@@ -852,6 +852,14 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         if version_lt(version, '1.22'):
             raise host_config_version_error('tmpfs', '1.22')
         host_config["Tmpfs"] = convert_tmpfs_mounts(tmpfs)
+
+    if userns_mode:
+        if version_lt(version, '1.23'):
+            raise host_config_version_error('userns_mode', '1.23')
+
+        if userns_mode != "host":
+            raise host_config_value_error("userns_mode", userns_mode)
+        host_config['UsernsMode'] = userns_mode
 
     return host_config
 

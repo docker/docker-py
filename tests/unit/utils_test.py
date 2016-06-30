@@ -98,6 +98,16 @@ class HostConfigTest(base.BaseTestCase):
             InvalidVersion, lambda: create_host_config(version='1.18.3',
                                                        oom_kill_disable=True))
 
+    def test_create_host_config_with_userns_mode(self):
+        config = create_host_config(version='1.23', userns_mode='host')
+        self.assertEqual(config.get('UsernsMode'), 'host')
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.22',
+                                                       userns_mode='host'))
+        self.assertRaises(
+            ValueError, lambda: create_host_config(version='1.23',
+                                                   userns_mode='host12'))
+
     def test_create_host_config_with_oom_score_adj(self):
         config = create_host_config(version='1.22', oom_score_adj=100)
         self.assertEqual(config.get('OomScoreAdj'), 100)
@@ -602,7 +612,6 @@ class UtilsTest(base.BaseTestCase):
 
 
 class SplitCommandTest(base.BaseTestCase):
-
     def test_split_command_with_unicode(self):
         self.assertEqual(split_command(u'echo μμ'), ['echo', 'μμ'])
 
