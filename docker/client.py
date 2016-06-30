@@ -48,7 +48,8 @@ class Client(
         api.ExecApiMixin,
         api.ImageApiMixin,
         api.VolumeApiMixin,
-        api.NetworkApiMixin):
+        api.NetworkApiMixin,
+        api.SwarmApiMixin):
     def __init__(self, base_url=None, version=None,
                  timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=constants.DEFAULT_USER_AGENT):
