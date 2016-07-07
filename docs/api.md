@@ -995,6 +995,15 @@ Tag an image into a repository. Identical to the `docker tag` command.
 
 **Returns** (bool): True if successful
 
+Here is an example for tagging ``ubuntu`` image in order to push it to a local registry :
+
+```python
+>>> from docker import Client
+>>> cli = Client()
+>>> cli.tag('ubuntu', 'localhost:5000/ubuntu', 'latest', True)
+True
+```
+
 ## top
 Display the running processes of a container.
 
