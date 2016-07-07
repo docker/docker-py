@@ -2,8 +2,9 @@ import gzip
 import io
 
 import docker
+from docker import auth
 
-from .api_test import DockerClientTest
+from .api_test import DockerClientTest, fake_request, url_prefix
 
 
 class BuildTest(DockerClientTest):
@@ -83,7 +84,24 @@ class BuildTest(DockerClientTest):
             }
         }
 
+        expected_params = {'t': None, 'q': False, 'dockerfile': None,
+                           'rm': False, 'nocache': False, 'pull': False,
+                           'forcerm': False,
+                           'remote': 'https://github.com/docker-library/mongo'}
+        expected_headers = {
+            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+
         self.client.build(path='https://github.com/docker-library/mongo')
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'build',
+            stream=True,
+            data=None,
+            headers=expected_headers,
+            params=expected_params,
+            timeout=None
+        )
 
     def test_build_container_with_named_dockerfile(self):
         self.client.build('.', dockerfile='nameddockerfile')
@@ -103,3 +121,44 @@ class BuildTest(DockerClientTest):
                 'foo': 'bar'
             })
         )
+
+    def test__set_auth_headers_with_empty_dict_and_auth_configs(self):
+        self.client._auth_configs = {
+            'https://example.com': {
+                'user': 'example',
+                'password': 'example',
+                'email': 'example@example.com'
+            }
+        }
+
+        headers = {}
+        expected_headers = {
+            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+        self.client._set_auth_headers(headers)
+        self.assertEqual(headers, expected_headers)
+
+    def test__set_auth_headers_with_dict_and_auth_configs(self):
+        self.client._auth_configs = {
+            'https://example.com': {
+                'user': 'example',
+                'password': 'example',
+                'email': 'example@example.com'
+            }
+        }
+
+        headers = {'foo': 'bar'}
+        expected_headers = {
+            'foo': 'bar',
+            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+
+        self.client._set_auth_headers(headers)
+        self.assertEqual(headers, expected_headers)
+
+    def test__set_auth_headers_with_dict_and_no_auth_configs(self):
+        headers = {'foo': 'bar'}
+        expected_headers = {
+            'foo': 'bar'
+        }
+
+        self.client._set_auth_headers(headers)
+        self.assertEqual(headers, expected_headers)
