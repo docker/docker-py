@@ -1,4 +1,5 @@
 import sys
+from .version import version
 
 DEFAULT_DOCKER_API_VERSION = '1.22'
 DEFAULT_TIMEOUT_SECONDS = 60
@@ -12,3 +13,5 @@ INSECURE_REGISTRY_DEPRECATION_WARNING = \
     'is deprecated and non-functional. Please remove it.'
 
 IS_WINDOWS_PLATFORM = (sys.platform == 'win32')
+
+DEFAULT_USER_AGENT = "docker-py/{0}".format(version)

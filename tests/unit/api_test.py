@@ -415,3 +415,33 @@ class StreamTest(base.Cleanup, base.BaseTestCase):
 
             self.assertEqual(list(stream), [
                 str(i).encode() for i in range(50)])
+
+
+class UserAgentTest(base.BaseTestCase):
+    def setUp(self):
+        self.patcher = mock.patch.object(
+            docker.Client,
+            'send',
+            return_value=fake_resp("GET", "%s/version" % fake_api.prefix)
+        )
+        self.mock_send = self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_default_user_agent(self):
+        client = docker.Client()
+        client.version()
+
+        self.assertEqual(self.mock_send.call_count, 1)
+        headers = self.mock_send.call_args[0][0].headers
+        expected = 'docker-py/%s' % docker.__version__
+        self.assertEqual(headers['User-Agent'], expected)
+
+    def test_custom_user_agent(self):
+        client = docker.Client(user_agent='foo/bar')
+        client.version()
+
+        self.assertEqual(self.mock_send.call_count, 1)
+        headers = self.mock_send.call_args[0][0].headers
+        self.assertEqual(headers['User-Agent'], 'foo/bar')
