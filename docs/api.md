@@ -65,6 +65,7 @@ correct value (e.g `gzip`).
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
 * forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
 * dockerfile (str): path within the build context to the Dockerfile
+* buildargs (dict): A dictionary of build arguments
 * container_limits (dict): A dictionary of limits applied to each container
   created by the build process. Valid keys:
     - memory (int): set memory limit for build
