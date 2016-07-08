@@ -46,6 +46,8 @@ already, pass a readable file-like object to `fileobj` and also pass
 `custom_context=True`. If the stream is compressed also, set `encoding` to the
 correct value (e.g `gzip`).
 
+Build argument can also be pass a a Python dict through ``buildargs`` parameter.
+
 **Params**:
 
 * path (str): Path to the directory containing the Dockerfile
@@ -65,6 +67,7 @@ correct value (e.g `gzip`).
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
 * forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
 * dockerfile (str): path within the build context to the Dockerfile
+* buildargs (dict): A dictionary of build arguments
 * container_limits (dict): A dictionary of limits applied to each container
   created by the build process. Valid keys:
     - memory (int): set memory limit for build
