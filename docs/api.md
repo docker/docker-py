@@ -16,6 +16,7 @@ is hosted.
   to use the API version provided by the server.
 * timeout (int): The HTTP request timeout, in seconds.
 * tls (bool or [TLSConfig](tls.md#TLSConfig)): Equivalent CLI options: `docker --tls ...`
+* user_agent (str): Set a custom user agent for requests to the server.
 
 ****
 
