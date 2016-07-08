@@ -93,6 +93,10 @@ def fake_put(self, url, *args, **kwargs):
 def fake_delete(self, url, *args, **kwargs):
     return fake_request('DELETE', url, *args, **kwargs)
 
+
+def fake_read_from_socket(self, response, stream):
+    return six.binary_type()
+
 url_base = 'http+docker://localunixsocket/'
 url_prefix = '{0}v{1}/'.format(
     url_base,
@@ -103,7 +107,8 @@ class DockerClientTest(base.Cleanup, base.BaseTestCase):
     def setUp(self):
         self.patcher = mock.patch.multiple(
             'docker.Client', get=fake_get, post=fake_post, put=fake_put,
-            delete=fake_delete
+            delete=fake_delete,
+            _read_from_socket=fake_read_from_socket
         )
         self.patcher.start()
         self.client = docker.Client()
