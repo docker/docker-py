@@ -26,7 +26,7 @@ class ContainerApiMixin(object):
         u = self._url("/containers/{0}/attach", container)
         response = self._post(u, headers=headers, params=params, stream=stream)
 
-        return self._get_result(container, stream, response)
+        return self._read_from_socket(response, stream)
 
     @utils.check_resource
     def attach_socket(self, container, params=None, ws=False):
@@ -40,9 +40,18 @@ class ContainerApiMixin(object):
         if ws:
             return self._attach_websocket(container, params)
 
+        headers = {
+            'Connection': 'Upgrade',
+            'Upgrade': 'tcp'
+        }
+
         u = self._url("/containers/{0}/attach", container)
-        return self._get_raw_response_socket(self.post(
-            u, None, params=self._attach_params(params), stream=True))
+        return self._get_raw_response_socket(
+            self.post(
+                u, None, params=self._attach_params(params), stream=True,
+                headers=headers
+            )
+        )
 
     @utils.check_resource
     def commit(self, container, repository=None, tag=None, message=None,

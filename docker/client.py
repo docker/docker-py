@@ -12,7 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import errno
 import json
+import os
+import select
 import struct
 
 import requests
@@ -304,6 +307,53 @@ class Client(
         self._raise_for_status(response)
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
+
+    def _read_from_socket(self, response, stream):
+        def read_socket(socket, n=4096):
+            recoverable_errors = (
+                errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK
+            )
+
+            # wait for data to become available
+            select.select([socket], [], [])
+
+            try:
+                if hasattr(socket, 'recv'):
+                    return socket.recv(n)
+                return os.read(socket.fileno(), n)
+            except EnvironmentError as e:
+                if e.errno not in recoverable_errors:
+                    raise
+
+        def next_packet_size(socket):
+            data = six.binary_type()
+            while len(data) < 8:
+                next_data = read_socket(socket, 8 - len(data))
+                if not next_data:
+                    return 0
+                data = data + next_data
+
+            if data is None:
+                return 0
+
+            if len(data) == 8:
+                _, actual = struct.unpack('>BxxxL', data)
+                return actual
+
+        def read_loop(socket):
+            n = next_packet_size(socket)
+            while n > 0:
+                yield read_socket(socket, n)
+                n = next_packet_size(socket)
+
+        socket = self._get_raw_response_socket(response)
+        if stream:
+            return read_loop(socket)
+        else:
+            data = six.binary_type()
+            for d in read_loop(socket):
+                data += d
+            return data
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
