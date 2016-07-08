@@ -50,7 +50,8 @@ class Client(
         api.VolumeApiMixin,
         api.NetworkApiMixin):
     def __init__(self, base_url=None, version=None,
-                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
+                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
+                 user_agent=constants.DEFAULT_USER_AGENT):
         super(Client, self).__init__()
 
         if tls and not base_url:
@@ -60,6 +61,7 @@ class Client(
 
         self.base_url = base_url
         self.timeout = timeout
+        self.headers['User-Agent'] = user_agent
 
         self._auth_configs = auth.load_config()
 
