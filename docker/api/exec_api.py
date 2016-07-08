@@ -66,8 +66,16 @@ class ExecApiMixin(object):
             'Detach': detach
         }
 
+        headers = {} if detach else {
+            'Connection': 'Upgrade',
+            'Upgrade': 'tcp'
+        }
+
         res = self._post_json(
-            self._url('/exec/{0}/start', exec_id), data=data, stream=stream
+            self._url('/exec/{0}/start', exec_id),
+            headers=headers,
+            data=data,
+            stream=stream
         )
 
         if socket:
