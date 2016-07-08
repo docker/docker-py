@@ -46,8 +46,6 @@ already, pass a readable file-like object to `fileobj` and also pass
 `custom_context=True`. If the stream is compressed also, set `encoding` to the
 correct value (e.g `gzip`).
 
-Build argument can also be pass a a Python dict through ``buildargs`` parameter.
-
 **Params**:
 
 * path (str): Path to the directory containing the Dockerfile
