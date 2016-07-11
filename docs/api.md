@@ -18,6 +18,34 @@ is hosted.
 * tls (bool or [TLSConfig](tls.md#TLSConfig)): Equivalent CLI options: `docker --tls ...`
 * user_agent (str): Set a custom user agent for requests to the server.
 
+
+## Version mismatch
+
+You may encounter an error like this:
+
+```text
+client is newer than server (client API version: 1.24, server API version: 1.23)
+```
+
+To fix this, you have to either supply exact version to `Client` which you know that server supports:
+
+```python
+client = docker.Client(version="1.23")
+```
+
+or let client pick the newest version server supports:
+
+```python
+client = docker.Client(version="auto")
+```
+
+or even
+
+```python
+client = docker.AutoVersionClient()
+```
+
+
 ****
 
 ## attach
