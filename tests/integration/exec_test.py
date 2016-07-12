@@ -1,5 +1,8 @@
 import pytest
 
+from docker.utils.socket import next_packet_size
+from docker.utils.socket import read_data
+
 from .. import helpers
 
 BUSYBOX = helpers.BUSYBOX
@@ -107,9 +110,9 @@ class ExecTest(helpers.BaseTestCase):
         socket = self.client.exec_start(exec_id, socket=True)
         self.addCleanup(socket.close)
 
-        next_size = helpers.next_packet_size(socket)
+        next_size = next_packet_size(socket)
         self.assertEqual(next_size, len(line))
-        data = helpers.read_data(socket, next_size)
+        data = read_data(socket, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
     def test_exec_inspect(self):
