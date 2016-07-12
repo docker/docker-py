@@ -122,7 +122,7 @@ class BuildTest(DockerClientTest):
             })
         )
 
-    def test__set_auth_headers_with_empty_dict_and_auth_configs(self):
+    def test_set_auth_headers_with_empty_dict_and_auth_configs(self):
         self.client._auth_configs = {
             'https://example.com': {
                 'user': 'example',
@@ -137,7 +137,7 @@ class BuildTest(DockerClientTest):
         self.client._set_auth_headers(headers)
         self.assertEqual(headers, expected_headers)
 
-    def test__set_auth_headers_with_dict_and_auth_configs(self):
+    def test_set_auth_headers_with_dict_and_auth_configs(self):
         self.client._auth_configs = {
             'https://example.com': {
                 'user': 'example',
@@ -154,7 +154,7 @@ class BuildTest(DockerClientTest):
         self.client._set_auth_headers(headers)
         self.assertEqual(headers, expected_headers)
 
-    def test__set_auth_headers_with_dict_and_no_auth_configs(self):
+    def test_set_auth_headers_with_dict_and_no_auth_configs(self):
         headers = {'foo': 'bar'}
         expected_headers = {
             'foo': 'bar'
