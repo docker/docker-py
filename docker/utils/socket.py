@@ -11,7 +11,9 @@ class SocketError(Exception):
 
 
 def read_socket(socket, n=4096):
-    """ Code stolen from dockerpty to read the socket """
+    """
+    Reads at most n bytes from socket
+    """
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
     # wait for data to become available
@@ -27,8 +29,12 @@ def read_socket(socket, n=4096):
 
 
 def next_packet_size(socket):
-    """ Code stolen from dockerpty to get the next packet size """
+    """
+    Returns the size of the next frame of data waiting to be read from socket,
+    according to the protocol defined here:
 
+    https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/attach-to-a-container
+    """
     try:
         data = read_data(socket, 8)
     except SocketError:
@@ -39,6 +45,9 @@ def next_packet_size(socket):
 
 
 def read_data(socket, n):
+    """
+    Reads exactly n bytes from socket
+    """
     data = six.binary_type()
     while len(data) < n:
         next_data = read_socket(socket, n - len(data))
@@ -49,6 +58,9 @@ def read_data(socket, n):
 
 
 def read_iter(socket):
+    """
+    Returns a generator of frames read from socket
+    """
     n = next_packet_size(socket)
     while n > 0:
         yield read_socket(socket, n)
