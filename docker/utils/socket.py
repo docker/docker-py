@@ -10,7 +10,7 @@ class SocketError(Exception):
     pass
 
 
-def read_socket(socket, n=4096):
+def read(socket, n=4096):
     """
     Reads at most n bytes from socket
     """
@@ -28,13 +28,14 @@ def read_socket(socket, n=4096):
             raise
 
 
-def read_data(socket, n):
+def read_exactly(socket, n):
     """
     Reads exactly n bytes from socket
+    Raises SocketError if there isn't enough data
     """
     data = six.binary_type()
     while len(data) < n:
-        next_data = read_socket(socket, n - len(data))
+        next_data = read(socket, n - len(data))
         if not next_data:
             raise SocketError("Unexpected EOF")
         data += next_data
@@ -49,7 +50,7 @@ def next_frame_size(socket):
     https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/attach-to-a-container
     """
     try:
-        data = read_data(socket, 8)
+        data = read_exactly(socket, 8)
     except SocketError:
         return 0
 
@@ -63,5 +64,5 @@ def frames_iter(socket):
     """
     n = next_frame_size(socket)
     while n > 0:
-        yield read_socket(socket, n)
+        yield read(socket, n)
         n = next_frame_size(socket)
