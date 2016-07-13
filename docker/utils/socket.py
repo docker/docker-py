@@ -57,7 +57,7 @@ def next_frame_size(socket):
     return actual
 
 
-def read_iter(socket):
+def frames_iter(socket):
     """
     Returns a generator of frames read from socket
     """
