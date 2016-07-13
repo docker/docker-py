@@ -1,7 +1,7 @@
 import pytest
 
 from docker.utils.socket import next_frame_size
-from docker.utils.socket import read_data
+from docker.utils.socket import read_exactly
 
 from .. import helpers
 
@@ -112,7 +112,7 @@ class ExecTest(helpers.BaseTestCase):
 
         next_size = next_frame_size(socket)
         self.assertEqual(next_size, len(line))
-        data = read_data(socket, next_size)
+        data = read_exactly(socket, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
     def test_exec_inspect(self):

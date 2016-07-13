@@ -4,7 +4,7 @@ import tempfile
 
 import docker
 from docker.utils.socket import next_frame_size
-from docker.utils.socket import read_data
+from docker.utils.socket import read_exactly
 import pytest
 import six
 
@@ -1029,7 +1029,7 @@ class AttachContainerTest(helpers.BaseTestCase):
 
         next_size = next_frame_size(pty_stdout)
         self.assertEqual(next_size, len(line))
-        data = read_data(pty_stdout, next_size)
+        data = read_exactly(pty_stdout, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
 
