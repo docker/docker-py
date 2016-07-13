@@ -6,6 +6,10 @@ import struct
 import six
 
 
+class SocketError(Exception):
+    pass
+
+
 def read_socket(socket, n=4096):
     """ Code stolen from dockerpty to read the socket """
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
@@ -24,27 +28,22 @@ def read_socket(socket, n=4096):
 
 def next_packet_size(socket):
     """ Code stolen from dockerpty to get the next packet size """
-    data = six.binary_type()
-    while len(data) < 8:
-        next_data = read_socket(socket, 8 - len(data))
-        if not next_data:
-            return 0
-        data = data + next_data
 
-    if data is None:
+    try:
+        data = read_data(socket, 8)
+    except SocketError:
         return 0
 
-    if len(data) == 8:
-        _, actual = struct.unpack('>BxxxL', data)
-        return actual
+    _, actual = struct.unpack('>BxxxL', data)
+    return actual
 
 
-def read_data(socket, packet_size):
+def read_data(socket, n):
     data = six.binary_type()
-    while len(data) < packet_size:
-        next_data = read_socket(socket, packet_size - len(data))
+    while len(data) < n:
+        next_data = read_socket(socket, n - len(data))
         if not next_data:
-            assert False, "Failed trying to read in the data"
+            raise SocketError("Unexpected EOF")
         data += next_data
     return data
 
