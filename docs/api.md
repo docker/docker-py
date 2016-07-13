@@ -310,6 +310,7 @@ Create and register a named volume
 * name (str): Name of the volume
 * driver (str): Name of the driver used to create the volume
 * driver_opts (dict): Driver options as a key-value dictionary
+* labels (dict): Labels to set on the volume
 
 **Returns** (dict): The created volume reference object
 
@@ -317,10 +318,16 @@ Create and register a named volume
 >>> from docker import Client
 >>> cli = Client()
 >>> volume = cli.create_volume(
-  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'}
+  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'},
+  labels={"key": "value"}
 )
 >>> print(volume)
-{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+{
+  u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
+  u'Driver': u'local',
+  u'Name': u'foobar',
+  u'Labels': {u'key': u'value'}
+}
 ```
 
 ## diff
