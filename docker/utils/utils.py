@@ -613,7 +613,8 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        cap_drop=None, devices=None, extra_hosts=None,
                        read_only=None, pid_mode=None, ipc_mode=None,
                        security_opt=None, ulimits=None, log_config=None,
-                       mem_limit=None, memswap_limit=None, mem_swappiness=None,
+                       mem_limit=None, memswap_limit=None,
+                       mem_reservation=None, kernel_memory=None, mem_swappiness=None,
                        cgroup_parent=None, group_add=None, cpu_quota=None,
                        cpu_period=None, blkio_weight=None,
                        blkio_weight_device=None, device_read_bps=None,
@@ -636,6 +637,18 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if memswap_limit is not None:
         host_config['MemorySwap'] = parse_bytes(memswap_limit)
+
+    if mem_reservation:
+        if version_lt(version, '1.21'):
+            raise host_config_version_error('mem_reservation', '1.21')
+
+        host_config['MemoryReservation'] = parse_bytes(mem_reservation)
+
+    if kernel_memory:
+        if version_lt(version, '1.21'):
+            raise host_config_version_error('kernel_memory', '1.21')
+
+        host_config['KernelMemory'] = parse_bytes(kernel_memory)
 
     if mem_swappiness is not None:
         if version_lt(version, '1.20'):

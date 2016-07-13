@@ -115,6 +115,20 @@ class HostConfigTest(base.BaseTestCase):
         with pytest.raises(InvalidVersion):
             create_endpoint_config(version='1.21', aliases=['foo', 'bar'])
 
+    def test_create_host_config_with_mem_reservation(self):
+        config = create_host_config(version='1.21', mem_reservation=67108864)
+        self.assertEqual(config.get('MemoryReservation'), 67108864)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.20',
+                                                       mem_reservation=67108864))
+
+    def test_create_host_config_with_kernel_memory(self):
+        config = create_host_config(version='1.21', kernel_memory=67108864)
+        self.assertEqual(config.get('KernelMemory'), 67108864)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.20',
+                                                       kernel_memory=67108864))
+
 
 class UlimitTest(base.BaseTestCase):
     def test_create_host_config_dict_ulimit(self):
