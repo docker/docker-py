@@ -12,10 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import errno
 import json
-import os
-import select
 import struct
 
 import requests
@@ -32,7 +29,7 @@ from .ssladapter import ssladapter
 from .tls import TLSConfig
 from .transport import UnixAdapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
-from .utils.socket import read_socket, next_packet_size, read_iter
+from .utils.socket import read_iter
 try:
     from .transport import NpipeAdapter
 except ImportError:
