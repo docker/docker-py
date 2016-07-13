@@ -28,6 +28,19 @@ def read_socket(socket, n=4096):
             raise
 
 
+def read_data(socket, n):
+    """
+    Reads exactly n bytes from socket
+    """
+    data = six.binary_type()
+    while len(data) < n:
+        next_data = read_socket(socket, n - len(data))
+        if not next_data:
+            raise SocketError("Unexpected EOF")
+        data += next_data
+    return data
+
+
 def next_packet_size(socket):
     """
     Returns the size of the next frame of data waiting to be read from socket,
@@ -42,19 +55,6 @@ def next_packet_size(socket):
 
     _, actual = struct.unpack('>BxxxL', data)
     return actual
-
-
-def read_data(socket, n):
-    """
-    Reads exactly n bytes from socket
-    """
-    data = six.binary_type()
-    while len(data) < n:
-        next_data = read_socket(socket, n - len(data))
-        if not next_data:
-            raise SocketError("Unexpected EOF")
-        data += next_data
-    return data
 
 
 def read_iter(socket):
