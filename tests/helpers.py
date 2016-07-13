@@ -54,7 +54,7 @@ def exec_driver_is_native():
         c = docker_client()
         EXEC_DRIVER = c.info()['ExecutionDriver']
         c.close()
-    return EXEC_DRIVER.startswith('native')
+    return EXEC_DRIVER.startswith('native') or EXEC_DRIVER == ''
 
 
 def docker_client(**kwargs):
@@ -105,7 +105,7 @@ def read_data(socket, packet_size):
     while len(data) < packet_size:
         next_data = read_socket(socket, packet_size - len(data))
         if not next_data:
-            assert False, "Failed trying to read in the dataz"
+            assert False, "Failed trying to read in the data"
         data += next_data
     return data
 
