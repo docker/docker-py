@@ -29,7 +29,7 @@ from .ssladapter import ssladapter
 from .tls import TLSConfig
 from .transport import UnixAdapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
-from .utils.socket import read_iter
+from .utils.socket import frames_iter
 try:
     from .transport import NpipeAdapter
 except ImportError:
@@ -310,9 +310,9 @@ class Client(
         socket = self._get_raw_response_socket(response)
 
         if stream:
-            return read_iter(socket)
+            return frames_iter(socket)
         else:
-            return six.binary_type().join(read_iter(socket))
+            return six.binary_type().join(frames_iter(socket))
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
