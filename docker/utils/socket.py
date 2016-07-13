@@ -41,7 +41,7 @@ def read_data(socket, n):
     return data
 
 
-def next_packet_size(socket):
+def next_frame_size(socket):
     """
     Returns the size of the next frame of data waiting to be read from socket,
     according to the protocol defined here:
@@ -61,7 +61,7 @@ def read_iter(socket):
     """
     Returns a generator of frames read from socket
     """
-    n = next_packet_size(socket)
+    n = next_frame_size(socket)
     while n > 0:
         yield read_socket(socket, n)
-        n = next_packet_size(socket)
+        n = next_frame_size(socket)
