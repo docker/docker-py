@@ -32,7 +32,7 @@ from .ssladapter import ssladapter
 from .tls import TLSConfig
 from .transport import UnixAdapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
-from .utils.socket import read_socket, next_packet_size
+from .utils.socket import read_socket, next_packet_size, read_iter
 try:
     from .transport import NpipeAdapter
 except ImportError:
@@ -310,20 +310,12 @@ class Client(
             yield out
 
     def _read_from_socket(self, response, stream):
-        def read_loop(socket):
-            n = next_packet_size(socket)
-            while n > 0:
-                yield read_socket(socket, n)
-                n = next_packet_size(socket)
-
         socket = self._get_raw_response_socket(response)
+
         if stream:
-            return read_loop(socket)
+            return read_iter(socket)
         else:
-            data = six.binary_type()
-            for d in read_loop(socket):
-                data += d
-            return data
+            return six.binary_type().join(read_iter(socket))
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're

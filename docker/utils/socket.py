@@ -47,3 +47,10 @@ def read_data(socket, packet_size):
             assert False, "Failed trying to read in the data"
         data += next_data
     return data
+
+
+def read_iter(socket):
+    n = next_packet_size(socket)
+    while n > 0:
+        yield read_socket(socket, n)
+        n = next_packet_size(socket)
