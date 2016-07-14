@@ -141,6 +141,19 @@ class HostConfigTest(base.BaseTestCase):
             TypeError, lambda: create_host_config(version='1.22',
                                                   oom_score_adj='100'))
 
+    def test_create_host_config_with_dns_opt(self):
+
+        tested_opts = ['use-vc', 'no-tld-query']
+        config = create_host_config(version='1.21', dns_opt=tested_opts)
+        dns_opts = config.get('DnsOptions')
+
+        self.assertTrue('use-vc' in dns_opts)
+        self.assertTrue('no-tld-query' in dns_opts)
+
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.20',
+                                                       dns_opt=tested_opts))
+
     def test_create_endpoint_config_with_aliases(self):
         config = create_endpoint_config(version='1.22', aliases=['foo', 'bar'])
         assert config == {'Aliases': ['foo', 'bar']}
