@@ -801,6 +801,8 @@ command.
 * tag (str): An optional tag to push
 * stream (bool): Stream the output as a blocking generator
 * insecure_registry (bool): Use `http://` to connect to the registry
+* auth_config (dict): Override the credentials that Client.login has set for this request
+  `auth_config` should contain the `username` and `password` keys to be valid.
 
 **Returns** (generator or str): The output of the upload
 
