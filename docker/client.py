@@ -29,6 +29,7 @@ from .ssladapter import ssladapter
 from .tls import TLSConfig
 from .transport import UnixAdapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
+from .utils.socket import frames_iter
 try:
     from .transport import NpipeAdapter
 except ImportError:
@@ -304,6 +305,14 @@ class Client(
         self._raise_for_status(response)
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
+
+    def _read_from_socket(self, response, stream):
+        socket = self._get_raw_response_socket(response)
+
+        if stream:
+            return frames_iter(socket)
+        else:
+            return six.binary_type().join(frames_iter(socket))
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
