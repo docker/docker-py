@@ -295,9 +295,12 @@ Create a network, similar to the `docker network create` command.
 **Params**:
 
 * name (str): Name of the network
-* driver (str): Name of the driver used to create the network
-
+* driver (str): Name of the network driver plugin to use.
 * options (dict): Driver options as a key-value dictionary
+* ipam (dict): Optional custom IP scheme for the network
+* check_duplicate (bool): Requests daemon to check for networks with same name
+* internal (bool): Restrict external access to the network
+
 
 **Returns** (dict): The created network reference object
 
