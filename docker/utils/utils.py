@@ -288,9 +288,9 @@ def _convert_port_binding(binding):
     return result
 
 
-def _parse_ports(ports, default=None):
+def parse_range_ports(ports):
     if ports == '' or ports is None:
-        return default
+        return 0, 0, 0
     range_ports = ports.split("-")
     start_port = int(range_ports[0])
     end_port = start_port
@@ -299,6 +299,34 @@ def _parse_ports(ports, default=None):
     count = end_port - start_port + 1
     return start_port, end_port, count
 
+def update_for_range_ports(key, host_port_bindings):
+    result = {}
+    key_items = str(key).split("/")
+    key_ports = key_items[0]
+    proto = key_items[1]
+    start_port, end_port, ports_count = parse_range_ports(key_ports)
+    if ports_count > 1:
+        for i in range(ports_count):
+            new_key = '{0}/{1}'.format(start_port+i, proto)
+            new_host_port_bindings = []
+            for host_port_binding in host_port_bindings:
+                one_ports = host_port_binding['HostPort']
+                if one_ports == '' or one_ports is None:
+                    new_host_port_binding = host_port_binding.copy()
+                else:
+                    binding_start_port, binding_end_port, binding_ports_count \
+                        = parse_range_ports(one_ports)
+                    if binding_ports_count != ports_count:
+                        raise ValueError(
+                            'binding ports range count is not consistent!')
+                    new_host_port_binding = host_port_binding.copy()
+                    new_host_port_binding['HostPort'] \
+                        = str(binding_start_port+i)
+                new_host_port_bindings.append(new_host_port_binding)
+            result[new_key] = new_host_port_bindings
+    else:
+        result[key] = host_port_bindings
+    return result
 
 def convert_port_bindings(port_bindings):
     result = {}
@@ -311,29 +339,7 @@ def convert_port_bindings(port_bindings):
                 [_convert_port_binding(binding) for binding in v]
         else:
             host_port_bindings = [_convert_port_binding(v)]
-        key_items = str(key).split("/")
-        start_port, end_port, ports_count = _parse_ports(key_items[0])
-
-        proto = key_items[1]
-        if ports_count > 1:
-            for i in range(ports_count):
-                key = '{0}/{1}'.format(start_port+i, proto)
-                new_host_port_bindings = []
-                for host_port_binding in host_port_bindings:
-                    binding_start_port, binding_end_port, binding_ports_count \
-                        = _parse_ports(
-                            host_port_binding['HostPort'],
-                            (start_port, end_port, ports_count))
-                    if binding_ports_count != ports_count:
-                        raise ValueError(
-                            'binding ports range count is not consistent!')
-                    new_host_port_binding = host_port_binding.copy()
-                    new_host_port_binding['HostPort'] \
-                        = str(binding_start_port+i)
-                    new_host_port_bindings.append(new_host_port_binding)
-                result[key] = new_host_port_bindings
-        else:
-            result[key] = host_port_bindings
+        result.update(update_for_range_ports(key, host_port_bindings))
     return result
 
 
@@ -973,7 +979,7 @@ def create_container_config(
                 if len(port_definition) == 2:
                     proto = port_definition[1]
                 port = port_definition[0]
-            start_port, end_port, ports_count = _parse_ports(str(port))
+            start_port, end_port, ports_count = parse_range_ports(str(port))
             for port in range(start_port, end_port+1):
                 exposed_ports['{0}/{1}'.format(port, proto)] = {}
         ports = exposed_ports
