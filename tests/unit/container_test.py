@@ -678,14 +678,14 @@ class CreateContainerTest(DockerClientTest):
             one_key = '{0}/udp'.format(cur_port)
             one_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '{0}'.format(cur_port)},
                                 {'HostIp': '192.168.0.101', 'HostPort': '{0}'.format(cur_port)}]
-            self.assertEqual(cmp(port_bindings[one_key], one_port_bindings), 0)
+            self.assertEqual(port_bindings[one_key], one_port_bindings)
             self.assertTrue(one_key in port_bindings)
 
         for i in range(ports_count):
             cur_port = 31230+i
             one_key = '{0}/tcp'.format(cur_port)
             one_port_bindings = [{'HostIp': '', 'HostPort': ''}]
-            self.assertEqual(cmp(port_bindings[one_key], one_port_bindings), 0)
+            self.assertEqual(port_bindings[one_key], one_port_bindings)
             self.assertTrue(one_key in port_bindings)
 
         self.assertEqual(

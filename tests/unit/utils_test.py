@@ -992,7 +992,7 @@ class RangePortsTest(base.BaseTestCase):
         host_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '5000'}]
         port_bindings = update_for_range_ports(key, host_port_bindings)
         self.assertEqual(len(port_bindings), 1)
-        self.assertEqual(cmp(port_bindings[key], host_port_bindings), 0)
+        self.assertEqual(port_bindings[key], host_port_bindings)
 
     def test_update_for_range_ports_range(self):
         key = "31230-31250/udp"
@@ -1004,7 +1004,7 @@ class RangePortsTest(base.BaseTestCase):
             cur_port = 31230+i
             one_key = '{0}/udp'.format(cur_port)
             one_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '{0}'.format(cur_port)}]
-            self.assertEqual(cmp(port_bindings[one_key], one_port_bindings), 0)
+            self.assertEqual(port_bindings[one_key], one_port_bindings)
 
     def test_update_for_range_ports_range_and_multihost(self):
         key = "31230-31250/udp"
@@ -1018,6 +1018,6 @@ class RangePortsTest(base.BaseTestCase):
             one_key = '{0}/udp'.format(cur_port)
             one_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '{0}'.format(cur_port)},
                                 {'HostIp': '192.168.0.101', 'HostPort': '{0}'.format(cur_port)}]
-            self.assertEqual(cmp(port_bindings[one_key], one_port_bindings), 0)
+            self.assertEqual(port_bindings[one_key], one_port_bindings)
 
 
