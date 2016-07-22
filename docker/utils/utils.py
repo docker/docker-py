@@ -299,6 +299,7 @@ def parse_range_ports(ports):
     count = end_port - start_port + 1
     return start_port, end_port, count
 
+
 def update_for_range_ports(key, host_port_bindings):
     result = {}
     key_items = str(key).split("/")
@@ -327,6 +328,7 @@ def update_for_range_ports(key, host_port_bindings):
     else:
         result[key] = host_port_bindings
     return result
+
 
 def convert_port_bindings(port_bindings):
     result = {}

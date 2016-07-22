@@ -972,17 +972,19 @@ class TarTest(base.Cleanup, base.BaseTestCase):
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
             )
 
+
 class RangePortsTest(base.BaseTestCase):
     def test_parse_range_ports_single(self):
-        binding_start_port, binding_end_port, binding_ports_count = parse_range_ports("5000")
+        binding_start_port, binding_end_port, binding_ports_count \
+            = parse_range_ports("5000")
         self.assertEqual(binding_start_port, 5000)
         self.assertEqual(binding_end_port, 5000)
         self.assertEqual(binding_ports_count, 1)
 
-
     def test_parse_range_ports_range(self):
         ports_count = 31250-31230+1
-        binding_start_port, binding_end_port, binding_ports_count = parse_range_ports("31230-31250")
+        binding_start_port, binding_end_port, binding_ports_count = \
+            parse_range_ports("31230-31250")
         self.assertEqual(binding_start_port, 31230)
         self.assertEqual(binding_end_port, 31250)
         self.assertEqual(binding_ports_count, ports_count)
@@ -997,27 +999,44 @@ class RangePortsTest(base.BaseTestCase):
     def test_update_for_range_ports_range(self):
         key = "31230-31250/udp"
         ports_count = 31250-31230+1
-        host_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '31230-31250'}]
+        host_port_bindings = [
+            {'HostIp': '192.168.0.100', 'HostPort': '31230-31250'}]
         port_bindings = update_for_range_ports(key, host_port_bindings)
         self.assertEqual(len(port_bindings), ports_count)
         for i in range(ports_count):
             cur_port = 31230+i
             one_key = '{0}/udp'.format(cur_port)
-            one_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '{0}'.format(cur_port)}]
+            one_port_bindings = [
+                {
+                    'HostIp': '192.168.0.100',
+                    'HostPort': '{0}'.format(cur_port)
+                }]
             self.assertEqual(port_bindings[one_key], one_port_bindings)
 
     def test_update_for_range_ports_range_and_multihost(self):
         key = "31230-31250/udp"
         ports_count = 31250-31230+1
-        host_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '31230-31250'},
-                                {'HostIp': '192.168.0.101', 'HostPort': '31230-31250'},]
+        host_port_bindings = [
+            {
+                'HostIp': '192.168.0.100',
+                'HostPort': '31230-31250'
+            },
+            {
+                'HostIp': '192.168.0.101',
+                'HostPort': '31230-31250'
+            }]
         port_bindings = update_for_range_ports(key, host_port_bindings)
         self.assertEqual(len(port_bindings), ports_count)
         for i in range(ports_count):
             cur_port = 31230+i
             one_key = '{0}/udp'.format(cur_port)
-            one_port_bindings = [{'HostIp': '192.168.0.100', 'HostPort': '{0}'.format(cur_port)},
-                                {'HostIp': '192.168.0.101', 'HostPort': '{0}'.format(cur_port)}]
+            one_port_bindings = [
+                {
+                    'HostIp': '192.168.0.100',
+                    'HostPort': '{0}'.format(cur_port)
+                },
+                {
+                    'HostIp': '192.168.0.101',
+                    'HostPort': '{0}'.format(cur_port)
+                }]
             self.assertEqual(port_bindings[one_key], one_port_bindings)
-
-
