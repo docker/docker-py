@@ -419,11 +419,11 @@ class ParseHostTest(base.BaseTestCase):
 
     def test_parse_host_empty_value(self):
         unix_socket = 'http+unix://var/run/docker.sock'
-        tcp_port = 'http://127.0.0.1:2375'
+        npipe = 'npipe:////./pipe/docker_engine'
 
         for val in [None, '']:
             assert parse_host(val, is_win32=False) == unix_socket
-            assert parse_host(val, is_win32=True) == tcp_port
+            assert parse_host(val, is_win32=True) == npipe
 
     def test_parse_host_tls(self):
         host_value = 'myhost.docker.net:3348'
