@@ -36,6 +36,8 @@ from .types import Ulimit, LogConfig
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
+DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
+
 BYTE_UNITS = {
     'b': 1,
     'k': 1024,
@@ -390,7 +392,7 @@ def parse_host(addr, is_win32=False, tls=False):
     path = ''
 
     if not addr and is_win32:
-        addr = '{0}:{1}'.format(DEFAULT_HTTP_HOST, 2375)
+        addr = DEFAULT_NPIPE
 
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
