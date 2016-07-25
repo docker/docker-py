@@ -249,6 +249,27 @@ class TestNetworks(helpers.BaseTestCase):
             '2001:389::f00d'
         )
 
+    @requires_api_version('1.24')
+    def test_create_with_linklocal_ips(self):
+        container = self.client.create_container(
+            'busybox', 'top',
+            networking_config=self.client.create_networking_config(
+                {
+                    'bridge': self.client.create_endpoint_config(
+                        link_local_ips=['169.254.8.8']
+                    )
+                }
+            ),
+            host_config=self.client.create_host_config(network_mode='bridge')
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        container_data = self.client.inspect_container(container)
+        net_cfg = container_data['NetworkSettings']['Networks']['bridge']
+        assert 'IPAMConfig' in net_cfg
+        assert 'LinkLocalIPs' in net_cfg['IPAMConfig']
+        assert net_cfg['IPAMConfig']['LinkLocalIPs'] == ['169.254.8.8']
+
     @requires_api_version('1.22')
     def test_create_with_links(self):
         net_name, net_id = self.create_network()
