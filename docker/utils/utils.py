@@ -894,15 +894,15 @@ def create_endpoint_config(version, aliases=None, links=None,
     if ipv6_address:
         ipam_config['IPv6Address'] = ipv6_address
 
-    if ipam_config:
-        endpoint_config['IPAMConfig'] = ipam_config
-
     if link_local_ips is not None:
         if version_lt(version, '1.24'):
             raise errors.InvalidVersion(
                 'link_local_ips is not supported for API version < 1.24'
             )
-        endpoint_config['LinkLocalIPs'] = link_local_ips
+        ipam_config['LinkLocalIPs'] = link_local_ips
+
+    if ipam_config:
+        endpoint_config['IPAMConfig'] = ipam_config
 
     return endpoint_config
 
