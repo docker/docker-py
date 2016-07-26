@@ -15,6 +15,8 @@ Change Log
 * Added support for the `internal` param in `Client.create_network`.
 * Added support for `ipv4_address` and `ipv6_address` in utils function
   `create_endpoint_config`.
+* Added support for custom user agent setting in the `Client` constructor.
+  By default, docker-py now also declares itself in the `User-Agent` header.
 
 ### Bugfixes
 
