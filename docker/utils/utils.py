@@ -22,8 +22,8 @@ import tarfile
 import tempfile
 import warnings
 from distutils.version import StrictVersion
-from fnmatch import fnmatch
 from datetime import datetime
+from fnmatch import fnmatch
 
 import requests
 import six
@@ -33,6 +33,10 @@ from .. import errors
 from .. import tls
 from .types import Ulimit, LogConfig
 
+if six.PY2:
+    from urllib import splitnport
+else:
+    from urllib.parse import splitnport
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
@@ -387,7 +391,6 @@ def parse_repository_tag(repo_name):
 # Protocol translation: tcp -> http, unix -> http+unix
 def parse_host(addr, is_win32=False, tls=False):
     proto = "http+unix"
-    host = DEFAULT_HTTP_HOST
     port = None
     path = ''
 
@@ -427,31 +430,26 @@ def parse_host(addr, is_win32=False, tls=False):
             )
         proto = "https" if tls else "http"
 
-    if proto != "http+unix" and ":" in addr:
-        host_parts = addr.split(':')
-        if len(host_parts) != 2:
-            raise errors.DockerException(
-                "Invalid bind address format: {0}".format(addr)
-            )
-        if host_parts[0]:
-            host = host_parts[0]
+    if proto in ("http", "https"):
+        address_parts = addr.split('/', 1)
+        host = address_parts[0]
+        if len(address_parts) == 2:
+            path = '/' + address_parts[1]
+        host, port = splitnport(host)
 
-        port = host_parts[1]
-        if '/' in port:
-            port, path = port.split('/', 1)
-            path = '/{0}'.format(path)
-        try:
-            port = int(port)
-        except Exception:
+        if port is None:
             raise errors.DockerException(
                 "Invalid port: {0}".format(addr)
             )
 
-    elif proto in ("http", "https") and ':' not in addr:
-        raise errors.DockerException(
-            "Bind address needs a port: {0}".format(addr))
+        if not host:
+            host = DEFAULT_HTTP_HOST
     else:
         host = addr
+
+    if proto in ("http", "https") and port == -1:
+        raise errors.DockerException(
+            "Bind address needs a port: {0}".format(addr))
 
     if proto == "http+unix" or proto == 'npipe':
         return "{0}://{1}".format(proto, host)
