@@ -404,10 +404,18 @@ class ParseHostTest(base.BaseTestCase):
             'https://kokia.jp:2375': 'https://kokia.jp:2375',
             'unix:///var/run/docker.sock': 'http+unix:///var/run/docker.sock',
             'unix://': 'http+unix://var/run/docker.sock',
+            '12.234.45.127:2375/docker/engine': (
+                'http://12.234.45.127:2375/docker/engine'
+            ),
             'somehost.net:80/service/swarm': (
                 'http://somehost.net:80/service/swarm'
             ),
             'npipe:////./pipe/docker_engine': 'npipe:////./pipe/docker_engine',
+            '[fd12::82d1]:2375': 'http://[fd12::82d1]:2375',
+            'https://[fd12:5672::12aa]:1090': 'https://[fd12:5672::12aa]:1090',
+            '[fd12::82d1]:2375/docker/engine': (
+                'http://[fd12::82d1]:2375/docker/engine'
+            ),
         }
 
         for host in invalid_hosts:
@@ -415,7 +423,7 @@ class ParseHostTest(base.BaseTestCase):
                 parse_host(host, None)
 
         for host, expected in valid_hosts.items():
-            self.assertEqual(parse_host(host, None), expected, msg=host)
+            assert parse_host(host, None) == expected
 
     def test_parse_host_empty_value(self):
         unix_socket = 'http+unix://var/run/docker.sock'
