@@ -160,18 +160,24 @@ def find_config_file(config_path=None):
         os.path.basename(DOCKER_CONFIG_FILENAME)
     ) if os.environ.get('DOCKER_CONFIG') else None
 
-    paths = [
+    paths = filter(None, [
         config_path,  # 1
         environment_path,  # 2
         os.path.join(os.path.expanduser('~'), DOCKER_CONFIG_FILENAME),  # 3
         os.path.join(
             os.path.expanduser('~'), LEGACY_DOCKER_CONFIG_FILENAME
         )  # 4
-    ]
+    ])
+
+    log.debug("Trying paths: {0}".format(repr(paths)))
 
     for path in paths:
-        if path and os.path.exists(path):
+        if os.path.exists(path):
+            log.debug("Found file at path: {0}".format(path))
             return path
+
+    log.debug("No config file found")
+
     return None
 
 
@@ -186,7 +192,6 @@ def load_config(config_path=None):
     config_file = find_config_file(config_path)
 
     if not config_file:
-        log.debug("File doesn't exist")
         return {}
 
     try:
