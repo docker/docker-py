@@ -8,5 +8,8 @@ from .utils import (
     create_ipam_config, create_ipam_pool, parse_devices, normalize_links,
 )
 
-from .types import Ulimit, LogConfig
+from .types import LogConfig, Ulimit
+from .types import (
+    SwarmAcceptancePolicy, SwarmExternalCA, SwarmSpec,
+)
 from .decorators import check_resource, minimum_version, update_headers
