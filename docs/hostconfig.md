@@ -123,6 +123,7 @@ for example:
   for more information.
 * tmpfs: Temporary filesystems to mouunt. See [Using tmpfs](tmpfs.md) for more
   information.
+* sysctls (dict): Kernel parameters to set in the container.
 
 **Returns** (dict) HostConfig dictionary
 

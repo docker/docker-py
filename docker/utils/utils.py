@@ -619,7 +619,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        blkio_weight_device=None, device_read_bps=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
-                       shm_size=None, version=None, tmpfs=None,
+                       shm_size=None, sysctls=None, version=None, tmpfs=None,
                        oom_score_adj=None):
 
     host_config = {}
@@ -724,6 +724,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             raise host_config_type_error('security_opt', security_opt, 'list')
 
         host_config['SecurityOpt'] = security_opt
+
+    if sysctls:
+        if not isinstance(sysctls, dict):
+            raise host_config_type_error('sysctls', sysctls, 'dict')
+        host_config['Sysctls'] = {}
+        for k, v in six.iteritems(sysctls):
+            host_config['Sysctls'][k] = six.text_type(v)
 
     if volumes_from is not None:
         if isinstance(volumes_from, six.string_types):
