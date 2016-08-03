@@ -292,7 +292,7 @@ class CreateContainerTest(helpers.BaseTestCase):
             )
             self.client.start(container)
 
-        assert expected_msg in str(excinfo.value)
+        assert six.b(expected_msg) in excinfo.value.explanation
 
     def test_valid_no_log_driver_specified(self):
         log_config = docker.utils.LogConfig(
