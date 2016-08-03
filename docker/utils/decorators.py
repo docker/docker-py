@@ -40,7 +40,7 @@ def minimum_version(version):
 def update_headers(f):
     def inner(self, *args, **kwargs):
         if 'HttpHeaders' in self._auth_configs:
-            if 'headers' not in kwargs:
+            if not kwargs.get('headers'):
                 kwargs['headers'] = self._auth_configs['HttpHeaders']
             else:
                 kwargs['headers'].update(self._auth_configs['HttpHeaders'])
