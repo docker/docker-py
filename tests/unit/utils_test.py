@@ -20,9 +20,11 @@ from docker.utils import (
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
     split_command, create_ipam_config, create_ipam_pool, parse_devices,
+    update_headers,
 )
-from docker.utils.utils import create_endpoint_config
+
 from docker.utils.ports import build_port_bindings, split_port
+from docker.utils.utils import create_endpoint_config
 
 from .. import base
 from ..helpers import make_tree
@@ -32,6 +34,37 @@ TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
     'testdata/certs',
 )
+
+
+class DecoratorsTest(base.BaseTestCase):
+    def test_update_headers(self):
+        sample_headers = {
+            'X-Docker-Locale': 'en-US',
+        }
+
+        def f(self, headers=None):
+            return headers
+
+        client = Client()
+        client._auth_configs = {}
+
+        g = update_headers(f)
+        assert g(client, headers=None) is None
+        assert g(client, headers={}) == {}
+        assert g(client, headers={'Content-type': 'application/json'}) == {
+            'Content-type': 'application/json',
+        }
+
+        client._auth_configs = {
+            'HttpHeaders': sample_headers
+        }
+
+        assert g(client, headers=None) == sample_headers
+        assert g(client, headers={}) == sample_headers
+        assert g(client, headers={'Content-type': 'application/json'}) == {
+            'Content-type': 'application/json',
+            'X-Docker-Locale': 'en-US',
+        }
 
 
 class HostConfigTest(base.BaseTestCase):
