@@ -10,6 +10,7 @@ import warnings
 from distutils.version import StrictVersion
 from datetime import datetime
 from fnmatch import fnmatch
+from pytimeparse.timeparse import timeparse
 
 import requests
 import six
@@ -989,6 +990,8 @@ def format_environment(environment):
         return u'{key}={value}'.format(key=key, value=value)
     return [format_env(*var) for var in six.iteritems(environment)]
 
+def duration_from_string(duration_string):
+    return timeparse(duration_string) * 1000000000
 
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
@@ -997,6 +1000,7 @@ def create_container_config(
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
     labels=None, volume_driver=None, stop_signal=None, networking_config=None,
+    healthcheck=None,
 ):
     if isinstance(command, six.string_types):
         command = split_command(command)
@@ -1023,6 +1027,11 @@ def create_container_config(
     if stop_signal is not None and compare_version('1.21', version) < 0:
         raise errors.InvalidVersion(
             'stop_signal was only introduced in API version 1.21'
+        )
+
+    if healthcheck is not None and compare_version('1.24', version) < 0:
+        raise errors.InvalidVersion(
+            'Health options were only introduced in API version 1.24'
         )
 
     if compare_version('1.19', version) < 0:
@@ -1073,6 +1082,17 @@ def create_container_config(
         for vol in volumes:
             volumes_dict[vol] = {}
         volumes = volumes_dict
+
+    if isinstance(healthcheck, dict):
+        healthcheck = {
+            'Test': [
+                'CMD-SHELL',
+                healthcheck.get('command')
+            ],
+            'Interval': duration_from_string(healthcheck.get('interval')) if healthcheck.has_key('interval') else None,
+            'Timeout': duration_from_string(healthcheck.get('timeout')) if healthcheck.has_key('timeout') else None,
+            'Retries': healthcheck.get('retries')
+        }
 
     if volumes_from:
         if not isinstance(volumes_from, six.string_types):
@@ -1132,5 +1152,6 @@ def create_container_config(
         'MacAddress': mac_address,
         'Labels': labels,
         'VolumeDriver': volume_driver,
-        'StopSignal': stop_signal
+        'StopSignal': stop_signal,
+        'Healthcheck': healthcheck
     }
