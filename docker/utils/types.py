@@ -97,13 +97,11 @@ class Ulimit(DictType):
 
 
 class SwarmSpec(DictType):
-    def __init__(self, policies=None, task_history_retention_limit=None,
+    def __init__(self, task_history_retention_limit=None,
                  snapshot_interval=None, keep_old_snapshots=None,
                  log_entries_for_slow_followers=None, heartbeat_tick=None,
                  election_tick=None, dispatcher_heartbeat_period=None,
                  node_cert_expiry=None, external_ca=None):
-        if policies is not None:
-            self['AcceptancePolicy'] = {'Policies': policies}
         if task_history_retention_limit is not None:
             self['Orchestration'] = {
                 'TaskHistoryRetentionLimit': task_history_retention_limit
@@ -128,14 +126,6 @@ class SwarmSpec(DictType):
                 'NodeCertExpiry': node_cert_expiry,
                 'ExternalCA': external_ca
             }
-
-
-class SwarmAcceptancePolicy(DictType):
-    def __init__(self, role, auto_accept=False, secret=None):
-        self['Role'] = role.upper()
-        self['Autoaccept'] = auto_accept
-        if secret is not None:
-            self['Secret'] = secret
 
 
 class SwarmExternalCA(DictType):

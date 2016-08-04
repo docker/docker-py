@@ -10,6 +10,6 @@ from .utils import (
 
 from .types import LogConfig, Ulimit
 from .types import (
-    SwarmAcceptancePolicy, SwarmExternalCA, SwarmSpec,
+    SwarmExternalCA, SwarmSpec,
 )
 from .decorators import check_resource, minimum_version, update_headers

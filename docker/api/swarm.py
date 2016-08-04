@@ -9,7 +9,7 @@ class SwarmApiMixin(object):
         return utils.SwarmSpec(*args, **kwargs)
 
     @utils.minimum_version('1.24')
-    def init_swarm(self, advertise_addr, listen_addr='0.0.0.0:2377',
+    def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
                    force_new_cluster=False, swarm_spec=None):
         url = self._url('/swarm/init')
         if swarm_spec is not None and not isinstance(swarm_spec, dict):
@@ -30,14 +30,13 @@ class SwarmApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.24')
-    def join_swarm(self, remote_addresses, listen_address=None,
-                   secret=None, ca_cert_hash=None, manager=False):
+    def join_swarm(self, remote_addrs, join_token, listen_addr=None,
+                   advertise_addr=None):
         data = {
-            "RemoteAddrs": remote_addresses,
-            "ListenAddr": listen_address,
-            "Secret": secret,
-            "CACertHash": ca_cert_hash,
-            "Manager": manager
+            "RemoteAddrs": remote_addrs,
+            "ListenAddr": listen_addr,
+            "JoinToken": join_token,
+            "AdvertiseAddr": advertise_addr,
         }
         url = self._url('/swarm/join')
         response = self._post_json(url, data=data)
@@ -48,5 +47,17 @@ class SwarmApiMixin(object):
     def leave_swarm(self, force=False):
         url = self._url('/swarm/leave')
         response = self._post(url, params={'force': force})
+        self._raise_for_status(response)
+        return True
+
+    @utils.minimum_version('1.24')
+    def update_swarm(self, version, swarm_spec=None, rotate_worker_token=False,
+                     rotate_manager_token=False):
+        url = self._url('/swarm/update')
+        response = self._post_json(url, data=swarm_spec, params={
+            'rotateWorkerToken': rotate_worker_token,
+            'rotateManagerToken': rotate_manager_token,
+            'version': version
+        })
         self._raise_for_status(response)
         return True
