@@ -101,7 +101,7 @@ class SwarmSpec(DictType):
                  snapshot_interval=None, keep_old_snapshots=None,
                  log_entries_for_slow_followers=None, heartbeat_tick=None,
                  election_tick=None, dispatcher_heartbeat_period=None,
-                 node_cert_expiry=None, external_ca=None):
+                 node_cert_expiry=None, external_ca=None, name=None):
         if task_history_retention_limit is not None:
             self['Orchestration'] = {
                 'TaskHistoryRetentionLimit': task_history_retention_limit
@@ -126,6 +126,9 @@ class SwarmSpec(DictType):
                 'NodeCertExpiry': node_cert_expiry,
                 'ExternalCA': external_ca
             }
+
+        if name is not None:
+            self['Name'] = name
 
 
 class SwarmExternalCA(DictType):

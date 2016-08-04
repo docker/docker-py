@@ -106,6 +106,7 @@ argument in `Client.init_swarm`.
 * node_cert_expiry (int): Automatic expiry for nodes certificates.
 * external_ca (dict): Configuration for forwarding signing requests to an
   external certificate authority. Use `docker.utils.SwarmExternalCA`.
+* name (string): Swarm's name
 
 **Returns:** `docker.utils.SwarmSpec` instance.
 
@@ -194,3 +195,6 @@ Update the Swarm's configuration
   Default: `None`.
 * rotate_worker_token (bool): Rotate the worker join token. Default: `False`.
 * rotate_manager_token (bool): Rotate the manager join token. Default: `False`.
+
+**Returns:** `True` if the request went through. Raises an `APIError` if it
+  fails.
