@@ -108,8 +108,8 @@ class SwarmSpec(DictType):
             self['Orchestration'] = {
                 'TaskHistoryRetentionLimit': task_history_retention_limit
             }
-        if any(snapshot_interval, keep_old_snapshots,
-               log_entries_for_slow_followers, heartbeat_tick, election_tick):
+        if any([snapshot_interval, keep_old_snapshots,
+               log_entries_for_slow_followers, heartbeat_tick, election_tick]):
             self['Raft'] = {
                 'SnapshotInterval': snapshot_interval,
                 'KeepOldSnapshots': keep_old_snapshots,

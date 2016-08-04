@@ -29,7 +29,7 @@ class SwarmTest(helpers.BaseTestCase):
 
     @requires_api_version('1.24')
     def test_init_swarm_force_new_cluster(self):
-        pytest.skip('Test stalls the engine on 1.12')
+        pytest.skip('Test stalls the engine on 1.12.0')
 
         assert self.client.init_swarm('eth0')
         version_1 = self.client.inspect_swarm()['Version']['Index']
@@ -42,6 +42,18 @@ class SwarmTest(helpers.BaseTestCase):
         assert self.client.init_swarm('eth0')
         with pytest.raises(docker.errors.APIError):
             self.client.init_swarm('eth0')
+
+    @requires_api_version('1.24')
+    def test_init_swarm_custom_raft_spec(self):
+        spec = self.client.create_swarm_spec(
+            snapshot_interval=5000, log_entries_for_slow_followers=1200
+        )
+        assert self.client.init_swarm(
+            advertise_addr='eth0', swarm_spec=spec
+        )
+        swarm_info = self.client.inspect_swarm()
+        assert swarm_info['Spec']['Raft']['SnapshotInterval'] == 5000
+        assert swarm_info['Spec']['Raft']['LogEntriesForSlowFollowers'] == 1200
 
     @requires_api_version('1.24')
     def test_leave_swarm(self):
