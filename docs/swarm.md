@@ -23,17 +23,17 @@ client.init_swarm(
 
 ## Joining an existing Swarm
 
-If you're looking to have the engine your client is connected to joining an
-existing Swarm, this ca be accomplished by using the `Client.join_swarm`
+If you're looking to have the engine your client is connected to join an
+existing Swarm, this can be accomplished by using the `Client.join_swarm`
 method. You will need to provide a list of at least one remote address
-corresponding to other machines already part of the swarm. In most cases,
-a `listen_address` for your node, as well as the `secret` token are required
-to join too.
+corresponding to other machines already part of the swarm as well as the
+`join_token`. In most cases, a `listen_addr` and `advertise_addr` for your
+node are also required.
 
 ```python
 client.join_swarm(
-  remote_addresses=['192.168.14.221:2377'], secret='SWMTKN-1-redacted',
-  listen_address='0.0.0.0:5000', manager=True
+  remote_addrs=['192.168.14.221:2377'], join_token='SWMTKN-1-redacted',
+  listen_addr='0.0.0.0:5000', advertise_addr='eth0:5000'
 )
 ```
 
@@ -61,14 +61,136 @@ client.inspect_swarm()
 
 ### Client.init_swarm
 
+Initialize a new Swarm using the current connected engine as the first node.
+
+**Params:**
+
+* advertise_addr (string): Externally reachable address advertised to other
+  nodes. This can either be an address/port combination in the form
+  `192.168.1.1:4567`, or an interface followed by a port number, like
+  `eth0:4567`. If the port number is omitted, the port number from the listen
+  address is used. If `advertise_addr` is not specified, it will be
+  automatically detected when possible. Default: None
+* listen_addr (string): Listen address used for inter-manager communication,
+  as well as determining the networking interface used for the VXLAN Tunnel
+  Endpoint (VTEP). This can either be an address/port combination in the form
+  `192.168.1.1:4567`, or an interface followed by a port number, like
+  `eth0:4567`. If the port number is omitted, the default swarm listening port
+  is used. Default: '0.0.0.0:2377'
+* force_new_cluster (bool): Force creating a new Swarm, even if already part of
+  one. Default: False
+* swarm_spec (dict): Configuration settings of the new Swarm. Use
+  `Client.create_swarm_spec` to generate a valid configuration. Default: None
+
+**Returns:** `True` if the request went through. Raises an `APIError` if it
+  fails.
+
 #### Client.create_swarm_spec
 
-#### docker.utils.SwarmAcceptancePolicy
+Create a `docker.utils.SwarmSpec` instance that can be used as the `swarm_spec`
+argument in `Client.init_swarm`.
+
+**Params:**
+
+* task_history_retention_limit (int): Maximum number of tasks history stored.
+* snapshot_interval (int): Number of logs entries between snapshot.
+* keep_old_snapshots (int): Number of snapshots to keep beyond the current
+  snapshot.
+* log_entries_for_slow_followers (int): Number of log entries to keep around
+  to sync up slow followers after a snapshot is created.
+* heartbeat_tick (int): Amount of ticks (in seconds) between each heartbeat.
+* election_tick (int): Amount of ticks (in seconds) needed without a leader to
+  trigger a new election.
+* dispatcher_heartbeat_period (int):  The delay for an agent to send a
+  heartbeat to the dispatcher.
+* node_cert_expiry (int): Automatic expiry for nodes certificates.
+* external_ca (dict): Configuration for forwarding signing requests to an
+  external certificate authority. Use `docker.utils.SwarmExternalCA`.
+
+**Returns:** `docker.utils.SwarmSpec` instance.
 
 #### docker.utils.SwarmExternalCA
 
+Create a configuration dictionary for the `external_ca` argument in a
+`SwarmSpec`.
+
+**Params:**
+
+* protocol (string): Protocol for communication with the external CA (currently
+  only “cfssl” is supported).
+* url (string): URL where certificate signing requests should be sent.
+* options (dict): An object with key/value pairs that are interpreted as
+  protocol-specific options for the external CA driver.
+
 ### Client.inspect_swarm
+
+Retrieve information about the current Swarm.
+
+**Returns:** A dictionary containing information about the Swarm. See sample
+  below.
+
+```python
+{u'CreatedAt': u'2016-08-04T21:26:18.779800579Z',
+ u'ID': u'8hk6e9wh4iq214qtbgvbp84a9',
+ u'JoinTokens': {u'Manager': u'SWMTKN-1-redacted-1',
+  u'Worker': u'SWMTKN-1-redacted-2'},
+ u'Spec': {u'CAConfig': {u'NodeCertExpiry': 7776000000000000},
+  u'Dispatcher': {u'HeartbeatPeriod': 5000000000},
+  u'Name': u'default',
+  u'Orchestration': {u'TaskHistoryRetentionLimit': 10},
+  u'Raft': {u'ElectionTick': 3,
+   u'HeartbeatTick': 1,
+   u'LogEntriesForSlowFollowers': 500,
+   u'SnapshotInterval': 10000},
+  u'TaskDefaults': {}},
+ u'UpdatedAt': u'2016-08-04T21:26:19.391623265Z',
+ u'Version': {u'Index': 11}}
+```
 
 ### Client.join_swarm
 
-### CLient.leave_swarm
+Join an existing Swarm.
+
+**Params:**
+
+* remote_addrs (list): Addresses of one or more manager nodes already
+  participating in the Swarm to join.
+* join_token (string): Secret token for joining this Swarm.
+* listen_addr (string): Listen address used for inter-manager communication
+  if the node gets promoted to manager, as well as determining the networking
+  interface used for the VXLAN Tunnel Endpoint (VTEP). Default: `None`
+* advertise_addr (string): Externally reachable address advertised to other
+  nodes. This can either be an address/port combination in the form
+  `192.168.1.1:4567`, or an interface followed by a port number, like
+  `eth0:4567`. If the port number is omitted, the port number from the listen
+  address is used. If AdvertiseAddr is not specified, it will be automatically
+  detected when possible. Default: `None`
+
+**Returns:** `True` if the request went through. Raises an `APIError` if it
+  fails.
+
+### Client.leave_swarm
+
+Leave a Swarm.
+
+**Params:**
+
+* force (bool): Leave the Swarm even if this node is a manager.
+  Default: `False`
+
+**Returns:** `True` if the request went through. Raises an `APIError` if it
+  fails.
+
+### Client.update_swarm
+
+Update the Swarm's configuration
+
+**Params:**
+
+* version (int): The version number of the swarm object being updated. This
+  is required to avoid conflicting writes.
+* swarm_spec (dict): Configuration settings to update. Use
+  `Client.create_swarm_spec` to generate a valid configuration.
+  Default: `None`.
+* rotate_worker_token (bool): Rotate the worker join token. Default: `False`.
+* rotate_manager_token (bool): Rotate the manager join token. Default: `False`.
