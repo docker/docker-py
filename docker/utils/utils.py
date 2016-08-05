@@ -24,7 +24,6 @@ import warnings
 from distutils.version import StrictVersion
 from datetime import datetime
 from fnmatch import fnmatch
-from pytimeparse.timeparse import timeparse
 
 import requests
 import six
@@ -66,6 +65,22 @@ def create_ipam_config(driver='default', pool_configs=None):
         'Driver': driver,
         'Config': pool_configs or []
     }
+
+
+def create_healthcheck(test=None, interval=None, timeout=None, retries=None):
+    return {
+        'Test': test,
+        'Interval': interval,
+        'Timeout': timeout,
+        'Retries': retries,
+    }
+
+
+def create_healthcheck_test_from_command(command=None):
+    return [
+        'CMD-SHELL',
+        command
+    ]
 
 
 def mkbuildcontext(dockerfile):
@@ -953,8 +968,6 @@ def format_environment(environment):
         return '{key}={value}'.format(key=key, value=value)
     return [format_env(*var) for var in six.iteritems(environment)]
 
-def duration_from_string(duration_string):
-    return timeparse(duration_string) * 1000000000
 
 def create_container_config(
     version, image, command, hostname=None, user=None, detach=False,
@@ -1036,17 +1049,6 @@ def create_container_config(
         for vol in volumes:
             volumes_dict[vol] = {}
         volumes = volumes_dict
-
-    if isinstance(healthcheck, dict):
-        healthcheck = {
-            'Test': [
-                'CMD-SHELL',
-                healthcheck.get('command')
-            ],
-            'Interval': duration_from_string(healthcheck.get('interval')) if healthcheck.has_key('interval') else None,
-            'Timeout': duration_from_string(healthcheck.get('timeout')) if healthcheck.has_key('timeout') else None,
-            'Retries': healthcheck.get('retries')
-        }
 
     if volumes_from:
         if not isinstance(volumes_from, six.string_types):
