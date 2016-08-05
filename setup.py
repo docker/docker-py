@@ -9,7 +9,7 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'requests >= 2.5.2',
+    'requests[socks] >= 2.10.0',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
 ]
