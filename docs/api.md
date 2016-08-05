@@ -606,6 +606,11 @@ Display system-wide information. Identical to the `docker info` command.
  'SwapLimit': 1}
 ```
 
+## init_swarm
+
+Initialize a new Swarm using the current connected engine as the first node.
+See the [Swarm documentation](swarm.md#clientinit_swarm).
+
 ## insert
 *DEPRECATED*
 
@@ -641,6 +646,11 @@ Retrieve network info by id.
 
 **Returns** (dict): Network information dictionary
 
+## inspect_swarm
+
+Retrieve information about the current Swarm.
+See the [Swarm documentation](swarm.md#clientinspect_swarm).
+
 ## inspect_volume
 
 Retrieve volume info by name.
@@ -656,6 +666,11 @@ Retrieve volume info by name.
 {u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
 ```
 
+## join_swarm
+
+Join an existing Swarm.
+See the [Swarm documentation](swarm.md#clientjoin_swarm).
+
 ## kill
 
 Kill a container or send a signal to a container.
@@ -664,6 +679,11 @@ Kill a container or send a signal to a container.
 
 * container (str): The container to kill
 * signal (str or int): The signal to send. Defaults to `SIGKILL`
+
+## leave_swarm
+
+Leave the current Swarm.
+See the [Swarm documentation](swarm.md#clientleave_swarm).
 
 ## load_image
 
@@ -1053,6 +1073,11 @@ Update resource configs of one or more containers.
 * kernel_memory (int or str): Kernel memory limit
 
 **Returns** (dict): Dictionary containing a `Warnings` key.
+
+## update_swarm
+
+Update the current Swarm.
+See the [Swarm documentation](swarm.md#clientupdate_swarm).
 
 ## version
 
