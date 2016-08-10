@@ -159,9 +159,15 @@ class DockerApiTest(DockerClientTest):
             '{0}{1}'.format(url_prefix, 'hello/somename/world/someothername')
         )
 
-        url = self.client._url('/hello/{0}/world', '/some?name')
+        url = self.client._url('/hello/{0}/world', 'some?name')
         self.assertEqual(
-            url, '{0}{1}'.format(url_prefix, 'hello/%2Fsome%3Fname/world')
+            url, '{0}{1}'.format(url_prefix, 'hello/some%3Fname/world')
+        )
+
+        url = self.client._url("/images/{0}/push", "localhost:5000/image")
+        self.assertEqual(
+            url,
+            '{0}{1}'.format(url_prefix, 'images/localhost:5000/image/push')
         )
 
     def test_url_invalid_resource(self):

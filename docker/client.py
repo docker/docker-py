@@ -14,6 +14,7 @@
 
 import json
 import struct
+from functools import partial
 
 import requests
 import requests.exceptions
@@ -156,7 +157,8 @@ class Client(
                     'instead'.format(arg, type(arg))
                 )
 
-        args = map(six.moves.urllib.parse.quote_plus, args)
+        quote_f = partial(six.moves.urllib.parse.quote_plus, safe="/:")
+        args = map(quote_f, args)
 
         if kwargs.get('versioned_api', True):
             return '{0}/v{1}{2}'.format(
