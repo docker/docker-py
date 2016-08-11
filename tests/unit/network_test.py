@@ -176,7 +176,7 @@ class NetworkTest(DockerClientTest):
 
         with mock.patch('docker.Client.post', post):
             self.client.disconnect_container_from_network(
-                {'Id': container_id}, network_id)
+                {'Id': container_id}, network_id, force=False)
 
         self.assertEqual(
             post.call_args[0][0],
@@ -184,4 +184,4 @@ class NetworkTest(DockerClientTest):
 
         self.assertEqual(
             json.loads(post.call_args[1]['data']),
-            {'container': container_id})
+            {'Container': container_id, 'Force': False})
