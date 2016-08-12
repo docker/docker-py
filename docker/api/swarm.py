@@ -29,6 +29,12 @@ class SwarmApiMixin(object):
         url = self._url('/swarm')
         return self._result(self._get(url), True)
 
+    @utils.check_resource
+    @utils.minimum_version('1.24')
+    def inspect_node(self, node_id):
+        url = self._url('/nodes/{0}', node_id)
+        return self._result(self._get(url), True)
+
     @utils.minimum_version('1.24')
     def join_swarm(self, remote_addrs, join_token, listen_addr=None,
                    advertise_addr=None):
@@ -49,6 +55,15 @@ class SwarmApiMixin(object):
         response = self._post(url, params={'force': force})
         self._raise_for_status(response)
         return True
+
+    @utils.minimum_version('1.24')
+    def nodes(self, filters=None):
+        url = self._url('/nodes')
+        params = {}
+        if filters:
+            params['filters'] = utils.convert_filters(filters)
+
+        return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.24')
     def update_swarm(self, version, swarm_spec=None, rotate_worker_token=False,

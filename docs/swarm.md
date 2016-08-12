@@ -47,7 +47,6 @@ you will need to specify `force=True` to be able to leave.
 client.leave_swarm(force=False)
 ```
 
-
 ## Retrieving Swarm status
 
 You can retrieve information about your current Swarm status by calling
@@ -55,6 +54,15 @@ You can retrieve information about your current Swarm status by calling
 
 ```python
 client.inspect_swarm()
+```
+
+## Listing Swarm nodes
+
+List all nodes that are part of the current Swarm using `Client.nodes`.
+The `filters` argument allows to filter the results.
+
+```python
+client.nodes(filters={'role': 'manager'})
 ```
 
 ## Swarm API documentation
@@ -123,6 +131,37 @@ Create a configuration dictionary for the `external_ca` argument in a
 * options (dict): An object with key/value pairs that are interpreted as
   protocol-specific options for the external CA driver.
 
+### Client.inspect_node
+
+Retrieve low-level information about a Swarm node
+
+**Params:**
+
+* node_id (string): ID of the node to be inspected.
+
+**Returns:** A dictionary containing data about this node. See sample below.
+
+```python
+{u'CreatedAt': u'2016-08-11T23:28:39.695834296Z',
+ u'Description': {u'Engine': {u'EngineVersion': u'1.12.0',
+   u'Plugins': [{u'Name': u'bridge', u'Type': u'Network'},
+    {u'Name': u'host', u'Type': u'Network'},
+    {u'Name': u'null', u'Type': u'Network'},
+    {u'Name': u'overlay', u'Type': u'Network'},
+    {u'Name': u'local', u'Type': u'Volume'}]},
+  u'Hostname': u'dockerserv-1.local.net',
+  u'Platform': {u'Architecture': u'x86_64', u'OS': u'linux'},
+  u'Resources': {u'MemoryBytes': 8052109312, u'NanoCPUs': 4000000000}},
+ u'ID': u'1kqami616p23dz4hd7km35w63',
+ u'ManagerStatus': {u'Addr': u'10.0.131.127:2377',
+  u'Leader': True,
+  u'Reachability': u'reachable'},
+ u'Spec': {u'Availability': u'active', u'Role': u'manager'},
+ u'Status': {u'State': u'ready'},
+ u'UpdatedAt': u'2016-08-11T23:28:39.979829529Z',
+ u'Version': {u'Index': 9}}
+ ```
+
 ### Client.inspect_swarm
 
 Retrieve information about the current Swarm.
@@ -181,6 +220,17 @@ Leave a Swarm.
 
 **Returns:** `True` if the request went through. Raises an `APIError` if it
   fails.
+
+### Client.nodes
+
+List Swarm nodes
+
+**Params:**
+
+* filters (dict): Filters to process on the nodes list. Valid filters:
+  `id`, `name`, `membership` and `role`. Default: `None`
+
+**Returns:** A list of dictionaries containing data about each swarm node.
 
 ### Client.update_swarm
 

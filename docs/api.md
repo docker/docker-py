@@ -646,6 +646,11 @@ Retrieve network info by id.
 
 **Returns** (dict): Network information dictionary
 
+## inspect_node
+
+Retrieve low-level information about a Swarm node.
+See the [Swarm documentation](swarm.md#clientinspect_node).
+
 ## inspect_swarm
 
 Retrieve information about the current Swarm.
@@ -741,6 +746,10 @@ List networks currently registered by the docker daemon. Similar to the `docker 
 The above are combined to create a filters dict.
 
 **Returns** (dict): List of network objects.
+
+## nodes
+
+List Swarm nodes. See the [Swarm documentation](swarm.md#clientnodes).
 
 ## pause
 

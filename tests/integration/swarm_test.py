@@ -114,3 +114,32 @@ class SwarmTest(helpers.BaseTestCase):
             swarm_info_2['Version']['Index']
         )
         assert swarm_info_2['Spec']['Name'] == 'reimuhakurei'
+
+    @requires_api_version('1.24')
+    def test_list_nodes(self):
+        assert self.client.init_swarm('eth0')
+        nodes_list = self.client.nodes()
+        assert len(nodes_list) == 1
+        node = nodes_list[0]
+        assert 'ID' in node
+        assert 'Spec' in node
+        assert node['Spec']['Role'] == 'manager'
+
+        filtered_list = self.client.nodes(filters={
+            'id': node['ID']
+        })
+        assert len(filtered_list) == 1
+        filtered_list = self.client.nodes(filters={
+            'role': 'worker'
+        })
+        assert len(filtered_list) == 0
+
+    @requires_api_version('1.24')
+    def test_inspect_node(self):
+        assert self.client.init_swarm('eth0')
+        nodes_list = self.client.nodes()
+        assert len(nodes_list) == 1
+        node = nodes_list[0]
+        node_data = self.client.inspect_node(node['ID'])
+        assert node['ID'] == node_data['ID']
+        assert node['Version'] == node_data['Version']
