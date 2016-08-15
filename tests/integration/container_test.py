@@ -1101,11 +1101,38 @@ class ContainerUpdateTest(helpers.BaseTestCase):
         container = self.client.create_container(
             BUSYBOX, 'top', host_config=self.client.create_host_config(
                 mem_limit=old_mem_limit
-            ), cpu_shares=102
+            )
         )
         self.tmp_containers.append(container)
         self.client.start(container)
         self.client.update_container(container, mem_limit=new_mem_limit)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
-        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 102)
+
+
+class ContainerCPUTest(helpers.BaseTestCase):
+    @requires_api_version('1.18')
+    def test_container_cpu_shares(self):
+        cpu_shares = 512
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpu_shares=cpu_shares
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 512)
+
+    @requires_api_version('1.18')
+    def test_container_cpuset(self):
+        cpuset_cpus = "0,1"
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpuset_cpus=cpuset_cpus
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
