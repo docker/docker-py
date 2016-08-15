@@ -485,7 +485,8 @@ def parse_devices(devices):
     return device_list
 
 
-def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
+def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None,
+                    **params):
     if not environment:
         environment = os.environ
     host = environment.get('DOCKER_HOST')
@@ -501,8 +502,6 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
     else:
         tls_verify = tls_verify is not None
     enable_tls = cert_path or tls_verify
-
-    params = {}
 
     if host:
         params['base_url'] = (
