@@ -159,9 +159,6 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
     def create_container_readonly_fs(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         ctnr = self.client.create_container(
             BUSYBOX, ['mkdir', '/shrine'],
             host_config=self.client.create_host_config(
@@ -806,8 +803,7 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
+        self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -821,8 +817,7 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
+        self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
