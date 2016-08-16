@@ -45,15 +45,6 @@ def untar_file(tardata, filename):
     return result
 
 
-def exec_driver_is_native():
-    global EXEC_DRIVER
-    if not EXEC_DRIVER:
-        c = docker_client()
-        EXEC_DRIVER = c.info()['ExecutionDriver']
-        c.close()
-    return EXEC_DRIVER.startswith('native') or EXEC_DRIVER == ''
-
-
 def docker_client(**kwargs):
     return docker.Client(**docker_client_kwargs(**kwargs))
 
