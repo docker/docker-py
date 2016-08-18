@@ -42,10 +42,11 @@ class ServiceApiMixin(object):
         url = self._url('/services/{0}', service)
         resp = self._delete(url)
         self._raise_for_status(resp)
+        return True
 
     @utils.minimum_version('1.24')
     @utils.check_resource
-    def update_service(self, service, task_template=None, name=None,
+    def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None):
         url = self._url('/services/{0}/update', service)
@@ -65,7 +66,9 @@ class ServiceApiMixin(object):
         if endpoint_config is not None:
             data['Endpoint'] = endpoint_config
 
-        return self._result(self._post_json(url, data=data), True)
+        resp = self._post_json(url, data=data, params={'version': version})
+        self._raise_for_status(resp)
+        return True
 
 
 class TaskTemplate(dict):
