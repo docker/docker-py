@@ -40,8 +40,10 @@ class ServiceTest(helpers.BaseTestCase):
         else:
             name = self.get_service_name()
 
-        container_spec = docker.api.ContainerSpec('busybox', ['echo', 'hello'])
-        task_tmpl = docker.api.TaskTemplate(container_spec)
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
         return name, self.client.create_service(task_tmpl, name=name)
 
     @requires_api_version('1.24')
@@ -74,7 +76,7 @@ class ServiceTest(helpers.BaseTestCase):
         test_services = self.client.services(filters={'name': 'dockerpytest_'})
         assert len(test_services) == 0
 
-    def test_rempve_service_by_name(self):
+    def test_remove_service_by_name(self):
         svc_name, svc_id = self.create_simple_service()
         assert self.client.remove_service(svc_name)
         test_services = self.client.services(filters={'name': 'dockerpytest_'})
@@ -86,6 +88,94 @@ class ServiceTest(helpers.BaseTestCase):
         services = self.client.services(filters={'name': name})
         assert len(services) == 1
         assert services[0]['ID'] == svc_id['ID']
+
+    def test_create_service_custom_log_driver(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        log_cfg = docker.types.LogDriver('none')
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, log_driver=log_cfg
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        res_template = svc_info['Spec']['TaskTemplate']
+        assert 'LogDriver' in res_template
+        assert 'Name' in res_template['LogDriver']
+        assert res_template['LogDriver']['Name'] == 'none'
+
+    def test_create_service_with_volume_mount(self):
+        vol_name = self.get_service_name()
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['ls'],
+            mounts=[
+                docker.types.Mount(target='/test', source=vol_name)
+            ]
+        )
+        self.tmp_volumes.append(vol_name)
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        cspec = svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'Mounts' in cspec
+        assert len(cspec['Mounts']) == 1
+        mount = cspec['Mounts'][0]
+        assert mount['Target'] == '/test'
+        assert mount['Source'] == vol_name
+        assert mount['Type'] == 'volume'
+
+    def test_create_service_with_resources_constraints(self):
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        resources = docker.types.Resources(
+            cpu_limit=4000000, mem_limit=3 * 1024 * 1024 * 1024,
+            cpu_reservation=3500000, mem_reservation=2 * 1024 * 1024 * 1024
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, resources=resources
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        res_template = svc_info['Spec']['TaskTemplate']
+        assert 'Resources' in res_template
+        assert res_template['Resources']['Limits'] == resources['Limits']
+        assert res_template['Resources']['Reservations'] == resources[
+            'Reservations'
+        ]
+
+    def test_create_service_with_update_config(self):
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        update_config = docker.types.UpdateConfig(
+            parallelism=10, delay=5, failure_action='pause'
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, update_config=update_config, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'UpdateConfig' in svc_info['Spec']
+        assert update_config == svc_info['Spec']['UpdateConfig']
+
+    def test_create_service_with_restart_policy(self):
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        policy = docker.types.RestartPolicy(
+            docker.types.RestartPolicy.condition_types.ANY,
+            delay=5, max_attempts=5
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, restart_policy=policy
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'RestartPolicy' in svc_info['Spec']['TaskTemplate']
+        assert policy == svc_info['Spec']['TaskTemplate']['RestartPolicy']
 
     def test_update_service_name(self):
         name, svc_id = self.create_simple_service()

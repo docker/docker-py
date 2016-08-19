@@ -95,7 +95,7 @@ Initialize a new Swarm using the current connected engine as the first node.
 
 #### Client.create_swarm_spec
 
-Create a `docker.utils.SwarmSpec` instance that can be used as the `swarm_spec`
+Create a `docker.types.SwarmSpec` instance that can be used as the `swarm_spec`
 argument in `Client.init_swarm`.
 
 **Params:**
@@ -113,12 +113,12 @@ argument in `Client.init_swarm`.
   heartbeat to the dispatcher.
 * node_cert_expiry (int): Automatic expiry for nodes certificates.
 * external_ca (dict): Configuration for forwarding signing requests to an
-  external certificate authority. Use `docker.utils.SwarmExternalCA`.
+  external certificate authority. Use `docker.types.SwarmExternalCA`.
 * name (string): Swarm's name
 
-**Returns:** `docker.utils.SwarmSpec` instance.
+**Returns:** `docker.types.SwarmSpec` instance.
 
-#### docker.utils.SwarmExternalCA
+#### docker.types.SwarmExternalCA
 
 Create a configuration dictionary for the `external_ca` argument in a
 `SwarmSpec`.
