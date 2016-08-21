@@ -16,6 +16,7 @@ is hosted.
   to use the API version provided by the server.
 * timeout (int): The HTTP request timeout, in seconds.
 * tls (bool or [TLSConfig](tls.md#TLSConfig)): Equivalent CLI options: `docker --tls ...`
+* user_agent (str): Set a custom user agent for requests to the server.
 
 ****
 
@@ -65,6 +66,7 @@ correct value (e.g `gzip`).
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
 * forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
 * dockerfile (str): path within the build context to the Dockerfile
+* buildargs (dict): A dictionary of build arguments
 * container_limits (dict): A dictionary of limits applied to each container
   created by the build process. Valid keys:
     - memory (int): set memory limit for build
@@ -309,6 +311,7 @@ Create and register a named volume
 * name (str): Name of the volume
 * driver (str): Name of the driver used to create the volume
 * driver_opts (dict): Driver options as a key-value dictionary
+* labels (dict): Labels to set on the volume
 
 **Returns** (dict): The created volume reference object
 
@@ -316,10 +319,16 @@ Create and register a named volume
 >>> from docker import Client
 >>> cli = Client()
 >>> volume = cli.create_volume(
-  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'}
+  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'},
+  labels={"key": "value"}
 )
 >>> print(volume)
-{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+{
+  u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
+  u'Driver': u'local',
+  u'Name': u'foobar',
+  u'Labels': {u'key': u'value'}
+}
 ```
 
 ## diff
@@ -792,6 +801,8 @@ command.
 * tag (str): An optional tag to push
 * stream (bool): Stream the output as a blocking generator
 * insecure_registry (bool): Use `http://` to connect to the registry
+* auth_config (dict): Override the credentials that Client.login has set for this request
+  `auth_config` should contain the `username` and `password` keys to be valid.
 
 **Returns** (generator or str): The output of the upload
 

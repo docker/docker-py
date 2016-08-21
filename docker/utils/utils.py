@@ -22,8 +22,8 @@ import tarfile
 import tempfile
 import warnings
 from distutils.version import StrictVersion
-from fnmatch import fnmatch
 from datetime import datetime
+from fnmatch import fnmatch
 
 import requests
 import six
@@ -33,9 +33,15 @@ from .. import errors
 from .. import tls
 from .types import Ulimit, LogConfig
 
+if six.PY2:
+    from urllib import splitnport
+else:
+    from urllib.parse import splitnport
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
+DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
+
 BYTE_UNITS = {
     'b': 1,
     'k': 1024,
@@ -385,12 +391,11 @@ def parse_repository_tag(repo_name):
 # Protocol translation: tcp -> http, unix -> http+unix
 def parse_host(addr, is_win32=False, tls=False):
     proto = "http+unix"
-    host = DEFAULT_HTTP_HOST
     port = None
     path = ''
 
     if not addr and is_win32:
-        addr = '{0}:{1}'.format(DEFAULT_HTTP_HOST, 2375)
+        addr = DEFAULT_NPIPE
 
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
@@ -425,31 +430,26 @@ def parse_host(addr, is_win32=False, tls=False):
             )
         proto = "https" if tls else "http"
 
-    if proto != "http+unix" and ":" in addr:
-        host_parts = addr.split(':')
-        if len(host_parts) != 2:
-            raise errors.DockerException(
-                "Invalid bind address format: {0}".format(addr)
-            )
-        if host_parts[0]:
-            host = host_parts[0]
+    if proto in ("http", "https"):
+        address_parts = addr.split('/', 1)
+        host = address_parts[0]
+        if len(address_parts) == 2:
+            path = '/' + address_parts[1]
+        host, port = splitnport(host)
 
-        port = host_parts[1]
-        if '/' in port:
-            port, path = port.split('/', 1)
-            path = '/{0}'.format(path)
-        try:
-            port = int(port)
-        except Exception:
+        if port is None:
             raise errors.DockerException(
                 "Invalid port: {0}".format(addr)
             )
 
-    elif proto in ("http", "https") and ':' not in addr:
-        raise errors.DockerException(
-            "Bind address needs a port: {0}".format(addr))
+        if not host:
+            host = DEFAULT_HTTP_HOST
     else:
         host = addr
+
+    if proto in ("http", "https") and port == -1:
+        raise errors.DockerException(
+            "Bind address needs a port: {0}".format(addr))
 
     if proto == "http+unix" or proto == 'npipe':
         return "{0}://{1}".format(proto, host)
@@ -619,7 +619,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        blkio_weight_device=None, device_read_bps=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
-                       shm_size=None, version=None, tmpfs=None,
+                       shm_size=None, sysctls=None, version=None, tmpfs=None,
                        oom_score_adj=None):
 
     host_config = {}
@@ -724,6 +724,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             raise host_config_type_error('security_opt', security_opt, 'list')
 
         host_config['SecurityOpt'] = security_opt
+
+    if sysctls:
+        if not isinstance(sysctls, dict):
+            raise host_config_type_error('sysctls', sysctls, 'dict')
+        host_config['Sysctls'] = {}
+        for k, v in six.iteritems(sysctls):
+            host_config['Sysctls'][k] = six.text_type(v)
 
     if volumes_from is not None:
         if isinstance(volumes_from, six.string_types):
@@ -894,15 +901,15 @@ def create_endpoint_config(version, aliases=None, links=None,
     if ipv6_address:
         ipam_config['IPv6Address'] = ipv6_address
 
-    if ipam_config:
-        endpoint_config['IPAMConfig'] = ipam_config
-
     if link_local_ips is not None:
         if version_lt(version, '1.24'):
             raise errors.InvalidVersion(
                 'link_local_ips is not supported for API version < 1.24'
             )
-        endpoint_config['LinkLocalIPs'] = link_local_ips
+        ipam_config['LinkLocalIPs'] = link_local_ips
+
+    if ipam_config:
+        endpoint_config['IPAMConfig'] = ipam_config
 
     return endpoint_config
 

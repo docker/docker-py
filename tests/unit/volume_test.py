@@ -43,6 +43,22 @@ class VolumeTest(DockerClientTest):
         self.assertEqual(args[0][1], url_prefix + 'volumes/create')
         self.assertEqual(json.loads(args[1]['data']), {'Name': name})
 
+    @base.requires_api_version('1.23')
+    def test_create_volume_with_labels(self):
+        name = 'perfectcherryblossom'
+        result = self.client.create_volume(name, labels={
+            'com.example.some-label': 'some-value'})
+        self.assertEqual(
+            result["Labels"],
+            {'com.example.some-label': 'some-value'}
+        )
+
+    @base.requires_api_version('1.23')
+    def test_create_volume_with_invalid_labels(self):
+        name = 'perfectcherryblossom'
+        with pytest.raises(TypeError):
+            self.client.create_volume(name, labels=1)
+
     @base.requires_api_version('1.21')
     def test_create_volume_with_driver(self):
         name = 'perfectcherryblossom'

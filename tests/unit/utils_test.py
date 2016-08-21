@@ -20,9 +20,11 @@ from docker.utils import (
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
     split_command, create_ipam_config, create_ipam_pool, parse_devices,
+    update_headers,
 )
-from docker.utils.utils import create_endpoint_config
+
 from docker.utils.ports import build_port_bindings, split_port
+from docker.utils.utils import create_endpoint_config
 
 from .. import base
 from ..helpers import make_tree
@@ -32,6 +34,37 @@ TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
     'testdata/certs',
 )
+
+
+class DecoratorsTest(base.BaseTestCase):
+    def test_update_headers(self):
+        sample_headers = {
+            'X-Docker-Locale': 'en-US',
+        }
+
+        def f(self, headers=None):
+            return headers
+
+        client = Client()
+        client._auth_configs = {}
+
+        g = update_headers(f)
+        assert g(client, headers=None) is None
+        assert g(client, headers={}) == {}
+        assert g(client, headers={'Content-type': 'application/json'}) == {
+            'Content-type': 'application/json',
+        }
+
+        client._auth_configs = {
+            'HttpHeaders': sample_headers
+        }
+
+        assert g(client, headers=None) == sample_headers
+        assert g(client, headers={}) == sample_headers
+        assert g(client, headers={'Content-type': 'application/json'}) == {
+            'Content-type': 'application/json',
+            'X-Docker-Locale': 'en-US',
+        }
 
 
 class HostConfigTest(base.BaseTestCase):
@@ -404,10 +437,18 @@ class ParseHostTest(base.BaseTestCase):
             'https://kokia.jp:2375': 'https://kokia.jp:2375',
             'unix:///var/run/docker.sock': 'http+unix:///var/run/docker.sock',
             'unix://': 'http+unix://var/run/docker.sock',
+            '12.234.45.127:2375/docker/engine': (
+                'http://12.234.45.127:2375/docker/engine'
+            ),
             'somehost.net:80/service/swarm': (
                 'http://somehost.net:80/service/swarm'
             ),
             'npipe:////./pipe/docker_engine': 'npipe:////./pipe/docker_engine',
+            '[fd12::82d1]:2375': 'http://[fd12::82d1]:2375',
+            'https://[fd12:5672::12aa]:1090': 'https://[fd12:5672::12aa]:1090',
+            '[fd12::82d1]:2375/docker/engine': (
+                'http://[fd12::82d1]:2375/docker/engine'
+            ),
         }
 
         for host in invalid_hosts:
@@ -415,15 +456,15 @@ class ParseHostTest(base.BaseTestCase):
                 parse_host(host, None)
 
         for host, expected in valid_hosts.items():
-            self.assertEqual(parse_host(host, None), expected, msg=host)
+            assert parse_host(host, None) == expected
 
     def test_parse_host_empty_value(self):
         unix_socket = 'http+unix://var/run/docker.sock'
-        tcp_port = 'http://127.0.0.1:2375'
+        npipe = 'npipe:////./pipe/docker_engine'
 
         for val in [None, '']:
             assert parse_host(val, is_win32=False) == unix_socket
-            assert parse_host(val, is_win32=True) == tcp_port
+            assert parse_host(val, is_win32=True) == npipe
 
     def test_parse_host_tls(self):
         host_value = 'myhost.docker.net:3348'

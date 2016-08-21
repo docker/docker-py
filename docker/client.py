@@ -14,6 +14,7 @@
 
 import json
 import struct
+from functools import partial
 
 import requests
 import requests.exceptions
@@ -29,6 +30,7 @@ from .ssladapter import ssladapter
 from .tls import TLSConfig
 from .transport import UnixAdapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
+from .utils.socket import frames_iter
 try:
     from .transport import NpipeAdapter
 except ImportError:
@@ -50,7 +52,8 @@ class Client(
         api.NetworkApiMixin,
         api.SwarmApiMixin):
     def __init__(self, base_url=None, version=None,
-                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
+                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
+                 user_agent=constants.DEFAULT_USER_AGENT):
         super(Client, self).__init__()
 
         if tls and not base_url:
@@ -60,6 +63,7 @@ class Client(
 
         self.base_url = base_url
         self.timeout = timeout
+        self.headers['User-Agent'] = user_agent
 
         self._auth_configs = auth.load_config()
 
@@ -154,7 +158,8 @@ class Client(
                     'instead'.format(arg, type(arg))
                 )
 
-        args = map(six.moves.urllib.parse.quote_plus, args)
+        quote_f = partial(six.moves.urllib.parse.quote_plus, safe="/:")
+        args = map(quote_f, args)
 
         if kwargs.get('versioned_api', True):
             return '{0}/v{1}{2}'.format(
@@ -305,6 +310,14 @@ class Client(
         self._raise_for_status(response)
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
+
+    def _read_from_socket(self, response, stream):
+        socket = self._get_raw_response_socket(response)
+
+        if stream:
+            return frames_iter(socket)
+        else:
+            return six.binary_type().join(frames_iter(socket))
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're

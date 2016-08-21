@@ -205,7 +205,7 @@ class ImageApiMixin(object):
         return self._result(response)
 
     def push(self, repository, tag=None, stream=False,
-             insecure_registry=False, decode=False):
+             insecure_registry=False, auth_config=None, decode=False):
         if insecure_registry:
             warnings.warn(
                 INSECURE_REGISTRY_DEPRECATION_WARNING.format('push()'),
@@ -224,15 +224,22 @@ class ImageApiMixin(object):
         if utils.compare_version('1.5', self._version) >= 0:
             # If we don't have any auth data so far, try reloading the config
             # file one more time in case anything showed up in there.
-            if not self._auth_configs:
-                self._auth_configs = auth.load_config()
-            authcfg = auth.resolve_authconfig(self._auth_configs, registry)
-
-            # Do not fail here if no authentication exists for this specific
-            # registry as we can have a readonly pull. Just put the header if
-            # we can.
-            if authcfg:
-                headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+            if auth_config is None:
+                log.debug('Looking for auth config')
+                if not self._auth_configs:
+                    log.debug(
+                        "No auth config in memory - loading from filesystem"
+                    )
+                    self._auth_configs = auth.load_config()
+                authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+                # Do not fail here if no authentication exists for this
+                # specific registry as we can have a readonly pull. Just
+                # put the header if we can.
+                if authcfg:
+                    headers['X-Registry-Auth'] = auth.encode_header(authcfg)
+            else:
+                log.debug('Sending supplied auth config')
+                headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         response = self._post_json(
             u, None, headers=headers, stream=stream, params=params
