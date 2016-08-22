@@ -169,7 +169,7 @@ class RestartPolicy(dict):
         self['Window'] = window
 
 
-class LogDriver(dict):
+class DriverConfig(dict):
     def __init__(self, name, options=None):
         self['Name'] = name
         if options:
