@@ -93,7 +93,7 @@ class ServiceTest(helpers.BaseTestCase):
         container_spec = docker.types.ContainerSpec(
             'busybox', ['echo', 'hello']
         )
-        log_cfg = docker.types.LogDriver('none')
+        log_cfg = docker.types.DriverConfig('none')
         task_tmpl = docker.types.TaskTemplate(
             container_spec, log_driver=log_cfg
         )
