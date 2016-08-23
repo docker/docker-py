@@ -123,9 +123,11 @@ for example:
   container process will run as.
 * devices (list): Host device bindings. See [host devices](host-devices.md)
   for more information.
-* tmpfs: Temporary filesystems to mouunt. See [Using tmpfs](tmpfs.md) for more
+* tmpfs: Temporary filesystems to mount. See [Using tmpfs](tmpfs.md) for more
   information.
 * sysctls (dict): Kernel parameters to set in the container.
+* userns_mode (str): Sets the user namespace mode for the container when user
+  namespace remapping option is enabled. Supported values are: `host`
 
 **Returns** (dict) HostConfig dictionary
 
