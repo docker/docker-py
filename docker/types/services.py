@@ -36,7 +36,12 @@ class TaskTemplate(dict):
 class ContainerSpec(dict):
     def __init__(self, image, command=None, args=None, env=None, workdir=None,
                  user=None, labels=None, mounts=None, stop_grace_period=None):
+        from ..utils import split_command  # FIXME: circular import
+
         self['Image'] = image
+
+        if isinstance(command, six.string_types):
+            command = split_command(command)
         self['Command'] = command
         self['Args'] = args
 

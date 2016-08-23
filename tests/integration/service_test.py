@@ -1,7 +1,6 @@
 import random
 
 import docker
-# import pytest
 
 from ..base import requires_api_version
 from .. import helpers

@@ -666,6 +666,16 @@ Create a service, similar to the `docker service create` command. See the
 Retrieve information about the current Swarm.
 See the [Swarm documentation](swarm.md#clientinspect_swarm).
 
+## inspect_task
+
+Retrieve information about a task.
+
+**Params**:
+
+* task (str): Task identifier
+
+**Returns** (dict): Task information dictionary
+
 ## inspect_volume
 
 Retrieve volume info by name.
@@ -1054,6 +1064,17 @@ Tag an image into a repository. Identical to the `docker tag` command.
 * force (bool): Force
 
 **Returns** (bool): True if successful
+
+## tasks
+
+Retrieve a list of tasks.
+
+**Params**:
+
+* filters (dict): A map of filters to process on the tasks list. Valid filters:
+  `id`, `name`, `service`, `node`, `label` and `desired-state`.
+
+**Returns** (list): List of task dictionaries.
 
 ## top
 Display the running processes of a container.
