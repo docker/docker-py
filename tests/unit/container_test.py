@@ -286,6 +286,33 @@ class CreateContainerTest(DockerClientTest):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    @requires_api_version('1.18')
+    def test_create_container_with_host_config_cpu_shares(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpu_shares=512
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpuShares": 512,
+                                "NetworkMode": "default"
+                             }}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_cpuset(self):
         self.client.create_container('busybox', 'ls',
                                      cpuset='0,1')
@@ -303,6 +330,33 @@ class CreateContainerTest(DockerClientTest):
                              "NetworkDisabled": false,
                              "Cpuset": "0,1",
                              "CpusetCpus": "0,1"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    @requires_api_version('1.18')
+    def test_create_container_with_host_config_cpuset(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpuset_cpus='0,1'
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpuSetCpus": "0,1",
+                                "NetworkMode": "default"
+                             }}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
