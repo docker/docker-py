@@ -620,7 +620,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
                        shm_size=None, sysctls=None, version=None, tmpfs=None,
-                       oom_score_adj=None):
+                       oom_score_adj=None, dns_opt=None):
 
     host_config = {}
 
@@ -718,6 +718,12 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if dns is not None:
         host_config['Dns'] = dns
+
+    if dns_opt is not None:
+        if version_lt(version, '1.21'):
+            raise host_config_version_error('dns_opt', '1.21')
+
+        host_config['DnsOptions'] = dns_opt
 
     if security_opt is not None:
         if not isinstance(security_opt, list):

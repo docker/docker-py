@@ -239,6 +239,7 @@ where unit = b, k, m, or g)
 * environment (dict or list): A dictionary or a list of strings in the
 following format `["PASSWORD=xxx"]` or `{"PASSWORD": "xxx"}`.
 * dns (list): DNS name servers
+* dns_opt (list): Additional options to be added to the container's `resolv.conf` file
 * volumes (str or list):
 * volumes_from (str or list): List of container names or Ids to get volumes
 from. Optionally a single string joining container id's with commas
