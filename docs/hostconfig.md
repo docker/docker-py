@@ -109,6 +109,8 @@ for example:
 * cpu_group (int): The length of a CPU period in microseconds.
 * cpu_period (int): Microseconds of CPU time that the container can get in a
   CPU period.
+* cpu_shares (int): CPU shares (relative weight)
+* cpuset_cpus (str): CPUs in which to allow execution (0-3, 0,1)
 * blkio_weight: Block IO weight (relative weight), accepts a weight value between 10 and 1000.
 * blkio_weight_device: Block IO weight (relative device weight) in the form of:
   `[{"Path": "device_path", "Weight": weight}]`

@@ -620,7 +620,8 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
                        shm_size=None, sysctls=None, version=None, tmpfs=None,
-                       oom_score_adj=None, dns_opt=None):
+                       oom_score_adj=None, dns_opt=None, cpu_shares=None,
+                       cpuset_cpus=None):
 
     host_config = {}
 
@@ -809,6 +810,21 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
         host_config['CpuPeriod'] = cpu_period
 
+    if cpu_shares:
+        if version_lt(version, '1.18'):
+            raise host_config_version_error('cpu_shares', '1.18')
+
+        if not isinstance(cpu_shares, int):
+            raise host_config_type_error('cpu_shares', cpu_shares, 'int')
+
+        host_config['CpuShares'] = cpu_shares
+
+    if cpuset_cpus:
+        if version_lt(version, '1.18'):
+            raise host_config_version_error('cpuset_cpus', '1.18')
+
+        host_config['CpuSetCpus'] = cpuset_cpus
+
     if blkio_weight:
         if not isinstance(blkio_weight, int):
             raise host_config_type_error('blkio_weight', blkio_weight, 'int')
@@ -981,6 +997,14 @@ def create_container_config(
             'labels were only introduced in API version 1.18'
         )
 
+    if cpuset is not None or cpu_shares is not None:
+        if version_gte(version, '1.18'):
+            warnings.warn(
+                'The cpuset_cpus and cpu_shares options have been moved to '
+                'host_config in API version 1.18, and will be removed',
+                DeprecationWarning
+            )
+
     if stop_signal is not None and compare_version('1.21', version) < 0:
         raise errors.InvalidVersion(
             'stop_signal was only introduced in API version 1.21'
@@ -1010,6 +1034,7 @@ def create_container_config(
 
     if mem_limit is not None:
         mem_limit = parse_bytes(mem_limit)
+
     if memswap_limit is not None:
         memswap_limit = parse_bytes(memswap_limit)
 
