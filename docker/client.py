@@ -255,8 +255,16 @@ class Client(
                 if decode:
                     if six.PY3:
                         data = data.decode('utf-8')
-                    data = json.loads(data)
-                yield data
+                    # remove the trailing newline
+                    data = data.strip()
+                    # split the data at any newlines
+                    data_list = data.split("\r\n")
+                    # load and yield each line seperately
+                    for data in data_list:
+                        data = json.loads(data)
+                        yield data
+                else:
+                    yield data
         else:
             # Response isn't chunked, meaning we probably
             # encountered an error immediately
