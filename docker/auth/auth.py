@@ -51,6 +51,26 @@ def resolve_index_name(index_name):
     return index_name
 
 
+def get_config_header(client, registry):
+    log.debug('Looking for auth config')
+    if not client._auth_configs:
+        log.debug(
+            "No auth config in memory - loading from filesystem"
+        )
+        client._auth_configs = load_config()
+    authcfg = resolve_authconfig(client._auth_configs, registry)
+    # Do not fail here if no authentication exists for this
+    # specific registry as we can have a readonly pull. Just
+    # put the header if we can.
+    if authcfg:
+        log.debug('Found auth config')
+        # auth_config needs to be a dict in the format used by
+        # auth.py username , password, serveraddress, email
+        return encode_header(authcfg)
+    log.debug('No auth config found')
+    return None
+
+
 def split_repo_name(repo_name):
     parts = repo_name.split('/', 1)
     if len(parts) == 1 or (

@@ -1,5 +1,7 @@
 import six
 
+from .base import DictType
+
 
 class LogConfigTypesEnum(object):
     _values = (
@@ -11,12 +13,6 @@ class LogConfigTypesEnum(object):
         'none'
     )
     JSON, SYSLOG, JOURNALD, GELF, FLUENTD, NONE = _values
-
-
-class DictType(dict):
-    def __init__(self, init):
-        for k, v in six.iteritems(init):
-            self[k] = v
 
 
 class LogConfig(DictType):

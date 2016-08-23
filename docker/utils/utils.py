@@ -31,7 +31,7 @@ import six
 from .. import constants
 from .. import errors
 from .. import tls
-from .types import Ulimit, LogConfig
+from ..types import Ulimit, LogConfig
 
 if six.PY2:
     from urllib import splitnport

@@ -302,6 +302,11 @@ Create a network, similar to the `docker network create` command.
 
 **Returns** (dict): The created network reference object
 
+## create_service
+
+Create a service, similar to the `docker service create` command. See the
+[services documentation](services.md#Clientcreate_service) for details.
+
 ## create_volume
 
 Create and register a named volume
@@ -606,6 +611,11 @@ Display system-wide information. Identical to the `docker info` command.
  'SwapLimit': 1}
 ```
 
+## init_swarm
+
+Initialize a new Swarm using the current connected engine as the first node.
+See the [Swarm documentation](swarm.md#clientinit_swarm).
+
 ## insert
 *DEPRECATED*
 
@@ -641,6 +651,31 @@ Retrieve network info by id.
 
 **Returns** (dict): Network information dictionary
 
+## inspect_node
+
+Retrieve low-level information about a Swarm node.
+See the [Swarm documentation](swarm.md#clientinspect_node).
+
+## inspect_service
+
+Create a service, similar to the `docker service create` command. See the
+[services documentation](services.md#clientinspect_service) for details.
+
+## inspect_swarm
+
+Retrieve information about the current Swarm.
+See the [Swarm documentation](swarm.md#clientinspect_swarm).
+
+## inspect_task
+
+Retrieve information about a task.
+
+**Params**:
+
+* task (str): Task identifier
+
+**Returns** (dict): Task information dictionary
+
 ## inspect_volume
 
 Retrieve volume info by name.
@@ -656,6 +691,11 @@ Retrieve volume info by name.
 {u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
 ```
 
+## join_swarm
+
+Join an existing Swarm.
+See the [Swarm documentation](swarm.md#clientjoin_swarm).
+
 ## kill
 
 Kill a container or send a signal to a container.
@@ -664,6 +704,11 @@ Kill a container or send a signal to a container.
 
 * container (str): The container to kill
 * signal (str or int): The signal to send. Defaults to `SIGKILL`
+
+## leave_swarm
+
+Leave the current Swarm.
+See the [Swarm documentation](swarm.md#clientleave_swarm).
 
 ## load_image
 
@@ -721,6 +766,10 @@ List networks currently registered by the docker daemon. Similar to the `docker 
 The above are combined to create a filters dict.
 
 **Returns** (dict): List of network objects.
+
+## nodes
+
+List Swarm nodes. See the [Swarm documentation](swarm.md#clientnodes).
 
 ## pause
 
@@ -866,6 +915,11 @@ Remove a network. Similar to the `docker network rm` command.
 
 Failure to remove will raise a `docker.errors.APIError` exception.
 
+## remove_service
+
+Remove a service, similar to the `docker service rm` command. See the
+[services documentation](services.md#clientremove_service) for details.
+
 ## remove_volume
 
 Remove a volume. Similar to the `docker volume rm` command.
@@ -933,6 +987,11 @@ Identical to the `docker search` command.
   'star_count': 60},
   ...
 ```
+
+## services
+
+List services, similar to the `docker service ls` command. See the
+[services documentation](services.md#clientservices) for details.
 
 ## start
 
@@ -1006,6 +1065,17 @@ Tag an image into a repository. Identical to the `docker tag` command.
 
 **Returns** (bool): True if successful
 
+## tasks
+
+Retrieve a list of tasks.
+
+**Params**:
+
+* filters (dict): A map of filters to process on the tasks list. Valid filters:
+  `id`, `name`, `service`, `node`, `label` and `desired-state`.
+
+**Returns** (list): List of task dictionaries.
+
 ## top
 Display the running processes of a container.
 
@@ -1053,6 +1123,16 @@ Update resource configs of one or more containers.
 * kernel_memory (int or str): Kernel memory limit
 
 **Returns** (dict): Dictionary containing a `Warnings` key.
+
+## update_service
+
+Update a service, similar to the `docker service update` command. See the
+[services documentation](services.md#clientupdate_service) for details.
+
+## update_swarm
+
+Update the current Swarm.
+See the [Swarm documentation](swarm.md#clientupdate_swarm).
 
 ## version
 
