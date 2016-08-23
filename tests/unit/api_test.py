@@ -22,9 +22,11 @@ import sys
 import tempfile
 import threading
 import time
+import io
 
 import docker
 import requests
+from requests.packages import urllib3
 import six
 
 from .. import base
@@ -42,7 +44,7 @@ DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS
 
 
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
-             request=None):
+             request=None, raw=None):
     res = requests.Response()
     res.status_code = status_code
     if not isinstance(content, six.binary_type):
@@ -52,6 +54,7 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
     res.reason = reason
     res.elapsed = datetime.timedelta(elapsed)
     res.request = request
+    res.raw = raw
     return res
 
 
@@ -327,6 +330,43 @@ class DockerApiTest(DockerClientTest):
         self.assertRaises(
             TypeError, self.client.create_host_config, security_opt='wrong'
         )
+
+    def test_stream_helper_decoding(self):
+        status_code, content = fake_api.fake_responses[url_prefix + 'events']()
+        content_str = json.dumps(content)
+        if six.PY3:
+            content_str = content_str.encode('utf-8')
+        body = io.BytesIO(content_str)
+
+        # mock a stream interface
+        raw_resp = urllib3.HTTPResponse(body=body)
+        setattr(raw_resp._fp, 'chunked', True)
+        setattr(raw_resp._fp, 'chunk_left', len(body.getvalue())-1)
+
+        # pass `decode=False` to the helper
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp))
+        self.assertEqual(result, content_str)
+
+        # pass `decode=True` to the helper
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp, decode=True))
+        self.assertEqual(result, content)
+
+        # non-chunked response, pass `decode=False` to the helper
+        setattr(raw_resp._fp, 'chunked', False)
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp))
+        self.assertEqual(result, content_str.decode('utf-8'))
+
+        # non-chunked response, pass `decode=True` to the helper
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp, decode=True))
+        self.assertEqual(result, content)
 
 
 class StreamTest(base.Cleanup, base.BaseTestCase):

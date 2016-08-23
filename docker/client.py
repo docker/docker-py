@@ -268,7 +268,7 @@ class Client(
         else:
             # Response isn't chunked, meaning we probably
             # encountered an error immediately
-            yield self._result(response)
+            yield self._result(response, json=decode)
 
     def _multiplexed_buffer_helper(self, response):
         """A generator of multiplexed data blocks read from a buffered
