@@ -623,7 +623,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        device_write_iops=None, oom_kill_disable=False,
                        shm_size=None, sysctls=None, version=None, tmpfs=None,
                        oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                       cpuset_cpus=None, userns_mode=None):
+                       cpuset_cpus=None, userns_mode=None, pids_limit=None):
 
     host_config = {}
 
@@ -903,6 +903,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         if userns_mode != "host":
             raise host_config_value_error("userns_mode", userns_mode)
         host_config['UsernsMode'] = userns_mode
+
+    if pids_limit:
+        if not isinstance(pids_limit, int):
+            raise host_config_type_error('pids_limit', pids_limit, 'int')
+        if version_lt(version, '1.23'):
+            raise host_config_version_error('pids_limit', '1.23')
+        host_config["PidsLimit"] = pids_limit
 
     return host_config
 
