@@ -114,7 +114,8 @@ class Client(
 
     @classmethod
     def from_env(cls, **kwargs):
-        return cls(**kwargs_from_env(**kwargs))
+        version = kwargs.pop('version', None)
+        return cls(version=version, **kwargs_from_env(**kwargs))
 
     def _retrieve_server_version(self):
         try:
