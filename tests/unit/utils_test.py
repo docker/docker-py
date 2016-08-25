@@ -185,6 +185,15 @@ class HostConfigTest(base.BaseTestCase):
             InvalidVersion, lambda: create_host_config(
                 version='1.20', kernel_memory=67108864))
 
+    def test_create_host_config_with_pids_limit(self):
+        config = create_host_config(version='1.23', pids_limit=1024)
+        self.assertEqual(config.get('PidsLimit'), 1024)
+
+        with pytest.raises(InvalidVersion):
+            create_host_config(version='1.22', pids_limit=1024)
+        with pytest.raises(TypeError):
+            create_host_config(version='1.22', pids_limit='1024')
+
 
 class UlimitTest(base.BaseTestCase):
     def test_create_host_config_dict_ulimit(self):
