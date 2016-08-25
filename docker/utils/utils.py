@@ -993,7 +993,7 @@ def format_environment(environment):
     def format_env(key, value):
         if value is None:
             return key
-        return '{key}={value}'.format(key=key, value=value)
+        return u'{key}={value}'.format(key=key, value=value)
     return [format_env(*var) for var in six.iteritems(environment)]
 
 

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import datetime
 import json
 import signal
@@ -1154,6 +1156,24 @@ class CreateContainerTest(DockerClientTest):
         self.assertEqual(
             args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
         )
+
+    def test_create_container_with_unicode_envvars(self):
+        envvars_dict = {
+            'foo': u'☃',
+        }
+
+        expected = [
+            u'foo=☃'
+        ]
+
+        self.client.create_container(
+            'busybox', 'true',
+            environment=envvars_dict,
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data'])['Env'], expected)
 
 
 class ContainerTest(DockerClientTest):
