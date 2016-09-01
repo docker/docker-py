@@ -300,7 +300,8 @@ class TestNetworks(helpers.BaseTestCase):
         net_name, net_id = self.create_network()
         with self.assertRaises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
-        self.client.create_network(net_name, check_duplicate=False)
+        net_id = self.client.create_network(net_name, check_duplicate=False)
+        self.tmp_networks.append(net_id['Id'])
 
     @requires_api_version('1.22')
     def test_connect_with_links(self):
@@ -387,3 +388,27 @@ class TestNetworks(helpers.BaseTestCase):
         _, net_id = self.create_network(internal=True)
         net = self.client.inspect_network(net_id)
         assert net['Internal'] is True
+
+    @requires_api_version('1.23')
+    def test_create_network_with_labels(self):
+        _, net_id = self.create_network(labels={
+            'com.docker.py.test': 'label'
+        })
+
+        net = self.client.inspect_network(net_id)
+        assert 'Labels' in net
+        assert len(net['Labels']) == 1
+        assert net['Labels'] == {
+            'com.docker.py.test': 'label'
+        }
+
+    @requires_api_version('1.23')
+    def test_create_network_with_labels_wrong_type(self):
+        with pytest.raises(TypeError):
+            self.create_network(labels=['com.docker.py.test=label', ])
+
+    @requires_api_version('1.23')
+    def test_create_network_ipv6_enabled(self):
+        _, net_id = self.create_network(enable_ipv6=True)
+        net = self.client.inspect_network(net_id)
+        assert net['EnableIPv6'] is True
