@@ -115,7 +115,8 @@ class TestNetworks(helpers.BaseTestCase):
         network_data = self.client.inspect_network(net_id)
         self.assertEqual(
             list(network_data['Containers'].keys()),
-            [container['Id']])
+            [container['Id']]
+        )
 
         with pytest.raises(docker.errors.APIError):
             self.client.connect_container_to_network(container, net_id)
@@ -126,6 +127,33 @@ class TestNetworks(helpers.BaseTestCase):
 
         with pytest.raises(docker.errors.APIError):
             self.client.disconnect_container_from_network(container, net_id)
+
+    @requires_api_version('1.22')
+    def test_connect_and_force_disconnect_container(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container('busybox', 'top')
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        network_data = self.client.inspect_network(net_id)
+        self.assertFalse(network_data.get('Containers'))
+
+        self.client.connect_container_to_network(container, net_id)
+        network_data = self.client.inspect_network(net_id)
+        self.assertEqual(
+            list(network_data['Containers'].keys()),
+            [container['Id']]
+        )
+
+        self.client.disconnect_container_from_network(container, net_id, True)
+        network_data = self.client.inspect_network(net_id)
+        self.assertFalse(network_data.get('Containers'))
+
+        with pytest.raises(docker.errors.APIError):
+            self.client.disconnect_container_from_network(
+                container, net_id, force=True
+            )
 
     @requires_api_version('1.22')
     def test_connect_with_aliases(self):

@@ -184,4 +184,4 @@ class NetworkTest(DockerClientTest):
 
         self.assertEqual(
             json.loads(post.call_args[1]['data']),
-            {'container': container_id})
+            {'Container': container_id})

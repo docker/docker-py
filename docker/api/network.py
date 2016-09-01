@@ -93,8 +93,15 @@ class NetworkApiMixin(object):
 
     @check_resource
     @minimum_version('1.21')
-    def disconnect_container_from_network(self, container, net_id):
-        data = {"container": container}
+    def disconnect_container_from_network(self, container, net_id,
+                                          force=False):
+        data = {"Container": container}
+        if force:
+            if version_lt(self._version, '1.22'):
+                raise InvalidVersion(
+                    'Forced disconnect was introduced in API 1.22'
+                )
+            data['Force'] = force
         url = self._url("/networks/{0}/disconnect", net_id)
         res = self._post_json(url, data=data)
         self._raise_for_status(res)

@@ -355,6 +355,8 @@ Inspect changes on a container's filesystem.
 
 * container (str): container-id/name to be disconnected from a network
 * net_id (str): network id
+* force (bool): Force the container to disconnect from a network.
+  Default: `False`
 
 ## events
 
