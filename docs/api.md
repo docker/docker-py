@@ -283,22 +283,25 @@ The utility can be used as follows:
 ```python
 >>> import docker.utils
 >>> my_envs = docker.utils.parse_env_file('/path/to/file')
->>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+>>> client.create_container('myimage', 'command', environment=my_envs)
 ```
-
-You can now use this with 'environment' for `create_container`.
-
 
 ## create_network
 
-Create a network, similar to the `docker network create` command.
+Create a network, similar to the `docker network create` command. See the
+[networks documentation](networks.md) for details.
 
 **Params**:
 
 * name (str): Name of the network
 * driver (str): Name of the driver used to create the network
-
 * options (dict): Driver options as a key-value dictionary
+* ipam (dict): Optional custom IP scheme for the network
+* check_duplicate (bool): Request daemon to check for networks with same name.
+  Default: `True`.
+* internal (bool): Restrict external access to the network. Default `False`.
+* labels (dict): Map of labels to set on the network. Default `None`.
+* enable_ipv6 (bool): Enable IPv6 on the network. Default `False`.
 
 **Returns** (dict): The created network reference object
 
@@ -352,6 +355,8 @@ Inspect changes on a container's filesystem.
 
 * container (str): container-id/name to be disconnected from a network
 * net_id (str): network id
+* force (bool): Force the container to disconnect from a network.
+  Default: `False`
 
 ## events
 

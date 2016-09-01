@@ -22,7 +22,8 @@ class NetworkApiMixin(object):
 
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
-                       check_duplicate=None, internal=False):
+                       check_duplicate=None, internal=False, labels=None,
+                       enable_ipv6=False):
         if options is not None and not isinstance(options, dict):
             raise TypeError('options must be a dictionary')
 
@@ -33,6 +34,22 @@ class NetworkApiMixin(object):
             'IPAM': ipam,
             'CheckDuplicate': check_duplicate
         }
+
+        if labels is not None:
+            if version_lt(self._version, '1.23'):
+                raise InvalidVersion(
+                    'network labels were introduced in API 1.23'
+                )
+            if not isinstance(labels, dict):
+                raise TypeError('labels must be a dictionary')
+            data["Labels"] = labels
+
+        if enable_ipv6:
+            if version_lt(self._version, '1.23'):
+                raise InvalidVersion(
+                    'enable_ipv6 was introduced in API 1.23'
+                )
+            data['EnableIPv6'] = True
 
         if internal:
             if version_lt(self._version, '1.22'):
@@ -76,8 +93,15 @@ class NetworkApiMixin(object):
 
     @check_resource
     @minimum_version('1.21')
-    def disconnect_container_from_network(self, container, net_id):
-        data = {"container": container}
+    def disconnect_container_from_network(self, container, net_id,
+                                          force=False):
+        data = {"Container": container}
+        if force:
+            if version_lt(self._version, '1.22'):
+                raise InvalidVersion(
+                    'Forced disconnect was introduced in API 1.22'
+                )
+            data['Force'] = force
         url = self._url("/networks/{0}/disconnect", net_id)
         res = self._post_json(url, data=data)
         self._raise_for_status(res)
