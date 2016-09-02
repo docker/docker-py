@@ -80,7 +80,7 @@ class Mount(dict):
                 self['BindOptions'] = {
                     'Propagation': propagation
                 }
-            if any(labels, driver_config, no_copy):
+            if any([labels, driver_config, no_copy]):
                 raise errors.DockerError(
                     'Mount type is binding but volume options have been '
                     'provided.'
