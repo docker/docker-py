@@ -67,6 +67,22 @@ def create_ipam_config(driver='default', pool_configs=None):
     }
 
 
+def create_healthcheck(test=None, interval=None, timeout=None, retries=None):
+    return {
+        'Test': test,
+        'Interval': interval,
+        'Timeout': timeout,
+        'Retries': retries,
+    }
+
+
+def create_healthcheck_test_from_command(command=None):
+    return [
+        'CMD-SHELL',
+        command
+    ]
+
+
 def mkbuildcontext(dockerfile):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
@@ -1011,6 +1027,7 @@ def create_container_config(
     entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
     memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
     labels=None, volume_driver=None, stop_signal=None, networking_config=None,
+    healthcheck=None,
 ):
     if isinstance(command, six.string_types):
         command = split_command(command)
@@ -1037,6 +1054,11 @@ def create_container_config(
     if stop_signal is not None and compare_version('1.21', version) < 0:
         raise errors.InvalidVersion(
             'stop_signal was only introduced in API version 1.21'
+        )
+
+    if healthcheck is not None and compare_version('1.24', version) < 0:
+        raise errors.InvalidVersion(
+            'Health options were only introduced in API version 1.24'
         )
 
     if compare_version('1.19', version) < 0:
@@ -1146,5 +1168,6 @@ def create_container_config(
         'MacAddress': mac_address,
         'Labels': labels,
         'VolumeDriver': volume_driver,
-        'StopSignal': stop_signal
+        'StopSignal': stop_signal,
+        'Healthcheck': healthcheck
     }
