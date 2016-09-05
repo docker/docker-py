@@ -8,41 +8,59 @@ import requests.exceptions
 import six
 import websocket
 
-
-from . import api, auth, constants, errors, ssladapter
-from .tls import TLSConfig
-from .transport import UnixAdapter
-from .utils import utils, check_resource, update_headers, kwargs_from_env
-from .utils.socket import frames_iter
+from .build import BuildApiMixin
+from .container import ContainerApiMixin
+from .daemon import DaemonApiMixin
+from .exec_api import ExecApiMixin
+from .image import ImageApiMixin
+from .network import NetworkApiMixin
+from .service import ServiceApiMixin
+from .swarm import SwarmApiMixin
+from .volume import VolumeApiMixin
+from .. import auth, ssladapter
+from ..constants import (DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
+                         IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION,
+                         STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
+                         MINIMUM_DOCKER_API_VERSION)
+from ..errors import DockerException, APIError, TLSParameterError, NotFound
+from ..tls import TLSConfig
+from ..transport import UnixAdapter
+from ..utils import utils, check_resource, update_headers, kwargs_from_env
+from ..utils.socket import frames_iter
 try:
-    from .transport import NpipeAdapter
+    from ..transport import NpipeAdapter
 except ImportError:
     pass
 
 
 def from_env(**kwargs):
-    return Client.from_env(**kwargs)
+    return APIClient.from_env(**kwargs)
 
 
-class Client(
+class APIClient(
         requests.Session,
-        api.BuildApiMixin,
-        api.ContainerApiMixin,
-        api.DaemonApiMixin,
-        api.ExecApiMixin,
-        api.ImageApiMixin,
-        api.NetworkApiMixin,
-        api.ServiceApiMixin,
-        api.SwarmApiMixin,
-        api.VolumeApiMixin):
+        BuildApiMixin,
+        ContainerApiMixin,
+        DaemonApiMixin,
+        ExecApiMixin,
+        ImageApiMixin,
+        NetworkApiMixin,
+        ServiceApiMixin,
+        SwarmApiMixin,
+        VolumeApiMixin):
+    """
+    A low-level client for the Docker Remote API.
+
+    Each method maps one-to-one with a REST API endpoint, so calling each
+    method results in a single API call.
+    """
     def __init__(self, base_url=None, version=None,
-                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
-                 user_agent=constants.DEFAULT_USER_AGENT,
-                 num_pools=constants.DEFAULT_NUM_POOLS):
-        super(Client, self).__init__()
+                 timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
+                 user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS):
+        super(APIClient, self).__init__()
 
         if tls and not base_url:
-            raise errors.TLSParameterError(
+            raise TLSParameterError(
                 'If using TLS, the base_url argument must be provided.'
             )
 
@@ -53,7 +71,7 @@ class Client(
         self._auth_configs = auth.load_config()
 
         base_url = utils.parse_host(
-            base_url, constants.IS_WINDOWS_PLATFORM, tls=bool(tls)
+            base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)
         )
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixAdapter(
@@ -63,8 +81,8 @@ class Client(
             self._unmount('http://', 'https://')
             self.base_url = 'http+docker://localunixsocket'
         elif base_url.startswith('npipe://'):
-            if not constants.IS_WINDOWS_PLATFORM:
-                raise errors.DockerException(
+            if not IS_WINDOWS_PLATFORM:
+                raise DockerException(
                     'The npipe:// protocol is only supported on Windows'
                 )
             try:
@@ -72,7 +90,7 @@ class Client(
                     base_url, timeout, pool_connections=num_pools
                 )
             except NameError:
-                raise errors.DockerException(
+                raise DockerException(
                     'Install pypiwin32 package to enable npipe:// support'
                 )
             self.mount('http+docker://', self._custom_adapter)
@@ -90,24 +108,24 @@ class Client(
 
         # version detection needs to be after unix adapter mounting
         if version is None:
-            self._version = constants.DEFAULT_DOCKER_API_VERSION
+            self._version = DEFAULT_DOCKER_API_VERSION
         elif isinstance(version, six.string_types):
             if version.lower() == 'auto':
                 self._version = self._retrieve_server_version()
             else:
                 self._version = version
         else:
-            raise errors.DockerException(
+            raise DockerException(
                 'Version parameter must be a string or None. Found {0}'.format(
                     type(version).__name__
                 )
             )
-        if utils.version_lt(self._version, constants.MINIMUM_DOCKER_API_VERSION):
+        if utils.version_lt(self._version, MINIMUM_DOCKER_API_VERSION):
             warnings.warn(
                 'The minimum API version supported is {}, but you are using '
                 'version {}. It is recommended you either upgrade Docker '
                 'Engine or use an older version of docker-py.'.format(
-                    constants.MINIMUM_DOCKER_API_VERSION, self._version)
+                    MINIMUM_DOCKER_API_VERSION, self._version)
             )
 
     @classmethod
@@ -121,12 +139,12 @@ class Client(
         try:
             return self.version(api_version=False)["ApiVersion"]
         except KeyError:
-            raise errors.DockerException(
+            raise DockerException(
                 'Invalid response from docker daemon: key "ApiVersion"'
                 ' is missing.'
             )
         except Exception as e:
-            raise errors.DockerException(
+            raise DockerException(
                 'Error while fetching server API version: {0}'.format(e)
             )
 
@@ -176,8 +194,8 @@ class Client(
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                raise errors.NotFound(e, response, explanation=explanation)
-            raise errors.APIError(e, response, explanation=explanation)
+                raise NotFound(e, response, explanation=explanation)
+            raise APIError(e, response, explanation=explanation)
 
     def _result(self, response, json=False, binary=False):
         assert not (json and binary)
@@ -282,7 +300,7 @@ class Client(
             if len(buf[walker:]) < 8:
                 break
             _, length = struct.unpack_from('>BxxxL', buf[walker:])
-            start = walker + constants.STREAM_HEADER_SIZE_BYTES
+            start = walker + STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end
             yield buf[start:end]
@@ -297,7 +315,7 @@ class Client(
         self._disable_socket_timeout(socket)
 
         while True:
-            header = response.raw.read(constants.STREAM_HEADER_SIZE_BYTES)
+            header = response.raw.read(STREAM_HEADER_SIZE_BYTES)
             if not header:
                 break
             _, length = struct.unpack('>BxxxL', header)
@@ -390,7 +408,7 @@ class Client(
 
     def get_adapter(self, url):
         try:
-            return super(Client, self).get_adapter(url)
+            return super(APIClient, self).get_adapter(url)
         except requests.exceptions.InvalidSchema as e:
             if self._custom_adapter:
                 return self._custom_adapter

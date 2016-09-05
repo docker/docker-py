@@ -1244,7 +1244,7 @@ class ContainerTest(DockerClientTest):
         )
 
     def test_logs(self):
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             logs = self.client.logs(fake_api.FAKE_CONTAINER_ID)
 
@@ -1263,7 +1263,7 @@ class ContainerTest(DockerClientTest):
         )
 
     def test_logs_with_dict_instead_of_id(self):
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             logs = self.client.logs({'Id': fake_api.FAKE_CONTAINER_ID})
 
@@ -1282,7 +1282,7 @@ class ContainerTest(DockerClientTest):
         )
 
     def test_log_streaming(self):
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True,
                              follow=False)
@@ -1297,7 +1297,7 @@ class ContainerTest(DockerClientTest):
         )
 
     def test_log_following(self):
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
                              follow=True)
@@ -1312,7 +1312,7 @@ class ContainerTest(DockerClientTest):
         )
 
     def test_log_following_backwards(self):
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True)
 
@@ -1326,7 +1326,7 @@ class ContainerTest(DockerClientTest):
         )
 
     def test_log_streaming_and_following(self):
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=True,
                              follow=True)
@@ -1342,7 +1342,7 @@ class ContainerTest(DockerClientTest):
 
     def test_log_tail(self):
 
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
                              follow=False, tail=10)
@@ -1358,7 +1358,7 @@ class ContainerTest(DockerClientTest):
 
     def test_log_since(self):
         ts = 809222400
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
                              follow=False, since=ts)
@@ -1375,7 +1375,7 @@ class ContainerTest(DockerClientTest):
     def test_log_since_with_datetime(self):
         ts = 809222400
         time = datetime.datetime.utcfromtimestamp(ts)
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
                              follow=False, since=time)
@@ -1391,9 +1391,9 @@ class ContainerTest(DockerClientTest):
 
     def test_log_tty(self):
         m = mock.Mock()
-        with mock.patch('docker.Client.inspect_container',
+        with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container_tty):
-            with mock.patch('docker.Client._stream_raw_result',
+            with mock.patch('docker.api.client.APIClient._stream_raw_result',
                             m):
                 self.client.logs(fake_api.FAKE_CONTAINER_ID,
                                  follow=True, stream=True)

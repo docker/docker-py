@@ -25,7 +25,7 @@ class InformationTest(BaseIntegrationTest):
         self.assertIn('Debug', res)
 
     def test_search(self):
-        client = docker.from_env(timeout=10)
+        client = docker.APIClient(timeout=10, **kwargs_from_env())
         res = client.search('busybox')
         self.assertTrue(len(res) >= 1)
         base_img = [x for x in res if x['name'] == 'busybox']
@@ -114,7 +114,7 @@ class LoadConfigTest(BaseIntegrationTest):
 
 class AutoDetectVersionTest(unittest.TestCase):
     def test_client_init(self):
-        client = docker.from_env(version='auto')
+        client = docker.APIClient(version='auto', **kwargs_from_env())
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -126,7 +126,7 @@ class AutoDetectVersionTest(unittest.TestCase):
 class ConnectionTimeoutTest(unittest.TestCase):
     def setUp(self):
         self.timeout = 0.5
-        self.client = docker.client.Client(base_url='http://192.168.10.2:4243',
+        self.client = docker.api.APIClient(base_url='http://192.168.10.2:4243',
                                            timeout=self.timeout)
 
     def test_timeout(self):
@@ -155,7 +155,7 @@ class UnixconnTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
 
-            client = docker.from_env()
+            client = docker.APIClient(**kwargs_from_env())
             client.images()
             client.close()
             del client

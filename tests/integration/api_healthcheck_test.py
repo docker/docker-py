@@ -1,5 +1,4 @@
-from .base import BaseIntegrationTest
-from .base import BUSYBOX
+from .base import BaseAPIIntegrationTest, BUSYBOX
 from .. import helpers
 
 SECOND = 1000000000
@@ -12,7 +11,7 @@ def wait_on_health_status(client, container, status):
     return helpers.wait_on_condition(condition)
 
 
-class HealthcheckTest(BaseIntegrationTest):
+class HealthcheckTest(BaseAPIIntegrationTest):
 
     @helpers.requires_api_version('1.24')
     def test_healthcheck_shell_command(self):

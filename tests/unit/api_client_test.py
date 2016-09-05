@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from docker.client import Client
+from docker.api import APIClient
 
 TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -23,14 +23,14 @@ class ClientTest(unittest.TestCase):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
-        client = Client.from_env()
+        client = APIClient.from_env()
         self.assertEqual(client.base_url, "https://192.168.59.103:2376")
 
     def test_from_env_with_version(self):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
-        client = Client.from_env(version='2.32')
+        client = APIClient.from_env(version='2.32')
         self.assertEqual(client.base_url, "https://192.168.59.103:2376")
         self.assertEqual(client._version, '2.32')
 
@@ -47,7 +47,7 @@ class DisableSocketTest(unittest.TestCase):
             return self.timeout
 
     def setUp(self):
-        self.client = Client()
+        self.client = APIClient()
 
     def test_disable_socket_timeout(self):
         """Test that the timeout is disabled on a generic socket object."""
