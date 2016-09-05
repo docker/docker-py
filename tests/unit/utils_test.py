@@ -13,10 +13,8 @@ import unittest
 import pytest
 import six
 
-from docker.client import Client
-from docker.constants import (
-    DEFAULT_DOCKER_API_VERSION, IS_WINDOWS_PLATFORM
-)
+from docker.api.client import APIClient
+from docker.constants import DEFAULT_DOCKER_API_VERSION, IS_WINDOWS_PLATFORM
 from docker.errors import DockerException, InvalidVersion
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
@@ -47,7 +45,7 @@ class DecoratorsTest(unittest.TestCase):
         def f(self, headers=None):
             return headers
 
-        client = Client()
+        client = APIClient()
         client._auth_configs = {}
 
         g = update_headers(f)
@@ -305,7 +303,7 @@ class KwargsFromEnvTest(unittest.TestCase):
         self.assertEqual(False, kwargs['tls'].assert_hostname)
         self.assertTrue(kwargs['tls'].verify)
         try:
-            client = Client(**kwargs)
+            client = APIClient(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
             self.assertEqual(kwargs['tls'].ca_cert, client.verify)
             self.assertEqual(kwargs['tls'].cert, client.cert)
@@ -324,7 +322,7 @@ class KwargsFromEnvTest(unittest.TestCase):
         self.assertEqual(True, kwargs['tls'].assert_hostname)
         self.assertEqual(False, kwargs['tls'].verify)
         try:
-            client = Client(**kwargs)
+            client = APIClient(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
             self.assertEqual(kwargs['tls'].cert, client.cert)
             self.assertFalse(kwargs['tls'].verify)
@@ -821,6 +819,7 @@ class PortsTest(unittest.TestCase):
         self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
         self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
 
+
 def convert_paths(collection):
     if not IS_WINDOWS_PLATFORM:
         return collection
@@ -1093,7 +1092,7 @@ class TarTest(unittest.TestCase):
             )
 
 
-class FormatEnvironmentTest(base.BaseTestCase):
+class FormatEnvironmentTest(unittest.TestCase):
     def test_format_env_binary_unicode_value(self):
         env_dict = {
             'ARTIST_NAME': b'\xec\x86\xa1\xec\xa7\x80\xec\x9d\x80'

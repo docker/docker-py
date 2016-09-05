@@ -33,7 +33,7 @@ class NetworkTest(DockerClientTest):
         get = mock.Mock(return_value=response(
             status_code=200, content=json.dumps(networks).encode('utf-8')))
 
-        with mock.patch('docker.Client.get', get):
+        with mock.patch('docker.api.client.APIClient.get', get):
             self.assertEqual(self.client.networks(), networks)
 
             self.assertEqual(get.call_args[0][0], url_prefix + 'networks')
@@ -59,7 +59,7 @@ class NetworkTest(DockerClientTest):
         network_response = response(status_code=200, content=network_data)
         post = mock.Mock(return_value=network_response)
 
-        with mock.patch('docker.Client.post', post):
+        with mock.patch('docker.api.client.APIClient.post', post):
             result = self.client.create_network('foo')
             self.assertEqual(result, network_data)
 
@@ -109,7 +109,7 @@ class NetworkTest(DockerClientTest):
         network_id = 'abc12345'
         delete = mock.Mock(return_value=response(status_code=200))
 
-        with mock.patch('docker.Client.delete', delete):
+        with mock.patch('docker.api.client.APIClient.delete', delete):
             self.client.remove_network(network_id)
 
         args = delete.call_args
@@ -130,7 +130,7 @@ class NetworkTest(DockerClientTest):
         network_response = response(status_code=200, content=network_data)
         get = mock.Mock(return_value=network_response)
 
-        with mock.patch('docker.Client.get', get):
+        with mock.patch('docker.api.client.APIClient.get', get):
             result = self.client.inspect_network(network_id)
             self.assertEqual(result, network_data)
 
@@ -145,7 +145,7 @@ class NetworkTest(DockerClientTest):
 
         post = mock.Mock(return_value=response(status_code=201))
 
-        with mock.patch('docker.Client.post', post):
+        with mock.patch('docker.api.client.APIClient.post', post):
             self.client.connect_container_to_network(
                 {'Id': container_id},
                 network_id,
@@ -174,7 +174,7 @@ class NetworkTest(DockerClientTest):
 
         post = mock.Mock(return_value=response(status_code=201))
 
-        with mock.patch('docker.Client.post', post):
+        with mock.patch('docker.api.client.APIClient.post', post):
             self.client.disconnect_container_from_network(
                 {'Id': container_id}, network_id)
 

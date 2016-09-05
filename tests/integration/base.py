@@ -2,6 +2,7 @@ import shutil
 import unittest
 
 import docker
+from docker.utils import kwargs_from_env
 import six
 
 
@@ -23,7 +24,7 @@ class BaseIntegrationTest(unittest.TestCase):
         if six.PY2:
             self.assertRegex = self.assertRegexpMatches
             self.assertCountEqual = self.assertItemsEqual
-        self.client = docker.from_env(timeout=60)
+        self.client = docker.APIClient(timeout=60, **kwargs_from_env())
         self.tmp_imgs = []
         self.tmp_containers = []
         self.tmp_folders = []

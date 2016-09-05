@@ -11,6 +11,7 @@ import time
 import unittest
 
 import docker
+from docker.api import APIClient
 import requests
 from requests.packages import urllib3
 import six
@@ -95,12 +96,15 @@ url_prefix = '{0}v{1}/'.format(
 class DockerClientTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.multiple(
-            'docker.Client', get=fake_get, post=fake_post, put=fake_put,
+            'docker.api.client.APIClient',
+            get=fake_get,
+            post=fake_post,
+            put=fake_put,
             delete=fake_delete,
             _read_from_socket=fake_read_from_socket
         )
         self.patcher.start()
-        self.client = docker.Client()
+        self.client = APIClient()
         # Force-clear authconfig to avoid tampering with the tests
         self.client._cfg = {'Configs': {}}
 
@@ -122,7 +126,7 @@ class DockerClientTest(unittest.TestCase):
 class DockerApiTest(DockerClientTest):
     def test_ctor(self):
         with pytest.raises(docker.errors.DockerException) as excinfo:
-            docker.Client(version=1.12)
+            APIClient(version=1.12)
 
         self.assertEqual(
             str(excinfo.value),
@@ -189,7 +193,7 @@ class DockerApiTest(DockerClientTest):
         )
 
     def test_retrieve_server_version(self):
-        client = docker.Client(version="auto")
+        client = APIClient(version="auto")
         self.assertTrue(isinstance(client._version, six.string_types))
         self.assertFalse(client._version == "auto")
         client.close()
@@ -269,27 +273,27 @@ class DockerApiTest(DockerClientTest):
         return socket_adapter.socket_path
 
     def test_url_compatibility_unix(self):
-        c = docker.Client(base_url="unix://socket")
+        c = APIClient(base_url="unix://socket")
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_unix_triple_slash(self):
-        c = docker.Client(base_url="unix:///socket")
+        c = APIClient(base_url="unix:///socket")
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http_unix_triple_slash(self):
-        c = docker.Client(base_url="http+unix:///socket")
+        c = APIClient(base_url="http+unix:///socket")
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http(self):
-        c = docker.Client(base_url="http://hostname:1234")
+        c = APIClient(base_url="http://hostname:1234")
 
         assert c.base_url == "http://hostname:1234"
 
     def test_url_compatibility_tcp(self):
-        c = docker.Client(base_url="tcp://hostname:1234")
+        c = APIClient(base_url="tcp://hostname:1234")
 
         assert c.base_url == "http://hostname:1234"
 
@@ -435,7 +439,7 @@ class StreamTest(unittest.TestCase):
             b'\r\n'
         ) + b'\r\n'.join(lines)
 
-        with docker.Client(base_url="http+unix://" + self.socket_file) \
+        with APIClient(base_url="http+unix://" + self.socket_file) \
                 as client:
             for i in range(5):
                 try:
@@ -455,7 +459,7 @@ class StreamTest(unittest.TestCase):
 class UserAgentTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.object(
-            docker.Client,
+            APIClient,
             'send',
             return_value=fake_resp("GET", "%s/version" % fake_api.prefix)
         )
@@ -465,7 +469,7 @@ class UserAgentTest(unittest.TestCase):
         self.patcher.stop()
 
     def test_default_user_agent(self):
-        client = docker.Client()
+        client = APIClient()
         client.version()
 
         self.assertEqual(self.mock_send.call_count, 1)
@@ -474,7 +478,7 @@ class UserAgentTest(unittest.TestCase):
         self.assertEqual(headers['User-Agent'], expected)
 
     def test_custom_user_agent(self):
-        client = docker.Client(user_agent='foo/bar')
+        client = APIClient(user_agent='foo/bar')
         client.version()
 
         self.assertEqual(self.mock_send.call_count, 1)
