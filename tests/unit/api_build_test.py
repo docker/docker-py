@@ -4,10 +4,10 @@ import io
 import docker
 from docker import auth
 
-from .api_test import DockerClientTest, fake_request, url_prefix
+from .api_test import BaseAPIClientTest, fake_request, url_prefix
 
 
-class BuildTest(DockerClientTest):
+class BuildTest(BaseAPIClientTest):
     def test_build_container(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',

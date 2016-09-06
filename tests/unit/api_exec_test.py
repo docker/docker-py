@@ -2,11 +2,11 @@ import json
 
 from . import fake_api
 from .api_test import (
-    DockerClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
+    BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
 )
 
 
-class ExecTest(DockerClientTest):
+class ExecTest(BaseAPIClientTest):
     def test_exec_create(self):
         self.client.exec_create(fake_api.FAKE_CONTAINER_ID, ['ls', '-1'])
 

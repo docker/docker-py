@@ -93,7 +93,7 @@ url_prefix = '{0}v{1}/'.format(
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
 
-class DockerClientTest(unittest.TestCase):
+class BaseAPIClientTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.multiple(
             'docker.api.client.APIClient',
@@ -123,7 +123,7 @@ class DockerClientTest(unittest.TestCase):
                 }
 
 
-class DockerApiTest(DockerClientTest):
+class DockerApiTest(BaseAPIClientTest):
     def test_ctor(self):
         with pytest.raises(docker.errors.DockerException) as excinfo:
             APIClient(version=1.12)

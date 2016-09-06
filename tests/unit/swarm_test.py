@@ -4,10 +4,10 @@ import json
 
 from . import fake_api
 from ..helpers import requires_api_version
-from .api_test import (DockerClientTest, url_prefix, fake_request)
+from .api_test import BaseAPIClientTest, url_prefix, fake_request
 
 
-class SwarmTest(DockerClientTest):
+class SwarmTest(BaseAPIClientTest):
     @requires_api_version('1.24')
     def test_node_update(self):
         node_spec = {

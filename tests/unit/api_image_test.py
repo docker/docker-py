@@ -4,7 +4,7 @@ import pytest
 from . import fake_api
 from docker import auth
 from .api_test import (
-    DockerClientTest, fake_request, DEFAULT_TIMEOUT_SECONDS, url_prefix,
+    BaseAPIClientTest, fake_request, DEFAULT_TIMEOUT_SECONDS, url_prefix,
     fake_resolve_authconfig
 )
 
@@ -14,7 +14,7 @@ except ImportError:
     import mock
 
 
-class ImageTest(DockerClientTest):
+class ImageTest(BaseAPIClientTest):
     def test_image_viz(self):
         with pytest.raises(Exception):
             self.client.images('busybox', viz=True)
