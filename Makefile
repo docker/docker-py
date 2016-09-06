@@ -13,6 +13,9 @@ build:
 build-py3:
 	docker build -t docker-py3 -f Dockerfile-py3 .
 
+build-docs:
+	docker build -t docker-py-docs -f Dockerfile-docs .
+
 build-dind-certs:
 	docker build -t dpy-dind-certs -f tests/Dockerfile-dind-certs .
 
@@ -57,3 +60,6 @@ integration-dind-ssl: build-dind-certs build build-py3
 
 flake8: build
 	docker run docker-py flake8 docker tests
+
+docs: build-docs
+	docker run -v `pwd`/docs:/home/docker-py/docs/ -p 8000:8000 docker-py-docs mkdocs serve -a 0.0.0.0:8000
