@@ -106,8 +106,6 @@ def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
         # docker.io - in that case, it seems the full URL is necessary.
         registry = 'https://index.docker.io/v1/'
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
-    if registry not in authconfig:
-        log.debug("No entry found")
     store = dockerpycreds.Store(credstore_name)
     try:
         data = store.get(registry)
@@ -122,10 +120,13 @@ def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
                 'Password': data['Secret'],
             })
         return res
+    except dockerpycreds.CredentialsNotFound as e:
+        log.debug('No entry found')
+        return None
     except dockerpycreds.StoreError as e:
-        log.error('Credentials store error: {0}'.format(repr(e)))
-
-    return None
+        raise errors.DockerException(
+            'Credentials store error: {0}'.format(repr(e))
+        )
 
 
 def convert_to_hostname(url):
