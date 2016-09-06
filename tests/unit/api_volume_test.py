@@ -3,10 +3,10 @@ import json
 import pytest
 
 from ..helpers import requires_api_version
-from .api_test import DockerClientTest, url_prefix, fake_request
+from .api_test import BaseAPIClientTest, url_prefix, fake_request
 
 
-class VolumeTest(DockerClientTest):
+class VolumeTest(BaseAPIClientTest):
     @requires_api_version('1.21')
     def test_list_volumes(self):
         volumes = self.client.volumes()

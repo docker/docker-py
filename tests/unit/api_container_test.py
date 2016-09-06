@@ -11,7 +11,7 @@ import six
 from . import fake_api
 from ..helpers import requires_api_version
 from .api_test import (
-    DockerClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
+    BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
     fake_inspect_container
 )
 
@@ -25,7 +25,7 @@ def fake_inspect_container_tty(self, container):
     return fake_inspect_container(self, container, tty=True)
 
 
-class StartContainerTest(DockerClientTest):
+class StartContainerTest(BaseAPIClientTest):
     def test_start_container(self):
         self.client.start(fake_api.FAKE_CONTAINER_ID)
 
@@ -168,7 +168,7 @@ class StartContainerTest(DockerClientTest):
         )
 
 
-class CreateContainerTest(DockerClientTest):
+class CreateContainerTest(BaseAPIClientTest):
     def test_create_container(self):
         self.client.create_container('busybox', 'true')
 
@@ -1180,7 +1180,7 @@ class CreateContainerTest(DockerClientTest):
         self.assertEqual(json.loads(args[1]['data'])['Env'], expected)
 
 
-class ContainerTest(DockerClientTest):
+class ContainerTest(BaseAPIClientTest):
     def test_list_containers(self):
         self.client.containers(all=True)
 

@@ -2,7 +2,7 @@ import json
 
 import six
 
-from .api_test import DockerClientTest, url_prefix, response
+from .api_test import BaseAPIClientTest, url_prefix, response
 from ..helpers import requires_api_version
 from docker.utils import create_ipam_config, create_ipam_pool
 
@@ -12,7 +12,7 @@ except ImportError:
     import mock
 
 
-class NetworkTest(DockerClientTest):
+class NetworkTest(BaseAPIClientTest):
     @requires_api_version('1.21')
     def test_list_networks(self):
         networks = [
