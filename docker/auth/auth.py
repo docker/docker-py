@@ -3,6 +3,7 @@ import json
 import logging
 import os
 
+import dockerpycreds
 import six
 
 from .. import errors
@@ -11,6 +12,7 @@ INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
 DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
 LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
+TOKEN_USERNAME = '<token>'
 
 log = logging.getLogger(__name__)
 
@@ -74,6 +76,13 @@ def resolve_authconfig(authconfig, registry=None):
     with full URLs are stripped down to hostnames before checking for a match.
     Returns None if no match was found.
     """
+    if 'credsStore' in authconfig:
+        log.debug(
+            'Using credentials store "{0}"'.format(authconfig['credsStore'])
+        )
+        return _resolve_authconfig_credstore(
+            authconfig, registry, authconfig['credsStore']
+        )
     # Default to the public index server
     registry = resolve_index_name(registry) if registry else INDEX_NAME
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
@@ -89,6 +98,35 @@ def resolve_authconfig(authconfig, registry=None):
 
     log.debug("No entry found")
     return None
+
+
+def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
+    if not registry or registry == INDEX_NAME:
+        # The ecosystem is a little schizophrenic with index.docker.io VS
+        # docker.io - in that case, it seems the full URL is necessary.
+        registry = 'https://index.docker.io/v1/'
+    log.debug("Looking for auth entry for {0}".format(repr(registry)))
+    store = dockerpycreds.Store(credstore_name)
+    try:
+        data = store.get(registry)
+        res = {
+            'ServerAddress': registry,
+        }
+        if data['Username'] == TOKEN_USERNAME:
+            res['IdentityToken'] = data['Secret']
+        else:
+            res.update({
+                'Username': data['Username'],
+                'Password': data['Secret'],
+            })
+        return res
+    except dockerpycreds.CredentialsNotFound as e:
+        log.debug('No entry found')
+        return None
+    except dockerpycreds.StoreError as e:
+        raise errors.DockerException(
+            'Credentials store error: {0}'.format(repr(e))
+        )
 
 
 def convert_to_hostname(url):
