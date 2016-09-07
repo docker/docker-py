@@ -169,35 +169,6 @@ def get_fake_inspect_image():
     return status_code, response
 
 
-def get_fake_port():
-    status_code = 200
-    response = {
-        'HostConfig': {
-            'Binds': None,
-            'ContainerIDFile': '',
-            'Links': None,
-            'LxcConf': None,
-            'PortBindings': {
-                '1111': None,
-                '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-                '2222': None
-            },
-            'Privileged': False,
-            'PublishAllPorts': False
-        },
-        'NetworkSettings': {
-            'Bridge': 'docker0',
-            'PortMapping': None,
-            'Ports': {
-                '1111': None,
-                '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-                '2222': None},
-            'MacAddress': '02:42:ac:11:00:0a'
-        }
-    }
-    return status_code, response
-
-
 def get_fake_insert_image():
     status_code = 200
     response = {'StatusCode': 0}
@@ -495,8 +466,6 @@ fake_responses = {
     post_fake_pause_container,
     '{1}/{0}/containers/3cc2351ab11b/unpause'.format(CURRENT_VERSION, prefix):
     post_fake_unpause_container,
-    '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
-    get_fake_port,
     '{1}/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION, prefix):
     post_fake_restart_container,
     '{1}/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION, prefix):

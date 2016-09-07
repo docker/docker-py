@@ -751,14 +751,18 @@ class CreateContainerTest(DockerClientTest):
         )
 
     def test_create_container_with_mac_address(self):
-        mac_address_expected = "02:42:ac:11:00:0a"
+        expected = "02:42:ac:11:00:0a"
 
-        container = self.client.create_container(
-            'busybox', ['sleep', '60'], mac_address=mac_address_expected)
+        self.client.create_container(
+            'busybox',
+            ['sleep', '60'],
+            mac_address=expected
+        )
 
-        res = self.client.inspect_container(container['Id'])
-        self.assertEqual(mac_address_expected,
-                         res['NetworkSettings']['MacAddress'])
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        data = json.loads(args[1]['data'])
+        assert data['MacAddress'] == expected
 
     def test_create_container_with_links(self):
         link_path = 'path'
