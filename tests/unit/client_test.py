@@ -1,6 +1,7 @@
 import os
+import unittest
+
 from docker.client import Client
-from .. import base
 
 TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -8,7 +9,7 @@ TEST_CERT_DIR = os.path.join(
 )
 
 
-class ClientTest(base.BaseTestCase):
+class ClientTest(unittest.TestCase):
     def setUp(self):
         self.os_environ = os.environ.copy()
 
@@ -34,7 +35,7 @@ class ClientTest(base.BaseTestCase):
         self.assertEqual(client._version, '2.32')
 
 
-class DisableSocketTest(base.BaseTestCase):
+class DisableSocketTest(unittest.TestCase):
     class DummySocket(object):
         def __init__(self, timeout=60):
             self.timeout = timeout
