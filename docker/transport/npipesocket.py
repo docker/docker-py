@@ -94,7 +94,7 @@ class NpipeSocket(object):
         if mode.strip('b') != 'r':
             raise NotImplementedError()
         rawio = NpipeFileIOBase(self)
-        if bufsize is None:
+        if bufsize is None or bufsize < 0:
             bufsize = io.DEFAULT_BUFFER_SIZE
         return io.BufferedReader(rawio, buffer_size=bufsize)
 
