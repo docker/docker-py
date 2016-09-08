@@ -1,4 +1,4 @@
-.PHONY: all build test integration-test unit-test build-py3 unit-test-py3 integration-test-py3
+.PHONY: all build build-py3 build-dind-certs clean flake8 integration-test integration-test-py3 integration-dind integration-dind-ssl test unit-test unit-test-py3
 
 all: test
 
