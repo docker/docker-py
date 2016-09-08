@@ -2,8 +2,8 @@ import json
 
 import six
 
-from ..helpers import requires_api_version
 from .api_test import DockerClientTest, url_prefix, response
+from ..helpers import requires_api_version
 from docker.utils import create_ipam_config, create_ipam_pool
 
 try:

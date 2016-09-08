@@ -1,21 +1,20 @@
 import datetime
 import json
+import io
 import os
 import re
 import shutil
 import socket
-import sys
 import tempfile
 import threading
 import time
-import io
+import unittest
 
 import docker
 import requests
 from requests.packages import urllib3
 import six
 
-from .. import base
 from . import fake_api
 
 import pytest
@@ -93,7 +92,7 @@ url_prefix = '{0}v{1}/'.format(
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
 
-class DockerClientTest(base.Cleanup, base.BaseTestCase):
+class DockerClientTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.multiple(
             'docker.Client', get=fake_get, post=fake_post, put=fake_put,
@@ -108,11 +107,6 @@ class DockerClientTest(base.Cleanup, base.BaseTestCase):
     def tearDown(self):
         self.client.close()
         self.patcher.stop()
-
-    def assertIn(self, object, collection):
-        if six.PY2 and sys.version_info[1] <= 6:
-            return self.assertTrue(object in collection)
-        return super(DockerClientTest, self).assertIn(object, collection)
 
     def base_create_payload(self, img='busybox', cmd=None):
         if not cmd:
@@ -356,7 +350,7 @@ class DockerApiTest(DockerClientTest):
         self.assertEqual(result, content)
 
 
-class StreamTest(base.Cleanup, base.BaseTestCase):
+class StreamTest(unittest.TestCase):
     def setUp(self):
         socket_dir = tempfile.mkdtemp()
         self.build_context = tempfile.mkdtemp()
@@ -458,7 +452,7 @@ class StreamTest(base.Cleanup, base.BaseTestCase):
                 str(i).encode() for i in range(50)])
 
 
-class UserAgentTest(base.BaseTestCase):
+class UserAgentTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.object(
             docker.Client,
