@@ -208,6 +208,48 @@ class ImportImageTest(helpers.BaseTestCase):
         img_id = result['status']
         self.tmp_imgs.append(img_id)
 
+    def test_import_image_from_data_with_changes(self):
+        with self.dummy_tar_stream(n_bytes=500) as f:
+            content = f.read()
+
+        statuses = self.client.import_image_from_data(
+            content, repository='test/import-from-bytes',
+            changes=['USER foobar', 'CMD ["echo"]']
+        )
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        assert 'error' not in result
+
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+        img_data = self.client.inspect_image(img_id)
+        assert img_data is not None
+        assert img_data['Config']['Cmd'] == ['echo']
+        assert img_data['Config']['User'] == 'foobar'
+
+    def test_import_image_with_changes(self):
+        with self.dummy_tar_file(n_bytes=self.TAR_SIZE) as tar_filename:
+            statuses = self.client.import_image(
+                src=tar_filename, repository='test/import-from-file',
+                changes=['USER foobar', 'CMD ["echo"]']
+            )
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        assert 'error' not in result
+
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+        img_data = self.client.inspect_image(img_id)
+        assert img_data is not None
+        assert img_data['Config']['Cmd'] == ['echo']
+        assert img_data['Config']['User'] == 'foobar'
+
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):
         '''Serve data from an IO stream over HTTP.'''

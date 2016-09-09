@@ -1,17 +1,3 @@
-# Copyright 2013 dotCloud inc.
-
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-
-#        http://www.apache.org/licenses/LICENSE-2.0
-
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
 from . import fake_stat
 from docker import constants
 
@@ -179,35 +165,6 @@ def get_fake_inspect_image():
             "WorkingDir": ""
         },
         'Size': 6823592
-    }
-    return status_code, response
-
-
-def get_fake_port():
-    status_code = 200
-    response = {
-        'HostConfig': {
-            'Binds': None,
-            'ContainerIDFile': '',
-            'Links': None,
-            'LxcConf': None,
-            'PortBindings': {
-                '1111': None,
-                '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-                '2222': None
-            },
-            'Privileged': False,
-            'PublishAllPorts': False
-        },
-        'NetworkSettings': {
-            'Bridge': 'docker0',
-            'PortMapping': None,
-            'Ports': {
-                '1111': None,
-                '1111/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '4567'}],
-                '2222': None},
-            'MacAddress': '02:42:ac:11:00:0a'
-        }
     }
     return status_code, response
 
@@ -433,7 +390,10 @@ def get_fake_volume():
     response = {
         'Name': 'perfectcherryblossom',
         'Driver': 'local',
-        'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+        'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom',
+        'Labels': {
+            'com.example.some-label': 'some-value'
+        }
     }
     return status_code, response
 
@@ -506,8 +466,6 @@ fake_responses = {
     post_fake_pause_container,
     '{1}/{0}/containers/3cc2351ab11b/unpause'.format(CURRENT_VERSION, prefix):
     post_fake_unpause_container,
-    '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
-    get_fake_port,
     '{1}/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION, prefix):
     post_fake_restart_container,
     '{1}/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION, prefix):

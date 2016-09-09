@@ -56,8 +56,6 @@ class ExecApiMixin(object):
     def exec_start(self, exec_id, detach=False, tty=False, stream=False,
                    socket=False):
         # we want opened socket if socket == True
-        if socket:
-            stream = True
         if isinstance(exec_id, dict):
             exec_id = exec_id.get('Id')
 
@@ -66,10 +64,18 @@ class ExecApiMixin(object):
             'Detach': detach
         }
 
+        headers = {} if detach else {
+            'Connection': 'Upgrade',
+            'Upgrade': 'tcp'
+        }
+
         res = self._post_json(
-            self._url('/exec/{0}/start', exec_id), data=data, stream=stream
+            self._url('/exec/{0}/start', exec_id),
+            headers=headers,
+            data=data,
+            stream=True
         )
 
         if socket:
             return self._get_raw_response_socket(res)
-        return self._get_result_tty(stream, res, tty)
+        return self._read_from_socket(res, stream)

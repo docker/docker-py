@@ -107,6 +107,7 @@ Create an endpoint config dictionary to be used with
   using the IPv4 protocol. Defaults to `None`.
 * ipv6_address (str): The IP address of this container on the network,
   using the IPv6 protocol. Defaults to `None`.
+* link_local_ips (list): A list of link-local (IPv4/IPv6) addresses.
 
 **Returns** An endpoint config dictionary.
 

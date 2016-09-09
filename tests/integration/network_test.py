@@ -115,7 +115,8 @@ class TestNetworks(helpers.BaseTestCase):
         network_data = self.client.inspect_network(net_id)
         self.assertEqual(
             list(network_data['Containers'].keys()),
-            [container['Id']])
+            [container['Id']]
+        )
 
         with pytest.raises(docker.errors.APIError):
             self.client.connect_container_to_network(container, net_id)
@@ -126,6 +127,33 @@ class TestNetworks(helpers.BaseTestCase):
 
         with pytest.raises(docker.errors.APIError):
             self.client.disconnect_container_from_network(container, net_id)
+
+    @requires_api_version('1.22')
+    def test_connect_and_force_disconnect_container(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container('busybox', 'top')
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        network_data = self.client.inspect_network(net_id)
+        self.assertFalse(network_data.get('Containers'))
+
+        self.client.connect_container_to_network(container, net_id)
+        network_data = self.client.inspect_network(net_id)
+        self.assertEqual(
+            list(network_data['Containers'].keys()),
+            [container['Id']]
+        )
+
+        self.client.disconnect_container_from_network(container, net_id, True)
+        network_data = self.client.inspect_network(net_id)
+        self.assertFalse(network_data.get('Containers'))
+
+        with pytest.raises(docker.errors.APIError):
+            self.client.disconnect_container_from_network(
+                container, net_id, force=True
+            )
 
     @requires_api_version('1.22')
     def test_connect_with_aliases(self):
@@ -249,6 +277,27 @@ class TestNetworks(helpers.BaseTestCase):
             '2001:389::f00d'
         )
 
+    @requires_api_version('1.24')
+    def test_create_with_linklocal_ips(self):
+        container = self.client.create_container(
+            'busybox', 'top',
+            networking_config=self.client.create_networking_config(
+                {
+                    'bridge': self.client.create_endpoint_config(
+                        link_local_ips=['169.254.8.8']
+                    )
+                }
+            ),
+            host_config=self.client.create_host_config(network_mode='bridge')
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        container_data = self.client.inspect_container(container)
+        net_cfg = container_data['NetworkSettings']['Networks']['bridge']
+        assert 'IPAMConfig' in net_cfg
+        assert 'LinkLocalIPs' in net_cfg['IPAMConfig']
+        assert net_cfg['IPAMConfig']['LinkLocalIPs'] == ['169.254.8.8']
+
     @requires_api_version('1.22')
     def test_create_with_links(self):
         net_name, net_id = self.create_network()
@@ -279,7 +328,8 @@ class TestNetworks(helpers.BaseTestCase):
         net_name, net_id = self.create_network()
         with self.assertRaises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
-        self.client.create_network(net_name, check_duplicate=False)
+        net_id = self.client.create_network(net_name, check_duplicate=False)
+        self.tmp_networks.append(net_id['Id'])
 
     @requires_api_version('1.22')
     def test_connect_with_links(self):
@@ -366,3 +416,27 @@ class TestNetworks(helpers.BaseTestCase):
         _, net_id = self.create_network(internal=True)
         net = self.client.inspect_network(net_id)
         assert net['Internal'] is True
+
+    @requires_api_version('1.23')
+    def test_create_network_with_labels(self):
+        _, net_id = self.create_network(labels={
+            'com.docker.py.test': 'label'
+        })
+
+        net = self.client.inspect_network(net_id)
+        assert 'Labels' in net
+        assert len(net['Labels']) == 1
+        assert net['Labels'] == {
+            'com.docker.py.test': 'label'
+        }
+
+    @requires_api_version('1.23')
+    def test_create_network_with_labels_wrong_type(self):
+        with pytest.raises(TypeError):
+            self.create_network(labels=['com.docker.py.test=label', ])
+
+    @requires_api_version('1.23')
+    def test_create_network_ipv6_enabled(self):
+        _, net_id = self.create_network(enable_ipv6=True)
+        net = self.client.inspect_network(net_id)
+        assert net['EnableIPv6'] is True

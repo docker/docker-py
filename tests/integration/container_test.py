@@ -3,6 +3,8 @@ import signal
 import tempfile
 
 import docker
+from docker.utils.socket import next_frame_size
+from docker.utils.socket import read_exactly
 import pytest
 import six
 
@@ -157,9 +159,6 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
     def create_container_readonly_fs(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         ctnr = self.client.create_container(
             BUSYBOX, ['mkdir', '/shrine'],
             host_config=self.client.create_host_config(
@@ -290,7 +289,7 @@ class CreateContainerTest(helpers.BaseTestCase):
             )
             self.client.start(container)
 
-        assert expected_msg in str(excinfo.value)
+        assert six.b(expected_msg) in excinfo.value.explanation
 
     def test_valid_no_log_driver_specified(self):
         log_config = docker.utils.LogConfig(
@@ -804,8 +803,7 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
+        self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -819,8 +817,7 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
+        self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -1025,9 +1022,9 @@ class AttachContainerTest(helpers.BaseTestCase):
 
         self.client.start(ident)
 
-        next_size = helpers.next_packet_size(pty_stdout)
+        next_size = next_frame_size(pty_stdout)
         self.assertEqual(next_size, len(line))
-        data = helpers.read_data(pty_stdout, next_size)
+        data = read_exactly(pty_stdout, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
 
@@ -1099,11 +1096,38 @@ class ContainerUpdateTest(helpers.BaseTestCase):
         container = self.client.create_container(
             BUSYBOX, 'top', host_config=self.client.create_host_config(
                 mem_limit=old_mem_limit
-            ), cpu_shares=102
+            )
         )
         self.tmp_containers.append(container)
         self.client.start(container)
         self.client.update_container(container, mem_limit=new_mem_limit)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
-        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 102)
+
+
+class ContainerCPUTest(helpers.BaseTestCase):
+    @requires_api_version('1.18')
+    def test_container_cpu_shares(self):
+        cpu_shares = 512
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpu_shares=cpu_shares
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 512)
+
+    @requires_api_version('1.18')
+    def test_container_cpuset(self):
+        cpuset_cpus = "0,1"
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpuset_cpus=cpuset_cpus
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)

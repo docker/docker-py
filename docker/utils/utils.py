@@ -1,17 +1,3 @@
-# Copyright 2013 dotCloud inc.
-
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-
-#        http://www.apache.org/licenses/LICENSE-2.0
-
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
 import base64
 import io
 import os
@@ -22,8 +8,8 @@ import tarfile
 import tempfile
 import warnings
 from distutils.version import StrictVersion
-from fnmatch import fnmatch
 from datetime import datetime
+from fnmatch import fnmatch
 
 import requests
 import six
@@ -31,11 +17,17 @@ import six
 from .. import constants
 from .. import errors
 from .. import tls
-from .types import Ulimit, LogConfig
+from ..types import Ulimit, LogConfig
 
+if six.PY2:
+    from urllib import splitnport
+else:
+    from urllib.parse import splitnport
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
+DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
+
 BYTE_UNITS = {
     'b': 1,
     'k': 1024,
@@ -385,12 +377,11 @@ def parse_repository_tag(repo_name):
 # Protocol translation: tcp -> http, unix -> http+unix
 def parse_host(addr, is_win32=False, tls=False):
     proto = "http+unix"
-    host = DEFAULT_HTTP_HOST
     port = None
     path = ''
 
     if not addr and is_win32:
-        addr = '{0}:{1}'.format(DEFAULT_HTTP_HOST, 2375)
+        addr = DEFAULT_NPIPE
 
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
@@ -425,31 +416,26 @@ def parse_host(addr, is_win32=False, tls=False):
             )
         proto = "https" if tls else "http"
 
-    if proto != "http+unix" and ":" in addr:
-        host_parts = addr.split(':')
-        if len(host_parts) != 2:
-            raise errors.DockerException(
-                "Invalid bind address format: {0}".format(addr)
-            )
-        if host_parts[0]:
-            host = host_parts[0]
+    if proto in ("http", "https"):
+        address_parts = addr.split('/', 1)
+        host = address_parts[0]
+        if len(address_parts) == 2:
+            path = '/' + address_parts[1]
+        host, port = splitnport(host)
 
-        port = host_parts[1]
-        if '/' in port:
-            port, path = port.split('/', 1)
-            path = '/{0}'.format(path)
-        try:
-            port = int(port)
-        except Exception:
+        if port is None:
             raise errors.DockerException(
                 "Invalid port: {0}".format(addr)
             )
 
-    elif proto in ("http", "https") and ':' not in addr:
-        raise errors.DockerException(
-            "Bind address needs a port: {0}".format(addr))
+        if not host:
+            host = DEFAULT_HTTP_HOST
     else:
         host = addr
+
+    if proto in ("http", "https") and port == -1:
+        raise errors.DockerException(
+            "Bind address needs a port: {0}".format(addr))
 
     if proto == "http+unix" or proto == 'npipe':
         return "{0}://{1}".format(proto, host)
@@ -613,14 +599,17 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        cap_drop=None, devices=None, extra_hosts=None,
                        read_only=None, pid_mode=None, ipc_mode=None,
                        security_opt=None, ulimits=None, log_config=None,
-                       mem_limit=None, memswap_limit=None, mem_swappiness=None,
-                       cgroup_parent=None, group_add=None, cpu_quota=None,
+                       mem_limit=None, memswap_limit=None,
+                       mem_reservation=None, kernel_memory=None,
+                       mem_swappiness=None, cgroup_parent=None,
+                       group_add=None, cpu_quota=None,
                        cpu_period=None, blkio_weight=None,
                        blkio_weight_device=None, device_read_bps=None,
                        device_write_bps=None, device_read_iops=None,
                        device_write_iops=None, oom_kill_disable=False,
-                       shm_size=None, version=None, tmpfs=None,
-                       oom_score_adj=None):
+                       shm_size=None, sysctls=None, version=None, tmpfs=None,
+                       oom_score_adj=None, dns_opt=None, cpu_shares=None,
+                       cpuset_cpus=None, userns_mode=None, pids_limit=None):
 
     host_config = {}
 
@@ -636,6 +625,18 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
     if memswap_limit is not None:
         host_config['MemorySwap'] = parse_bytes(memswap_limit)
+
+    if mem_reservation:
+        if version_lt(version, '1.21'):
+            raise host_config_version_error('mem_reservation', '1.21')
+
+        host_config['MemoryReservation'] = parse_bytes(mem_reservation)
+
+    if kernel_memory:
+        if version_lt(version, '1.21'):
+            raise host_config_version_error('kernel_memory', '1.21')
+
+        host_config['KernelMemory'] = parse_bytes(kernel_memory)
 
     if mem_swappiness is not None:
         if version_lt(version, '1.20'):
@@ -719,11 +720,24 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
     if dns is not None:
         host_config['Dns'] = dns
 
+    if dns_opt is not None:
+        if version_lt(version, '1.21'):
+            raise host_config_version_error('dns_opt', '1.21')
+
+        host_config['DnsOptions'] = dns_opt
+
     if security_opt is not None:
         if not isinstance(security_opt, list):
             raise host_config_type_error('security_opt', security_opt, 'list')
 
         host_config['SecurityOpt'] = security_opt
+
+    if sysctls:
+        if not isinstance(sysctls, dict):
+            raise host_config_type_error('sysctls', sysctls, 'dict')
+        host_config['Sysctls'] = {}
+        for k, v in six.iteritems(sysctls):
+            host_config['Sysctls'][k] = six.text_type(v)
 
     if volumes_from is not None:
         if isinstance(volumes_from, six.string_types):
@@ -796,6 +810,21 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
         host_config['CpuPeriod'] = cpu_period
 
+    if cpu_shares:
+        if version_lt(version, '1.18'):
+            raise host_config_version_error('cpu_shares', '1.18')
+
+        if not isinstance(cpu_shares, int):
+            raise host_config_type_error('cpu_shares', cpu_shares, 'int')
+
+        host_config['CpuShares'] = cpu_shares
+
+    if cpuset_cpus:
+        if version_lt(version, '1.18'):
+            raise host_config_version_error('cpuset_cpus', '1.18')
+
+        host_config['CpuSetCpus'] = cpuset_cpus
+
     if blkio_weight:
         if not isinstance(blkio_weight, int):
             raise host_config_type_error('blkio_weight', blkio_weight, 'int')
@@ -853,6 +882,21 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
             raise host_config_version_error('tmpfs', '1.22')
         host_config["Tmpfs"] = convert_tmpfs_mounts(tmpfs)
 
+    if userns_mode:
+        if version_lt(version, '1.23'):
+            raise host_config_version_error('userns_mode', '1.23')
+
+        if userns_mode != "host":
+            raise host_config_value_error("userns_mode", userns_mode)
+        host_config['UsernsMode'] = userns_mode
+
+    if pids_limit:
+        if not isinstance(pids_limit, int):
+            raise host_config_type_error('pids_limit', pids_limit, 'int')
+        if version_lt(version, '1.23'):
+            raise host_config_version_error('pids_limit', '1.23')
+        host_config["PidsLimit"] = pids_limit
+
     return host_config
 
 
@@ -873,7 +917,8 @@ def create_networking_config(endpoints_config=None):
 
 
 def create_endpoint_config(version, aliases=None, links=None,
-                           ipv4_address=None, ipv6_address=None):
+                           ipv4_address=None, ipv6_address=None,
+                           link_local_ips=None):
     if version_lt(version, '1.22'):
         raise errors.InvalidVersion(
             'Endpoint config is not supported for API version < 1.22'
@@ -892,6 +937,13 @@ def create_endpoint_config(version, aliases=None, links=None,
 
     if ipv6_address:
         ipam_config['IPv6Address'] = ipv6_address
+
+    if link_local_ips is not None:
+        if version_lt(version, '1.24'):
+            raise errors.InvalidVersion(
+                'link_local_ips is not supported for API version < 1.24'
+            )
+        ipam_config['LinkLocalIPs'] = link_local_ips
 
     if ipam_config:
         endpoint_config['IPAMConfig'] = ipam_config
@@ -934,7 +986,7 @@ def format_environment(environment):
     def format_env(key, value):
         if value is None:
             return key
-        return '{key}={value}'.format(key=key, value=value)
+        return u'{key}={value}'.format(key=key, value=value)
     return [format_env(*var) for var in six.iteritems(environment)]
 
 
@@ -959,6 +1011,14 @@ def create_container_config(
         raise errors.InvalidVersion(
             'labels were only introduced in API version 1.18'
         )
+
+    if cpuset is not None or cpu_shares is not None:
+        if version_gte(version, '1.18'):
+            warnings.warn(
+                'The cpuset_cpus and cpu_shares options have been moved to '
+                'host_config in API version 1.18, and will be removed',
+                DeprecationWarning
+            )
 
     if stop_signal is not None and compare_version('1.21', version) < 0:
         raise errors.InvalidVersion(
@@ -989,6 +1049,7 @@ def create_container_config(
 
     if mem_limit is not None:
         mem_limit = parse_bytes(mem_limit)
+
     if memswap_limit is not None:
         memswap_limit = parse_bytes(memswap_limit)
 

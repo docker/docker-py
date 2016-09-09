@@ -1,4 +1,5 @@
-import pytest
+from docker.utils.socket import next_frame_size
+from docker.utils.socket import read_exactly
 
 from .. import helpers
 
@@ -7,9 +8,6 @@ BUSYBOX = helpers.BUSYBOX
 
 class ExecTest(helpers.BaseTestCase):
     def test_execute_command(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
@@ -23,9 +21,6 @@ class ExecTest(helpers.BaseTestCase):
         self.assertEqual(exec_log, b'hello\n')
 
     def test_exec_command_string(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
@@ -39,9 +34,6 @@ class ExecTest(helpers.BaseTestCase):
         self.assertEqual(exec_log, b'hello world\n')
 
     def test_exec_command_as_user(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
@@ -55,9 +47,6 @@ class ExecTest(helpers.BaseTestCase):
         self.assertEqual(exec_log, b'default\n')
 
     def test_exec_command_as_root(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
@@ -71,9 +60,6 @@ class ExecTest(helpers.BaseTestCase):
         self.assertEqual(exec_log, b'root\n')
 
     def test_exec_command_streaming(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
@@ -89,9 +75,6 @@ class ExecTest(helpers.BaseTestCase):
         self.assertEqual(res, b'hello\nworld\n')
 
     def test_exec_start_socket(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         container_id = container['Id']
@@ -107,15 +90,12 @@ class ExecTest(helpers.BaseTestCase):
         socket = self.client.exec_start(exec_id, socket=True)
         self.addCleanup(socket.close)
 
-        next_size = helpers.next_packet_size(socket)
+        next_size = next_frame_size(socket)
         self.assertEqual(next_size, len(line))
-        data = helpers.read_data(socket, next_size)
+        data = read_exactly(socket, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
     def test_exec_inspect(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']

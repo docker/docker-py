@@ -1,22 +1,9 @@
-# Copyright 2013 dotCloud inc.
-
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-
-#        http://www.apache.org/licenses/LICENSE-2.0
-
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
 import base64
 import json
 import logging
 import os
 
+import dockerpycreds
 import six
 
 from .. import errors
@@ -25,6 +12,7 @@ INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
 DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
 LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
+TOKEN_USERNAME = '<token>'
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +39,26 @@ def resolve_index_name(index_name):
     return index_name
 
 
+def get_config_header(client, registry):
+    log.debug('Looking for auth config')
+    if not client._auth_configs:
+        log.debug(
+            "No auth config in memory - loading from filesystem"
+        )
+        client._auth_configs = load_config()
+    authcfg = resolve_authconfig(client._auth_configs, registry)
+    # Do not fail here if no authentication exists for this
+    # specific registry as we can have a readonly pull. Just
+    # put the header if we can.
+    if authcfg:
+        log.debug('Found auth config')
+        # auth_config needs to be a dict in the format used by
+        # auth.py username , password, serveraddress, email
+        return encode_header(authcfg)
+    log.debug('No auth config found')
+    return None
+
+
 def split_repo_name(repo_name):
     parts = repo_name.split('/', 1)
     if len(parts) == 1 or (
@@ -68,6 +76,13 @@ def resolve_authconfig(authconfig, registry=None):
     with full URLs are stripped down to hostnames before checking for a match.
     Returns None if no match was found.
     """
+    if 'credsStore' in authconfig:
+        log.debug(
+            'Using credentials store "{0}"'.format(authconfig['credsStore'])
+        )
+        return _resolve_authconfig_credstore(
+            authconfig, registry, authconfig['credsStore']
+        )
     # Default to the public index server
     registry = resolve_index_name(registry) if registry else INDEX_NAME
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
@@ -83,6 +98,35 @@ def resolve_authconfig(authconfig, registry=None):
 
     log.debug("No entry found")
     return None
+
+
+def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
+    if not registry or registry == INDEX_NAME:
+        # The ecosystem is a little schizophrenic with index.docker.io VS
+        # docker.io - in that case, it seems the full URL is necessary.
+        registry = 'https://index.docker.io/v1/'
+    log.debug("Looking for auth entry for {0}".format(repr(registry)))
+    store = dockerpycreds.Store(credstore_name)
+    try:
+        data = store.get(registry)
+        res = {
+            'ServerAddress': registry,
+        }
+        if data['Username'] == TOKEN_USERNAME:
+            res['IdentityToken'] = data['Secret']
+        else:
+            res.update({
+                'Username': data['Username'],
+                'Password': data['Secret'],
+            })
+        return res
+    except dockerpycreds.CredentialsNotFound as e:
+        log.debug('No entry found')
+        return None
+    except dockerpycreds.StoreError as e:
+        raise errors.DockerException(
+            'Credentials store error: {0}'.format(repr(e))
+        )
 
 
 def convert_to_hostname(url):
@@ -160,18 +204,24 @@ def find_config_file(config_path=None):
         os.path.basename(DOCKER_CONFIG_FILENAME)
     ) if os.environ.get('DOCKER_CONFIG') else None
 
-    paths = [
+    paths = filter(None, [
         config_path,  # 1
         environment_path,  # 2
         os.path.join(os.path.expanduser('~'), DOCKER_CONFIG_FILENAME),  # 3
         os.path.join(
             os.path.expanduser('~'), LEGACY_DOCKER_CONFIG_FILENAME
         )  # 4
-    ]
+    ])
+
+    log.debug("Trying paths: {0}".format(repr(paths)))
 
     for path in paths:
-        if path and os.path.exists(path):
+        if os.path.exists(path):
+            log.debug("Found file at path: {0}".format(path))
             return path
+
+    log.debug("No config file found")
+
     return None
 
 
@@ -186,7 +236,6 @@ def load_config(config_path=None):
     config_file = find_config_file(config_path)
 
     if not config_file:
-        log.debug("File doesn't exist")
         return {}
 
     try:

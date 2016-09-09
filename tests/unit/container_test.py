@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import datetime
 import json
 import signal
@@ -286,6 +288,33 @@ class CreateContainerTest(DockerClientTest):
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
+    @requires_api_version('1.18')
+    def test_create_container_with_host_config_cpu_shares(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpu_shares=512
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpuShares": 512,
+                                "NetworkMode": "default"
+                             }}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
     def test_create_container_with_cpuset(self):
         self.client.create_container('busybox', 'ls',
                                      cpuset='0,1')
@@ -303,6 +332,33 @@ class CreateContainerTest(DockerClientTest):
                              "NetworkDisabled": false,
                              "Cpuset": "0,1",
                              "CpusetCpus": "0,1"}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    @requires_api_version('1.18')
+    def test_create_container_with_host_config_cpuset(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpuset_cpus='0,1'
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpuSetCpus": "0,1",
+                                "NetworkMode": "default"
+                             }}'''))
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})
 
@@ -695,14 +751,18 @@ class CreateContainerTest(DockerClientTest):
         )
 
     def test_create_container_with_mac_address(self):
-        mac_address_expected = "02:42:ac:11:00:0a"
+        expected = "02:42:ac:11:00:0a"
 
-        container = self.client.create_container(
-            'busybox', ['sleep', '60'], mac_address=mac_address_expected)
+        self.client.create_container(
+            'busybox',
+            ['sleep', '60'],
+            mac_address=expected
+        )
 
-        res = self.client.inspect_container(container['Id'])
-        self.assertEqual(mac_address_expected,
-                         res['NetworkSettings']['MacAddress'])
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        data = json.loads(args[1]['data'])
+        assert data['MacAddress'] == expected
 
     def test_create_container_with_links(self):
         link_path = 'path'
@@ -1073,6 +1133,51 @@ class CreateContainerTest(DockerClientTest):
             args[1]['timeout'],
             DEFAULT_TIMEOUT_SECONDS
         )
+
+    @requires_api_version('1.24')
+    def test_create_container_with_sysctl(self):
+        self.client.create_container(
+            'busybox', 'true',
+            host_config=self.client.create_host_config(
+                sysctls={
+                    'net.core.somaxconn': 1024,
+                    'net.ipv4.tcp_syncookies': '0',
+                }
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['Sysctls'] = {
+            'net.core.somaxconn': '1024', 'net.ipv4.tcp_syncookies': '0',
+        }
+        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
+        self.assertEqual(
+            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_create_container_with_unicode_envvars(self):
+        envvars_dict = {
+            'foo': u'☃',
+        }
+
+        expected = [
+            u'foo=☃'
+        ]
+
+        self.client.create_container(
+            'busybox', 'true',
+            environment=envvars_dict,
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        self.assertEqual(json.loads(args[1]['data'])['Env'], expected)
 
 
 class ContainerTest(DockerClientTest):

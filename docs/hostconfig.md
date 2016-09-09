@@ -109,11 +109,14 @@ for example:
 * cpu_group (int): The length of a CPU period in microseconds.
 * cpu_period (int): Microseconds of CPU time that the container can get in a
   CPU period.
-* blkio_weight: Block IO weight (relative weight), accepts a weight value between 10 and 1000.
+* cpu_shares (int): CPU shares (relative weight)
+* cpuset_cpus (str): CPUs in which to allow execution (0-3, 0,1)
+* blkio_weight: Block IO weight (relative weight), accepts a weight value
+  between 10 and 1000.
 * blkio_weight_device: Block IO weight (relative device weight) in the form of:
   `[{"Path": "device_path", "Weight": weight}]`
-* device_read_bps: Limit read rate (bytes per second) from a device in the form of:
-  `[{"Path": "device_path", "Rate": rate}]`
+* device_read_bps: Limit read rate (bytes per second) from a device in the
+  form of: `[{"Path": "device_path", "Rate": rate}]`
 * device_write_bps: Limit write rate (bytes per second) from a device.
 * device_read_iops: Limit read rate (IO per second) from a device.
 * device_write_iops: Limit write rate (IO per second) from a device.
@@ -121,8 +124,12 @@ for example:
   container process will run as.
 * devices (list): Host device bindings. See [host devices](host-devices.md)
   for more information.
-* tmpfs: Temporary filesystems to mouunt. See [Using tmpfs](tmpfs.md) for more
+* tmpfs: Temporary filesystems to mount. See [Using tmpfs](tmpfs.md) for more
   information.
+* sysctls (dict): Kernel parameters to set in the container.
+* userns_mode (str): Sets the user namespace mode for the container when user
+  namespace remapping option is enabled. Supported values are: `host`
+* pids_limit (int): Tune a container’s pids limit. Set -1 for unlimited.
 
 **Returns** (dict) HostConfig dictionary
 

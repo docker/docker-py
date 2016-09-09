@@ -1,6 +1,49 @@
 Change Log
 ==========
 
+1.10.0
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Features
+
+* Added swarm mode and service management methods. See the documentation for
+  details.
+* Added support for IPv6 Docker host addresses in the `Client` constructor.
+* Added (read-only) support for the Docker credentials store.
+* Added support for custom `auth_config` in `Client.push`.
+* Added support for `labels` in `Client.create_volume`.
+* Added support for `labels` and `enable_ipv6` in `Client.create_network`.
+* Added support for `force` param in
+  `Client.disconnect_container_from_network`.
+* Added support for `pids_limit`, `sysctls`, `userns_mode`, `cpuset_cpus`,
+  `cpu_shares`, `mem_reservation` and `kernel_memory` parameters in
+  `Client.create_host_config`.
+* Added support for `link_local_ips` in `create_endpoint_config`.
+* Added support for a `changes` parameter in `Client.import_image`.
+* Added support for a `version` parameter in `Client.from_env`.
+
+### Bugfixes
+
+* Fixed a bug where `Client.build` would crash if the `config.json` file
+  contained a `HttpHeaders` entry.
+* Fixed a bug where passing `decode=True` in some streaming methods would
+  crash when the daemon's response had an unexpected format.
+* Fixed a bug where `environment` values with unicode characters weren't
+  handled properly in `create_container`.
+* Fixed a bug where using the `npipe` protocol would sometimes break with
+  `ValueError: buffer size must be strictly positive`.
+
+### Miscellaneous
+
+* Fixed an issue where URL-quoting in docker-py was inconsistent with the
+  quoting done by the Docker CLI client.
+* The client now sends TCP upgrade headers to hint potential proxies about
+  connection hijacking.
+* The client now defaults to using the `npipe` protocol on Windows.
+
+
 1.9.0
 -----
 

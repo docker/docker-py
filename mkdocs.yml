@@ -13,6 +13,8 @@ pages:
 - Host devices: host-devices.md
 - Host configuration: hostconfig.md
 - Network configuration: networks.md
+- Swarm management: swarm.md
+- Swarm services: services.md
 - Using tmpfs: tmpfs.md
 - Using with Docker Machine: machine.md
 - Change Log: change_log.md
