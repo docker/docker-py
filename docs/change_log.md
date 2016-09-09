@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+1.10.1
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Bugfixes
+
+* The docker.utils.types module was removed in favor of docker.types, but some
+  applications imported it explicitly. It has been re-added with an import
+  warning advising to use the new module path.
+
 1.10.0
 ------
 
