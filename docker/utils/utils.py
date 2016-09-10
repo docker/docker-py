@@ -53,22 +53,6 @@ def create_ipam_config(driver='default', pool_configs=None):
     }
 
 
-def create_healthcheck(test=None, interval=None, timeout=None, retries=None):
-    return {
-        'Test': test,
-        'Interval': interval,
-        'Timeout': timeout,
-        'Retries': retries,
-    }
-
-
-def create_healthcheck_test_from_command(command=None):
-    return [
-        'CMD-SHELL',
-        command
-    ]
-
-
 def mkbuildcontext(dockerfile):
     f = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w', fileobj=f)
@@ -1042,7 +1026,7 @@ def create_container_config(
             'stop_signal was only introduced in API version 1.21'
         )
 
-    if healthcheck is not None and compare_version('1.24', version) < 0:
+    if healthcheck is not None and version_lt(version, '1.24'):
         raise errors.InvalidVersion(
             'Health options were only introduced in API version 1.24'
         )

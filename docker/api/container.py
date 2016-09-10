@@ -366,7 +366,7 @@ class ContainerApiMixin(object):
             cap_drop=cap_drop, volumes_from=volumes_from, devices=devices,
             network_mode=network_mode, restart_policy=restart_policy,
             extra_hosts=extra_hosts, read_only=read_only, pid_mode=pid_mode,
-            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits
+            ipc_mode=ipc_mode, security_opt=security_opt, ulimits=ulimits,
         )
         start_config = None
 
