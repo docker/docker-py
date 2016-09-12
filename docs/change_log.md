@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+1.10.2
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Bugfixes
+
+* Updated the docker-pycreds dependency as it was causing issues for some
+  users with dependency resolution in applications using docker-py.
+
+
 1.10.1
 ------
 
