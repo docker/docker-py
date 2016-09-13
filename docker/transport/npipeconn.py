@@ -1,6 +1,7 @@
 import six
 import requests.adapters
 
+from .. import constants
 from .npipesocket import NpipeSocket
 
 if six.PY3:
@@ -33,9 +34,9 @@ class NpipeHTTPConnection(httplib.HTTPConnection, object):
 
 
 class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, npipe_path, timeout=60):
+    def __init__(self, npipe_path, timeout=60, maxsize=10):
         super(NpipeHTTPConnectionPool, self).__init__(
-            'localhost', timeout=timeout
+            'localhost', timeout=timeout, maxsize=maxsize
         )
         self.npipe_path = npipe_path
         self.timeout = timeout
@@ -47,11 +48,12 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 
 
 class NpipeAdapter(requests.adapters.HTTPAdapter):
-    def __init__(self, base_url, timeout=60):
+    def __init__(self, base_url, timeout=60,
+                 num_pools=constants.DEFAULT_NUM_POOLS):
         self.npipe_path = base_url.replace('npipe://', '')
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
-            10, dispose_func=lambda p: p.close()
+            num_pools, dispose_func=lambda p: p.close()
         )
         super(NpipeAdapter, self).__init__()
 
