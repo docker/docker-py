@@ -40,7 +40,8 @@ class Client(
         api.VolumeApiMixin):
     def __init__(self, base_url=None, version=None,
                  timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
-                 user_agent=constants.DEFAULT_USER_AGENT):
+                 user_agent=constants.DEFAULT_USER_AGENT,
+                 num_pools=constants.DEFAULT_NUM_POOLS):
         super(Client, self).__init__()
 
         if tls and not base_url:
@@ -58,7 +59,9 @@ class Client(
             base_url, constants.IS_WINDOWS_PLATFORM, tls=bool(tls)
         )
         if base_url.startswith('http+unix://'):
-            self._custom_adapter = UnixAdapter(base_url, timeout)
+            self._custom_adapter = UnixAdapter(
+                base_url, timeout, num_pools=num_pools
+            )
             self.mount('http+docker://', self._custom_adapter)
             self._unmount('http://', 'https://')
             self.base_url = 'http+docker://localunixsocket'
@@ -68,7 +71,9 @@ class Client(
                     'The npipe:// protocol is only supported on Windows'
                 )
             try:
-                self._custom_adapter = NpipeAdapter(base_url, timeout)
+                self._custom_adapter = NpipeAdapter(
+                    base_url, timeout, num_pools=num_pools
+                )
             except NameError:
                 raise errors.DockerException(
                     'Install pypiwin32 package to enable npipe:// support'
@@ -80,7 +85,9 @@ class Client(
             if isinstance(tls, TLSConfig):
                 tls.configure_client(self)
             elif tls:
-                self._custom_adapter = ssladapter.SSLAdapter()
+                self._custom_adapter = ssladapter.SSLAdapter(
+                    num_pools=num_pools
+                )
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
 
