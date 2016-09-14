@@ -35,11 +35,11 @@ unit-test-py3: build-py3
 
 .PHONY: integration-test
 integration-test: build
-	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py py.test tests/integration
+	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py py.test tests/integration/${file}
 
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
-	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test tests/integration
+	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test tests/integration/${file}
 
 .PHONY: integration-dind
 integration-dind: build build-py3
