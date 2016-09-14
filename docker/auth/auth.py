@@ -174,6 +174,15 @@ def parse_auth(entries, raise_on_error=False):
                     'Invalid configuration for registry {0}'.format(registry)
                 )
             return {}
+        if 'identitytoken' in entry:
+            log.debug('Found an IdentityToken entry for registry {0}'.format(
+                registry
+            ))
+            conf[registry] = {
+                'IdentityToken': entry['identitytoken']
+            }
+            continue  # Other values are irrelevant if we have a token, skip.
+
         if 'auth' not in entry:
             # Starting with engine v1.11 (API 1.23), an empty dictionary is
             # a valid value in the auths config.
@@ -182,13 +191,15 @@ def parse_auth(entries, raise_on_error=False):
                 'Auth data for {0} is absent. Client might be using a '
                 'credentials store instead.'
             )
-            return {}
+            conf[registry] = {}
+            continue
 
         username, password = decode_auth(entry['auth'])
         log.debug(
             'Found entry (registry={0}, username={1})'
             .format(repr(registry), repr(username))
         )
+
         conf[registry] = {
             'username': username,
             'password': password,
