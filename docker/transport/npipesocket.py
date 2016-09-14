@@ -26,6 +26,7 @@ class NpipeSocket(object):
         and server-specific methods (bind, listen, accept...) are not
         implemented.
     """
+
     def __init__(self, handle=None):
         self._timeout = win32pipe.NMPWAIT_USE_DEFAULT_WAIT
         self._handle = handle

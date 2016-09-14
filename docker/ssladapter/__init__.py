@@ -1,1 +1,1 @@
-from .ssladapter import SSLAdapter # flake8: noqa
+from .ssladapter import SSLAdapter  # flake8: noqa

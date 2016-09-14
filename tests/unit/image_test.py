@@ -271,9 +271,9 @@ class ImageTest(DockerClientTest):
         }
         encoded_auth = auth.encode_header(auth_config)
         self.client.push(
-                fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME,
-                auth_config=auth_config
-                )
+            fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME,
+            auth_config=auth_config
+        )
 
         fake_request.assert_called_with(
             'POST',
