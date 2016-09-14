@@ -11,17 +11,11 @@ BUSYBOX = helpers.BUSYBOX
 class SwarmTest(helpers.BaseTestCase):
     def setUp(self):
         super(SwarmTest, self).setUp()
-        try:
-            self.client.leave_swarm(force=True)
-        except docker.errors.APIError:
-            pass
+        self.client.leave_swarm(force=True)
 
     def tearDown(self):
         super(SwarmTest, self).tearDown()
-        try:
-            self.client.leave_swarm(force=True)
-        except docker.errors.APIError:
-            pass
+        self.client.leave_swarm(force=True)
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):
@@ -65,6 +59,7 @@ class SwarmTest(helpers.BaseTestCase):
         with pytest.raises(docker.errors.APIError) as exc_info:
             self.client.inspect_swarm()
         exc_info.value.response.status_code == 406
+        assert self.client.leave_swarm(force=True)
 
     @requires_api_version('1.24')
     def test_update_swarm(self):

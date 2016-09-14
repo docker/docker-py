@@ -12,10 +12,7 @@ BUSYBOX = helpers.BUSYBOX
 class ServiceTest(helpers.BaseTestCase):
     def setUp(self):
         super(ServiceTest, self).setUp()
-        try:
-            self.client.leave_swarm(force=True)
-        except docker.errors.APIError:
-            pass
+        self.client.leave_swarm(force=True)
         self.client.init_swarm('eth0')
 
     def tearDown(self):
@@ -25,10 +22,7 @@ class ServiceTest(helpers.BaseTestCase):
                 self.client.remove_service(service['ID'])
             except docker.errors.APIError:
                 pass
-        try:
-            self.client.leave_swarm(force=True)
-        except docker.errors.APIError:
-            pass
+        self.client.leave_swarm(force=True)
 
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
