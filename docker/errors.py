@@ -11,7 +11,10 @@ class APIError(requests.exceptions.HTTPError):
         self.explanation = explanation
 
         if self.explanation is None and response.content:
-            self.explanation = response.content.strip()
+            try:
+                self.explanation = response.json()['message']
+            except ValueError:
+                self.explanation = response.content.strip()
 
     def __str__(self):
         message = super(APIError, self).__str__()
