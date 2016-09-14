@@ -1,5 +1,6 @@
-from .. import utils
 import logging
+from six.moves import http_client
+from .. import utils
 log = logging.getLogger(__name__)
 
 
@@ -53,6 +54,9 @@ class SwarmApiMixin(object):
     def leave_swarm(self, force=False):
         url = self._url('/swarm/leave')
         response = self._post(url, params={'force': force})
+        # Ignore "this node is not part of a swarm" error
+        if force and response.status_code == http_client.NOT_ACCEPTABLE:
+            return True
         self._raise_for_status(response)
         return True
 
