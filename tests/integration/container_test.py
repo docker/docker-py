@@ -119,7 +119,7 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.client.wait(id)
         with self.assertRaises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
-        err = exc.exception.response.text
+        err = exc.exception.explanation
         self.assertIn(
             'You cannot remove a running container', err
         )
@@ -290,7 +290,7 @@ class CreateContainerTest(helpers.BaseTestCase):
             )
             self.client.start(container)
 
-        assert six.b(expected_msg) in excinfo.value.explanation
+        assert excinfo.value.explanation == expected_msg
 
     def test_valid_no_log_driver_specified(self):
         log_config = docker.utils.LogConfig(
