@@ -35,11 +35,11 @@ unit-test-py3: build-py3
 
 .PHONY: integration-test
 integration-test: build
-	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py py.test tests/integration
+	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py py.test tests/integration/${file}
 
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
-	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test tests/integration
+	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test tests/integration/${file}
 
 .PHONY: integration-dind
 integration-dind: build build-py3
@@ -75,3 +75,7 @@ flake8: build
 .PHONY: docs
 docs: build-docs
 	docker run -v `pwd`/docs:/home/docker-py/docs/ -p 8000:8000 docker-py-docs mkdocs serve -a 0.0.0.0:8000
+
+.PHONY: shell
+shell: build
+	docker run -it -v /var/run/docker.sock:/var/run/docker.sock docker-py python
