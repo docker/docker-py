@@ -42,7 +42,7 @@ class TLSConfig(object):
                 )
 
             if not (tls_cert and tls_key) or (not os.path.isfile(tls_cert) or
-               not os.path.isfile(tls_key)):
+                                              not os.path.isfile(tls_key)):
                 raise errors.TLSParameterError(
                     'Path to a certificate and key files must be provided'
                     ' through the client_config param'

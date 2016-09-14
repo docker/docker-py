@@ -327,7 +327,7 @@ class DockerApiTest(DockerClientTest):
         # mock a stream interface
         raw_resp = urllib3.HTTPResponse(body=body)
         setattr(raw_resp._fp, 'chunked', True)
-        setattr(raw_resp._fp, 'chunk_left', len(body.getvalue())-1)
+        setattr(raw_resp._fp, 'chunk_left', len(body.getvalue()) - 1)
 
         # pass `decode=False` to the helper
         raw_resp._fp.seek(0)
