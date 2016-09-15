@@ -8,11 +8,11 @@ import six
 
 from docker import errors
 
-from .. import helpers
 from ..base import requires_api_version
+from .base import BaseIntegrationTest
 
 
-class BuildTest(helpers.BaseTestCase):
+class BuildTest(BaseIntegrationTest):
     def test_build_streaming(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
