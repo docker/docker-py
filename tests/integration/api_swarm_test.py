@@ -3,10 +3,10 @@ import docker
 import pytest
 
 from ..helpers import requires_api_version
-from .base import BaseIntegrationTest
+from .base import BaseAPIIntegrationTest
 
 
-class SwarmTest(BaseIntegrationTest):
+class SwarmTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(SwarmTest, self).setUp()
         self.client.leave_swarm(force=True)

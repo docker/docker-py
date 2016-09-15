@@ -8,10 +8,10 @@ import warnings
 import docker
 from docker.utils import kwargs_from_env
 
-from .base import BaseIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
-class InformationTest(BaseIntegrationTest):
+class InformationTest(BaseAPIIntegrationTest):
     def test_version(self):
         res = self.client.version()
         self.assertIn('GoVersion', res)
@@ -33,7 +33,7 @@ class InformationTest(BaseIntegrationTest):
         self.assertIn('description', base_img[0])
 
 
-class LinkTest(BaseIntegrationTest):
+class LinkTest(BaseAPIIntegrationTest):
     def test_remove_link(self):
         # Create containers
         container1 = self.client.create_container(
@@ -75,7 +75,7 @@ class LinkTest(BaseIntegrationTest):
         self.assertEqual(len(retrieved), 2)
 
 
-class LoadConfigTest(BaseIntegrationTest):
+class LoadConfigTest(BaseAPIIntegrationTest):
     def test_load_legacy_config(self):
         folder = tempfile.mkdtemp()
         self.tmp_folders.append(folder)
