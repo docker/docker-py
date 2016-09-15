@@ -2,7 +2,7 @@ import json
 
 import six
 
-from .. import base
+from ..helpers import requires_api_version
 from .api_test import DockerClientTest, url_prefix, response
 from docker.utils import create_ipam_config, create_ipam_pool
 
@@ -13,7 +13,7 @@ except ImportError:
 
 
 class NetworkTest(DockerClientTest):
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_list_networks(self):
         networks = [
             {
@@ -49,7 +49,7 @@ class NetworkTest(DockerClientTest):
             filters = json.loads(get.call_args[1]['params']['filters'])
             self.assertEqual(filters, {'id': ['123']})
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_create_network(self):
         network_data = {
             "id": 'abc12345',
@@ -104,7 +104,7 @@ class NetworkTest(DockerClientTest):
                     }
                 })
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_remove_network(self):
         network_id = 'abc12345'
         delete = mock.Mock(return_value=response(status_code=200))
@@ -116,7 +116,7 @@ class NetworkTest(DockerClientTest):
         self.assertEqual(args[0][0],
                          url_prefix + 'networks/{0}'.format(network_id))
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_inspect_network(self):
         network_id = 'abc12345'
         network_name = 'foo'
@@ -138,7 +138,7 @@ class NetworkTest(DockerClientTest):
         self.assertEqual(args[0][0],
                          url_prefix + 'networks/{0}'.format(network_id))
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_connect_container_to_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'
@@ -167,7 +167,7 @@ class NetworkTest(DockerClientTest):
                 },
             })
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_disconnect_container_from_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'

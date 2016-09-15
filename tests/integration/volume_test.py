@@ -1,8 +1,7 @@
 import docker
 import pytest
 
-from .. import helpers
-from ..base import requires_api_version
+from ..helpers import requires_api_version
 from .base import BaseIntegrationTest
 
 
