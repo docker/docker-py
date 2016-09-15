@@ -1,12 +1,11 @@
 import logging
 import os
-import six
 import warnings
 
-from ..auth import auth
+import six
+
+from .. import auth, errors, utils
 from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
-from .. import utils
-from .. import errors
 
 log = logging.getLogger(__name__)
 

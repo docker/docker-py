@@ -2,9 +2,8 @@ import os
 import warnings
 from datetime import datetime
 
-from ..auth import auth
+from .. import auth, utils
 from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
-from ..utils import utils
 
 
 class DaemonApiMixin(object):

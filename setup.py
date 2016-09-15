@@ -49,9 +49,8 @@ setup(
     long_description=long_description,
     url='https://github.com/docker/docker-py/',
     packages=[
-        'docker', 'docker.api', 'docker.auth', 'docker.transport',
-        'docker.utils', 'docker.utils.ports', 'docker.ssladapter',
-        'docker.types',
+        'docker', 'docker.api', 'docker.transport', 'docker.utils',
+        'docker.utils.ports', 'docker.ssladapter', 'docker.types',
     ],
     install_requires=requirements,
     tests_require=test_requirements,

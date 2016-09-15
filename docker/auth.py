@@ -6,7 +6,7 @@ import os
 import dockerpycreds
 import six
 
-from .. import errors
+from . import errors
 
 INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
