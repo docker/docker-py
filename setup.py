@@ -50,7 +50,7 @@ setup(
     url='https://github.com/docker/docker-py/',
     packages=[
         'docker', 'docker.api', 'docker.transport', 'docker.utils',
-        'docker.utils.ports', 'docker.types',
+        'docker.types',
     ],
     install_requires=requirements,
     tests_require=test_requirements,
