@@ -8,9 +8,7 @@ import random
 import shutil
 import tempfile
 
-from docker import auth
-from docker.auth.auth import parse_auth
-from docker import errors
+from docker import auth, errors
 
 from .. import base
 
@@ -122,7 +120,7 @@ class ResolveAuthTest(base.BaseTestCase):
     private_config = {'auth': encode_auth({'username': 'privateuser'})}
     legacy_config = {'auth': encode_auth({'username': 'legacyauth'})}
 
-    auth_config = parse_auth({
+    auth_config = auth.parse_auth({
         'https://index.docker.io/v1/': index_config,
         'my.registry.net': private_config,
         'http://legacy.registry.url/v1/': legacy_config,

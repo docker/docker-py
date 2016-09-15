@@ -228,7 +228,7 @@ class ImageTest(DockerClientTest):
         )
 
     def test_push_image(self):
-        with mock.patch('docker.auth.auth.resolve_authconfig',
+        with mock.patch('docker.auth.resolve_authconfig',
                         fake_resolve_authconfig):
             self.client.push(fake_api.FAKE_IMAGE_NAME)
 
@@ -245,7 +245,7 @@ class ImageTest(DockerClientTest):
         )
 
     def test_push_image_with_tag(self):
-        with mock.patch('docker.auth.auth.resolve_authconfig',
+        with mock.patch('docker.auth.resolve_authconfig',
                         fake_resolve_authconfig):
             self.client.push(
                 fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME
@@ -289,7 +289,7 @@ class ImageTest(DockerClientTest):
         )
 
     def test_push_image_stream(self):
-        with mock.patch('docker.auth.auth.resolve_authconfig',
+        with mock.patch('docker.auth.resolve_authconfig',
                         fake_resolve_authconfig):
             self.client.push(fake_api.FAKE_IMAGE_NAME, stream=True)
 
