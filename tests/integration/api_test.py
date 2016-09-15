@@ -6,11 +6,12 @@ import unittest
 import warnings
 
 import docker
+from docker.utils import kwargs_from_env
 
-from .. import helpers
+from .base import BaseIntegrationTest, BUSYBOX
 
 
-class InformationTest(helpers.BaseTestCase):
+class InformationTest(BaseIntegrationTest):
     def test_version(self):
         res = self.client.version()
         self.assertIn('GoVersion', res)
@@ -24,19 +25,19 @@ class InformationTest(helpers.BaseTestCase):
         self.assertIn('Debug', res)
 
     def test_search(self):
-        self.client = helpers.docker_client(timeout=10)
-        res = self.client.search('busybox')
+        client = docker.from_env(timeout=10)
+        res = client.search('busybox')
         self.assertTrue(len(res) >= 1)
         base_img = [x for x in res if x['name'] == 'busybox']
         self.assertEqual(len(base_img), 1)
         self.assertIn('description', base_img[0])
 
 
-class LinkTest(helpers.BaseTestCase):
+class LinkTest(BaseIntegrationTest):
     def test_remove_link(self):
         # Create containers
         container1 = self.client.create_container(
-            helpers.BUSYBOX, 'cat', detach=True, stdin_open=True
+            BUSYBOX, 'cat', detach=True, stdin_open=True
         )
         container1_id = container1['Id']
         self.tmp_containers.append(container1_id)
@@ -48,7 +49,7 @@ class LinkTest(helpers.BaseTestCase):
         link_alias = 'mylink'
 
         container2 = self.client.create_container(
-            helpers.BUSYBOX, 'cat', host_config=self.client.create_host_config(
+            BUSYBOX, 'cat', host_config=self.client.create_host_config(
                 links={link_path: link_alias}
             )
         )
@@ -74,7 +75,7 @@ class LinkTest(helpers.BaseTestCase):
         self.assertEqual(len(retrieved), 2)
 
 
-class LoadConfigTest(helpers.BaseTestCase):
+class LoadConfigTest(BaseIntegrationTest):
     def test_load_legacy_config(self):
         folder = tempfile.mkdtemp()
         self.tmp_folders.append(folder)
@@ -113,7 +114,7 @@ class LoadConfigTest(helpers.BaseTestCase):
 
 class AutoDetectVersionTest(unittest.TestCase):
     def test_client_init(self):
-        client = helpers.docker_client(version='auto')
+        client = docker.from_env(version='auto')
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -122,7 +123,7 @@ class AutoDetectVersionTest(unittest.TestCase):
         client.close()
 
     def test_auto_client(self):
-        client = docker.AutoVersionClient(**helpers.docker_client_kwargs())
+        client = docker.AutoVersionClient(**kwargs_from_env())
         client_version = client._version
         api_version = client.version(api_version=False)['ApiVersion']
         self.assertEqual(client_version, api_version)
@@ -130,9 +131,7 @@ class AutoDetectVersionTest(unittest.TestCase):
         self.assertEqual(client_version, api_version_2)
         client.close()
         with self.assertRaises(docker.errors.DockerException):
-            docker.AutoVersionClient(
-                **helpers.docker_client_kwargs(version='1.11')
-            )
+            docker.AutoVersionClient(version='1.11', **kwargs_from_env())
 
 
 class ConnectionTimeoutTest(unittest.TestCase):
@@ -167,7 +166,7 @@ class UnixconnTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
 
-            client = helpers.docker_client()
+            client = docker.from_env()
             client.images()
             client.close()
             del client

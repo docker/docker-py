@@ -3,13 +3,10 @@ import docker
 import pytest
 
 from ..base import requires_api_version
-from .. import helpers
+from .base import BaseIntegrationTest
 
 
-BUSYBOX = helpers.BUSYBOX
-
-
-class SwarmTest(helpers.BaseTestCase):
+class SwarmTest(BaseIntegrationTest):
     def setUp(self):
         super(SwarmTest, self).setUp()
         self.client.leave_swarm(force=True)
