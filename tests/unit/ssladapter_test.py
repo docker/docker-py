@@ -1,4 +1,4 @@
-from docker.ssladapter import ssladapter
+from docker import ssladapter
 
 try:
     from backports.ssl_match_hostname import (

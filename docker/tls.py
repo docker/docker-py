@@ -1,8 +1,7 @@
 import os
 import ssl
 
-from . import errors
-from .ssladapter import ssladapter
+from . import errors, ssladapter
 
 
 class TLSConfig(object):
