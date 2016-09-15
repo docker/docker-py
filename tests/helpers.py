@@ -3,6 +3,8 @@ import os.path
 import tarfile
 import tempfile
 
+import docker
+import pytest
 
 
 def make_tree(dirs, files):
@@ -36,3 +38,12 @@ def untar_file(tardata, filename):
         result = f.read()
         f.close()
     return result
+
+
+def requires_api_version(version):
+    return pytest.mark.skipif(
+        docker.utils.version_lt(
+            docker.constants.DEFAULT_DOCKER_API_VERSION, version
+        ),
+        reason="API version is too low (< {0})".format(version)
+    )
