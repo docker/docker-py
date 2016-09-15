@@ -14,10 +14,10 @@ from six.moves import socketserver
 
 import docker
 
-from .base import BaseIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
-class ListImagesTest(BaseIntegrationTest):
+class ListImagesTest(BaseAPIIntegrationTest):
     def test_images(self):
         res1 = self.client.images(all=True)
         self.assertIn('Id', res1[0])
@@ -35,7 +35,7 @@ class ListImagesTest(BaseIntegrationTest):
         self.assertEqual(type(res1[0]), six.text_type)
 
 
-class PullImageTest(BaseIntegrationTest):
+class PullImageTest(BaseAPIIntegrationTest):
     def test_pull(self):
         try:
             self.client.remove_image('hello-world')
@@ -66,7 +66,7 @@ class PullImageTest(BaseIntegrationTest):
         self.assertIn('Id', img_info)
 
 
-class CommitTest(BaseIntegrationTest):
+class CommitTest(BaseAPIIntegrationTest):
     def test_commit(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -101,7 +101,7 @@ class CommitTest(BaseIntegrationTest):
         assert img['Config']['Cmd'] == ['bash']
 
 
-class RemoveImageTest(BaseIntegrationTest):
+class RemoveImageTest(BaseAPIIntegrationTest):
     def test_remove(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -117,7 +117,7 @@ class RemoveImageTest(BaseIntegrationTest):
         self.assertEqual(len(res), 0)
 
 
-class ImportImageTest(BaseIntegrationTest):
+class ImportImageTest(BaseAPIIntegrationTest):
     '''Base class for `docker import` test cases.'''
 
     TAR_SIZE = 512 * 1024

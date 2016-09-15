@@ -3,10 +3,10 @@ import random
 import docker
 
 from ..helpers import requires_api_version
-from .base import BaseIntegrationTest
+from .base import BaseAPIIntegrationTest
 
 
-class ServiceTest(BaseIntegrationTest):
+class ServiceTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(ServiceTest, self).setUp()
         self.client.leave_swarm(force=True)

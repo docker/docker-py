@@ -11,20 +11,14 @@ BUSYBOX = 'busybox:buildroot-2014.02'
 
 class BaseIntegrationTest(unittest.TestCase):
     """
-    A base class for integration test cases.
-
-    It sets up a Docker client and cleans up the Docker server after itself.
+    A base class for integration test cases. It cleans up the Docker server
+    after itself.
     """
-    tmp_imgs = []
-    tmp_containers = []
-    tmp_folders = []
-    tmp_volumes = []
 
     def setUp(self):
         if six.PY2:
             self.assertRegex = self.assertRegexpMatches
             self.assertCountEqual = self.assertItemsEqual
-        self.client = docker.APIClient(timeout=60, **kwargs_from_env())
         self.tmp_imgs = []
         self.tmp_containers = []
         self.tmp_folders = []
@@ -32,32 +26,41 @@ class BaseIntegrationTest(unittest.TestCase):
         self.tmp_networks = []
 
     def tearDown(self):
+        client = docker.from_env()
         for img in self.tmp_imgs:
             try:
-                self.client.remove_image(img)
+                client.api.remove_image(img)
             except docker.errors.APIError:
                 pass
         for container in self.tmp_containers:
             try:
-                self.client.stop(container, timeout=1)
-                self.client.remove_container(container)
+                client.api.remove_container(container, force=True)
             except docker.errors.APIError:
                 pass
         for network in self.tmp_networks:
             try:
-                self.client.remove_network(network)
+                client.api.remove_network(network)
             except docker.errors.APIError:
                 pass
+        for volume in self.tmp_volumes:
+            try:
+                client.api.remove_volume(volume)
+            except docker.errors.APIError:
+                pass
+
         for folder in self.tmp_folders:
             shutil.rmtree(folder)
 
-        for volume in self.tmp_volumes:
-            try:
-                self.client.remove_volume(volume)
-            except docker.errors.APIError:
-                pass
 
-        self.client.close()
+class BaseAPIIntegrationTest(BaseIntegrationTest):
+    """
+    A test case for `APIClient` integration tests. It sets up an `APIClient`
+    as `self.client`.
+    """
+
+    def setUp(self):
+        super(BaseAPIIntegrationTest, self).setUp()
+        self.client = docker.APIClient(timeout=60, **kwargs_from_env())
 
     def run_container(self, *args, **kwargs):
         container = self.client.create_container(*args, **kwargs)
