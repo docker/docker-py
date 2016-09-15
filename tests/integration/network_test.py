@@ -5,7 +5,7 @@ from docker.utils import create_ipam_config
 from docker.utils import create_ipam_pool
 import pytest
 
-from ..base import requires_api_version
+from ..helpers import requires_api_version
 from .base import BaseIntegrationTest
 
 

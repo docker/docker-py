@@ -9,7 +9,7 @@ from docker.utils.socket import read_exactly
 import pytest
 import six
 
-from ..base import requires_api_version
+from ..helpers import requires_api_version
 from .. import helpers
 from .base import BaseIntegrationTest, BUSYBOX
 

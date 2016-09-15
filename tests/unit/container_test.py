@@ -9,7 +9,7 @@ import pytest
 import six
 
 from . import fake_api
-from ..base import requires_api_version
+from ..helpers import requires_api_version
 from .api_test import (
     DockerClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
     fake_inspect_container
