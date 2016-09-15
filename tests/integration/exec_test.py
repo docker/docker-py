@@ -1,12 +1,10 @@
 from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
 
-from .. import helpers
-
-BUSYBOX = helpers.BUSYBOX
+from .base import BaseIntegrationTest, BUSYBOX
 
 
-class ExecTest(helpers.BaseTestCase):
+class ExecTest(BaseIntegrationTest):
     def test_execute_command(self):
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)

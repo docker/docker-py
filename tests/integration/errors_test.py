@@ -1,13 +1,10 @@
 from docker.errors import APIError
-from .. import helpers
+from .base import BaseIntegrationTest, BUSYBOX
 
 
-class ErrorsTest(helpers.BaseTestCase):
+class ErrorsTest(BaseIntegrationTest):
     def test_api_error_parses_json(self):
-        container = self.client.create_container(
-            helpers.BUSYBOX,
-            ['sleep', '10']
-        )
+        container = self.client.create_container(BUSYBOX, ['sleep', '10'])
         self.client.start(container['Id'])
         with self.assertRaises(APIError) as cm:
             self.client.remove_container(container['Id'])
