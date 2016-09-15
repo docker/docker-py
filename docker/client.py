@@ -8,8 +8,7 @@ import six
 import websocket
 
 
-from . import api, auth, constants, errors
-from .ssladapter import ssladapter
+from . import api, auth, constants, errors, ssladapter
 from .tls import TLSConfig
 from .transport import UnixAdapter
 from .utils import utils, check_resource, update_headers, kwargs_from_env
