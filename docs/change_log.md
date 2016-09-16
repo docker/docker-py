@@ -1,6 +1,23 @@
 Change Log
 ==========
 
+1.10.3
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.3+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed an issue where identity tokens in configuration files weren't handled
+  by the library.
+
+### Miscellaneous
+
+* Increased the default number of connection pools from 10 to 25. This number
+  can now be configured using the `num_pools` parameter in the `Client`
+  constructor.
+
+
 1.10.2
 ------
 
