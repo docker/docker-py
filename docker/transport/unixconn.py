@@ -2,6 +2,8 @@ import six
 import requests.adapters
 import socket
 
+from .. import constants
+
 if six.PY3:
     import http.client as httplib
 else:
@@ -11,6 +13,7 @@ try:
     import requests.packages.urllib3 as urllib3
 except ImportError:
     import urllib3
+
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
@@ -32,28 +35,31 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
 
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, base_url, socket_path, timeout=60):
+    def __init__(self, base_url, socket_path, timeout=60, maxsize=10):
         super(UnixHTTPConnectionPool, self).__init__(
-            'localhost', timeout=timeout
+            'localhost', timeout=timeout, maxsize=maxsize
         )
         self.base_url = base_url
         self.socket_path = socket_path
         self.timeout = timeout
 
     def _new_conn(self):
-        return UnixHTTPConnection(self.base_url, self.socket_path,
-                                  self.timeout)
+        return UnixHTTPConnection(
+            self.base_url, self.socket_path, self.timeout
+        )
 
 
 class UnixAdapter(requests.adapters.HTTPAdapter):
-    def __init__(self, socket_url, timeout=60):
+    def __init__(self, socket_url, timeout=60,
+                 num_pools=constants.DEFAULT_NUM_POOLS):
         socket_path = socket_url.replace('http+unix://', '')
         if not socket_path.startswith('/'):
             socket_path = '/' + socket_path
         self.socket_path = socket_path
         self.timeout = timeout
-        self.pools = RecentlyUsedContainer(10,
-                                           dispose_func=lambda p: p.close())
+        self.pools = RecentlyUsedContainer(
+            num_pools, dispose_func=lambda p: p.close()
+        )
         super(UnixAdapter, self).__init__()
 
     def get_connection(self, url, proxies=None):
