@@ -460,4 +460,28 @@ class LoadConfigTest(base.Cleanup, base.BaseTestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg == {}
+        assert cfg == {'scarlet.net': {}}
+
+    def test_load_config_identity_token(self):
+        folder = tempfile.mkdtemp()
+        registry = 'scarlet.net'
+        token = '1ce1cebb-503e-7043-11aa-7feb8bd4a1ce'
+        self.addCleanup(shutil.rmtree, folder)
+        dockercfg_path = os.path.join(folder, 'config.json')
+        auth_entry = encode_auth({'username': 'sakuya'}).decode('ascii')
+        config = {
+            'auths': {
+                registry: {
+                    'auth': auth_entry,
+                    'identitytoken': token
+                }
+            }
+        }
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config, f)
+
+        cfg = auth.load_config(dockercfg_path)
+        assert registry in cfg
+        cfg = cfg[registry]
+        assert 'IdentityToken' in cfg
+        assert cfg['IdentityToken'] == token
