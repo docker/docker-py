@@ -7,6 +7,7 @@ import requests.exceptions
 import six
 import websocket
 
+from zope.interface import Interface, implementer
 
 from . import api
 from . import constants
@@ -27,6 +28,54 @@ def from_env(**kwargs):
     return Client.from_env(**kwargs)
 
 
+class IDockerClient(Interface):
+    """
+    Create, delete and list docker containers.
+    """
+    def containers(all=False, quiet=False):
+        """
+        List containers. Identical to the ``docker ps`` command.
+
+        https://docker-py.readthedocs.org/en/latest/api/#containers
+
+        :param bool quiet: Only display numeric Ids.
+        :param bool all: Show all containers. Only running containers
+            are shown by default
+        """
+
+    def create_container(image, name=None):
+        """
+        Creates a container that can then be ``.start()`` ed. Parameters are
+        similar to those for the docker run command except it doesn't support
+        the attach options (-a).
+
+        http://docker-py.readthedocs.org/en/latest/api/#create_container
+
+        :param str image: The image to run.
+        :param str name: A name for the container.
+        :returns:  A ``dict`` with an image 'Id' key and a 'Warnings' key.
+        """
+
+    def remove_container(container):
+        """
+        Remove a container. Similar to the ``docker rm`` command.
+
+        http://docker-py.readthedocs.org/en/latest/api/#remove_container
+
+        :param str container: The container to remove.
+        """
+
+    def inspect_container(container):
+        """
+        Identical to the ``docker inspect`` command, but only for containers.
+
+        :param str container: The container to inspect.
+        :returns: Nearly the same output as ``docker inspect``, just as a
+            single dict.
+        """
+
+
+@implementer(IDockerClient)
 class Client(
         requests.Session,
         api.BuildApiMixin,
@@ -48,11 +97,9 @@ class Client(
             raise errors.TLSParameterError(
                 'If using TLS, the base_url argument must be provided.'
             )
-
         self.base_url = base_url
         self.timeout = timeout
         self.headers['User-Agent'] = user_agent
-
         self._auth_configs = auth.load_config()
 
         base_url = utils.parse_host(

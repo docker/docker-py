@@ -3,6 +3,7 @@ import signal
 import tempfile
 
 import docker
+from docker.testtools import make_idockerclient_tests
 from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
 import pytest
@@ -1131,3 +1132,11 @@ class ContainerCPUTest(helpers.BaseTestCase):
         self.client.start(container)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
+
+
+class RealDockerClientTests(
+        make_idockerclient_tests(dockerclient_factory=docker.Client)
+):
+    """
+    Tests for ``docker.Client`` adherence to ``IDockerClient``.
+    """

@@ -12,7 +12,8 @@ requirements = [
     'requests >= 2.5.2, < 2.11',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
-    'docker-pycreds >= 0.2.0'
+    'docker-pycreds >= 0.2.0',
+    'zope.interface',
 ]
 
 if sys.platform == 'win32':

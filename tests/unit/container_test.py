@@ -5,6 +5,7 @@ import json
 import signal
 
 import docker
+from docker.testtools import make_idockerclient_tests, FakeDockerClient
 import pytest
 import six
 
@@ -1633,3 +1634,30 @@ class ContainerTest(DockerClientTest):
         self.assertEqual(
             args[1]['headers']['Content-Type'], 'application/json'
         )
+
+
+class FakeDockerClientTests(
+        make_idockerclient_tests(dockerclient_factory=FakeDockerClient)
+):
+    """
+    Tests for ``FakeDockerClient``.
+    """
+    def test_containers_empty(self):
+        """
+        ``IDockerContainers.containers`` returns an empty list if there are no
+        running containers.
+        """
+        self.assertEqual([], self.client.containers())
+
+    def test_containers_empty_all(self):
+        """
+        ``IDockerContainers.containers`` accepts an ``all`` argument.
+        """
+        results = self.client.containers(all=True)
+        self.assertEqual([], results)
+
+    def test_containers_quiet_all(self):
+        """
+        ``IDockerContainers.containers`` accepts a ``quiet`` argument.
+        """
+        self.assertEqual([], self.client.containers(quiet=True))
