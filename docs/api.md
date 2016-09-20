@@ -1126,6 +1126,7 @@ Update resource configs of one or more containers.
 * mem_reservation (int or str): Memory soft limit
 * memswap_limit (int or str): Total memory (memory + swap), -1 to disable swap
 * kernel_memory (int or str): Kernel memory limit
+* restart_policy (dict): Restart policy dictionary
 
 **Returns** (dict): Dictionary containing a `Warnings` key.
 
