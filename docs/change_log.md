@@ -1,6 +1,45 @@
 Change Log
 ==========
 
+1.10.3
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.3+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed an issue where identity tokens in configuration files weren't handled
+  by the library.
+
+### Miscellaneous
+
+* Increased the default number of connection pools from 10 to 25. This number
+  can now be configured using the `num_pools` parameter in the `Client`
+  constructor.
+
+
+1.10.2
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Bugfixes
+
+* Updated the docker-pycreds dependency as it was causing issues for some
+  users with dependency resolution in applications using docker-py.
+
+
+1.10.1
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Bugfixes
+
+* The docker.utils.types module was removed in favor of docker.types, but some
+  applications imported it explicitly. It has been re-added with an import
+  warning advising to use the new module path.
+
 1.10.0
 ------
 
