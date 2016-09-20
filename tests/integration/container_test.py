@@ -1104,6 +1104,36 @@ class ContainerUpdateTest(helpers.BaseTestCase):
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
 
+    @requires_api_version('1.23')
+    def test_restart_policy_update(self):
+        old_restart_policy = {
+            'MaximumRetryCount': 0,
+            'Name': 'always'
+        }
+        new_restart_policy = {
+            'MaximumRetryCount': 42,
+            'Name': 'on-failure'
+        }
+        container = self.client.create_container(
+            BUSYBOX, ['sleep', '60'],
+            host_config=self.client.create_host_config(
+                restart_policy=old_restart_policy
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        self.client.update_container(container,
+                                     restart_policy=new_restart_policy)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(
+            inspect_data['HostConfig']['RestartPolicy']['MaximumRetryCount'],
+            new_restart_policy['MaximumRetryCount']
+        )
+        self.assertEqual(
+            inspect_data['HostConfig']['RestartPolicy']['Name'],
+            new_restart_policy['Name']
+        )
+
 
 class ContainerCPUTest(helpers.BaseTestCase):
     @requires_api_version('1.18')

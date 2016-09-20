@@ -421,7 +421,8 @@ class ContainerApiMixin(object):
     def update_container(
         self, container, blkio_weight=None, cpu_period=None, cpu_quota=None,
         cpu_shares=None, cpuset_cpus=None, cpuset_mems=None, mem_limit=None,
-        mem_reservation=None, memswap_limit=None, kernel_memory=None
+        mem_reservation=None, memswap_limit=None, kernel_memory=None,
+        restart_policy=None
     ):
         url = self._url('/containers/{0}/update', container)
         data = {}
@@ -445,6 +446,13 @@ class ContainerApiMixin(object):
             data['MemorySwap'] = utils.parse_bytes(memswap_limit)
         if kernel_memory:
             data['KernelMemory'] = utils.parse_bytes(kernel_memory)
+        if restart_policy:
+            if utils.version_lt(self._version, '1.23'):
+                raise errors.InvalidVersion(
+                    'restart policy update is not supported '
+                    'for API version < 1.23'
+                )
+            data['RestartPolicy'] = restart_policy
 
         res = self._post_json(url, data=data)
         return self._result(res, True)
