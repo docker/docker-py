@@ -232,6 +232,30 @@ List Swarm nodes
 
 **Returns:** A list of dictionaries containing data about each swarm node.
 
+### Client.update_node
+
+Update the Node's configuration
+
+**Params:**
+
+* version (int): The version number of the node object being updated. This
+  is required to avoid conflicting writes.
+* node_spec (dict): Configuration settings to update.  Any values not provided 
+  will be removed.  See the official [Docker API documentation](https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/update-a-node) for more details.
+  Default: `None`.
+
+**Returns:** `True` if the request went through. Raises an `APIError` if it
+  fails.
+
+```python
+node_spec = {'Availability': 'active',
+             'Name': 'node-name',
+             'Role': 'manager',				   
+             'Labels': {'foo': 'bar'}
+            }
+client.update_node(node_id='24ifsmvkjbyhk', version=8, node_spec=node_spec)
+```
+
 ### Client.update_swarm
 
 Update the Swarm's configuration

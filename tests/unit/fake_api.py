@@ -14,6 +14,7 @@ FAKE_FILE_NAME = 'file'
 FAKE_URL = 'myurl'
 FAKE_PATH = '/path'
 FAKE_VOLUME_NAME = 'perfectcherryblossom'
+FAKE_NODE_ID = '24ifsmvkjbyhk'
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
@@ -406,6 +407,10 @@ def post_fake_update_container():
     return 200, {'Warnings': []}
 
 
+def post_fake_update_node():
+    return 200, None
+
+
 # Maps real api url to fake response callback
 prefix = 'http+docker://localunixsocket'
 if constants.IS_WINDOWS_PLATFORM:
@@ -507,4 +512,8 @@ fake_responses = {
         CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
     ), 'DELETE'):
     fake_remove_volume,
+    ('{1}/{0}/nodes/{2}/update?version=1'.format(
+        CURRENT_VERSION, prefix, FAKE_NODE_ID
+    ), 'POST'):
+    post_fake_update_node,
 }
