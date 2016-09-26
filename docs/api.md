@@ -228,6 +228,7 @@ arguments should be passed as part of the `host_config` dictionary.
 * image (str): The image to run
 * command (str or list): The command to be run in the container
 * hostname (str): Optional hostname for the container
+* domainname (str): Optional domain name to use for the container
 * user (str or int): Username or UID
 * detach (bool): Detached mode: run container in the background and print new
 container Id
@@ -247,7 +248,6 @@ from. Optionally a single string joining container id's with commas
 * name (str): A name for the container
 * entrypoint (str or list): An entrypoint
 * working_dir (str): Path to the working directory
-* domainname (str or list): Set custom DNS search domains
 * memswap_limit (int):
 * host_config (dict): A [HostConfig](hostconfig.md) dictionary
 * mac_address (str): The Mac Address to assign the container
