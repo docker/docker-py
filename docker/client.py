@@ -108,8 +108,10 @@ class Client(
 
     @classmethod
     def from_env(cls, **kwargs):
+        timeout = kwargs.pop('timeout', None)
         version = kwargs.pop('version', None)
-        return cls(version=version, **kwargs_from_env(**kwargs))
+        return cls(timeout=timeout, version=version,
+                   **kwargs_from_env(**kwargs))
 
     def _retrieve_server_version(self):
         try:
