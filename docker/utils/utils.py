@@ -94,9 +94,20 @@ def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
 
     for path in sorted(exclude_paths(root, exclude, dockerfile=dockerfile)):
         i = t.gettarinfo(os.path.join(root, path), arcname=path)
+
         if sys.platform == 'win32':
+            # Windows doesn't keep track of the execute bit, so we make files
+            # and directories executable by default.
             i.mode = i.mode & 0o755 | 0o111
-        t.addfile(i)
+
+        try:
+            # We open the file object in binary mode for Windows support.
+            f = open(os.path.join(root, path), 'rb')
+        except IOError:
+            # When we encounter a directory the file object is set to None.
+            f = None
+
+        t.addfile(i, f)
 
     t.close()
     fileobj.seek(0)
