@@ -624,7 +624,8 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
                        device_write_iops=None, oom_kill_disable=False,
                        shm_size=None, sysctls=None, version=None, tmpfs=None,
                        oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                       cpuset_cpus=None, userns_mode=None, pids_limit=None):
+                       cpuset_cpus=None, userns_mode=None, pids_limit=None,
+                       isolation=None):
 
     host_config = {}
 
@@ -911,6 +912,13 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         if version_lt(version, '1.23'):
             raise host_config_version_error('pids_limit', '1.23')
         host_config["PidsLimit"] = pids_limit
+
+    if isolation:
+        if not isinstance(isolation, six.string_types):
+            raise host_config_type_error('isolation', isolation, 'string')
+        if version_lt(version, '1.24'):
+            raise host_config_version_error('isolation', '1.24')
+        host_config['Isolation'] = isolation
 
     return host_config
 
