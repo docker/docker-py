@@ -397,6 +397,17 @@ class CreateContainerTest(helpers.BaseTestCase):
         config = self.client.inspect_container(container)
         assert config['HostConfig']['Tmpfs'] == tmpfs
 
+    @requires_api_version('1.24')
+    def test_create_with_isolation(self):
+        container = self.client.create_container(
+            BUSYBOX, ['echo'], host_config=self.client.create_host_config(
+                isolation='default'
+            )
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['Isolation'] == 'default'
+
 
 class VolumeBindTest(helpers.BaseTestCase):
     def setUp(self):
