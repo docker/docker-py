@@ -152,7 +152,7 @@ class UpdateConfig(dict):
 class RestartConditionTypesEnum(object):
     _values = (
         'none',
-        'on_failure',
+        'on-failure',
         'any',
     )
     NONE, ON_FAILURE, ANY = _values
