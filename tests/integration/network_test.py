@@ -69,9 +69,9 @@ class TestNetworks(helpers.BaseTestCase):
 
         assert ipam.pop('Options', None) is None
 
-        assert ipam == {
-            'Driver': 'default',
-            'Config': [{
+        assert ipam['Driver'] == 'default'
+
+        assert ipam['Config'] == [{
                 'Subnet': "172.28.0.0/16",
                 'IPRange': "172.28.5.0/24",
                 'Gateway': "172.28.5.254",
@@ -80,8 +80,7 @@ class TestNetworks(helpers.BaseTestCase):
                     "b": "172.28.1.6",
                     "c": "172.28.1.7",
                 },
-            }],
-        }
+            }]
 
     @requires_api_version('1.21')
     def test_create_network_with_host_driver_fails(self):
