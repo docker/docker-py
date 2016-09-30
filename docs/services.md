@@ -82,7 +82,7 @@ Create a service.
   See the [UpdateConfig class](#UpdateConfig) for details. Default: `None`.
 * networks (list): List of network names or IDs to attach the service to.
   Default: `None`.
-* endpoint_config (dict): Properties that can be configured to access and load
+* endpoint_spec (dict): Properties that can be configured to access and load
   balance a service. Default: `None`.
 
 **Returns:** A dictionary containing an `ID` key for the newly created service.
@@ -173,6 +173,20 @@ and for the `driver_config` in a volume `Mount`.
 
 * name (string): Name of the logging driver to use.
 * options (dict): Driver-specific options. Default: `None`.
+
+#### EndpointSpec
+
+An `EndpointSpec` object describes properties to access and load-balance a
+service.
+
+**Params:**
+
+* mode (string): The mode of resolution to use for internal load balancing
+  between tasks (`'vip'` or `'dnsrr'`). Defaults to `'vip'` if not provided.
+* ports (dict): Exposed ports that this service is accessible on from the
+  outside, in the form of `{ target_port: published_port }` or
+  `{ target_port: (published_port, protocol) }`. Ports can only be provided if
+  the `vip` resolution mode is used.
 
 #### Mount
 

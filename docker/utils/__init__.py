@@ -6,6 +6,7 @@ from .utils import (
     create_host_config, create_container_config, parse_bytes, ping_registry,
     parse_env_file, version_lt, version_gte, decode_json_header, split_command,
     create_ipam_config, create_ipam_pool, parse_devices, normalize_links,
+    convert_service_networks,
 )
 
 from ..types import LogConfig, Ulimit

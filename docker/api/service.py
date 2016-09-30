@@ -1,3 +1,5 @@
+import warnings
+
 from .. import errors
 from .. import utils
 from ..auth import auth
@@ -7,8 +9,16 @@ class ServiceApiMixin(object):
     @utils.minimum_version('1.24')
     def create_service(
             self, task_template, name=None, labels=None, mode=None,
-            update_config=None, networks=None, endpoint_config=None
+            update_config=None, networks=None, endpoint_config=None,
+            endpoint_spec=None
     ):
+        if endpoint_config is not None:
+            warnings.warn(
+                'endpoint_config has been renamed to endpoint_spec.',
+                DeprecationWarning
+            )
+            endpoint_spec = endpoint_config
+
         url = self._url('/services/create')
         headers = {}
         image = task_template.get('ContainerSpec', {}).get('Image', None)
@@ -26,8 +36,8 @@ class ServiceApiMixin(object):
             'TaskTemplate': task_template,
             'Mode': mode,
             'UpdateConfig': update_config,
-            'Networks': networks,
-            'Endpoint': endpoint_config
+            'Networks': utils.convert_service_networks(networks),
+            'EndpointSpec': endpoint_spec
         }
         return self._result(
             self._post_json(url, data=data, headers=headers), True
