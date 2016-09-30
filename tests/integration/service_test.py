@@ -169,3 +169,65 @@ class ServiceTest(BaseIntegrationTest):
         svc_info = self.client.inspect_service(svc_id)
         assert 'RestartPolicy' in svc_info['Spec']['TaskTemplate']
         assert policy == svc_info['Spec']['TaskTemplate']['RestartPolicy']
+
+    def test_create_service_with_custom_networks(self):
+        net1 = self.client.create_network(
+            'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(net1['Id'])
+        net2 = self.client.create_network(
+            'dockerpytest_2', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(net2['Id'])
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, networks=[
+                'dockerpytest_1', {'Target': 'dockerpytest_2'}
+            ]
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Networks' in svc_info['Spec']
+        assert svc_info['Spec']['Networks'] == [
+            {'Target': net1['Id']}, {'Target': net2['Id']}
+        ]
+
+    def test_create_service_with_placement(self):
+        node_id = self.client.nodes()[0]['ID']
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=['node.id=={}'.format(node_id)]
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert (svc_info['Spec']['TaskTemplate']['Placement'] ==
+                {'Constraints': ['node.id=={}'.format(node_id)]})
+
+    def test_create_service_with_endpoint_spec(self):
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        endpoint_spec = docker.types.EndpointSpec(ports={
+            12357: (1990, 'udp'),
+            12562: (678,),
+            53243: 8080,
+        })
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, endpoint_spec=endpoint_spec
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        print(svc_info)
+        ports = svc_info['Spec']['EndpointSpec']['Ports']
+        assert {
+            'PublishedPort': 12562, 'TargetPort': 678, 'Protocol': 'tcp'
+        } in ports
+        assert {
+            'PublishedPort': 53243, 'TargetPort': 8080, 'Protocol': 'tcp'
+        } in ports
+        assert {
+            'PublishedPort': 12357, 'TargetPort': 1990, 'Protocol': 'udp'
+        } in ports
+        assert len(ports) == 3

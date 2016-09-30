@@ -376,6 +376,20 @@ def convert_tmpfs_mounts(tmpfs):
     return result
 
 
+def convert_service_networks(networks):
+    if not networks:
+        return networks
+    if not isinstance(networks, list):
+        raise TypeError('networks parameter must be a list.')
+
+    result = []
+    for n in networks:
+        if isinstance(n, six.string_types):
+            n = {'Target': n}
+        result.append(n)
+    return result
+
+
 def parse_repository_tag(repo_name):
     parts = repo_name.rsplit('@', 1)
     if len(parts) == 2:
