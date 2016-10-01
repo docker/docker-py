@@ -137,7 +137,7 @@ Update a service.
   See the [UpdateConfig class](#UpdateConfig) for details. Default: `None`.
 * networks (list): List of network names or IDs to attach the service to.
   Default: `None`.
-* endpoint_config (dict): Properties that can be configured to access and load
+* endpoint_spec (dict): Properties that can be configured to access and load
   balance a service. Default: `None`.
 
 **Returns:** `True` if successful. Raises an `APIError` otherwise.
