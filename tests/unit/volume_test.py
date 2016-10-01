@@ -2,12 +2,12 @@ import json
 
 import pytest
 
-from .. import base
+from ..helpers import requires_api_version
 from .api_test import DockerClientTest, url_prefix, fake_request
 
 
 class VolumeTest(DockerClientTest):
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_list_volumes(self):
         volumes = self.client.volumes()
         self.assertIn('Volumes', volumes)
@@ -17,7 +17,7 @@ class VolumeTest(DockerClientTest):
         self.assertEqual(args[0][0], 'GET')
         self.assertEqual(args[0][1], url_prefix + 'volumes')
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_list_volumes_and_filters(self):
         volumes = self.client.volumes(filters={'dangling': True})
         assert 'Volumes' in volumes
@@ -29,7 +29,7 @@ class VolumeTest(DockerClientTest):
         assert args[1] == {'params': {'filters': '{"dangling": ["true"]}'},
                            'timeout': 60}
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_create_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.create_volume(name)
@@ -43,7 +43,7 @@ class VolumeTest(DockerClientTest):
         self.assertEqual(args[0][1], url_prefix + 'volumes/create')
         self.assertEqual(json.loads(args[1]['data']), {'Name': name})
 
-    @base.requires_api_version('1.23')
+    @requires_api_version('1.23')
     def test_create_volume_with_labels(self):
         name = 'perfectcherryblossom'
         result = self.client.create_volume(name, labels={
@@ -53,13 +53,13 @@ class VolumeTest(DockerClientTest):
             {'com.example.some-label': 'some-value'}
         )
 
-    @base.requires_api_version('1.23')
+    @requires_api_version('1.23')
     def test_create_volume_with_invalid_labels(self):
         name = 'perfectcherryblossom'
         with pytest.raises(TypeError):
             self.client.create_volume(name, labels=1)
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_create_volume_with_driver(self):
         name = 'perfectcherryblossom'
         driver_name = 'sshfs'
@@ -72,7 +72,7 @@ class VolumeTest(DockerClientTest):
         self.assertIn('Driver', data)
         self.assertEqual(data['Driver'], driver_name)
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_create_volume_invalid_opts_type(self):
         with pytest.raises(TypeError):
             self.client.create_volume(
@@ -89,7 +89,7 @@ class VolumeTest(DockerClientTest):
                 'perfectcherryblossom', driver_opts=''
             )
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_inspect_volume(self):
         name = 'perfectcherryblossom'
         result = self.client.inspect_volume(name)
@@ -102,7 +102,7 @@ class VolumeTest(DockerClientTest):
         self.assertEqual(args[0][0], 'GET')
         self.assertEqual(args[0][1], '{0}volumes/{1}'.format(url_prefix, name))
 
-    @base.requires_api_version('1.21')
+    @requires_api_version('1.21')
     def test_remove_volume(self):
         name = 'perfectcherryblossom'
         self.client.remove_volume(name)
