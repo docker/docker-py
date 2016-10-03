@@ -4,12 +4,10 @@ import random
 import docker
 import six
 
-from .. import helpers
-
-BUSYBOX = helpers.BUSYBOX
+from .base import BaseIntegrationTest, BUSYBOX
 
 
-class TestRegressions(helpers.BaseTestCase):
+class TestRegressions(BaseIntegrationTest):
     def test_443_handle_nonchunked_response_in_stream(self):
         dfile = io.BytesIO()
         with self.assertRaises(docker.errors.APIError) as exc:

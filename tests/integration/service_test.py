@@ -2,14 +2,11 @@ import random
 
 import docker
 
-from ..base import requires_api_version
-from .. import helpers
+from ..helpers import requires_api_version
+from .base import BaseIntegrationTest
 
 
-BUSYBOX = helpers.BUSYBOX
-
-
-class ServiceTest(helpers.BaseTestCase):
+class ServiceTest(BaseIntegrationTest):
     def setUp(self):
         super(ServiceTest, self).setUp()
         self.client.leave_swarm(force=True)

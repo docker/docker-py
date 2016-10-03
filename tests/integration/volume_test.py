@@ -1,12 +1,12 @@
 import docker
 import pytest
 
-from .. import helpers
-from ..base import requires_api_version
+from ..helpers import requires_api_version
+from .base import BaseIntegrationTest
 
 
 @requires_api_version('1.21')
-class TestVolumes(helpers.BaseTestCase):
+class TestVolumes(BaseIntegrationTest):
     def test_create_volume(self):
         name = 'perfectcherryblossom'
         self.tmp_volumes.append(name)
