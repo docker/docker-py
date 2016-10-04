@@ -49,11 +49,11 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 
 class NpipeAdapter(requests.adapters.HTTPAdapter):
     def __init__(self, base_url, timeout=60,
-                 num_pools=constants.DEFAULT_NUM_POOLS):
+                 pool_connections=constants.DEFAULT_NUM_POOLS):
         self.npipe_path = base_url.replace('npipe://', '')
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
-            num_pools, dispose_func=lambda p: p.close()
+            pool_connections, dispose_func=lambda p: p.close()
         )
         super(NpipeAdapter, self).__init__()
 
