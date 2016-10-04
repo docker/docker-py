@@ -86,7 +86,7 @@ class Client(
                 tls.configure_client(self)
             elif tls:
                 self._custom_adapter = ssladapter.SSLAdapter(
-                    num_pools=num_pools
+                    pool_connections=num_pools
                 )
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
