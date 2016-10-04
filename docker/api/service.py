@@ -1,6 +1,4 @@
-from .. import errors
-from .. import utils
-from ..auth import auth
+from .. import auth, errors, utils
 
 
 class ServiceApiMixin(object):
