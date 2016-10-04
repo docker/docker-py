@@ -60,7 +60,7 @@ class Client(
         )
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixAdapter(
-                base_url, timeout, num_pools=num_pools
+                base_url, timeout, pool_connections=num_pools
             )
             self.mount('http+docker://', self._custom_adapter)
             self._unmount('http://', 'https://')
@@ -72,7 +72,7 @@ class Client(
                 )
             try:
                 self._custom_adapter = NpipeAdapter(
-                    base_url, timeout, num_pools=num_pools
+                    base_url, timeout, pool_connections=num_pools
                 )
             except NameError:
                 raise errors.DockerException(
