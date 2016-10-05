@@ -13,7 +13,7 @@ The latest stable version is always available on PyPi.
     pip install docker-py
 
 Documentation
-------------
+-------------
 
 [![Documentation Status](https://readthedocs.org/projects/docker-py/badge/?version=latest)](https://readthedocs.org/projects/docker-py/?badge=latest)
 
