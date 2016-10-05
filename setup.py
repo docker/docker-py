@@ -20,6 +20,9 @@ if sys.platform == 'win32':
 
 extras_require = {
     ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
+    # While not imported explicitly, the ipaddress module is required for
+    # ssl_match_hostname to verify hosts match with certificates via
+    # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
     ':python_version < "3.3"': 'ipaddress >= 1.0.16',
 }
 
