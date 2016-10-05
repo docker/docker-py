@@ -30,10 +30,20 @@ with open('./test-requirements.txt') as test_reqs_txt:
     test_requirements = [line for line in test_reqs_txt]
 
 
+long_description = ''
+try:
+    with open('./README.rst') as readme_rst:
+        long_description = readme_rst.read()
+except IOError:
+    # README.rst is only generated on release. Its absence should not prevent
+    # setup.py from working properly.
+    pass
+
 setup(
     name="docker-py",
     version=version,
     description="Python client for Docker.",
+    long_description=long_description,
     url='https://github.com/docker/docker-py/',
     packages=[
         'docker', 'docker.api', 'docker.auth', 'docker.transport',
@@ -61,4 +71,6 @@ setup(
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],
+    maintainer='Joffrey F',
+    maintainer_email='joffrey@docker.com',
 )
