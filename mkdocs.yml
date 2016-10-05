@@ -7,7 +7,6 @@ theme: readthedocs
 pages:
 - Home: index.md
 - Client API: api.md
-- FAQ: faq.md
 - Port Bindings: port-bindings.md
 - Using Volumes: volumes.md
 - Using TLS: tls.md
