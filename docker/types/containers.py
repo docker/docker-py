@@ -1,0 +1,92 @@
+import six
+
+from .base import DictType
+
+
+class LogConfigTypesEnum(object):
+    _values = (
+        'json-file',
+        'syslog',
+        'journald',
+        'gelf',
+        'fluentd',
+        'none'
+    )
+    JSON, SYSLOG, JOURNALD, GELF, FLUENTD, NONE = _values
+
+
+class LogConfig(DictType):
+    types = LogConfigTypesEnum
+
+    def __init__(self, **kwargs):
+        log_driver_type = kwargs.get('type', kwargs.get('Type'))
+        config = kwargs.get('config', kwargs.get('Config')) or {}
+
+        if config and not isinstance(config, dict):
+            raise ValueError("LogConfig.config must be a dictionary")
+
+        super(LogConfig, self).__init__({
+            'Type': log_driver_type,
+            'Config': config
+        })
+
+    @property
+    def type(self):
+        return self['Type']
+
+    @type.setter
+    def type(self, value):
+        self['Type'] = value
+
+    @property
+    def config(self):
+        return self['Config']
+
+    def set_config_value(self, key, value):
+        self.config[key] = value
+
+    def unset_config(self, key):
+        if key in self.config:
+            del self.config[key]
+
+
+class Ulimit(DictType):
+    def __init__(self, **kwargs):
+        name = kwargs.get('name', kwargs.get('Name'))
+        soft = kwargs.get('soft', kwargs.get('Soft'))
+        hard = kwargs.get('hard', kwargs.get('Hard'))
+        if not isinstance(name, six.string_types):
+            raise ValueError("Ulimit.name must be a string")
+        if soft and not isinstance(soft, int):
+            raise ValueError("Ulimit.soft must be an integer")
+        if hard and not isinstance(hard, int):
+            raise ValueError("Ulimit.hard must be an integer")
+        super(Ulimit, self).__init__({
+            'Name': name,
+            'Soft': soft,
+            'Hard': hard
+        })
+
+    @property
+    def name(self):
+        return self['Name']
+
+    @name.setter
+    def name(self, value):
+        self['Name'] = value
+
+    @property
+    def soft(self):
+        return self.get('Soft')
+
+    @soft.setter
+    def soft(self, value):
+        self['Soft'] = value
+
+    @property
+    def hard(self):
+        return self.get('Hard')
+
+    @hard.setter
+    def hard(self, value):
+        self['Hard'] = value

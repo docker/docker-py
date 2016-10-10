@@ -20,10 +20,11 @@ from docker.utils import (
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
     split_command, create_ipam_config, create_ipam_pool, parse_devices,
-    update_for_range_ports, parse_range_ports,
+    update_headers, update_for_range_ports, parse_range_ports,
 )
-from docker.utils.utils import create_endpoint_config
+
 from docker.utils.ports import build_port_bindings, split_port
+from docker.utils.utils import create_endpoint_config
 
 from .. import base
 from ..helpers import make_tree
@@ -33,6 +34,37 @@ TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
     'testdata/certs',
 )
+
+
+class DecoratorsTest(base.BaseTestCase):
+    def test_update_headers(self):
+        sample_headers = {
+            'X-Docker-Locale': 'en-US',
+        }
+
+        def f(self, headers=None):
+            return headers
+
+        client = Client()
+        client._auth_configs = {}
+
+        g = update_headers(f)
+        assert g(client, headers=None) is None
+        assert g(client, headers={}) == {}
+        assert g(client, headers={'Content-type': 'application/json'}) == {
+            'Content-type': 'application/json',
+        }
+
+        client._auth_configs = {
+            'HttpHeaders': sample_headers
+        }
+
+        assert g(client, headers=None) == sample_headers
+        assert g(client, headers={}) == sample_headers
+        assert g(client, headers={'Content-type': 'application/json'}) == {
+            'Content-type': 'application/json',
+            'X-Docker-Locale': 'en-US',
+        }
 
 
 class HostConfigTest(base.BaseTestCase):
@@ -65,6 +97,25 @@ class HostConfigTest(base.BaseTestCase):
         config = create_host_config(version='1.20', cpu_period=1999)
         self.assertEqual(config.get('CpuPeriod'), 1999)
 
+    def test_create_host_config_with_blkio_constraints(self):
+        blkio_rate = [{"Path": "/dev/sda", "Rate": 1000}]
+        config = create_host_config(version='1.22',
+                                    blkio_weight=1999,
+                                    blkio_weight_device=blkio_rate,
+                                    device_read_bps=blkio_rate,
+                                    device_write_bps=blkio_rate,
+                                    device_read_iops=blkio_rate,
+                                    device_write_iops=blkio_rate)
+
+        self.assertEqual(config.get('BlkioWeight'), 1999)
+        self.assertTrue(config.get('BlkioWeightDevice') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceReadBps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceWriteBps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceReadIOps') is blkio_rate)
+        self.assertTrue(config.get('BlkioDeviceWriteIOps') is blkio_rate)
+        self.assertEqual(blkio_rate[0]['Path'], "/dev/sda")
+        self.assertEqual(blkio_rate[0]['Rate'], 1000)
+
     def test_create_host_config_with_shm_size(self):
         config = create_host_config(version='1.22', shm_size=67108864)
         self.assertEqual(config.get('ShmSize'), 67108864)
@@ -80,6 +131,16 @@ class HostConfigTest(base.BaseTestCase):
             InvalidVersion, lambda: create_host_config(version='1.18.3',
                                                        oom_kill_disable=True))
 
+    def test_create_host_config_with_userns_mode(self):
+        config = create_host_config(version='1.23', userns_mode='host')
+        self.assertEqual(config.get('UsernsMode'), 'host')
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.22',
+                                                       userns_mode='host'))
+        self.assertRaises(
+            ValueError, lambda: create_host_config(version='1.23',
+                                                   userns_mode='host12'))
+
     def test_create_host_config_with_oom_score_adj(self):
         config = create_host_config(version='1.22', oom_score_adj=100)
         self.assertEqual(config.get('OomScoreAdj'), 100)
@@ -90,12 +151,48 @@ class HostConfigTest(base.BaseTestCase):
             TypeError, lambda: create_host_config(version='1.22',
                                                   oom_score_adj='100'))
 
+    def test_create_host_config_with_dns_opt(self):
+
+        tested_opts = ['use-vc', 'no-tld-query']
+        config = create_host_config(version='1.21', dns_opt=tested_opts)
+        dns_opts = config.get('DnsOptions')
+
+        self.assertTrue('use-vc' in dns_opts)
+        self.assertTrue('no-tld-query' in dns_opts)
+
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(version='1.20',
+                                                       dns_opt=tested_opts))
+
     def test_create_endpoint_config_with_aliases(self):
         config = create_endpoint_config(version='1.22', aliases=['foo', 'bar'])
         assert config == {'Aliases': ['foo', 'bar']}
 
         with pytest.raises(InvalidVersion):
             create_endpoint_config(version='1.21', aliases=['foo', 'bar'])
+
+    def test_create_host_config_with_mem_reservation(self):
+        config = create_host_config(version='1.21', mem_reservation=67108864)
+        self.assertEqual(config.get('MemoryReservation'), 67108864)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.20', mem_reservation=67108864))
+
+    def test_create_host_config_with_kernel_memory(self):
+        config = create_host_config(version='1.21', kernel_memory=67108864)
+        self.assertEqual(config.get('KernelMemory'), 67108864)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.20', kernel_memory=67108864))
+
+    def test_create_host_config_with_pids_limit(self):
+        config = create_host_config(version='1.23', pids_limit=1024)
+        self.assertEqual(config.get('PidsLimit'), 1024)
+
+        with pytest.raises(InvalidVersion):
+            create_host_config(version='1.22', pids_limit=1024)
+        with pytest.raises(TypeError):
+            create_host_config(version='1.22', pids_limit='1024')
 
 
 class UlimitTest(base.BaseTestCase):
@@ -300,56 +397,30 @@ class ConverVolumeBindsTest(base.BaseTestCase):
         self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
 
     def test_convert_volume_binds_unicode_bytes_input(self):
-        if six.PY2:
-            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+        expected = [u'/mnt/지연:/unicode/박:rw']
 
-            data = {
-                '/mnt/지연': {
-                    'bind': '/unicode/박',
-                    'mode': 'rw'
-                }
+        data = {
+            u'/mnt/지연'.encode('utf-8'): {
+                'bind': u'/unicode/박'.encode('utf-8'),
+                'mode': 'rw'
             }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
-        else:
-            expected = ['/mnt/지연:/unicode/박:rw']
-
-            data = {
-                bytes('/mnt/지연', 'utf-8'): {
-                    'bind': bytes('/unicode/박', 'utf-8'),
-                    'mode': 'rw'
-                }
-            }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
+        }
+        self.assertEqual(
+            convert_volume_binds(data), expected
+        )
 
     def test_convert_volume_binds_unicode_unicode_input(self):
-        if six.PY2:
-            expected = [unicode('/mnt/지연:/unicode/박:rw', 'utf-8')]
+        expected = [u'/mnt/지연:/unicode/박:rw']
 
-            data = {
-                unicode('/mnt/지연', 'utf-8'): {
-                    'bind': unicode('/unicode/박', 'utf-8'),
-                    'mode': 'rw'
-                }
+        data = {
+            u'/mnt/지연': {
+                'bind': u'/unicode/박',
+                'mode': 'rw'
             }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
-        else:
-            expected = ['/mnt/지연:/unicode/박:rw']
-
-            data = {
-                '/mnt/지연': {
-                    'bind': '/unicode/박',
-                    'mode': 'rw'
-                }
-            }
-            self.assertEqual(
-                convert_volume_binds(data), expected
-            )
+        }
+        self.assertEqual(
+            convert_volume_binds(data), expected
+        )
 
 
 class ParseEnvFileTest(base.BaseTestCase):
@@ -412,8 +483,17 @@ class ParseHostTest(base.BaseTestCase):
             'https://kokia.jp:2375': 'https://kokia.jp:2375',
             'unix:///var/run/docker.sock': 'http+unix:///var/run/docker.sock',
             'unix://': 'http+unix://var/run/docker.sock',
+            '12.234.45.127:2375/docker/engine': (
+                'http://12.234.45.127:2375/docker/engine'
+            ),
             'somehost.net:80/service/swarm': (
                 'http://somehost.net:80/service/swarm'
+            ),
+            'npipe:////./pipe/docker_engine': 'npipe:////./pipe/docker_engine',
+            '[fd12::82d1]:2375': 'http://[fd12::82d1]:2375',
+            'https://[fd12:5672::12aa]:1090': 'https://[fd12:5672::12aa]:1090',
+            '[fd12::82d1]:2375/docker/engine': (
+                'http://[fd12::82d1]:2375/docker/engine'
             ),
         }
 
@@ -422,17 +502,15 @@ class ParseHostTest(base.BaseTestCase):
                 parse_host(host, None)
 
         for host, expected in valid_hosts.items():
-            self.assertEqual(parse_host(host, None), expected, msg=host)
+            assert parse_host(host, None) == expected
 
     def test_parse_host_empty_value(self):
         unix_socket = 'http+unix://var/run/docker.sock'
-        tcp_port = 'http://127.0.0.1:2375'
+        npipe = 'npipe:////./pipe/docker_engine'
 
         for val in [None, '']:
-            for platform in ['darwin', 'linux2', None]:
-                assert parse_host(val, platform) == unix_socket
-
-            assert parse_host(val, 'win32') == tcp_port
+            assert parse_host(val, is_win32=False) == unix_socket
+            assert parse_host(val, is_win32=True) == npipe
 
     def test_parse_host_tls(self):
         host_value = 'myhost.docker.net:3348'
@@ -611,15 +689,8 @@ class UtilsTest(base.BaseTestCase):
 
 
 class SplitCommandTest(base.BaseTestCase):
-
     def test_split_command_with_unicode(self):
-        if six.PY2:
-            self.assertEqual(
-                split_command(unicode('echo μμ', 'utf-8')),
-                ['echo', 'μμ']
-            )
-        else:
-            self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
+        self.assertEqual(split_command(u'echo μμ'), ['echo', 'μμ'])
 
     @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
     def test_split_command_with_bytes(self):

@@ -5,11 +5,11 @@ from docker.utils import create_ipam_config
 from docker.utils import create_ipam_pool
 import pytest
 
-from .. import helpers
-from ..base import requires_api_version
+from ..helpers import requires_api_version
+from .base import BaseIntegrationTest
 
 
-class TestNetworks(helpers.BaseTestCase):
+class TestNetworks(BaseIntegrationTest):
     def create_network(self, *args, **kwargs):
         net_name = u'dockerpy{}'.format(random.getrandbits(24))[:14]
         net_id = self.client.create_network(net_name, *args, **kwargs)['Id']
@@ -69,9 +69,9 @@ class TestNetworks(helpers.BaseTestCase):
 
         assert ipam.pop('Options', None) is None
 
-        assert ipam == {
-            'Driver': 'default',
-            'Config': [{
+        assert ipam['Driver'] == 'default'
+
+        assert ipam['Config'] == [{
                 'Subnet': "172.28.0.0/16",
                 'IPRange': "172.28.5.0/24",
                 'Gateway': "172.28.5.254",
@@ -80,8 +80,7 @@ class TestNetworks(helpers.BaseTestCase):
                     "b": "172.28.1.6",
                     "c": "172.28.1.7",
                 },
-            }],
-        }
+            }]
 
     @requires_api_version('1.21')
     def test_create_network_with_host_driver_fails(self):
@@ -115,7 +114,8 @@ class TestNetworks(helpers.BaseTestCase):
         network_data = self.client.inspect_network(net_id)
         self.assertEqual(
             list(network_data['Containers'].keys()),
-            [container['Id']])
+            [container['Id']]
+        )
 
         with pytest.raises(docker.errors.APIError):
             self.client.connect_container_to_network(container, net_id)
@@ -128,6 +128,33 @@ class TestNetworks(helpers.BaseTestCase):
             self.client.disconnect_container_from_network(container, net_id)
 
     @requires_api_version('1.22')
+    def test_connect_and_force_disconnect_container(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container('busybox', 'top')
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        network_data = self.client.inspect_network(net_id)
+        self.assertFalse(network_data.get('Containers'))
+
+        self.client.connect_container_to_network(container, net_id)
+        network_data = self.client.inspect_network(net_id)
+        self.assertEqual(
+            list(network_data['Containers'].keys()),
+            [container['Id']]
+        )
+
+        self.client.disconnect_container_from_network(container, net_id, True)
+        network_data = self.client.inspect_network(net_id)
+        self.assertFalse(network_data.get('Containers'))
+
+        with pytest.raises(docker.errors.APIError):
+            self.client.disconnect_container_from_network(
+                container, net_id, force=True
+            )
+
+    @requires_api_version('1.22')
     def test_connect_with_aliases(self):
         net_name, net_id = self.create_network()
 
@@ -138,9 +165,11 @@ class TestNetworks(helpers.BaseTestCase):
         self.client.connect_container_to_network(
             container, net_id, aliases=['foo', 'bar'])
         container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
-            ['foo', 'bar'])
+        aliases = (
+            container_data['NetworkSettings']['Networks'][net_name]['Aliases']
+        )
+        assert 'foo' in aliases
+        assert 'bar' in aliases
 
     @requires_api_version('1.21')
     def test_connect_on_container_create(self):
@@ -183,9 +212,90 @@ class TestNetworks(helpers.BaseTestCase):
         self.client.start(container)
 
         container_data = self.client.inspect_container(container)
+        aliases = (
+            container_data['NetworkSettings']['Networks'][net_name]['Aliases']
+        )
+        assert 'foo' in aliases
+        assert 'bar' in aliases
+
+    @requires_api_version('1.22')
+    def test_create_with_ipv4_address(self):
+        net_name, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[create_ipam_pool(subnet="132.124.0.0/16")],
+            ),
+        )
+        container = self.client.create_container(
+            image='busybox', command='top',
+            host_config=self.client.create_host_config(network_mode=net_name),
+            networking_config=self.client.create_networking_config({
+                net_name: self.client.create_endpoint_config(
+                    ipv4_address='132.124.0.23'
+                )
+            })
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        container_data = self.client.inspect_container(container)
         self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]['Aliases'],
-            ['foo', 'bar'])
+            container_data[
+                'NetworkSettings']['Networks'][net_name]['IPAMConfig'][
+                'IPv4Address'
+            ],
+            '132.124.0.23'
+        )
+
+    @requires_api_version('1.22')
+    def test_create_with_ipv6_address(self):
+        net_name, net_id = self.create_network(
+            ipam=create_ipam_config(
+                driver='default',
+                pool_configs=[create_ipam_pool(subnet="2001:389::1/64")],
+            ),
+        )
+        container = self.client.create_container(
+            image='busybox', command='top',
+            host_config=self.client.create_host_config(network_mode=net_name),
+            networking_config=self.client.create_networking_config({
+                net_name: self.client.create_endpoint_config(
+                    ipv6_address='2001:389::f00d'
+                )
+            })
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        container_data = self.client.inspect_container(container)
+        self.assertEqual(
+            container_data[
+                'NetworkSettings']['Networks'][net_name]['IPAMConfig'][
+                'IPv6Address'
+            ],
+            '2001:389::f00d'
+        )
+
+    @requires_api_version('1.24')
+    def test_create_with_linklocal_ips(self):
+        container = self.client.create_container(
+            'busybox', 'top',
+            networking_config=self.client.create_networking_config(
+                {
+                    'bridge': self.client.create_endpoint_config(
+                        link_local_ips=['169.254.8.8']
+                    )
+                }
+            ),
+            host_config=self.client.create_host_config(network_mode='bridge')
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        container_data = self.client.inspect_container(container)
+        net_cfg = container_data['NetworkSettings']['Networks']['bridge']
+        assert 'IPAMConfig' in net_cfg
+        assert 'LinkLocalIPs' in net_cfg['IPAMConfig']
+        assert net_cfg['IPAMConfig']['LinkLocalIPs'] == ['169.254.8.8']
 
     @requires_api_version('1.22')
     def test_create_with_links(self):
@@ -217,7 +327,8 @@ class TestNetworks(helpers.BaseTestCase):
         net_name, net_id = self.create_network()
         with self.assertRaises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
-        self.client.create_network(net_name, check_duplicate=False)
+        net_id = self.client.create_network(net_name, check_duplicate=False)
+        self.tmp_networks.append(net_id['Id'])
 
     @requires_api_version('1.22')
     def test_connect_with_links(self):
@@ -304,3 +415,27 @@ class TestNetworks(helpers.BaseTestCase):
         _, net_id = self.create_network(internal=True)
         net = self.client.inspect_network(net_id)
         assert net['Internal'] is True
+
+    @requires_api_version('1.23')
+    def test_create_network_with_labels(self):
+        _, net_id = self.create_network(labels={
+            'com.docker.py.test': 'label'
+        })
+
+        net = self.client.inspect_network(net_id)
+        assert 'Labels' in net
+        assert len(net['Labels']) == 1
+        assert net['Labels'] == {
+            'com.docker.py.test': 'label'
+        }
+
+    @requires_api_version('1.23')
+    def test_create_network_with_labels_wrong_type(self):
+        with pytest.raises(TypeError):
+            self.create_network(labels=['com.docker.py.test=label', ])
+
+    @requires_api_version('1.23')
+    def test_create_network_ipv6_enabled(self):
+        _, net_id = self.create_network(enable_ipv6=True)
+        net = self.client.inspect_network(net_id)
+        assert net['EnableIPv6'] is True

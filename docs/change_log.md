@@ -1,10 +1,116 @@
 Change Log
 ==========
 
+1.10.3
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.3+is%3Aclosed)
+
+### Bugfixes
+
+* Fixed an issue where identity tokens in configuration files weren't handled
+  by the library.
+
+### Miscellaneous
+
+* Increased the default number of connection pools from 10 to 25. This number
+  can now be configured using the `num_pools` parameter in the `Client`
+  constructor.
+
+
+1.10.2
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Bugfixes
+
+* Updated the docker-pycreds dependency as it was causing issues for some
+  users with dependency resolution in applications using docker-py.
+
+
+1.10.1
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Bugfixes
+
+* The docker.utils.types module was removed in favor of docker.types, but some
+  applications imported it explicitly. It has been re-added with an import
+  warning advising to use the new module path.
+
+1.10.0
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.10.0+is%3Aclosed)
+
+### Features
+
+* Added swarm mode and service management methods. See the documentation for
+  details.
+* Added support for IPv6 Docker host addresses in the `Client` constructor.
+* Added (read-only) support for the Docker credentials store.
+* Added support for custom `auth_config` in `Client.push`.
+* Added support for `labels` in `Client.create_volume`.
+* Added support for `labels` and `enable_ipv6` in `Client.create_network`.
+* Added support for `force` param in
+  `Client.disconnect_container_from_network`.
+* Added support for `pids_limit`, `sysctls`, `userns_mode`, `cpuset_cpus`,
+  `cpu_shares`, `mem_reservation` and `kernel_memory` parameters in
+  `Client.create_host_config`.
+* Added support for `link_local_ips` in `create_endpoint_config`.
+* Added support for a `changes` parameter in `Client.import_image`.
+* Added support for a `version` parameter in `Client.from_env`.
+
+### Bugfixes
+
+* Fixed a bug where `Client.build` would crash if the `config.json` file
+  contained a `HttpHeaders` entry.
+* Fixed a bug where passing `decode=True` in some streaming methods would
+  crash when the daemon's response had an unexpected format.
+* Fixed a bug where `environment` values with unicode characters weren't
+  handled properly in `create_container`.
+* Fixed a bug where using the `npipe` protocol would sometimes break with
+  `ValueError: buffer size must be strictly positive`.
+
+### Miscellaneous
+
+* Fixed an issue where URL-quoting in docker-py was inconsistent with the
+  quoting done by the Docker CLI client.
+* The client now sends TCP upgrade headers to hint potential proxies about
+  connection hijacking.
+* The client now defaults to using the `npipe` protocol on Windows.
+
+
+1.9.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.9.0+is%3Aclosed)
+
+### Features
+
+* Added **experimental** support for Windows named pipes (`npipe://` protocol).
+* Added support for Block IO constraints in `Client.create_host_config`. This
+  includes parameters `blkio_weight`, `blkio_weight_device`, `device_read_bps`,
+  `device_write_bps`, `device_read_iops` and `device_write_iops`.
+* Added support for the `internal` param in `Client.create_network`.
+* Added support for `ipv4_address` and `ipv6_address` in utils function
+  `create_endpoint_config`.
+* Added support for custom user agent setting in the `Client` constructor.
+  By default, docker-py now also declares itself in the `User-Agent` header.
+
+### Bugfixes
+
+* Fixed an issue where the HTTP timeout on streaming responses would sometimes
+  be set incorrectly.
+* Fixed an issue where explicit relative paths in `.dockerignore` files were
+  not being recognized.
+
 1.8.1
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.8.0+is%3Aclosed)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/issues?q=milestone%3A1.8.1+is%3Aclosed)
 
 ### Bugfixes
 
@@ -213,7 +319,7 @@ Change Log
 ### Features
 
 * Added `utils.parse_env_file` to support env-files.
-  See [docs](http://docker-py.readthedocs.org/en/latest/api/#create_container)
+  See [docs](https://docker-py.readthedocs.io/en/latest/api/#create_container)
   for usage.
 * Added support for arbitrary log drivers
 * Added support for URL paths in the docker host URL (`base_url`)
@@ -577,7 +683,7 @@ Change Log
 ### Documentation
 
 * Added new MkDocs documentation. Currently hosted on
-  [ReadTheDocs](http://docker-py.readthedocs.org/en/latest/)
+  [ReadTheDocs](https://docker-py.readthedocs.io/en/latest/)
 
 ### Miscellaneous
 

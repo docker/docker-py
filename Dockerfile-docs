@@ -1,0 +1,9 @@
+FROM python:2.7
+
+RUN mkdir /home/docker-py
+WORKDIR /home/docker-py
+
+COPY docs-requirements.txt /home/docker-py/docs-requirements.txt
+RUN pip install -r docs-requirements.txt
+
+COPY . /home/docker-py

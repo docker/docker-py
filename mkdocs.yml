@@ -1,7 +1,7 @@
 site_name: docker-py Documentation
 site_description: An API client for Docker written in Python
 site_favicon: favicon_whale.png
-site_url: http://docker-py.readthedocs.org
+site_url: https://docker-py.readthedocs.io
 repo_url: https://github.com/docker/docker-py/
 theme: readthedocs
 pages:
@@ -13,6 +13,8 @@ pages:
 - Host devices: host-devices.md
 - Host configuration: hostconfig.md
 - Network configuration: networks.md
+- Swarm management: swarm.md
+- Swarm services: services.md
 - Using tmpfs: tmpfs.md
 - Using with Docker Machine: machine.md
 - Change Log: change_log.md

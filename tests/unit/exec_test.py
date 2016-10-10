@@ -51,8 +51,36 @@ class ExecTest(DockerClientTest):
             }
         )
 
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['headers'], {
+                'Content-Type': 'application/json',
+                'Connection': 'Upgrade',
+                'Upgrade': 'tcp'
+            }
+        )
+
+    def test_exec_start_detached(self):
+        self.client.exec_start(fake_api.FAKE_EXEC_ID, detach=True)
+
+        args = fake_request.call_args
+        self.assertEqual(
+            args[0][1], url_prefix + 'exec/{0}/start'.format(
+                fake_api.FAKE_EXEC_ID
+            )
+        )
+
+        self.assertEqual(
+            json.loads(args[1]['data']), {
+                'Tty': False,
+                'Detach': True
+            }
+        )
+
+        self.assertEqual(
+            args[1]['headers'], {
+                'Content-Type': 'application/json'
+            }
+        )
 
     def test_exec_inspect(self):
         self.client.exec_inspect(fake_api.FAKE_EXEC_ID)

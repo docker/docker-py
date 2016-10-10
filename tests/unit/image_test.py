@@ -2,6 +2,7 @@ import docker
 import pytest
 
 from . import fake_api
+from docker import auth
 from .api_test import (
     DockerClientTest, fake_request, DEFAULT_TIMEOUT_SECONDS, url_prefix,
     fake_resolve_authconfig
@@ -258,6 +259,31 @@ class ImageTest(DockerClientTest):
             },
             data='{}',
             headers={'Content-Type': 'application/json'},
+            stream=False,
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_push_image_with_auth(self):
+        auth_config = {
+            'username': "test_user",
+            'password': "test_password",
+            'serveraddress': "test_server",
+        }
+        encoded_auth = auth.encode_header(auth_config)
+        self.client.push(
+            fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME,
+            auth_config=auth_config
+        )
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'images/test_image/push',
+            params={
+                'tag': fake_api.FAKE_TAG_NAME,
+            },
+            data='{}',
+            headers={'Content-Type': 'application/json',
+                     'X-Registry-Auth': encoded_auth},
             stream=False,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

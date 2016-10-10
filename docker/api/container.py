@@ -15,12 +15,18 @@ class ContainerApiMixin(object):
             'logs': logs and 1 or 0,
             'stdout': stdout and 1 or 0,
             'stderr': stderr and 1 or 0,
-            'stream': stream and 1 or 0,
+            'stream': stream and 1 or 0
         }
-        u = self._url("/containers/{0}/attach", container)
-        response = self._post(u, params=params, stream=stream)
 
-        return self._get_result(container, stream, response)
+        headers = {
+            'Connection': 'Upgrade',
+            'Upgrade': 'tcp'
+        }
+
+        u = self._url("/containers/{0}/attach", container)
+        response = self._post(u, headers=headers, params=params, stream=stream)
+
+        return self._read_from_socket(response, stream)
 
     @utils.check_resource
     def attach_socket(self, container, params=None, ws=False):
@@ -34,9 +40,18 @@ class ContainerApiMixin(object):
         if ws:
             return self._attach_websocket(container, params)
 
+        headers = {
+            'Connection': 'Upgrade',
+            'Upgrade': 'tcp'
+        }
+
         u = self._url("/containers/{0}/attach", container)
-        return self._get_raw_response_socket(self.post(
-            u, None, params=self._attach_params(params), stream=True))
+        return self._get_raw_response_socket(
+            self.post(
+                u, None, params=self._attach_params(params), stream=True,
+                headers=headers
+            )
+        )
 
     @utils.check_resource
     def commit(self, container, repository=None, tag=None, message=None,
@@ -187,6 +202,8 @@ class ContainerApiMixin(object):
         url = self._url("/containers/{0}/kill", container)
         params = {}
         if signal is not None:
+            if not isinstance(signal, six.string_types):
+                signal = int(signal)
             params['signal'] = signal
         res = self._post(url, params=params)
 
@@ -404,7 +421,8 @@ class ContainerApiMixin(object):
     def update_container(
         self, container, blkio_weight=None, cpu_period=None, cpu_quota=None,
         cpu_shares=None, cpuset_cpus=None, cpuset_mems=None, mem_limit=None,
-        mem_reservation=None, memswap_limit=None, kernel_memory=None
+        mem_reservation=None, memswap_limit=None, kernel_memory=None,
+        restart_policy=None
     ):
         url = self._url('/containers/{0}/update', container)
         data = {}
@@ -428,6 +446,13 @@ class ContainerApiMixin(object):
             data['MemorySwap'] = utils.parse_bytes(memswap_limit)
         if kernel_memory:
             data['KernelMemory'] = utils.parse_bytes(kernel_memory)
+        if restart_policy:
+            if utils.version_lt(self._version, '1.23'):
+                raise errors.InvalidVersion(
+                    'restart policy update is not supported '
+                    'for API version < 1.23'
+                )
+            data['RestartPolicy'] = restart_policy
 
         res = self._post_json(url, data=data)
         return self._result(res, True)

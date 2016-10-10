@@ -1,17 +1,3 @@
-# Copyright 2013 dotCloud inc.
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-
-#        http://www.apache.org/licenses/LICENSE-2.0
-
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
 import datetime
 import json
 import os
@@ -22,9 +8,11 @@ import sys
 import tempfile
 import threading
 import time
+import io
 
 import docker
 import requests
+from requests.packages import urllib3
 import six
 
 from .. import base
@@ -42,7 +30,7 @@ DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS
 
 
 def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
-             request=None):
+             request=None, raw=None):
     res = requests.Response()
     res.status_code = status_code
     if not isinstance(content, six.binary_type):
@@ -52,6 +40,7 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
     res.reason = reason
     res.elapsed = datetime.timedelta(elapsed)
     res.request = request
+    res.raw = raw
     return res
 
 
@@ -93,6 +82,10 @@ def fake_put(self, url, *args, **kwargs):
 def fake_delete(self, url, *args, **kwargs):
     return fake_request('DELETE', url, *args, **kwargs)
 
+
+def fake_read_from_socket(self, response, stream):
+    return six.binary_type()
+
 url_base = 'http+docker://localunixsocket/'
 url_prefix = '{0}v{1}/'.format(
     url_base,
@@ -103,7 +96,8 @@ class DockerClientTest(base.Cleanup, base.BaseTestCase):
     def setUp(self):
         self.patcher = mock.patch.multiple(
             'docker.Client', get=fake_get, post=fake_post, put=fake_put,
-            delete=fake_delete
+            delete=fake_delete,
+            _read_from_socket=fake_read_from_socket
         )
         self.patcher.start()
         self.client = docker.Client()
@@ -154,9 +148,15 @@ class DockerApiTest(DockerClientTest):
             '{0}{1}'.format(url_prefix, 'hello/somename/world/someothername')
         )
 
-        url = self.client._url('/hello/{0}/world', '/some?name')
+        url = self.client._url('/hello/{0}/world', 'some?name')
         self.assertEqual(
-            url, '{0}{1}'.format(url_prefix, 'hello/%2Fsome%3Fname/world')
+            url, '{0}{1}'.format(url_prefix, 'hello/some%3Fname/world')
+        )
+
+        url = self.client._url("/images/{0}/push", "localhost:5000/image")
+        self.assertEqual(
+            url,
+            '{0}{1}'.format(url_prefix, 'images/localhost:5000/image/push')
         )
 
     def test_url_invalid_resource(self):
@@ -317,6 +317,43 @@ class DockerApiTest(DockerClientTest):
             TypeError, self.client.create_host_config, security_opt='wrong'
         )
 
+    def test_stream_helper_decoding(self):
+        status_code, content = fake_api.fake_responses[url_prefix + 'events']()
+        content_str = json.dumps(content)
+        if six.PY3:
+            content_str = content_str.encode('utf-8')
+        body = io.BytesIO(content_str)
+
+        # mock a stream interface
+        raw_resp = urllib3.HTTPResponse(body=body)
+        setattr(raw_resp._fp, 'chunked', True)
+        setattr(raw_resp._fp, 'chunk_left', len(body.getvalue()) - 1)
+
+        # pass `decode=False` to the helper
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp))
+        self.assertEqual(result, content_str)
+
+        # pass `decode=True` to the helper
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp, decode=True))
+        self.assertEqual(result, content)
+
+        # non-chunked response, pass `decode=False` to the helper
+        setattr(raw_resp._fp, 'chunked', False)
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp))
+        self.assertEqual(result, content_str.decode('utf-8'))
+
+        # non-chunked response, pass `decode=True` to the helper
+        raw_resp._fp.seek(0)
+        resp = response(status_code=status_code, content=content, raw=raw_resp)
+        result = next(self.client._stream_helper(resp, decode=True))
+        self.assertEqual(result, content)
+
 
 class StreamTest(base.Cleanup, base.BaseTestCase):
     def setUp(self):
@@ -415,3 +452,33 @@ class StreamTest(base.Cleanup, base.BaseTestCase):
 
             self.assertEqual(list(stream), [
                 str(i).encode() for i in range(50)])
+
+
+class UserAgentTest(base.BaseTestCase):
+    def setUp(self):
+        self.patcher = mock.patch.object(
+            docker.Client,
+            'send',
+            return_value=fake_resp("GET", "%s/version" % fake_api.prefix)
+        )
+        self.mock_send = self.patcher.start()
+
+    def tearDown(self):
+        self.patcher.stop()
+
+    def test_default_user_agent(self):
+        client = docker.Client()
+        client.version()
+
+        self.assertEqual(self.mock_send.call_count, 1)
+        headers = self.mock_send.call_args[0][0].headers
+        expected = 'docker-py/%s' % docker.__version__
+        self.assertEqual(headers['User-Agent'], expected)
+
+    def test_custom_user_agent(self):
+        client = docker.Client(user_agent='foo/bar')
+        client.version()
+
+        self.assertEqual(self.mock_send.call_count, 1)
+        headers = self.mock_send.call_args[0][0].headers
+        self.assertEqual(headers['User-Agent'], 'foo/bar')

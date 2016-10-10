@@ -16,6 +16,8 @@ is hosted.
   to use the API version provided by the server.
 * timeout (int): The HTTP request timeout, in seconds.
 * tls (bool or [TLSConfig](tls.md#TLSConfig)): Equivalent CLI options: `docker --tls ...`
+* user_agent (str): Set a custom user agent for requests to the server.
+
 
 ****
 
@@ -65,6 +67,7 @@ correct value (e.g `gzip`).
 * pull (bool): Downloads any updates to the FROM image in Dockerfiles
 * forcerm (bool): Always remove intermediate containers, even after unsuccessful builds
 * dockerfile (str): path within the build context to the Dockerfile
+* buildargs (dict): A dictionary of build arguments
 * container_limits (dict): A dictionary of limits applied to each container
   created by the build process. Valid keys:
     - memory (int): set memory limit for build
@@ -109,7 +112,7 @@ correct value (e.g `gzip`).
 ```
 
 **Raises:** [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) if `path` nor
+https://docs.python.org/3.5/library/exceptions.html#TypeError) if `path` nor
 `fileobj` are specified
 
 ## commit
@@ -179,6 +182,16 @@ Connect a container to a network.
 
 * container (str): container-id/name to be connected to the network
 * net_id (str): network id
+* aliases (list): A list of aliases for this endpoint. Names in that list can
+  be used within the network to reach the container. Defaults to `None`.
+* links (list): A list of links for this endpoint. Containers declared in this
+  list will be [linked](https://docs.docker.com/engine/userguide/networking/work-with-networks/#linking-containers-in-user-defined-networks)
+  to this container. Defaults to `None`.
+* ipv4_address (str): The IP address of this container on the network,
+  using the IPv4 protocol. Defaults to `None`.
+* ipv6_address (str): The IP address of this container on the network,
+  using the IPv6 protocol. Defaults to `None`.
+* link_local_ips (list): A list of link-local (IPv4/IPv6) addresses.
 
 ## copy
 Identical to the `docker cp` command. Get files/folders from the container.
@@ -207,7 +220,7 @@ of the created container in bytes) or a string with a units identification char
 character, bytes are assumed as an intended unit.
 
 `volumes_from` and `dns` arguments raise [TypeError](
-https://docs.python.org/3.4/library/exceptions.html#TypeError) exception if
+https://docs.python.org/3.5/library/exceptions.html#TypeError) exception if
 they are used against v1.10 and above of the Docker remote API. Those
 arguments should be passed as part of the `host_config` dictionary.
 
@@ -227,13 +240,13 @@ where unit = b, k, m, or g)
 * environment (dict or list): A dictionary or a list of strings in the
 following format `["PASSWORD=xxx"]` or `{"PASSWORD": "xxx"}`.
 * dns (list): DNS name servers
+* dns_opt (list): Additional options to be added to the container's `resolv.conf` file
 * volumes (str or list):
 * volumes_from (str or list): List of container names or Ids to get volumes
 from. Optionally a single string joining container id's with commas
 * network_disabled (bool): Disable networking
 * name (str): A name for the container
 * entrypoint (str or list): An entrypoint
-* cpu_shares (int): CPU shares (relative weight)
 * working_dir (str): Path to the working directory
 * domainname (str or list): Set custom DNS search domains
 * memswap_limit (int):
@@ -242,6 +255,7 @@ from. Optionally a single string joining container id's with commas
 * labels (dict or list): A dictionary of name-value labels (e.g. `{"label1": "value1", "label2": "value2"}`) or a list of names of labels to set with empty values (e.g. `["label1", "label2"]`)
 * volume_driver (str): The name of a volume driver/plugin.
 * stop_signal (str): The stop signal to use to stop the container (e.g. `SIGINT`).
+* networking_config (dict): A [NetworkingConfig](networks.md) dictionary
 
 **Returns** (dict): A dictionary with an image 'Id' key and a 'Warnings' key.
 
@@ -270,24 +284,32 @@ The utility can be used as follows:
 ```python
 >>> import docker.utils
 >>> my_envs = docker.utils.parse_env_file('/path/to/file')
->>> docker.utils.create_container_config('1.18', '_mongodb', 'foobar',  environment=my_envs)
+>>> client.create_container('myimage', 'command', environment=my_envs)
 ```
-
-You can now use this with 'environment' for `create_container`.
-
 
 ## create_network
 
-Create a network, similar to the `docker network create` command.
+Create a network, similar to the `docker network create` command. See the
+[networks documentation](networks.md) for details.
 
 **Params**:
 
 * name (str): Name of the network
 * driver (str): Name of the driver used to create the network
-
 * options (dict): Driver options as a key-value dictionary
+* ipam (dict): Optional custom IP scheme for the network
+* check_duplicate (bool): Request daemon to check for networks with same name.
+  Default: `True`.
+* internal (bool): Restrict external access to the network. Default `False`.
+* labels (dict): Map of labels to set on the network. Default `None`.
+* enable_ipv6 (bool): Enable IPv6 on the network. Default `False`.
 
 **Returns** (dict): The created network reference object
+
+## create_service
+
+Create a service, similar to the `docker service create` command. See the
+[services documentation](services.md#Clientcreate_service) for details.
 
 ## create_volume
 
@@ -298,6 +320,7 @@ Create and register a named volume
 * name (str): Name of the volume
 * driver (str): Name of the driver used to create the volume
 * driver_opts (dict): Driver options as a key-value dictionary
+* labels (dict): Labels to set on the volume
 
 **Returns** (dict): The created volume reference object
 
@@ -305,10 +328,16 @@ Create and register a named volume
 >>> from docker import Client
 >>> cli = Client()
 >>> volume = cli.create_volume(
-  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'}
+  name='foobar', driver='local', driver_opts={'foo': 'bar', 'baz': 'false'},
+  labels={"key": "value"}
 )
 >>> print(volume)
-{u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
+{
+  u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
+  u'Driver': u'local',
+  u'Name': u'foobar',
+  u'Labels': {u'key': u'value'}
+}
 ```
 
 ## diff
@@ -327,6 +356,8 @@ Inspect changes on a container's filesystem.
 
 * container (str): container-id/name to be disconnected from a network
 * net_id (str): network id
+* force (bool): Force the container to disconnect from a network.
+  Default: `False`
 
 ## events
 
@@ -586,6 +617,11 @@ Display system-wide information. Identical to the `docker info` command.
  'SwapLimit': 1}
 ```
 
+## init_swarm
+
+Initialize a new Swarm using the current connected engine as the first node.
+See the [Swarm documentation](swarm.md#clientinit_swarm).
+
 ## insert
 *DEPRECATED*
 
@@ -606,7 +642,7 @@ Identical to the `docker inspect` command, but only for images.
 
 **Params**:
 
-* image_id (str): The image to inspect
+* image (str): The image to inspect
 
 **Returns** (dict): Nearly the same output as `docker inspect`, just as a
 single dict
@@ -620,6 +656,31 @@ Retrieve network info by id.
 * net_id (str): network id
 
 **Returns** (dict): Network information dictionary
+
+## inspect_node
+
+Retrieve low-level information about a Swarm node.
+See the [Swarm documentation](swarm.md#clientinspect_node).
+
+## inspect_service
+
+Create a service, similar to the `docker service create` command. See the
+[services documentation](services.md#clientinspect_service) for details.
+
+## inspect_swarm
+
+Retrieve information about the current Swarm.
+See the [Swarm documentation](swarm.md#clientinspect_swarm).
+
+## inspect_task
+
+Retrieve information about a task.
+
+**Params**:
+
+* task (str): Task identifier
+
+**Returns** (dict): Task information dictionary
 
 ## inspect_volume
 
@@ -636,6 +697,11 @@ Retrieve volume info by name.
 {u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data', u'Driver': u'local', u'Name': u'foobar'}
 ```
 
+## join_swarm
+
+Join an existing Swarm.
+See the [Swarm documentation](swarm.md#clientjoin_swarm).
+
 ## kill
 
 Kill a container or send a signal to a container.
@@ -644,6 +710,11 @@ Kill a container or send a signal to a container.
 
 * container (str): The container to kill
 * signal (str or int): The signal to send. Defaults to `SIGKILL`
+
+## leave_swarm
+
+Leave the current Swarm.
+See the [Swarm documentation](swarm.md#clientleave_swarm).
 
 ## load_image
 
@@ -701,6 +772,10 @@ List networks currently registered by the docker daemon. Similar to the `docker 
 The above are combined to create a filters dict.
 
 **Returns** (dict): List of network objects.
+
+## nodes
+
+List Swarm nodes. See the [Swarm documentation](swarm.md#clientnodes).
 
 ## pause
 
@@ -781,6 +856,8 @@ command.
 * tag (str): An optional tag to push
 * stream (bool): Stream the output as a blocking generator
 * insecure_registry (bool): Use `http://` to connect to the registry
+* auth_config (dict): Override the credentials that Client.login has set for this request
+  `auth_config` should contain the `username` and `password` keys to be valid.
 
 **Returns** (generator or str): The output of the upload
 
@@ -843,6 +920,11 @@ Remove a network. Similar to the `docker network rm` command.
 * net_id (str): The network's id
 
 Failure to remove will raise a `docker.errors.APIError` exception.
+
+## remove_service
+
+Remove a service, similar to the `docker service rm` command. See the
+[services documentation](services.md#clientremove_service) for details.
 
 ## remove_volume
 
@@ -911,6 +993,11 @@ Identical to the `docker search` command.
   'star_count': 60},
   ...
 ```
+
+## services
+
+List services, similar to the `docker service ls` command. See the
+[services documentation](services.md#clientservices) for details.
 
 ## start
 
@@ -984,6 +1071,17 @@ Tag an image into a repository. Identical to the `docker tag` command.
 
 **Returns** (bool): True if successful
 
+## tasks
+
+Retrieve a list of tasks.
+
+**Params**:
+
+* filters (dict): A map of filters to process on the tasks list. Valid filters:
+  `id`, `name`, `service`, `node`, `label` and `desired-state`.
+
+**Returns** (list): List of task dictionaries.
+
 ## top
 Display the running processes of a container.
 
@@ -1029,8 +1127,19 @@ Update resource configs of one or more containers.
 * mem_reservation (int or str): Memory soft limit
 * memswap_limit (int or str): Total memory (memory + swap), -1 to disable swap
 * kernel_memory (int or str): Kernel memory limit
+* restart_policy (dict): Restart policy dictionary
 
 **Returns** (dict): Dictionary containing a `Warnings` key.
+
+## update_service
+
+Update a service, similar to the `docker service update` command. See the
+[services documentation](services.md#clientupdate_service) for details.
+
+## update_swarm
+
+Update the current Swarm.
+See the [Swarm documentation](swarm.md#clientupdate_swarm).
 
 ## version
 
@@ -1095,3 +1204,26 @@ TODO:
 * load_image
 
 -->
+
+****
+
+## Version mismatch
+
+You may encounter an error like this:
+
+```text
+client is newer than server (client API version: 1.24, server API version: 1.23)
+```
+
+To fix this, you have to either supply the exact version your server supports
+when instantiating the `Client`:
+
+```python
+client = docker.Client(version="1.23")
+```
+
+or let the client automatically detect the newest version server supports:
+
+```python
+client = docker.Client(version="auto")
+```

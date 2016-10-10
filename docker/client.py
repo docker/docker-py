@@ -1,20 +1,6 @@
-# Copyright 2013 dotCloud inc.
-
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-
-#        http://www.apache.org/licenses/LICENSE-2.0
-
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
 import json
 import struct
-import sys
+from functools import partial
 
 import requests
 import requests.exceptions
@@ -26,10 +12,15 @@ from . import api
 from . import constants
 from . import errors
 from .auth import auth
-from .unixconn import unixconn
 from .ssladapter import ssladapter
-from .utils import utils, check_resource, update_headers, kwargs_from_env
 from .tls import TLSConfig
+from .transport import UnixAdapter
+from .utils import utils, check_resource, update_headers, kwargs_from_env
+from .utils.socket import frames_iter
+try:
+    from .transport import NpipeAdapter
+except ImportError:
+    pass
 
 
 def from_env(**kwargs):
@@ -43,10 +34,14 @@ class Client(
         api.DaemonApiMixin,
         api.ExecApiMixin,
         api.ImageApiMixin,
-        api.VolumeApiMixin,
-        api.NetworkApiMixin):
+        api.NetworkApiMixin,
+        api.ServiceApiMixin,
+        api.SwarmApiMixin,
+        api.VolumeApiMixin):
     def __init__(self, base_url=None, version=None,
-                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False):
+                 timeout=constants.DEFAULT_TIMEOUT_SECONDS, tls=False,
+                 user_agent=constants.DEFAULT_USER_AGENT,
+                 num_pools=constants.DEFAULT_NUM_POOLS):
         super(Client, self).__init__()
 
         if tls and not base_url:
@@ -56,20 +51,43 @@ class Client(
 
         self.base_url = base_url
         self.timeout = timeout
+        self.headers['User-Agent'] = user_agent
 
         self._auth_configs = auth.load_config()
 
-        base_url = utils.parse_host(base_url, sys.platform, tls=bool(tls))
+        base_url = utils.parse_host(
+            base_url, constants.IS_WINDOWS_PLATFORM, tls=bool(tls)
+        )
         if base_url.startswith('http+unix://'):
-            self._custom_adapter = unixconn.UnixAdapter(base_url, timeout)
+            self._custom_adapter = UnixAdapter(
+                base_url, timeout, pool_connections=num_pools
+            )
             self.mount('http+docker://', self._custom_adapter)
+            self._unmount('http://', 'https://')
             self.base_url = 'http+docker://localunixsocket'
+        elif base_url.startswith('npipe://'):
+            if not constants.IS_WINDOWS_PLATFORM:
+                raise errors.DockerException(
+                    'The npipe:// protocol is only supported on Windows'
+                )
+            try:
+                self._custom_adapter = NpipeAdapter(
+                    base_url, timeout, pool_connections=num_pools
+                )
+            except NameError:
+                raise errors.DockerException(
+                    'Install pypiwin32 package to enable npipe:// support'
+                )
+            self.mount('http+docker://', self._custom_adapter)
+            self.base_url = 'http+docker://localnpipe'
         else:
             # Use SSLAdapter for the ability to specify SSL version
             if isinstance(tls, TLSConfig):
                 tls.configure_client(self)
             elif tls:
-                self._custom_adapter = ssladapter.SSLAdapter()
+                self._custom_adapter = ssladapter.SSLAdapter(
+                    pool_connections=num_pools
+                )
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
 
@@ -90,7 +108,10 @@ class Client(
 
     @classmethod
     def from_env(cls, **kwargs):
-        return cls(**kwargs_from_env(**kwargs))
+        timeout = kwargs.pop('timeout', None)
+        version = kwargs.pop('version', None)
+        return cls(timeout=timeout, version=version,
+                   **kwargs_from_env(**kwargs))
 
     def _retrieve_server_version(self):
         try:
@@ -135,7 +156,8 @@ class Client(
                     'instead'.format(arg, type(arg))
                 )
 
-        args = map(six.moves.urllib.parse.quote_plus, args)
+        quote_f = partial(six.moves.urllib.parse.quote_plus, safe="/:")
+        args = map(quote_f, args)
 
         if kwargs.get('versioned_api', True):
             return '{0}/v{1}{2}'.format(
@@ -230,12 +252,20 @@ class Client(
                 if decode:
                     if six.PY3:
                         data = data.decode('utf-8')
-                    data = json.loads(data)
-                yield data
+                    # remove the trailing newline
+                    data = data.strip()
+                    # split the data at any newlines
+                    data_list = data.split("\r\n")
+                    # load and yield each line seperately
+                    for data in data_list:
+                        data = json.loads(data)
+                        yield data
+                else:
+                    yield data
         else:
             # Response isn't chunked, meaning we probably
             # encountered an error immediately
-            yield self._result(response)
+            yield self._result(response, json=decode)
 
     def _multiplexed_buffer_helper(self, response):
         """A generator of multiplexed data blocks read from a buffered
@@ -286,6 +316,14 @@ class Client(
         self._raise_for_status(response)
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
+
+    def _read_from_socket(self, response, stream):
+        socket = self._get_raw_response_socket(response)
+
+        if stream:
+            return frames_iter(socket)
+        else:
+            return six.binary_type().join(frames_iter(socket))
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
@@ -339,6 +377,10 @@ class Client(
             return sep.join(
                 [x for x in self._multiplexed_buffer_helper(res)]
             )
+
+    def _unmount(self, *args):
+        for proto in args:
+            self.adapters.pop(proto)
 
     def get_adapter(self, url):
         try:

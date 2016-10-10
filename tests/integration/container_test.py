@@ -3,16 +3,17 @@ import signal
 import tempfile
 
 import docker
+from docker.utils.socket import next_frame_size
+from docker.utils.socket import read_exactly
 import pytest
 import six
 
-from ..base import requires_api_version
+from ..helpers import requires_api_version
 from .. import helpers
+from .base import BaseIntegrationTest, BUSYBOX
 
-BUSYBOX = helpers.BUSYBOX
 
-
-class ListContainersTest(helpers.BaseTestCase):
+class ListContainersTest(BaseIntegrationTest):
     def test_list_containers(self):
         res0 = self.client.containers(all=True)
         size = len(res0)
@@ -32,7 +33,7 @@ class ListContainersTest(helpers.BaseTestCase):
         self.assertIn('Status', retrieved)
 
 
-class CreateContainerTest(helpers.BaseTestCase):
+class CreateContainerTest(BaseIntegrationTest):
 
     def test_create(self):
         res = self.client.create_container(BUSYBOX, 'true')
@@ -116,7 +117,7 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.client.wait(id)
         with self.assertRaises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
-        err = exc.exception.response.text
+        err = exc.exception.explanation
         self.assertIn(
             'You cannot remove a running container', err
         )
@@ -157,9 +158,6 @@ class CreateContainerTest(helpers.BaseTestCase):
         self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
 
     def create_container_readonly_fs(self):
-        if not helpers.exec_driver_is_native():
-            pytest.skip('Exec driver not native')
-
         ctnr = self.client.create_container(
             BUSYBOX, ['mkdir', '/shrine'],
             host_config=self.client.create_host_config(
@@ -290,7 +288,7 @@ class CreateContainerTest(helpers.BaseTestCase):
             )
             self.client.start(container)
 
-        assert expected_msg in str(excinfo.value)
+        assert excinfo.value.explanation == expected_msg
 
     def test_valid_no_log_driver_specified(self):
         log_config = docker.utils.LogConfig(
@@ -399,7 +397,7 @@ class CreateContainerTest(helpers.BaseTestCase):
         assert config['HostConfig']['Tmpfs'] == tmpfs
 
 
-class VolumeBindTest(helpers.BaseTestCase):
+class VolumeBindTest(BaseIntegrationTest):
     def setUp(self):
         super(VolumeBindTest, self).setUp()
 
@@ -488,7 +486,7 @@ class VolumeBindTest(helpers.BaseTestCase):
 
 
 @requires_api_version('1.20')
-class ArchiveTest(helpers.BaseTestCase):
+class ArchiveTest(BaseIntegrationTest):
     def test_get_file_archive_from_container(self):
         data = 'The Maid and the Pocket Watch of Blood'
         ctnr = self.client.create_container(
@@ -568,7 +566,7 @@ class ArchiveTest(helpers.BaseTestCase):
         self.assertIn('bar/', results)
 
 
-class RenameContainerTest(helpers.BaseTestCase):
+class RenameContainerTest(BaseIntegrationTest):
     def test_rename_container(self):
         version = self.client.version()['Version']
         name = 'hong_meiling'
@@ -584,7 +582,7 @@ class RenameContainerTest(helpers.BaseTestCase):
             self.assertEqual('/{0}'.format(name), inspect['Name'])
 
 
-class StartContainerTest(helpers.BaseTestCase):
+class StartContainerTest(BaseIntegrationTest):
     def test_start_container(self):
         res = self.client.create_container(BUSYBOX, 'true')
         self.assertIn('Id', res)
@@ -638,7 +636,7 @@ class StartContainerTest(helpers.BaseTestCase):
             self.assertEqual(exitcode, 0, msg=cmd)
 
 
-class WaitTest(helpers.BaseTestCase):
+class WaitTest(BaseIntegrationTest):
     def test_wait(self):
         res = self.client.create_container(BUSYBOX, ['sleep', '3'])
         id = res['Id']
@@ -666,7 +664,7 @@ class WaitTest(helpers.BaseTestCase):
         self.assertEqual(inspect['State']['ExitCode'], exitcode)
 
 
-class LogsTest(helpers.BaseTestCase):
+class LogsTest(BaseIntegrationTest):
     def test_logs(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
@@ -738,7 +736,7 @@ Line2'''
         self.assertEqual(logs, ''.encode(encoding='ascii'))
 
 
-class DiffTest(helpers.BaseTestCase):
+class DiffTest(BaseIntegrationTest):
     def test_diff(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -766,7 +764,7 @@ class DiffTest(helpers.BaseTestCase):
         self.assertEqual(test_diff[0]['Kind'], 1)
 
 
-class StopTest(helpers.BaseTestCase):
+class StopTest(BaseIntegrationTest):
     def test_stop(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -793,7 +791,7 @@ class StopTest(helpers.BaseTestCase):
         self.assertEqual(state['Running'], False)
 
 
-class KillTest(helpers.BaseTestCase):
+class KillTest(BaseIntegrationTest):
     def test_kill(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -804,8 +802,7 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
+        self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -819,8 +816,7 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('State', container_info)
         state = container_info['State']
         self.assertIn('ExitCode', state)
-        if helpers.exec_driver_is_native():
-            self.assertNotEqual(state['ExitCode'], 0)
+        self.assertNotEqual(state['ExitCode'], 0)
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False)
 
@@ -840,8 +836,38 @@ class KillTest(helpers.BaseTestCase):
         self.assertIn('Running', state)
         self.assertEqual(state['Running'], False, state)
 
+    def test_kill_with_signal_name(self):
+        id = self.client.create_container(BUSYBOX, ['sleep', '60'])
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(id, signal='SIGKILL')
+        exitcode = self.client.wait(id)
+        self.assertNotEqual(exitcode, 0)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False, state)
 
-class PortTest(helpers.BaseTestCase):
+    def test_kill_with_signal_integer(self):
+        id = self.client.create_container(BUSYBOX, ['sleep', '60'])
+        self.client.start(id)
+        self.tmp_containers.append(id)
+        self.client.kill(id, signal=9)
+        exitcode = self.client.wait(id)
+        self.assertNotEqual(exitcode, 0)
+        container_info = self.client.inspect_container(id)
+        self.assertIn('State', container_info)
+        state = container_info['State']
+        self.assertIn('ExitCode', state)
+        self.assertNotEqual(state['ExitCode'], 0)
+        self.assertIn('Running', state)
+        self.assertEqual(state['Running'], False, state)
+
+
+class PortTest(BaseIntegrationTest):
     def test_port(self):
 
         port_bindings = {
@@ -872,7 +898,7 @@ class PortTest(helpers.BaseTestCase):
         self.client.kill(id)
 
 
-class ContainerTopTest(helpers.BaseTestCase):
+class ContainerTopTest(BaseIntegrationTest):
     def test_top(self):
         container = self.client.create_container(
             BUSYBOX, ['sleep', '60'])
@@ -907,7 +933,7 @@ class ContainerTopTest(helpers.BaseTestCase):
         self.client.kill(id)
 
 
-class RestartContainerTest(helpers.BaseTestCase):
+class RestartContainerTest(BaseIntegrationTest):
     def test_restart(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -948,7 +974,7 @@ class RestartContainerTest(helpers.BaseTestCase):
         self.client.kill(id)
 
 
-class RemoveContainerTest(helpers.BaseTestCase):
+class RemoveContainerTest(BaseIntegrationTest):
     def test_remove(self):
         container = self.client.create_container(BUSYBOX, ['true'])
         id = container['Id']
@@ -970,7 +996,7 @@ class RemoveContainerTest(helpers.BaseTestCase):
         self.assertEqual(len(res), 0)
 
 
-class AttachContainerTest(helpers.BaseTestCase):
+class AttachContainerTest(BaseIntegrationTest):
     def test_run_container_streaming(self):
         container = self.client.create_container(BUSYBOX, '/bin/sh',
                                                  detach=True, stdin_open=True)
@@ -995,13 +1021,13 @@ class AttachContainerTest(helpers.BaseTestCase):
 
         self.client.start(ident)
 
-        next_size = helpers.next_packet_size(pty_stdout)
+        next_size = next_frame_size(pty_stdout)
         self.assertEqual(next_size, len(line))
-        data = helpers.read_data(pty_stdout, next_size)
+        data = read_exactly(pty_stdout, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
 
-class PauseTest(helpers.BaseTestCase):
+class PauseTest(BaseIntegrationTest):
     def test_pause_unpause(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         id = container['Id']
@@ -1030,7 +1056,7 @@ class PauseTest(helpers.BaseTestCase):
         self.assertEqual(state['Paused'], False)
 
 
-class GetContainerStatsTest(helpers.BaseTestCase):
+class GetContainerStatsTest(BaseIntegrationTest):
     @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
         container = self.client.create_container(
@@ -1061,7 +1087,7 @@ class GetContainerStatsTest(helpers.BaseTestCase):
                     self.assertIn(key, chunk)
 
 
-class ContainerUpdateTest(helpers.BaseTestCase):
+class ContainerUpdateTest(BaseIntegrationTest):
     @requires_api_version('1.22')
     def test_update_container(self):
         old_mem_limit = 400 * 1024 * 1024
@@ -1069,11 +1095,68 @@ class ContainerUpdateTest(helpers.BaseTestCase):
         container = self.client.create_container(
             BUSYBOX, 'top', host_config=self.client.create_host_config(
                 mem_limit=old_mem_limit
-            ), cpu_shares=102
+            )
         )
         self.tmp_containers.append(container)
         self.client.start(container)
         self.client.update_container(container, mem_limit=new_mem_limit)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
-        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 102)
+
+    @requires_api_version('1.23')
+    def test_restart_policy_update(self):
+        old_restart_policy = {
+            'MaximumRetryCount': 0,
+            'Name': 'always'
+        }
+        new_restart_policy = {
+            'MaximumRetryCount': 42,
+            'Name': 'on-failure'
+        }
+        container = self.client.create_container(
+            BUSYBOX, ['sleep', '60'],
+            host_config=self.client.create_host_config(
+                restart_policy=old_restart_policy
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        self.client.update_container(container,
+                                     restart_policy=new_restart_policy)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(
+            inspect_data['HostConfig']['RestartPolicy']['MaximumRetryCount'],
+            new_restart_policy['MaximumRetryCount']
+        )
+        self.assertEqual(
+            inspect_data['HostConfig']['RestartPolicy']['Name'],
+            new_restart_policy['Name']
+        )
+
+
+class ContainerCPUTest(BaseIntegrationTest):
+    @requires_api_version('1.18')
+    def test_container_cpu_shares(self):
+        cpu_shares = 512
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpu_shares=cpu_shares
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 512)
+
+    @requires_api_version('1.18')
+    def test_container_cpuset(self):
+        cpuset_cpus = "0,1"
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpuset_cpus=cpuset_cpus
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)

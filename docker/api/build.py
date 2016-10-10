@@ -18,7 +18,8 @@ class BuildApiMixin(object):
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False):
-        remote = context = headers = None
+        remote = context = None
+        headers = {}
         container_limits = container_limits or {}
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
@@ -134,8 +135,7 @@ class BuildApiMixin(object):
                     ', '.join(repr(k) for k in self._auth_configs.keys())
                 )
             )
-            if headers is None:
-                headers = {}
+
             if utils.compare_version('1.19', self._version) >= 0:
                 headers['X-Registry-Config'] = auth.encode_header(
                     self._auth_configs

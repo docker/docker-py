@@ -14,12 +14,10 @@ from six.moves import socketserver
 
 import docker
 
-from .. import helpers
-
-BUSYBOX = helpers.BUSYBOX
+from .base import BaseIntegrationTest, BUSYBOX
 
 
-class ListImagesTest(helpers.BaseTestCase):
+class ListImagesTest(BaseIntegrationTest):
     def test_images(self):
         res1 = self.client.images(all=True)
         self.assertIn('Id', res1[0])
@@ -37,7 +35,7 @@ class ListImagesTest(helpers.BaseTestCase):
         self.assertEqual(type(res1[0]), six.text_type)
 
 
-class PullImageTest(helpers.BaseTestCase):
+class PullImageTest(BaseIntegrationTest):
     def test_pull(self):
         try:
             self.client.remove_image('hello-world')
@@ -70,7 +68,7 @@ class PullImageTest(helpers.BaseTestCase):
         self.assertIn('Id', img_info)
 
 
-class CommitTest(helpers.BaseTestCase):
+class CommitTest(BaseIntegrationTest):
     def test_commit(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -105,7 +103,7 @@ class CommitTest(helpers.BaseTestCase):
         assert img['Config']['Cmd'] == ['bash']
 
 
-class RemoveImageTest(helpers.BaseTestCase):
+class RemoveImageTest(BaseIntegrationTest):
     def test_remove(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
@@ -121,7 +119,7 @@ class RemoveImageTest(helpers.BaseTestCase):
         self.assertEqual(len(res), 0)
 
 
-class ImportImageTest(helpers.BaseTestCase):
+class ImportImageTest(BaseIntegrationTest):
     '''Base class for `docker import` test cases.'''
 
     TAR_SIZE = 512 * 1024
@@ -207,6 +205,48 @@ class ImportImageTest(helpers.BaseTestCase):
         self.assertIn('status', result)
         img_id = result['status']
         self.tmp_imgs.append(img_id)
+
+    def test_import_image_from_data_with_changes(self):
+        with self.dummy_tar_stream(n_bytes=500) as f:
+            content = f.read()
+
+        statuses = self.client.import_image_from_data(
+            content, repository='test/import-from-bytes',
+            changes=['USER foobar', 'CMD ["echo"]']
+        )
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        assert 'error' not in result
+
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+        img_data = self.client.inspect_image(img_id)
+        assert img_data is not None
+        assert img_data['Config']['Cmd'] == ['echo']
+        assert img_data['Config']['User'] == 'foobar'
+
+    def test_import_image_with_changes(self):
+        with self.dummy_tar_file(n_bytes=self.TAR_SIZE) as tar_filename:
+            statuses = self.client.import_image(
+                src=tar_filename, repository='test/import-from-file',
+                changes=['USER foobar', 'CMD ["echo"]']
+            )
+
+        result_text = statuses.splitlines()[-1]
+        result = json.loads(result_text)
+
+        assert 'error' not in result
+
+        img_id = result['status']
+        self.tmp_imgs.append(img_id)
+
+        img_data = self.client.inspect_image(img_id)
+        assert img_data is not None
+        assert img_data['Config']['Cmd'] == ['echo']
+        assert img_data['Config']['User'] == 'foobar'
 
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):

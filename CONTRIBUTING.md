@@ -20,7 +20,7 @@ pip freeze | grep docker-py && python --version && docker version
 - If possible, steps or a code snippet to reproduce the issue
 
 To save yourself time, please be sure to check our
-[documentation](http://docker-py.readthedocs.org/) and use the
+[documentation](https://docker-py.readthedocs.io/) and use the
 [search function](https://github.com/docker/docker-py/search) to find out if
 it has already been addressed, or is currently being looked at.
 
