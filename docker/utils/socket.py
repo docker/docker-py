@@ -69,7 +69,11 @@ def frames_iter(socket):
     """
     Returns a generator of frames read from socket
     """
-    n = next_frame_size(socket)
-    while n > 0:
-        yield read(socket, n)
+    while True:
         n = next_frame_size(socket)
+        if n == 0:
+            break
+        while n > 0:
+            result = read(socket, n)
+            n -= len(result)
+            yield result
