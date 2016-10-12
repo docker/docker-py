@@ -522,6 +522,11 @@ class ParseHostTest(base.BaseTestCase):
         expected_result = 'https://myhost.docker.net:3348'
         assert parse_host(host_value, tls=True) == expected_result
 
+    def test_parse_host_trailing_slash(self):
+        host_value = 'tcp://myhost.docker.net:2376/'
+        expected_result = 'http://myhost.docker.net:2376'
+        assert parse_host(host_value) == expected_result
+
 
 class ParseRepositoryTagTest(base.BaseTestCase):
     sha = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'

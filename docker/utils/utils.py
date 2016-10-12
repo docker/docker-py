@@ -438,8 +438,8 @@ def parse_host(addr, is_win32=False, tls=False):
             "Bind address needs a port: {0}".format(addr))
 
     if proto == "http+unix" or proto == 'npipe':
-        return "{0}://{1}".format(proto, host)
-    return "{0}://{1}:{2}{3}".format(proto, host, port, path)
+        return "{0}://{1}".format(proto, host).rstrip('/')
+    return "{0}://{1}:{2}{3}".format(proto, host, port, path).rstrip('/')
 
 
 def parse_devices(devices):
