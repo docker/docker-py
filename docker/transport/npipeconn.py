@@ -14,7 +14,6 @@ try:
 except ImportError:
     import urllib3
 
-
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
@@ -45,6 +44,28 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         return NpipeHTTPConnection(
             self.npipe_path, self.timeout
         )
+
+    # When re-using connections, urllib3 tries to call select() on our
+    # NpipeSocket instance, causing a crash. To circumvent this, we override
+    # _get_conn, where that check happens.
+    def _get_conn(self, timeout):
+        conn = None
+        try:
+            conn = self.pool.get(block=self.block, timeout=timeout)
+
+        except AttributeError:  # self.pool is None
+            raise urllib3.exceptions.ClosedPoolError(self, "Pool is closed.")
+
+        except six.moves.queue.Empty:
+            if self.block:
+                raise urllib3.exceptions.EmptyPoolError(
+                    self,
+                    "Pool reached maximum size and no more "
+                    "connections are allowed."
+                )
+            pass  # Oh well, we'll create a new connection then
+
+        return conn or self._new_conn()
 
 
 class NpipeAdapter(requests.adapters.HTTPAdapter):
