@@ -20,11 +20,11 @@ from docker.utils import (
     create_host_config, Ulimit, LogConfig, parse_bytes, parse_env_file,
     exclude_paths, convert_volume_binds, decode_json_header, tar,
     split_command, create_ipam_config, create_ipam_pool, parse_devices,
-    update_headers,
+    update_headers
 )
 
 from docker.utils.ports import build_port_bindings, split_port
-from docker.utils.utils import create_endpoint_config
+from docker.utils.utils import create_endpoint_config, format_environment
 
 from .. import base
 from ..helpers import make_tree
@@ -1042,3 +1042,18 @@ class TarTest(base.Cleanup, base.BaseTestCase):
             self.assertEqual(
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
             )
+
+
+class FormatEnvironmentTest(base.BaseTestCase):
+    def test_format_env_binary_unicode_value(self):
+        env_dict = {
+            'ARTIST_NAME': b'\xec\x86\xa1\xec\xa7\x80\xec\x9d\x80'
+        }
+        assert format_environment(env_dict) == [u'ARTIST_NAME=송지은']
+
+    def test_format_env_no_value(self):
+        env_dict = {
+            'FOO': None,
+            'BAR': '',
+        }
+        assert sorted(format_environment(env_dict)) == ['BAR=', 'FOO']
