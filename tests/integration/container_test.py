@@ -3,6 +3,7 @@ import signal
 import tempfile
 
 import docker
+from docker.constants import IS_WINDOWS_PLATFORM
 from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
 import pytest
@@ -523,13 +524,13 @@ class ArchiveTest(BaseIntegrationTest):
 
     def test_copy_file_to_container(self):
         data = b'Deaf To All But The Song'
-        with tempfile.NamedTemporaryFile() as test_file:
+        with tempfile.NamedTemporaryFile(delete=False) as test_file:
             test_file.write(data)
             test_file.seek(0)
             ctnr = self.client.create_container(
                 BUSYBOX,
                 'cat {0}'.format(
-                    os.path.join('/vol1', os.path.basename(test_file.name))
+                    os.path.join('/vol1/', os.path.basename(test_file.name))
                 ),
                 volumes=['/vol1']
             )
@@ -821,11 +822,12 @@ class KillTest(BaseIntegrationTest):
         self.assertEqual(state['Running'], False)
 
     def test_kill_with_signal(self):
-        container = self.client.create_container(BUSYBOX, ['sleep', '60'])
-        id = container['Id']
-        self.client.start(id)
+        id = self.client.create_container(BUSYBOX, ['sleep', '60'])
         self.tmp_containers.append(id)
-        self.client.kill(id, signal=signal.SIGKILL)
+        self.client.start(id)
+        self.client.kill(
+            id, signal=signal.SIGKILL if not IS_WINDOWS_PLATFORM else 9
+        )
         exitcode = self.client.wait(id)
         self.assertNotEqual(exitcode, 0)
         container_info = self.client.inspect_container(id)
@@ -901,28 +903,34 @@ class PortTest(BaseIntegrationTest):
 class ContainerTopTest(BaseIntegrationTest):
     def test_top(self):
         container = self.client.create_container(
-            BUSYBOX, ['sleep', '60'])
+            BUSYBOX, ['sleep', '60']
+        )
 
-        id = container['Id']
+        self.tmp_containers.append(container)
 
         self.client.start(container)
-        res = self.client.top(container['Id'])
-        self.assertEqual(
-            res['Titles'],
-            ['UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD']
-        )
-        self.assertEqual(len(res['Processes']), 1)
-        self.assertEqual(res['Processes'][0][7], 'sleep 60')
-        self.client.kill(id)
+        res = self.client.top(container)
+        if IS_WINDOWS_PLATFORM:
+            assert res['Titles'] == ['PID', 'USER', 'TIME', 'COMMAND']
+        else:
+            assert res['Titles'] == [
+                'UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'
+            ]
+        assert len(res['Processes']) == 1
+        assert res['Processes'][0][-1] == 'sleep 60'
+        self.client.kill(container)
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='No psargs support on windows'
+    )
     def test_top_with_psargs(self):
         container = self.client.create_container(
             BUSYBOX, ['sleep', '60'])
 
-        id = container['Id']
+        self.tmp_containers.append(container)
 
         self.client.start(container)
-        res = self.client.top(container['Id'], 'waux')
+        res = self.client.top(container, 'waux')
         self.assertEqual(
             res['Titles'],
             ['USER', 'PID', '%CPU', '%MEM', 'VSZ', 'RSS',
@@ -930,7 +938,6 @@ class ContainerTopTest(BaseIntegrationTest):
         )
         self.assertEqual(len(res['Processes']), 1)
         self.assertEqual(res['Processes'][0][10], 'sleep 60')
-        self.client.kill(id)
 
 
 class RestartContainerTest(BaseIntegrationTest):
