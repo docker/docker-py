@@ -209,8 +209,8 @@ def match_path(path, pattern):
     if pattern:
         pattern = os.path.relpath(pattern)
 
-    pattern_components = pattern.split('/')
-    path_components = path.split('/')[:len(pattern_components)]
+    pattern_components = pattern.split(os.path.sep)
+    path_components = path.split(os.path.sep)[:len(pattern_components)]
     return fnmatch('/'.join(path_components), pattern)
 
 
