@@ -415,6 +415,9 @@ class VolumeBindTest(helpers.BaseTestCase):
             ['touch', os.path.join(self.mount_dest, self.filename)],
         )
 
+    @pytest.mark.xfail(
+        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
+    )
     def test_create_with_binds_rw(self):
 
         container = self.run_with_volume(
@@ -430,6 +433,9 @@ class VolumeBindTest(helpers.BaseTestCase):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, True)
 
+    @pytest.mark.xfail(
+        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
+    )
     def test_create_with_binds_ro(self):
         self.run_with_volume(
             False,
