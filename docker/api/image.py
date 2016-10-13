@@ -88,9 +88,6 @@ class ImageApiMixin(object):
                 u, data=data, params=params, headers=headers, timeout=None
             )
         )
-        return self.import_image(
-            src=data, repository=repository, tag=tag, changes=changes
-        )
 
     def import_image_from_file(self, filename, repository=None, tag=None,
                                changes=None):
