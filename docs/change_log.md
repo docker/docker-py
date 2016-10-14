@@ -1,6 +1,28 @@
 Change Log
 ==========
 
+1.10.4
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/24?closed=1)
+
+### Bugfixes
+
+* Fixed an issue where `RestartPolicy.condition_types.ON_FAILURE` would yield
+  an invalid value.
+* Fixed an issue where the SSL connection adapter would receive an invalid
+  argument.
+* Fixed an issue that caused the Client to fail to reach API endpoints when
+  the provided `base_url` had a trailing slash.
+* Fixed a bug where some `environment` values in `create_container`
+  containing unicode characters would raise an encoding error.
+* Fixed a number of issues tied with named pipe transport on Windows.
+
+### Miscellaneous
+
+* Adjusted version requirements for the `requests` library.
+
+
 1.10.3
 ------
 
