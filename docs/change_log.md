@@ -17,10 +17,13 @@ Change Log
 * Fixed a bug where some `environment` values in `create_container`
   containing unicode characters would raise an encoding error.
 * Fixed a number of issues tied with named pipe transport on Windows.
+* Fixed a bug where inclusion patterns in `.dockerignore` would cause some
+  excluded files to appear in the build context on Windows.
 
 ### Miscellaneous
 
 * Adjusted version requirements for the `requests` library.
+* It is now possible to run the docker-py test suite on Windows.
 
 
 1.10.3
