@@ -1,5 +1,4 @@
 import io
-import json
 import os
 import shutil
 import tempfile
@@ -22,14 +21,11 @@ class BuildTest(BaseIntegrationTest):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
-        stream = self.client.build(fileobj=script, stream=True)
-        logs = ''
+        stream = self.client.build(fileobj=script, stream=True, decode=True)
+        logs = []
         for chunk in stream:
-            if six.PY3:
-                chunk = chunk.decode('utf-8')
-            json.loads(chunk)  # ensure chunk is a single, valid JSON blob
-            logs += chunk
-        self.assertNotEqual(logs, '')
+            logs.append(chunk)
+        assert len(logs) > 0
 
     def test_build_from_stringio(self):
         if six.PY3:
