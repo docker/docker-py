@@ -76,6 +76,9 @@ correct value (e.g `gzip`).
     - cpusetcpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
 * decode (bool): If set to `True`, the returned stream will be decoded into
   dicts on the fly. Default `False`.
+* shmsize (int): Size of /dev/shm in bytes. The size must be greater 
+  than 0. If omitted the system uses 64MB.
+* labels (dict): A dictionary of labels to set on the image
 
 **Returns** (generator): A generator for the build output
 
