@@ -86,7 +86,7 @@ def fake_delete(self, url, *args, **kwargs):
 def fake_read_from_socket(self, response, stream):
     return six.binary_type()
 
-url_base = 'http+docker://localunixsocket/'
+url_base = '{0}/'.format(fake_api.prefix)
 url_prefix = '{0}v{1}/'.format(
     url_base,
     docker.constants.DEFAULT_DOCKER_API_VERSION)
@@ -422,6 +422,9 @@ class StreamTest(base.Cleanup, base.BaseTestCase):
 
             data += connection.recv(2048)
 
+    @pytest.mark.skipif(
+        docker.constants.IS_WINDOWS_PLATFORM, reason='Unix only'
+    )
     def test_early_stream_response(self):
         self.request_handler = self.early_response_sending_handler
         lines = []

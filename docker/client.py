@@ -86,7 +86,7 @@ class Client(
                 tls.configure_client(self)
             elif tls:
                 self._custom_adapter = ssladapter.SSLAdapter(
-                    num_pools=num_pools
+                    pool_connections=num_pools
                 )
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
@@ -218,7 +218,9 @@ class Client(
 
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
-        if six.PY3:
+        if self.base_url == "http+docker://localnpipe":
+            sock = response.raw._fp.fp.raw.sock
+        elif six.PY3:
             sock = response.raw._fp.fp.raw
             if self.base_url.startswith("https://"):
                 sock = sock._sock

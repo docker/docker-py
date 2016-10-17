@@ -194,8 +194,8 @@ def match_path(path, pattern):
     if pattern:
         pattern = os.path.relpath(pattern)
 
-    pattern_components = pattern.split('/')
-    path_components = path.split('/')[:len(pattern_components)]
+    pattern_components = pattern.split(os.path.sep)
+    path_components = path.split(os.path.sep)[:len(pattern_components)]
     return fnmatch('/'.join(path_components), pattern)
 
 
@@ -438,8 +438,8 @@ def parse_host(addr, is_win32=False, tls=False):
             "Bind address needs a port: {0}".format(addr))
 
     if proto == "http+unix" or proto == 'npipe':
-        return "{0}://{1}".format(proto, host)
-    return "{0}://{1}:{2}{3}".format(proto, host, port, path)
+        return "{0}://{1}".format(proto, host).rstrip('/')
+    return "{0}://{1}:{2}{3}".format(proto, host, port, path).rstrip('/')
 
 
 def parse_devices(devices):
@@ -986,6 +986,9 @@ def format_environment(environment):
     def format_env(key, value):
         if value is None:
             return key
+        if isinstance(value, six.binary_type):
+            value = value.decode('utf-8')
+
         return u'{key}={value}'.format(key=key, value=value)
     return [format_env(*var) for var in six.iteritems(environment)]
 

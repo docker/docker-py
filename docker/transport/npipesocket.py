@@ -1,6 +1,7 @@
 import functools
 import io
 
+import six
 import win32file
 import win32pipe
 
@@ -94,7 +95,7 @@ class NpipeSocket(object):
         if mode.strip('b') != 'r':
             raise NotImplementedError()
         rawio = NpipeFileIOBase(self)
-        if bufsize is None or bufsize < 0:
+        if bufsize is None or bufsize <= 0:
             bufsize = io.DEFAULT_BUFFER_SIZE
         return io.BufferedReader(rawio, buffer_size=bufsize)
 
@@ -114,6 +115,9 @@ class NpipeSocket(object):
 
     @check_closed
     def recv_into(self, buf, nbytes=0):
+        if six.PY2:
+            return self._recv_into_py2(buf, nbytes)
+
         readbuf = buf
         if not isinstance(buf, memoryview):
             readbuf = memoryview(buf)
@@ -123,6 +127,12 @@ class NpipeSocket(object):
             readbuf[:nbytes] if nbytes else readbuf
         )
         return len(data)
+
+    def _recv_into_py2(self, buf, nbytes):
+        err, data = win32file.ReadFile(self._handle, nbytes or len(buf))
+        n = len(data)
+        buf[:n] = data
+        return n
 
     @check_closed
     def send(self, string, flags=0):
