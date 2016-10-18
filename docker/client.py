@@ -400,13 +400,3 @@ class Client(
     @property
     def api_version(self):
         return self._version
-
-
-class AutoVersionClient(Client):
-    def __init__(self, *args, **kwargs):
-        if 'version' in kwargs and kwargs['version']:
-            raise errors.DockerException(
-                'Can not specify version for AutoVersionClient'
-            )
-        kwargs['version'] = 'auto'
-        super(AutoVersionClient, self).__init__(*args, **kwargs)
