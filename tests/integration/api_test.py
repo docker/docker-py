@@ -122,17 +122,6 @@ class AutoDetectVersionTest(unittest.TestCase):
         self.assertEqual(client_version, api_version_2)
         client.close()
 
-    def test_auto_client(self):
-        client = docker.AutoVersionClient(**kwargs_from_env())
-        client_version = client._version
-        api_version = client.version(api_version=False)['ApiVersion']
-        self.assertEqual(client_version, api_version)
-        api_version_2 = client.version()['ApiVersion']
-        self.assertEqual(client_version, api_version_2)
-        client.close()
-        with self.assertRaises(docker.errors.DockerException):
-            docker.AutoVersionClient(version='1.11', **kwargs_from_env())
-
 
 class ConnectionTimeoutTest(unittest.TestCase):
     def setUp(self):
