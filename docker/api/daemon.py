@@ -68,7 +68,7 @@ class DaemonApiMixin(object):
         return self._result(response, json=True)
 
     def ping(self):
-        return self._result(self._get(self._url('/_ping')))
+        return self._result(self._get(self._url('/_ping'))) == 'OK'
 
     def version(self, api_version=True):
         url = self._url("/version", versioned_api=api_version)
