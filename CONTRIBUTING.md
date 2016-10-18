@@ -1,5 +1,8 @@
 # Contributing guidelines
 
+See the [Docker contributing guidelines](https://github.com/docker/docker/blob/master/CONTRIBUTING.md).
+The following is specific to docker-py.
+
 Thank you for your interest in the project. We look forward to your
 contribution. In order to make the process as fast and streamlined as possible,
 here is a set of guidelines we recommend you follow.
@@ -100,3 +103,34 @@ here are the steps to get you started.
 5. Run `python setup.py develop` to install the dev version of the project
   and required dependencies. We recommend you do so inside a
   [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs)
+
+## Running the tests & Code Quality
+
+To get the source source code and run the unit tests, run:
+```
+$ git clone git://github.com/docker/docker-py.git
+$ cd docker-py
+$ pip install tox
+$ tox
+```
+
+## Building the docs
+
+```
+$ make docs
+$ open _build/index.html
+```
+
+## Release Checklist
+
+Before a new release, please go through the following checklist:
+
+* Bump version in docker/version.py
+* Add a release note in docs/change_log.md
+* Git tag the version
+* Upload to pypi
+
+## Vulnerability Reporting
+For any security issues, please do NOT file an issue or pull request on github!
+Please contact [security@docker.com](mailto:security@docker.com) or read [the
+Docker security page](https://www.docker.com/resources/security/).
