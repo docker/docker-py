@@ -45,6 +45,20 @@ class ClientTest(unittest.TestCase):
         assert client.version() == mock_func.return_value
         mock_func.assert_called_with()
 
+    def test_call_api_client_method(self):
+        client = docker.from_env()
+        with self.assertRaises(AttributeError) as cm:
+            client.create_container()
+        s = str(cm.exception)
+        assert "'Client' object has no attribute 'create_container'" in s
+        assert "this method is now on the object APIClient" in s
+
+        with self.assertRaises(AttributeError) as cm:
+            client.abcdef()
+        s = str(cm.exception)
+        assert "'Client' object has no attribute 'abcdef'" in s
+        assert "this method is now on the object APIClient" not in s
+
 
 class FromEnvTest(unittest.TestCase):
 

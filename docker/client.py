@@ -154,4 +154,14 @@ class Client(object):
         return self.api.version(*args, **kwargs)
     version.__doc__ = APIClient.version.__doc__
 
+    def __getattr__(self, name):
+        s = ["'Client' object has no attribute '{}'".format(name)]
+        # If a user calls a method on APIClient, they
+        if hasattr(APIClient, name):
+            s.append("In docker-py 2.0, this method is now on the object "
+                     "APIClient. See the low-level API section of the "
+                     "documentation for more details.".format(name))
+        raise AttributeError(' '.join(s))
+
+
 from_env = Client.from_env
