@@ -55,12 +55,10 @@ class PullImageTest(BaseIntegrationTest):
             self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        stream = self.client.pull('hello-world', stream=True)
+        stream = self.client.pull('hello-world', stream=True, decode=True)
         self.tmp_imgs.append('hello-world')
         for chunk in stream:
-            if six.PY3:
-                chunk = chunk.decode('utf-8')
-            json.loads(chunk)  # ensure chunk is a single, valid JSON blob
+            assert isinstance(chunk, dict)
         self.assertGreaterEqual(
             len(self.client.images('hello-world')), 1
         )
@@ -150,7 +148,7 @@ class ImportImageTest(BaseIntegrationTest):
     @contextlib.contextmanager
     def dummy_tar_file(self, n_bytes):
         '''Yields the name of a valid tar file of size n_bytes.'''
-        with tempfile.NamedTemporaryFile() as tar_file:
+        with tempfile.NamedTemporaryFile(delete=False) as tar_file:
             self.write_dummy_tar_content(n_bytes, tar_file)
             tar_file.seek(0)
             yield tar_file.name

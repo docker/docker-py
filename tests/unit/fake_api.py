@@ -408,6 +408,9 @@ def post_fake_update_container():
 
 # Maps real api url to fake response callback
 prefix = 'http+docker://localunixsocket'
+if constants.IS_WINDOWS_PLATFORM:
+    prefix = 'http+docker://localnpipe'
+
 fake_responses = {
     '{0}/version'.format(prefix):
     get_fake_raw_version,

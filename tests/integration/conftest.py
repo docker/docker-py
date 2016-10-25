@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import json
 import sys
 import warnings
 
@@ -18,8 +17,7 @@ def setup_test_session():
         c.inspect_image(BUSYBOX)
     except docker.errors.NotFound:
         print("\npulling {0}".format(BUSYBOX), file=sys.stderr)
-        for data in c.pull(BUSYBOX, stream=True):
-            data = json.loads(data.decode('utf-8'))
+        for data in c.pull(BUSYBOX, stream=True, decode=True):
             status = data.get("status")
             progress = data.get("progress")
             detail = "{0} - {1}".format(status, progress)

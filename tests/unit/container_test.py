@@ -270,8 +270,8 @@ class CreateContainerTest(DockerClientTest):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_cpu_shares(self):
-        self.client.create_container('busybox', 'ls',
-                                     cpu_shares=5)
+        with pytest.deprecated_call():
+            self.client.create_container('busybox', 'ls', cpu_shares=5)
 
         args = fake_request.call_args
         self.assertEqual(args[0][1],
@@ -316,8 +316,8 @@ class CreateContainerTest(DockerClientTest):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_with_cpuset(self):
-        self.client.create_container('busybox', 'ls',
-                                     cpuset='0,1')
+        with pytest.deprecated_call():
+            self.client.create_container('busybox', 'ls', cpuset='0,1')
 
         args = fake_request.call_args
         self.assertEqual(args[0][1],
