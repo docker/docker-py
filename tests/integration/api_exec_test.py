@@ -93,6 +93,21 @@ class ExecTest(BaseAPIIntegrationTest):
         data = read_exactly(socket, next_size)
         self.assertEqual(data.decode('utf-8'), line)
 
+    def test_exec_start_detached(self):
+        container = self.client.create_container(BUSYBOX, 'cat',
+                                                 detach=True, stdin_open=True)
+        container_id = container['Id']
+        self.client.start(container_id)
+        self.tmp_containers.append(container_id)
+
+        exec_id = self.client.exec_create(
+            container_id, ['printf', "asdqwe"])
+        self.assertIn('Id', exec_id)
+
+        response = self.client.exec_start(exec_id, detach=True)
+
+        self.assertEqual(response, "")
+
     def test_exec_inspect(self):
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
