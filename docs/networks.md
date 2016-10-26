@@ -137,6 +137,7 @@ Create an IPAM (IP Address Management) config dictionary to be used with
 * driver (str): The IPAM driver to use. Defaults to `'default'`.
 * pool_configs (list): A list of pool configuration dictionaries as created
   by `docker.utils.create_ipam_pool`. Defaults to empty list.
+* options (dict): Driver options as a key-value dictionary. Defaults to `None`.
 
 **Returns** An IPAM config dictionary
 

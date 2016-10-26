@@ -47,10 +47,14 @@ def create_ipam_pool(subnet=None, iprange=None, gateway=None,
     }
 
 
-def create_ipam_config(driver='default', pool_configs=None):
+def create_ipam_config(driver='default', pool_configs=None, options=None):
+    if options is not None and not isinstance(options, dict):
+        raise TypeError('IPAM options must be a dictionary')
+
     return {
         'Driver': driver,
-        'Config': pool_configs or []
+        'Config': pool_configs or [],
+        'Options': options
     }
 
 
