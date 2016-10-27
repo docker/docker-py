@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+1.10.5
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/24?closed=1)
+
+### Bugfixes
+
+* Fixed an issue where concurrent attempts to access to a named pipe by the
+  client would sometimes cause recoverable exceptions to be raised.
+
+
 1.10.4
 ------
 
