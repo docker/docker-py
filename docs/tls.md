@@ -1,7 +1,7 @@
 ## Connection to daemon using HTTPS
 
 **Note:** *These instructions are docker-py specific. Please refer to
-[http://docs.docker.com/articles/https/](http://docs.docker.com/articles/https/)
+[https://docs.docker.com/engine/security/https/](https://docs.docker.com/engine/security/https/)
 first.*
 
 ## TLSConfig
