@@ -24,7 +24,8 @@ class SSLAdapterTest(base.BaseTestCase):
         ssl_context = ssladapter.urllib3.util.ssl_.create_urllib3_context()
 
         assert ssl_context.options & OP_NO_SSLv3
-        assert ssl_context.options & OP_NO_SSLv2
+        # if OpenSSL is compiled without SSL2 support, OP_NO_SSLv2 will be 0
+        assert not bool(OP_NO_SSLv2) or ssl_context.options & OP_NO_SSLv2
         assert not ssl_context.options & OP_NO_TLSv1
 
 
