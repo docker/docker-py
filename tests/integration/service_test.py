@@ -150,7 +150,10 @@ class ServiceTest(BaseIntegrationTest):
         )
         svc_info = self.client.inspect_service(svc_id)
         assert 'UpdateConfig' in svc_info['Spec']
-        assert update_config == svc_info['Spec']['UpdateConfig']
+        uc = svc_info['Spec']['UpdateConfig']
+        assert update_config['Parallelism'] == uc['Parallelism']
+        assert update_config['Delay'] == uc['Delay']
+        assert update_config['FailureAction'] == uc['FailureAction']
 
     def test_create_service_with_restart_policy(self):
         container_spec = docker.types.ContainerSpec('busybox', ['true'])
@@ -166,15 +169,3 @@ class ServiceTest(BaseIntegrationTest):
         svc_info = self.client.inspect_service(svc_id)
         assert 'RestartPolicy' in svc_info['Spec']['TaskTemplate']
         assert policy == svc_info['Spec']['TaskTemplate']['RestartPolicy']
-
-    def test_update_service_name(self):
-        name, svc_id = self.create_simple_service()
-        svc_info = self.client.inspect_service(svc_id)
-        svc_version = svc_info['Version']['Index']
-        new_name = self.get_service_name()
-        assert self.client.update_service(
-            svc_id, svc_version, name=new_name,
-            task_template=svc_info['Spec']['TaskTemplate']
-        )
-        svc_info = self.client.inspect_service(svc_id)
-        assert svc_info['Spec']['Name'] == new_name
