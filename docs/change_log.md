@@ -1,10 +1,21 @@
 Change Log
 ==========
 
+1.10.6
+------
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/26?closed=1)
+
+### Bugfixes
+
+* Fixed an issue where setting a `NpipeSocket` instance to blocking mode would
+  put it in non-blocking mode and vice-versa.
+
+
 1.10.5
 ------
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/24?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/25?closed=1)
 
 ### Bugfixes
 
