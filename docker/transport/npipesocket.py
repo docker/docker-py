@@ -170,13 +170,16 @@ class NpipeSocket(object):
 
     def settimeout(self, value):
         if value is None:
-            self._timeout = win32pipe.NMPWAIT_NOWAIT
+            # Blocking mode
+            self._timeout = win32pipe.NMPWAIT_WAIT_FOREVER
         elif not isinstance(value, (float, int)) or value < 0:
             raise ValueError('Timeout value out of range')
         elif value == 0:
-            self._timeout = win32pipe.NMPWAIT_USE_DEFAULT_WAIT
+            # Non-blocking mode
+            self._timeout = win32pipe.NMPWAIT_NO_WAIT
         else:
-            self._timeout = value
+            # Timeout mode - Value converted to milliseconds
+            self._timeout = value * 1000
 
     def gettimeout(self):
         return self._timeout
