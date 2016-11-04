@@ -27,7 +27,7 @@ class ServiceApiMixin(object):
             'Mode': mode,
             'UpdateConfig': update_config,
             'Networks': networks,
-            'Endpoint': endpoint_config
+            'EndpointSpec': endpoint_config
         }
         return self._result(
             self._post_json(url, data=data, headers=headers), True
@@ -96,7 +96,7 @@ class ServiceApiMixin(object):
         if networks is not None:
             data['Networks'] = networks
         if endpoint_config is not None:
-            data['Endpoint'] = endpoint_config
+            data['EndpointSpec'] = endpoint_config
 
         resp = self._post_json(
             url, data=data, params={'version': version}, headers=headers
