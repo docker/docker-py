@@ -76,6 +76,7 @@ correct value (e.g `gzip`).
     - cpusetcpus (str): CPUs in which to allow execution, e.g., `"0-3"`, `"0,1"`
 * decode (bool): If set to `True`, the returned stream will be decoded into
   dicts on the fly. Default `False`.
+* build_arg - (dict): Set build time variables.
 
 **Returns** (generator): A generator for the build output
 
