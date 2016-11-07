@@ -1131,6 +1131,11 @@ Update resource configs of one or more containers.
 
 **Returns** (dict): Dictionary containing a `Warnings` key.
 
+## update_node
+
+Update a node.
+See the [Swarm documentation](swarm.md#clientupdate_node).
+
 ## update_service
 
 Update a service, similar to the `docker service update` command. See the

@@ -1,3 +1,4 @@
+import copy
 import docker
 import pytest
 
@@ -135,3 +136,26 @@ class SwarmTest(BaseIntegrationTest):
         node_data = self.client.inspect_node(node['ID'])
         assert node['ID'] == node_data['ID']
         assert node['Version'] == node_data['Version']
+
+    @requires_api_version('1.24')
+    def test_update_node(self):
+        assert self.client.init_swarm('eth0')
+        nodes_list = self.client.nodes()
+        node = nodes_list[0]
+        orig_spec = node['Spec']
+
+        # add a new label
+        new_spec = copy.deepcopy(orig_spec)
+        new_spec['Labels'] = {'new.label': 'new value'}
+        self.client.update_node(node_id=node['ID'],
+                                version=node['Version']['Index'],
+                                node_spec=new_spec)
+        updated_node = self.client.inspect_node(node['ID'])
+        assert new_spec == updated_node['Spec']
+
+        # Revert the changes
+        self.client.update_node(node_id=node['ID'],
+                                version=updated_node['Version']['Index'],
+                                node_spec=orig_spec)
+        reverted_node = self.client.inspect_node(node['ID'])
+        assert orig_spec == reverted_node['Spec']

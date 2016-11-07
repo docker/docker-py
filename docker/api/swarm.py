@@ -70,6 +70,13 @@ class SwarmApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.24')
+    def update_node(self, node_id, version, node_spec=None):
+        url = self._url('/nodes/{0}/update?version={1}', node_id, str(version))
+        res = self._post_json(url, data=node_spec)
+        self._raise_for_status(res)
+        return True
+
+    @utils.minimum_version('1.24')
     def update_swarm(self, version, swarm_spec=None, rotate_worker_token=False,
                      rotate_manager_token=False):
         url = self._url('/swarm/update')
