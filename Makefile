@@ -74,7 +74,7 @@ flake8: build
 
 .PHONY: docs
 docs: build-docs
-	docker run -v `pwd`/docs:/home/docker-py/docs/ -p 8000:8000 docker-py-docs mkdocs serve -a 0.0.0.0:8000
+	docker run --rm -it -v `pwd`:/home/docker-py docker-py-docs sphinx-build docs ./_build
 
 .PHONY: shell
 shell: build

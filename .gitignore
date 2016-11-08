@@ -10,7 +10,7 @@ dist
 html/*
 
 # Compiled Documentation
-site/
+_build/
 README.rst
 
 env/
