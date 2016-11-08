@@ -1,5 +1,6 @@
 import os
 import os.path
+import random
 import tarfile
 import tempfile
 import time
@@ -56,3 +57,7 @@ def wait_on_condition(condition, delay=0.1, timeout=40):
         if time.time() - start_time > timeout:
             raise AssertionError("Timeout: %s" % condition)
         time.sleep(delay)
+
+
+def random_name():
+    return u'dockerpytest_{0:x}'.format(random.getrandbits(64))
