@@ -61,3 +61,16 @@ def wait_on_condition(condition, delay=0.1, timeout=40):
 
 def random_name():
     return u'dockerpytest_{0:x}'.format(random.getrandbits(64))
+
+
+def force_leave_swarm(client):
+    """Actually force leave a Swarm. There seems to be a bug in Swarm that
+    occasionally throws "context deadline exceeded" errors when leaving."""
+    while True:
+        try:
+            return client.swarm.leave(force=True)
+        except docker.errors.APIError as e:
+            if e.explanation == "context deadline exceeded":
+                continue
+            else:
+                raise
