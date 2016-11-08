@@ -1,17 +1,15 @@
-import random
-
 import docker
 from docker.utils import create_ipam_config
 from docker.utils import create_ipam_pool
 import pytest
 
-from ..helpers import requires_api_version
+from ..helpers import random_name, requires_api_version
 from .base import BaseAPIIntegrationTest
 
 
 class TestNetworks(BaseAPIIntegrationTest):
     def create_network(self, *args, **kwargs):
-        net_name = u'dockerpy{}'.format(random.getrandbits(24))[:14]
+        net_name = random_name()
         net_id = self.client.create_network(net_name, *args, **kwargs)['Id']
         self.tmp_networks.append(net_id)
         return (net_name, net_id)
@@ -84,10 +82,8 @@ class TestNetworks(BaseAPIIntegrationTest):
 
     @requires_api_version('1.21')
     def test_create_network_with_host_driver_fails(self):
-        net_name = 'dockerpy{}'.format(random.getrandbits(24))[:14]
-
         with pytest.raises(docker.errors.APIError):
-            self.client.create_network(net_name, driver='host')
+            self.client.create_network(random_name(), driver='host')
 
     @requires_api_version('1.21')
     def test_remove_network(self):
