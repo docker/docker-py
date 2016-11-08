@@ -8,6 +8,36 @@ from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
 
 class DaemonApiMixin(object):
     def events(self, since=None, until=None, filters=None, decode=None):
+        """
+        Get real-time events from the server. Similar to the ``docker events``
+        command.
+
+        Args:
+            since (UTC datetime or int): Get events from this point
+            until (UTC datetime or int): Get events until this point
+            filters (dict): Filter the events by event time, container or image
+            decode (bool): If set to true, stream will be decoded into dicts on
+                the fly. False by default.
+
+        Returns:
+            (generator): A blocking generator you can iterate over to retrieve
+                events as they happen.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        Example:
+
+            >>> for event in client.events()
+            ...   print event
+            {u'from': u'image/with:tag',
+             u'id': u'container-id',
+             u'status': u'start',
+             u'time': 1423339459}
+            ...
+        """
+
         if isinstance(since, datetime):
             since = utils.datetime_to_timestamp(since)
 
@@ -29,10 +59,42 @@ class DaemonApiMixin(object):
         )
 
     def info(self):
+        """
+        Display system-wide information. Identical to the ``docker info``
+        command.
+
+        Returns:
+            (dict): The info as a dict
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         return self._result(self._get(self._url("/info")), True)
 
     def login(self, username, password=None, email=None, registry=None,
               reauth=False, insecure_registry=False, dockercfg_path=None):
+        """
+        Authenticate with a registry. Similar to the ``docker login`` command.
+
+        Args:
+            username (str): The registry username
+            password (str): The plaintext password
+            email (str): The email for the registry account
+            registry (str): URL to the registry.  E.g.
+                ``https://index.docker.io/v1/``
+            reauth (bool): Whether refresh existing authentication on the
+                Docker server.
+            dockercfg_path (str): Use a custom path for the ``.dockercfg`` file
+        (default ``$HOME/.dockercfg``)
+
+        Returns:
+            (dict): The response from the login request
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         if insecure_registry:
             warnings.warn(
                 INSECURE_REGISTRY_DEPRECATION_WARNING.format('login()'),
@@ -68,8 +130,30 @@ class DaemonApiMixin(object):
         return self._result(response, json=True)
 
     def ping(self):
+        """
+        Checks the server is responsive. An exception will be raised if it
+        isn't responding.
+
+        Returns:
+            (bool) The response from the server.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         return self._result(self._get(self._url('/_ping'))) == 'OK'
 
     def version(self, api_version=True):
+        """
+        Returns version information from the server. Similar to the ``docker
+        version`` command.
+
+        Returns:
+            (dict): The server version information
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         url = self._url("/version", versioned_api=api_version)
         return self._result(self._get(url), json=True)

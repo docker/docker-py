@@ -11,6 +11,30 @@ class ContainerApiMixin(object):
     @utils.check_resource
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
+        """
+        Attach to a container.
+
+        The ``.logs()`` function is a wrapper around this method, which you can
+        use instead if you want to fetch/stream container output without first
+        retrieving the entire backlog.
+
+        Args:
+            container (str): The container to attach to.
+            stdout (bool): Include stdout.
+            stderr (bool): Include stderr.
+            stream (bool): Return container output progressively as an iterator
+                of strings, rather than a single string.
+            logs (bool): Include the container's previous output.
+
+        Returns:
+            By default, the container's output as a single string.
+
+            If ``stream=True``, an iterator of output strings.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {
             'logs': logs and 1 or 0,
             'stdout': stdout and 1 or 0,
@@ -30,6 +54,20 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def attach_socket(self, container, params=None, ws=False):
+        """
+        Like ``attach``, but returns the underlying socket-like object for the
+        HTTP request.
+
+        Args:
+            container (str): The container to attach to.
+            params (dict): Dictionary of request parameters (e.g. ``stdout``,
+                ``stderr``, ``stream``).
+            ws (bool): Use websockets instead of raw HTTP.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         if params is None:
             params = {
                 'stdout': 1,
@@ -56,6 +94,26 @@ class ContainerApiMixin(object):
     @utils.check_resource
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, changes=None, conf=None):
+        """
+        Commit a container to an image. Similar to the ``docker commit``
+        command.
+
+        Args:
+            container (str): The image hash of the container
+            repository (str): The repository to push the image to
+            tag (str): The tag to push
+            message (str): A commit message
+            author (str): The name of the author
+            changes (str): Dockerfile instructions to apply while committing
+            conf (dict): The configuration for the container. See the
+                `Remote API documentation
+                <https://docs.docker.com/reference/api/docker_remote_api/>`_
+                for full details.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {
             'container': container,
             'repo': repository,
@@ -71,6 +129,50 @@ class ContainerApiMixin(object):
     def containers(self, quiet=False, all=False, trunc=False, latest=False,
                    since=None, before=None, limit=-1, size=False,
                    filters=None):
+        """
+        List containers. Similar to the ``docker ps`` command.
+
+        Args:
+            quiet (bool): Only display numeric Ids
+            all (bool): Show all containers. Only running containers are shown
+                by default trunc (bool): Truncate output
+            latest (bool): Show only the latest created container, include
+                non-running ones.
+            since (str): Show only containers created since Id or Name, include
+                non-running ones
+            before (str): Show only container created before Id or Name,
+                include non-running ones
+            limit (int): Show `limit` last created containers, include
+                non-running ones
+            size (bool): Display sizes
+            filters (dict): Filters to be processed on the image list.
+                Available filters:
+
+                - `exited` (int): Only containers with specified exit code
+                - `status` (str): One of ``restarting``, ``running``,
+                    ``paused``, ``exited``
+                - `label` (str): format either ``"key"`` or ``"key=value"``
+                - `id` (str): The id of the container.
+                - `name` (str): The name of the container.
+                - `ancestor` (str): Filter by container ancestor. Format of
+                    ``<image-name>[:tag]``, ``<image-id>``, or
+                    ``<image@digest>``.
+                - `before` (str): Only containers created before a particular
+                    container. Give the container name or id.
+                - `since` (str): Only containers created after a particular
+                    container. Give container name or id.
+
+                A comprehensive list can be found in the documentation for
+                `docker ps
+                <https://docs.docker.com/engine/reference/commandline/ps>`_.
+
+        Returns:
+            A list of dicts, one per container
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {
             'limit': 1 if latest else limit,
             'all': 1 if all else 0,
@@ -93,6 +195,24 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def copy(self, container, resource):
+        """
+        Identical to the ``docker cp`` command. Get files/folders from the
+        container.
+
+        **Deprecated for API version >= 1.20.** Use
+        :py:meth:`~ContainerApiMixin.get_archive` instead.
+
+        Args:
+            container (str): The container to copy from
+            resource (str): The path within the container
+
+        Returns:
+            The contents of the file as a string
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         if utils.version_gte(self._version, '1.20'):
             warnings.warn(
                 'Client.copy() is deprecated for API version >= 1.20, '
@@ -117,7 +237,190 @@ class ContainerApiMixin(object):
                          mac_address=None, labels=None, volume_driver=None,
                          stop_signal=None, networking_config=None,
                          healthcheck=None):
+        """
+        Creates a container. Parameters are similar to those for the ``docker
+        run`` command except it doesn't support the attach options (``-a``).
 
+        The arguments that are passed directly to this function are
+        host-independent configuration options. Host-specific configuration
+        is passed with the `host_config` argument. You'll normally want to
+        use this method in combination with the :py:meth:`create_host_config`
+        method to generate ``host_config``.
+
+        **Port bindings**
+
+        Port binding is done in two parts: first, provide a list of ports to
+        open inside the container with the ``ports`` parameter, then declare
+        bindings with the ``host_config`` parameter. For example:
+
+        .. code-block:: python
+
+            container_id = cli.create_container(
+                'busybox', 'ls', ports=[1111, 2222],
+                host_config=cli.create_host_config(port_bindings={
+                    1111: 4567,
+                    2222: None
+                })
+            )
+
+
+        You can limit the host address on which the port will be exposed like
+        such:
+
+        .. code-block:: python
+
+            cli.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+
+        Or without host port assignment:
+
+        .. code-block:: python
+
+            cli.create_host_config(port_bindings={1111: ('127.0.0.1',)})
+
+        If you wish to use UDP instead of TCP (default), you need to declare
+        ports as such in both the config and host config:
+
+        .. code-block:: python
+
+            container_id = cli.create_container(
+                'busybox', 'ls', ports=[(1111, 'udp'), 2222],
+                host_config=cli.create_host_config(port_bindings={
+                    '1111/udp': 4567, 2222: None
+                })
+            )
+
+        To bind multiple host ports to a single container port, use the
+        following syntax:
+
+        .. code-block:: python
+
+            cli.create_host_config(port_bindings={
+                1111: [1234, 4567]
+            })
+
+        You can also bind multiple IPs to a single container port:
+
+        .. code-block:: python
+
+            cli.create_host_config(port_bindings={
+                1111: [
+                    ('192.168.0.100', 1234),
+                    ('192.168.0.101', 1234)
+                ]
+            })
+
+        **Using volumes**
+
+        Volume declaration is done in two parts. Provide a list of mountpoints
+        to the with the ``volumes`` parameter, and declare mappings in the
+        ``host_config`` section.
+
+        .. code-block:: python
+
+            container_id = cli.create_container(
+                'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+                host_config=cli.create_host_config(binds={
+                    '/home/user1/': {
+                        'bind': '/mnt/vol2',
+                        'mode': 'rw',
+                    },
+                    '/var/www': {
+                        'bind': '/mnt/vol1',
+                        'mode': 'ro',
+                    }
+                })
+            )
+
+        You can alternatively specify binds as a list. This code is equivalent
+        to the example above:
+
+        .. code-block:: python
+
+            container_id = cli.create_container(
+                'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+                host_config=cli.create_host_config(binds=[
+                    '/home/user1/:/mnt/vol2',
+                    '/var/www:/mnt/vol1:ro',
+                ])
+            )
+
+        **Networking**
+
+        You can specify networks to connect the container to by using the
+        ``networking_config`` parameter. At the time of creation, you can
+        only connect a container to a single networking, but you
+        can create more connections by using
+        :py:meth:`~connect_container_to_network`.
+
+        For example:
+
+        .. code-block:: python
+
+            networking_config = docker_client.create_networking_config({
+                'network1': docker_client.create_endpoint_config(
+                    ipv4_address='172.28.0.124',
+                    aliases=['foo', 'bar'],
+                    links=['container2']
+                )
+            })
+
+            ctnr = docker_client.create_container(
+                img, command, networking_config=networking_config
+            )
+
+        Args:
+            image (str): The image to run
+            command (str or list): The command to be run in the container
+            hostname (str): Optional hostname for the container
+            user (str or int): Username or UID
+            detach (bool): Detached mode: run container in the background and
+                return container ID
+            stdin_open (bool): Keep STDIN open even if not attached
+            tty (bool): Allocate a pseudo-TTY
+            mem_limit (float or str): Memory limit. Accepts float values (which
+                represent the memory limit of the created container in bytes)
+                or a string with a units identification char (``100000b``,
+                ``1000k``, ``128m``, ``1g``). If a string is specified without
+                a units character, bytes are assumed as an intended unit.
+            ports (list of ints): A list of port numbers
+            environment (dict or list): A dictionary or a list of strings in
+                the following format ``["PASSWORD=xxx"]`` or
+                ``{"PASSWORD": "xxx"}``.
+            dns (list): DNS name servers. Deprecated since API version 1.10.
+                Use ``host_config`` instead.
+            dns_opt (list): Additional options to be added to the container's
+                ``resolv.conf`` file
+            volumes (str or list):
+            volumes_from (list): List of container names or Ids to get
+                volumes from.
+            network_disabled (bool): Disable networking
+            name (str): A name for the container
+            entrypoint (str or list): An entrypoint
+            working_dir (str): Path to the working directory
+            domainname (str or list): Set custom DNS search domains
+            memswap_limit (int):
+            host_config (dict): A dictionary created with
+                :py:meth:`create_host_config`.
+            mac_address (str): The Mac Address to assign the container
+            labels (dict or list): A dictionary of name-value labels (e.g.
+                ``{"label1": "value1", "label2": "value2"}``) or a list of
+                names of labels to set with empty values (e.g.
+                ``["label1", "label2"]``)
+            volume_driver (str): The name of a volume driver/plugin.
+            stop_signal (str): The stop signal to use to stop the container
+                (e.g. ``SIGINT``).
+            networking_config (dict): A networking configuration generated
+                by :py:meth:`create_networking_config`.
+
+        Returns:
+            A dictionary with an image 'Id' key and a 'Warnings' key.
+
+        Raises:
+            :py:class:`docker.errors.ImageNotFound`
+                If the specified image does not exist.
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
 
@@ -147,6 +450,130 @@ class ContainerApiMixin(object):
         return self._result(res, True)
 
     def create_host_config(self, *args, **kwargs):
+        """
+        Create a dictionary for the ``host_config`` argument to
+        :py:meth:`create_container`.
+
+        Args:
+            binds (dict): Volumes to bind. See :py:meth:`create_container`
+                    for more information.
+            blkio_weight_device: Block IO weight (relative device weight) in
+                the form of: ``[{"Path": "device_path", "Weight": weight}]``.
+            blkio_weight: Block IO weight (relative weight), accepts a weight
+                value between 10 and 1000.
+            cap_add (list of str): Add kernel capabilities. For example,
+                ``["SYS_ADMIN", "MKNOD"]``.
+            cap_drop (list of str): Drop kernel capabilities.
+            cpu_group (int): The length of a CPU period in microseconds.
+            cpu_period (int): Microseconds of CPU time that the container can
+                get in a CPU period.
+            cpu_shares (int): CPU shares (relative weight).
+            cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
+                ``0,1``).
+            device_read_bps: Limit read rate (bytes per second) from a device
+                in the form of: `[{"Path": "device_path", "Rate": rate}]`
+            device_read_iops: Limit read rate (IO per second) from a device.
+            device_write_bps: Limit write rate (bytes per second) from a
+                device.
+            device_write_iops: Limit write rate (IO per second) from a device.
+            devices (list): Expose host devices to the container, as a list
+                of strings in the form
+                ``<path_on_host>:<path_in_container>:<cgroup_permissions>``.
+
+                For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
+                to have read-write access to the host's ``/dev/sda`` via a
+                node named ``/dev/xvda`` inside the container.
+            dns (list): Set custom DNS servers.
+            dns_search (list): DNS search domains.
+            extra_hosts (dict): Addtional hostnames to resolve inside the
+                container, as a mapping of hostname to IP address.
+            group_add (list): List of additional group names and/or IDs that
+                the container process will run as.
+            ipc_mode (str): Set the IPC mode for the container.
+            isolation (str): Isolation technology to use. Default: `None`.
+            links (dict or list of tuples): Either a dictionary mapping name
+                to alias or as a list of ``(name, alias)`` tuples.
+            log_config (dict): Logging configuration, as a dictionary with
+                keys:
+
+                - ``type`` The logging driver name.
+                - ``config`` A dictionary of configuration for the logging
+                  driver.
+
+            lxc_conf (dict): LXC config.
+            mem_limit (float or str): Memory limit. Accepts float values
+                (which represent the memory limit of the created container in
+                bytes) or a string with a units identification char
+                (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
+                specified without a units character, bytes are assumed as an
+            mem_swappiness (int): Tune a container's memory swappiness
+                behavior. Accepts number between 0 and 100.
+            memswap_limit (str or int): Maximum amount of memory + swap a
+                container is allowed to consume.
+            network_mode (str): One of:
+
+                - ``bridge`` Create a new network stack for the container on
+                  on the bridge network.
+                - ``none`` No networking for this container.
+                - ``container:<name|id>`` Reuse another container's network
+                  stack.
+                - ``host`` Use the host network stack.
+            oom_kill_disable (bool): Whether to disable OOM killer.
+            oom_score_adj (int): An integer value containing the score given
+                to the container in order to tune OOM killer preferences.
+            pid_mode (str): If set to ``host``, use the host PID namespace
+                inside the container.
+            pids_limit (int): Tune a container's pids limit. Set ``-1`` for
+                unlimited.
+            port_bindings (dict): See :py:meth:`create_container`
+                    for more information.
+            privileged (bool): Give extended privileges to this container.
+            publish_all_ports (bool): Publish all ports to the host.
+            read_only (bool): Mount the container's root filesystem as read
+                only.
+            restart_policy (dict): Restart the container when it exits.
+                Configured as a dictionary with keys:
+
+                - ``Name`` One of ``on-failure``, or ``always``.
+                - ``MaximumRetryCount`` Number of times to restart the
+                  container on failure.
+            security_opt (list): A list of string values to customize labels
+                for MLS systems, such as SELinux.
+            shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
+            sysctls (dict): Kernel parameters to set in the container.
+            tmpfs (dict): Temporary filesystems to mount, as a dictionary
+                mapping a path inside the container to options for that path.
+
+                For example:
+
+                .. code-block:: python
+
+                    {
+                        '/mnt/vol2': '',
+                        '/mnt/vol1': 'size=3G,uid=1000'
+                    }
+
+            ulimits (list): Ulimits to set inside the container, as a list of
+                dicts.
+            userns_mode (str): Sets the user namespace mode for the container
+                when user namespace remapping option is enabled. Supported
+                values are: ``host``
+            volumes_from (list): List of container names or IDs to get
+                volumes from.
+
+
+        Returns:
+            (dict) A dictionary which can be passed to the ``host_config``
+            argument to :py:meth:`create_container`.
+
+        Example:
+
+            >>> cli.create_host_config(privileged=True, cap_drop=['MKNOD'],
+                                       volumes_from=['nostalgic_newton'])
+            {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True,
+             'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
+
+"""
         if not kwargs:
             kwargs = {}
         if 'version' in kwargs:
@@ -158,19 +585,98 @@ class ContainerApiMixin(object):
         return utils.create_host_config(*args, **kwargs)
 
     def create_networking_config(self, *args, **kwargs):
+        """
+        Create a networking config dictionary to be used as the
+        ``networking_config`` parameter in :py:meth:`create_container`.
+
+        Args:
+            endpoints_config (dict): A dictionary mapping network names to
+                endpoint configurations generated by
+                :py:meth:`create_endpoint_config`.
+
+        Returns:
+            (dict) A networking config.
+
+        Example:
+
+            >>> docker_client.create_network('network1')
+            >>> networking_config = docker_client.create_networking_config({
+                'network1': docker_client.create_endpoint_config()
+            })
+            >>> container = docker_client.create_container(
+                img, command, networking_config=networking_config
+            )
+
+        """
         return create_networking_config(*args, **kwargs)
 
     def create_endpoint_config(self, *args, **kwargs):
+        """
+        Create an endpoint config dictionary to be used with
+        :py:meth:`create_networking_config`.
+
+        Args:
+            aliases (list): A list of aliases for this endpoint. Names in
+                that list can be used within the network to reach the
+                container. Defaults to ``None``.
+            links (list): A list of links for this endpoint. Containers
+                declared in this list will be linked to this container.
+                Defaults to ``None``.
+            ipv4_address (str): The IP address of this container on the
+                network, using the IPv4 protocol. Defaults to ``None``.
+            ipv6_address (str): The IP address of this container on the
+                network, using the IPv6 protocol. Defaults to ``None``.
+            link_local_ips (list): A list of link-local (IPv4/IPv6)
+                addresses.
+
+        Returns:
+            (dict) An endpoint config.
+
+        Example:
+
+            >>> endpoint_config = client.create_endpoint_config(
+                aliases=['web', 'app'],
+                links=['app_db'],
+                ipv4_address='132.65.0.123'
+            )
+
+        """
         return create_endpoint_config(self._version, *args, **kwargs)
 
     @utils.check_resource
     def diff(self, container):
+        """
+        Inspect changes on a container's filesystem.
+
+        Args:
+            container (str): The container to diff
+
+        Returns:
+            (str)
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         return self._result(
             self._get(self._url("/containers/{0}/changes", container)), True
         )
 
     @utils.check_resource
     def export(self, container):
+        """
+        Export the contents of a filesystem as a tar archive.
+
+        Args:
+            container (str): The container to export
+
+        Returns:
+            (str): The filesystem tar archive
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         res = self._get(
             self._url("/containers/{0}/export", container), stream=True
         )
@@ -180,6 +686,22 @@ class ContainerApiMixin(object):
     @utils.check_resource
     @utils.minimum_version('1.20')
     def get_archive(self, container, path):
+        """
+        Retrieve a file or folder from a container in the form of a tar
+        archive.
+
+        Args:
+            container (str): The container where the file is located
+            path (str): Path to the file or folder to retrieve
+
+        Returns:
+            (tuple): First element is a raw tar data stream. Second element is
+            a dict containing ``stat`` information on the specified ``path``.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {
             'path': path
         }
@@ -194,12 +716,37 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def inspect_container(self, container):
+        """
+        Identical to the `docker inspect` command, but only for containers.
+
+        Args:
+            container (str): The container to inspect
+
+        Returns:
+            (dict): Similar to the output of `docker inspect`, but as a
+            single dict
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         return self._result(
             self._get(self._url("/containers/{0}/json", container)), True
         )
 
     @utils.check_resource
     def kill(self, container, signal=None):
+        """
+        Kill a container or send a signal to a container.
+
+        Args:
+            container (str): The container to kill
+            signal (str or int): The signal to send. Defaults to ``SIGKILL``
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         url = self._url("/containers/{0}/kill", container)
         params = {}
         if signal is not None:
@@ -213,6 +760,32 @@ class ContainerApiMixin(object):
     @utils.check_resource
     def logs(self, container, stdout=True, stderr=True, stream=False,
              timestamps=False, tail='all', since=None, follow=None):
+        """
+        Get logs from a container. Similar to the ``docker logs`` command.
+
+        The ``stream`` parameter makes the ``logs`` function return a blocking
+        generator you can iterate over to retrieve log output as it happens.
+
+        Args:
+            container (str): The container to get logs from
+            stdout (bool): Get ``STDOUT``
+            stderr (bool): Get ``STDERR``
+            stream (bool): Stream the response
+            timestamps (bool): Show timestamps
+            tail (str or int): Output specified number of lines at the end of
+                logs. Either an integer of number of lines or the string
+                ``all``. Default ``all``
+            since (datetime or int): Show logs since a given datetime or
+                integer epoch (in seconds)
+            follow (bool): Follow log output
+
+        Returns:
+            (generator or str)
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         if utils.compare_version('1.11', self._version) >= 0:
             if follow is None:
                 follow = stream
@@ -249,12 +822,48 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def pause(self, container):
+        """
+        Pauses all processes within a container.
+
+        Args:
+            container (str): The container to pause
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         url = self._url('/containers/{0}/pause', container)
         res = self._post(url)
         self._raise_for_status(res)
 
     @utils.check_resource
     def port(self, container, private_port):
+        """
+        Lookup the public-facing port that is NAT-ed to ``private_port``.
+        Identical to the ``docker port`` command.
+
+        Args:
+            container (str): The container to look up
+            private_port (int): The private port to inspect
+
+        Returns:
+            (list of dict): The mapping for the host ports
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        Example:
+            .. code-block:: bash
+
+                $ docker run -d -p 80:80 ubuntu:14.04 /bin/sleep 30
+                7174d6347063a83f412fad6124c99cffd25ffe1a0807eb4b7f9cec76ac8cb43b
+
+            .. code-block:: python
+
+                >>> cli.port('7174d6347063', 80)
+                [{'HostIp': '0.0.0.0', 'HostPort': '80'}]
+        """
         res = self._get(self._url("/containers/{0}/json", container))
         self._raise_for_status(res)
         json_ = res.json()
@@ -279,6 +888,26 @@ class ContainerApiMixin(object):
     @utils.check_resource
     @utils.minimum_version('1.20')
     def put_archive(self, container, path, data):
+        """
+        Insert a file or folder in an existing container using a tar archive as
+        source.
+
+        Args:
+            container (str): The container where the file(s) will be extracted
+            path (str): Path inside the container where the file(s) will be
+                extracted. Must exist.
+            data (bytes): tar data to be extracted
+
+        Returns:
+            (bool): True if the call succeeds.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        Raises:
+            :py:class:`~docker.errors.APIError` If an error occurs.
+        """
         params = {'path': path}
         url = self._url('/containers/{0}/archive', container)
         res = self._put(url, params=params, data=data)
@@ -287,6 +916,21 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def remove_container(self, container, v=False, link=False, force=False):
+        """
+        Remove a container. Similar to the ``docker rm`` command.
+
+        Args:
+            container (str): The container to remove
+            v (bool): Remove the volumes associated with the container
+            link (bool): Remove the specified link and not the underlying
+                container
+            force (bool): Force the removal of a running container (uses
+                ``SIGKILL``)
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {'v': v, 'link': link, 'force': force}
         res = self._delete(
             self._url("/containers/{0}", container), params=params
@@ -296,6 +940,17 @@ class ContainerApiMixin(object):
     @utils.minimum_version('1.17')
     @utils.check_resource
     def rename(self, container, name):
+        """
+        Rename a container. Similar to the ``docker rename`` command.
+
+        Args:
+            container (str): ID of the container to rename
+            name (str): New name for the container
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         url = self._url("/containers/{0}/rename", container)
         params = {'name': name}
         res = self._post(url, params=params)
@@ -303,6 +958,18 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def resize(self, container, height, width):
+        """
+        Resize the tty session.
+
+        Args:
+            container (str or dict): The container to resize
+            height (int): Height of tty session
+            width (int): Width of tty session
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {'h': height, 'w': width}
         url = self._url("/containers/{0}/resize", container)
         res = self._post(url, params=params)
@@ -310,6 +977,20 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def restart(self, container, timeout=10):
+        """
+        Restart a container. Similar to the ``docker restart`` command.
+
+        Args:
+            container (str or dict): The container to restart. If a dict, the
+                ``Id`` key is used.
+            timeout (int): Number of seconds to try to stop for before killing
+                the container. Once killed it will then be restarted. Default
+                is 10 seconds.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart", container)
         res = self._post(url, params=params)
@@ -322,7 +1003,28 @@ class ContainerApiMixin(object):
               restart_policy=None, cap_add=None, cap_drop=None, devices=None,
               extra_hosts=None, read_only=None, pid_mode=None, ipc_mode=None,
               security_opt=None, ulimits=None):
+        """
+        Start a container. Similar to the ``docker start`` command, but
+        doesn't support attach options.
 
+        **Deprecation warning:** For API version > 1.15, it is highly
+        recommended to provide host config options in the ``host_config``
+        parameter of :py:meth:`~ContainerApiMixin.create_container`.
+
+        Args:
+            container (str): The container to start
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        Example:
+
+            >>> container = cli.create_container(
+            ...     image='busybox:latest',
+            ...     command='/bin/sleep 30')
+            >>> cli.start(container=container.get('Id'))
+        """
         if utils.compare_version('1.10', self._version) < 0:
             if dns is not None:
                 raise errors.InvalidVersion(
@@ -386,6 +1088,22 @@ class ContainerApiMixin(object):
     @utils.minimum_version('1.17')
     @utils.check_resource
     def stats(self, container, decode=None, stream=True):
+        """
+        Stream statistics for a specific container. Similar to the
+        ``docker stats`` command.
+
+        Args:
+            container (str): The container to stream statistics from
+            decode (bool): If set to true, stream will be decoded into dicts
+                on the fly. False by default.
+            stream (bool): If set to false, only the current stats will be
+                returned instead of a stream. True by default.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        """
         url = self._url("/containers/{0}/stats", container)
         if stream:
             return self._stream_helper(self._get(url, stream=True),
@@ -396,6 +1114,18 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def stop(self, container, timeout=10):
+        """
+        Stops a container. Similar to the ``docker stop`` command.
+
+        Args:
+            container (str): The container to stop
+            timeout (int): Timeout in seconds to wait for the container to
+                stop before sending a ``SIGKILL``. Default: 10
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         params = {'t': timeout}
         url = self._url("/containers/{0}/stop", container)
 
@@ -405,6 +1135,20 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def top(self, container, ps_args=None):
+        """
+        Display the running processes of a container.
+
+        Args:
+            container (str): The container to inspect
+            ps_args (str): An optional arguments passed to ps (e.g. ``aux``)
+
+        Returns:
+            (str): The output of the top
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         u = self._url("/containers/{0}/top", container)
         params = {}
         if ps_args is not None:
@@ -413,6 +1157,12 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def unpause(self, container):
+        """
+        Unpause all processes within a container.
+
+        Args:
+            container (str): The container to unpause
+        """
         url = self._url('/containers/{0}/unpause', container)
         res = self._post(url)
         self._raise_for_status(res)
@@ -425,6 +1175,31 @@ class ContainerApiMixin(object):
         mem_reservation=None, memswap_limit=None, kernel_memory=None,
         restart_policy=None
     ):
+        """
+        Update resource configs of one or more containers.
+
+        Args:
+            container (str): The container to inspect
+            blkio_weight (int): Block IO (relative weight), between 10 and 1000
+            cpu_period (int): Limit CPU CFS (Completely Fair Scheduler) period
+            cpu_quota (int): Limit CPU CFS (Completely Fair Scheduler) quota
+            cpu_shares (int): CPU shares (relative weight)
+            cpuset_cpus (str): CPUs in which to allow execution
+            cpuset_mems (str): MEMs in which to allow execution
+            mem_limit (int or str): Memory limit
+            mem_reservation (int or str): Memory soft limit
+            memswap_limit (int or str): Total memory (memory + swap), -1 to
+                disable swap
+            kernel_memory (int or str): Kernel memory limit
+            restart_policy (dict): Restart policy dictionary
+
+        Returns:
+            (dict): Dictionary containing a ``Warnings`` key.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         url = self._url('/containers/{0}/update', container)
         data = {}
         if blkio_weight:
@@ -460,6 +1235,25 @@ class ContainerApiMixin(object):
 
     @utils.check_resource
     def wait(self, container, timeout=None):
+        """
+        Block until a container stops, then return its exit code. Similar to
+        the ``docker wait`` command.
+
+        Args:
+            container (str or dict): The container to wait on. If a dict, the
+                ``Id`` key is used.
+            timeout (int): Request timeout
+
+        Returns:
+            (int): The exit code of the container. Returns ``-1`` if the API
+            responds without a ``StatusCode`` attribute.
+
+        Raises:
+            :py:class:`requests.exceptions.ReadTimeout`
+                If the timeout is exceeded.
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
         url = self._url("/containers/{0}/wait", container)
         res = self._post(url, timeout=timeout)
         self._raise_for_status(res)
