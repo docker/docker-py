@@ -17,7 +17,8 @@ class BuildApiMixin(object):
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
-              decode=False, buildargs=None, gzip=False):
+              decode=False, buildargs=None, gzip=False, shmsize=None,
+              labels=None):
         remote = context = None
         headers = {}
         container_limits = container_limits or {}
@@ -86,6 +87,22 @@ class BuildApiMixin(object):
             else:
                 raise errors.InvalidVersion(
                     'buildargs was only introduced in API version 1.21'
+                )
+
+        if shmsize:
+            if utils.version_gte(self._version, '1.22'):
+                params.update({'shmsize': shmsize})
+            else:
+                raise errors.InvalidVersion(
+                    'shmsize was only introduced in API version 1.22'
+                )
+
+        if labels:
+            if utils.version_gte(self._version, '1.23'):
+                params.update({'labels': json.dumps(labels)})
+            else:
+                raise errors.InvalidVersion(
+                    'labels was only introduced in API version 1.23'
                 )
 
         if context is not None:

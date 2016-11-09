@@ -118,6 +118,44 @@ class BuildTest(BaseIntegrationTest):
         info = self.client.inspect_image('buildargs')
         self.assertEqual(info['Config']['User'], 'OK')
 
+    @requires_api_version('1.22')
+    def test_build_shmsize(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+            'CMD sh -c "echo \'Hello, World!\'"',
+        ]).encode('ascii'))
+
+        tag = 'shmsize'
+        shmsize = 134217728
+
+        stream = self.client.build(
+            fileobj=script, tag=tag, shmsize=shmsize
+        )
+        self.tmp_imgs.append(tag)
+        for chunk in stream:
+            pass
+
+        # There is currently no way to get the shmsize
+        # that was used to build the image
+
+    @requires_api_version('1.23')
+    def test_build_labels(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+        ]).encode('ascii'))
+
+        labels = {'test': 'OK'}
+
+        stream = self.client.build(
+            fileobj=script, tag='labels', labels=labels
+        )
+        self.tmp_imgs.append('labels')
+        for chunk in stream:
+            pass
+
+        info = self.client.inspect_image('labels')
+        self.assertEqual(info['Config']['Labels'], labels)
+
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']
         snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'
