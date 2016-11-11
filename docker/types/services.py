@@ -39,6 +39,7 @@ class ContainerSpec(dict):
     def __init__(self, image, command=None, args=None, env=None, workdir=None,
                  user=None, labels=None, mounts=None, stop_grace_period=None):
         from ..utils import split_command  # FIXME: circular import
+        from ..utils import format_environment  # FIXME: circular import
 
         self['Image'] = image
 
@@ -48,7 +49,10 @@ class ContainerSpec(dict):
         self['Args'] = args
 
         if env is not None:
-            self['Env'] = env
+            if isinstance(env, dict):
+                self['Env'] = format_environment(env)
+            else:
+                self['Env'] = env
         if workdir is not None:
             self['Dir'] = workdir
         if user is not None:
