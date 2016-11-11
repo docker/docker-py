@@ -94,7 +94,7 @@ class Mount(dict):
             if labels:
                 volume_opts['Labels'] = labels
             if driver_config:
-                volume_opts['driver_config'] = driver_config
+                volume_opts['DriverConfig'] = driver_config
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
             if propagation:
