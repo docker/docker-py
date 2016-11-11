@@ -2,6 +2,7 @@ import os
 import os.path
 import tarfile
 import tempfile
+import time
 
 import docker
 import pytest
@@ -47,3 +48,11 @@ def requires_api_version(version):
         ),
         reason="API version is too low (< {0})".format(version)
     )
+
+
+def wait_on_condition(condition, delay=0.1, timeout=40):
+    start_time = time.time()
+    while not condition():
+        if time.time() - start_time > timeout:
+            raise AssertionError("Timeout: %s" % condition)
+        time.sleep(delay)
