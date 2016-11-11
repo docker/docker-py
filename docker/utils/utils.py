@@ -18,7 +18,7 @@ import six
 from .. import constants
 from .. import errors
 from .. import tls
-from ..types import Ulimit, LogConfig
+from ..types import Ulimit, LogConfig, Healthcheck
 
 if six.PY2:
     from urllib import splitnport
@@ -1130,6 +1130,9 @@ def create_container_config(
     else:
         # Force None, an empty list or dict causes client.start to fail
         volumes_from = None
+
+    if healthcheck and isinstance(healthcheck, dict):
+        healthcheck = Healthcheck(**healthcheck)
 
     attach_stdin = False
     attach_stdout = False

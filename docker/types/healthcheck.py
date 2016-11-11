@@ -1,12 +1,18 @@
 from .base import DictType
 
+import six
+
 
 class Healthcheck(DictType):
     def __init__(self, **kwargs):
         test = kwargs.get('test', kwargs.get('Test'))
+        if isinstance(test, six.string_types):
+            test = ["CMD-SHELL", test]
+
         interval = kwargs.get('interval', kwargs.get('Interval'))
         timeout = kwargs.get('timeout', kwargs.get('Timeout'))
         retries = kwargs.get('retries', kwargs.get('Retries'))
+
         super(Healthcheck, self).__init__({
             'Test': test,
             'Interval': interval,
