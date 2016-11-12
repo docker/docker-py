@@ -467,8 +467,16 @@ class ParseEnvFileTest(unittest.TestCase):
     def test_parse_env_file_commented_line(self):
         env_file = self.generate_tempfile(
             file_content='USER=jdoe\n#PASS=secret')
-        get_parse_env_file = parse_env_file((env_file))
+        get_parse_env_file = parse_env_file(env_file)
         self.assertEqual(get_parse_env_file, {'USER': 'jdoe'})
+        os.unlink(env_file)
+
+    def test_parse_env_file_newline(self):
+        env_file = self.generate_tempfile(
+            file_content='\nUSER=jdoe\n\n\nPASS=secret')
+        get_parse_env_file = parse_env_file(env_file)
+        self.assertEqual(get_parse_env_file,
+                         {'USER': 'jdoe', 'PASS': 'secret'})
         os.unlink(env_file)
 
     def test_parse_env_file_invalid_line(self):

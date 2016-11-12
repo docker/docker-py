@@ -1069,7 +1069,11 @@ def parse_env_file(env_file):
             if line[0] == '#':
                 continue
 
-            parse_line = line.strip().split('=', 1)
+            line = line.strip()
+            if not line:
+                continue
+
+            parse_line = line.split('=', 1)
             if len(parse_line) == 2:
                 k, v = parse_line
                 environment[k] = v
