@@ -86,6 +86,7 @@ def fake_delete(self, url, *args, **kwargs):
 def fake_read_from_socket(self, response, stream):
     return six.binary_type()
 
+
 url_base = '{0}/'.format(fake_api.prefix)
 url_prefix = '{0}v{1}/'.format(
     url_base,
