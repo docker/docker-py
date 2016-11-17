@@ -1,5 +1,6 @@
 import json
 import struct
+import warnings
 from functools import partial
 
 import requests
@@ -104,6 +105,13 @@ class Client(
                 'Version parameter must be a string or None. Found {0}'.format(
                     type(version).__name__
                 )
+            )
+        if utils.version_lt(self._version, constants.MINIMUM_DOCKER_API_VERSION):
+            warnings.warn(
+                'The minimum API version supported is {}, but you are using '
+                'version {}. It is recommended you either upgrade Docker '
+                'Engine or use an older version of docker-py.'.format(
+                    constants.MINIMUM_DOCKER_API_VERSION, self._version)
             )
 
     @classmethod
