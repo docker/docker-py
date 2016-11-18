@@ -194,7 +194,18 @@ class HostConfigTest(base.BaseTestCase):
         with pytest.raises(InvalidVersion):
             create_host_config(version='1.22', pids_limit=1024)
         with pytest.raises(TypeError):
-            create_host_config(version='1.22', pids_limit='1024')
+            create_host_config(version='1.23', pids_limit='1024')
+
+    def test_create_host_config_with_isolation(self):
+        config = create_host_config(version='1.24', isolation='hyperv')
+        self.assertEqual(config.get('Isolation'), 'hyperv')
+
+        with pytest.raises(InvalidVersion):
+            create_host_config(version='1.23', isolation='hyperv')
+        with pytest.raises(TypeError):
+            create_host_config(
+                version='1.24', isolation={'isolation': 'hyperv'}
+            )
 
 
 class UlimitTest(base.BaseTestCase):

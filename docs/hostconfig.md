@@ -130,6 +130,7 @@ for example:
 * userns_mode (str): Sets the user namespace mode for the container when user
   namespace remapping option is enabled. Supported values are: `host`
 * pids_limit (int): Tune a container’s pids limit. Set -1 for unlimited.
+* isolation (str): Isolation technology to use. Default: `None`.
 
 **Returns** (dict) HostConfig dictionary
 
