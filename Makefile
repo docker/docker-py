@@ -27,28 +27,28 @@ test: flake8 unit-test unit-test-py3 integration-dind integration-dind-ssl
 
 .PHONY: unit-test
 unit-test: build
-	docker run docker-py py.test tests/unit
+	docker run --rm docker-py py.test tests/unit
 
 .PHONY: unit-test-py3
 unit-test-py3: build-py3
-	docker run docker-py3 py.test tests/unit
+	docker run --rm docker-py3 py.test tests/unit
 
 .PHONY: integration-test
 integration-test: build
-	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py py.test tests/integration/${file}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-py py.test tests/integration/${file}
 
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
-	docker run -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test tests/integration/${file}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-py3 py.test tests/integration/${file}
 
 .PHONY: integration-dind
 integration-dind: build build-py3
 	docker rm -vf dpy-dind || :
 	docker run -d --name dpy-dind --privileged dockerswarm/dind:1.12.0 docker daemon\
 		-H tcp://0.0.0.0:2375
-	docker run --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-py\
+	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-py\
 		py.test tests/integration
-	docker run --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-py3\
+	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-py3\
 		py.test tests/integration
 	docker rm -vf dpy-dind
 
@@ -60,17 +60,17 @@ integration-dind-ssl: build-dind-certs build build-py3
 		-v /tmp --privileged dockerswarm/dind:1.12.0 docker daemon --tlsverify\
 		--tlscacert=/certs/ca.pem --tlscert=/certs/server-cert.pem\
 		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375
-	docker run --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
+	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
 		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs"\
 		--link=dpy-dind-ssl:docker docker-py py.test tests/integration
-	docker run --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
+	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
 		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs"\
 		--link=dpy-dind-ssl:docker docker-py3 py.test tests/integration
 	docker rm -vf dpy-dind-ssl dpy-dind-certs
 
 .PHONY: flake8
 flake8: build
-	docker run docker-py flake8 docker tests
+	docker run --rm docker-py flake8 docker tests
 
 .PHONY: docs
 docs: build-docs
