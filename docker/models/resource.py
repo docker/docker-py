@@ -60,6 +60,12 @@ class Collection(object):
         #: is on.
         self.client = client
 
+    def __call__(self, *args, **kwargs):
+        raise TypeError(
+            "'{}' object is not callable. You might be trying to use the old "
+            "(pre-2.0) API - use docker.APIClient if so."
+            .format(self.__class__.__name__))
+
     def list(self):
         raise NotImplementedError
 
