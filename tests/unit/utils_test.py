@@ -702,7 +702,8 @@ class UtilsTest(base.BaseTestCase):
                 'Gateway': '192.168.52.254',
                 'AuxiliaryAddresses': None,
                 'IPRange': None,
-            }]
+            }],
+            'Options': None
         })
 
 
