@@ -684,9 +684,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
 
         host_config['ShmSize'] = shm_size
 
-    if pid_mode not in (None, 'host'):
-        raise host_config_value_error('pid_mode', pid_mode)
-    elif pid_mode:
+    if pid_mode:
         host_config['PidMode'] = pid_mode
 
     if ipc_mode:

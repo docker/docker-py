@@ -365,9 +365,6 @@ class CreateContainerTest(BaseIntegrationTest):
         self.assertRaises(TypeError,
                           self.client.create_host_config, mem_swappiness='40')
 
-        self.assertRaises(ValueError,
-                          self.client.create_host_config, pid_mode='40')
-
     def test_create_with_environment_variable_no_value(self):
         container = self.client.create_container(
             BUSYBOX,
