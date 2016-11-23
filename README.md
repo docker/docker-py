@@ -8,7 +8,7 @@ A Python library for the Docker API. It lets you do anything the `docker` comman
 
 The latest stable version [is available on PyPi](https://pypi.python.org/pypi/docker/). Either add `docker` to your `requirements.txt` file or install with pip:
 
-    pip install docker
+    pip install docker-py
 
 ## Usage
 
