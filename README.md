@@ -1,6 +1,6 @@
 # Docker SDK for Python
 
-[![Build Status](https://travis-ci.org/docker/docker-py.png)](https://travis-ci.org/docker/docker-py)
+[![Build Status](https://travis-ci.org/docker/docker-py.svg?branch=master)](https://travis-ci.org/docker/docker-py)
 
 **Warning:** This readme is for the development version of docker-py, which is significantly different to the stable version. [Documentation for the stable version is here.](https://docker-py.readthedocs.io/)
 
