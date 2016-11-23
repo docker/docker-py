@@ -2,13 +2,15 @@
 
 [![Build Status](https://travis-ci.org/docker/docker-py.png)](https://travis-ci.org/docker/docker-py)
 
+**Warning:** This readme is for the development version of docker-py, which is significantly different to the stable version. [Documentation for the stable version is here.](https://docker-py.readthedocs.io/)
+
 A Python library for the Docker API. It lets you do anything the `docker` command does, but from within Python apps – run containers, manage containers, manage Swarms, etc.
 
 ## Installation
 
 The latest stable version [is available on PyPi](https://pypi.python.org/pypi/docker/). Either add `docker` to your `requirements.txt` file or install with pip:
 
-    pip install docker
+    pip install docker-py
 
 ## Usage
 
@@ -70,4 +72,4 @@ You can manage images:
 [<Image 'ubuntu'>, <Image 'nginx'>, ...]
 ```
 
-[Read the full documentation](https://docs.docker.com/sdk/python/) to see everything you can do.
+[Read the full documentation](https://docker-py.readthedocs.io) to see everything you can do.
