@@ -3,7 +3,7 @@ import codecs
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -49,10 +49,7 @@ setup(
     description="A Python library for the Docker Engine API.",
     long_description=long_description,
     url='https://github.com/docker/docker-py',
-    packages=[
-        'docker', 'docker.api', 'docker.transport', 'docker.utils',
-        'docker.types',
-    ],
+    packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
