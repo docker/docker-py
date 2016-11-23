@@ -100,7 +100,7 @@ class ContainerApiMixin(object):
                 DeprecationWarning
             )
         res = self._post_json(
-            self._url("/containers/{0}/copy".format(container)),
+            self._url("/containers/{0}/copy", container),
             data={"Resource": resource},
             stream=True
         )
