@@ -44,11 +44,11 @@ except IOError:
     pass
 
 setup(
-    name="docker-py",
+    name="docker",
     version=version,
-    description="Python client for Docker.",
+    description="A Python library for the Docker Engine API.",
     long_description=long_description,
-    url='https://github.com/docker/docker-py/',
+    url='https://github.com/docker/docker-py',
     packages=[
         'docker', 'docker.api', 'docker.transport', 'docker.utils',
         'docker.types',
@@ -59,7 +59,7 @@ setup(
     zip_safe=False,
     test_suite='tests',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
