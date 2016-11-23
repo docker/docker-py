@@ -697,7 +697,7 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
     if not version:
         warnings.warn(
             'docker.utils.create_host_config() is deprecated. Please use '
-            'Client.create_host_config() instead.'
+            'APIClient.create_host_config() instead.'
         )
         version = constants.DEFAULT_DOCKER_API_VERSION
 

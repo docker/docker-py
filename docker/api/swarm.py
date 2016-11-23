@@ -77,7 +77,7 @@ class SwarmApiMixin(object):
             force_new_cluster (bool): Force creating a new Swarm, even if
                 already part of one. Default: False
             swarm_spec (dict): Configuration settings of the new Swarm. Use
-                ``Client.create_swarm_spec`` to generate a valid
+                ``APIClient.create_swarm_spec`` to generate a valid
                 configuration. Default: None
 
         Returns:

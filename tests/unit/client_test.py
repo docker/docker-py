@@ -50,13 +50,13 @@ class ClientTest(unittest.TestCase):
         with self.assertRaises(AttributeError) as cm:
             client.create_container()
         s = str(cm.exception)
-        assert "'Client' object has no attribute 'create_container'" in s
+        assert "'DockerClient' object has no attribute 'create_container'" in s
         assert "this method is now on the object APIClient" in s
 
         with self.assertRaises(AttributeError) as cm:
             client.abcdef()
         s = str(cm.exception)
-        assert "'Client' object has no attribute 'abcdef'" in s
+        assert "'DockerClient' object has no attribute 'abcdef'" in s
         assert "this method is now on the object APIClient" not in s
 
 
