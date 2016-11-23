@@ -1,21 +1,21 @@
 import datetime
 import json
+import io
 import os
 import re
 import shutil
 import socket
-import sys
 import tempfile
 import threading
 import time
-import io
+import unittest
 
 import docker
+from docker.api import APIClient
 import requests
 from requests.packages import urllib3
 import six
 
-from .. import base
 from . import fake_api
 
 import pytest
@@ -93,26 +93,24 @@ url_prefix = '{0}v{1}/'.format(
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
 
-class DockerClientTest(base.Cleanup, base.BaseTestCase):
+class BaseAPIClientTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.multiple(
-            'docker.Client', get=fake_get, post=fake_post, put=fake_put,
+            'docker.api.client.APIClient',
+            get=fake_get,
+            post=fake_post,
+            put=fake_put,
             delete=fake_delete,
             _read_from_socket=fake_read_from_socket
         )
         self.patcher.start()
-        self.client = docker.Client()
+        self.client = APIClient()
         # Force-clear authconfig to avoid tampering with the tests
         self.client._cfg = {'Configs': {}}
 
     def tearDown(self):
         self.client.close()
         self.patcher.stop()
-
-    def assertIn(self, object, collection):
-        if six.PY2 and sys.version_info[1] <= 6:
-            return self.assertTrue(object in collection)
-        return super(DockerClientTest, self).assertIn(object, collection)
 
     def base_create_payload(self, img='busybox', cmd=None):
         if not cmd:
@@ -125,10 +123,10 @@ class DockerClientTest(base.Cleanup, base.BaseTestCase):
                 }
 
 
-class DockerApiTest(DockerClientTest):
+class DockerApiTest(BaseAPIClientTest):
     def test_ctor(self):
         with pytest.raises(docker.errors.DockerException) as excinfo:
-            docker.Client(version=1.12)
+            APIClient(version=1.12)
 
         self.assertEqual(
             str(excinfo.value),
@@ -195,7 +193,7 @@ class DockerApiTest(DockerClientTest):
         )
 
     def test_retrieve_server_version(self):
-        client = docker.Client(version="auto")
+        client = APIClient(version="auto")
         self.assertTrue(isinstance(client._version, six.string_types))
         self.assertFalse(client._version == "auto")
         client.close()
@@ -275,27 +273,27 @@ class DockerApiTest(DockerClientTest):
         return socket_adapter.socket_path
 
     def test_url_compatibility_unix(self):
-        c = docker.Client(base_url="unix://socket")
+        c = APIClient(base_url="unix://socket")
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_unix_triple_slash(self):
-        c = docker.Client(base_url="unix:///socket")
+        c = APIClient(base_url="unix:///socket")
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http_unix_triple_slash(self):
-        c = docker.Client(base_url="http+unix:///socket")
+        c = APIClient(base_url="http+unix:///socket")
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http(self):
-        c = docker.Client(base_url="http://hostname:1234")
+        c = APIClient(base_url="http://hostname:1234")
 
         assert c.base_url == "http://hostname:1234"
 
     def test_url_compatibility_tcp(self):
-        c = docker.Client(base_url="tcp://hostname:1234")
+        c = APIClient(base_url="tcp://hostname:1234")
 
         assert c.base_url == "http://hostname:1234"
 
@@ -356,7 +354,7 @@ class DockerApiTest(DockerClientTest):
         self.assertEqual(result, content)
 
 
-class StreamTest(base.Cleanup, base.BaseTestCase):
+class StreamTest(unittest.TestCase):
     def setUp(self):
         socket_dir = tempfile.mkdtemp()
         self.build_context = tempfile.mkdtemp()
@@ -441,7 +439,7 @@ class StreamTest(base.Cleanup, base.BaseTestCase):
             b'\r\n'
         ) + b'\r\n'.join(lines)
 
-        with docker.Client(base_url="http+unix://" + self.socket_file) \
+        with APIClient(base_url="http+unix://" + self.socket_file) \
                 as client:
             for i in range(5):
                 try:
@@ -458,10 +456,10 @@ class StreamTest(base.Cleanup, base.BaseTestCase):
                 str(i).encode() for i in range(50)])
 
 
-class UserAgentTest(base.BaseTestCase):
+class UserAgentTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.object(
-            docker.Client,
+            APIClient,
             'send',
             return_value=fake_resp("GET", "%s/version" % fake_api.prefix)
         )
@@ -471,7 +469,7 @@ class UserAgentTest(base.BaseTestCase):
         self.patcher.stop()
 
     def test_default_user_agent(self):
-        client = docker.Client()
+        client = APIClient()
         client.version()
 
         self.assertEqual(self.mock_send.call_count, 1)
@@ -480,9 +478,53 @@ class UserAgentTest(base.BaseTestCase):
         self.assertEqual(headers['User-Agent'], expected)
 
     def test_custom_user_agent(self):
-        client = docker.Client(user_agent='foo/bar')
+        client = APIClient(user_agent='foo/bar')
         client.version()
 
         self.assertEqual(self.mock_send.call_count, 1)
         headers = self.mock_send.call_args[0][0].headers
         self.assertEqual(headers['User-Agent'], 'foo/bar')
+
+
+class DisableSocketTest(unittest.TestCase):
+    class DummySocket(object):
+        def __init__(self, timeout=60):
+            self.timeout = timeout
+
+        def settimeout(self, timeout):
+            self.timeout = timeout
+
+        def gettimeout(self):
+            return self.timeout
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_disable_socket_timeout(self):
+        """Test that the timeout is disabled on a generic socket object."""
+        socket = self.DummySocket()
+
+        self.client._disable_socket_timeout(socket)
+
+        self.assertEqual(socket.timeout, None)
+
+    def test_disable_socket_timeout2(self):
+        """Test that the timeouts are disabled on a generic socket object
+        and it's _sock object if present."""
+        socket = self.DummySocket()
+        socket._sock = self.DummySocket()
+
+        self.client._disable_socket_timeout(socket)
+
+        self.assertEqual(socket.timeout, None)
+        self.assertEqual(socket._sock.timeout, None)
+
+    def test_disable_socket_timout_non_blocking(self):
+        """Test that a non-blocking socket does not get set to blocking."""
+        socket = self.DummySocket()
+        socket._sock = self.DummySocket(0.0)
+
+        self.client._disable_socket_timeout(socket)
+
+        self.assertEqual(socket.timeout, None)
+        self.assertEqual(socket._sock.timeout, 0.0)

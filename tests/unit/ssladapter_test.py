@@ -1,4 +1,5 @@
-from docker.ssladapter import ssladapter
+import unittest
+from docker import ssladapter
 
 try:
     from backports.ssl_match_hostname import (
@@ -16,10 +17,8 @@ except ImportError:
     OP_NO_SSLv3 = 0x2000000
     OP_NO_TLSv1 = 0x4000000
 
-from .. import base
 
-
-class SSLAdapterTest(base.BaseTestCase):
+class SSLAdapterTest(unittest.TestCase):
     def test_only_uses_tls(self):
         ssl_context = ssladapter.urllib3.util.ssl_.create_urllib3_context()
 
@@ -29,7 +28,7 @@ class SSLAdapterTest(base.BaseTestCase):
         assert not ssl_context.options & OP_NO_TLSv1
 
 
-class MatchHostnameTest(base.BaseTestCase):
+class MatchHostnameTest(unittest.TestCase):
     cert = {
         'issuer': (
             (('countryName', u'US'),),

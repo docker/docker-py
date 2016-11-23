@@ -49,8 +49,7 @@ setup(
     long_description=long_description,
     url='https://github.com/docker/docker-py/',
     packages=[
-        'docker', 'docker.api', 'docker.auth', 'docker.transport',
-        'docker.utils', 'docker.utils.ports', 'docker.ssladapter',
+        'docker', 'docker.api', 'docker.transport', 'docker.utils',
         'docker.types',
     ],
     install_requires=requirements,
@@ -65,7 +64,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',

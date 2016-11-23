@@ -39,6 +39,38 @@ BYTE_UNITS = {
 
 def create_ipam_pool(subnet=None, iprange=None, gateway=None,
                      aux_addresses=None):
+    """
+    Create an IPAM pool config dictionary to be added to the
+    ``pool_configs`` parameter of
+    :py:meth:`~docker.utils.create_ipam_config`.
+
+    Args:
+
+        subnet (str): Custom subnet for this IPAM pool using the CIDR
+            notation. Defaults to ``None``.
+        iprange (str): Custom IP range for endpoints in this IPAM pool using
+            the CIDR notation. Defaults to ``None``.
+        gateway (str): Custom IP address for the pool's gateway.
+        aux_addresses (dict): A dictionary of ``key -> ip_address``
+            relationships specifying auxiliary addresses that need to be
+            allocated by the IPAM driver.
+
+    Returns:
+        (dict) An IPAM pool config
+
+    Example:
+
+        >>> ipam_pool = docker.utils.create_ipam_pool(
+            subnet='124.42.0.0/16',
+            iprange='124.42.0.0/24',
+            gateway='124.42.0.254',
+            aux_addresses={
+                'reserved1': '124.42.1.1'
+            }
+        )
+        >>> ipam_config = docker.utils.create_ipam_config(
+                pool_configs=[ipam_pool])
+    """
     return {
         'Subnet': subnet,
         'IPRange': iprange,
@@ -48,6 +80,25 @@ def create_ipam_pool(subnet=None, iprange=None, gateway=None,
 
 
 def create_ipam_config(driver='default', pool_configs=None):
+    """
+    Create an IPAM (IP Address Management) config dictionary to be used with
+    :py:meth:`~docker.api.network.NetworkApiMixin.create_network`.
+
+    Args:
+        driver (str): The IPAM driver to use. Defaults to ``default``.
+        pool_configs (list): A list of pool configuration dictionaries as
+            created by :py:meth:`~docker.utils.create_ipam_pool`. Defaults to
+            empty list.
+
+    Returns:
+        (dict) An IPAM config.
+
+    Example:
+
+        >>> ipam_config = docker.utils.create_ipam_config(driver='default')
+        >>> network = client.create_network('network1', ipam=ipam_config)
+
+    """
     return {
         'Driver': driver,
         'Config': pool_configs or []

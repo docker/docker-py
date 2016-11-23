@@ -1,11 +1,24 @@
 import os
 import ssl
 
-from . import errors
-from .ssladapter import ssladapter
+from . import errors, ssladapter
 
 
 class TLSConfig(object):
+    """
+    TLS configuration.
+
+    Args:
+        client_cert (tuple of str): Path to client cert, path to client key.
+        ca_cert (str): Path to CA cert file.
+        verify (bool or str): This can be ``False`` or a path to a CA cert
+            file.
+        ssl_version (int): A valid `SSL version`_.
+        assert_hostname (bool): Verify the hostname of the server.
+
+    .. _`SSL version`:
+        https://docs.python.org/3.5/library/ssl.html#ssl.PROTOCOL_TLSv1
+    """
     cert = None
     ca_cert = None
     verify = None
@@ -58,6 +71,9 @@ class TLSConfig(object):
             )
 
     def configure_client(self, client):
+        """
+        Configure a client with these TLS options.
+        """
         client.ssl_version = self.ssl_version
 
         if self.verify and self.ca_cert:

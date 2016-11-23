@@ -8,14 +8,13 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import unittest
 
 import pytest
 import six
 
-from docker.client import Client
-from docker.constants import (
-    DEFAULT_DOCKER_API_VERSION, IS_WINDOWS_PLATFORM
-)
+from docker.api.client import APIClient
+from docker.constants import DEFAULT_DOCKER_API_VERSION, IS_WINDOWS_PLATFORM
 from docker.errors import DockerException, InvalidVersion
 from docker.utils import (
     parse_repository_tag, parse_host, convert_filters, kwargs_from_env,
@@ -28,7 +27,6 @@ from docker.utils import (
 from docker.utils.ports import build_port_bindings, split_port
 from docker.utils.utils import create_endpoint_config, format_environment
 
-from .. import base
 from ..helpers import make_tree
 
 
@@ -38,7 +36,7 @@ TEST_CERT_DIR = os.path.join(
 )
 
 
-class DecoratorsTest(base.BaseTestCase):
+class DecoratorsTest(unittest.TestCase):
     def test_update_headers(self):
         sample_headers = {
             'X-Docker-Locale': 'en-US',
@@ -47,7 +45,7 @@ class DecoratorsTest(base.BaseTestCase):
         def f(self, headers=None):
             return headers
 
-        client = Client()
+        client = APIClient()
         client._auth_configs = {}
 
         g = update_headers(f)
@@ -69,7 +67,7 @@ class DecoratorsTest(base.BaseTestCase):
         }
 
 
-class HostConfigTest(base.BaseTestCase):
+class HostConfigTest(unittest.TestCase):
     def test_create_host_config_no_options(self):
         config = create_host_config(version='1.19')
         self.assertFalse('NetworkMode' in config)
@@ -208,7 +206,7 @@ class HostConfigTest(base.BaseTestCase):
             )
 
 
-class UlimitTest(base.BaseTestCase):
+class UlimitTest(unittest.TestCase):
     def test_create_host_config_dict_ulimit(self):
         ulimit_dct = {'name': 'nofile', 'soft': 8096}
         config = create_host_config(
@@ -253,7 +251,7 @@ class UlimitTest(base.BaseTestCase):
         self.assertRaises(ValueError, lambda: Ulimit(name='hello', hard='456'))
 
 
-class LogConfigTest(base.BaseTestCase):
+class LogConfigTest(unittest.TestCase):
     def test_create_host_config_dict_logconfig(self):
         dct = {'type': LogConfig.types.SYSLOG, 'config': {'key1': 'val1'}}
         config = create_host_config(
@@ -277,7 +275,7 @@ class LogConfigTest(base.BaseTestCase):
             LogConfig(type=LogConfig.types.JSON, config='helloworld')
 
 
-class KwargsFromEnvTest(base.BaseTestCase):
+class KwargsFromEnvTest(unittest.TestCase):
     def setUp(self):
         self.os_environ = os.environ.copy()
 
@@ -305,7 +303,7 @@ class KwargsFromEnvTest(base.BaseTestCase):
         self.assertEqual(False, kwargs['tls'].assert_hostname)
         self.assertTrue(kwargs['tls'].verify)
         try:
-            client = Client(**kwargs)
+            client = APIClient(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
             self.assertEqual(kwargs['tls'].ca_cert, client.verify)
             self.assertEqual(kwargs['tls'].cert, client.cert)
@@ -324,7 +322,7 @@ class KwargsFromEnvTest(base.BaseTestCase):
         self.assertEqual(True, kwargs['tls'].assert_hostname)
         self.assertEqual(False, kwargs['tls'].verify)
         try:
-            client = Client(**kwargs)
+            client = APIClient(**kwargs)
             self.assertEqual(kwargs['base_url'], client.base_url)
             self.assertEqual(kwargs['tls'].cert, client.cert)
             self.assertFalse(kwargs['tls'].verify)
@@ -377,7 +375,7 @@ class KwargsFromEnvTest(base.BaseTestCase):
         assert 'tls' not in kwargs
 
 
-class ConverVolumeBindsTest(base.BaseTestCase):
+class ConverVolumeBindsTest(unittest.TestCase):
     def test_convert_volume_binds_empty(self):
         self.assertEqual(convert_volume_binds({}), [])
         self.assertEqual(convert_volume_binds([]), [])
@@ -436,7 +434,7 @@ class ConverVolumeBindsTest(base.BaseTestCase):
         )
 
 
-class ParseEnvFileTest(base.BaseTestCase):
+class ParseEnvFileTest(unittest.TestCase):
     def generate_tempfile(self, file_content=None):
         """
         Generates a temporary file for tests with the content
@@ -479,7 +477,7 @@ class ParseEnvFileTest(base.BaseTestCase):
         os.unlink(env_file)
 
 
-class ParseHostTest(base.BaseTestCase):
+class ParseHostTest(unittest.TestCase):
     def test_parse_host(self):
         invalid_hosts = [
             '0.0.0.0',
@@ -541,7 +539,7 @@ class ParseHostTest(base.BaseTestCase):
         assert parse_host(host_value) == expected_result
 
 
-class ParseRepositoryTagTest(base.BaseTestCase):
+class ParseRepositoryTagTest(unittest.TestCase):
     sha = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
     def test_index_image_no_tag(self):
@@ -587,7 +585,7 @@ class ParseRepositoryTagTest(base.BaseTestCase):
         )
 
 
-class ParseDeviceTest(base.BaseTestCase):
+class ParseDeviceTest(unittest.TestCase):
     def test_dict(self):
         devices = parse_devices([{
             'PathOnHost': '/dev/sda1',
@@ -646,7 +644,7 @@ class ParseDeviceTest(base.BaseTestCase):
         })
 
 
-class ParseBytesTest(base.BaseTestCase):
+class ParseBytesTest(unittest.TestCase):
     def test_parse_bytes_valid(self):
         self.assertEqual(parse_bytes("512MB"), 536870912)
         self.assertEqual(parse_bytes("512M"), 536870912)
@@ -666,7 +664,7 @@ class ParseBytesTest(base.BaseTestCase):
         )
 
 
-class UtilsTest(base.BaseTestCase):
+class UtilsTest(unittest.TestCase):
     longMessage = True
 
     def test_convert_filters(self):
@@ -706,7 +704,7 @@ class UtilsTest(base.BaseTestCase):
         })
 
 
-class SplitCommandTest(base.BaseTestCase):
+class SplitCommandTest(unittest.TestCase):
     def test_split_command_with_unicode(self):
         self.assertEqual(split_command(u'echo μμ'), ['echo', 'μμ'])
 
@@ -715,7 +713,7 @@ class SplitCommandTest(base.BaseTestCase):
         self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
 
 
-class PortsTest(base.BaseTestCase):
+class PortsTest(unittest.TestCase):
     def test_split_port_with_host_ip(self):
         internal_port, external_port = split_port("127.0.0.1:1000:2000")
         self.assertEqual(internal_port, ["2000"])
@@ -828,7 +826,7 @@ def convert_paths(collection):
     return set(map(lambda x: x.replace('/', '\\'), collection))
 
 
-class ExcludePathsTest(base.BaseTestCase):
+class ExcludePathsTest(unittest.TestCase):
     dirs = [
         'foo',
         'foo/bar',
@@ -1010,7 +1008,7 @@ class ExcludePathsTest(base.BaseTestCase):
         )
 
 
-class TarTest(base.Cleanup, base.BaseTestCase):
+class TarTest(unittest.TestCase):
     def test_tar_with_excludes(self):
         dirs = [
             'foo',
@@ -1094,7 +1092,7 @@ class TarTest(base.Cleanup, base.BaseTestCase):
             )
 
 
-class FormatEnvironmentTest(base.BaseTestCase):
+class FormatEnvironmentTest(unittest.TestCase):
     def test_format_env_binary_unicode_value(self):
         env_dict = {
             'ARTIST_NAME': b'\xec\x86\xa1\xec\xa7\x80\xec\x9d\x80'
