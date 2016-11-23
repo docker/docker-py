@@ -70,4 +70,4 @@ You can manage images:
 [<Image 'ubuntu'>, <Image 'nginx'>, ...]
 ```
 
-[Read the full documentation](https://docs.docker.com/sdk/python/) to see everything you can do.
+[Read the full documentation](https://docker-py.readthedocs.io) to see everything you can do.
