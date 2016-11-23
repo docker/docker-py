@@ -12,4 +12,4 @@ Our latest stable is always available on PyPi.
 Full documentation is available in the `/docs/` directory.
 
 ## License
-Docker is licensed under the Apache License, Version 2.0. See LICENSE for full license text
+Docker is licensed under the Apache License, Version 2.0. See [LICENSE](https://raw.githubusercontent.com/docker/docker-py/master/LICENSE) for full license text
