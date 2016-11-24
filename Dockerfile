@@ -1,5 +1,4 @@
 FROM python:2.7
-MAINTAINER Joffrey F <joffrey@docker.com>
 
 RUN mkdir /home/docker-py
 WORKDIR /home/docker-py

@@ -15,7 +15,6 @@ class BuildTest(BaseAPIIntegrationTest):
     def test_build_streaming(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
@@ -32,7 +31,6 @@ class BuildTest(BaseAPIIntegrationTest):
             return
         script = io.StringIO(six.text_type('\n').join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
@@ -54,7 +52,6 @@ class BuildTest(BaseAPIIntegrationTest):
         with open(os.path.join(base_dir, 'Dockerfile'), 'w') as f:
             f.write("\n".join([
                 'FROM busybox',
-                'MAINTAINER docker-py',
                 'ADD . /test',
             ]))
 
@@ -182,7 +179,6 @@ class BuildTest(BaseAPIIntegrationTest):
         with open(os.path.join(base_dir, 'Dockerfile'), 'w') as f:
             f.write("\n".join([
                 'FROM busybox',
-                'MAINTAINER docker-py',
                 'ADD . /test',
             ]))
 
