@@ -11,7 +11,6 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
@@ -23,7 +22,6 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container_pull(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
@@ -35,7 +33,6 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container_stream(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
@@ -47,7 +44,6 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container_custom_context(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
@@ -60,7 +56,6 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container_custom_context_gzip(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'MAINTAINER docker-py',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
