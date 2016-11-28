@@ -2,7 +2,7 @@
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 ROOT_DIR = os.path.dirname(__file__)
@@ -43,22 +43,19 @@ except IOError:
     pass
 
 setup(
-    name="docker-py",
+    name="docker",
     version=version,
-    description="Python client for Docker.",
+    description="A Python library for the Docker Engine API.",
     long_description=long_description,
-    url='https://github.com/docker/docker-py/',
-    packages=[
-        'docker', 'docker.api', 'docker.transport', 'docker.utils',
-        'docker.types',
-    ],
+    url='https://github.com/docker/docker-py',
+    packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
     zip_safe=False,
     test_suite='tests',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
