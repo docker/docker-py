@@ -15,5 +15,5 @@ INSECURE_REGISTRY_DEPRECATION_WARNING = \
 
 IS_WINDOWS_PLATFORM = (sys.platform == 'win32')
 
-DEFAULT_USER_AGENT = "docker-py/{0}".format(version)
+DEFAULT_USER_AGENT = "docker-sdk-python/{0}".format(version)
 DEFAULT_NUM_POOLS = 25
