@@ -753,6 +753,8 @@ def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
         host_config['ShmSize'] = shm_size
 
     if pid_mode:
+        if version_lt(version, '1.24') and pid_mode != 'host':
+            raise host_config_value_error('pid_mode', pid_mode)
         host_config['PidMode'] = pid_mode
 
     if ipc_mode:
