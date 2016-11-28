@@ -469,6 +469,11 @@ class ImageApiMixin(object):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+
+        Example:
+
+            >>> client.tag('ubuntu', 'localhost:5000/ubuntu', 'latest',
+                           force=True)
         """
         params = {
             'tag': tag,
