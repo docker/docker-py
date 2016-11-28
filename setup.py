@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import codecs
 import os
 import sys
 
@@ -35,7 +36,7 @@ with open('./test-requirements.txt') as test_reqs_txt:
 
 long_description = ''
 try:
-    with open('./README.rst') as readme_rst:
+    with codecs.open('./README.rst', encoding='utf-8') as readme_rst:
         long_description = readme_rst.read()
 except IOError:
     # README.rst is only generated on release. Its absence should not prevent
