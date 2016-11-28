@@ -205,6 +205,19 @@ class HostConfigTest(unittest.TestCase):
                 version='1.24', isolation={'isolation': 'hyperv'}
             )
 
+    def test_create_host_config_pid_mode(self):
+        with pytest.raises(ValueError):
+            create_host_config(version='1.23', pid_mode='baccab125')
+
+        config = create_host_config(version='1.23', pid_mode='host')
+        assert config.get('PidMode') == 'host'
+        config = create_host_config(version='1.24', pid_mode='baccab125')
+        assert config.get('PidMode') == 'baccab125'
+
+    def test_create_host_config_invalid_mem_swappiness(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.24', mem_swappiness='40')
+
 
 class UlimitTest(unittest.TestCase):
     def test_create_host_config_dict_ulimit(self):
