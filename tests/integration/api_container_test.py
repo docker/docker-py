@@ -361,10 +361,6 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         host_config = inspect['HostConfig']
         self.assertIn('MemorySwappiness', host_config)
 
-    def test_create_host_config_exception_raising(self):
-        self.assertRaises(TypeError,
-                          self.client.create_host_config, mem_swappiness='40')
-
     def test_create_with_environment_variable_no_value(self):
         container = self.client.create_container(
             BUSYBOX,
