@@ -25,7 +25,9 @@ from docker.utils import (
 )
 
 from docker.utils.ports import build_port_bindings, split_port
-from docker.utils.utils import create_endpoint_config, format_environment
+from docker.utils.utils import (
+    create_endpoint_config, format_environment, should_check_directory
+)
 
 from ..helpers import make_tree
 
@@ -1111,6 +1113,78 @@ class TarTest(unittest.TestCase):
             self.assertEqual(
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
             )
+
+
+class ShouldCheckDirectoryTest(unittest.TestCase):
+    exclude_patterns = [
+        'exclude_rather_large_directory',
+        'dir/with/subdir_excluded',
+        'dir/with/exceptions'
+    ]
+
+    include_patterns = [
+        'dir/with/exceptions/like_this_one',
+        'dir/with/exceptions/in/descendents'
+    ]
+
+    def test_should_check_directory_not_excluded(self):
+        self.assertTrue(
+            should_check_directory('not_excluded', self.exclude_patterns,
+                                   self.include_patterns)
+        )
+
+        self.assertTrue(
+            should_check_directory('dir/with', self.exclude_patterns,
+                                   self.include_patterns)
+        )
+
+    def test_shoud_check_parent_directories_of_excluded(self):
+        self.assertTrue(
+            should_check_directory('dir', self.exclude_patterns,
+                                   self.include_patterns)
+        )
+        self.assertTrue(
+            should_check_directory('dir/with', self.exclude_patterns,
+                                   self.include_patterns)
+        )
+
+    def test_should_not_check_excluded_directories_with_no_exceptions(self):
+        self.assertFalse(
+            should_check_directory('exclude_rather_large_directory',
+                                   self.exclude_patterns, self.include_patterns
+                                   )
+        )
+        self.assertFalse(
+            should_check_directory('dir/with/subdir_excluded',
+                                   self.exclude_patterns, self.include_patterns
+                                   )
+        )
+
+    def test_should_check_excluded_directory_with_exceptions(self):
+        self.assertTrue(
+            should_check_directory('dir/with/exceptions',
+                                   self.exclude_patterns, self.include_patterns
+                                   )
+        )
+        self.assertTrue(
+            should_check_directory('dir/with/exceptions/in',
+                                   self.exclude_patterns, self.include_patterns
+                                   )
+        )
+
+    def test_should_not_check_siblings_of_exceptions(self):
+        self.assertFalse(
+            should_check_directory('dir/with/exceptions/but_not_here',
+                                   self.exclude_patterns, self.include_patterns
+                                   )
+        )
+
+    def test_should_check_subdirectories_of_exceptions(self):
+        self.assertTrue(
+            should_check_directory('dir/with/exceptions/like_this_one/subdir',
+                                   self.exclude_patterns, self.include_patterns
+                                   )
+        )
 
 
 class FormatEnvironmentTest(unittest.TestCase):

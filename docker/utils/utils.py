@@ -214,6 +214,31 @@ def should_include(path, exclude_patterns, include_patterns):
     return True
 
 
+def should_check_directory(directory_path, exclude_patterns, include_patterns):
+    """
+    Given a directory path, a list of exclude patterns, and a list of inclusion
+    patterns:
+
+    1. Returns True if the directory path should be included according to
+       should_include.
+    2. Returns True if the directory path is the prefix for an inclusion
+       pattern
+    3. Returns False otherwise
+    """
+
+    # To account for exception rules, check directories if their path is a
+    # a prefix to an inclusion pattern. This logic conforms with the current
+    # docker logic (2016-10-27):
+    # https://github.com/docker/docker/blob/bc52939b0455116ab8e0da67869ec81c1a1c3e2c/pkg/archive/archive.go#L640-L671
+
+    path_with_slash = directory_path + os.sep
+    possible_child_patterns = [pattern for pattern in include_patterns if
+                               (pattern + os.sep).startswith(path_with_slash)]
+    directory_included = should_include(directory_path, exclude_patterns,
+                                        include_patterns)
+    return directory_included or len(possible_child_patterns) > 0
+
+
 def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
     paths = []
 
@@ -222,25 +247,13 @@ def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
         if parent == '.':
             parent = ''
 
-        # If exception rules exist, we can't skip recursing into ignored
-        # directories, as we need to look for exceptions in them.
-        #
-        # It may be possible to optimize this further for exception patterns
-        # that *couldn't* match within ignored directores.
-        #
-        # This matches the current docker logic (as of 2015-11-24):
-        # https://github.com/docker/docker/blob/37ba67bf636b34dc5c0c0265d62a089d0492088f/pkg/archive/archive.go#L555-L557
-
-        if not has_exceptions:
-
-            # Remove excluded patterns from the list of directories to traverse
-            # by mutating the dirs we're iterating over.
-            # This looks strange, but is considered the correct way to skip
-            # traversal. See https://docs.python.org/2/library/os.html#os.walk
-
-            dirs[:] = [d for d in dirs if
-                       should_include(os.path.join(parent, d),
-                                      exclude_patterns, include_patterns)]
+        # Remove excluded patterns from the list of directories to traverse
+        # by mutating the dirs we're iterating over.
+        # This looks strange, but is considered the correct way to skip
+        # traversal. See https://docs.python.org/2/library/os.html#os.walk
+        dirs[:] = [d for d in dirs if
+                   should_check_directory(os.path.join(parent, d),
+                                          exclude_patterns, include_patterns)]
 
         for path in dirs:
             if should_include(os.path.join(parent, path),
