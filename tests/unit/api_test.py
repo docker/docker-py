@@ -269,7 +269,7 @@ class DockerApiTest(BaseAPIClientTest):
         )
 
     def _socket_path_for_client_session(self, client):
-        socket_adapter = client.get_adapter('http+docker://')
+        socket_adapter = client.get_adapter('http://unixsocket.docker.com')
         return socket_adapter.socket_path
 
     def test_url_compatibility_unix(self):

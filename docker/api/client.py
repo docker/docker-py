@@ -98,9 +98,9 @@ class APIClient(
             self._custom_adapter = UnixAdapter(
                 base_url, timeout, pool_connections=num_pools
             )
-            self.mount('http+docker://', self._custom_adapter)
+            self.mount('http://unixsocket.docker.com/', self._custom_adapter)
             self._unmount('http://', 'https://')
-            self.base_url = 'http+docker://localunixsocket'
+            self.base_url = 'http://unixsocket.docker.com'
         elif base_url.startswith('npipe://'):
             if not IS_WINDOWS_PLATFORM:
                 raise DockerException(
@@ -114,8 +114,8 @@ class APIClient(
                 raise DockerException(
                     'Install pypiwin32 package to enable npipe:// support'
                 )
-            self.mount('http+docker://', self._custom_adapter)
-            self.base_url = 'http+docker://localnpipe'
+            self.mount('http://npipe.docker.com/', self._custom_adapter)
+            self.base_url = 'http://npipe.docker.com'
         else:
             # Use SSLAdapter for the ability to specify SSL version
             if isinstance(tls, TLSConfig):
@@ -254,7 +254,7 @@ class APIClient(
 
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
-        if self.base_url == "http+docker://localnpipe":
+        if self.base_url == "http://npipe.docker.com":
             sock = response.raw._fp.fp.raw.sock
         elif six.PY3:
             sock = response.raw._fp.fp.raw
