@@ -215,7 +215,7 @@ class ContainerApiMixin(object):
         """
         if utils.version_gte(self._version, '1.20'):
             warnings.warn(
-                'Client.copy() is deprecated for API version >= 1.20, '
+                'APIClient.copy() is deprecated for API version >= 1.20, '
                 'please use get_archive() instead',
                 DeprecationWarning
             )

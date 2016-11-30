@@ -238,7 +238,7 @@ class ImageCollection(Collection):
             tag (str): The tag to pull
             insecure_registry (bool): Use an insecure registry
             auth_config (dict): Override the credentials that
-                :py:meth:`~docker.client.Client.login` has set for
+                :py:meth:`~docker.client.DockerClient.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
 

@@ -4,6 +4,26 @@ from .. import errors
 
 
 class TaskTemplate(dict):
+    """
+    Describe the task specification to be used when creating or updating a
+    service.
+
+    Args:
+
+    * container_spec (dict): Container settings for containers started as part
+      of this task. See the :py:class:`~docker.types.services.ContainerSpec`
+      for details.
+    * log_driver (dict): Log configuration for containers created as part of
+      the service. See the :py:class:`~docker.types.services.DriverConfig`
+      class for details.
+    * resources (dict): Resource requirements which apply to each individual
+      container created as part of the service. See the
+      :py:class:`~docker.types.services.Resources` class for details.
+    * restart_policy (dict): Specification for the restart policy which applies
+      to containers created as part of this service. See the
+      :py:class:`~docker.types.services.RestartPolicy` class for details.
+    * placement (list): A list of constraints.
+    """
     def __init__(self, container_spec, resources=None, restart_policy=None,
                  placement=None, log_driver=None):
         self['ContainerSpec'] = container_spec
@@ -36,6 +56,25 @@ class TaskTemplate(dict):
 
 
 class ContainerSpec(dict):
+    """
+    Describes the behavior of containers that are part of a task, and is used
+    when declaring a :py:class:`~docker.types.services.TaskTemplate`.
+
+    Args:
+
+    * image (string): The image name to use for the container.
+    * command (string or list):  The command to be run in the image.
+    * args (list): Arguments to the command.
+    * env (dict): Environment variables.
+    * dir (string): The working directory for commands to run in.
+    * user (string): The user inside the container.
+    * labels (dict): A map of labels to associate with the service.
+    * mounts (list): A list of specifications for mounts to be added to
+      containers created as part of the service. See the
+      :py:class:`~docker.types.services.Mount` class for details.
+    * stop_grace_period (int): Amount of time to wait for the container to
+      terminate before forcefully killing it.
+    """
     def __init__(self, image, command=None, args=None, env=None, workdir=None,
                  user=None, labels=None, mounts=None, stop_grace_period=None):
         from ..utils import split_command  # FIXME: circular import
@@ -66,6 +105,28 @@ class ContainerSpec(dict):
 
 
 class Mount(dict):
+    """
+    Describes a mounted folder's configuration inside a container. A list of
+    ``Mount``s would be used as part of a
+    :py:class:`~docker.types.services.ContainerSpec`.
+
+    Args:
+
+    * target (string): Container path.
+    * source (string): Mount source (e.g. a volume name or a host path).
+    * type (string): The mount type (``bind`` or ``volume``).
+      Default: ``volume``.
+    * read_only (bool): Whether the mount should be read-only.
+    * propagation (string): A propagation mode with the value ``[r]private``,
+      ``[r]shared``, or ``[r]slave``. Only valid for the ``bind`` type.
+    * no_copy (bool): False if the volume should be populated with the data
+      from the target. Default: ``False``. Only valid for the ``volume`` type.
+    * labels (dict): User-defined name and labels for the volume. Only valid
+      for the ``volume`` type.
+    * driver_config (dict): Volume driver configuration.
+      See the :py:class:`~docker.types.services.DriverConfig` class for
+      details. Only valid for the ``volume`` type.
+    """
     def __init__(self, target, source, type='volume', read_only=False,
                  propagation=None, no_copy=False, labels=None,
                  driver_config=None):
@@ -120,6 +181,17 @@ class Mount(dict):
 
 
 class Resources(dict):
+    """
+    Configures resource allocation for containers when made part of a
+    :py:class:`~docker.types.services.ContainerSpec`.
+
+    Args:
+
+    * cpu_limit (int): CPU limit in units of 10^9 CPU shares.
+    * mem_limit (int): Memory limit in Bytes.
+    * cpu_reservation (int): CPU reservation in units of 10^9 CPU shares.
+    * mem_reservation (int): Memory reservation in Bytes.
+    """
     def __init__(self, cpu_limit=None, mem_limit=None, cpu_reservation=None,
                  mem_reservation=None):
         limits = {}
@@ -140,6 +212,19 @@ class Resources(dict):
 
 
 class UpdateConfig(dict):
+    """
+
+    Used to specify the way container updates should be performed by a service.
+
+    Args:
+
+    * parallelism (int): Maximum number of tasks to be updated in one iteration
+      (0 means unlimited parallelism). Default: 0.
+    * delay (int): Amount of time between updates.
+    * failure_action (string): Action to take if an updated task fails to run,
+      or stops running during the update. Acceptable values are ``continue``
+      and ``pause``. Default: ``continue``
+    """
     def __init__(self, parallelism=0, delay=None, failure_action='continue'):
         self['Parallelism'] = parallelism
         if delay is not None:
@@ -161,6 +246,19 @@ class RestartConditionTypesEnum(object):
 
 
 class RestartPolicy(dict):
+    """
+    Used when creating a :py:class:`~docker.types.services.ContainerSpec`,
+    dictates whether a container should restart after stopping or failing.
+
+    * condition (string): Condition for restart (``none``, ``on-failure``,
+      or ``any``). Default: `none`.
+    * delay (int): Delay between restart attempts. Default: 0
+    * attempts (int): Maximum attempts to restart a given container before
+      giving up. Default value is 0, which is ignored.
+    * window (int): Time window used to evaluate the restart policy. Default
+      value is 0, which is unbounded.
+    """
+
     condition_types = RestartConditionTypesEnum
 
     def __init__(self, condition=RestartConditionTypesEnum.NONE, delay=0,
@@ -177,6 +275,17 @@ class RestartPolicy(dict):
 
 
 class DriverConfig(dict):
+    """
+    Indicates which driver to use, as well as its configuration. Can be used
+    as ``log_driver`` in a :py:class:`~docker.types.services.ContainerSpec`,
+    and for the `driver_config` in a volume
+    :py:class:`~docker.types.services.Mount`.
+
+    Args:
+
+    * name (string): Name of the driver to use.
+    * options (dict): Driver-specific options. Default: ``None``.
+    """
     def __init__(self, name, options=None):
         self['Name'] = name
         if options:
@@ -184,6 +293,19 @@ class DriverConfig(dict):
 
 
 class EndpointSpec(dict):
+    """
+    Describes properties to access and load-balance a service.
+
+    Args:
+
+    * mode (string): The mode of resolution to use for internal load balancing
+      between tasks (``'vip'`` or ``'dnsrr'``). Defaults to ``'vip'`` if not
+      provided.
+    * ports (dict): Exposed ports that this service is accessible on from the
+      outside, in the form of ``{ target_port: published_port }`` or
+      ``{ target_port: (published_port, protocol) }``. Ports can only be
+      provided if the ``vip`` resolution mode is used.
+    """
     def __init__(self, mode=None, ports=None):
         if ports:
             self['Ports'] = convert_service_ports(ports)

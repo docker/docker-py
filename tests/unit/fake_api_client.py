@@ -56,6 +56,6 @@ def make_fake_client():
     """
     Returns a Client with a fake APIClient.
     """
-    client = docker.Client()
+    client = docker.DockerClient()
     client.api = make_fake_api_client()
     return client

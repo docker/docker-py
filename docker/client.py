@@ -9,14 +9,14 @@ from .models.volumes import VolumeCollection
 from .utils import kwargs_from_env
 
 
-class Client(object):
+class DockerClient(object):
     """
     A client for communicating with a Docker server.
 
     Example:
 
         >>> import docker
-        >>> client = Client(base_url='unix://var/run/docker.sock')
+        >>> client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 
     Args:
         base_url (str): URL to the Docker server. For example,
@@ -155,7 +155,7 @@ class Client(object):
     version.__doc__ = APIClient.version.__doc__
 
     def __getattr__(self, name):
-        s = ["'Client' object has no attribute '{}'".format(name)]
+        s = ["'DockerClient' object has no attribute '{}'".format(name)]
         # If a user calls a method on APIClient, they
         if hasattr(APIClient, name):
             s.append("In docker-py 2.0, this method is now on the object "
@@ -164,4 +164,4 @@ class Client(object):
         raise AttributeError(' '.join(s))
 
 
-from_env = Client.from_env
+from_env = DockerClient.from_env
