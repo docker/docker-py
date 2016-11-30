@@ -1,6 +1,5 @@
 import docker
-from docker.utils import create_ipam_config
-from docker.utils import create_ipam_pool
+from docker.types import IPAMConfig, IPAMPool
 import pytest
 
 from ..helpers import random_name, requires_api_version
@@ -45,10 +44,10 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.21')
     def test_create_network_with_ipam_config(self):
         _, net_id = self.create_network(
-            ipam=create_ipam_config(
+            ipam=IPAMConfig(
                 driver='default',
                 pool_configs=[
-                    create_ipam_pool(
+                    IPAMPool(
                         subnet="172.28.0.0/16",
                         iprange="172.28.5.0/24",
                         gateway="172.28.5.254",
@@ -217,9 +216,9 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.22')
     def test_create_with_ipv4_address(self):
         net_name, net_id = self.create_network(
-            ipam=create_ipam_config(
+            ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[create_ipam_pool(subnet="132.124.0.0/16")],
+                pool_configs=[IPAMPool(subnet="132.124.0.0/16")],
             ),
         )
         container = self.client.create_container(
@@ -246,9 +245,9 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.22')
     def test_create_with_ipv6_address(self):
         net_name, net_id = self.create_network(
-            ipam=create_ipam_config(
+            ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[create_ipam_pool(subnet="2001:389::1/64")],
+                pool_configs=[IPAMPool(subnet="2001:389::1/64")],
             ),
         )
         container = self.client.create_container(
@@ -353,10 +352,10 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.22')
     def test_connect_with_ipv4_address(self):
         net_name, net_id = self.create_network(
-            ipam=create_ipam_config(
+            ipam=IPAMConfig(
                 driver='default',
                 pool_configs=[
-                    create_ipam_pool(
+                    IPAMPool(
                         subnet="172.28.0.0/16", iprange="172.28.5.0/24",
                         gateway="172.28.5.254"
                     )
@@ -381,10 +380,10 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.22')
     def test_connect_with_ipv6_address(self):
         net_name, net_id = self.create_network(
-            ipam=create_ipam_config(
+            ipam=IPAMConfig(
                 driver='default',
                 pool_configs=[
-                    create_ipam_pool(
+                    IPAMPool(
                         subnet="2001:389::1/64", iprange="2001:389::0/96",
                         gateway="2001:389::ffff"
                     )

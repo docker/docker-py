@@ -46,8 +46,7 @@ class NetworkApiMixin(object):
             name (str): Name of the network
             driver (str): Name of the driver used to create the network
             options (dict): Driver options as a key-value dictionary
-            ipam (dict): Optional custom IP scheme for the network.
-                Created with :py:meth:`~docker.utils.create_ipam_config`.
+            ipam (IPAMConfig): Optional custom IP scheme for the network.
             check_duplicate (bool): Request daemon to check for networks with
                 same name. Default: ``True``.
             internal (bool): Restrict external access to the network. Default
@@ -74,11 +73,11 @@ class NetworkApiMixin(object):
 
             .. code-block:: python
 
-                >>> ipam_pool = docker.utils.create_ipam_pool(
+                >>> ipam_pool = docker.types.IPAMPool(
                     subnet='192.168.52.0/24',
                     gateway='192.168.52.254'
                 )
-                >>> ipam_config = docker.utils.create_ipam_config(
+                >>> ipam_config = docker.types.IPAMConfig(
                     pool_configs=[ipam_pool]
                 )
                 >>> docker_client.create_network("network1", driver="bridge",

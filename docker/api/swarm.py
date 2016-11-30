@@ -1,5 +1,6 @@
 import logging
 from six.moves import http_client
+from .. import types
 from .. import utils
 log = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class SwarmApiMixin(object):
               force_new_cluster=False, swarm_spec=spec
             )
         """
-        return utils.SwarmSpec(*args, **kwargs)
+        return types.SwarmSpec(*args, **kwargs)
 
     @utils.minimum_version('1.24')
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',

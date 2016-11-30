@@ -255,7 +255,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.assertIn('1001', groups)
 
     def test_valid_log_driver_and_log_opt(self):
-        log_config = docker.utils.LogConfig(
+        log_config = docker.types.LogConfig(
             type='json-file',
             config={'max-file': '100'}
         )
@@ -274,7 +274,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.assertEqual(container_log_config['Config'], log_config.config)
 
     def test_invalid_log_driver_raises_exception(self):
-        log_config = docker.utils.LogConfig(
+        log_config = docker.types.LogConfig(
             type='asdf-nope',
             config={}
         )
@@ -292,7 +292,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert excinfo.value.explanation == expected_msg
 
     def test_valid_no_log_driver_specified(self):
-        log_config = docker.utils.LogConfig(
+        log_config = docker.types.LogConfig(
             type="",
             config={'max-file': '100'}
         )
@@ -311,7 +311,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.assertEqual(container_log_config['Config'], log_config.config)
 
     def test_valid_no_config_specified(self):
-        log_config = docker.utils.LogConfig(
+        log_config = docker.types.LogConfig(
             type="json-file",
             config=None
         )

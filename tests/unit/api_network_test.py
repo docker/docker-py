@@ -4,7 +4,7 @@ import six
 
 from .api_test import BaseAPIClientTest, url_prefix, response
 from ..helpers import requires_api_version
-from docker.utils import create_ipam_config, create_ipam_pool
+from docker.types import IPAMConfig, IPAMPool
 
 try:
     from unittest import mock
@@ -81,9 +81,9 @@ class NetworkTest(BaseAPIClientTest):
                 json.loads(post.call_args[1]['data']),
                 {"Name": "foo", "Driver": "bridge", "Options": opts})
 
-            ipam_pool_config = create_ipam_pool(subnet="192.168.52.0/24",
-                                                gateway="192.168.52.254")
-            ipam_config = create_ipam_config(pool_configs=[ipam_pool_config])
+            ipam_pool_config = IPAMPool(subnet="192.168.52.0/24",
+                                        gateway="192.168.52.254")
+            ipam_config = IPAMConfig(pool_configs=[ipam_pool_config])
 
             self.client.create_network("bar", driver="bridge",
                                        ipam=ipam_config)
