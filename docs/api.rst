@@ -49,15 +49,6 @@ Networks
   :members:
   :undoc-members:
 
-Utilities
-~~~~~~~~~
-
-These functions are available under ``docker.utils`` to create arguments
-for :py:meth:`create_network`:
-
-.. autofunction:: docker.utils.create_ipam_config
-.. autofunction:: docker.utils.create_ipam_pool
-
 Volumes
 -------
 
@@ -107,3 +98,19 @@ The Docker daemon
 .. autoclass:: DaemonApiMixin
   :members:
   :undoc-members:
+
+Configuration types
+-------------------
+
+.. py:module:: docker.types
+
+.. autoclass:: IPAMConfig
+.. autoclass:: IPAMPool
+.. autoclass:: ContainerSpec
+.. autoclass:: DriverConfig
+.. autoclass:: EndpointSpec
+.. autoclass:: Mount
+.. autoclass:: Resources
+.. autoclass:: RestartPolicy
+.. autoclass:: TaskTemplate
+.. autoclass:: UpdateConfig

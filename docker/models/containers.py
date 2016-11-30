@@ -2,7 +2,7 @@ import copy
 
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
-from ..utils import create_host_config
+from ..types import HostConfig
 from .images import Image
 from .resource import Collection, Model
 
@@ -869,7 +869,7 @@ def _create_container_args(kwargs):
     if kwargs:
         raise create_unexpected_kwargs_error('run', kwargs)
 
-    create_kwargs['host_config'] = create_host_config(**host_config_kwargs)
+    create_kwargs['host_config'] = HostConfig(**host_config_kwargs)
 
     # Fill in any kwargs which need processing by create_host_config first
     port_bindings = create_kwargs['host_config'].get('PortBindings')

@@ -61,7 +61,7 @@ class ClientTest(unittest.TestCase):
         assert "this method is now on the object APIClient" not in s
 
     def test_call_containers(self):
-        client = docker.Client(**kwargs_from_env())
+        client = docker.DockerClient(**kwargs_from_env())
 
         with self.assertRaises(TypeError) as cm:
             client.containers()
