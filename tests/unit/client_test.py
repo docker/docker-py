@@ -1,5 +1,6 @@
 import datetime
 import docker
+from docker.utils import kwargs_from_env
 import os
 import unittest
 
@@ -58,6 +59,16 @@ class ClientTest(unittest.TestCase):
         s = str(cm.exception)
         assert "'DockerClient' object has no attribute 'abcdef'" in s
         assert "this method is now on the object APIClient" not in s
+
+    def test_call_containers(self):
+        client = docker.Client(**kwargs_from_env())
+
+        with self.assertRaises(TypeError) as cm:
+            client.containers()
+
+        s = str(cm.exception)
+        assert "'ContainerCollection' object is not callable" in s
+        assert "docker.APIClient" in s
 
 
 class FromEnvTest(unittest.TestCase):
