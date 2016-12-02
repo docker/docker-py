@@ -143,8 +143,8 @@ class APIClient(
             warnings.warn(
                 'The minimum API version supported is {}, but you are using '
                 'version {}. It is recommended you either upgrade Docker '
-                'Engine or use an older version of docker-py.'.format(
-                    MINIMUM_DOCKER_API_VERSION, self._version)
+                'Engine or use an older version of Docker SDK for '
+                'Python.'.format(MINIMUM_DOCKER_API_VERSION, self._version)
             )
 
     def _retrieve_server_version(self):

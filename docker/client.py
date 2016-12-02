@@ -158,9 +158,9 @@ class DockerClient(object):
         s = ["'DockerClient' object has no attribute '{}'".format(name)]
         # If a user calls a method on APIClient, they
         if hasattr(APIClient, name):
-            s.append("In docker-py 2.0, this method is now on the object "
-                     "APIClient. See the low-level API section of the "
-                     "documentation for more details.".format(name))
+            s.append("In Docker SDK for Python 2.0, this method is now on the "
+                     "object APIClient. See the low-level API section of the "
+                     "documentation for more details.")
         raise AttributeError(' '.join(s))
 
 

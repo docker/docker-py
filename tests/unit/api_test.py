@@ -474,7 +474,7 @@ class UserAgentTest(unittest.TestCase):
 
         self.assertEqual(self.mock_send.call_count, 1)
         headers = self.mock_send.call_args[0][0].headers
-        expected = 'docker-py/%s' % docker.__version__
+        expected = 'docker-sdk-python/%s' % docker.__version__
         self.assertEqual(headers['User-Agent'], expected)
 
     def test_custom_user_agent(self):
