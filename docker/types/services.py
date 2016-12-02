@@ -1,7 +1,7 @@
 import six
 
 from .. import errors
-from ..utils import split_command
+from ..utils import format_environment, split_command
 
 
 class TaskTemplate(dict):
@@ -82,7 +82,10 @@ class ContainerSpec(dict):
         self['Args'] = args
 
         if env is not None:
-            self['Env'] = env
+            if isinstance(env, dict):
+                self['Env'] = format_environment(env)
+            else:
+                self['Env'] = env
         if workdir is not None:
             self['Dir'] = workdir
         if user is not None:
