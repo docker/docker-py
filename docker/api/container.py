@@ -4,7 +4,9 @@ from datetime import datetime
 
 from .. import errors
 from .. import utils
-from ..utils.utils import create_networking_config, create_endpoint_config
+from ..types import (
+    ContainerConfig, EndpointConfig, HostConfig, NetworkingConfig
+)
 
 
 class ContainerApiMixin(object):
@@ -430,8 +432,8 @@ class ContainerApiMixin(object):
             )
 
         config = self.create_container_config(
-            image, command, hostname, user, detach, stdin_open,
-            tty, mem_limit, ports, environment, dns, volumes, volumes_from,
+            image, command, hostname, user, detach, stdin_open, tty, mem_limit,
+            ports, dns, environment, volumes, volumes_from,
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
             volume_driver, stop_signal, networking_config, healthcheck,
@@ -439,7 +441,7 @@ class ContainerApiMixin(object):
         return self.create_container_from_config(config, name)
 
     def create_container_config(self, *args, **kwargs):
-        return utils.create_container_config(self._version, *args, **kwargs)
+        return ContainerConfig(self._version, *args, **kwargs)
 
     def create_container_from_config(self, config, name=None):
         u = self._url("/containers/create")
@@ -582,7 +584,7 @@ class ContainerApiMixin(object):
                 "keyword argument 'version'"
             )
         kwargs['version'] = self._version
-        return utils.create_host_config(*args, **kwargs)
+        return HostConfig(*args, **kwargs)
 
     def create_networking_config(self, *args, **kwargs):
         """
@@ -608,7 +610,7 @@ class ContainerApiMixin(object):
             )
 
         """
-        return create_networking_config(*args, **kwargs)
+        return NetworkingConfig(*args, **kwargs)
 
     def create_endpoint_config(self, *args, **kwargs):
         """
@@ -641,7 +643,7 @@ class ContainerApiMixin(object):
             )
 
         """
-        return create_endpoint_config(self._version, *args, **kwargs)
+        return EndpointConfig(self._version, *args, **kwargs)
 
     @utils.check_resource
     def diff(self, container):
