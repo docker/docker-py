@@ -231,3 +231,19 @@ class ServiceTest(BaseAPIIntegrationTest):
             'PublishedPort': 12357, 'TargetPort': 1990, 'Protocol': 'udp'
         } in ports
         assert len(ports) == 3
+
+    def test_create_service_with_env(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['true'], env={'DOCKER_PY_TEST': 1}
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec,
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        con_spec = svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'Env' in con_spec
+        assert con_spec['Env'] == ['DOCKER_PY_TEST=1']
