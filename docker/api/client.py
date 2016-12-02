@@ -17,7 +17,7 @@ from .network import NetworkApiMixin
 from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
-from .. import auth, ssladapter
+from .. import auth
 from ..constants import (DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
                          IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION,
                          STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
@@ -25,7 +25,7 @@ from ..constants import (DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
 from ..errors import (DockerException, TLSParameterError,
                       create_api_error_from_http_exception)
 from ..tls import TLSConfig
-from ..transport import UnixAdapter
+from ..transport import SSLAdapter, UnixAdapter
 from ..utils import utils, check_resource, update_headers
 from ..utils.socket import frames_iter
 try:
@@ -121,9 +121,7 @@ class APIClient(
             if isinstance(tls, TLSConfig):
                 tls.configure_client(self)
             elif tls:
-                self._custom_adapter = ssladapter.SSLAdapter(
-                    pool_connections=num_pools
-                )
+                self._custom_adapter = SSLAdapter(pool_connections=num_pools)
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
 
