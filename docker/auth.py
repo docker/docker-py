@@ -7,6 +7,7 @@ import dockerpycreds
 import six
 
 from . import errors
+from .constants import IS_WINDOWS_PLATFORM
 
 INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
@@ -210,19 +211,12 @@ def parse_auth(entries, raise_on_error=False):
 
 
 def find_config_file(config_path=None):
-    environment_path = os.path.join(
-        os.environ.get('DOCKER_CONFIG'),
-        os.path.basename(DOCKER_CONFIG_FILENAME)
-    ) if os.environ.get('DOCKER_CONFIG') else None
-
-    paths = filter(None, [
+    paths = list(filter(None, [
         config_path,  # 1
-        environment_path,  # 2
-        os.path.join(os.path.expanduser('~'), DOCKER_CONFIG_FILENAME),  # 3
-        os.path.join(
-            os.path.expanduser('~'), LEGACY_DOCKER_CONFIG_FILENAME
-        )  # 4
-    ])
+        config_path_from_environment(),  # 2
+        os.path.join(home_dir(), DOCKER_CONFIG_FILENAME),  # 3
+        os.path.join(home_dir(), LEGACY_DOCKER_CONFIG_FILENAME),  # 4
+    ]))
 
     log.debug("Trying paths: {0}".format(repr(paths)))
 
@@ -234,6 +228,24 @@ def find_config_file(config_path=None):
     log.debug("No config file found")
 
     return None
+
+
+def config_path_from_environment():
+    config_dir = os.environ.get('DOCKER_CONFIG')
+    if not config_dir:
+        return None
+    return os.path.join(config_dir, os.path.basename(DOCKER_CONFIG_FILENAME))
+
+
+def home_dir():
+    """
+    Get the user's home directory, using the same logic as the Docker Engine
+    client - use %USERPROFILE% on Windows, $HOME/getuid on POSIX.
+    """
+    if IS_WINDOWS_PLATFORM:
+        return os.environ.get('USERPROFILE', '')
+    else:
+        return os.path.expanduser('~')
 
 
 def load_config(config_path=None):
