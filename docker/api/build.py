@@ -230,19 +230,35 @@ class BuildApiMixin(object):
         # Send the full auth configuration (if any exists), since the build
         # could use any (or all) of the registries.
         if self._auth_configs:
+            auth_data = {}
+            if self._auth_configs.get('credsStore'):
+                # Using a credentials store, we need to retrieve the
+                # credentials for each registry listed in the config.json file
+                # Matches CLI behavior: https://github.com/docker/docker/blob/
+                # 67b85f9d26f1b0b2b240f2d794748fac0f45243c/cliconfig/
+                # credentials/native_store.go#L68-L83
+                for registry in self._auth_configs.keys():
+                    if registry == 'credsStore' or registry == 'HttpHeaders':
+                        continue
+                    auth_data[registry] = auth.resolve_authconfig(
+                        self._auth_configs, registry
+                    )
+            else:
+                auth_data = self._auth_configs
+
             log.debug(
                 'Sending auth config ({0})'.format(
-                    ', '.join(repr(k) for k in self._auth_configs.keys())
+                    ', '.join(repr(k) for k in auth_data.keys())
                 )
             )
 
             if utils.compare_version('1.19', self._version) >= 0:
                 headers['X-Registry-Config'] = auth.encode_header(
-                    self._auth_configs
+                    auth_data
                 )
             else:
                 headers['X-Registry-Config'] = auth.encode_header({
-                    'configs': self._auth_configs
+                    'configs': auth_data
                 })
         else:
             log.debug('No auth config found')
