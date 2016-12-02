@@ -1,5 +1,5 @@
 import unittest
-from docker import ssladapter
+from docker.transport import ssladapter
 
 try:
     from backports.ssl_match_hostname import (
