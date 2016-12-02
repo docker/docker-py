@@ -100,7 +100,7 @@ class NetworkTest(BaseAPIClientTest):
                             "Gateway": "192.168.52.254",
                             "Subnet": "192.168.52.0/24",
                             "AuxiliaryAddresses": None,
-                        }]
+                        }],
                     }
                 })
 
