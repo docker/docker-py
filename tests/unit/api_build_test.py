@@ -86,7 +86,7 @@ class BuildTest(BaseAPIClientTest):
                                                f2.name,
                                                d1])
 
-        self.client.build(fileobj=context, custom_context=True, tag='test4')
+        self.client.build(fileobj=context, custom_context=True)
 
     def test_build_container_custom_context_gzip(self):
         script = io.BytesIO('\n'.join([
