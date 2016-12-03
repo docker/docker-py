@@ -1,5 +1,6 @@
 import gzip
 import io
+import tempfile as tf
 
 import docker
 from docker import auth
@@ -52,6 +53,40 @@ class BuildTest(BaseAPIClientTest):
         context = docker.utils.mkbuildcontext(script)
 
         self.client.build(fileobj=context, custom_context=True)
+
+    def test_build_container_custom_context_with_files(self):
+        d0 = tf.mkdtemp()
+        d1 = tf.mkdtemp(dir=d0)
+        d2 = tf.mkdtemp(dir=d1)
+        f1 = tf.NamedTemporaryFile(suffix="docker", dir=d0, delete=True)
+        f2 = tf.NamedTemporaryFile(suffix="docker", dir=d0, delete=True)
+        f3 = tf.NamedTemporaryFile(suffix="docker", dir=d0, delete=True)
+        p1 = tf.NamedTemporaryFile(suffix="docker", dir=d1, delete=True)
+        p2 = tf.NamedTemporaryFile(suffix="docker", dir=d1, delete=True)
+        p3 = tf.NamedTemporaryFile(suffix="docker", dir=d1, delete=True)
+        w1 = tf.NamedTemporaryFile(suffix="docker", dir=d2, delete=True)
+        w2 = tf.NamedTemporaryFile(suffix="docker", dir=d2, delete=True)
+        w3 = tf.NamedTemporaryFile(suffix="docker", dir=d2, delete=True)
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'RUN mkdir -p /tmp/test',
+            'EXPOSE 8080',
+            'ADD '+f1.name+' /tmp/f1',
+            'ADD '+f2.name+' /tmp/f2',
+            'ADD '+f3.name+' /tmp/f3',
+            'ADD '+p1.name+' /tmp/p1',
+            'ADD '+p2.name+' /tmp/p2',
+            'ADD '+p3.name+' /tmp/p3',
+            'ADD '+w1.name+' /tmp/w1',
+            'ADD '+w2.name+' /tmp/w2',
+            'ADD '+w3.name+' /tmp/w3'
+        ]).encode('ascii'))
+        context = docker.utils.mkbuildcontext(script,
+                                              [f1.name,
+                                               f2.name,
+                                               d1])
+
+        self.client.build(fileobj=context, custom_context=True, tag='test4')
 
     def test_build_container_custom_context_gzip(self):
         script = io.BytesIO('\n'.join([
