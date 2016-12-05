@@ -41,6 +41,25 @@ class Node(Model):
         """
         return self.client.api.update_node(self.id, self.version, node_spec)
 
+    def remove(self, force=False):
+        """
+        Remove this node from the swarm.
+
+        Args:
+            force (bool): Force remove an active node. Default: `False`
+
+        Returns:
+            `True` if the request was successful.
+
+        Raises:
+            :py:class:`docker.errors.NotFound`
+                If the node doesn't exist in the swarm.
+
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        return self.client.api.remove_node(self.id, force=force)
+
 
 class NodeCollection(Collection):
     """Nodes on the Docker server."""
