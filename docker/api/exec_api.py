@@ -137,7 +137,8 @@ class ExecApiMixin(object):
             data=data,
             stream=True
         )
-
+        if detach:
+            return self._result(res)
         if socket:
             return self._get_raw_response_socket(res)
         return self._read_from_socket(res, stream)
