@@ -38,7 +38,7 @@ class NetworkApiMixin(object):
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False, labels=None,
-                       enable_ipv6=False):
+                       enable_ipv6=False, attachable=None):
         """
         Create a network. Similar to the ``docker network create``.
 
@@ -54,6 +54,9 @@ class NetworkApiMixin(object):
             labels (dict): Map of labels to set on the network. Default
                 ``None``.
             enable_ipv6 (bool): Enable IPv6 on the network. Default ``False``.
+            attachable (bool): If enabled, and the network is in the global
+                scope,  non-service containers on worker nodes will be able to
+                connect to the network.
 
         Returns:
             (dict): The created network reference object
@@ -91,7 +94,7 @@ class NetworkApiMixin(object):
             'Driver': driver,
             'Options': options,
             'IPAM': ipam,
-            'CheckDuplicate': check_duplicate
+            'CheckDuplicate': check_duplicate,
         }
 
         if labels is not None:
@@ -115,6 +118,12 @@ class NetworkApiMixin(object):
                 raise InvalidVersion('Internal networks are not '
                                      'supported in API version < 1.22')
             data['Internal'] = True
+
+        if attachable is not None
+            if version_lt(self._version, '1.24'):
+                raise InvalidVersion('Attachable is not '
+                                     'supported in API version < 1.24')
+            data['Attachable'] = attachable
 
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)
