@@ -7,6 +7,10 @@ from .base import BaseAPIIntegrationTest
 
 
 class TestNetworks(BaseAPIIntegrationTest):
+    def tearDown(self):
+        super(TestNetworks, self).tearDown()
+        self.client.leave_swarm(force=True)
+
     def create_network(self, *args, **kwargs):
         net_name = random_name()
         net_id = self.client.create_network(net_name, *args, **kwargs)['Id']
@@ -434,3 +438,10 @@ class TestNetworks(BaseAPIIntegrationTest):
         _, net_id = self.create_network(enable_ipv6=True)
         net = self.client.inspect_network(net_id)
         assert net['EnableIPv6'] is True
+
+    @requires_api_version('1.24')
+    def test_create_network_attachable(self):
+        assert self.client.init_swarm('eth0')
+        _, net_id = self.create_network(driver='overlay', attachable=True)
+        net = self.client.inspect_network(net_id)
+        assert net['Attachable'] is True
