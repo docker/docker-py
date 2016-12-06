@@ -89,6 +89,16 @@ class VolumeTest(BaseAPIClientTest):
                 'perfectcherryblossom', driver_opts=''
             )
 
+    @requires_api_version('1.24')
+    def test_create_volume_with_no_specified_name(self):
+        result = self.client.create_volume(name=None)
+        self.assertIn('Name', result)
+        self.assertNotEqual(result['Name'], None)
+        self.assertIn('Driver', result)
+        self.assertEqual(result['Driver'], 'local')
+        self.assertIn('Scope', result)
+        self.assertEqual(result['Scope'], 'local')
+
     @requires_api_version('1.21')
     def test_inspect_volume(self):
         name = 'perfectcherryblossom'
