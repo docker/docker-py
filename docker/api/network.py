@@ -38,7 +38,7 @@ class NetworkApiMixin(object):
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False, labels=None,
-                       enable_ipv6=False, attachable=None):
+                       enable_ipv6=False, attachable=None, scope=None):
         """
         Create a network. Similar to the ``docker network create``.
 
@@ -119,10 +119,11 @@ class NetworkApiMixin(object):
                                      'supported in API version < 1.22')
             data['Internal'] = True
 
-        if attachable is not None
+        if attachable is not None:
             if version_lt(self._version, '1.24'):
-                raise InvalidVersion('Attachable is not '
-                                     'supported in API version < 1.24')
+                raise InvalidVersion(
+                    'attachable is not supported in API version < 1.24'
+                )
             data['Attachable'] = attachable
 
         url = self._url("/networks/create")
