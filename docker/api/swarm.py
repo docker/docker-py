@@ -228,6 +228,33 @@ class SwarmApiMixin(object):
 
         return self._result(self._get(url, params=params), True)
 
+    @utils.check_resource
+    @utils.minimum_version('1.24')
+    def remove_node(self, node_id, force=False):
+        """
+        Remove a node from the swarm.
+
+        Args:
+            node_id (string): ID of the node to be removed.
+            force (bool): Force remove an active node. Default: `False`
+
+        Raises:
+            :py:class:`docker.errors.NotFound`
+                If the node referenced doesn't exist in the swarm.
+
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        Returns:
+            `True` if the request was successful.
+        """
+        url = self._url('/nodes/{0}', node_id)
+        params = {
+            'force': force
+        }
+        res = self._delete(url, params=params)
+        self._raise_for_status(res)
+        return True
+
     @utils.minimum_version('1.24')
     def update_node(self, node_id, version, node_spec=None):
         """
@@ -235,6 +262,7 @@ class SwarmApiMixin(object):
 
         Args:
 
+            node_id (string): ID of the node to be updated.
             version (int): The version number of the node object being
                 updated. This is required to avoid conflicting writes.
             node_spec (dict): Configuration settings to update. Any values

@@ -159,3 +159,20 @@ class SwarmTest(BaseAPIIntegrationTest):
                                 node_spec=orig_spec)
         reverted_node = self.client.inspect_node(node['ID'])
         assert orig_spec == reverted_node['Spec']
+
+    @requires_api_version('1.24')
+    def test_remove_main_node(self):
+        assert self.client.init_swarm('eth0')
+        nodes_list = self.client.nodes()
+        node_id = nodes_list[0]['ID']
+        with pytest.raises(docker.errors.NotFound):
+            self.client.remove_node('foobar01')
+        with pytest.raises(docker.errors.APIError) as e:
+            self.client.remove_node(node_id)
+
+        assert e.value.response.status_code == 500
+
+        with pytest.raises(docker.errors.APIError) as e:
+            self.client.remove_node(node_id, True)
+
+        assert e.value.response.status_code == 500
