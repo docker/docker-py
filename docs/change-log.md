@@ -1,6 +1,77 @@
 Change log
 ==========
 
+2.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/22?closed=1)
+
+### Breaking changes
+
+* Dropped support for Python 2.6
+* `docker.Client` has been renamed to `docker.APIClient`
+* `docker.from_env` now creates a `DockerClient` instance instead of an
+  `APIClient` instance.
+* Removed HostConfig parameters from `APIClient.start`
+* The minimum supported API version is now 1.21 (Engine version 1.9.0+)
+* The name of the `pip` package is now `docker` (was: `docker-py`). New
+  versions of this library will only be published as `docker` from now on.
+* `docker.ssladapter` is now `docker.transport.ssladapter`
+* The package structure has been flattened in certain cases, which may affect
+  import for `docker.auth` and `docker.utils.ports`
+* `docker.utils.types` has been moved to `docker.types`
+* `create_host_config`, `create_ipam_pool` and `create_ipam_config` have been
+  removed from `docker.utils`. They have been replaced by the following classes
+  in `docker.types`: `HostConfig`, `IPAMPool` and `IPAMCOnfig`.
+
+### Features
+
+* Added a high-level, user-focused API as `docker.DockerClient`. See the
+  README and documentation for more information.
+* Implemented `update_node` method in `APIClient`.
+* Implemented `remove_node` method in `APIClient`.
+* Added support for `restart_policy` in `update_container`.
+* Added support for `labels` and `shmsize` in `build`.
+* Added support for `attachable` in `create_network`
+* Added support for `healthcheck` in `create_container`.
+* Added support for `isolation` in `HostConfig`.
+* Expanded support for `pid_mode` in `HostConfig` (now supports arbitrary
+  values for API version >= 1.24).
+* Added support for `options` in `IPAMConfig`
+* Added a `HealthCheck` class to `docker.types` to be used in
+  `create_container`.
+* Added an `EndpointSpec` class to `docker.types` to be used in
+  `create_service` and `update_service`.
+
+
+### Bugfixes
+
+* Fixed a bug where auth information would not be properly passed to the engine
+  during a `build` if the client used a credentials store.
+* Fixed an issue with some exclusion patterns in `build`.
+* Fixed an issue where context files were bundled with the wrong permissions
+  when calling `build` on Windows.
+* Fixed an issue where auth info would not be retrieved from its default location
+  on Windows.
+* Fixed an issue where lists of `networks` in `create_service` and
+  `update_service` wouldn't be properly converted for the engine.
+* Fixed an issue where `endpoint_config` in `create_service` and
+  `update_service` would be ignored.
+* `endpoint_config` in `create_service` and `update_service` has been
+  deprecated in favor of `endpoint_spec`
+* Fixed a bug where `constraints` in a `TaskTemplate` object wouldn't be
+  properly converted for the engine.
+* Fixed an issue where providing a dictionary for `env` in `ContainerSpec`
+  would provoke an `APIError` when sent to the engine.
+* Fixed a bug where providing an `env_file` containing empty lines in
+  `create_container`would raise an exception.
+* Fixed a bug where `detach` was being ignored by `exec_start`.
+
+### Documentation
+
+* Documentation for classes and methods is now included alongside the code as
+  docstrings.
+
 1.10.6
 ------
 
