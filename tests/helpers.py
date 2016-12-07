@@ -73,4 +73,4 @@ def force_leave_swarm(client):
             if e.explanation == "context deadline exceeded":
                 continue
             else:
-                raise
+                return

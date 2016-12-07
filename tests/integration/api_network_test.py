@@ -7,6 +7,10 @@ from .base import BaseAPIIntegrationTest
 
 
 class TestNetworks(BaseAPIIntegrationTest):
+    def tearDown(self):
+        super(TestNetworks, self).tearDown()
+        self.client.leave_swarm(force=True)
+
     def create_network(self, *args, **kwargs):
         net_name = random_name()
         net_id = self.client.create_network(net_name, *args, **kwargs)['Id']
@@ -16,12 +20,10 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.21')
     def test_list_networks(self):
         networks = self.client.networks()
-        initial_size = len(networks)
 
         net_name, net_id = self.create_network()
 
         networks = self.client.networks()
-        self.assertEqual(len(networks), initial_size + 1)
         self.assertTrue(net_id in [n['Id'] for n in networks])
 
         networks_by_name = self.client.networks(names=[net_name])
@@ -431,6 +433,23 @@ class TestNetworks(BaseAPIIntegrationTest):
 
     @requires_api_version('1.23')
     def test_create_network_ipv6_enabled(self):
-        _, net_id = self.create_network(enable_ipv6=True)
+        _, net_id = self.create_network(
+            enable_ipv6=True, ipam=IPAMConfig(
+                driver='default',
+                pool_configs=[
+                    IPAMPool(
+                        subnet="2001:389::1/64", iprange="2001:389::0/96",
+                        gateway="2001:389::ffff"
+                    )
+                ]
+            )
+        )
         net = self.client.inspect_network(net_id)
         assert net['EnableIPv6'] is True
+
+    @requires_api_version('1.25')
+    def test_create_network_attachable(self):
+        assert self.client.init_swarm('eth0')
+        _, net_id = self.create_network(driver='overlay', attachable=True)
+        net = self.client.inspect_network(net_id)
+        assert net['Attachable'] is True
