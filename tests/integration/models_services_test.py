@@ -1,5 +1,8 @@
 import unittest
+
 import docker
+import pytest
+
 from .. import helpers
 
 
@@ -29,7 +32,7 @@ class ServiceTest(unittest.TestCase):
         assert service.name == name
         assert service.attrs['Spec']['Labels']['foo'] == 'bar'
         container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
-        assert container_spec['Image'] == "alpine"
+        assert "alpine" in container_spec['Image']
         assert container_spec['Labels'] == {'container': 'label'}
 
     def test_get(self):
@@ -78,6 +81,7 @@ class ServiceTest(unittest.TestCase):
         assert len(tasks) == 1
         assert tasks[0]['ServiceID'] == service2.id
 
+    @pytest.mark.skip(reason="Makes Swarm unstable?")
     def test_update(self):
         client = docker.from_env()
         service = client.services.create(
@@ -87,14 +91,12 @@ class ServiceTest(unittest.TestCase):
             image="alpine",
             command="sleep 300"
         )
-        new_name = helpers.random_name()
         service.update(
             # create argument
-            name=new_name,
+            name=service.name,
             # ContainerSpec argument
             command="sleep 600"
         )
         service.reload()
-        assert service.name == new_name
         container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert container_spec['Command'] == ["sleep", "600"]

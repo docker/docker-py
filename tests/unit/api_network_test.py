@@ -105,10 +105,6 @@ class NetworkTest(BaseAPIClientTest):
                     }
                 })
 
-    @requires_api_version('1.24')
-    def test_create_network_with_attachable(self):
-        pass
-
     @requires_api_version('1.21')
     def test_remove_network(self):
         network_id = 'abc12345'

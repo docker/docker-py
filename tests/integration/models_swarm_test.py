@@ -19,4 +19,9 @@ class SwarmTest(unittest.TestCase):
         assert client.swarm.leave(force=True)
         with self.assertRaises(docker.errors.APIError) as cm:
             client.swarm.reload()
-        assert cm.exception.response.status_code == 406
+        assert (
+            # FIXME: test for both until
+            # https://github.com/docker/docker/issues/29192 is resolved
+            cm.exception.response.status_code == 406 or
+            cm.exception.response.status_code == 503
+        )

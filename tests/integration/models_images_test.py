@@ -1,5 +1,8 @@
 import io
+
 import docker
+import pytest
+
 from .base import BaseIntegrationTest
 
 
@@ -14,6 +17,7 @@ class ImageCollectionTest(BaseIntegrationTest):
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
 
+    @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
     def test_build_with_error(self):
         client = docker.from_env()
         with self.assertRaises(docker.errors.BuildError) as cm:
