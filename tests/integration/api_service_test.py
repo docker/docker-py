@@ -221,15 +221,19 @@ class ServiceTest(BaseAPIIntegrationTest):
         svc_info = self.client.inspect_service(svc_id)
         print(svc_info)
         ports = svc_info['Spec']['EndpointSpec']['Ports']
-        assert {
-            'PublishedPort': 12562, 'TargetPort': 678, 'Protocol': 'tcp'
-        } in ports
-        assert {
-            'PublishedPort': 53243, 'TargetPort': 8080, 'Protocol': 'tcp'
-        } in ports
-        assert {
-            'PublishedPort': 12357, 'TargetPort': 1990, 'Protocol': 'udp'
-        } in ports
+        for port in ports:
+            if port['PublishedPort'] == 12562:
+                assert port['TargetPort'] == 678
+                assert port['Protocol'] == 'tcp'
+            elif port['PublishedPort'] == 53243:
+                assert port['TargetPort'] == 8080
+                assert port['Protocol'] == 'tcp'
+            elif port['PublishedPort'] == 12357:
+                assert port['TargetPort'] == 1990
+                assert port['Protocol'] == 'udp'
+            else:
+                self.fail('Invalid port specification: {0}'.format(port))
+
         assert len(ports) == 3
 
     def test_create_service_with_env(self):

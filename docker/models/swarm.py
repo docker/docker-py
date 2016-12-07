@@ -15,7 +15,8 @@ class Swarm(Model):
             try:
                 self.reload()
             except APIError as e:
-                if e.response.status_code != 406:
+                # FIXME: https://github.com/docker/docker/issues/29192
+                if e.response.status_code not in (406, 503):
                     raise
 
     @property
