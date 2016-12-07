@@ -305,11 +305,13 @@ class APIClient(
         """A generator of multiplexed data blocks read from a buffered
         response."""
         buf = self._result(response, binary=True)
+        buf_length = len(buf)
         walker = 0
         while True:
-            if len(buf[walker:]) < 8:
+            if buf_length - walker < STREAM_HEADER_SIZE_BYTES:
                 break
-            _, length = struct.unpack_from('>BxxxL', buf[walker:])
+            header = buf[walker:walker + STREAM_HEADER_SIZE_BYTES]
+            _, length = struct.unpack_from('>BxxxL', header)
             start = walker + STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end
