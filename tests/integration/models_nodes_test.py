@@ -1,5 +1,7 @@
 import unittest
+
 import docker
+
 from .. import helpers
 
 
@@ -12,7 +14,7 @@ class NodesTest(unittest.TestCase):
 
     def test_list_get_update(self):
         client = docker.from_env()
-        client.swarm.init()
+        client.swarm.init(listen_addr=helpers.swarm_listen_addr())
         nodes = client.nodes.list()
         assert len(nodes) == 1
         assert nodes[0].attrs['Spec']['Role'] == 'manager'

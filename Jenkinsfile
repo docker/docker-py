@@ -4,7 +4,7 @@ def imageNameBase = "dockerbuildbot/docker-py"
 def imageNamePy2
 def imageNamePy3
 def images = [:]
-def dockerVersions = ["1.12.3", "1.13.0-rc3"]
+def dockerVersions = ["1.12.0", "1.13.0-rc3"]
 
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
@@ -33,6 +33,7 @@ def buildImages = { ->
 
 def runTests = { Map settings ->
   def dockerVersion = settings.get("dockerVersion", null)
+  def pythonVersion = settings.get("pythonVersion", null)
   def testImage = settings.get("testImage", null)
 
   if (!testImage) {
@@ -41,26 +42,31 @@ def runTests = { Map settings ->
   if (!dockerVersion) {
     throw new Exception("Need Docker version to test, e.g.: `runTests(dockerVersion: '1.12.3')`")
   }
+  if (!pythonVersion) {
+    throw new Exception("Need Python version being tested, e.g.: `runTests(pythonVersion: 'py2.7')`")
+  }
 
   { ->
     wrappedNode(label: "ubuntu && !zfs && amd64", cleanWorkspace: true) {
-      stage("test image=${testImage} / docker=${dockerVersion}") {
+      stage("test python=${pythonVersion} / docker=${dockerVersion}") {
         checkout(scm)
+        def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER"
+        def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER"
         try {
-          sh """docker run -d --name dpy-dind-\$BUILD_NUMBER -v /tmp --privileged \\
+          sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
             dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
-            --name dpy-tests-\$BUILD_NUMBER --volumes-from dpy-dind-\$BUILD_NUMBER \\
+            --name ${testContainerName} --volumes-from ${dindContainerName} \\
             -e 'DOCKER_HOST=tcp://docker:2375' \\
-            --link=dpy-dind-\$BUILD_NUMBER:docker \\
+            --link=${dindContainerName}:docker \\
             ${testImage} \\
-            py.test -rxs tests/integration
+            py.test -v -rxs tests/integration
           """
         } finally {
           sh """
-            docker stop dpy-tests-\$BUILD_NUMBER dpy-dind-\$BUILD_NUMBER
-            docker rm -vf dpy-tests-\$BUILD_NUMBER dpy-dind-\$BUILD_NUMBER
+            docker stop ${dindContainerName} ${testContainerName}
+            docker rm -vf ${dindContainerName} ${testContainerName}
           """
         }
       }
@@ -75,7 +81,7 @@ def testMatrix = [failFast: false]
 
 for (imgKey in new ArrayList(images.keySet())) {
   for (version in dockerVersions) {
-    testMatrix["${imgKey}_${version}"] = runTests([testImage: images[imgKey], dockerVersion: version])
+    testMatrix["${imgKey}_${version}"] = runTests([testImage: images[imgKey], dockerVersion: version, pythonVersion: imgKey])
   }
 }
 
