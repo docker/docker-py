@@ -5,6 +5,7 @@ import docker
 from docker.utils import kwargs_from_env
 import six
 
+from .. import helpers
 
 BUSYBOX = 'busybox:buildroot-2014.02'
 
@@ -90,3 +91,8 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
         msg = "Expected `{}` to exit with code {} but returned {}:\n{}".format(
             " ".join(cmd), exit_code, actual_exit_code, output)
         assert actual_exit_code == exit_code, msg
+
+    def init_swarm(self, **kwargs):
+        return self.client.init_swarm(
+            'eth0', listen_addr=helpers.swarm_listen_addr(), **kwargs
+        )
