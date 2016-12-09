@@ -17,39 +17,37 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
 
     @requires_api_version('1.24')
     def test_init_swarm_force_new_cluster(self):
         pytest.skip('Test stalls the engine on 1.12.0')
 
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         version_1 = self.client.inspect_swarm()['Version']['Index']
-        assert self.client.init_swarm('eth0', force_new_cluster=True)
+        assert self.client.init_swarm(force_new_cluster=True)
         version_2 = self.client.inspect_swarm()['Version']['Index']
         assert version_2 != version_1
 
     @requires_api_version('1.24')
     def test_init_already_in_cluster(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         with pytest.raises(docker.errors.APIError):
-            self.client.init_swarm('eth0')
+            self.init_swarm()
 
     @requires_api_version('1.24')
     def test_init_swarm_custom_raft_spec(self):
         spec = self.client.create_swarm_spec(
             snapshot_interval=5000, log_entries_for_slow_followers=1200
         )
-        assert self.client.init_swarm(
-            advertise_addr='eth0', swarm_spec=spec
-        )
+        assert self.init_swarm(swarm_spec=spec)
         swarm_info = self.client.inspect_swarm()
         assert swarm_info['Spec']['Raft']['SnapshotInterval'] == 5000
         assert swarm_info['Spec']['Raft']['LogEntriesForSlowFollowers'] == 1200
 
     @requires_api_version('1.24')
     def test_leave_swarm(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         with pytest.raises(docker.errors.APIError) as exc_info:
             self.client.leave_swarm()
         exc_info.value.response.status_code == 500
@@ -61,7 +59,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_update_swarm(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         swarm_info_1 = self.client.inspect_swarm()
         spec = self.client.create_swarm_spec(
             snapshot_interval=5000, log_entries_for_slow_followers=1200,
@@ -92,7 +90,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_update_swarm_name(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         swarm_info_1 = self.client.inspect_swarm()
         spec = self.client.create_swarm_spec(
             node_cert_expiry=7776000000000000, name='reimuhakurei'
@@ -110,7 +108,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_list_nodes(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         nodes_list = self.client.nodes()
         assert len(nodes_list) == 1
         node = nodes_list[0]
@@ -129,7 +127,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_inspect_node(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         nodes_list = self.client.nodes()
         assert len(nodes_list) == 1
         node = nodes_list[0]
@@ -139,7 +137,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_update_node(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         nodes_list = self.client.nodes()
         node = nodes_list[0]
         orig_spec = node['Spec']
@@ -162,7 +160,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_remove_main_node(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         nodes_list = self.client.nodes()
         node_id = nodes_list[0]['ID']
         with pytest.raises(docker.errors.NotFound):

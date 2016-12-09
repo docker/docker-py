@@ -74,3 +74,7 @@ def force_leave_swarm(client):
                 continue
             else:
                 return
+
+
+def swarm_listen_addr():
+    return '0.0.0.0:{0}'.format(random.randrange(10000, 25000))

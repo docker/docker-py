@@ -11,7 +11,7 @@ class ServiceTest(unittest.TestCase):
     def setUpClass(cls):
         client = docker.from_env()
         helpers.force_leave_swarm(client)
-        client.swarm.init()
+        client.swarm.init(listen_addr=helpers.swarm_listen_addr())
 
     @classmethod
     def tearDownClass(cls):
