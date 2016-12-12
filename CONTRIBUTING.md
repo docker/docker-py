@@ -1,5 +1,8 @@
 # Contributing guidelines
 
+See the [Docker contributing guidelines](https://github.com/docker/docker/blob/master/CONTRIBUTING.md).
+The following is specific to Docker SDK for Python.
+
 Thank you for your interest in the project. We look forward to your
 contribution. In order to make the process as fast and streamlined as possible,
 here is a set of guidelines we recommend you follow.
@@ -7,13 +10,14 @@ here is a set of guidelines we recommend you follow.
 ## Reporting issues
 
 We do our best to ensure bugs don't creep up in our releases, but some may
-still slip through. If you encounter one while using docker-py, please create
-an issue [in the tracker](https://github.com/docker/docker-py/issues/new) with
+still slip through. If you encounter one while using the SDK, please
+create an issue
+[in the tracker](https://github.com/docker/docker-py/issues/new) with
 the following information:
 
-- docker-py version, docker version and python version
+- SDK version, Docker version and python version
 ```
-pip freeze | grep docker-py && python --version && docker version
+pip freeze | grep docker && python --version && docker version
 ```
 - OS, distribution and OS version
 - The issue you're encountering including a stacktrace if applicable
@@ -21,14 +25,14 @@ pip freeze | grep docker-py && python --version && docker version
 
 To save yourself time, please be sure to check our
 [documentation](https://docker-py.readthedocs.io/) and use the
-[search function](https://github.com/docker/docker-py/search) to find out if
-it has already been addressed, or is currently being looked at.
+[search function](https://github.com/docker/docker-py/search) to find
+out if it has already been addressed, or is currently being looked at.
 
 ## Submitting pull requests
 
 Do you have a fix for an existing issue, or want to add a new functionality
-to docker-py? We happily welcome pull requests. Here are a few tips to make
-the review process easier on both the maintainers and yourself.
+to the SDK? We happily welcome pull requests. Here are a few tips to
+make the review process easier on both the maintainers and yourself.
 
 ### 1. Sign your commits
 
@@ -84,11 +88,10 @@ to reach out and ask questions. We will do our best to answer and help out.
 
 ## Development environment
 
-If you're looking contribute to docker-py but are new to the project or Python,
-here are the steps to get you started.
+If you're looking contribute to Docker SDK for Python but are new to the
+project or Python, here are the steps to get you started.
 
-1. Fork [https://github.com/docker/docker-py](https://github.com/docker/docker-py)
-   to your username.
+1. Fork https://github.com/docker/docker-py to your username.
 2. Clone your forked repository locally with
   `git clone git@github.com:yourusername/docker-py.git`.
 3. Configure a
@@ -100,3 +103,33 @@ here are the steps to get you started.
 5. Run `python setup.py develop` to install the dev version of the project
   and required dependencies. We recommend you do so inside a
   [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs)
+
+## Running the tests & Code Quality
+
+To get the source source code and run the unit tests, run:
+```
+$ git clone git://github.com/docker/docker-py.git
+$ cd docker-py
+$ make test
+```
+
+## Building the docs
+
+```
+$ make docs
+$ open _build/index.html
+```
+
+## Release Checklist
+
+Before a new release, please go through the following checklist:
+
+* Bump version in docker/version.py
+* Add a release note in docs/change_log.md
+* Git tag the version
+* Upload to pypi
+
+## Vulnerability Reporting
+For any security issues, please do NOT file an issue or pull request on github!
+Please contact [security@docker.com](mailto:security@docker.com) or read [the
+Docker security page](https://www.docker.com/resources/security/).

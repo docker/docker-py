@@ -1,26 +1,77 @@
-docker-py
-=========
+# Docker SDK for Python
 
-[![Build Status](https://travis-ci.org/docker/docker-py.png)](https://travis-ci.org/docker/docker-py)
+[![Build Status](https://travis-ci.org/docker/docker-py.svg?branch=master)](https://travis-ci.org/docker/docker-py)
 
-A Python library for the Docker Remote API. It does everything the `docker` command does, but from within Python – run containers, manage them, pull/push images, etc.
+**Warning:** This README is for the development version of the Docker SDK for
+Python, which is significantly different to the stable version.
+[Documentation for the stable version is here.](https://docker-py.readthedocs.io/)
 
-Installation
-------------
+A Python library for the Docker Engine API. It lets you do anything the `docker` command does, but from within Python apps – run containers, manage containers, manage Swarms, etc.
 
-The latest stable version is always available on PyPi.
+## Installation
 
-    pip install docker-py
+The latest stable version [is available on PyPi](https://pypi.python.org/pypi/docker/). Either add `docker` to your `requirements.txt` file or install with pip:
 
-Documentation
--------------
+    pip install docker
 
-[![Documentation Status](https://readthedocs.org/projects/docker-py/badge/?version=latest)](https://readthedocs.org/projects/docker-py/?badge=latest)
+## Usage
 
-[Read the full documentation here](https://docker-py.readthedocs.io/en/latest/).
-The source is available in the `docs/` directory.
+Connect to Docker using the default socket or the configuration in your environment:
 
+```python
+import docker
+client = docker.from_env()
+```
 
-License
--------
-Docker is licensed under the Apache License, Version 2.0. See LICENSE for full license text
+You can run containers:
+
+```python
+>>> client.containers.run("ubuntu", "echo hello world")
+'hello world\n'
+```
+
+You can run containers in the background:
+
+```python
+>>> client.containers.run("bfirsh/reticulate-splines", detach=True)
+<Container '45e6d2de7c54'>
+```
+
+You can manage containers:
+
+```python
+>>> client.containers.list()
+[<Container '45e6d2de7c54'>, <Container 'db18e4f20eaa'>, ...]
+
+>>> container = client.containers.get('45e6d2de7c54')
+
+>>> container.attrs['Config']['Image']
+"bfirsh/reticulate-splines"
+
+>>> container.logs()
+"Reticulating spline 1...\n"
+
+>>> container.stop()
+```
+
+You can stream logs:
+
+```python
+>>> for line in container.logs(stream=True):
+...   print line.strip()
+Reticulating spline 2...
+Reticulating spline 3...
+...
+```
+
+You can manage images:
+
+```python
+>>> client.images.pull('nginx')
+<Image 'nginx'>
+
+>>> client.images.list()
+[<Image 'ubuntu'>, <Image 'nginx'>, ...]
+```
+
+[Read the full documentation](https://docker-py.readthedocs.io) to see everything you can do.

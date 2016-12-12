@@ -4,6 +4,7 @@ import os
 import os.path
 import json
 import shlex
+import sys
 import tarfile
 import tempfile
 import warnings
@@ -14,10 +15,8 @@ from fnmatch import fnmatch
 import requests
 import six
 
-from .. import constants
 from .. import errors
 from .. import tls
-from ..types import Ulimit, LogConfig
 
 if six.PY2:
     from urllib import splitnport
@@ -36,21 +35,18 @@ BYTE_UNITS = {
 }
 
 
-def create_ipam_pool(subnet=None, iprange=None, gateway=None,
-                     aux_addresses=None):
-    return {
-        'Subnet': subnet,
-        'IPRange': iprange,
-        'Gateway': gateway,
-        'AuxiliaryAddresses': aux_addresses
-    }
+def create_ipam_pool(*args, **kwargs):
+    raise errors.DeprecatedMethod(
+        'utils.create_ipam_pool has been removed. Please use a '
+        'docker.types.IPAMPool object instead.'
+    )
 
 
-def create_ipam_config(driver='default', pool_configs=None):
-    return {
-        'Driver': driver,
-        'Config': pool_configs or []
-    }
+def create_ipam_config(*args, **kwargs):
+    raise errors.DeprecatedMethod(
+        'utils.create_ipam_config has been removed. Please use a '
+        'docker.types.IPAMConfig object instead.'
+    )
 
 
 def mkbuildcontext(dockerfile):
@@ -92,7 +88,21 @@ def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
     exclude = exclude or []
 
     for path in sorted(exclude_paths(root, exclude, dockerfile=dockerfile)):
-        t.add(os.path.join(root, path), arcname=path, recursive=False)
+        i = t.gettarinfo(os.path.join(root, path), arcname=path)
+
+        if sys.platform == 'win32':
+            # Windows doesn't keep track of the execute bit, so we make files
+            # and directories executable by default.
+            i.mode = i.mode & 0o755 | 0o111
+
+        try:
+            # We open the file object in binary mode for Windows support.
+            f = open(os.path.join(root, path), 'rb')
+        except IOError:
+            # When we encounter a directory the file object is set to None.
+            f = None
+
+        t.addfile(i, f)
 
     t.close()
     fileobj.seek(0)
@@ -148,6 +158,31 @@ def should_include(path, exclude_patterns, include_patterns):
     return True
 
 
+def should_check_directory(directory_path, exclude_patterns, include_patterns):
+    """
+    Given a directory path, a list of exclude patterns, and a list of inclusion
+    patterns:
+
+    1. Returns True if the directory path should be included according to
+       should_include.
+    2. Returns True if the directory path is the prefix for an inclusion
+       pattern
+    3. Returns False otherwise
+    """
+
+    # To account for exception rules, check directories if their path is a
+    # a prefix to an inclusion pattern. This logic conforms with the current
+    # docker logic (2016-10-27):
+    # https://github.com/docker/docker/blob/bc52939b0455116ab8e0da67869ec81c1a1c3e2c/pkg/archive/archive.go#L640-L671
+
+    path_with_slash = directory_path + os.sep
+    possible_child_patterns = [pattern for pattern in include_patterns if
+                               (pattern + os.sep).startswith(path_with_slash)]
+    directory_included = should_include(directory_path, exclude_patterns,
+                                        include_patterns)
+    return directory_included or len(possible_child_patterns) > 0
+
+
 def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
     paths = []
 
@@ -156,25 +191,13 @@ def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
         if parent == '.':
             parent = ''
 
-        # If exception rules exist, we can't skip recursing into ignored
-        # directories, as we need to look for exceptions in them.
-        #
-        # It may be possible to optimize this further for exception patterns
-        # that *couldn't* match within ignored directores.
-        #
-        # This matches the current docker logic (as of 2015-11-24):
-        # https://github.com/docker/docker/blob/37ba67bf636b34dc5c0c0265d62a089d0492088f/pkg/archive/archive.go#L555-L557
-
-        if not has_exceptions:
-
-            # Remove excluded patterns from the list of directories to traverse
-            # by mutating the dirs we're iterating over.
-            # This looks strange, but is considered the correct way to skip
-            # traversal. See https://docs.python.org/2/library/os.html#os.walk
-
-            dirs[:] = [d for d in dirs if
-                       should_include(os.path.join(parent, d),
-                                      exclude_patterns, include_patterns)]
+        # Remove excluded patterns from the list of directories to traverse
+        # by mutating the dirs we're iterating over.
+        # This looks strange, but is considered the correct way to skip
+        # traversal. See https://docs.python.org/2/library/os.html#os.walk
+        dirs[:] = [d for d in dirs if
+                   should_check_directory(os.path.join(parent, d),
+                                          exclude_patterns, include_patterns)]
 
         for path in dirs:
             if should_include(os.path.join(parent, path),
@@ -358,6 +381,20 @@ def convert_tmpfs_mounts(tmpfs):
             )
 
         result[name] = options
+    return result
+
+
+def convert_service_networks(networks):
+    if not networks:
+        return networks
+    if not isinstance(networks, list):
+        raise TypeError('networks parameter must be a list.')
+
+    result = []
+    for n in networks:
+        if isinstance(n, six.string_types):
+            n = {'Target': n}
+        result.append(n)
     return result
 
 
@@ -576,379 +613,11 @@ def parse_bytes(s):
     return s
 
 
-def host_config_type_error(param, param_value, expected):
-    error_msg = 'Invalid type for {0} param: expected {1} but found {2}'
-    return TypeError(error_msg.format(param, expected, type(param_value)))
-
-
-def host_config_version_error(param, version, less_than=True):
-    operator = '<' if less_than else '>'
-    error_msg = '{0} param is not supported in API versions {1} {2}'
-    return errors.InvalidVersion(error_msg.format(param, operator, version))
-
-
-def host_config_value_error(param, param_value):
-    error_msg = 'Invalid value for {0} param: {1}'
-    return ValueError(error_msg.format(param, param_value))
-
-
-def create_host_config(binds=None, port_bindings=None, lxc_conf=None,
-                       publish_all_ports=False, links=None, privileged=False,
-                       dns=None, dns_search=None, volumes_from=None,
-                       network_mode=None, restart_policy=None, cap_add=None,
-                       cap_drop=None, devices=None, extra_hosts=None,
-                       read_only=None, pid_mode=None, ipc_mode=None,
-                       security_opt=None, ulimits=None, log_config=None,
-                       mem_limit=None, memswap_limit=None,
-                       mem_reservation=None, kernel_memory=None,
-                       mem_swappiness=None, cgroup_parent=None,
-                       group_add=None, cpu_quota=None,
-                       cpu_period=None, blkio_weight=None,
-                       blkio_weight_device=None, device_read_bps=None,
-                       device_write_bps=None, device_read_iops=None,
-                       device_write_iops=None, oom_kill_disable=False,
-                       shm_size=None, sysctls=None, version=None, tmpfs=None,
-                       oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                       cpuset_cpus=None, userns_mode=None, pids_limit=None):
-
-    host_config = {}
-
-    if not version:
-        warnings.warn(
-            'docker.utils.create_host_config() is deprecated. Please use '
-            'Client.create_host_config() instead.'
-        )
-        version = constants.DEFAULT_DOCKER_API_VERSION
-
-    if mem_limit is not None:
-        host_config['Memory'] = parse_bytes(mem_limit)
-
-    if memswap_limit is not None:
-        host_config['MemorySwap'] = parse_bytes(memswap_limit)
-
-    if mem_reservation:
-        if version_lt(version, '1.21'):
-            raise host_config_version_error('mem_reservation', '1.21')
-
-        host_config['MemoryReservation'] = parse_bytes(mem_reservation)
-
-    if kernel_memory:
-        if version_lt(version, '1.21'):
-            raise host_config_version_error('kernel_memory', '1.21')
-
-        host_config['KernelMemory'] = parse_bytes(kernel_memory)
-
-    if mem_swappiness is not None:
-        if version_lt(version, '1.20'):
-            raise host_config_version_error('mem_swappiness', '1.20')
-        if not isinstance(mem_swappiness, int):
-            raise host_config_type_error(
-                'mem_swappiness', mem_swappiness, 'int'
-            )
-
-        host_config['MemorySwappiness'] = mem_swappiness
-
-    if shm_size is not None:
-        if isinstance(shm_size, six.string_types):
-            shm_size = parse_bytes(shm_size)
-
-        host_config['ShmSize'] = shm_size
-
-    if pid_mode not in (None, 'host'):
-        raise host_config_value_error('pid_mode', pid_mode)
-    elif pid_mode:
-        host_config['PidMode'] = pid_mode
-
-    if ipc_mode:
-        host_config['IpcMode'] = ipc_mode
-
-    if privileged:
-        host_config['Privileged'] = privileged
-
-    if oom_kill_disable:
-        if version_lt(version, '1.20'):
-            raise host_config_version_error('oom_kill_disable', '1.19')
-
-        host_config['OomKillDisable'] = oom_kill_disable
-
-    if oom_score_adj:
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('oom_score_adj', '1.22')
-        if not isinstance(oom_score_adj, int):
-            raise host_config_type_error(
-                'oom_score_adj', oom_score_adj, 'int'
-            )
-        host_config['OomScoreAdj'] = oom_score_adj
-
-    if publish_all_ports:
-        host_config['PublishAllPorts'] = publish_all_ports
-
-    if read_only is not None:
-        host_config['ReadonlyRootfs'] = read_only
-
-    if dns_search:
-        host_config['DnsSearch'] = dns_search
-
-    if network_mode:
-        host_config['NetworkMode'] = network_mode
-    elif network_mode is None and compare_version('1.19', version) > 0:
-        host_config['NetworkMode'] = 'default'
-
-    if restart_policy:
-        if not isinstance(restart_policy, dict):
-            raise host_config_type_error(
-                'restart_policy', restart_policy, 'dict'
-            )
-
-        host_config['RestartPolicy'] = restart_policy
-
-    if cap_add:
-        host_config['CapAdd'] = cap_add
-
-    if cap_drop:
-        host_config['CapDrop'] = cap_drop
-
-    if devices:
-        host_config['Devices'] = parse_devices(devices)
-
-    if group_add:
-        if version_lt(version, '1.20'):
-            raise host_config_version_error('group_add', '1.20')
-
-        host_config['GroupAdd'] = [six.text_type(grp) for grp in group_add]
-
-    if dns is not None:
-        host_config['Dns'] = dns
-
-    if dns_opt is not None:
-        if version_lt(version, '1.21'):
-            raise host_config_version_error('dns_opt', '1.21')
-
-        host_config['DnsOptions'] = dns_opt
-
-    if security_opt is not None:
-        if not isinstance(security_opt, list):
-            raise host_config_type_error('security_opt', security_opt, 'list')
-
-        host_config['SecurityOpt'] = security_opt
-
-    if sysctls:
-        if not isinstance(sysctls, dict):
-            raise host_config_type_error('sysctls', sysctls, 'dict')
-        host_config['Sysctls'] = {}
-        for k, v in six.iteritems(sysctls):
-            host_config['Sysctls'][k] = six.text_type(v)
-
-    if volumes_from is not None:
-        if isinstance(volumes_from, six.string_types):
-            volumes_from = volumes_from.split(',')
-
-        host_config['VolumesFrom'] = volumes_from
-
-    if binds is not None:
-        host_config['Binds'] = convert_volume_binds(binds)
-
-    if port_bindings is not None:
-        host_config['PortBindings'] = convert_port_bindings(port_bindings)
-
-    if extra_hosts is not None:
-        if isinstance(extra_hosts, dict):
-            extra_hosts = [
-                '{0}:{1}'.format(k, v)
-                for k, v in sorted(six.iteritems(extra_hosts))
-            ]
-
-        host_config['ExtraHosts'] = extra_hosts
-
-    if links is not None:
-        host_config['Links'] = normalize_links(links)
-
-    if isinstance(lxc_conf, dict):
-        formatted = []
-        for k, v in six.iteritems(lxc_conf):
-            formatted.append({'Key': k, 'Value': str(v)})
-        lxc_conf = formatted
-
-    if lxc_conf is not None:
-        host_config['LxcConf'] = lxc_conf
-
-    if cgroup_parent is not None:
-        host_config['CgroupParent'] = cgroup_parent
-
-    if ulimits is not None:
-        if not isinstance(ulimits, list):
-            raise host_config_type_error('ulimits', ulimits, 'list')
-        host_config['Ulimits'] = []
-        for l in ulimits:
-            if not isinstance(l, Ulimit):
-                l = Ulimit(**l)
-            host_config['Ulimits'].append(l)
-
-    if log_config is not None:
-        if not isinstance(log_config, LogConfig):
-            if not isinstance(log_config, dict):
-                raise host_config_type_error(
-                    'log_config', log_config, 'LogConfig'
-                )
-            log_config = LogConfig(**log_config)
-
-        host_config['LogConfig'] = log_config
-
-    if cpu_quota:
-        if not isinstance(cpu_quota, int):
-            raise host_config_type_error('cpu_quota', cpu_quota, 'int')
-        if version_lt(version, '1.19'):
-            raise host_config_version_error('cpu_quota', '1.19')
-
-        host_config['CpuQuota'] = cpu_quota
-
-    if cpu_period:
-        if not isinstance(cpu_period, int):
-            raise host_config_type_error('cpu_period', cpu_period, 'int')
-        if version_lt(version, '1.19'):
-            raise host_config_version_error('cpu_period', '1.19')
-
-        host_config['CpuPeriod'] = cpu_period
-
-    if cpu_shares:
-        if version_lt(version, '1.18'):
-            raise host_config_version_error('cpu_shares', '1.18')
-
-        if not isinstance(cpu_shares, int):
-            raise host_config_type_error('cpu_shares', cpu_shares, 'int')
-
-        host_config['CpuShares'] = cpu_shares
-
-    if cpuset_cpus:
-        if version_lt(version, '1.18'):
-            raise host_config_version_error('cpuset_cpus', '1.18')
-
-        host_config['CpuSetCpus'] = cpuset_cpus
-
-    if blkio_weight:
-        if not isinstance(blkio_weight, int):
-            raise host_config_type_error('blkio_weight', blkio_weight, 'int')
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('blkio_weight', '1.22')
-        host_config["BlkioWeight"] = blkio_weight
-
-    if blkio_weight_device:
-        if not isinstance(blkio_weight_device, list):
-            raise host_config_type_error(
-                'blkio_weight_device', blkio_weight_device, 'list'
-            )
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('blkio_weight_device', '1.22')
-        host_config["BlkioWeightDevice"] = blkio_weight_device
-
-    if device_read_bps:
-        if not isinstance(device_read_bps, list):
-            raise host_config_type_error(
-                'device_read_bps', device_read_bps, 'list'
-            )
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('device_read_bps', '1.22')
-        host_config["BlkioDeviceReadBps"] = device_read_bps
-
-    if device_write_bps:
-        if not isinstance(device_write_bps, list):
-            raise host_config_type_error(
-                'device_write_bps', device_write_bps, 'list'
-            )
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('device_write_bps', '1.22')
-        host_config["BlkioDeviceWriteBps"] = device_write_bps
-
-    if device_read_iops:
-        if not isinstance(device_read_iops, list):
-            raise host_config_type_error(
-                'device_read_iops', device_read_iops, 'list'
-            )
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('device_read_iops', '1.22')
-        host_config["BlkioDeviceReadIOps"] = device_read_iops
-
-    if device_write_iops:
-        if not isinstance(device_write_iops, list):
-            raise host_config_type_error(
-                'device_write_iops', device_write_iops, 'list'
-            )
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('device_write_iops', '1.22')
-        host_config["BlkioDeviceWriteIOps"] = device_write_iops
-
-    if tmpfs:
-        if version_lt(version, '1.22'):
-            raise host_config_version_error('tmpfs', '1.22')
-        host_config["Tmpfs"] = convert_tmpfs_mounts(tmpfs)
-
-    if userns_mode:
-        if version_lt(version, '1.23'):
-            raise host_config_version_error('userns_mode', '1.23')
-
-        if userns_mode != "host":
-            raise host_config_value_error("userns_mode", userns_mode)
-        host_config['UsernsMode'] = userns_mode
-
-    if pids_limit:
-        if not isinstance(pids_limit, int):
-            raise host_config_type_error('pids_limit', pids_limit, 'int')
-        if version_lt(version, '1.23'):
-            raise host_config_version_error('pids_limit', '1.23')
-        host_config["PidsLimit"] = pids_limit
-
-    return host_config
-
-
 def normalize_links(links):
     if isinstance(links, dict):
         links = six.iteritems(links)
 
     return ['{0}:{1}'.format(k, v) for k, v in sorted(links)]
-
-
-def create_networking_config(endpoints_config=None):
-    networking_config = {}
-
-    if endpoints_config:
-        networking_config["EndpointsConfig"] = endpoints_config
-
-    return networking_config
-
-
-def create_endpoint_config(version, aliases=None, links=None,
-                           ipv4_address=None, ipv6_address=None,
-                           link_local_ips=None):
-    if version_lt(version, '1.22'):
-        raise errors.InvalidVersion(
-            'Endpoint config is not supported for API version < 1.22'
-        )
-    endpoint_config = {}
-
-    if aliases:
-        endpoint_config["Aliases"] = aliases
-
-    if links:
-        endpoint_config["Links"] = normalize_links(links)
-
-    ipam_config = {}
-    if ipv4_address:
-        ipam_config['IPv4Address'] = ipv4_address
-
-    if ipv6_address:
-        ipam_config['IPv6Address'] = ipv6_address
-
-    if link_local_ips is not None:
-        if version_lt(version, '1.24'):
-            raise errors.InvalidVersion(
-                'link_local_ips is not supported for API version < 1.24'
-            )
-        ipam_config['LinkLocalIPs'] = link_local_ips
-
-    if ipam_config:
-        endpoint_config['IPAMConfig'] = ipam_config
-
-    return endpoint_config
 
 
 def parse_env_file(env_file):
@@ -964,7 +633,11 @@ def parse_env_file(env_file):
             if line[0] == '#':
                 continue
 
-            parse_line = line.strip().split('=', 1)
+            line = line.strip()
+            if not line:
+                continue
+
+            parse_line = line.split('=', 1)
             if len(parse_line) == 2:
                 k, v = parse_line
                 environment[k] = v
@@ -993,147 +666,8 @@ def format_environment(environment):
     return [format_env(*var) for var in six.iteritems(environment)]
 
 
-def create_container_config(
-    version, image, command, hostname=None, user=None, detach=False,
-    stdin_open=False, tty=False, mem_limit=None, ports=None, environment=None,
-    dns=None, volumes=None, volumes_from=None, network_disabled=False,
-    entrypoint=None, cpu_shares=None, working_dir=None, domainname=None,
-    memswap_limit=None, cpuset=None, host_config=None, mac_address=None,
-    labels=None, volume_driver=None, stop_signal=None, networking_config=None,
-):
-    if isinstance(command, six.string_types):
-        command = split_command(command)
-
-    if isinstance(entrypoint, six.string_types):
-        entrypoint = split_command(entrypoint)
-
-    if isinstance(environment, dict):
-        environment = format_environment(environment)
-
-    if labels is not None and compare_version('1.18', version) < 0:
-        raise errors.InvalidVersion(
-            'labels were only introduced in API version 1.18'
-        )
-
-    if cpuset is not None or cpu_shares is not None:
-        if version_gte(version, '1.18'):
-            warnings.warn(
-                'The cpuset_cpus and cpu_shares options have been moved to '
-                'host_config in API version 1.18, and will be removed',
-                DeprecationWarning
-            )
-
-    if stop_signal is not None and compare_version('1.21', version) < 0:
-        raise errors.InvalidVersion(
-            'stop_signal was only introduced in API version 1.21'
-        )
-
-    if compare_version('1.19', version) < 0:
-        if volume_driver is not None:
-            raise errors.InvalidVersion(
-                'Volume drivers were only introduced in API version 1.19'
-            )
-        mem_limit = mem_limit if mem_limit is not None else 0
-        memswap_limit = memswap_limit if memswap_limit is not None else 0
-    else:
-        if mem_limit is not None:
-            raise errors.InvalidVersion(
-                'mem_limit has been moved to host_config in API version 1.19'
-            )
-
-        if memswap_limit is not None:
-            raise errors.InvalidVersion(
-                'memswap_limit has been moved to host_config in API '
-                'version 1.19'
-            )
-
-    if isinstance(labels, list):
-        labels = dict((lbl, six.text_type('')) for lbl in labels)
-
-    if mem_limit is not None:
-        mem_limit = parse_bytes(mem_limit)
-
-    if memswap_limit is not None:
-        memswap_limit = parse_bytes(memswap_limit)
-
-    if isinstance(ports, list):
-        exposed_ports = {}
-        for port_definition in ports:
-            port = port_definition
-            proto = 'tcp'
-            if isinstance(port_definition, tuple):
-                if len(port_definition) == 2:
-                    proto = port_definition[1]
-                port = port_definition[0]
-            exposed_ports['{0}/{1}'.format(port, proto)] = {}
-        ports = exposed_ports
-
-    if isinstance(volumes, six.string_types):
-        volumes = [volumes, ]
-
-    if isinstance(volumes, list):
-        volumes_dict = {}
-        for vol in volumes:
-            volumes_dict[vol] = {}
-        volumes = volumes_dict
-
-    if volumes_from:
-        if not isinstance(volumes_from, six.string_types):
-            volumes_from = ','.join(volumes_from)
-    else:
-        # Force None, an empty list or dict causes client.start to fail
-        volumes_from = None
-
-    attach_stdin = False
-    attach_stdout = False
-    attach_stderr = False
-    stdin_once = False
-
-    if not detach:
-        attach_stdout = True
-        attach_stderr = True
-
-        if stdin_open:
-            attach_stdin = True
-            stdin_once = True
-
-    if compare_version('1.10', version) >= 0:
-        message = ('{0!r} parameter has no effect on create_container().'
-                   ' It has been moved to host_config')
-        if dns is not None:
-            raise errors.InvalidVersion(message.format('dns'))
-        if volumes_from is not None:
-            raise errors.InvalidVersion(message.format('volumes_from'))
-
-    return {
-        'Hostname': hostname,
-        'Domainname': domainname,
-        'ExposedPorts': ports,
-        'User': six.text_type(user) if user else None,
-        'Tty': tty,
-        'OpenStdin': stdin_open,
-        'StdinOnce': stdin_once,
-        'Memory': mem_limit,
-        'AttachStdin': attach_stdin,
-        'AttachStdout': attach_stdout,
-        'AttachStderr': attach_stderr,
-        'Env': environment,
-        'Cmd': command,
-        'Dns': dns,
-        'Image': image,
-        'Volumes': volumes,
-        'VolumesFrom': volumes_from,
-        'NetworkDisabled': network_disabled,
-        'Entrypoint': entrypoint,
-        'CpuShares': cpu_shares,
-        'Cpuset': cpuset,
-        'CpusetCpus': cpuset,
-        'WorkingDir': working_dir,
-        'MemorySwap': memswap_limit,
-        'HostConfig': host_config,
-        'NetworkingConfig': networking_config,
-        'MacAddress': mac_address,
-        'Labels': labels,
-        'VolumeDriver': volume_driver,
-        'StopSignal': stop_signal
-    }
+def create_host_config(self, *args, **kwargs):
+    raise errors.DeprecatedMethod(
+        'utils.create_host_config has been removed. Please use a '
+        'docker.types.HostConfig object instead.'
+    )

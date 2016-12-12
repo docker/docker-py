@@ -4,16 +4,16 @@ import sys
 import warnings
 
 import docker.errors
+from docker.utils import kwargs_from_env
 import pytest
 
-from ..helpers import BUSYBOX
-from ..helpers import docker_client
+from .base import BUSYBOX
 
 
 @pytest.fixture(autouse=True, scope='session')
 def setup_test_session():
     warnings.simplefilter('error')
-    c = docker_client()
+    c = docker.APIClient(**kwargs_from_env())
     try:
         c.inspect_image(BUSYBOX)
     except docker.errors.NotFound:

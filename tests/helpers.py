@@ -1,15 +1,12 @@
 import os
 import os.path
-import shutil
+import random
 import tarfile
 import tempfile
-import unittest
+import time
 
 import docker
-import six
-
-BUSYBOX = 'busybox:buildroot-2014.02'
-EXEC_DRIVER = []
+import pytest
 
 
 def make_tree(dirs, files):
@@ -45,86 +42,35 @@ def untar_file(tardata, filename):
     return result
 
 
-def docker_client(**kwargs):
-    return docker.Client(**docker_client_kwargs(**kwargs))
+def requires_api_version(version):
+    return pytest.mark.skipif(
+        docker.utils.version_lt(
+            docker.constants.DEFAULT_DOCKER_API_VERSION, version
+        ),
+        reason="API version is too low (< {0})".format(version)
+    )
 
 
-def docker_client_kwargs(**kwargs):
-    client_kwargs = docker.utils.kwargs_from_env(assert_hostname=False)
-    client_kwargs.update(kwargs)
-    return client_kwargs
+def wait_on_condition(condition, delay=0.1, timeout=40):
+    start_time = time.time()
+    while not condition():
+        if time.time() - start_time > timeout:
+            raise AssertionError("Timeout: %s" % condition)
+        time.sleep(delay)
 
 
-class BaseTestCase(unittest.TestCase):
-    tmp_imgs = []
-    tmp_containers = []
-    tmp_folders = []
-    tmp_volumes = []
+def random_name():
+    return u'dockerpytest_{0:x}'.format(random.getrandbits(64))
 
-    def setUp(self):
-        if six.PY2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertCountEqual = self.assertItemsEqual
-        self.client = docker_client(timeout=60)
-        self.tmp_imgs = []
-        self.tmp_containers = []
-        self.tmp_folders = []
-        self.tmp_volumes = []
-        self.tmp_networks = []
 
-    def tearDown(self):
-        for img in self.tmp_imgs:
-            try:
-                self.client.remove_image(img)
-            except docker.errors.APIError:
-                pass
-        for container in self.tmp_containers:
-            try:
-                self.client.stop(container, timeout=1)
-                self.client.remove_container(container)
-            except docker.errors.APIError:
-                pass
-        for network in self.tmp_networks:
-            try:
-                self.client.remove_network(network)
-            except docker.errors.APIError:
-                pass
-        for folder in self.tmp_folders:
-            shutil.rmtree(folder)
-
-        for volume in self.tmp_volumes:
-            try:
-                self.client.remove_volume(volume)
-            except docker.errors.APIError:
-                pass
-
-        self.client.close()
-
-    def run_container(self, *args, **kwargs):
-        container = self.client.create_container(*args, **kwargs)
-        self.tmp_containers.append(container)
-        self.client.start(container)
-        exitcode = self.client.wait(container)
-
-        if exitcode != 0:
-            output = self.client.logs(container)
-            raise Exception(
-                "Container exited with code {}:\n{}"
-                .format(exitcode, output))
-
-        return container
-
-    def create_and_start(self, image='busybox', command='top', **kwargs):
-        container = self.client.create_container(
-            image=image, command=command, **kwargs)
-        self.tmp_containers.append(container)
-        self.client.start(container)
-        return container
-
-    def execute(self, container, cmd, exit_code=0, **kwargs):
-        exc = self.client.exec_create(container, cmd, **kwargs)
-        output = self.client.exec_start(exc)
-        actual_exit_code = self.client.exec_inspect(exc)['ExitCode']
-        msg = "Expected `{}` to exit with code {} but returned {}:\n{}".format(
-            " ".join(cmd), exit_code, actual_exit_code, output)
-        assert actual_exit_code == exit_code, msg
+def force_leave_swarm(client):
+    """Actually force leave a Swarm. There seems to be a bug in Swarm that
+    occasionally throws "context deadline exceeded" errors when leaving."""
+    while True:
+        try:
+            return client.swarm.leave(force=True)
+        except docker.errors.APIError as e:
+            if e.explanation == "context deadline exceeded":
+                continue
+            else:
+                return

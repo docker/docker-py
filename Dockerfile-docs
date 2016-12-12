@@ -1,9 +1,12 @@
-FROM python:2.7
+FROM python:3.5
 
-RUN mkdir /home/docker-py
-WORKDIR /home/docker-py
+RUN mkdir /src
+WORKDIR /src
 
-COPY docs-requirements.txt /home/docker-py/docs-requirements.txt
+COPY requirements.txt /src/requirements.txt
+RUN pip install -r requirements.txt
+
+COPY docs-requirements.txt /src/docs-requirements.txt
 RUN pip install -r docs-requirements.txt
 
-COPY . /home/docker-py
+COPY . /src

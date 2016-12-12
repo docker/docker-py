@@ -51,14 +51,14 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 
 class UnixAdapter(requests.adapters.HTTPAdapter):
     def __init__(self, socket_url, timeout=60,
-                 num_pools=constants.DEFAULT_NUM_POOLS):
+                 pool_connections=constants.DEFAULT_NUM_POOLS):
         socket_path = socket_url.replace('http+unix://', '')
         if not socket_path.startswith('/'):
             socket_path = '/' + socket_path
         self.socket_path = socket_path
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
-            num_pools, dispose_func=lambda p: p.close()
+            pool_connections, dispose_func=lambda p: p.close()
         )
         super(UnixAdapter, self).__init__()
 

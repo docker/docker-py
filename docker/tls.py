@@ -2,10 +2,24 @@ import os
 import ssl
 
 from . import errors
-from .ssladapter import ssladapter
+from .transport import SSLAdapter
 
 
 class TLSConfig(object):
+    """
+    TLS configuration.
+
+    Args:
+        client_cert (tuple of str): Path to client cert, path to client key.
+        ca_cert (str): Path to CA cert file.
+        verify (bool or str): This can be ``False`` or a path to a CA cert
+            file.
+        ssl_version (int): A valid `SSL version`_.
+        assert_hostname (bool): Verify the hostname of the server.
+
+    .. _`SSL version`:
+        https://docs.python.org/3.5/library/ssl.html#ssl.PROTOCOL_TLSv1
+    """
     cert = None
     ca_cert = None
     verify = None
@@ -42,7 +56,7 @@ class TLSConfig(object):
                 )
 
             if not (tls_cert and tls_key) or (not os.path.isfile(tls_cert) or
-               not os.path.isfile(tls_key)):
+                                              not os.path.isfile(tls_key)):
                 raise errors.TLSParameterError(
                     'Path to a certificate and key files must be provided'
                     ' through the client_config param'
@@ -58,6 +72,9 @@ class TLSConfig(object):
             )
 
     def configure_client(self, client):
+        """
+        Configure a client with these TLS options.
+        """
         client.ssl_version = self.ssl_version
 
         if self.verify and self.ca_cert:
@@ -68,7 +85,7 @@ class TLSConfig(object):
         if self.cert:
             client.cert = self.cert
 
-        client.mount('https://', ssladapter.SSLAdapter(
+        client.mount('https://', SSLAdapter(
             ssl_version=self.ssl_version,
             assert_hostname=self.assert_hostname,
             assert_fingerprint=self.assert_fingerprint,

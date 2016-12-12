@@ -1,15 +1,16 @@
 #!/usr/bin/env python
+import codecs
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'requests >= 2.5.2, != 2.11.0',
+    'requests >= 2.5.2, != 2.11.0, != 2.12.2',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
     'docker-pycreds >= 0.2.1'
@@ -20,6 +21,9 @@ if sys.platform == 'win32':
 
 extras_require = {
     ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
+    # While not imported explicitly, the ipaddress module is required for
+    # ssl_match_hostname to verify hosts match with certificates via
+    # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
     ':python_version < "3.3"': 'ipaddress >= 1.0.16',
 }
 
@@ -32,7 +36,7 @@ with open('./test-requirements.txt') as test_reqs_txt:
 
 long_description = ''
 try:
-    with open('./README.rst') as readme_rst:
+    with codecs.open('./README.rst', encoding='utf-8') as readme_rst:
         long_description = readme_rst.read()
 except IOError:
     # README.rst is only generated on release. Its absence should not prevent
@@ -40,29 +44,24 @@ except IOError:
     pass
 
 setup(
-    name="docker-py",
+    name="docker",
     version=version,
-    description="Python client for Docker.",
+    description="A Python library for the Docker Engine API.",
     long_description=long_description,
-    url='https://github.com/docker/docker-py/',
-    packages=[
-        'docker', 'docker.api', 'docker.auth', 'docker.transport',
-        'docker.utils', 'docker.utils.ports', 'docker.ssladapter',
-        'docker.types',
-    ],
+    url='https://github.com/docker/docker-py',
+    packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
     zip_safe=False,
     test_suite='tests',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',

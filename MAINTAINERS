@@ -1,4 +1,4 @@
-# Docker-py maintainers file
+# Docker SDK for Python maintainers file
 #
 # This file describes who runs the docker/docker-py project and how.
 # This is a living document - if you see something out of date or missing, speak up!
@@ -12,6 +12,7 @@
 	[Org."Core maintainers"]
 		people = [
 			"aanand",
+			"bfirsh",
 			"dnephin",
 			"mnowster",
 			"mpetazzoni",
@@ -30,6 +31,11 @@
 	Name = "Aanand Prasad"
 	Email = "aanand@docker.com"
 	GitHub = "aanand"
+
+	[people.bfirsh]
+	Name = "Ben Firshman"
+	Email = "b@fir.sh"
+	GitHub = "bfirsh"
 
 	[people.dnephin]
 	Name = "Daniel Nephin"
