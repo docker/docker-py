@@ -2,10 +2,6 @@
 
 [![Build Status](https://travis-ci.org/docker/docker-py.svg?branch=master)](https://travis-ci.org/docker/docker-py)
 
-**Warning:** This README is for the development version of the Docker SDK for
-Python, which is significantly different to the stable version.
-[Documentation for the stable version is here.](https://docker-py.readthedocs.io/)
-
 A Python library for the Docker Engine API. It lets you do anything the `docker` command does, but from within Python apps – run containers, manage containers, manage Swarms, etc.
 
 ## Installation
