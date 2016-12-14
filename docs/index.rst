@@ -1,9 +1,9 @@
 Docker SDK for Python
 =====================
 
-A Python library for the Docker Remote API. It lets you do anything the ``docker`` command does, but from within Python apps – run containers, manage containers, manage Swarms, etc.
+A Python library for the Docker Engine API. It lets you do anything the ``docker`` command does, but from within Python apps – run containers, manage containers, manage Swarms, etc.
 
-For more information about the Remote API, `see its documentation <https://docs.docker.com/engine/reference/api/docker_remote_api/>`_.
+For more information about the Engine API, `see its documentation <https://docs.docker.com/engine/reference/api/docker_remote_api/>`_.
 
 Installation
 ------------

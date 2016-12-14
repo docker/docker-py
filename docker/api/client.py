@@ -50,7 +50,7 @@ class APIClient(
         SwarmApiMixin,
         VolumeApiMixin):
     """
-    A low-level client for the Docker Remote API.
+    A low-level client for the Docker Engine API.
 
     Example:
 
