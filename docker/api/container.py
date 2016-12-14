@@ -108,7 +108,7 @@ class ContainerApiMixin(object):
             author (str): The name of the author
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
-                `Remote API documentation
+                `Engine API documentation
                 <https://docs.docker.com/reference/api/docker_remote_api/>`_
                 for full details.
 
