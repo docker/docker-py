@@ -271,8 +271,8 @@ class ImageApiMixin(object):
         Args:
             data (binary): Image data to be loaded.
         """
-        res = self._post(self._url("/images/load"), data=data)
-        self._raise_for_status(res)
+        return self._result(
+            self._post(self._url("/images/load"), data=data))
 
     def pull(self, repository, tag=None, stream=False,
              insecure_registry=False, auth_config=None, decode=False):
