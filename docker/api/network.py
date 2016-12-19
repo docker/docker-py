@@ -1,19 +1,23 @@
-import json
-
 from ..errors import InvalidVersion
 from ..utils import check_resource, minimum_version
 from ..utils import version_lt
+from .. import utils
 
 
 class NetworkApiMixin(object):
     @minimum_version('1.21')
-    def networks(self, names=None, ids=None):
+    def networks(self, names=None, ids=None, filters=None):
         """
         List networks. Similar to the ``docker networks ls`` command.
 
         Args:
             names (list): List of names to filter by
             ids (list): List of ids to filter by
+            filters (dict): Filters to be processed on the network list.
+                Available filters:
+                - ``driver=[<driver-name>]`` Matches a network's driver.
+                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - ``type=["custom"|"builtin"] `` Filters networks by type.
 
         Returns:
             (dict): List of network objects.
@@ -23,14 +27,13 @@ class NetworkApiMixin(object):
                 If the server returns an error.
         """
 
-        filters = {}
+        if filters is None:
+            filters = {}
         if names:
             filters['name'] = names
         if ids:
             filters['id'] = ids
-
-        params = {'filters': json.dumps(filters)}
-
+        params = {'filters': utils.convert_filters(filters)}
         url = self._url("/networks")
         res = self._get(url, params=params)
         return self._result(res, json=True)
