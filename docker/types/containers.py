@@ -116,8 +116,8 @@ class HostConfig(dict):
                  device_read_iops=None, device_write_iops=None,
                  oom_kill_disable=False, shm_size=None, sysctls=None,
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                 cpuset_cpus=None, userns_mode=None, pids_limit=None,
-                 isolation=None):
+                 cpuset_cpus=None, cpuset_mems=None, userns_mode=None,
+                 pids_limit=None, isolation=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -325,6 +325,12 @@ class HostConfig(dict):
                 raise host_config_version_error('cpuset_cpus', '1.18')
 
             self['CpuSetCpus'] = cpuset_cpus
+
+        if cpuset_mems:
+            if version_lt(version, '1.19'):
+                raise host_config_version_error('cpuset_mems', '1.19')
+
+            self['CpuSetMems'] = cpuset_mems
 
         if blkio_weight:
             if not isinstance(blkio_weight, int):

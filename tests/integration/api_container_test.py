@@ -1166,7 +1166,7 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         self.assertEqual(inspect_data['HostConfig']['CpuShares'], 512)
 
     @requires_api_version('1.18')
-    def test_container_cpuset(self):
+    def test_container_cpuset_cpus(self):
         cpuset_cpus = "0,1"
         container = self.client.create_container(
             BUSYBOX, 'ls', host_config=self.client.create_host_config(
@@ -1177,3 +1177,16 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         self.client.start(container)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
+
+    @requires_api_version('1.19')
+    def test_container_cpuset_mems(self):
+        cpuset_mems = "0"
+        container = self.client.create_container(
+            BUSYBOX, 'ls', host_config=self.client.create_host_config(
+                cpuset_mems=cpuset_mems
+            )
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        inspect_data = self.client.inspect_container(container)
+        self.assertEqual(inspect_data['HostConfig']['CpuSetMems'], cpuset_mems)
