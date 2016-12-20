@@ -390,8 +390,6 @@ class ContainerApiMixin(object):
                 ``{"PASSWORD": "xxx"}``.
             dns (:py:class:`list`): DNS name servers. Deprecated since API
                 version 1.10. Use ``host_config`` instead.
-            dns_opt (:py:class:`list`): Additional options to be added to the
-                container's ``resolv.conf`` file
             volumes (str or list):
             volumes_from (:py:class:`list`): List of container names or Ids to
                 get volumes from.
@@ -491,6 +489,8 @@ class ContainerApiMixin(object):
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
             dns (:py:class:`list`): Set custom DNS servers.
+            dns_opt (:py:class:`list`): Additional options to be added to the
+                container's ``resolv.conf`` file
             dns_search (:py:class:`list`): DNS search domains.
             extra_hosts (dict): Addtional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
