@@ -135,6 +135,7 @@ class Mount(dict):
                 'Only acceptable mount types are `bind` and `volume`.'
             )
         self['Type'] = type
+        self['ReadOnly'] = read_only
 
         if type == 'bind':
             if propagation is not None:
@@ -174,7 +175,7 @@ class Mount(dict):
         else:
             target = parts[1]
             source = parts[0]
-            read_only = not (len(parts) == 3 or parts[2] == 'ro')
+            read_only = not (len(parts) == 2 or parts[2] == 'rw')
             return cls(target, source, read_only=read_only)
 
 
