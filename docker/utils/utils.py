@@ -175,11 +175,17 @@ def should_check_directory(directory_path, exclude_patterns, include_patterns):
     # docker logic (2016-10-27):
     # https://github.com/docker/docker/blob/bc52939b0455116ab8e0da67869ec81c1a1c3e2c/pkg/archive/archive.go#L640-L671
 
-    path_with_slash = directory_path + os.sep
-    possible_child_patterns = [pattern for pattern in include_patterns if
-                               (pattern + os.sep).startswith(path_with_slash)]
-    directory_included = should_include(directory_path, exclude_patterns,
-                                        include_patterns)
+    def normalize_path(path):
+        return path.replace(os.path.sep, '/')
+
+    path_with_slash = normalize_path(directory_path) + '/'
+    possible_child_patterns = [
+        pattern for pattern in map(normalize_path, include_patterns)
+        if (pattern + '/').startswith(path_with_slash)
+    ]
+    directory_included = should_include(
+        directory_path, exclude_patterns, include_patterns
+    )
     return directory_included or len(possible_child_patterns) > 0
 
 
@@ -195,9 +201,11 @@ def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
         # by mutating the dirs we're iterating over.
         # This looks strange, but is considered the correct way to skip
         # traversal. See https://docs.python.org/2/library/os.html#os.walk
-        dirs[:] = [d for d in dirs if
-                   should_check_directory(os.path.join(parent, d),
-                                          exclude_patterns, include_patterns)]
+        dirs[:] = [
+            d for d in dirs if should_check_directory(
+                os.path.join(parent, d), exclude_patterns, include_patterns
+            )
+        ]
 
         for path in dirs:
             if should_include(os.path.join(parent, path),
@@ -213,7 +221,7 @@ def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
 
 
 def match_path(path, pattern):
-    pattern = pattern.rstrip('/')
+    pattern = pattern.rstrip('/' + os.path.sep)
     if pattern:
         pattern = os.path.relpath(pattern)
 
