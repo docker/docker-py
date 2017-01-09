@@ -780,6 +780,16 @@ class ExcludePathsTest(unittest.TestCase):
             ])
         )
 
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='Backslash patterns only on Windows'
+    )
+    def test_directory_with_subdir_exception_win32_pathsep(self):
+        assert self.exclude(['foo', '!foo\\bar']) == convert_paths(
+            self.all_paths - set([
+                'foo/a.py', 'foo/b.py', 'foo', 'foo/Dockerfile3'
+            ])
+        )
+
     def test_directory_with_wildcard_exception(self):
         assert self.exclude(['foo', '!foo/*.py']) == convert_paths(
             self.all_paths - set([
@@ -789,6 +799,14 @@ class ExcludePathsTest(unittest.TestCase):
 
     def test_subdirectory(self):
         assert self.exclude(['foo/bar']) == convert_paths(
+            self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
+        )
+
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='Backslash patterns only on Windows'
+    )
+    def test_subdirectory_win32_pathsep(self):
+        assert self.exclude(['foo\\bar']) == convert_paths(
             self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
         )
 
