@@ -131,7 +131,7 @@ class Mount(dict):
         self['Target'] = target
         self['Source'] = source
         if type not in ('bind', 'volume'):
-            raise errors.DockerError(
+            raise errors.InvalidArgument(
                 'Only acceptable mount types are `bind` and `volume`.'
             )
         self['Type'] = type
@@ -143,7 +143,7 @@ class Mount(dict):
                     'Propagation': propagation
                 }
             if any([labels, driver_config, no_copy]):
-                raise errors.DockerError(
+                raise errors.InvalidArgument(
                     'Mount type is binding but volume options have been '
                     'provided.'
                 )
@@ -158,7 +158,7 @@ class Mount(dict):
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
             if propagation:
-                raise errors.DockerError(
+                raise errors.InvalidArgument(
                     'Mount type is volume but `propagation` argument has been '
                     'provided.'
                 )
@@ -167,11 +167,11 @@ class Mount(dict):
     def parse_mount_string(cls, string):
         parts = string.split(':')
         if len(parts) > 3:
-            raise errors.DockerError(
+            raise errors.InvalidArgument(
                 'Invalid mount format "{0}"'.format(string)
             )
         if len(parts) == 1:
-            return cls(target=parts[0])
+            return cls(target=parts[0], source=None)
         else:
             target = parts[1]
             source = parts[0]
@@ -229,7 +229,7 @@ class UpdateConfig(dict):
         if delay is not None:
             self['Delay'] = delay
         if failure_action not in ('pause', 'continue'):
-            raise errors.DockerError(
+            raise errors.InvalidArgument(
                 'failure_action must be either `pause` or `continue`.'
             )
         self['FailureAction'] = failure_action
