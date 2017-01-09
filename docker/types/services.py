@@ -1,6 +1,7 @@
 import six
 
 from .. import errors
+from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import format_environment, split_command
 
 
@@ -175,8 +176,17 @@ class Mount(dict):
         else:
             target = parts[1]
             source = parts[0]
+            mount_type = 'volume'
+            if source.startswith('/') or (
+                IS_WINDOWS_PLATFORM and source[0].isalpha() and
+                source[1] == ':'
+            ):
+                # FIXME: That windows condition will fail earlier since we
+                # split on ':'. We should look into doing a smarter split
+                # if we detect we are on Windows.
+                mount_type = 'bind'
             read_only = not (len(parts) == 2 or parts[2] == 'rw')
-            return cls(target, source, read_only=read_only)
+            return cls(target, source, read_only=read_only, type=mount_type)
 
 
 class Resources(dict):
