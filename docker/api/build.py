@@ -18,7 +18,7 @@ class BuildApiMixin(object):
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
-              labels=None):
+              labels=None, cachefrom=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -92,6 +92,7 @@ class BuildApiMixin(object):
             shmsize (int): Size of `/dev/shm` in bytes. The size must be
                 greater than 0. If omitted the system uses 64MB.
             labels (dict): A dictionary of labels to set on the image.
+            cachefrom (list): A list of images used for build cache resolution.
 
         Returns:
             A generator for the build output.
@@ -186,6 +187,14 @@ class BuildApiMixin(object):
             else:
                 raise errors.InvalidVersion(
                     'labels was only introduced in API version 1.23'
+                )
+
+        if cachefrom:
+            if utils.version_gte(self._version, '1.25'):
+                params.update({'cachefrom': json.dumps(cachefrom)})
+            else:
+                raise errors.InvalidVersion(
+                    'cachefrom was only introduced in API version 1.25'
                 )
 
         if context is not None:
