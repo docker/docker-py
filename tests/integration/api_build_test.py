@@ -153,6 +153,24 @@ class BuildTest(BaseAPIIntegrationTest):
         info = self.client.inspect_image('labels')
         self.assertEqual(info['Config']['Labels'], labels)
 
+    @requires_api_version('1.25')
+    def test_build_cachefrom(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+        ]).encode('ascii'))
+
+        cachefrom = ['build1']
+
+        stream = self.client.build(
+            fileobj=script, tag='cachefrom', cachefrom=cachefrom
+        )
+        self.tmp_imgs.append('cachefrom')
+        for chunk in stream:
+            pass
+
+        info = self.client.inspect_image('cachefrom')
+        self.assertEqual(info['Config']['CacheFrom'], cachefrom)
+
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']
         snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'
