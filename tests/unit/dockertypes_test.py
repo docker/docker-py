@@ -5,9 +5,9 @@ import unittest
 import pytest
 
 from docker.constants import DEFAULT_DOCKER_API_VERSION
-from docker.errors import InvalidVersion
+from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    EndpointConfig, HostConfig, IPAMConfig, IPAMPool, LogConfig, Ulimit,
+    EndpointConfig, HostConfig, IPAMConfig, IPAMPool, LogConfig, Mount, Ulimit,
 )
 
 
@@ -253,3 +253,33 @@ class IPAMConfigTest(unittest.TestCase):
                 'IPRange': None,
             }]
         })
+
+
+class TestMounts(unittest.TestCase):
+    def test_parse_mount_string_ro(self):
+        mount = Mount.parse_mount_string("/foo/bar:/baz:ro")
+        self.assertEqual(mount['Source'], "/foo/bar")
+        self.assertEqual(mount['Target'], "/baz")
+        self.assertEqual(mount['ReadOnly'], True)
+
+    def test_parse_mount_string_rw(self):
+        mount = Mount.parse_mount_string("/foo/bar:/baz:rw")
+        self.assertEqual(mount['Source'], "/foo/bar")
+        self.assertEqual(mount['Target'], "/baz")
+        self.assertEqual(mount['ReadOnly'], False)
+
+    def test_parse_mount_string_short_form(self):
+        mount = Mount.parse_mount_string("/foo/bar:/baz")
+        self.assertEqual(mount['Source'], "/foo/bar")
+        self.assertEqual(mount['Target'], "/baz")
+        self.assertEqual(mount['ReadOnly'], False)
+
+    def test_parse_mount_string_no_source(self):
+        mount = Mount.parse_mount_string("foo/bar")
+        self.assertEqual(mount['Source'], None)
+        self.assertEqual(mount['Target'], "foo/bar")
+        self.assertEqual(mount['ReadOnly'], False)
+
+    def test_parse_mount_string_invalid(self):
+        with pytest.raises(InvalidArgument):
+            Mount.parse_mount_string("foo:bar:baz:rw")

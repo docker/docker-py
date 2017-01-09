@@ -93,6 +93,10 @@ class InvalidConfigFile(DockerException):
     pass
 
 
+class InvalidArgument(DockerException):
+    pass
+
+
 class DeprecatedMethod(DockerException):
     pass
 
