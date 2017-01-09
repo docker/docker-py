@@ -10,6 +10,11 @@ from docker.types import (
     EndpointConfig, HostConfig, IPAMConfig, IPAMPool, LogConfig, Mount, Ulimit,
 )
 
+try:
+    from unittest import mock
+except:
+    import mock
+
 
 def create_host_config(*args, **kwargs):
     return HostConfig(*args, **kwargs)
@@ -258,28 +263,48 @@ class IPAMConfigTest(unittest.TestCase):
 class TestMounts(unittest.TestCase):
     def test_parse_mount_string_ro(self):
         mount = Mount.parse_mount_string("/foo/bar:/baz:ro")
-        self.assertEqual(mount['Source'], "/foo/bar")
-        self.assertEqual(mount['Target'], "/baz")
-        self.assertEqual(mount['ReadOnly'], True)
+        assert mount['Source'] == "/foo/bar"
+        assert mount['Target'] == "/baz"
+        assert mount['ReadOnly'] is True
 
     def test_parse_mount_string_rw(self):
         mount = Mount.parse_mount_string("/foo/bar:/baz:rw")
-        self.assertEqual(mount['Source'], "/foo/bar")
-        self.assertEqual(mount['Target'], "/baz")
-        self.assertEqual(mount['ReadOnly'], False)
+        assert mount['Source'] == "/foo/bar"
+        assert mount['Target'] == "/baz"
+        assert not mount['ReadOnly']
 
     def test_parse_mount_string_short_form(self):
         mount = Mount.parse_mount_string("/foo/bar:/baz")
-        self.assertEqual(mount['Source'], "/foo/bar")
-        self.assertEqual(mount['Target'], "/baz")
-        self.assertEqual(mount['ReadOnly'], False)
+        assert mount['Source'] == "/foo/bar"
+        assert mount['Target'] == "/baz"
+        assert not mount['ReadOnly']
 
     def test_parse_mount_string_no_source(self):
         mount = Mount.parse_mount_string("foo/bar")
-        self.assertEqual(mount['Source'], None)
-        self.assertEqual(mount['Target'], "foo/bar")
-        self.assertEqual(mount['ReadOnly'], False)
+        assert mount['Source'] is None
+        assert mount['Target'] == "foo/bar"
+        assert not mount['ReadOnly']
 
     def test_parse_mount_string_invalid(self):
         with pytest.raises(InvalidArgument):
             Mount.parse_mount_string("foo:bar:baz:rw")
+
+    def test_parse_mount_named_volume(self):
+        mount = Mount.parse_mount_string("foobar:/baz")
+        assert mount['Source'] == 'foobar'
+        assert mount['Target'] == '/baz'
+        assert mount['Type'] == 'volume'
+
+    def test_parse_mount_bind(self):
+        mount = Mount.parse_mount_string('/foo/bar:/baz')
+        assert mount['Source'] == "/foo/bar"
+        assert mount['Target'] == "/baz"
+        assert mount['Type'] == 'bind'
+
+    @pytest.mark.xfail
+    def test_parse_mount_bind_windows(self):
+        with mock.patch('docker.types.services.IS_WINDOWS_PLATFORM', True):
+            mount = Mount.parse_mount_string('C:/foo/bar:/baz')
+        assert mount['Source'] == "C:/foo/bar"
+        assert mount['Target'] == "/baz"
+        assert mount['Type'] == 'bind'
