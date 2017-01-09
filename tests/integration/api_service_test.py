@@ -10,7 +10,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(ServiceTest, self).setUp()
         self.client.leave_swarm(force=True)
-        self.client.init_swarm('eth0')
+        self.init_swarm()
 
     def tearDown(self):
         super(ServiceTest, self).tearDown()

@@ -1,6 +1,7 @@
 import six
 
 from .. import errors
+from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import format_environment, split_command
 
 
@@ -131,10 +132,11 @@ class Mount(dict):
         self['Target'] = target
         self['Source'] = source
         if type not in ('bind', 'volume'):
-            raise errors.DockerError(
+            raise errors.InvalidArgument(
                 'Only acceptable mount types are `bind` and `volume`.'
             )
         self['Type'] = type
+        self['ReadOnly'] = read_only
 
         if type == 'bind':
             if propagation is not None:
@@ -142,7 +144,7 @@ class Mount(dict):
                     'Propagation': propagation
                 }
             if any([labels, driver_config, no_copy]):
-                raise errors.DockerError(
+                raise errors.InvalidArgument(
                     'Mount type is binding but volume options have been '
                     'provided.'
                 )
@@ -157,7 +159,7 @@ class Mount(dict):
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
             if propagation:
-                raise errors.DockerError(
+                raise errors.InvalidArgument(
                     'Mount type is volume but `propagation` argument has been '
                     'provided.'
                 )
@@ -166,16 +168,25 @@ class Mount(dict):
     def parse_mount_string(cls, string):
         parts = string.split(':')
         if len(parts) > 3:
-            raise errors.DockerError(
+            raise errors.InvalidArgument(
                 'Invalid mount format "{0}"'.format(string)
             )
         if len(parts) == 1:
-            return cls(target=parts[0])
+            return cls(target=parts[0], source=None)
         else:
             target = parts[1]
             source = parts[0]
-            read_only = not (len(parts) == 3 or parts[2] == 'ro')
-            return cls(target, source, read_only=read_only)
+            mount_type = 'volume'
+            if source.startswith('/') or (
+                IS_WINDOWS_PLATFORM and source[0].isalpha() and
+                source[1] == ':'
+            ):
+                # FIXME: That windows condition will fail earlier since we
+                # split on ':'. We should look into doing a smarter split
+                # if we detect we are on Windows.
+                mount_type = 'bind'
+            read_only = not (len(parts) == 2 or parts[2] == 'rw')
+            return cls(target, source, read_only=read_only, type=mount_type)
 
 
 class Resources(dict):
@@ -228,7 +239,7 @@ class UpdateConfig(dict):
         if delay is not None:
             self['Delay'] = delay
         if failure_action not in ('pause', 'continue'):
-            raise errors.DockerError(
+            raise errors.InvalidArgument(
                 'failure_action must be either `pause` or `continue`.'
             )
         self['FailureAction'] = failure_action

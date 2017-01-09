@@ -1,6 +1,20 @@
 Change log
 ==========
 
+2.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/28?closed=1)
+
+### Bugfixes
+
+* Fixed a bug where forward slashes in some .dockerignore patterns weren't
+  being parsed correctly on Windows
+* Fixed a bug where `Mount.parse_mount_string` would never set the read_only
+  parameter on the resulting `Mount`.
+* Fixed a bug where `Mount.parse_mount_string` would incorrectly mark host
+  binds as being of `volume` type.
+
 2.0.0
 -----
 
