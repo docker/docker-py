@@ -348,3 +348,38 @@ def convert_service_ports(ports):
 
         result.append(port_spec)
     return result
+
+
+class ServiceMode(dict):
+    """
+        Indicate whether a service should be deployed as a replicated or global
+        service, and associated parameters
+
+        Args:
+            mode (string): Can be either ``replicated`` or ``global``
+            replicas (int): Number of replicas. For replicated services only.
+    """
+    def __init__(self, mode, replicas=None):
+        if mode not in ('replicated', 'global'):
+            raise errors.InvalidArgument(
+                'mode must be either "replicated" or "global"'
+            )
+        if mode != 'replicated' and replicas is not None:
+            raise errors.InvalidArgument(
+                'replicas can only be used for replicated mode'
+            )
+        self[mode] = {}
+        if replicas:
+            self[mode]['Replicas'] = replicas
+
+    @property
+    def mode(self):
+        if 'global' in self:
+            return 'global'
+        return 'replicated'
+
+    @property
+    def replicas(self):
+        if self.mode != 'replicated':
+            return None
+        return self['replicated'].get('Replicas')
