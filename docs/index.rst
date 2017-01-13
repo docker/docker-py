@@ -8,7 +8,7 @@ For more information about the Remote API, `see its documentation <https://docs.
 Installation
 ------------
 
-The latest stable version `is available on PyPi <https://pypi.python.org/pypi/docker/>`_. Either add ``docker`` to your ``requirements.txt`` file or install with pip::
+The latest stable version `is available on PyPI <https://pypi.python.org/pypi/docker/>`_. Either add ``docker`` to your ``requirements.txt`` file or install with pip::
 
     pip install docker
 
