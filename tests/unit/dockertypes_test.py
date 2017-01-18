@@ -308,3 +308,44 @@ class TestMounts(unittest.TestCase):
         assert mount['Source'] == "C:/foo/bar"
         assert mount['Target'] == "/baz"
         assert mount['Type'] == 'bind'
+
+
+class TestServiceMounts(unittest.TestCase):
+
+    def test_parse_mount_string_defaults(self):
+        mount = Mount.parse_mount_string(
+            "source=/foo/bar,target=/abc/xyz")
+        self.assertEqual(mount['Source'], '/foo/bar')
+        self.assertEqual(mount['Target'], '/abc/xyz')
+        self.assertEqual(mount['Type'], 'volume')
+        self.assertEqual(mount['ReadOnly'], False)
+
+    def test_parse_mount_string_common(self):
+        mount = Mount.parse_mount_string(
+            "type=bind,src=/foo/bar,dst=/abc/xyz,readonly,propagation=slave")
+        self.assertEqual(mount['Source'], '/foo/bar')
+        self.assertEqual(mount['Target'], '/abc/xyz')
+        self.assertEqual(mount['Type'], 'bind')
+        self.assertEqual(mount['ReadOnly'], True)
+        self.assertEqual(mount['BindOptions']['Propagation'], 'slave')
+
+    def test_parse_mount_string_advanced(self):
+        mount = Mount.parse_mount_string(
+            "src=/foo/bar,dst=/abc/xyz,ro,volume-label=color1=red,"
+            "volume-label='color2=blue'")
+        print mount
+        self.assertEqual(mount['Source'], '/foo/bar')
+        self.assertEqual(mount['Target'], '/abc/xyz')
+        self.assertEqual(mount['ReadOnly'], True)
+        self.assertDictEqual(
+            mount['VolumeOptions']['Labels'],
+            {'color1': 'red', 'color2': 'blue'})
+
+    @pytest.mark.xfail
+    def test_parse_mount_bind_windows(self):
+        with mock.patch('docker.types.services.IS_WINDOWS_PLATFORM', True):
+            mount = Mount.parse_mount_string(
+                "source=C:/foo/bar,target=/baz")
+        assert mount['Source'] == "C:/foo/bar"
+        assert mount['Target'] == "/baz"
+        assert mount['Type'] == 'volume'

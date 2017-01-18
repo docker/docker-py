@@ -166,6 +166,13 @@ class Mount(dict):
 
     @classmethod
     def parse_mount_string(cls, string):
+        if ',' in string:
+            return cls._parse_mount_string_service(string)
+        else:
+            return cls._parse_mount_string_docker(string)
+
+    @classmethod
+    def _parse_mount_string_docker(cls, string):
         parts = string.split(':')
         if len(parts) > 3:
             raise errors.InvalidArgument(
@@ -187,6 +194,45 @@ class Mount(dict):
                 mount_type = 'bind'
             read_only = not (len(parts) == 2 or parts[2] == 'rw')
             return cls(target, source, read_only=read_only, type=mount_type)
+
+    @classmethod
+    def _parse_mount_string_service(cls, string):
+        mount_kwargs = {}
+        try:
+            target = source = None
+            fields = string.split(',')
+            for field in fields:
+                pair = field.split('=', 1)
+                key = pair[0]
+
+                if len(pair) == 1:
+                    if key in ['readonly', 'ro']:
+                        mount_kwargs['read_only'] = True
+                    elif key == 'volume-nocopy':
+                        mount_kwargs['no_copy'] = True
+                    continue
+
+                val = pair[1]
+                if key in ['target', 'dst', 'destination']:
+                    target = val
+                elif key in ['source', 'src']:
+                    source = val
+                elif key in ['readonly, ro']:
+                    mount_kwargs['read_only'] = val
+                elif key in ['type', 'propagation']:
+                    mount_kwargs[key] = val
+                elif key == 'volume-label':
+                    k, v = val.strip("\"\'").split('=')
+                    mount_kwargs.setdefault('labels', {}).update({k: v})
+
+            if not (target and source):
+                raise SyntaxError("`target` and `source` are required fields.")
+
+        except Exception as e:
+            raise SyntaxError(
+                "Invalid mount format {0}\n{1}".format(string, e))
+
+        return cls(target, source, **mount_kwargs)
 
 
 class Resources(dict):
