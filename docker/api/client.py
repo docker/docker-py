@@ -18,16 +18,20 @@ from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
 from .. import auth
-from ..constants import (DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
-                         IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION,
-                         STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
-                         MINIMUM_DOCKER_API_VERSION)
-from ..errors import (DockerException, TLSParameterError,
-                      create_api_error_from_http_exception)
+from ..constants import (
+    DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
+    DEFAULT_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
+    MINIMUM_DOCKER_API_VERSION
+)
+from ..errors import (
+    DockerException, TLSParameterError,
+    create_api_error_from_http_exception
+)
 from ..tls import TLSConfig
 from ..transport import SSLAdapter, UnixAdapter
 from ..utils import utils, check_resource, update_headers
 from ..utils.socket import frames_iter
+from ..utils.json_stream import json_stream
 try:
     from ..transport import NpipeAdapter
 except ImportError:
@@ -274,27 +278,20 @@ class APIClient(
 
     def _stream_helper(self, response, decode=False):
         """Generator for data coming from a chunked-encoded HTTP response."""
+
         if response.raw._fp.chunked:
-            reader = response.raw
-            while not reader.closed:
-                # this read call will block until we get a chunk
-                data = reader.read(1)
-                if not data:
-                    break
-                if reader._fp.chunk_left:
-                    data += reader.read(reader._fp.chunk_left)
-                if decode:
-                    if six.PY3:
-                        data = data.decode('utf-8')
-                    # remove the trailing newline
-                    data = data.strip()
-                    # split the data at any newlines
-                    data_list = data.split("\r\n")
-                    # load and yield each line seperately
-                    for data in data_list:
-                        data = json.loads(data)
-                        yield data
-                else:
+            if decode:
+                for chunk in json_stream(self._stream_helper(response, False)):
+                    yield chunk
+            else:
+                reader = response.raw
+                while not reader.closed:
+                    # this read call will block until we get a chunk
+                    data = reader.read(1)
+                    if not data:
+                        break
+                    if reader._fp.chunk_left:
+                        data += reader.read(reader._fp.chunk_left)
                     yield data
         else:
             # Response isn't chunked, meaning we probably
