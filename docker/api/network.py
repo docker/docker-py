@@ -11,13 +11,13 @@ class NetworkApiMixin(object):
         List networks. Similar to the ``docker networks ls`` command.
 
         Args:
-            names (list): List of names to filter by
-            ids (list): List of ids to filter by
+            names (:py:class:`list`): List of names to filter by
+            ids (:py:class:`list`): List of ids to filter by
             filters (dict): Filters to be processed on the network list.
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
                 - ``label=[<key>]`` or ``label=[<key>=<value>]``.
-                - ``type=["custom"|"builtin"] `` Filters networks by type.
+                - ``type=["custom"|"builtin"]`` Filters networks by type.
 
         Returns:
             (dict): List of network objects.
@@ -169,17 +169,18 @@ class NetworkApiMixin(object):
         Args:
             container (str): container-id/name to be connected to the network
             net_id (str): network id
-            aliases (list): A list of aliases for this endpoint. Names in that
-                list can be used within the network to reach the container.
-                Defaults to ``None``.
-            links (list): A list of links for this endpoint. Containers
-                declared in this list will be linkedto this container.
-                Defaults to ``None``.
+            aliases (:py:class:`list`): A list of aliases for this endpoint.
+                Names in that list can be used within the network to reach the
+                container. Defaults to ``None``.
+            links (:py:class:`list`): A list of links for this endpoint.
+                Containers declared in this list will be linked to this
+                container. Defaults to ``None``.
             ipv4_address (str): The IP address of this container on the
                 network, using the IPv4 protocol. Defaults to ``None``.
             ipv6_address (str): The IP address of this container on the
                 network, using the IPv6 protocol. Defaults to ``None``.
-            link_local_ips (list): A list of link-local (IPv4/IPv6) addresses.
+            link_local_ips (:py:class:`list`): A list of link-local
+            (IPv4/IPv6) addresses.
         """
         data = {
             "Container": container,

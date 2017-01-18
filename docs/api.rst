@@ -19,8 +19,6 @@ Containers
   :members:
   :undoc-members:
 
-.. py:module:: docker.api.image
-
 Images
 ------
 

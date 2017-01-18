@@ -20,7 +20,7 @@ class TaskTemplate(dict):
           individual container created as part of the service.
         restart_policy (RestartPolicy): Specification for the restart policy
           which applies to containers created as part of this service.
-        placement (list): A list of constraints.
+        placement (:py:class:`list`): A list of constraints.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
                  placement=None, log_driver=None):
@@ -62,16 +62,16 @@ class ContainerSpec(dict):
 
         image (string): The image name to use for the container.
         command (string or list):  The command to be run in the image.
-        args (list): Arguments to the command.
+        args (:py:class:`list`): Arguments to the command.
         env (dict): Environment variables.
         dir (string): The working directory for commands to run in.
         user (string): The user inside the container.
         labels (dict): A map of labels to associate with the service.
-        mounts (list): A list of specifications for mounts to be added to
-          containers created as part of the service. See the
-          :py:class:`~docker.types.Mount` class for details.
+        mounts (:py:class:`list`): A list of specifications for mounts to be
+            added to containers created as part of the service. See the
+            :py:class:`~docker.types.Mount` class for details.
         stop_grace_period (int): Amount of time to wait for the container to
-          terminate before forcefully killing it.
+            terminate before forcefully killing it.
     """
     def __init__(self, image, command=None, args=None, env=None, workdir=None,
                  user=None, labels=None, mounts=None, stop_grace_period=None):
@@ -106,7 +106,7 @@ class ContainerSpec(dict):
 class Mount(dict):
     """
     Describes a mounted folder's configuration inside a container. A list of
-    ``Mount``s would be used as part of a
+    :py:class:`Mount`s would be used as part of a
     :py:class:`~docker.types.ContainerSpec`.
 
     Args:

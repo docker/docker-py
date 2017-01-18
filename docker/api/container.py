@@ -388,13 +388,13 @@ class ContainerApiMixin(object):
             environment (dict or list): A dictionary or a list of strings in
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
-            dns (list): DNS name servers. Deprecated since API version 1.10.
-                Use ``host_config`` instead.
-            dns_opt (list): Additional options to be added to the container's
-                ``resolv.conf`` file
+            dns (:py:class:`list`): DNS name servers. Deprecated since API
+                version 1.10. Use ``host_config`` instead.
+            dns_opt (:py:class:`list`): Additional options to be added to the
+                container's ``resolv.conf`` file
             volumes (str or list):
-            volumes_from (list): List of container names or Ids to get
-                volumes from.
+            volumes_from (:py:class:`list`): List of container names or Ids to
+                get volumes from.
             network_disabled (bool): Disable networking
             name (str): A name for the container
             entrypoint (str or list): An entrypoint
@@ -478,19 +478,19 @@ class ContainerApiMixin(object):
             device_write_bps: Limit write rate (bytes per second) from a
                 device.
             device_write_iops: Limit write rate (IO per second) from a device.
-            devices (list): Expose host devices to the container, as a list
-                of strings in the form
+            devices (:py:class:`list`): Expose host devices to the container,
+                as a list of strings in the form
                 ``<path_on_host>:<path_in_container>:<cgroup_permissions>``.
 
                 For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
-            dns (list): Set custom DNS servers.
-            dns_search (list): DNS search domains.
+            dns (:py:class:`list`): Set custom DNS servers.
+            dns_search (:py:class:`list`): DNS search domains.
             extra_hosts (dict): Addtional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
-            group_add (list): List of additional group names and/or IDs that
-                the container process will run as.
+            group_add (:py:class:`list`): List of additional group names and/or
+                IDs that the container process will run as.
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: `None`.
             links (dict or list of tuples): Either a dictionary mapping name
@@ -539,8 +539,8 @@ class ContainerApiMixin(object):
                 - ``Name`` One of ``on-failure``, or ``always``.
                 - ``MaximumRetryCount`` Number of times to restart the
                   container on failure.
-            security_opt (list): A list of string values to customize labels
-                for MLS systems, such as SELinux.
+            security_opt (:py:class:`list`): A list of string values to
+                customize labels for MLS systems, such as SELinux.
             shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
             sysctls (dict): Kernel parameters to set in the container.
             tmpfs (dict): Temporary filesystems to mount, as a dictionary
@@ -555,13 +555,13 @@ class ContainerApiMixin(object):
                         '/mnt/vol1': 'size=3G,uid=1000'
                     }
 
-            ulimits (list): Ulimits to set inside the container, as a list of
-                dicts.
+            ulimits (:py:class:`list`): Ulimits to set inside the container,
+                as a list of dicts.
             userns_mode (str): Sets the user namespace mode for the container
                 when user namespace remapping option is enabled. Supported
                 values are: ``host``
-            volumes_from (list): List of container names or IDs to get
-                volumes from.
+            volumes_from (:py:class:`list`): List of container names or IDs to
+                get volumes from.
 
 
         Returns:
@@ -618,17 +618,17 @@ class ContainerApiMixin(object):
         :py:meth:`create_networking_config`.
 
         Args:
-            aliases (list): A list of aliases for this endpoint. Names in
-                that list can be used within the network to reach the
+            aliases (:py:class:`list`): A list of aliases for this endpoint.
+                Names in that list can be used within the network to reach the
                 container. Defaults to ``None``.
-            links (list): A list of links for this endpoint. Containers
-                declared in this list will be linked to this container.
-                Defaults to ``None``.
+            links (:py:class:`list`): A list of links for this endpoint.
+                Containers declared in this list will be linked to this
+                container. Defaults to ``None``.
             ipv4_address (str): The IP address of this container on the
                 network, using the IPv4 protocol. Defaults to ``None``.
             ipv6_address (str): The IP address of this container on the
                 network, using the IPv6 protocol. Defaults to ``None``.
-            link_local_ips (list): A list of link-local (IPv4/IPv6)
+            link_local_ips (:py:class:`list`): A list of link-local (IPv4/IPv6)
                 addresses.
 
         Returns:
