@@ -143,8 +143,8 @@ class SwarmApiMixin(object):
         Make this Engine join a swarm that has already been created.
 
         Args:
-            remote_addrs (list): Addresses of one or more manager nodes already
-                participating in the Swarm to join.
+            remote_addrs (:py:class:`list`): Addresses of one or more manager
+                nodes already participating in the Swarm to join.
             join_token (string): Secret token for joining this Swarm.
             listen_addr (string): Listen address used for inter-manager
                 communication if the node gets promoted to manager, as well as

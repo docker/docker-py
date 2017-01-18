@@ -13,18 +13,18 @@ class ServiceApiMixin(object):
         Create a service.
 
         Args:
-            task_template (dict): Specification of the task to start as part
-                of the new service.
+            task_template (TaskTemplate): Specification of the task to start as
+                part of the new service.
             name (string): User-defined name for the service. Optional.
             labels (dict): A map of labels to associate with the service.
                 Optional.
             mode (string): Scheduling mode for the service (``replicated`` or
                 ``global``). Defaults to ``replicated``.
-            update_config (dict): Specification for the update strategy of the
-                service. Default: ``None``
-            networks (list): List of network names or IDs to attach the
-                service to. Default: ``None``.
-            endpoint_config (dict): Properties that can be configured to
+            update_config (UpdateConfig): Specification for the update strategy
+                of the service. Default: ``None``
+            networks (:py:class:`list`): List of network names or IDs to attach
+                the service to. Default: ``None``.
+            endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
         Returns:
@@ -159,7 +159,7 @@ class ServiceApiMixin(object):
                 ``label`` and ``desired-state``.
 
         Returns:
-            (list): List of task dictionaries.
+            (:py:class:`list`): List of task dictionaries.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -186,20 +186,18 @@ class ServiceApiMixin(object):
                 ID).
             version (int): The version number of the service object being
                 updated. This is required to avoid conflicting writes.
-            task_template (dict): Specification of the updated task to start
-                as part of the service. See the [TaskTemplate
-                class](#TaskTemplate) for details.
+            task_template (TaskTemplate): Specification of the updated task to
+                start as part of the service.
             name (string): New name for the service. Optional.
             labels (dict): A map of labels to associate with the service.
                 Optional.
             mode (string): Scheduling mode for the service (``replicated`` or
                 ``global``). Defaults to ``replicated``.
-            update_config (dict): Specification for the update strategy of the
-                service. See the [UpdateConfig class](#UpdateConfig) for
-                details. Default: ``None``.
-            networks (list): List of network names or IDs to attach the
-                service to. Default: ``None``.
-            endpoint_config (dict): Properties that can be configured to
+            update_config (UpdateConfig): Specification for the update strategy
+                of the service. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs to attach
+                the service to. Default: ``None``.
+            endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
         Returns:
