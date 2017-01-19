@@ -333,7 +333,6 @@ class TestServiceMounts(unittest.TestCase):
         mount = Mount.parse_mount_string(
             "src=/foo/bar,dst=/abc/xyz,ro,volume-label=color1=red,"
             "volume-label='color2=blue'")
-        print mount
         self.assertEqual(mount['Source'], '/foo/bar')
         self.assertEqual(mount['Target'], '/abc/xyz')
         self.assertEqual(mount['ReadOnly'], True)
