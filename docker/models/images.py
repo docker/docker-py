@@ -30,10 +30,10 @@ class Image(Model):
         """
         The image's tags.
         """
-        return [
-            tag for tag in self.attrs.get('RepoTags', [])
-            if tag != '<none>:<none>'
-        ]
+        tags = self.attrs.get('RepoTags')
+        if tags is None:
+            tags = []
+        return [tag for tag in tags if tag != '<none>:<none>']
 
     def history(self):
         """
