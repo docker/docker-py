@@ -468,17 +468,17 @@ class ContainerCollection(Collection):
             device_write_bps: Limit write rate (bytes per second) from a
                 device.
             device_write_iops: Limit write rate (IO per second) from a device.
-            devices (list): Expose host devices to the container, as a list
-                of strings in the form
+            devices (:py:class:`list`): Expose host devices to the container,
+                as a list of strings in the form
                 ``<path_on_host>:<path_in_container>:<cgroup_permissions>``.
 
                 For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
-            dns (list): Set custom DNS servers.
-            dns_opt (list): Additional options to be added to the container's
-                ``resolv.conf`` file.
-            dns_search (list): DNS search domains.
+            dns (:py:class:`list`): Set custom DNS servers.
+            dns_opt (:py:class:`list`): Additional options to be added to the
+                container's ``resolv.conf`` file.
+            dns_search (:py:class:`list`): DNS search domains.
             domainname (str or list): Set custom DNS search domains.
             entrypoint (str or list): The entrypoint for the container.
             environment (dict or list): Environment variables to set inside
@@ -486,8 +486,8 @@ class ContainerCollection(Collection):
                 format ``["SOMEVARIABLE=xxx"]``.
             extra_hosts (dict): Addtional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
-            group_add (list): List of additional group names and/or IDs that
-                the container process will run as.
+            group_add (:py:class:`list`): List of additional group names and/or
+                IDs that the container process will run as.
             hostname (str): Optional hostname for the container.
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: `None`.
@@ -517,8 +517,8 @@ class ContainerCollection(Collection):
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
                 container is allowed to consume.
-            networks (list): A list of network names to connect this
-                container to.
+            networks (:py:class:`list`): A list of network names to connect
+                this container to.
             name (str): The name for this container.
             network_disabled (bool): Disable networking.
             network_mode (str): One of:
@@ -574,8 +574,8 @@ class ContainerCollection(Collection):
                 For example:
                 ``{"Name": "on-failure", "MaximumRetryCount": 5}``
 
-            security_opt (list): A list of string values to customize labels
-                for MLS systems, such as SELinux.
+            security_opt (:py:class:`list`): A list of string values to
+                customize labels for MLS systems, such as SELinux.
             shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
             stdin_open (bool): Keep ``STDIN`` open even if not attached.
             stdout (bool): Return logs from ``STDOUT`` when ``detach=False``.
@@ -598,8 +598,8 @@ class ContainerCollection(Collection):
                     }
 
             tty (bool): Allocate a pseudo-TTY.
-            ulimits (list): Ulimits to set inside the container, as a list of
-                dicts.
+            ulimits (:py:class:`list`): Ulimits to set inside the container, as
+                a list of dicts.
             user (str or int): Username or UID to run commands as inside the
                 container.
             userns_mode (str): Sets the user namespace mode for the container
@@ -621,8 +621,8 @@ class ContainerCollection(Collection):
                     {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
                      '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
 
-            volumes_from (list): List of container names or IDs to get
-                volumes from.
+            volumes_from (:py:class:`list`): List of container names or IDs to
+                get volumes from.
             working_dir (str): Path to the working directory.
 
         Returns:

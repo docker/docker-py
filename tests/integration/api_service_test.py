@@ -251,3 +251,31 @@ class ServiceTest(BaseAPIIntegrationTest):
         con_spec = svc_info['Spec']['TaskTemplate']['ContainerSpec']
         assert 'Env' in con_spec
         assert con_spec['Env'] == ['DOCKER_PY_TEST=1']
+
+    def test_create_service_global_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, mode='global'
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'Global' in svc_info['Spec']['Mode']
+
+    def test_create_service_replicated_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name,
+            mode=docker.types.ServiceMode('replicated', 5)
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'Replicated' in svc_info['Spec']['Mode']
+        assert svc_info['Spec']['Mode']['Replicated'] == {'Replicas': 5}

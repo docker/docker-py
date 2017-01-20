@@ -1,5 +1,6 @@
 import warnings
 from .. import auth, errors, utils
+from ..types import ServiceMode
 
 
 class ServiceApiMixin(object):
@@ -13,18 +14,18 @@ class ServiceApiMixin(object):
         Create a service.
 
         Args:
-            task_template (dict): Specification of the task to start as part
-                of the new service.
+            task_template (TaskTemplate): Specification of the task to start as
+                part of the new service.
             name (string): User-defined name for the service. Optional.
             labels (dict): A map of labels to associate with the service.
                 Optional.
-            mode (string): Scheduling mode for the service (``replicated`` or
-                ``global``). Defaults to ``replicated``.
-            update_config (dict): Specification for the update strategy of the
-                service. Default: ``None``
-            networks (list): List of network names or IDs to attach the
-                service to. Default: ``None``.
-            endpoint_config (dict): Properties that can be configured to
+            mode (ServiceMode): Scheduling mode for the service (replicated
+                or global). Defaults to replicated.
+            update_config (UpdateConfig): Specification for the update strategy
+                of the service. Default: ``None``
+            networks (:py:class:`list`): List of network names or IDs to attach
+                the service to. Default: ``None``.
+            endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
         Returns:
@@ -49,6 +50,9 @@ class ServiceApiMixin(object):
             raise errors.DockerException(
                 'Missing mandatory Image key in ContainerSpec'
             )
+        if mode and not isinstance(mode, dict):
+            mode = ServiceMode(mode)
+
         registry, repo_name = auth.resolve_repository_name(image)
         auth_header = auth.get_config_header(self, registry)
         if auth_header:
@@ -159,7 +163,7 @@ class ServiceApiMixin(object):
                 ``label`` and ``desired-state``.
 
         Returns:
-            (list): List of task dictionaries.
+            (:py:class:`list`): List of task dictionaries.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -186,20 +190,18 @@ class ServiceApiMixin(object):
                 ID).
             version (int): The version number of the service object being
                 updated. This is required to avoid conflicting writes.
-            task_template (dict): Specification of the updated task to start
-                as part of the service. See the [TaskTemplate
-                class](#TaskTemplate) for details.
+            task_template (TaskTemplate): Specification of the updated task to
+                start as part of the service.
             name (string): New name for the service. Optional.
             labels (dict): A map of labels to associate with the service.
                 Optional.
-            mode (string): Scheduling mode for the service (``replicated`` or
-                ``global``). Defaults to ``replicated``.
-            update_config (dict): Specification for the update strategy of the
-                service. See the [UpdateConfig class](#UpdateConfig) for
-                details. Default: ``None``.
-            networks (list): List of network names or IDs to attach the
-                service to. Default: ``None``.
-            endpoint_config (dict): Properties that can be configured to
+            mode (ServiceMode): Scheduling mode for the service (replicated
+                or global). Defaults to replicated.
+            update_config (UpdateConfig): Specification for the update strategy
+                of the service. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs to attach
+                the service to. Default: ``None``.
+            endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
         Returns:
@@ -224,6 +226,8 @@ class ServiceApiMixin(object):
         if labels is not None:
             data['Labels'] = labels
         if mode is not None:
+            if not isinstance(mode, dict):
+                mode = ServiceMode(mode)
             data['Mode'] = mode
         if task_template is not None:
             image = task_template.get('ContainerSpec', {}).get('Image', None)

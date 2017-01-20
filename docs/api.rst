@@ -19,8 +19,6 @@ Containers
   :members:
   :undoc-members:
 
-.. py:module:: docker.api.image
-
 Images
 ------
 
@@ -112,5 +110,6 @@ Configuration types
 .. autoclass:: Mount
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
+.. autoclass:: ServiceMode
 .. autoclass:: TaskTemplate
 .. autoclass:: UpdateConfig

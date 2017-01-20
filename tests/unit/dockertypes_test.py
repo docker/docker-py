@@ -7,7 +7,8 @@ import pytest
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    EndpointConfig, HostConfig, IPAMConfig, IPAMPool, LogConfig, Mount, Ulimit,
+    EndpointConfig, HostConfig, IPAMConfig, IPAMPool, LogConfig, Mount,
+    ServiceMode, Ulimit,
 )
 
 try:
@@ -260,7 +261,35 @@ class IPAMConfigTest(unittest.TestCase):
         })
 
 
-class TestMounts(unittest.TestCase):
+class ServiceModeTest(unittest.TestCase):
+    def test_replicated_simple(self):
+        mode = ServiceMode('replicated')
+        assert mode == {'replicated': {}}
+        assert mode.mode == 'replicated'
+        assert mode.replicas is None
+
+    def test_global_simple(self):
+        mode = ServiceMode('global')
+        assert mode == {'global': {}}
+        assert mode.mode == 'global'
+        assert mode.replicas is None
+
+    def test_global_replicas_error(self):
+        with pytest.raises(InvalidArgument):
+            ServiceMode('global', 21)
+
+    def test_replicated_replicas(self):
+        mode = ServiceMode('replicated', 21)
+        assert mode == {'replicated': {'Replicas': 21}}
+        assert mode.mode == 'replicated'
+        assert mode.replicas == 21
+
+    def test_invalid_mode(self):
+        with pytest.raises(InvalidArgument):
+            ServiceMode('foobar')
+
+
+class MountTest(unittest.TestCase):
     def test_parse_mount_string_ro(self):
         mount = Mount.parse_mount_string("/foo/bar:/baz:ro")
         assert mount['Source'] == "/foo/bar"

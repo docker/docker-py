@@ -83,6 +83,11 @@ class ImageTest(unittest.TestCase):
         })
         assert image.tags == []
 
+        image = Image(attrs={
+            'RepoTags': None
+        })
+        assert image.tags == []
+
     def test_history(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
