@@ -73,13 +73,12 @@ You can manage images:
   >>> client.images.list()
   [<Image 'ubuntu'>, <Image 'nginx'>, ...]
 
-That's just a taster of what you can do with the Docker SDK for Python. For more, :doc:`take a look at the reference <client>`.
+That's just a taste of what you can do with the Docker SDK for Python. For more, :doc:`take a look at the reference <client>`.
 
 .. toctree::
   :hidden:
   :maxdepth: 2
 
-  Home <index>
   client
   containers
   images

@@ -48,7 +48,7 @@ class IPAMConfig(dict):
     Args:
 
         driver (str): The IPAM driver to use. Defaults to ``default``.
-        pool_configs (list): A list of pool configurations
+        pool_configs (:py:class:`list`): A list of pool configurations
           (:py:class:`~docker.types.IPAMPool`). Defaults to empty list.
         options (dict): Driver options as a key-value dictionary.
           Defaults to `None`.

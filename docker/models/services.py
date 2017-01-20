@@ -42,7 +42,7 @@ class Service(Model):
                 ``label``, and ``desired-state``.
 
         Returns:
-            (list): List of task dictionaries.
+            (:py:class:`list`): List of task dictionaries.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -92,29 +92,27 @@ class ServiceCollection(Collection):
             args (list of str): Arguments to the command.
             constraints (list of str): Placement constraints.
             container_labels (dict): Labels to apply to the container.
-            endpoint_spec (dict): Properties that can be configured to
+            endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
             env (list of str): Environment variables, in the form
                 ``KEY=val``.
             labels (dict): Labels to apply to the service.
             log_driver (str): Log driver to use for containers.
             log_driver_options (dict): Log driver options.
-            mode (string): Scheduling mode for the service (``replicated`` or
+            mode (str): Scheduling mode for the service (``replicated`` or
                 ``global``). Defaults to ``replicated``.
             mounts (list of str): Mounts for the containers, in the form
                 ``source:target:options``, where options is either
                 ``ro`` or ``rw``.
             name (str): Name to give to the service.
-            networks (list): List of network names or IDs to attach the
-                service to. Default: ``None``.
-            resources (dict): Resource limits and reservations. For the
-                format, see the Remote API documentation.
-            restart_policy (dict): Restart policy for containers. For the
-                format, see the Remote API documentation.
+            networks (list of str): List of network names or IDs to attach
+                the service to. Default: ``None``.
+            resources (Resources): Resource limits and reservations.
+            restart_policy (RestartPolicy): Restart policy for containers.
             stop_grace_period (int): Amount of time to wait for
                 containers to terminate before forcefully killing them.
-            update_config (dict): Specification for the update strategy of the
-                service. Default: ``None``
+            update_config (UpdateConfig): Specification for the update strategy
+                of the service. Default: ``None``
             user (str): User to run commands as.
             workdir (str): Working directory for commands to run.
 
