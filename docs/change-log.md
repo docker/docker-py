@@ -4,7 +4,7 @@ Change log
 2.0.2
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/28?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/29?closed=1)
 
 ### Bugfixes
 
