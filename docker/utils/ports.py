@@ -1,6 +1,4 @@
 
-import re
-
 
 def add_port_mapping(port_bindings, internal_port, external):
     if internal_port in port_bindings:
@@ -60,11 +58,7 @@ def _raise_invalid_port(port):
 
 
 def split_port(port):
-    # mask : inside [] with ^ (ipv6 address)
-    port = re.sub(r'\[[^]]*\]', lambda x: x.group(0).replace(':', '^'), port)
-    parts = str(port).split(':')
-    # unmask parts
-    parts = [part.replace('^', ':') for part in parts]
+    parts = str(port).rsplit(':',2)
 
     if not 1 <= len(parts) <= 3:
         _raise_invalid_port(port)

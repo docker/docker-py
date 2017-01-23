@@ -549,9 +549,9 @@ class PortsTest(unittest.TestCase):
 
     def test_split_port_with_ipv6_address(self):
         internal_port, external_port = split_port(
-            "[2001:abcd:ef00::2]:1000:2000")
+            "2001:abcd:ef00::2:1000:2000")
         self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, [("[2001:abcd:ef00::2]", "1000")])
+        self.assertEqual(external_port, [("2001:abcd:ef00::2", "1000")])
 
     def test_split_port_invalid(self):
         self.assertRaises(ValueError,
