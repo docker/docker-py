@@ -121,7 +121,6 @@ class Container(Model):
             user (str): User to execute command as. Default: root
             detach (bool): If true, detach from the exec command.
                 Default: False
-            tty (bool): Allocate a pseudo-TTY. Default: False
             stream (bool): Stream response data. Default: False
 
         Returns:
