@@ -4,7 +4,6 @@ import os
 import os.path
 import json
 import shlex
-import sys
 import tarfile
 import tempfile
 import warnings
@@ -15,6 +14,7 @@ from fnmatch import fnmatch
 import requests
 import six
 
+from .. import constants
 from .. import errors
 from .. import tls
 
@@ -90,7 +90,12 @@ def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
     for path in sorted(exclude_paths(root, exclude, dockerfile=dockerfile)):
         i = t.gettarinfo(os.path.join(root, path), arcname=path)
 
-        if sys.platform == 'win32':
+        if i is None:
+            # This happens when we encounter a socket file. We can safely
+            # ignore it and proceed.
+            continue
+
+        if constants.IS_WINDOWS_PLATFORM:
             # Windows doesn't keep track of the execute bit, so we make files
             # and directories executable by default.
             i.mode = i.mode & 0o755 | 0o111
