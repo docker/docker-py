@@ -22,7 +22,7 @@ def create_api_error_from_http_exception(e):
     cls = APIError
     if response.status_code == 404:
         if explanation and ('No such image' in str(explanation) or
-                            'not found: does not exist or no read access'
+                            'not found: does not exist or no pull access'
                             in str(explanation)):
             cls = ImageNotFound
         else:
