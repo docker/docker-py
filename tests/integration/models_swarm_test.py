@@ -15,7 +15,8 @@ class SwarmTest(unittest.TestCase):
     def test_init_update_leave(self):
         client = docker.from_env()
         client.swarm.init(
-            snapshot_interval=5000, listen_addr=helpers.swarm_listen_addr()
+            advertise_addr='eth0', snapshot_interval=5000,
+            listen_addr=helpers.swarm_listen_addr()
         )
         assert client.swarm.attrs['Spec']['Raft']['SnapshotInterval'] == 5000
         client.swarm.update(snapshot_interval=10000)
