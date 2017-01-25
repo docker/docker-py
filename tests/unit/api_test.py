@@ -192,6 +192,24 @@ class DockerApiTest(BaseAPIClientTest):
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_df(self):
+        self.client.df()
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'system/df',
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_df_no_api_version(self):
+        self.client.df(False)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_base + 'system/df',
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_retrieve_server_version(self):
         client = APIClient(version="auto")
         self.assertTrue(isinstance(client._version, six.string_types))

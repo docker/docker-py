@@ -18,6 +18,13 @@ class InformationTest(BaseAPIIntegrationTest):
         self.assertIn('Version', res)
         self.assertEqual(len(res['Version'].split('.')), 3)
 
+    def test_df(self):
+        res = self.client.df()
+        self.assertIn('LayersSize', res)
+        self.assertIn('Images', res)
+        self.assertIn('Containers', res)
+        self.assertIn('Volumes', res)
+
     def test_info(self):
         res = self.client.info()
         self.assertIn('Containers', res)
