@@ -5,6 +5,7 @@ import json
 import os
 import os.path
 import shutil
+import socket
 import sys
 import tarfile
 import tempfile
@@ -892,6 +893,20 @@ class TarTest(unittest.TestCase):
             tar_data = tarfile.open(fileobj=archive)
             self.assertEqual(
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
+            )
+
+    def test_tar_socket_file(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        sock = socket.socket(socket.AF_UNIX)
+        self.addCleanup(sock.close)
+        sock.bind(os.path.join(base, 'test.sock'))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            self.assertEqual(
+                sorted(tar_data.getnames()), ['bar', 'foo']
             )
 
 
