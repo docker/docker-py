@@ -87,7 +87,7 @@ class Image(Model):
         Returns:
             (bool): ``True`` if successful
         """
-        self.client.api.tag(self.id, repository, tag=tag, **kwargs)
+        return self.client.api.tag(self.id, repository, tag=tag, **kwargs)
 
 
 class ImageCollection(Collection):
