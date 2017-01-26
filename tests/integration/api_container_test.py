@@ -401,6 +401,18 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(container)
         assert config['HostConfig']['Isolation'] == 'default'
 
+    @requires_api_version('1.25')
+    def test_create_with_auto_remove(self):
+        host_config = self.client.create_host_config(
+            auto_remove=True
+        )
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], host_config=host_config
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['AutoRemove'] is True
+
 
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):

@@ -457,6 +457,8 @@ class ContainerApiMixin(object):
         :py:meth:`create_container`.
 
         Args:
+            auto_remove (bool): enable auto-removal of the container on daemon
+                side when the container's process exits.
             binds (dict): Volumes to bind. See :py:meth:`create_container`
                     for more information.
             blkio_weight_device: Block IO weight (relative device weight) in
