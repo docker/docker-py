@@ -1,3 +1,4 @@
+import os
 import shutil
 import unittest
 
@@ -8,6 +9,7 @@ import six
 from .. import helpers
 
 BUSYBOX = 'busybox:buildroot-2014.02'
+TEST_API_VERSION = os.environ.get('DOCKER_TEST_API_VERSION')
 
 
 class BaseIntegrationTest(unittest.TestCase):
@@ -27,7 +29,7 @@ class BaseIntegrationTest(unittest.TestCase):
         self.tmp_networks = []
 
     def tearDown(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         for img in self.tmp_imgs:
             try:
                 client.api.remove_image(img)
@@ -61,7 +63,9 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
     def setUp(self):
         super(BaseAPIIntegrationTest, self).setUp()
-        self.client = docker.APIClient(timeout=60, **kwargs_from_env())
+        self.client = docker.APIClient(
+            version=TEST_API_VERSION, timeout=60, **kwargs_from_env()
+        )
 
     def run_container(self, *args, **kwargs):
         container = self.client.create_container(*args, **kwargs)

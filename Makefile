@@ -46,10 +46,10 @@ integration-dind: build build-py3
 	docker rm -vf dpy-dind || :
 	docker run -d --name dpy-dind --privileged dockerswarm/dind:1.13.0 docker daemon\
 		-H tcp://0.0.0.0:2375
-	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-sdk-python\
-		py.test tests/integration
-	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --link=dpy-dind:docker docker-sdk-python3\
-		py.test tests/integration
+	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=1.25"\
+		--link=dpy-dind:docker docker-sdk-python py.test tests/integration
+	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=1.25"\
+		--link=dpy-dind:docker docker-sdk-python3 py.test tests/integration
 	docker rm -vf dpy-dind
 
 .PHONY: integration-dind-ssl
@@ -61,10 +61,10 @@ integration-dind-ssl: build-dind-certs build build-py3
 		--tlscacert=/certs/ca.pem --tlscert=/certs/server-cert.pem\
 		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375
 	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
-		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs"\
+		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=1.25"\
 		--link=dpy-dind-ssl:docker docker-sdk-python py.test tests/integration
 	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
-		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs"\
+		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=1.25"\
 		--link=dpy-dind-ssl:docker docker-sdk-python3 py.test tests/integration
 	docker rm -vf dpy-dind-ssl dpy-dind-certs
 

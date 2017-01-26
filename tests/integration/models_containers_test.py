@@ -1,25 +1,25 @@
 import docker
-from .base import BaseIntegrationTest
+from .base import BaseIntegrationTest, TEST_API_VERSION
 
 
 class ContainerCollectionTest(BaseIntegrationTest):
 
     def test_run(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         self.assertEqual(
             client.containers.run("alpine", "echo hello world", remove=True),
             b'hello world\n'
         )
 
     def test_run_detach(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
         assert container.attrs['Config']['Image'] == "alpine"
         assert container.attrs['Config']['Cmd'] == ['sleep', '300']
 
     def test_run_with_error(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         with self.assertRaises(docker.errors.ContainerError) as cm:
             client.containers.run("alpine", "cat /test", remove=True)
         assert cm.exception.exit_status == 1
@@ -28,19 +28,19 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert "No such file or directory" in str(cm.exception)
 
     def test_run_with_image_that_does_not_exist(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         with self.assertRaises(docker.errors.ImageNotFound):
             client.containers.run("dockerpytest_does_not_exist")
 
     def test_get(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
         assert client.containers.get(container.id).attrs[
             'Config']['Image'] == "alpine"
 
     def test_list(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container_id = client.containers.run(
             "alpine", "sleep 300", detach=True).id
         self.tmp_containers.append(container_id)
@@ -59,7 +59,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 class ContainerTest(BaseIntegrationTest):
 
     def test_commit(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run(
             "alpine", "sh -c 'echo \"hello\" > /test'",
             detach=True
@@ -73,14 +73,14 @@ class ContainerTest(BaseIntegrationTest):
         )
 
     def test_diff(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "touch /test", detach=True)
         self.tmp_containers.append(container.id)
         container.wait()
         assert container.diff() == [{'Path': '/test', 'Kind': 1}]
 
     def test_exec_run(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run(
             "alpine", "sh -c 'echo \"hello\" > /test; sleep 60'", detach=True
         )
@@ -88,7 +88,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.exec_run("cat /test") == b"hello\n"
 
     def test_kill(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
         while container.status != 'running':
@@ -99,7 +99,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.status == 'exited'
 
     def test_logs(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "echo hello world",
                                           detach=True)
         self.tmp_containers.append(container.id)
@@ -107,7 +107,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.logs() == b"hello world\n"
 
     def test_pause(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
         container.pause()
@@ -118,7 +118,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.status == "running"
 
     def test_remove(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "echo hello", detach=True)
         self.tmp_containers.append(container.id)
         assert container.id in [c.id for c in client.containers.list(all=True)]
@@ -128,7 +128,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.id not in [c.id for c in containers]
 
     def test_rename(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "echo hello", name="test1",
                                           detach=True)
         self.tmp_containers.append(container.id)
@@ -138,7 +138,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.name == "test2"
 
     def test_restart(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 100", detach=True)
         self.tmp_containers.append(container.id)
         first_started_at = container.attrs['State']['StartedAt']
@@ -148,7 +148,7 @@ class ContainerTest(BaseIntegrationTest):
         assert first_started_at != second_started_at
 
     def test_start(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.create("alpine", "sleep 50", detach=True)
         self.tmp_containers.append(container.id)
         assert container.status == "created"
@@ -157,7 +157,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.status == "running"
 
     def test_stats(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 100", detach=True)
         self.tmp_containers.append(container.id)
         stats = container.stats(stream=False)
@@ -166,7 +166,7 @@ class ContainerTest(BaseIntegrationTest):
             assert key in stats
 
     def test_stop(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "top", detach=True)
         self.tmp_containers.append(container.id)
         assert container.status in ("running", "created")
@@ -175,7 +175,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.status == "exited"
 
     def test_top(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 60", detach=True)
         self.tmp_containers.append(container.id)
         top = container.top()
@@ -183,7 +183,7 @@ class ContainerTest(BaseIntegrationTest):
         assert 'sleep 60' in top['Processes'][0]
 
     def test_update(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 60", detach=True,
                                           cpu_shares=2)
         self.tmp_containers.append(container.id)
@@ -193,7 +193,7 @@ class ContainerTest(BaseIntegrationTest):
         assert container.attrs['HostConfig']['CpuShares'] == 3
 
     def test_wait(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sh -c 'exit 0'",
                                           detach=True)
         self.tmp_containers.append(container.id)

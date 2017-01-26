@@ -3,13 +3,13 @@ import io
 import docker
 import pytest
 
-from .base import BaseIntegrationTest
+from .base import BaseIntegrationTest, TEST_API_VERSION
 
 
 class ImageCollectionTest(BaseIntegrationTest):
 
     def test_build(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.build(fileobj=io.BytesIO(
             "FROM alpine\n"
             "CMD echo hello world".encode('ascii')
@@ -19,7 +19,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
     def test_build_with_error(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         with self.assertRaises(docker.errors.BuildError) as cm:
             client.images.build(fileobj=io.BytesIO(
                 "FROM alpine\n"
@@ -29,18 +29,18 @@ class ImageCollectionTest(BaseIntegrationTest):
                                      "NOTADOCKERFILECOMMAND")
 
     def test_list(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
         assert image.id in get_ids(client.images.list())
 
     def test_list_with_repository(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
         assert image.id in get_ids(client.images.list('alpine'))
         assert image.id in get_ids(client.images.list('alpine:latest'))
 
     def test_pull(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
         assert 'alpine:latest' in image.attrs['RepoTags']
 
@@ -52,7 +52,7 @@ class ImageTest(BaseIntegrationTest):
         tag = 'some-tag'
         identifier = '{}:{}'.format(repo, tag)
 
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
 
         image.tag(repo, tag)

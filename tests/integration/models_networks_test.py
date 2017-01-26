@@ -1,12 +1,12 @@
 import docker
 from .. import helpers
-from .base import BaseIntegrationTest
+from .base import BaseIntegrationTest, TEST_API_VERSION
 
 
 class ImageCollectionTest(BaseIntegrationTest):
 
     def test_create(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         name = helpers.random_name()
         network = client.networks.create(name, labels={'foo': 'bar'})
         self.tmp_networks.append(network.id)
@@ -14,7 +14,7 @@ class ImageCollectionTest(BaseIntegrationTest):
         assert network.attrs['Labels']['foo'] == "bar"
 
     def test_get(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         name = helpers.random_name()
         network_id = client.networks.create(name).id
         self.tmp_networks.append(network_id)
@@ -22,7 +22,7 @@ class ImageCollectionTest(BaseIntegrationTest):
         assert network.name == name
 
     def test_list_remove(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         name = helpers.random_name()
         network = client.networks.create(name)
         self.tmp_networks.append(network.id)
@@ -50,7 +50,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 class ImageTest(BaseIntegrationTest):
 
     def test_connect_disconnect(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         network = client.networks.create(helpers.random_name())
         self.tmp_networks.append(network.id)
         container = client.containers.create("alpine", "sleep 300")

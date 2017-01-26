@@ -13,7 +13,7 @@ from .base import BUSYBOX
 @pytest.fixture(autouse=True, scope='session')
 def setup_test_session():
     warnings.simplefilter('error')
-    c = docker.APIClient(**kwargs_from_env())
+    c = docker.APIClient(version='auto', **kwargs_from_env())
     try:
         c.inspect_image(BUSYBOX)
     except docker.errors.NotFound:
