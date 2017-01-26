@@ -141,6 +141,7 @@ class ImageCollection(Collection):
                     ``"0-3"``, ``"0,1"``
             decode (bool): If set to ``True``, the returned stream will be
                 decoded into dicts on the fly. Default ``False``.
+            cachefrom (list): A list of images used for build cache resolution.
 
         Returns:
             (:py:class:`Image`): The built image.
