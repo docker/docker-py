@@ -34,6 +34,13 @@ def buildImages = { ->
   }
 }
 
+def getAPIVersion = { engineVersion ->
+  def versionMap = ['1.12': '1.24', '1.13': '1.25']
+
+  engineVersion = engineVersion.substring(0, 4)
+  return versionMap[engineVersion]
+}
+
 def runTests = { Map settings ->
   def dockerVersion = settings.get("dockerVersion", null)
   def pythonVersion = settings.get("pythonVersion", null)
@@ -53,8 +60,9 @@ def runTests = { Map settings ->
     wrappedNode(label: "ubuntu && !zfs && amd64", cleanWorkspace: true) {
       stage("test python=${pythonVersion} / docker=${dockerVersion}") {
         checkout(scm)
-        def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER"
-        def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER"
+        def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
+        def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
+        def apiVersion = getAPIVersion(dockerVersion)
         try {
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
             dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375
@@ -62,6 +70,7 @@ def runTests = { Map settings ->
           sh """docker run \\
             --name ${testContainerName} --volumes-from ${dindContainerName} \\
             -e 'DOCKER_HOST=tcp://docker:2375' \\
+            -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
             --link=${dindContainerName}:docker \\
             ${testImage} \\
             py.test -v -rxs tests/integration

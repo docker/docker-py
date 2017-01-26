@@ -25,8 +25,7 @@ class InformationTest(BaseAPIIntegrationTest):
         self.assertIn('Debug', res)
 
     def test_search(self):
-        client = docker.APIClient(timeout=10, **kwargs_from_env())
-        res = client.search('busybox')
+        res = self.client.search('busybox')
         self.assertTrue(len(res) >= 1)
         base_img = [x for x in res if x['name'] == 'busybox']
         self.assertEqual(len(base_img), 1)
@@ -126,8 +125,11 @@ class AutoDetectVersionTest(unittest.TestCase):
 class ConnectionTimeoutTest(unittest.TestCase):
     def setUp(self):
         self.timeout = 0.5
-        self.client = docker.api.APIClient(base_url='http://192.168.10.2:4243',
-                                           timeout=self.timeout)
+        self.client = docker.api.APIClient(
+            version=docker.constants.MINIMUM_DOCKER_API_VERSION,
+            base_url='http://192.168.10.2:4243',
+            timeout=self.timeout
+        )
 
     def test_timeout(self):
         start = time.time()
