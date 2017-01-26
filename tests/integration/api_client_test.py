@@ -24,13 +24,6 @@ class InformationTest(BaseAPIIntegrationTest):
         self.assertIn('Images', res)
         self.assertIn('Debug', res)
 
-    def test_search(self):
-        res = self.client.search('busybox')
-        self.assertTrue(len(res) >= 1)
-        base_img = [x for x in res if x['name'] == 'busybox']
-        self.assertEqual(len(base_img), 1)
-        self.assertIn('description', base_img[0])
-
 
 class LinkTest(BaseAPIIntegrationTest):
     def test_remove_link(self):
