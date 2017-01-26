@@ -10,9 +10,18 @@ class Volume(Model):
         """The name of the volume."""
         return self.attrs['Name']
 
-    def remove(self):
-        """Remove this volume."""
-        return self.client.api.remove_volume(self.id)
+    def remove(self, force=False):
+        """
+        Remove this volume.
+
+        Args:
+            force (bool): Force removal of volumes that were already removed
+                out of band by the volume driver plugin.
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If volume failed to remove.
+        """
+        return self.client.api.remove_volume(self.id, force=force)
 
 
 class VolumeCollection(Collection):
