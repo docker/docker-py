@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 
+import pytest
 import six
 
 from docker import errors
@@ -154,9 +155,11 @@ class BuildTest(BaseAPIIntegrationTest):
         self.assertEqual(info['Config']['Labels'], labels)
 
     @requires_api_version('1.25')
+    @pytest.mark.xfail(reason='Bad test')
     def test_build_cachefrom(self):
         script = io.BytesIO('\n'.join([
             'FROM scratch',
+            'CMD sh -c "echo \'Hello, World!\'"',
         ]).encode('ascii'))
 
         cachefrom = ['build1']
@@ -169,6 +172,7 @@ class BuildTest(BaseAPIIntegrationTest):
             pass
 
         info = self.client.inspect_image('cachefrom')
+        # FIXME: Config.CacheFrom is not a real thing
         self.assertEqual(info['Config']['CacheFrom'], cachefrom)
 
     def test_build_stderr_data(self):

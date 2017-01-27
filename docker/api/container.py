@@ -238,7 +238,7 @@ class ContainerApiMixin(object):
                          memswap_limit=None, cpuset=None, host_config=None,
                          mac_address=None, labels=None, volume_driver=None,
                          stop_signal=None, networking_config=None,
-                         healthcheck=None):
+                         healthcheck=None, stop_timeout=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -411,6 +411,8 @@ class ContainerApiMixin(object):
             volume_driver (str): The name of a volume driver/plugin.
             stop_signal (str): The stop signal to use to stop the container
                 (e.g. ``SIGINT``).
+            stop_timeout (int): Timeout to stop the container, in seconds.
+                Default: 10
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
 
@@ -437,6 +439,7 @@ class ContainerApiMixin(object):
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
             volume_driver, stop_signal, networking_config, healthcheck,
+            stop_timeout
         )
         return self.create_container_from_config(config, name)
 
