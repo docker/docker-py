@@ -36,15 +36,14 @@ def buildImages = { ->
 
 def getAPIVersion = { engineVersion ->
   def versionMap = ['1.12': '1.24', '1.13': '1.25']
-
-  engineVersion = engineVersion.substring(0, 4)
-  return versionMap[engineVersion]
+  return versionMap[engineVersion.substring(0, 4)]
 }
 
 def runTests = { Map settings ->
   def dockerVersion = settings.get("dockerVersion", null)
   def pythonVersion = settings.get("pythonVersion", null)
   def testImage = settings.get("testImage", null)
+  def apiVersion = getAPIVersion(dockerVersion)
 
   if (!testImage) {
     throw new Exception("Need test image object, e.g.: `runTests(testImage: img)`")
@@ -62,7 +61,6 @@ def runTests = { Map settings ->
         checkout(scm)
         def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
-        def apiVersion = getAPIVersion(dockerVersion)
         try {
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
             dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375
