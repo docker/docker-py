@@ -43,10 +43,12 @@ def untar_file(tardata, filename):
 
 
 def requires_api_version(version):
+    test_version = os.environ.get(
+        'DOCKER_TEST_API_VERSION', docker.constants.DEFAULT_DOCKER_API_VERSION
+    )
+
     return pytest.mark.skipif(
-        docker.utils.version_lt(
-            docker.constants.DEFAULT_DOCKER_API_VERSION, version
-        ),
+        docker.utils.version_lt(test_version, version),
         reason="API version is too low (< {0})".format(version)
     )
 

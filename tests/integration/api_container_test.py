@@ -413,6 +413,15 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(container)
         assert config['HostConfig']['AutoRemove'] is True
 
+    @requires_api_version('1.25')
+    def test_create_with_stop_timeout(self):
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], stop_timeout=25
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['Config']['StopTimeout'] == 25
+
 
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):
