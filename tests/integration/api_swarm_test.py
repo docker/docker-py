@@ -2,18 +2,18 @@ import copy
 import docker
 import pytest
 
-from ..helpers import requires_api_version
+from ..helpers import force_leave_swarm, requires_api_version
 from .base import BaseAPIIntegrationTest
 
 
 class SwarmTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(SwarmTest, self).setUp()
-        self.client.leave_swarm(force=True)
+        force_leave_swarm(self.client)
 
     def tearDown(self):
         super(SwarmTest, self).tearDown()
-        self.client.leave_swarm(force=True)
+        force_leave_swarm(self.client)
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):

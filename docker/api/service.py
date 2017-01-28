@@ -62,10 +62,24 @@ class ServiceApiMixin(object):
             'Labels': labels,
             'TaskTemplate': task_template,
             'Mode': mode,
-            'UpdateConfig': update_config,
             'Networks': utils.convert_service_networks(networks),
             'EndpointSpec': endpoint_spec
         }
+
+        if update_config is not None:
+            if utils.version_lt(self._version, '1.25'):
+                if 'MaxFailureRatio' in update_config:
+                    raise errors.InvalidVersion(
+                        'UpdateConfig.max_failure_ratio is not supported in'
+                        ' API version < 1.25'
+                    )
+                if 'Monitor' in update_config:
+                    raise errors.InvalidVersion(
+                        'UpdateConfig.monitor is not supported in'
+                        ' API version < 1.25'
+                    )
+            data['UpdateConfig'] = update_config
+
         return self._result(
             self._post_json(url, data=data, headers=headers), True
         )
@@ -230,6 +244,12 @@ class ServiceApiMixin(object):
                 mode = ServiceMode(mode)
             data['Mode'] = mode
         if task_template is not None:
+            if 'ForceUpdate' in task_template and utils.version_lt(
+                    self._version, '1.25'):
+                raise errors.InvalidVersion(
+                    'force_update is not supported in API version < 1.25'
+                )
+
             image = task_template.get('ContainerSpec', {}).get('Image', None)
             if image is not None:
                 registry, repo_name = auth.resolve_repository_name(image)
@@ -238,7 +258,19 @@ class ServiceApiMixin(object):
                     headers['X-Registry-Auth'] = auth_header
             data['TaskTemplate'] = task_template
         if update_config is not None:
+            if utils.version_lt(self._version, '1.25'):
+                if 'MaxFailureRatio' in update_config:
+                    raise errors.InvalidVersion(
+                        'UpdateConfig.max_failure_ratio is not supported in'
+                        ' API version < 1.25'
+                    )
+                if 'Monitor' in update_config:
+                    raise errors.InvalidVersion(
+                        'UpdateConfig.monitor is not supported in'
+                        ' API version < 1.25'
+                    )
             data['UpdateConfig'] = update_config
+
         if networks is not None:
             data['Networks'] = utils.convert_service_networks(networks)
         if endpoint_spec is not None:
