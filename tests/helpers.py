@@ -70,7 +70,9 @@ def force_leave_swarm(client):
     occasionally throws "context deadline exceeded" errors when leaving."""
     while True:
         try:
-            return client.swarm.leave(force=True)
+            if isinstance(client, docker.DockerClient):
+                return client.swarm.leave(force=True)
+            return client.leave_swarm(force=True)  # elif APIClient
         except docker.errors.APIError as e:
             if e.explanation == "context deadline exceeded":
                 continue

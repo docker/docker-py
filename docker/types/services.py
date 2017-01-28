@@ -21,9 +21,11 @@ class TaskTemplate(dict):
         restart_policy (RestartPolicy): Specification for the restart policy
           which applies to containers created as part of this service.
         placement (:py:class:`list`): A list of constraints.
+        force_update (int): A counter that triggers an update even if no
+            relevant parameters have been changed.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
-                 placement=None, log_driver=None):
+                 placement=None, log_driver=None, force_update=None):
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -35,6 +37,11 @@ class TaskTemplate(dict):
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
+
+        if force_update is not None:
+            if not isinstance(force_update, int):
+                raise TypeError('force_update must be an integer')
+            self['ForceUpdate'] = force_update
 
     @property
     def container_spec(self):
