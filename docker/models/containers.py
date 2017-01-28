@@ -1,5 +1,6 @@
 import copy
 
+from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
@@ -764,21 +765,8 @@ class ContainerCollection(Collection):
         return [self.get(r['Id']) for r in resp]
 
     def prune(self, filters=None):
-        """
-        Delete stopped containers
-
-        Args:
-            filters (dict): Filters to process on the prune list.
-
-        Returns:
-            (dict): A dict containing a list of deleted container IDs and
-                the amount of disk space reclaimed in bytes.
-
-        Raises:
-            :py:class:`docker.errors.APIError`
-                If the server returns an error.
-        """
         return self.client.api.prune_containers(filters=filters)
+    prune.__doc__ = APIClient.prune_containers.__doc__
 
 
 # kwargs to copy straight from run to create
