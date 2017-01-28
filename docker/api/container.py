@@ -911,15 +911,34 @@ class ContainerApiMixin(object):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
-
-        Raises:
-            :py:class:`~docker.errors.APIError` If an error occurs.
         """
         params = {'path': path}
         url = self._url('/containers/{0}/archive', container)
         res = self._put(url, params=params, data=data)
         self._raise_for_status(res)
         return res.status_code == 200
+
+    @utils.minimum_version('1.25')
+    def prune_containers(self, filters=None):
+        """
+        Delete stopped containers
+
+        Args:
+            filters (dict): Filters to process on the prune list.
+
+        Returns:
+            (dict): A dict containing a list of deleted container IDs and
+                the amount of disk space reclaimed in bytes.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        params = {}
+        if filters:
+            params['filters'] = utils.convert_filters(filters)
+        url = self._url('/containers/prune')
+        return self._result(self._post(url, params=params), True)
 
     @utils.check_resource
     def remove_container(self, container, v=False, link=False, force=False):
