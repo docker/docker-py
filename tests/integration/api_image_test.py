@@ -14,6 +14,7 @@ from six.moves import socketserver
 
 import docker
 
+from ..helpers import requires_api_version
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
@@ -285,3 +286,18 @@ class ImportImageTest(BaseAPIIntegrationTest):
         self.assertIn('status', result)
         img_id = result['status']
         self.tmp_imgs.append(img_id)
+
+
+@requires_api_version('1.25')
+class PruneImagesTest(BaseAPIIntegrationTest):
+    def test_prune_images(self):
+        try:
+            self.client.remove_image('hello-world')
+        except docker.errors.APIError:
+            pass
+        self.client.pull('hello-world')
+        self.tmp_imgs.append('hello-world')
+        img_id = self.client.inspect_image('hello-world')['Id']
+        result = self.client.prune_images()
+        assert img_id in result['ImagesDeleted']
+        assert result['SpaceReclaimed'] > 0

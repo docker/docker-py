@@ -269,3 +269,7 @@ class ImageCollection(Collection):
     def search(self, *args, **kwargs):
         return self.client.api.search(*args, **kwargs)
     search.__doc__ = APIClient.search.__doc__
+
+    def prune(self, filters=None):
+        return self.client.api.prune_images(filters=filters)
+    prune.__doc__ = APIClient.prune_images.__doc__
