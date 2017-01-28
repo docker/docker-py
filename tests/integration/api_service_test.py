@@ -155,6 +155,23 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert update_config['Delay'] == uc['Delay']
         assert update_config['FailureAction'] == uc['FailureAction']
 
+    @requires_api_version('1.25')
+    def test_create_service_with_update_config_monitor(self):
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        update_config = docker.types.UpdateConfig(
+            monitor=300000000, max_failure_ratio=0.4
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, update_config=update_config, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'UpdateConfig' in svc_info['Spec']
+        uc = svc_info['Spec']['UpdateConfig']
+        assert update_config['Monitor'] == uc['Monitor']
+        assert update_config['MaxFailureRatio'] == uc['MaxFailureRatio']
+
     def test_create_service_with_restart_policy(self):
         container_spec = docker.types.ContainerSpec('busybox', ['true'])
         policy = docker.types.RestartPolicy(

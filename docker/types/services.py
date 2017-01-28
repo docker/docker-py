@@ -233,8 +233,14 @@ class UpdateConfig(dict):
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
           ``continue`` and ``pause``. Default: ``continue``
+        monitor (int): Amount of time to monitor each updated task for
+          failures, in nanoseconds.
+        max_failure_ratio (float): The fraction of tasks that may fail during
+          an update before the failure action is invoked, specified as a
+          floating point number between 0 and 1. Default: 0
     """
-    def __init__(self, parallelism=0, delay=None, failure_action='continue'):
+    def __init__(self, parallelism=0, delay=None, failure_action='continue',
+                 monitor=None, max_failure_ratio=None):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
@@ -243,6 +249,20 @@ class UpdateConfig(dict):
                 'failure_action must be either `pause` or `continue`.'
             )
         self['FailureAction'] = failure_action
+
+        if monitor is not None:
+            if not isinstance(monitor, int):
+                raise TypeError('monitor must be an integer')
+            self['Monitor'] = monitor
+
+        if max_failure_ratio is not None:
+            if not isinstance(max_failure_ratio, (float, int)):
+                raise TypeError('max_failure_ratio must be a float')
+            if max_failure_ratio > 1 or max_failure_ratio < 0:
+                raise errors.InvalidArgument(
+                    'max_failure_ratio must be a number between 0 and 1'
+                )
+            self['MaxFailureRatio'] = max_failure_ratio
 
 
 class RestartConditionTypesEnum(object):
