@@ -438,6 +438,7 @@ class ContainerConfig(dict):
         working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
         host_config=None, mac_address=None, labels=None, volume_driver=None,
         stop_signal=None, networking_config=None, healthcheck=None,
+        stop_timeout=None
     ):
         if isinstance(command, six.string_types):
             command = split_command(command)
@@ -464,6 +465,11 @@ class ContainerConfig(dict):
         if stop_signal is not None and version_lt(version, '1.21'):
             raise errors.InvalidVersion(
                 'stop_signal was only introduced in API version 1.21'
+            )
+
+        if stop_timeout is not None and version_lt(version, '1.25'):
+            raise errors.InvalidVersion(
+                'stop_timeout was only introduced in API version 1.25'
             )
 
         if healthcheck is not None and version_lt(version, '1.24'):
@@ -584,4 +590,5 @@ class ContainerConfig(dict):
             'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
+            'StopTimeout': stop_timeout
         })
