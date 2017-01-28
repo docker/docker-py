@@ -763,6 +763,23 @@ class ContainerCollection(Collection):
                                           since=since)
         return [self.get(r['Id']) for r in resp]
 
+    def prune(self, filters=None):
+        """
+        Delete stopped containers
+
+        Args:
+            filters (dict): Filters to process on the prune list.
+
+        Returns:
+            (dict): A dict containing a list of deleted container IDs and
+                the amount of disk space reclaimed in bytes.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        return self.client.api.prune_containers(filters=filters)
+
 
 # kwargs to copy straight from run to create
 RUN_CREATE_KWARGS = [
