@@ -101,9 +101,11 @@ class ServiceCollection(Collection):
             log_driver_options (dict): Log driver options.
             mode (string): Scheduling mode for the service (``replicated`` or
                 ``global``). Defaults to ``replicated``.
-            mounts (list of str): Mounts for the containers, in the form
-                ``source:target:options``, where options is either
-                ``ro`` or ``rw``.
+            mounts (list of str): Mounts for the containers. Use either
+                ``docker service create --mount`` form
+                ``type=type,source=source,target=target,option=value,...``,
+                or `docker run --volume` form ``source:target:options``,
+                where options are either ``ro`` or ``rw``.
             name (str): Name to give to the service.
             networks (list): List of network names or IDs to attach the
                 service to. Default: ``None``.
