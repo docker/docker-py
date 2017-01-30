@@ -18,7 +18,8 @@ class BuildApiMixin(object):
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
-              labels=None, cache_from=None, target=None, network_mode=None):
+              labels=None, cache_from=None, target=None, network_mode=None,
+              squash=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -98,6 +99,8 @@ class BuildApiMixin(object):
                 Dockerfile
             network_mode (str): networking mode for the run commands during
                 build
+            squash (bool): Squash the resulting images layers into a
+                single layer.
 
         Returns:
             A generator for the build output.
@@ -216,6 +219,14 @@ class BuildApiMixin(object):
             else:
                 raise errors.InvalidVersion(
                     'network_mode was only introduced in API version 1.25'
+                )
+
+        if squash:
+            if utils.version_gte(self._version, '1.25'):
+                params.update({'squash': squash})
+            else:
+                raise errors.InvalidVersion(
+                    'squash was only introduced in API version 1.25'
                 )
 
         if context is not None:
