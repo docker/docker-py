@@ -28,12 +28,13 @@ class VolumeCollection(Collection):
     """Volumes on the Docker server."""
     model = Volume
 
-    def create(self, name, **kwargs):
+    def create(self, name=None, **kwargs):
         """
         Create a volume.
 
         Args:
-            name (str): Name of the volume
+            name (str): Name of the volume.  If not specified, the engine
+                generates a name.
             driver (str): Name of the driver used to create the volume
             driver_opts (dict): Driver options as a key-value dictionary
             labels (dict): Labels to set on the volume
