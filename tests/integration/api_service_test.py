@@ -2,14 +2,14 @@ import random
 
 import docker
 
-from ..helpers import requires_api_version
+from ..helpers import force_leave_swarm, requires_api_version
 from .base import BaseAPIIntegrationTest
 
 
 class ServiceTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(ServiceTest, self).setUp()
-        self.client.leave_swarm(force=True)
+        force_leave_swarm(self.client)
         self.init_swarm()
 
     def tearDown(self):
@@ -19,7 +19,7 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.client.remove_service(service['ID'])
             except docker.errors.APIError:
                 pass
-        self.client.leave_swarm(force=True)
+        force_leave_swarm(self.client)
 
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
@@ -155,6 +155,23 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert update_config['Delay'] == uc['Delay']
         assert update_config['FailureAction'] == uc['FailureAction']
 
+    @requires_api_version('1.25')
+    def test_create_service_with_update_config_monitor(self):
+        container_spec = docker.types.ContainerSpec('busybox', ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        update_config = docker.types.UpdateConfig(
+            monitor=300000000, max_failure_ratio=0.4
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, update_config=update_config, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'UpdateConfig' in svc_info['Spec']
+        uc = svc_info['Spec']['UpdateConfig']
+        assert update_config['Monitor'] == uc['Monitor']
+        assert update_config['MaxFailureRatio'] == uc['MaxFailureRatio']
+
     def test_create_service_with_restart_policy(self):
         container_spec = docker.types.ContainerSpec('busybox', ['true'])
         policy = docker.types.RestartPolicy(
@@ -279,3 +296,24 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Mode' in svc_info['Spec']
         assert 'Replicated' in svc_info['Spec']['Mode']
         assert svc_info['Spec']['Mode']['Replicated'] == {'Replicas': 5}
+
+    @requires_api_version('1.25')
+    def test_update_service_force_update(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ForceUpdate' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['ForceUpdate'] == 0
+        version_index = svc_info['Version']['Index']
+
+        task_tmpl = docker.types.TaskTemplate(container_spec, force_update=10)
+        self.client.update_service(name, version_index, task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert svc_info['Spec']['TaskTemplate']['ForceUpdate'] == 10
