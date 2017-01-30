@@ -389,11 +389,13 @@ def get_fake_volume_list():
             {
                 'Name': 'perfectcherryblossom',
                 'Driver': 'local',
-                'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom'
+                'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom',
+                'Scope': 'local'
             }, {
                 'Name': 'subterraneananimism',
                 'Driver': 'local',
-                'Mountpoint': '/var/lib/docker/volumes/subterraneananimism'
+                'Mountpoint': '/var/lib/docker/volumes/subterraneananimism',
+                'Scope': 'local'
             }
         ]
     }
@@ -408,7 +410,8 @@ def get_fake_volume():
         'Mountpoint': '/var/lib/docker/volumes/perfectcherryblossom',
         'Labels': {
             'com.example.some-label': 'some-value'
-        }
+        },
+        'Scope': 'local'
     }
     return status_code, response
 
