@@ -38,7 +38,8 @@ class VolumeApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.21')
-    def create_volume(self, name, driver=None, driver_opts=None, labels=None):
+    def create_volume(self, name=None, driver=None, driver_opts=None,
+                      labels=None):
         """
         Create and register a named volume
 
