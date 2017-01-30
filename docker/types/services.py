@@ -226,10 +226,11 @@ class Mount(dict):
                     mount_kwargs.setdefault('labels', {}).update({k: v})
 
             if not (target and source):
-                raise SyntaxError("`target` and `source` are required fields.")
+                raise errors.InvalidArgument(
+                    "`target` and `source` are required fields.")
 
         except Exception as e:
-            raise SyntaxError(
+            raise errors.InvalidArgument(
                 "Invalid mount format {0}\n{1}".format(string, e))
 
         return cls(target, source, **mount_kwargs)

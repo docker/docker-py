@@ -266,11 +266,13 @@ class TestMounts(unittest.TestCase):
         assert mount['Source'] == "/foo/bar"
         assert mount['Target'] == "/baz"
         assert mount['ReadOnly'] is True
+        assert mount['Type'] == 'bind'
 
     def test_parse_mount_string_rw(self):
         mount = Mount.parse_mount_string("/foo/bar:/baz:rw")
         assert mount['Source'] == "/foo/bar"
         assert mount['Target'] == "/baz"
+        assert mount['Type'] == 'bind'
         assert not mount['ReadOnly']
 
     def test_parse_mount_string_short_form(self):
@@ -339,6 +341,14 @@ class TestServiceMounts(unittest.TestCase):
         self.assertDictEqual(
             mount['VolumeOptions']['Labels'],
             {'color1': 'red', 'color2': 'blue'})
+
+    def test_parse_mount_string_invalid_format(self):
+        with pytest.raises(InvalidArgument):
+            Mount.parse_mount_string("type=bind,foo=bar=buz")
+
+    def test_parse_mount_string_missing_mandatory_params(self):
+        with pytest.raises(InvalidArgument):
+            Mount.parse_mount_string("type=bind,src=/foo/bar")
 
     @pytest.mark.xfail
     def test_parse_mount_bind_windows(self):
