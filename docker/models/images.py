@@ -62,10 +62,11 @@ class Image(Model):
 
         Example:
 
-            >>> image = cli.get("fedora:latest")
+            >>> image = cli.images.get("fedora:latest")
             >>> resp = image.save()
             >>> f = open('/tmp/fedora-latest.tar', 'w')
-            >>> f.write(resp.data)
+            >>> for chunk in resp.stream():
+            >>>     f.write(chunk)
             >>> f.close()
         """
         return self.client.api.get_image(self.id)
