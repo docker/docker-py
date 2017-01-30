@@ -18,7 +18,7 @@ class BuildApiMixin(object):
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
-              labels=None, cache_from=None):
+              labels=None, cache_from=None, squash=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -94,6 +94,8 @@ class BuildApiMixin(object):
             labels (dict): A dictionary of labels to set on the image.
             cache_from (list): A list of images used for build cache
                 resolution.
+            squash (bool): Squash the resulting images layers into a
+                single layer.
 
         Returns:
             A generator for the build output.
@@ -196,6 +198,14 @@ class BuildApiMixin(object):
             else:
                 raise errors.InvalidVersion(
                     'cache_from was only introduced in API version 1.25'
+                )
+
+        if squash:
+            if utils.version_gte(self._version, '1.25'):
+                params.update({'squash': squash})
+            else:
+                raise errors.InvalidVersion(
+                    'squash was only introduced in API version 1.25'
                 )
 
         if context is not None:
