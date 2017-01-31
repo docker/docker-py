@@ -88,13 +88,11 @@ class TestNetworks(BaseAPIIntegrationTest):
 
     @requires_api_version('1.21')
     def test_remove_network(self):
-        initial_size = len(self.client.networks())
-
         net_name, net_id = self.create_network()
-        self.assertEqual(len(self.client.networks()), initial_size + 1)
+        assert net_name in [n['Name'] for n in self.client.networks()]
 
         self.client.remove_network(net_id)
-        self.assertEqual(len(self.client.networks()), initial_size)
+        assert net_name not in [n['Name'] for n in self.client.networks()]
 
     @requires_api_version('1.21')
     def test_connect_and_disconnect_container(self):
