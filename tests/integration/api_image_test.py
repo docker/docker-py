@@ -299,5 +299,5 @@ class PruneImagesTest(BaseAPIIntegrationTest):
         self.tmp_imgs.append('hello-world')
         img_id = self.client.inspect_image('hello-world')['Id']
         result = self.client.prune_images()
-        assert img_id in result['ImagesDeleted']
+        assert img_id in [img['Deleted'] for img in result['ImagesDeleted']]
         assert result['SpaceReclaimed'] > 0
