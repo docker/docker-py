@@ -295,9 +295,23 @@ class PruneImagesTest(BaseAPIIntegrationTest):
             self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
+
+        # Ensure busybox does not get pruned
+        ctnr = self.client.create_container(BUSYBOX, ['sleep', '9999'])
+        self.tmp_containers.append(ctnr)
+
         self.client.pull('hello-world')
         self.tmp_imgs.append('hello-world')
         img_id = self.client.inspect_image('hello-world')['Id']
         result = self.client.prune_images()
-        assert img_id in [img['Deleted'] for img in result['ImagesDeleted']]
+        assert img_id not in [
+            img.get('Deleted') for img in result['ImagesDeleted']
+        ]
+        result = self.client.prune_images({'dangling': False})
         assert result['SpaceReclaimed'] > 0
+        assert 'hello-world:latest' in [
+            img.get('Untagged') for img in result['ImagesDeleted']
+        ]
+        assert img_id in [
+            img.get('Deleted') for img in result['ImagesDeleted']
+        ]
