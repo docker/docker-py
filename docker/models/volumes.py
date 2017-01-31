@@ -1,3 +1,4 @@
+from ..api import APIClient
 from .resource import Model, Collection
 
 
@@ -91,3 +92,7 @@ class VolumeCollection(Collection):
         if not resp.get('Volumes'):
             return []
         return [self.prepare_model(obj) for obj in resp['Volumes']]
+
+    def prune(self, filters=None):
+        return self.client.api.prune_volumes(filters=filters)
+    prune.__doc__ = APIClient.prune_volumes.__doc__
