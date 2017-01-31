@@ -124,7 +124,7 @@ class VolumeApiMixin(object):
             filters (dict): Filters to process on the prune list.
 
         Returns:
-            (dict): A dict containing a list of deleted volume IDs and
+            (dict): A dict containing a list of deleted volume names and
                 the amount of disk space reclaimed in bytes.
 
         Raises:

@@ -18,6 +18,7 @@ Methods available on ``client.images``:
   .. automethod:: push
   .. automethod:: remove
   .. automethod:: search
+  .. automethod:: prune
 
 
 Image objects

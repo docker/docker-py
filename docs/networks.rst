@@ -13,6 +13,7 @@ Methods available on ``client.networks``:
   .. automethod:: create
   .. automethod:: get
   .. automethod:: list
+  .. automethod:: prune
 
 Network objects
 -----------------
