@@ -87,6 +87,17 @@ Services
   :members:
   :undoc-members:
 
+Plugins
+-------
+
+.. py:module:: docker.api.plugin
+
+.. rst-class:: hide-signature
+.. autoclass:: PluginApiMixin
+  :members:
+  :undoc-members:
+
+
 The Docker daemon
 -----------------
 

@@ -14,6 +14,7 @@ from .daemon import DaemonApiMixin
 from .exec_api import ExecApiMixin
 from .image import ImageApiMixin
 from .network import NetworkApiMixin
+from .plugin import PluginApiMixin
 from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
@@ -46,6 +47,7 @@ class APIClient(
         ExecApiMixin,
         ImageApiMixin,
         NetworkApiMixin,
+        PluginApiMixin,
         ServiceApiMixin,
         SwarmApiMixin,
         VolumeApiMixin):
@@ -225,10 +227,12 @@ class APIClient(
         # Go <1.1 can't unserialize null to a string
         # so we do this disgusting thing here.
         data2 = {}
-        if data is not None:
+        if data is not None and isinstance(data, dict):
             for k, v in six.iteritems(data):
                 if v is not None:
                     data2[k] = v
+        else:
+            data2 = data
 
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
