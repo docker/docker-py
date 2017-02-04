@@ -81,7 +81,7 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
         return container
 
-    def create_and_start(self, image='busybox', command='top', **kwargs):
+    def create_and_start(self, image=BUSYBOX, command='top', **kwargs):
         container = self.client.create_container(
             image=image, command=command, **kwargs)
         self.tmp_containers.append(container)

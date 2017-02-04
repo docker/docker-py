@@ -1,5 +1,6 @@
 import copy
 
+from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
@@ -762,6 +763,10 @@ class ContainerCollection(Collection):
                                           filters=filters, limit=limit,
                                           since=since)
         return [self.get(r['Id']) for r in resp]
+
+    def prune(self, filters=None):
+        return self.client.api.prune_containers(filters=filters)
+    prune.__doc__ = APIClient.prune_containers.__doc__
 
 
 # kwargs to copy straight from run to create

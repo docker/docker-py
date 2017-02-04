@@ -1094,6 +1094,20 @@ class PauseTest(BaseAPIIntegrationTest):
         self.assertEqual(state['Paused'], False)
 
 
+class PruneTest(BaseAPIIntegrationTest):
+    @requires_api_version('1.25')
+    def test_prune_containers(self):
+        container1 = self.client.create_container(BUSYBOX, ['echo', 'hello'])
+        container2 = self.client.create_container(BUSYBOX, ['sleep', '9999'])
+        self.client.start(container1)
+        self.client.start(container2)
+        self.client.wait(container1)
+        result = self.client.prune_containers()
+        assert container1['Id'] in result['ContainersDeleted']
+        assert result['SpaceReclaimed'] > 0
+        assert container2['Id'] not in result['ContainersDeleted']
+
+
 class GetContainerStatsTest(BaseAPIIntegrationTest):
     @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
