@@ -231,7 +231,7 @@ class APIClient(
             for k, v in six.iteritems(data):
                 if v is not None:
                     data2[k] = v
-        else:
+        elif data is not None:
             data2 = data
 
         if 'headers' not in kwargs:
