@@ -885,5 +885,15 @@ def _create_container_args(kwargs):
                                   for p in sorted(port_bindings.keys())]
     binds = create_kwargs['host_config'].get('Binds')
     if binds:
-        create_kwargs['volumes'] = [v.split(':')[1] for v in binds]
+        create_kwargs['volumes'] = [_host_volume_from_bind(v) for v in binds]
     return create_kwargs
+
+
+def _host_volume_from_bind(bind):
+    bits = bind.split(':')
+    if len(bits) == 1:
+        return bits[0]
+    elif len(bits) == 2 and bits[1] in ('ro', 'rw'):
+        return bits[0]
+    else:
+        return bits[1]
