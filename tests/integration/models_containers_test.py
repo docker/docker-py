@@ -1,4 +1,5 @@
 import docker
+import tempfile
 from .base import BaseIntegrationTest, TEST_API_VERSION
 
 
@@ -31,6 +32,42 @@ class ContainerCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         with self.assertRaises(docker.errors.ImageNotFound):
             client.containers.run("dockerpytest_does_not_exist")
+
+    def test_run_with_volume(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        path = tempfile.mkdtemp()
+
+        container = client.containers.run(
+            "alpine", "sh -c 'echo \"hello\" > /insidecontainer/test'",
+            volumes=["%s:/insidecontainer" % path],
+            detach=True
+        )
+        self.tmp_containers.append(container.id)
+        container.wait()
+
+        out = client.containers.run(
+            "alpine", "cat /insidecontainer/test",
+            volumes=["%s:/insidecontainer" % path]
+        )
+        self.assertEqual(out, b'hello\n')
+
+    def test_run_with_named_volume(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.volumes.create(name="somevolume")
+
+        container = client.containers.run(
+            "alpine", "sh -c 'echo \"hello\" > /insidecontainer/test'",
+            volumes=["somevolume:/insidecontainer"],
+            detach=True
+        )
+        self.tmp_containers.append(container.id)
+        container.wait()
+
+        out = client.containers.run(
+            "alpine", "cat /insidecontainer/test",
+            volumes=["somevolume:/insidecontainer"]
+        )
+        self.assertEqual(out, b'hello\n')
 
     def test_get(self):
         client = docker.from_env(version=TEST_API_VERSION)
