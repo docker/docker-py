@@ -313,9 +313,10 @@ class ContainerApiMixin(object):
 
         **Using volumes**
 
-        Volume declaration is done in two parts. Provide a list of mountpoints
-        to the with the ``volumes`` parameter, and declare mappings in the
-        ``host_config`` section.
+        Volume declaration is done in two parts. Provide a list of
+        paths to use as mountpoints inside the container with the
+        ``volumes`` parameter, and declare mappings from paths on the host
+        in the ``host_config`` section.
 
         .. code-block:: python
 
@@ -392,7 +393,8 @@ class ContainerApiMixin(object):
                 version 1.10. Use ``host_config`` instead.
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file
-            volumes (str or list):
+            volumes (str or list): List of paths inside the container to use
+                as volumes.
             volumes_from (:py:class:`list`): List of container names or Ids to
                 get volumes from.
             network_disabled (bool): Disable networking
