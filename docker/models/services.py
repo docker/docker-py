@@ -77,6 +77,34 @@ class Service(Model):
             **create_kwargs
         )
 
+    def logs(self, **kwargs):
+        """
+            Get log stream for the service.
+            Note: This method works only for services with the ``json-file``
+            or ``journald`` logging drivers.
+
+            Args:
+                details (bool): Show extra details provided to logs.
+                    Default: ``False``
+                follow (bool): Keep connection open to read logs as they are
+                    sent by the Engine. Default: ``False``
+                stdout (bool): Return logs from ``stdout``. Default: ``False``
+                stderr (bool): Return logs from ``stderr``. Default: ``False``
+                since (int): UNIX timestamp for the logs staring point.
+                    Default: 0
+                timestamps (bool): Add timestamps to every log line.
+                tail (string or int): Number of log lines to be returned,
+                    counting from the current end of the logs. Specify an
+                    integer or ``'all'`` to output all log lines.
+                    Default: ``all``
+
+            Returns (generator): Logs for the service.
+        """
+        is_tty = self.attrs['Spec']['TaskTemplate']['ContainerSpec'].get(
+            'TTY', False
+        )
+        return self.client.api.service_logs(self.id, is_tty=is_tty, **kwargs)
+
 
 class ServiceCollection(Collection):
     """Services on the Docker server."""
