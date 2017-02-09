@@ -8,6 +8,7 @@ import warnings
 import docker
 from docker.utils import kwargs_from_env
 
+from ..helpers import requires_api_version
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
@@ -18,6 +19,7 @@ class InformationTest(BaseAPIIntegrationTest):
         self.assertIn('Version', res)
         self.assertEqual(len(res['Version'].split('.')), 3)
 
+    @requires_api_version('1.25')
     def test_df(self):
         res = self.client.df()
         self.assertIn('LayersSize', res)
