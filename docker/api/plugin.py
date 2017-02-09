@@ -26,21 +26,28 @@ class PluginApiMixin(object):
         self._raise_for_status(res)
         return True
 
-    def create_plugin(self, name, rootfs, manifest):
+    @utils.minimum_version('1.25')
+    def create_plugin(self, name, plugin_data_dir, gzip=False):
         """
             Create a new plugin.
 
             Args:
                 name (string): The name of the plugin. The ``:latest`` tag is
                     optional, and is the default if omitted.
-                rootfs (string): Path to the plugin's ``rootfs``
-                manifest (string): Path to the plugin's manifest file
+                plugin_data_dir (string): Path to the plugin data directory.
+                    Plugin data directory must contain the ``config.json``
+                    manifest file and the ``rootfs`` directory.
+                gzip (bool): Compress the context using gzip. Default: False
 
             Returns:
                 ``True`` if successful
         """
-        # FIXME: Needs implementation
-        raise NotImplementedError()
+        url = self._url('/plugins/create')
+
+        with utils.create_archive(root=plugin_data_dir, gzip=gzip) as archv:
+            res = self._post(url, params={'name': name}, data=archv)
+        self._raise_for_status(res)
+        return True
 
     @utils.minimum_version('1.25')
     def disable_plugin(self, name):

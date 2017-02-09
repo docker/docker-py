@@ -100,20 +100,22 @@ class Plugin(Model):
 class PluginCollection(Collection):
     model = Plugin
 
-    def create(self, name, rootfs, manifest):
+    def create(self, name, plugin_data_dir, gzip=False):
         """
             Create a new plugin.
 
             Args:
                 name (string): The name of the plugin. The ``:latest`` tag is
                     optional, and is the default if omitted.
-                rootfs (string): Path to the plugin's ``rootfs``
-                manifest (string): Path to the plugin's manifest file
+                plugin_data_dir (string): Path to the plugin data directory.
+                    Plugin data directory must contain the ``config.json``
+                    manifest file and the ``rootfs`` directory.
+                gzip (bool): Compress the context using gzip. Default: False
 
             Returns:
                 (:py:class:`Plugin`): The newly created plugin.
         """
-        self.client.api.create_plugin(name, rootfs, manifest)
+        self.client.api.create_plugin(name, plugin_data_dir, gzip)
         return self.get(name)
 
     def get(self, name):

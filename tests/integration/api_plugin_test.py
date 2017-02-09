@@ -1,11 +1,15 @@
+import os
+
 import docker
 import pytest
 
 from .base import BaseAPIIntegrationTest, TEST_API_VERSION
+from ..helpers import requires_api_version
 
 SSHFS = 'vieux/sshfs:latest'
 
 
+@requires_api_version('1.25')
 class PluginTest(BaseAPIIntegrationTest):
     @classmethod
     def teardown_class(cls):
@@ -23,6 +27,12 @@ class PluginTest(BaseAPIIntegrationTest):
             self.client.disable_plugin(SSHFS)
         except docker.errors.APIError:
             pass
+
+        for p in self.tmp_plugins:
+            try:
+                self.client.remove_plugin(p, force=True)
+            except docker.errors.APIError:
+                pass
 
     def ensure_plugin_installed(self, plugin_name):
         try:
@@ -112,3 +122,14 @@ class PluginTest(BaseAPIIntegrationTest):
         assert filter(lambda x: x['status'] == 'Download complete', logs)
         assert self.client.inspect_plugin(SSHFS)
         assert self.client.enable_plugin(SSHFS)
+
+    def test_create_plugin(self):
+        plugin_data_dir = os.path.join(
+            os.path.dirname(__file__), 'testdata/dummy-plugin'
+        )
+        assert self.client.create_plugin(
+            'docker-sdk-py/dummy', plugin_data_dir
+        )
+        self.tmp_plugins.append('docker-sdk-py/dummy')
+        data = self.client.inspect_plugin('docker-sdk-py/dummy')
+        assert data['Config']['Entrypoint'] == ['/dummy']
