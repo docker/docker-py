@@ -158,6 +158,7 @@ class DaemonApiMixin(object):
         url = self._url("/version", versioned_api=api_version)
         return self._result(self._get(url), json=True)
 
+    @utils.minimum_version('1.25')
     def df(self, api_version=True):
         """
         Returns disk information from the server. Similar to the ``docker
