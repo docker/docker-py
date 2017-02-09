@@ -25,4 +25,4 @@ class ClientTest(unittest.TestCase):
     @requires_api_version('1.25')
     def test_df(self):
         client = docker.from_env()
-        assert 'LayersSize' in client.version()
+        assert 'LayersSize' in client.df()
