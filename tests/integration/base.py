@@ -27,6 +27,7 @@ class BaseIntegrationTest(unittest.TestCase):
         self.tmp_folders = []
         self.tmp_volumes = []
         self.tmp_networks = []
+        self.tmp_plugins = []
 
     def tearDown(self):
         client = docker.from_env(version=TEST_API_VERSION)
