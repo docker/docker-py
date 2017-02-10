@@ -16,7 +16,7 @@ def check_resource(f):
             resource_id = resource_id.get('Id', resource_id.get('ID'))
         if not resource_id:
             raise errors.NullResource(
-                'image or container param is undefined'
+                'Resource ID was not provided'
             )
         return f(self, resource_id, *args, **kwargs)
     return wrapped
