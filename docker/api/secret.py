@@ -1,5 +1,7 @@
 import base64
 
+import six
+
 from .. import utils
 
 
@@ -20,6 +22,8 @@ class SecretApiMixin(object):
             data = data.encode('utf-8')
 
         data = base64.b64encode(data)
+        if six.PY3:
+            data = data.decode('ascii')
         body = {
             'Data': data,
             'Name': name,

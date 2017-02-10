@@ -28,6 +28,7 @@ class BaseIntegrationTest(unittest.TestCase):
         self.tmp_volumes = []
         self.tmp_networks = []
         self.tmp_plugins = []
+        self.tmp_secrets = []
 
     def tearDown(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -49,6 +50,12 @@ class BaseIntegrationTest(unittest.TestCase):
         for volume in self.tmp_volumes:
             try:
                 client.api.remove_volume(volume)
+            except docker.errors.APIError:
+                pass
+
+        for secret in self.tmp_secrets:
+            try:
+                client.api.remove_secret(secret)
             except docker.errors.APIError:
                 pass
 

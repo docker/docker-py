@@ -45,7 +45,7 @@ class StartContainerTest(BaseAPIClientTest):
 
         self.assertEqual(
             str(excinfo.value),
-            'image or container param is undefined',
+            'Resource ID was not provided',
         )
 
         with pytest.raises(ValueError) as excinfo:
@@ -53,7 +53,7 @@ class StartContainerTest(BaseAPIClientTest):
 
         self.assertEqual(
             str(excinfo.value),
-            'image or container param is undefined',
+            'Resource ID was not provided',
         )
 
     def test_start_container_regression_573(self):
@@ -1559,7 +1559,7 @@ class ContainerTest(BaseAPIClientTest):
                 self.client.inspect_container(arg)
 
             self.assertEqual(
-                excinfo.value.args[0], 'image or container param is undefined'
+                excinfo.value.args[0], 'Resource ID was not provided'
             )
 
     def test_container_stats(self):

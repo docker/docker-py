@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import random
+import time
 
 import docker
 
@@ -23,6 +26,21 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
+
+    def get_service_container(self, service_name, attempts=20, interval=0.5):
+        # There is some delay between the service's creation and the creation
+        # of the service's containers. This method deals with the uncertainty
+        # when trying to retrieve the container associated with a service.
+        while True:
+            containers = self.client.containers(
+                filters={'name': [service_name]}, quiet=True
+            )
+            if len(containers) > 0:
+                return containers[0]
+            attempts -= 1
+            if attempts <= 0:
+                return None
+            time.sleep(interval)
 
     def create_simple_service(self, name=None):
         if name:
@@ -317,3 +335,55 @@ class ServiceTest(BaseAPIIntegrationTest):
         new_index = svc_info['Version']['Index']
         assert new_index > version_index
         assert svc_info['Spec']['TaskTemplate']['ForceUpdate'] == 10
+
+    @requires_api_version('1.25')
+    def test_create_service_with_secret(self):
+        secret_name = 'favorite_touhou'
+        secret_data = b'phantasmagoria of flower view'
+        secret_id = self.client.create_secret(secret_name, secret_data)
+        self.tmp_secrets.append(secret_id)
+        secret_ref = docker.types.SecretReference(secret_id, secret_name)
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['top'], secrets=[secret_ref]
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Secrets' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        secrets = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Secrets']
+        assert secrets[0] == secret_ref
+
+        container = self.get_service_container(name)
+        assert container is not None
+        exec_id = self.client.exec_create(
+            container, 'cat /run/secrets/{0}'.format(secret_name)
+        )
+        assert self.client.exec_start(exec_id) == secret_data
+
+    @requires_api_version('1.25')
+    def test_create_service_with_unicode_secret(self):
+        secret_name = 'favorite_touhou'
+        secret_data = u'東方花映塚'
+        secret_id = self.client.create_secret(secret_name, secret_data)
+        self.tmp_secrets.append(secret_id)
+        secret_ref = docker.types.SecretReference(secret_id, secret_name)
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['top'], secrets=[secret_ref]
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Secrets' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        secrets = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Secrets']
+        assert secrets[0] == secret_ref
+
+        container = self.get_service_container(name)
+        assert container is not None
+        exec_id = self.client.exec_create(
+            container, 'cat /run/secrets/{0}'.format(secret_name)
+        )
+        container_secret = self.client.exec_start(exec_id)
+        container_secret = container_secret.decode('utf-8')
+        assert container_secret == secret_data
