@@ -1,0 +1,19 @@
+{
+    "description": "Dummy test plugin for docker python SDK",
+    "documentation": "https://github.com/docker/docker-py",
+    "entrypoint": ["/dummy"],
+    "network": {
+        "type": "host"
+    },
+    "interface" : {
+        "types": ["docker.volumedriver/1.0"],
+        "socket": "dummy.sock"
+    },
+    "env": [
+        {
+        "name":"DEBUG",
+        "settable":["value"],
+        "value":"0"
+        }
+    ]
+}

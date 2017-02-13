@@ -80,16 +80,35 @@ def decode_json_header(header):
 
 
 def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
-    if not fileobj:
-        fileobj = tempfile.NamedTemporaryFile()
-    t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
-
     root = os.path.abspath(path)
     exclude = exclude or []
 
-    for path in sorted(exclude_paths(root, exclude, dockerfile=dockerfile)):
-        i = t.gettarinfo(os.path.join(root, path), arcname=path)
+    return create_archive(
+        files=sorted(exclude_paths(root, exclude, dockerfile=dockerfile)),
+        root=root, fileobj=fileobj, gzip=gzip
+    )
 
+
+def build_file_list(root):
+    files = []
+    for dirname, dirnames, fnames in os.walk(root):
+        for filename in fnames + dirnames:
+            longpath = os.path.join(dirname, filename)
+            files.append(
+                longpath.replace(root, '', 1).lstrip('/')
+            )
+
+    return files
+
+
+def create_archive(root, files=None, fileobj=None, gzip=False):
+    if not fileobj:
+        fileobj = tempfile.NamedTemporaryFile()
+    t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
+    if files is None:
+        files = build_file_list(root)
+    for path in files:
+        i = t.gettarinfo(os.path.join(root, path), arcname=path)
         if i is None:
             # This happens when we encounter a socket file. We can safely
             # ignore it and proceed.
@@ -102,13 +121,11 @@ def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
 
         try:
             # We open the file object in binary mode for Windows support.
-            f = open(os.path.join(root, path), 'rb')
+            with open(os.path.join(root, path), 'rb') as f:
+                t.addfile(i, f)
         except IOError:
             # When we encounter a directory the file object is set to None.
-            f = None
-
-        t.addfile(i, f)
-
+            t.addfile(i, None)
     t.close()
     fileobj.seek(0)
     return fileobj
