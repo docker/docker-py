@@ -23,10 +23,9 @@ from docker.utils import (
     decode_json_header, tar, split_command, parse_devices, update_headers,
 )
 
+from docker.utils.build import should_check_directory
 from docker.utils.ports import build_port_bindings, split_port
-from docker.utils.utils import (
-    format_environment, should_check_directory
-)
+from docker.utils.utils import format_environment
 
 from ..helpers import make_tree
 
@@ -808,6 +807,17 @@ class ExcludePathsTest(unittest.TestCase):
     )
     def test_subdirectory_win32_pathsep(self):
         assert self.exclude(['foo\\bar']) == convert_paths(
+            self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
+        )
+
+    def test_double_wildcard(self):
+        assert self.exclude(['**/a.py']) == convert_paths(
+            self.all_paths - set(
+                ['a.py', 'foo/a.py', 'foo/bar/a.py', 'bar/a.py']
+            )
+        )
+
+        assert self.exclude(['foo/**/bar']) == convert_paths(
             self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
         )
 
