@@ -6,12 +6,14 @@ import docker
 from docker.constants import IS_WINDOWS_PLATFORM
 from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
+
 import pytest
+
 import six
 
-from ..helpers import requires_api_version
+from .base import BUSYBOX, BaseAPIIntegrationTest
 from .. import helpers
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from ..helpers import requires_api_version
 
 
 class ListContainersTest(BaseAPIIntegrationTest):
@@ -423,9 +425,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert config['Config']['StopTimeout'] == 25
 
     @requires_api_version('1.24')
+    @pytest.mark.xfail(True, reason='Not supported on most drivers')
     def test_create_with_storage_opt(self):
-        if self.client.info()['Driver'] == 'aufs':
-            return pytest.skip('Not supported on AUFS')
         host_config = self.client.create_host_config(
             storage_opt={'size': '120G'}
         )
