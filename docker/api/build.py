@@ -16,9 +16,9 @@ class BuildApiMixin(object):
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, stream=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
-              forcerm=False, dockerfile=None, container_limits=None,
-              decode=False, buildargs=None, gzip=False, shmsize=None,
-              labels=None, cachefrom=None):
+              forcerm=False, dockerfile=None, ignorefile='.dockerignore',
+              container_limits=None, decode=False, buildargs=None,
+              gzip=False, shmsize=None, labels=None, cachefrom=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -77,6 +77,7 @@ class BuildApiMixin(object):
             forcerm (bool): Always remove intermediate containers, even after
                 unsuccessful builds
             dockerfile (str): path within the build context to the Dockerfile
+            ignorefile (str): path within the build context to the ignore file
             buildargs (dict): A dictionary of build arguments
             container_limits (dict): A dictionary of limits applied to each
                 container created by the build process. Valid keys:
@@ -131,7 +132,7 @@ class BuildApiMixin(object):
         elif not os.path.isdir(path):
             raise TypeError("You must specify a directory to build in path")
         else:
-            dockerignore = os.path.join(path, '.dockerignore')
+            dockerignore = os.path.join(path, ignorefile)
             exclude = None
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
