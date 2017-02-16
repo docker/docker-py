@@ -109,6 +109,8 @@ class ServiceCollection(Collection):
                 the service to. Default: ``None``.
             resources (Resources): Resource limits and reservations.
             restart_policy (RestartPolicy): Restart policy for containers.
+            secrets (list of :py:class:`docker.types.SecretReference`): List
+                of secrets accessible to containers for this service.
             stop_grace_period (int): Amount of time to wait for
                 containers to terminate before forcefully killing them.
             update_config (UpdateConfig): Specification for the update strategy
@@ -179,6 +181,7 @@ CONTAINER_SPEC_KWARGS = [
     'labels',
     'mounts',
     'stop_grace_period',
+    'secrets',
 ]
 
 # kwargs to copy straight over to TaskTemplate

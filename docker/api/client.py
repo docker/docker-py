@@ -15,6 +15,7 @@ from .exec_api import ExecApiMixin
 from .image import ImageApiMixin
 from .network import NetworkApiMixin
 from .plugin import PluginApiMixin
+from .secret import SecretApiMixin
 from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
@@ -48,6 +49,7 @@ class APIClient(
         ImageApiMixin,
         NetworkApiMixin,
         PluginApiMixin,
+        SecretApiMixin,
         ServiceApiMixin,
         SwarmApiMixin,
         VolumeApiMixin):

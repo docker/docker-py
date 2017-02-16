@@ -4,6 +4,7 @@ from .models.images import ImageCollection
 from .models.networks import NetworkCollection
 from .models.nodes import NodeCollection
 from .models.plugins import PluginCollection
+from .models.secrets import SecretCollection
 from .models.services import ServiceCollection
 from .models.swarm import Swarm
 from .models.volumes import VolumeCollection
@@ -117,6 +118,13 @@ class DockerClient(object):
         :doc:`plugins documentation <plugins>` for full details.
         """
         return PluginCollection(client=self)
+
+    def secrets(self):
+        """
+        An object for managing secrets on the server. See the
+        :doc:`secrets documentation <secrets>` for full details.
+        """
+        return SecretCollection(client=self)
 
     @property
     def services(self):

@@ -2,7 +2,7 @@ import six
 
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
-from ..utils import format_environment, split_command
+from ..utils import check_resource, format_environment, split_command
 
 
 class TaskTemplate(dict):
@@ -79,9 +79,12 @@ class ContainerSpec(dict):
             :py:class:`~docker.types.Mount` class for details.
         stop_grace_period (int): Amount of time to wait for the container to
             terminate before forcefully killing it.
+        secrets (list of py:class:`SecretReference`): List of secrets to be
+            made available inside the containers.
     """
     def __init__(self, image, command=None, args=None, env=None, workdir=None,
-                 user=None, labels=None, mounts=None, stop_grace_period=None):
+                 user=None, labels=None, mounts=None, stop_grace_period=None,
+                 secrets=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -108,6 +111,11 @@ class ContainerSpec(dict):
             self['Mounts'] = mounts
         if stop_grace_period is not None:
             self['StopGracePeriod'] = stop_grace_period
+
+        if secrets is not None:
+            if not isinstance(secrets, list):
+                raise TypeError('secrets must be a list')
+            self['Secrets'] = secrets
 
 
 class Mount(dict):
@@ -410,3 +418,31 @@ class ServiceMode(dict):
         if self.mode != 'replicated':
             return None
         return self['replicated'].get('Replicas')
+
+
+class SecretReference(dict):
+    """
+        Secret reference to be used as part of a :py:class:`ContainerSpec`.
+        Describes how a secret is made accessible inside the service's
+        containers.
+
+        Args:
+            secret_id (string): Secret's ID
+            secret_name (string): Secret's name as defined at its creation.
+            filename (string): Name of the file containing the secret. Defaults
+                to the secret's name if not specified.
+            uid (string): UID of the secret file's owner. Default: 0
+            gid (string): GID of the secret file's group. Default: 0
+            mode (int): File access mode inside the container. Default: 0o444
+    """
+    @check_resource
+    def __init__(self, secret_id, secret_name, filename=None, uid=None,
+                 gid=None, mode=0o444):
+        self['SecretName'] = secret_name
+        self['SecretID'] = secret_id
+        self['File'] = {
+            'Name': filename or secret_name,
+            'UID': uid or '0',
+            'GID': gid or '0',
+            'Mode': mode
+        }
