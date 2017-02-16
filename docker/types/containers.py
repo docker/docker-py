@@ -117,7 +117,7 @@ class HostConfig(dict):
                  oom_kill_disable=False, shm_size=None, sysctls=None,
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
-                 isolation=None, auto_remove=False):
+                 isolation=None, auto_remove=False, storage_opt=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -411,6 +411,11 @@ class HostConfig(dict):
             if version_lt(version, '1.25'):
                 raise host_config_version_error('auto_remove', '1.25')
             self['AutoRemove'] = auto_remove
+
+        if storage_opt is not None:
+            if version_lt(version, '1.24'):
+                raise host_config_version_error('storage_opt', '1.24')
+            self['StorageOpt'] = storage_opt
 
 
 def host_config_type_error(param, param_value, expected):

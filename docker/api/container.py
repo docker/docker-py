@@ -549,6 +549,8 @@ class ContainerApiMixin(object):
             security_opt (:py:class:`list`): A list of string values to
                 customize labels for MLS systems, such as SELinux.
             shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
+            storage_opt (dict): Storage driver options per container as a
+                key-value mapping.
             sysctls (dict): Kernel parameters to set in the container.
             tmpfs (dict): Temporary filesystems to mount, as a dictionary
                 mapping a path inside the container to options for that path.

@@ -75,6 +75,10 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
             version=TEST_API_VERSION, timeout=60, **kwargs_from_env()
         )
 
+    def tearDown(self):
+        super(BaseAPIIntegrationTest, self).tearDown()
+        self.client.close()
+
     def run_container(self, *args, **kwargs):
         container = self.client.create_container(*args, **kwargs)
         self.tmp_containers.append(container)
