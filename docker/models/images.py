@@ -141,7 +141,8 @@ class ImageCollection(Collection):
                     ``"0-3"``, ``"0,1"``
             decode (bool): If set to ``True``, the returned stream will be
                 decoded into dicts on the fly. Default ``False``.
-            cachefrom (list): A list of images used for build cache resolution.
+            cache_from (list): A list of images used for build cache
+                resolution.
 
         Returns:
             (:py:class:`Image`): The built image.
@@ -162,10 +163,10 @@ class ImageCollection(Collection):
             return BuildError('Unknown')
         event = events[-1]
         if 'stream' in event:
-            match = re.search(r'Successfully built ([0-9a-f]+)',
+            match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
                               event.get('stream', ''))
             if match:
-                image_id = match.group(1)
+                image_id = match.group(2)
                 return self.get(image_id)
 
         raise BuildError(event.get('error') or event)
