@@ -154,6 +154,8 @@ class APIClient(
                 'Engine or use an older version of Docker SDK for '
                 'Python.'.format(MINIMUM_DOCKER_API_VERSION, self._version)
             )
+        if utils.version_gte(self._version, DEFAULT_DOCKER_API_VERSION):
+            self._experimental = self._retrieve_server_experimental()
 
     def _retrieve_server_version(self):
         try:
@@ -166,6 +168,16 @@ class APIClient(
         except Exception as e:
             raise DockerException(
                 'Error while fetching server API version: {0}'.format(e)
+            )
+
+    def _retrieve_server_experimental(self):
+        try:
+            return self.version(api_version=False)["Experimental"]
+        except KeyError:
+            pass
+        except Exception as e:
+            raise DockerException(
+                'Error while fetching server experimental flag: {0}'.format(e)
             )
 
     def _set_request_timeout(self, kwargs):
