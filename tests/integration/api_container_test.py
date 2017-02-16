@@ -422,6 +422,22 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(container)
         assert config['Config']['StopTimeout'] == 25
 
+    @requires_api_version('1.24')
+    def test_create_with_storage_opt(self):
+        if self.client.info()['Driver'] == 'aufs':
+            return pytest.skip('Not supported on AUFS')
+        host_config = self.client.create_host_config(
+            storage_opt={'size': '120G'}
+        )
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], host_config=host_config
+        )
+        self.tmp_containers.append(container)
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['StorageOpt'] == {
+            'size': '120G'
+        }
+
 
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):

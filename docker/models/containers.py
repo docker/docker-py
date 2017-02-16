@@ -585,6 +585,8 @@ class ContainerCollection(Collection):
                 Default: ``False``.
             stop_signal (str): The stop signal to use to stop the container
                 (e.g. ``SIGINT``).
+            storage_opt (dict): Storage driver options per container as a
+                key-value mapping.
             sysctls (dict): Kernel parameters to set in the container.
             tmpfs (dict): Temporary filesystems to mount, as a dictionary
                 mapping a path inside the container to options for that path.
@@ -828,6 +830,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'restart_policy',
     'security_opt',
     'shm_size',
+    'storage_opt',
     'sysctls',
     'tmpfs',
     'ulimits',
