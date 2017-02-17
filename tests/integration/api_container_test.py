@@ -6,12 +6,14 @@ import docker
 from docker.constants import IS_WINDOWS_PLATFORM
 from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
+
 import pytest
+
 import six
 
-from ..helpers import requires_api_version
+from .base import BUSYBOX, BaseAPIIntegrationTest
 from .. import helpers
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from ..helpers import requires_api_version
 
 
 class ListContainersTest(BaseAPIIntegrationTest):
@@ -400,6 +402,42 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container['Id'])
         config = self.client.inspect_container(container)
         assert config['HostConfig']['Isolation'] == 'default'
+
+    @requires_api_version('1.25')
+    def test_create_with_auto_remove(self):
+        host_config = self.client.create_host_config(
+            auto_remove=True
+        )
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], host_config=host_config
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['AutoRemove'] is True
+
+    @requires_api_version('1.25')
+    def test_create_with_stop_timeout(self):
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], stop_timeout=25
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['Config']['StopTimeout'] == 25
+
+    @requires_api_version('1.24')
+    @pytest.mark.xfail(True, reason='Not supported on most drivers')
+    def test_create_with_storage_opt(self):
+        host_config = self.client.create_host_config(
+            storage_opt={'size': '120G'}
+        )
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], host_config=host_config
+        )
+        self.tmp_containers.append(container)
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['StorageOpt'] == {
+            'size': '120G'
+        }
 
 
 class VolumeBindTest(BaseAPIIntegrationTest):
@@ -1071,6 +1109,20 @@ class PauseTest(BaseAPIIntegrationTest):
         self.assertEqual(state['Running'], True)
         self.assertIn('Paused', state)
         self.assertEqual(state['Paused'], False)
+
+
+class PruneTest(BaseAPIIntegrationTest):
+    @requires_api_version('1.25')
+    def test_prune_containers(self):
+        container1 = self.client.create_container(BUSYBOX, ['echo', 'hello'])
+        container2 = self.client.create_container(BUSYBOX, ['sleep', '9999'])
+        self.client.start(container1)
+        self.client.start(container2)
+        self.client.wait(container1)
+        result = self.client.prune_containers()
+        assert container1['Id'] in result['ContainersDeleted']
+        assert result['SpaceReclaimed'] > 0
+        assert container2['Id'] not in result['ContainersDeleted']
 
 
 class GetContainerStatsTest(BaseAPIIntegrationTest):

@@ -13,6 +13,7 @@ Methods available on ``client.volumes``:
   .. automethod:: create
   .. automethod:: get
   .. automethod:: list
+  .. automethod:: prune
 
 Volume objects
 --------------

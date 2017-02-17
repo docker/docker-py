@@ -1,5 +1,6 @@
 import copy
 
+from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
@@ -78,7 +79,7 @@ class Container(Model):
             author (str): The name of the author
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
-                `Remote API documentation
+                `Engine API documentation
                 <https://docs.docker.com/reference/api/docker_remote_api/>`_
                 for full details.
 
@@ -121,7 +122,6 @@ class Container(Model):
             user (str): User to execute command as. Default: root
             detach (bool): If true, detach from the exec command.
                 Default: False
-            tty (bool): Allocate a pseudo-TTY. Default: False
             stream (bool): Stream response data. Default: False
 
         Returns:
@@ -447,6 +447,8 @@ class ContainerCollection(Collection):
         Args:
             image (str): The image to run.
             command (str or list): The command to run in the container.
+            auto_remove (bool): enable auto-removal of the container on daemon
+                side when the container's process exits.
             blkio_weight_device: Block IO weight (relative device weight) in
                 the form of: ``[{"Path": "device_path", "Weight": weight}]``.
             blkio_weight: Block IO weight (relative weight), accepts a weight
@@ -584,6 +586,8 @@ class ContainerCollection(Collection):
                 Default: ``False``.
             stop_signal (str): The stop signal to use to stop the container
                 (e.g. ``SIGINT``).
+            storage_opt (dict): Storage driver options per container as a
+                key-value mapping.
             sysctls (dict): Kernel parameters to set in the container.
             tmpfs (dict): Temporary filesystems to mount, as a dictionary
                 mapping a path inside the container to options for that path.
@@ -762,6 +766,10 @@ class ContainerCollection(Collection):
                                           since=since)
         return [self.get(r['Id']) for r in resp]
 
+    def prune(self, filters=None):
+        return self.client.api.prune_containers(filters=filters)
+    prune.__doc__ = APIClient.prune_containers.__doc__
+
 
 # kwargs to copy straight from run to create
 RUN_CREATE_KWARGS = [
@@ -827,6 +835,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'restart_policy',
     'security_opt',
     'shm_size',
+    'storage_opt',
     'sysctls',
     'tmpfs',
     'ulimits',
@@ -879,5 +888,15 @@ def _create_container_args(kwargs):
                                   for p in sorted(port_bindings.keys())]
     binds = create_kwargs['host_config'].get('Binds')
     if binds:
-        create_kwargs['volumes'] = [v.split(':')[0] for v in binds]
+        create_kwargs['volumes'] = [_host_volume_from_bind(v) for v in binds]
     return create_kwargs
+
+
+def _host_volume_from_bind(bind):
+    bits = bind.split(':')
+    if len(bits) == 1:
+        return bits[0]
+    elif len(bits) == 2 and bits[1] in ('ro', 'rw'):
+        return bits[0]
+    else:
+        return bits[1]

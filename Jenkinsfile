@@ -4,7 +4,10 @@ def imageNameBase = "dockerbuildbot/docker-py"
 def imageNamePy2
 def imageNamePy3
 def images = [:]
-def dockerVersions = ["1.12.0", "1.13.0-rc3"]
+
+// Note: Swarm in dind seem notoriously flimsy with 1.12.1+, which is why we're
+// sticking with 1.12.0 for the 1.12 series
+def dockerVersions = ["1.12.0", "1.13.1"]
 
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
@@ -31,10 +34,16 @@ def buildImages = { ->
   }
 }
 
+def getAPIVersion = { engineVersion ->
+  def versionMap = ['1.12': '1.24', '1.13': '1.25']
+  return versionMap[engineVersion.substring(0, 4)]
+}
+
 def runTests = { Map settings ->
   def dockerVersion = settings.get("dockerVersion", null)
   def pythonVersion = settings.get("pythonVersion", null)
   def testImage = settings.get("testImage", null)
+  def apiVersion = getAPIVersion(dockerVersion)
 
   if (!testImage) {
     throw new Exception("Need test image object, e.g.: `runTests(testImage: img)`")
@@ -50,8 +59,8 @@ def runTests = { Map settings ->
     wrappedNode(label: "ubuntu && !zfs && amd64", cleanWorkspace: true) {
       stage("test python=${pythonVersion} / docker=${dockerVersion}") {
         checkout(scm)
-        def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER"
-        def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER"
+        def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
+        def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         try {
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
             dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375
@@ -59,6 +68,7 @@ def runTests = { Map settings ->
           sh """docker run \\
             --name ${testContainerName} --volumes-from ${dindContainerName} \\
             -e 'DOCKER_HOST=tcp://docker:2375' \\
+            -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
             --link=${dindContainerName}:docker \\
             ${testImage} \\
             py.test -v -rxs tests/integration

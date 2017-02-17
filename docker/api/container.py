@@ -108,7 +108,7 @@ class ContainerApiMixin(object):
             author (str): The name of the author
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
-                `Remote API documentation
+                `Engine API documentation
                 <https://docs.docker.com/reference/api/docker_remote_api/>`_
                 for full details.
 
@@ -238,7 +238,7 @@ class ContainerApiMixin(object):
                          memswap_limit=None, cpuset=None, host_config=None,
                          mac_address=None, labels=None, volume_driver=None,
                          stop_signal=None, networking_config=None,
-                         healthcheck=None):
+                         healthcheck=None, stop_timeout=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -313,9 +313,10 @@ class ContainerApiMixin(object):
 
         **Using volumes**
 
-        Volume declaration is done in two parts. Provide a list of mountpoints
-        to the with the ``volumes`` parameter, and declare mappings in the
-        ``host_config`` section.
+        Volume declaration is done in two parts. Provide a list of
+        paths to use as mountpoints inside the container with the
+        ``volumes`` parameter, and declare mappings from paths on the host
+        in the ``host_config`` section.
 
         .. code-block:: python
 
@@ -392,7 +393,8 @@ class ContainerApiMixin(object):
                 version 1.10. Use ``host_config`` instead.
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file
-            volumes (str or list):
+            volumes (str or list): List of paths inside the container to use
+                as volumes.
             volumes_from (:py:class:`list`): List of container names or Ids to
                 get volumes from.
             network_disabled (bool): Disable networking
@@ -411,6 +413,8 @@ class ContainerApiMixin(object):
             volume_driver (str): The name of a volume driver/plugin.
             stop_signal (str): The stop signal to use to stop the container
                 (e.g. ``SIGINT``).
+            stop_timeout (int): Timeout to stop the container, in seconds.
+                Default: 10
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
 
@@ -437,6 +441,7 @@ class ContainerApiMixin(object):
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
             volume_driver, stop_signal, networking_config, healthcheck,
+            stop_timeout
         )
         return self.create_container_from_config(config, name)
 
@@ -457,6 +462,8 @@ class ContainerApiMixin(object):
         :py:meth:`create_container`.
 
         Args:
+            auto_remove (bool): enable auto-removal of the container on daemon
+                side when the container's process exits.
             binds (dict): Volumes to bind. See :py:meth:`create_container`
                     for more information.
             blkio_weight_device: Block IO weight (relative device weight) in
@@ -542,6 +549,8 @@ class ContainerApiMixin(object):
             security_opt (:py:class:`list`): A list of string values to
                 customize labels for MLS systems, such as SELinux.
             shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
+            storage_opt (dict): Storage driver options per container as a
+                key-value mapping.
             sysctls (dict): Kernel parameters to set in the container.
             tmpfs (dict): Temporary filesystems to mount, as a dictionary
                 mapping a path inside the container to options for that path.
@@ -906,15 +915,34 @@ class ContainerApiMixin(object):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
-
-        Raises:
-            :py:class:`~docker.errors.APIError` If an error occurs.
         """
         params = {'path': path}
         url = self._url('/containers/{0}/archive', container)
         res = self._put(url, params=params, data=data)
         self._raise_for_status(res)
         return res.status_code == 200
+
+    @utils.minimum_version('1.25')
+    def prune_containers(self, filters=None):
+        """
+        Delete stopped containers
+
+        Args:
+            filters (dict): Filters to process on the prune list.
+
+        Returns:
+            (dict): A dict containing a list of deleted container IDs and
+                the amount of disk space reclaimed in bytes.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        params = {}
+        if filters:
+            params['filters'] = utils.convert_filters(filters)
+        url = self._url('/containers/prune')
+        return self._result(self._post(url, params=params), True)
 
     @utils.check_resource
     def remove_container(self, container, v=False, link=False, force=False):

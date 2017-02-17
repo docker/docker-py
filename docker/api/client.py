@@ -14,6 +14,8 @@ from .daemon import DaemonApiMixin
 from .exec_api import ExecApiMixin
 from .image import ImageApiMixin
 from .network import NetworkApiMixin
+from .plugin import PluginApiMixin
+from .secret import SecretApiMixin
 from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
@@ -46,11 +48,13 @@ class APIClient(
         ExecApiMixin,
         ImageApiMixin,
         NetworkApiMixin,
+        PluginApiMixin,
+        SecretApiMixin,
         ServiceApiMixin,
         SwarmApiMixin,
         VolumeApiMixin):
     """
-    A low-level client for the Docker Remote API.
+    A low-level client for the Docker Engine API.
 
     Example:
 
@@ -225,10 +229,12 @@ class APIClient(
         # Go <1.1 can't unserialize null to a string
         # so we do this disgusting thing here.
         data2 = {}
-        if data is not None:
+        if data is not None and isinstance(data, dict):
             for k, v in six.iteritems(data):
                 if v is not None:
                     data2[k] = v
+        elif data is not None:
+            data2 = data
 
         if 'headers' not in kwargs:
             kwargs['headers'] = {}
@@ -302,11 +308,13 @@ class APIClient(
         """A generator of multiplexed data blocks read from a buffered
         response."""
         buf = self._result(response, binary=True)
+        buf_length = len(buf)
         walker = 0
         while True:
-            if len(buf[walker:]) < 8:
+            if buf_length - walker < STREAM_HEADER_SIZE_BYTES:
                 break
-            _, length = struct.unpack_from('>BxxxL', buf[walker:])
+            header = buf[walker:walker + STREAM_HEADER_SIZE_BYTES]
+            _, length = struct.unpack_from('>BxxxL', header)
             start = walker + STREAM_HEADER_SIZE_BYTES
             end = start + length
             walker = end

@@ -29,7 +29,7 @@ class Swarm(Model):
         return self.attrs.get('Version').get('Index')
 
     def init(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
-             force_new_cluster=False, swarm_spec=None, **kwargs):
+             force_new_cluster=False, **kwargs):
         """
         Initialize a new swarm on this Engine.
 
@@ -87,11 +87,11 @@ class Swarm(Model):
             )
 
         """
-        init_kwargs = {}
-        for arg in ['advertise_addr', 'listen_addr', 'force_new_cluster']:
-            if arg in kwargs:
-                init_kwargs[arg] = kwargs[arg]
-                del kwargs[arg]
+        init_kwargs = {
+            'advertise_addr': advertise_addr,
+            'listen_addr': listen_addr,
+            'force_new_cluster': force_new_cluster
+        }
         init_kwargs['swarm_spec'] = SwarmSpec(**kwargs)
         self.client.api.init_swarm(**init_kwargs)
         self.reload()

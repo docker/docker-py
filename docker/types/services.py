@@ -2,7 +2,7 @@ import six
 
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
-from ..utils import format_environment, split_command
+from ..utils import check_resource, format_environment, split_command
 
 
 class TaskTemplate(dict):
@@ -21,9 +21,11 @@ class TaskTemplate(dict):
         restart_policy (RestartPolicy): Specification for the restart policy
           which applies to containers created as part of this service.
         placement (:py:class:`list`): A list of constraints.
+        force_update (int): A counter that triggers an update even if no
+            relevant parameters have been changed.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
-                 placement=None, log_driver=None):
+                 placement=None, log_driver=None, force_update=None):
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -35,6 +37,11 @@ class TaskTemplate(dict):
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
+
+        if force_update is not None:
+            if not isinstance(force_update, int):
+                raise TypeError('force_update must be an integer')
+            self['ForceUpdate'] = force_update
 
     @property
     def container_spec(self):
@@ -72,9 +79,12 @@ class ContainerSpec(dict):
             :py:class:`~docker.types.Mount` class for details.
         stop_grace_period (int): Amount of time to wait for the container to
             terminate before forcefully killing it.
+        secrets (list of py:class:`SecretReference`): List of secrets to be
+            made available inside the containers.
     """
     def __init__(self, image, command=None, args=None, env=None, workdir=None,
-                 user=None, labels=None, mounts=None, stop_grace_period=None):
+                 user=None, labels=None, mounts=None, stop_grace_period=None,
+                 secrets=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -101,6 +111,11 @@ class ContainerSpec(dict):
             self['Mounts'] = mounts
         if stop_grace_period is not None:
             self['StopGracePeriod'] = stop_grace_period
+
+        if secrets is not None:
+            if not isinstance(secrets, list):
+                raise TypeError('secrets must be a list')
+            self['Secrets'] = secrets
 
 
 class Mount(dict):
@@ -233,8 +248,14 @@ class UpdateConfig(dict):
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
           ``continue`` and ``pause``. Default: ``continue``
+        monitor (int): Amount of time to monitor each updated task for
+          failures, in nanoseconds.
+        max_failure_ratio (float): The fraction of tasks that may fail during
+          an update before the failure action is invoked, specified as a
+          floating point number between 0 and 1. Default: 0
     """
-    def __init__(self, parallelism=0, delay=None, failure_action='continue'):
+    def __init__(self, parallelism=0, delay=None, failure_action='continue',
+                 monitor=None, max_failure_ratio=None):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
@@ -243,6 +264,20 @@ class UpdateConfig(dict):
                 'failure_action must be either `pause` or `continue`.'
             )
         self['FailureAction'] = failure_action
+
+        if monitor is not None:
+            if not isinstance(monitor, int):
+                raise TypeError('monitor must be an integer')
+            self['Monitor'] = monitor
+
+        if max_failure_ratio is not None:
+            if not isinstance(max_failure_ratio, (float, int)):
+                raise TypeError('max_failure_ratio must be a float')
+            if max_failure_ratio > 1 or max_failure_ratio < 0:
+                raise errors.InvalidArgument(
+                    'max_failure_ratio must be a number between 0 and 1'
+                )
+            self['MaxFailureRatio'] = max_failure_ratio
 
 
 class RestartConditionTypesEnum(object):
@@ -383,3 +418,31 @@ class ServiceMode(dict):
         if self.mode != 'replicated':
             return None
         return self['replicated'].get('Replicas')
+
+
+class SecretReference(dict):
+    """
+        Secret reference to be used as part of a :py:class:`ContainerSpec`.
+        Describes how a secret is made accessible inside the service's
+        containers.
+
+        Args:
+            secret_id (string): Secret's ID
+            secret_name (string): Secret's name as defined at its creation.
+            filename (string): Name of the file containing the secret. Defaults
+                to the secret's name if not specified.
+            uid (string): UID of the secret file's owner. Default: 0
+            gid (string): GID of the secret file's group. Default: 0
+            mode (int): File access mode inside the container. Default: 0o444
+    """
+    @check_resource
+    def __init__(self, secret_id, secret_name, filename=None, uid=None,
+                 gid=None, mode=0o444):
+        self['SecretName'] = secret_name
+        self['SecretID'] = secret_id
+        self['File'] = {
+            'Name': filename or secret_name,
+            'UID': uid or '0',
+            'GID': gid or '0',
+            'Mode': mode
+        }

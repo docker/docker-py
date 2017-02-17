@@ -139,7 +139,7 @@ html_theme = 'alabaster'
 # documentation.
 #
 html_theme_options = {
-    'description': 'A Python library for the Docker Remote API',
+    'description': 'A Python library for the Docker Engine API',
     'fixed_sidebar': True,
 }
 

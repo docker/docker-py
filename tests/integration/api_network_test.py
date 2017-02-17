@@ -3,7 +3,7 @@ from docker.types import IPAMConfig, IPAMPool
 import pytest
 
 from ..helpers import random_name, requires_api_version
-from .base import BaseAPIIntegrationTest
+from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
 class TestNetworks(BaseAPIIntegrationTest):
@@ -88,19 +88,17 @@ class TestNetworks(BaseAPIIntegrationTest):
 
     @requires_api_version('1.21')
     def test_remove_network(self):
-        initial_size = len(self.client.networks())
-
         net_name, net_id = self.create_network()
-        self.assertEqual(len(self.client.networks()), initial_size + 1)
+        assert net_name in [n['Name'] for n in self.client.networks()]
 
         self.client.remove_network(net_id)
-        self.assertEqual(len(self.client.networks()), initial_size)
+        assert net_name not in [n['Name'] for n in self.client.networks()]
 
     @requires_api_version('1.21')
     def test_connect_and_disconnect_container(self):
         net_name, net_id = self.create_network()
 
-        container = self.client.create_container('busybox', 'top')
+        container = self.client.create_container(BUSYBOX, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
 
@@ -128,7 +126,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     def test_connect_and_force_disconnect_container(self):
         net_name, net_id = self.create_network()
 
-        container = self.client.create_container('busybox', 'top')
+        container = self.client.create_container(BUSYBOX, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
 
@@ -155,7 +153,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     def test_connect_with_aliases(self):
         net_name, net_id = self.create_network()
 
-        container = self.client.create_container('busybox', 'top')
+        container = self.client.create_container(BUSYBOX, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
 
@@ -173,7 +171,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
 
         container = self.client.create_container(
-            image='busybox',
+            image=BUSYBOX,
             command='top',
             host_config=self.client.create_host_config(network_mode=net_name),
         )
@@ -194,7 +192,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
 
         container = self.client.create_container(
-            image='busybox',
+            image=BUSYBOX,
             command='top',
             host_config=self.client.create_host_config(
                 network_mode=net_name,
@@ -224,7 +222,7 @@ class TestNetworks(BaseAPIIntegrationTest):
             ),
         )
         container = self.client.create_container(
-            image='busybox', command='top',
+            image=BUSYBOX, command='top',
             host_config=self.client.create_host_config(network_mode=net_name),
             networking_config=self.client.create_networking_config({
                 net_name: self.client.create_endpoint_config(
@@ -253,7 +251,7 @@ class TestNetworks(BaseAPIIntegrationTest):
             ),
         )
         container = self.client.create_container(
-            image='busybox', command='top',
+            image=BUSYBOX, command='top',
             host_config=self.client.create_host_config(network_mode=net_name),
             networking_config=self.client.create_networking_config({
                 net_name: self.client.create_endpoint_config(
@@ -276,7 +274,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.24')
     def test_create_with_linklocal_ips(self):
         container = self.client.create_container(
-            'busybox', 'top',
+            BUSYBOX, 'top',
             networking_config=self.client.create_networking_config(
                 {
                     'bridge': self.client.create_endpoint_config(
@@ -453,3 +451,9 @@ class TestNetworks(BaseAPIIntegrationTest):
         _, net_id = self.create_network(driver='overlay', attachable=True)
         net = self.client.inspect_network(net_id)
         assert net['Attachable'] is True
+
+    @requires_api_version('1.25')
+    def test_prune_networks(self):
+        net_name, _ = self.create_network()
+        result = self.client.prune_networks()
+        assert net_name in result['NetworksDeleted']

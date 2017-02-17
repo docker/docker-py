@@ -204,7 +204,7 @@ class ImageTest(BaseAPIClientTest):
                 self.client.inspect_image(arg)
 
             self.assertEqual(
-                excinfo.value.args[0], 'image or container param is undefined'
+                excinfo.value.args[0], 'Resource ID was not provided'
             )
 
     def test_insert_image(self):

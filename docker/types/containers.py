@@ -117,7 +117,7 @@ class HostConfig(dict):
                  oom_kill_disable=False, shm_size=None, sysctls=None,
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
-                 isolation=None):
+                 isolation=None, auto_remove=False, storage_opt=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -407,6 +407,16 @@ class HostConfig(dict):
                 raise host_config_version_error('isolation', '1.24')
             self['Isolation'] = isolation
 
+        if auto_remove:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('auto_remove', '1.25')
+            self['AutoRemove'] = auto_remove
+
+        if storage_opt is not None:
+            if version_lt(version, '1.24'):
+                raise host_config_version_error('storage_opt', '1.24')
+            self['StorageOpt'] = storage_opt
+
 
 def host_config_type_error(param, param_value, expected):
     error_msg = 'Invalid type for {0} param: expected {1} but found {2}'
@@ -433,6 +443,7 @@ class ContainerConfig(dict):
         working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
         host_config=None, mac_address=None, labels=None, volume_driver=None,
         stop_signal=None, networking_config=None, healthcheck=None,
+        stop_timeout=None
     ):
         if isinstance(command, six.string_types):
             command = split_command(command)
@@ -459,6 +470,11 @@ class ContainerConfig(dict):
         if stop_signal is not None and version_lt(version, '1.21'):
             raise errors.InvalidVersion(
                 'stop_signal was only introduced in API version 1.21'
+            )
+
+        if stop_timeout is not None and version_lt(version, '1.25'):
+            raise errors.InvalidVersion(
+                'stop_timeout was only introduced in API version 1.25'
             )
 
         if healthcheck is not None and version_lt(version, '1.24'):
@@ -579,4 +595,5 @@ class ContainerConfig(dict):
             'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
+            'StopTimeout': stop_timeout
         })

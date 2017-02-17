@@ -5,6 +5,7 @@ import json
 import os
 import os.path
 import shutil
+import socket
 import sys
 import tarfile
 import tempfile
@@ -22,10 +23,9 @@ from docker.utils import (
     decode_json_header, tar, split_command, parse_devices, update_headers,
 )
 
+from docker.utils.build import should_check_directory
 from docker.utils.ports import build_port_bindings, split_port
-from docker.utils.utils import (
-    format_environment, should_check_directory
-)
+from docker.utils.utils import format_environment
 
 from ..helpers import make_tree
 
@@ -810,6 +810,17 @@ class ExcludePathsTest(unittest.TestCase):
             self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
         )
 
+    def test_double_wildcard(self):
+        assert self.exclude(['**/a.py']) == convert_paths(
+            self.all_paths - set(
+                ['a.py', 'foo/a.py', 'foo/bar/a.py', 'bar/a.py']
+            )
+        )
+
+        assert self.exclude(['foo/**/bar']) == convert_paths(
+            self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
+        )
+
 
 class TarTest(unittest.TestCase):
     def test_tar_with_excludes(self):
@@ -892,6 +903,20 @@ class TarTest(unittest.TestCase):
             tar_data = tarfile.open(fileobj=archive)
             self.assertEqual(
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
+            )
+
+    def test_tar_socket_file(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+        sock = socket.socket(socket.AF_UNIX)
+        self.addCleanup(sock.close)
+        sock.bind(os.path.join(base, 'test.sock'))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            self.assertEqual(
+                sorted(tar_data.getnames()), ['bar', 'foo']
             )
 
 

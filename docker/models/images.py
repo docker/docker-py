@@ -62,10 +62,11 @@ class Image(Model):
 
         Example:
 
-            >>> image = cli.get("fedora:latest")
+            >>> image = cli.images.get("fedora:latest")
             >>> resp = image.save()
             >>> f = open('/tmp/fedora-latest.tar', 'w')
-            >>> f.write(resp.data)
+            >>> for chunk in resp.stream():
+            >>>     f.write(chunk)
             >>> f.close()
         """
         return self.client.api.get_image(self.id)
@@ -140,6 +141,8 @@ class ImageCollection(Collection):
                     ``"0-3"``, ``"0,1"``
             decode (bool): If set to ``True``, the returned stream will be
                 decoded into dicts on the fly. Default ``False``.
+            cache_from (list): A list of images used for build cache
+                resolution.
 
         Returns:
             (:py:class:`Image`): The built image.
@@ -160,10 +163,10 @@ class ImageCollection(Collection):
             return BuildError('Unknown')
         event = events[-1]
         if 'stream' in event:
-            match = re.search(r'Successfully built ([0-9a-f]+)',
+            match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
                               event.get('stream', ''))
             if match:
-                image_id = match.group(1)
+                image_id = match.group(2)
                 return self.get(image_id)
 
         raise BuildError(event.get('error') or event)
@@ -267,3 +270,7 @@ class ImageCollection(Collection):
     def search(self, *args, **kwargs):
         return self.client.api.search(*args, **kwargs)
     search.__doc__ = APIClient.search.__doc__
+
+    def prune(self, filters=None):
+        return self.client.api.prune_images(filters=filters)
+    prune.__doc__ = APIClient.prune_images.__doc__

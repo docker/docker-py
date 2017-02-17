@@ -4,21 +4,22 @@ import docker
 import pytest
 
 from .. import helpers
+from .base import TEST_API_VERSION
 
 
 class ServiceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         helpers.force_leave_swarm(client)
-        client.swarm.init(listen_addr=helpers.swarm_listen_addr())
+        client.swarm.init('eth0', listen_addr=helpers.swarm_listen_addr())
 
     @classmethod
     def tearDownClass(cls):
-        helpers.force_leave_swarm(docker.from_env())
+        helpers.force_leave_swarm(docker.from_env(version=TEST_API_VERSION))
 
     def test_create(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         name = helpers.random_name()
         service = client.services.create(
             # create arguments
@@ -36,7 +37,7 @@ class ServiceTest(unittest.TestCase):
         assert container_spec['Labels'] == {'container': 'label'}
 
     def test_get(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         name = helpers.random_name()
         service = client.services.create(
             name=name,
@@ -47,7 +48,7 @@ class ServiceTest(unittest.TestCase):
         assert service.name == name
 
     def test_list_remove(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         service = client.services.create(
             name=helpers.random_name(),
             image="alpine",
@@ -58,7 +59,7 @@ class ServiceTest(unittest.TestCase):
         assert service not in client.services.list()
 
     def test_tasks(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         service1 = client.services.create(
             name=helpers.random_name(),
             image="alpine",
@@ -83,7 +84,7 @@ class ServiceTest(unittest.TestCase):
 
     @pytest.mark.skip(reason="Makes Swarm unstable?")
     def test_update(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         service = client.services.create(
             # create arguments
             name=helpers.random_name(),

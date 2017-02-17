@@ -1,3 +1,4 @@
+import os
 import shutil
 import unittest
 
@@ -8,6 +9,7 @@ import six
 from .. import helpers
 
 BUSYBOX = 'busybox:buildroot-2014.02'
+TEST_API_VERSION = os.environ.get('DOCKER_TEST_API_VERSION')
 
 
 class BaseIntegrationTest(unittest.TestCase):
@@ -25,9 +27,11 @@ class BaseIntegrationTest(unittest.TestCase):
         self.tmp_folders = []
         self.tmp_volumes = []
         self.tmp_networks = []
+        self.tmp_plugins = []
+        self.tmp_secrets = []
 
     def tearDown(self):
-        client = docker.from_env()
+        client = docker.from_env(version=TEST_API_VERSION)
         for img in self.tmp_imgs:
             try:
                 client.api.remove_image(img)
@@ -49,6 +53,12 @@ class BaseIntegrationTest(unittest.TestCase):
             except docker.errors.APIError:
                 pass
 
+        for secret in self.tmp_secrets:
+            try:
+                client.api.remove_secret(secret)
+            except docker.errors.APIError:
+                pass
+
         for folder in self.tmp_folders:
             shutil.rmtree(folder)
 
@@ -61,7 +71,13 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
     def setUp(self):
         super(BaseAPIIntegrationTest, self).setUp()
-        self.client = docker.APIClient(timeout=60, **kwargs_from_env())
+        self.client = docker.APIClient(
+            version=TEST_API_VERSION, timeout=60, **kwargs_from_env()
+        )
+
+    def tearDown(self):
+        super(BaseAPIIntegrationTest, self).tearDown()
+        self.client.close()
 
     def run_container(self, *args, **kwargs):
         container = self.client.create_container(*args, **kwargs)
@@ -77,7 +93,7 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
         return container
 
-    def create_and_start(self, image='busybox', command='top', **kwargs):
+    def create_and_start(self, image=BUSYBOX, command='top', **kwargs):
         container = self.client.create_container(
             image=image, command=command, **kwargs)
         self.tmp_containers.append(container)

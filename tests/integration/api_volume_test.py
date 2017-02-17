@@ -49,6 +49,21 @@ class TestVolumes(BaseAPIIntegrationTest):
         self.client.create_volume(name)
         self.client.remove_volume(name)
 
+    @requires_api_version('1.25')
+    def test_force_remove_volume(self):
+        name = 'shootthebullet'
+        self.tmp_volumes.append(name)
+        self.client.create_volume(name)
+        self.client.remove_volume(name, force=True)
+
+    @requires_api_version('1.25')
+    def test_prune_volumes(self):
+        name = 'hopelessmasquerade'
+        self.client.create_volume(name)
+        self.tmp_volumes.append(name)
+        result = self.client.prune_volumes()
+        assert name in result['VolumesDeleted']
+
     def test_remove_nonexistent_volume(self):
         name = 'shootthebullet'
         with pytest.raises(docker.errors.NotFound):

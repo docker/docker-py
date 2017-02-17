@@ -87,6 +87,26 @@ Services
   :members:
   :undoc-members:
 
+Plugins
+-------
+
+.. py:module:: docker.api.plugin
+
+.. rst-class:: hide-signature
+.. autoclass:: PluginApiMixin
+  :members:
+  :undoc-members:
+
+Secrets
+-------
+
+.. py:module:: docker.api.secret
+
+.. rst-class:: hide-signature
+.. autoclass:: SecretApiMixin
+  :members:
+  :undoc-members:
+
 The Docker daemon
 -----------------
 
@@ -110,6 +130,7 @@ Configuration types
 .. autoclass:: Mount
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
+.. autoclass:: SecretReference
 .. autoclass:: ServiceMode
 .. autoclass:: TaskTemplate
 .. autoclass:: UpdateConfig

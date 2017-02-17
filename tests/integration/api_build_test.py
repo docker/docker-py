@@ -3,12 +3,12 @@ import os
 import shutil
 import tempfile
 
-import six
-
 from docker import errors
 
-from ..helpers import requires_api_version
+import six
+
 from .base import BaseAPIIntegrationTest
+from ..helpers import requires_api_version
 
 
 class BuildTest(BaseAPIIntegrationTest):
@@ -152,6 +152,42 @@ class BuildTest(BaseAPIIntegrationTest):
 
         info = self.client.inspect_image('labels')
         self.assertEqual(info['Config']['Labels'], labels)
+
+    @requires_api_version('1.25')
+    def test_build_with_cache_from(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'ENV FOO=bar',
+            'RUN touch baz',
+            'RUN touch bax',
+        ]).encode('ascii'))
+
+        stream = self.client.build(fileobj=script, tag='build1')
+        self.tmp_imgs.append('build1')
+        for chunk in stream:
+            pass
+
+        stream = self.client.build(
+            fileobj=script, tag='build2', cache_from=['build1'],
+            decode=True
+        )
+        self.tmp_imgs.append('build2')
+        counter = 0
+        for chunk in stream:
+            if 'Using cache' in chunk.get('stream', ''):
+                counter += 1
+        assert counter == 3
+        self.client.remove_image('build2')
+
+        counter = 0
+        stream = self.client.build(
+            fileobj=script, tag='build2', cache_from=['nosuchtag'],
+            decode=True
+        )
+        for chunk in stream:
+            if 'Using cache' in chunk.get('stream', ''):
+                counter += 1
+        assert counter == 0
 
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']

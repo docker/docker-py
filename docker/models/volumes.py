@@ -1,3 +1,4 @@
+from ..api import APIClient
 from .resource import Model, Collection
 
 
@@ -10,21 +11,31 @@ class Volume(Model):
         """The name of the volume."""
         return self.attrs['Name']
 
-    def remove(self):
-        """Remove this volume."""
-        return self.client.api.remove_volume(self.id)
+    def remove(self, force=False):
+        """
+        Remove this volume.
+
+        Args:
+            force (bool): Force removal of volumes that were already removed
+                out of band by the volume driver plugin.
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If volume failed to remove.
+        """
+        return self.client.api.remove_volume(self.id, force=force)
 
 
 class VolumeCollection(Collection):
     """Volumes on the Docker server."""
     model = Volume
 
-    def create(self, name, **kwargs):
+    def create(self, name=None, **kwargs):
         """
         Create a volume.
 
         Args:
-            name (str): Name of the volume
+            name (str): Name of the volume.  If not specified, the engine
+                generates a name.
             driver (str): Name of the driver used to create the volume
             driver_opts (dict): Driver options as a key-value dictionary
             labels (dict): Labels to set on the volume
@@ -82,3 +93,7 @@ class VolumeCollection(Collection):
         if not resp.get('Volumes'):
             return []
         return [self.prepare_model(obj) for obj in resp['Volumes']]
+
+    def prune(self, filters=None):
+        return self.client.api.prune_volumes(filters=filters)
+    prune.__doc__ = APIClient.prune_volumes.__doc__

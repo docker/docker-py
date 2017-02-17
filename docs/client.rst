@@ -19,6 +19,8 @@ Client reference
   .. autoattribute:: images
   .. autoattribute:: networks
   .. autoattribute:: nodes
+  .. autoattribute:: plugins
+  .. autoattribute:: secrets
   .. autoattribute:: services
   .. autoattribute:: swarm
   .. autoattribute:: volumes

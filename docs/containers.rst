@@ -14,6 +14,7 @@ Methods available on ``client.containers``:
   .. automethod:: create(image, command=None, **kwargs)
   .. automethod:: get(id_or_name)
   .. automethod:: list(**kwargs)
+  .. automethod:: prune
 
 Container objects
 -----------------

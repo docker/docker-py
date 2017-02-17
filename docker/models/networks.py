@@ -1,3 +1,4 @@
+from ..api import APIClient
 from .containers import Container
 from .resource import Model, Collection
 
@@ -180,3 +181,7 @@ class NetworkCollection(Collection):
         """
         resp = self.client.api.networks(*args, **kwargs)
         return [self.prepare_model(item) for item in resp]
+
+    def prune(self, filters=None):
+        self.client.api.prune_networks(filters=filters)
+    prune.__doc__ = APIClient.prune_networks.__doc__
