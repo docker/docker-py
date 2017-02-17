@@ -1,6 +1,57 @@
 Change log
 ==========
 
+2.1.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/27?closed=1)
+
+### Features
+
+* Added the following pruning methods:
+    * In `APIClient`: `prune_containers`, `prune_images`, `prune_networks`,
+      `prune_volumes`
+    * In `DockerClient`: `containers.prune`, `images.prune`, `networks.prune`,
+      `volumes.prune`
+* Added support for the plugins API:
+    * In `APIClient`: `configure_plugin`, `create_plugin`, `disable_plugin`,
+      `enable_plugin`, `inspect_plugin`, `pull_plugin`, `plugins`,
+      `plugin_privileges`, `push_plugin`, `remove_plugin`
+    * In `DockerClient`: `plugins.create`, `plugins.get`, `plugins.install`,
+      `plugins.list`, and the `Plugin` model.
+* Added support for the secrets API:
+    * In `APIClient`: `create_secret`, `inspect_secret`, `remove_secret`,
+      `secrets`
+    * In `DockerClient`: `secret.create`, `secret.get`, `secret.list` and
+      the `Secret` model.
+    * Added `secrets` parameter to `ContainerSpec`. Each item in the `secrets`
+      list must be a `docker.types.SecretReference` instance.
+* Added support for `cache_from` in `APIClient.build` and
+  `DockerClient.images.build`.
+* Added support for `auto_remove` and `storage_opt` in
+  `APIClient.create_host_config` and `DockerClient.containers.run`
+* Added support for `stop_timeout` in `APIClient.create_container` and
+  `DockerClient.containers.run`
+* Added support for the `force` parameter in `APIClient.remove_volume` and
+  `Volume.remove`
+* Added support for `max_failure_ratio` and `monitor` in `UpdateConfig`
+* Added support for `force_update` in `TaskTemplate`
+* Made `name` parameter optional in `APIClient.create_volume` and
+  `DockerClient.volumes.create`
+
+### Bugfixes
+
+* Fixed a bug where building from a directory containing socket-type files
+  would raise an unexpected `AttributeError`.
+* Fixed an issue that was preventing the `DockerClient.swarm.init` method to
+  take into account arguments passed to it.
+* `Image.tag` now correctly returns a boolean value upon completion.
+* Fixed several issues related to passing `volumes` in
+  `DockerClient.containers.run`
+* Fixed an issue where `DockerClient.image.build` wouldn't return an `Image`
+  object even when the build was successful
+
+
 2.0.2
 -----
 
