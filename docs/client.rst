@@ -20,6 +20,7 @@ Client reference
   .. autoattribute:: networks
   .. autoattribute:: nodes
   .. autoattribute:: plugins
+  .. autoattribute:: secrets
   .. autoattribute:: services
   .. autoattribute:: swarm
   .. autoattribute:: volumes
