@@ -85,6 +85,7 @@ That's just a taste of what you can do with the Docker SDK for Python. For more,
   networks
   nodes
   plugins
+  secrets
   services
   swarm
   volumes

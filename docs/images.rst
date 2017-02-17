@@ -14,11 +14,11 @@ Methods available on ``client.images``:
   .. automethod:: get
   .. automethod:: list(**kwargs)
   .. automethod:: load
+  .. automethod:: prune
   .. automethod:: pull
   .. automethod:: push
   .. automethod:: remove
   .. automethod:: search
-  .. automethod:: prune
 
 
 Image objects
