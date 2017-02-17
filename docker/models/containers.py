@@ -493,6 +493,7 @@ class ContainerCollection(Collection):
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
+            init_path (bool): Path to the docker-init binary
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: `None`.
             labels (dict or list): A dictionary of name-value labels (e.g.
@@ -817,6 +818,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'extra_hosts',
     'group_add',
     'init',
+    'init_path',
     'ipc_mode',
     'isolation',
     'kernel_memory',

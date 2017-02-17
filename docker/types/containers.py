@@ -118,7 +118,7 @@ class HostConfig(dict):
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
                  isolation=None, auto_remove=False, storage_opt=None,
-                 init=None):
+                 init=None, init_path=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -422,6 +422,11 @@ class HostConfig(dict):
             if version_lt(version, '1.25'):
                 raise host_config_version_error('init', '1.25')
             self['Init'] = init
+
+        if init_path:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('init', '1.25')
+            self['InitPath'] = init_path
 
 
 def host_config_type_error(param, param_value, expected):
