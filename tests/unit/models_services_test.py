@@ -8,6 +8,7 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'image': 'foo',
             'command': 'true',
             'name': 'somename',
+            'hostname': "test_host",
             'labels': {'key': 'value'},
             'mode': 'global',
             'update_config': {'update': 'config'},
@@ -48,5 +49,5 @@ class CreateServiceKwargsTest(unittest.TestCase):
         }
         assert set(task_template['ContainerSpec'].keys()) == set([
             'Image', 'Command', 'Args', 'Env', 'Dir', 'User', 'Labels',
-            'Mounts', 'StopGracePeriod'
+            'Mounts', 'StopGracePeriod', 'Hostname'
         ])
