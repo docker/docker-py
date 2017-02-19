@@ -96,6 +96,7 @@ class ServiceCollection(Collection):
                 access and load balance a service. Default: ``None``.
             env (list of str): Environment variables, in the form
                 ``KEY=val``.
+            hostname (string): Hostname to set on the container.
             labels (dict): Labels to apply to the service.
             log_driver (str): Log driver to use for containers.
             log_driver_options (dict): Log driver options.
@@ -176,6 +177,7 @@ CONTAINER_SPEC_KWARGS = [
     'command',
     'args',
     'env',
+    'hostname',
     'workdir',
     'user',
     'labels',
