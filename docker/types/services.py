@@ -70,6 +70,7 @@ class ContainerSpec(dict):
         image (string): The image name to use for the container.
         command (string or list):  The command to be run in the image.
         args (:py:class:`list`): Arguments to the command.
+        hostname (string): The hostname to set on the container.
         env (dict): Environment variables.
         dir (string): The working directory for commands to run in.
         user (string): The user inside the container.
@@ -82,9 +83,9 @@ class ContainerSpec(dict):
         secrets (list of py:class:`SecretReference`): List of secrets to be
             made available inside the containers.
     """
-    def __init__(self, image, command=None, args=None, env=None, workdir=None,
-                 user=None, labels=None, mounts=None, stop_grace_period=None,
-                 secrets=None):
+    def __init__(self, image, command=None, args=None, hostname=None, env=None,
+                workdir=None, user=None, labels=None, mounts=None,
+                stop_grace_period=None, secrets=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -92,6 +93,8 @@ class ContainerSpec(dict):
         self['Command'] = command
         self['Args'] = args
 
+        if hostname is not None:
+            self['Hostname'] = hostname
         if env is not None:
             if isinstance(env, dict):
                 self['Env'] = format_environment(env)
