@@ -24,7 +24,7 @@ def build_port_bindings(ports):
     return port_bindings
 
 
-def to_port_range(port):
+def to_port_range(port, randomly_available_port = False):
     if not port:
         return None
 
@@ -36,6 +36,9 @@ def to_port_range(port):
 
         port, protocol = parts
         protocol = "/" + protocol
+
+    if randomly_available_port:
+        return ["%s%s" % (port, protocol)]
 
     parts = str(port).split('-')
 
@@ -69,7 +72,7 @@ def split_port(port):
         external_port, internal_port = parts
 
         internal_range = to_port_range(internal_port)
-        external_range = to_port_range(external_port)
+        external_range = to_port_range(external_port, len(internal_range) == 1)
 
         if internal_range is None or external_range is None:
             _raise_invalid_port(port)
@@ -81,7 +84,7 @@ def split_port(port):
 
     external_ip, external_port, internal_port = parts
     internal_range = to_port_range(internal_port)
-    external_range = to_port_range(external_port)
+    external_range = to_port_range(external_port, len(internal_range) == 1)
     if not external_range:
         external_range = [None] * len(internal_range)
 
