@@ -72,9 +72,11 @@ def split_port(port):
         external_port, internal_port = parts
 
         internal_range = to_port_range(internal_port)
-        external_range = to_port_range(external_port, len(internal_range) == 1)
+        if internal_range is None:
+            _raise_invalid_port(port)
 
-        if internal_range is None or external_range is None:
+        external_range = to_port_range(external_port, len(internal_range) == 1)
+        if external_range is None:
             _raise_invalid_port(port)
 
         if len(internal_range) != len(external_range):
