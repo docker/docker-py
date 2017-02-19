@@ -24,7 +24,7 @@ def build_port_bindings(ports):
     return port_bindings
 
 
-def to_port_range(port, randomly_available_port = False):
+def to_port_range(port, randomly_available_port=False):
     if not port:
         return None
 
