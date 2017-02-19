@@ -84,8 +84,8 @@ class ContainerSpec(dict):
             made available inside the containers.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
-                workdir=None, user=None, labels=None, mounts=None,
-                stop_grace_period=None, secrets=None):
+                 workdir=None, user=None, labels=None, mounts=None,
+                 stop_grace_period=None, secrets=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
