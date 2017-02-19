@@ -530,6 +530,11 @@ class PortsTest(unittest.TestCase):
         self.assertEqual(internal_port, ["2000", "2001"])
         self.assertEqual(external_port, ["1000", "1001"])
 
+    def test_split_port_random_port_range_with_host_port(self):
+        internal_port, external_port = split_port("1000-1001:2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, ["1000-1001"])
+
     def test_split_port_no_host_port(self):
         internal_port, external_port = split_port("2000")
         self.assertEqual(internal_port, ["2000"])
