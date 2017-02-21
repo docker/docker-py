@@ -54,7 +54,7 @@ class DaemonApiMixin(object):
         }
 
         return self._stream_helper(
-            self.get(self._url('/events'), params=params, stream=True),
+            self._get(self._url('/events'), params=params, stream=True),
             decode=decode
         )
 
