@@ -150,7 +150,7 @@ class UnixconnTest(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
 
-            client = docker.APIClient(**kwargs_from_env())
+            client = docker.APIClient(version='auto', **kwargs_from_env())
             client.images()
             client.close()
             del client
