@@ -122,7 +122,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
             self.client.remove_container(id)
         err = exc.exception.explanation
         self.assertIn(
-            'You cannot remove a running container', err
+            'You cannot remove ', err
         )
         self.client.remove_container(id, force=True)
 
