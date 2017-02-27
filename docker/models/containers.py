@@ -726,7 +726,7 @@ class ContainerCollection(Collection):
 
         Args:
             all (bool): Show all containers. Only running containers are shown
-                by default trunc (bool): Truncate output
+                by default
             since (str): Show only containers created since Id or Name, include
                 non-running ones
             before (str): Show only container created before Id or Name,
