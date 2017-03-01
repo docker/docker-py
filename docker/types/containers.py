@@ -423,9 +423,9 @@ class HostConfig(dict):
                 raise host_config_version_error('init', '1.25')
             self['Init'] = init
 
-        if init_path:
+        if init_path is not None:
             if version_lt(version, '1.25'):
-                raise host_config_version_error('init', '1.25')
+                raise host_config_version_error('init_path', '1.25')
             self['InitPath'] = init_path
 
 
