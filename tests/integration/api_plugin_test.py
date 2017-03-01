@@ -123,6 +123,16 @@ class PluginTest(BaseAPIIntegrationTest):
         assert self.client.inspect_plugin(SSHFS)
         assert self.client.enable_plugin(SSHFS)
 
+    @requires_api_version('1.26')
+    def test_upgrade_plugin(self):
+        pl_data = self.ensure_plugin_installed(SSHFS)
+        assert pl_data['Enabled'] is False
+        prv = self.client.plugin_privileges(SSHFS)
+        logs = [d for d in self.client.upgrade_plugin(SSHFS, SSHFS, prv)]
+        assert filter(lambda x: x['status'] == 'Download complete', logs)
+        assert self.client.inspect_plugin(SSHFS)
+        assert self.client.enable_plugin(SSHFS)
+
     def test_create_plugin(self):
         plugin_data_dir = os.path.join(
             os.path.dirname(__file__), 'testdata/dummy-plugin'

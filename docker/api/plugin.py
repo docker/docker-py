@@ -195,6 +195,7 @@ class PluginApiMixin(object):
         return self._stream_helper(res, decode=True)
 
     @utils.minimum_version('1.25')
+    @utils.check_resource
     def remove_plugin(self, name, force=False):
         """
             Remove an installed plugin.
@@ -212,3 +213,39 @@ class PluginApiMixin(object):
         res = self._delete(url, params={'force': force})
         self._raise_for_status(res)
         return True
+
+    @utils.minimum_version('1.26')
+    @utils.check_resource
+    def upgrade_plugin(self, name, remote, privileges):
+        """
+            Upgrade an installed plugin.
+
+            Args:
+                name (string): Name of the plugin to upgrade. The ``:latest``
+                    tag is optional and is the default if omitted.
+                remote (string): Remote reference to upgrade to. The
+                    ``:latest`` tag is optional and is the default if omitted.
+                privileges (list): A list of privileges the user consents to
+                    grant to the plugin. Can be retrieved using
+                    :py:meth:`~plugin_privileges`.
+
+            Returns:
+                An iterable object streaming the decoded API logs
+        """
+
+        url = self._url('/plugins/{0}/upgrade', name)
+        params = {
+            'remote': remote,
+        }
+
+        headers = {}
+        registry, repo_name = auth.resolve_repository_name(remote)
+        header = auth.get_config_header(self, registry)
+        if header:
+            headers['X-Registry-Auth'] = header
+        response = self._post_json(
+            url, params=params, headers=headers, data=privileges,
+            stream=True
+        )
+        self._raise_for_status(response)
+        return self._stream_helper(response, decode=True)
