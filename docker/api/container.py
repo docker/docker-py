@@ -498,6 +498,9 @@ class ContainerApiMixin(object):
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
+            init (bool): Run an init inside the container that forwards
+                signals and reaps processes
+            init_path (str): Path to the docker-init binary
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: `None`.
             links (dict or list of tuples): Either a dictionary mapping name

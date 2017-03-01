@@ -439,6 +439,30 @@ class CreateContainerTest(BaseAPIIntegrationTest):
             'size': '120G'
         }
 
+    @requires_api_version('1.25')
+    def test_create_with_init(self):
+        ctnr = self.client.create_container(
+            BUSYBOX, 'true',
+            host_config=self.client.create_host_config(
+                init=True
+            )
+        )
+        self.tmp_containers.append(ctnr['Id'])
+        config = self.client.inspect_container(ctnr)
+        assert config['HostConfig']['Init'] is True
+
+    @requires_api_version('1.25')
+    def test_create_with_init_path(self):
+        ctnr = self.client.create_container(
+            BUSYBOX, 'true',
+            host_config=self.client.create_host_config(
+                init_path="/usr/libexec/docker-init"
+            )
+        )
+        self.tmp_containers.append(ctnr['Id'])
+        config = self.client.inspect_container(ctnr)
+        assert config['HostConfig']['InitPath'] == "/usr/libexec/docker-init"
+
 
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):
