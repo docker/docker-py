@@ -158,6 +158,7 @@ def get_fake_inspect_image():
         'Parent': "27cf784147099545",
         'Created': "2013-03-23T22:24:18.818426-07:00",
         'Container': FAKE_CONTAINER_ID,
+        'Config': {'Labels': {'bar': 'foo'}},
         'ContainerConfig':
         {
             "Hostname": "",

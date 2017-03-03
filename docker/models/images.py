@@ -16,6 +16,14 @@ class Image(Model):
         return "<%s: '%s'>" % (self.__class__.__name__, "', '".join(self.tags))
 
     @property
+    def labels(self):
+        """
+        The labels of an image as dictionary.
+        """
+        result = self.attrs['Config'].get('Labels')
+        return result or {}
+
+    @property
     def short_id(self):
         """
         The ID of the image truncated to 10 characters, plus the ``sha256:``

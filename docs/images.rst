@@ -29,6 +29,7 @@ Image objects
   .. autoattribute:: id
   .. autoattribute:: short_id
   .. autoattribute:: tags
+  .. autoattribute:: labels
   .. py:attribute:: attrs
 
     The raw representation of this object from the server.
