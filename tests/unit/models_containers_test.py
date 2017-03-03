@@ -390,6 +390,11 @@ class ContainerTest(unittest.TestCase):
         container.kill(signal=5)
         client.api.kill.assert_called_with(FAKE_CONTAINER_ID, signal=5)
 
+    def test_labels(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        assert container.labels == {'foo': 'bar'}
+
     def test_logs(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)

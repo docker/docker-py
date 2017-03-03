@@ -19,6 +19,14 @@ class Container(Model):
             return self.attrs['Name'].lstrip('/')
 
     @property
+    def labels(self):
+        """
+        The labels of a container as dictionary.
+        """
+        result = self.attrs['Config'].get('Labels')
+        return result or {}
+
+    @property
     def status(self):
         """
         The status of the container. For example, ``running``, or ``exited``.

@@ -25,6 +25,7 @@ Container objects
   .. autoattribute:: short_id
   .. autoattribute:: name
   .. autoattribute:: status
+  .. autoattribute:: labels
   .. py:attribute:: attrs
 
     The raw representation of this object from the server.

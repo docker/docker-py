@@ -134,7 +134,7 @@ def get_fake_inspect_container(tty=False):
     status_code = 200
     response = {
         'Id': FAKE_CONTAINER_ID,
-        'Config': {'Privileged': True, 'Tty': tty},
+        'Config': {'Labels': {'foo': 'bar'}, 'Privileged': True, 'Tty': tty},
         'ID': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
         'Name': 'foobar',
