@@ -19,6 +19,16 @@ class Container(Model):
             return self.attrs['Name'].lstrip('/')
 
     @property
+    def image(self):
+        """
+        The image of the container.
+        """
+        image_id = self.attrs['Image']
+        if image_id is None:
+            return None
+        return self.client.images.get(image_id.split(':')[1])
+
+    @property
     def labels(self):
         """
         The labels of a container as dictionary.

@@ -25,6 +25,7 @@ Container objects
   .. autoattribute:: short_id
   .. autoattribute:: name
   .. autoattribute:: status
+  .. autoattribute:: image
   .. autoattribute:: labels
   .. py:attribute:: attrs
 

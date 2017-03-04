@@ -384,6 +384,11 @@ class ContainerTest(unittest.TestCase):
         container.get_archive('foo')
         client.api.get_archive.assert_called_with(FAKE_CONTAINER_ID, 'foo')
 
+    def test_image(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        assert container.image.id == FAKE_IMAGE_ID
+
     def test_kill(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
