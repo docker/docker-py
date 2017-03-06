@@ -3,3 +3,4 @@ pytest==2.9.1
 coverage==3.7.1
 pytest-cov==2.1.0
 flake8==2.4.1
+docker-pycreds==0.2.1
