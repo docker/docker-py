@@ -155,6 +155,10 @@ class DockerClient(object):
         return self.api.events(*args, **kwargs)
     events.__doc__ = APIClient.events.__doc__
 
+    def df(self):
+        return self.api.df()
+    df.__doc__ = APIClient.df.__doc__
+
     def info(self, *args, **kwargs):
         return self.api.info(*args, **kwargs)
     info.__doc__ = APIClient.info.__doc__
