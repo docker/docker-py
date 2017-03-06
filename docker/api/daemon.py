@@ -157,3 +157,19 @@ class DaemonApiMixin(object):
         """
         url = self._url("/version", versioned_api=api_version)
         return self._result(self._get(url), json=True)
+
+    @utils.minimum_version('1.25')
+    def df(self, api_version=True):
+        """
+        Returns disk information from the server. Similar to the ``docker
+        system df`` command.
+
+        Returns:
+            (dict): The server disk information
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        url = self._url("/system/df", versioned_api=api_version)
+        return self._result(self._get(url), json=True)

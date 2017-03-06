@@ -17,6 +17,7 @@ from requests.packages import urllib3
 import six
 
 from . import fake_api
+from ..helpers import requires_api_version
 
 import pytest
 
@@ -189,6 +190,25 @@ class DockerApiTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_base + 'version',
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    @requires_api_version('1.25')
+    def test_df(self):
+        self.client.df()
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'system/df',
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_df_no_api_version(self):
+        self.client.df(False)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_base + 'system/df',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 

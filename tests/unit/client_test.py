@@ -5,6 +5,7 @@ import os
 import unittest
 
 from . import fake_api
+from ..helpers import requires_api_version
 
 try:
     from unittest import mock
@@ -44,6 +45,14 @@ class ClientTest(unittest.TestCase):
         mock_func.return_value = fake_api.get_fake_version()[1]
         client = docker.from_env()
         assert client.version() == mock_func.return_value
+        mock_func.assert_called_with()
+
+    @mock.patch('docker.api.APIClient.df')
+    @requires_api_version('1.25')
+    def test_df(self, mock_func):
+        mock_func.return_value = fake_api.get_fake_version()[1]
+        client = docker.from_env()
+        assert client.df() == mock_func.return_value
         mock_func.assert_called_with()
 
     def test_call_api_client_method(self):
