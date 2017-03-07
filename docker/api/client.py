@@ -323,6 +323,7 @@ class APIClient(
     def _multiplexed_response_stream_helper(self, response):
         """A generator of multiplexed data blocks coming from a response
         stream."""
+        self._raise_for_status(response)
 
         # Disable timeout on the underlying socket to prevent
         # Read timed out(s) for long running processes
@@ -408,7 +409,6 @@ class APIClient(
             return self._stream_raw_result(res) if stream else \
                 self._result(res, binary=True)
 
-        self._raise_for_status(res)
         sep = six.binary_type()
         if stream:
             return self._multiplexed_response_stream_helper(res)
