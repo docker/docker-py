@@ -447,7 +447,7 @@ class ContainerCollection(Collection):
         Args:
             image (str): The image to run.
             command (str or list): The command to run in the container.
-            auto_remove (bool): enable auto-removal of the container on daemon
+            remove (bool): enable auto-removal of the container on daemon
                 side when the container's process exits.
             blkio_weight_device: Block IO weight (relative device weight) in
                 the form of: ``[{"Path": "device_path", "Weight": weight}]``.
