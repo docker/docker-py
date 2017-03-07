@@ -140,6 +140,43 @@ class Container(Model):
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
         )
 
+    def exec_run2(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
+                  privileged=False, user='', detach=False,
+                  socket=False):
+        """
+        Run a command inside this container and returns its output and exit
+        code. Similar to ``docker exec``.
+
+        Args:
+            cmd (str or list): Command to be executed
+            stdout (bool): Attach to stdout. Default: ``True``
+            stderr (bool): Attach to stderr. Default: ``True``
+            stdin (bool): Attach to stdin. Default: ``False``
+            tty (bool): Allocate a pseudo-TTY. Default: False
+            privileged (bool): Run as privileged.
+            user (str): User to execute command as. Default: root
+            detach (bool): If true, detach from the exec command.
+                Default: False
+
+        Returns:
+            tuple:
+                str: A string containing response data otherwise.
+                int: Return code of the exec
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        resp = self.client.api.exec_create(
+            self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
+            privileged=privileged, user=user
+        )
+        exec_output = self.client.api.exec_start(
+            resp['Id'], detach=detach, tty=tty, stream=False, socket=socket
+        )
+        exec_inspect = self.client.api.exec_inspect(resp['Id'])
+        return (exec_output, exec_inspect['ExitCode'])
+
     def export(self):
         """
         Export the contents of the container's filesystem as a tar archive.
