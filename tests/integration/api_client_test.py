@@ -23,8 +23,6 @@ class InformationTest(BaseAPIIntegrationTest):
         self.assertIn('Containers', res)
         self.assertIn('Images', res)
         self.assertIn('Debug', res)
-        print(res)
-        self.fail()
 
 
 class LoadConfigTest(BaseAPIIntegrationTest):
