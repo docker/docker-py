@@ -574,6 +574,10 @@ class PortsTest(unittest.TestCase):
         self.assertRaises(ValueError,
                           lambda: split_port("localhost:"))
 
+    def test_with_no_container_port(self):
+        self.assertRaises(ValueError,
+                          lambda: split_port("localhost:80:"))
+
     def test_build_port_bindings_with_one_port(self):
         port_bindings = build_port_bindings(["127.0.0.1:1000:1000"])
         self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
