@@ -100,8 +100,8 @@ class ServiceCollection(Collection):
             labels (dict): Labels to apply to the service.
             log_driver (str): Log driver to use for containers.
             log_driver_options (dict): Log driver options.
-            mode (str): Scheduling mode for the service (``replicated`` or
-                ``global``). Defaults to ``replicated``.
+            mode (ServiceMode): Scheduling mode for the service.
+                Default:``None``
             mounts (list of str): Mounts for the containers, in the form
                 ``source:target:options``, where options is either
                 ``ro`` or ``rw``.
