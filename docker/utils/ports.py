@@ -85,8 +85,13 @@ def split_port(port):
         return internal_range, external_range
 
     external_ip, external_port, internal_port = parts
+
+    if not internal_port:
+        _raise_invalid_port(port)
+
     internal_range = to_port_range(internal_port)
     external_range = to_port_range(external_port, len(internal_range) == 1)
+
     if not external_range:
         external_range = [None] * len(internal_range)
 
