@@ -140,6 +140,10 @@ class BuildError(Exception):
     pass
 
 
+class GitError(BuildError):
+    pass
+
+
 def create_unexpected_kwargs_error(name, kwargs):
     quoted_kwargs = ["'{}'".format(k) for k in sorted(kwargs)]
     text = ["{}() ".format(name)]
