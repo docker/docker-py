@@ -8,7 +8,7 @@ import warnings
 import docker
 from docker.utils import kwargs_from_env
 
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest
 
 
 class InformationTest(BaseAPIIntegrationTest):
@@ -23,48 +23,6 @@ class InformationTest(BaseAPIIntegrationTest):
         self.assertIn('Containers', res)
         self.assertIn('Images', res)
         self.assertIn('Debug', res)
-
-
-class LinkTest(BaseAPIIntegrationTest):
-    def test_remove_link(self):
-        # Create containers
-        container1 = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
-        )
-        container1_id = container1['Id']
-        self.tmp_containers.append(container1_id)
-        self.client.start(container1_id)
-
-        # Create Link
-        # we don't want the first /
-        link_path = self.client.inspect_container(container1_id)['Name'][1:]
-        link_alias = 'mylink'
-
-        container2 = self.client.create_container(
-            BUSYBOX, 'cat', host_config=self.client.create_host_config(
-                links={link_path: link_alias}
-            )
-        )
-        container2_id = container2['Id']
-        self.tmp_containers.append(container2_id)
-        self.client.start(container2_id)
-
-        # Remove link
-        linked_name = self.client.inspect_container(container2_id)['Name'][1:]
-        link_name = '%s/%s' % (linked_name, link_alias)
-        self.client.remove_container(link_name, link=True)
-
-        # Link is gone
-        containers = self.client.containers(all=True)
-        retrieved = [x for x in containers if link_name in x['Names']]
-        self.assertEqual(len(retrieved), 0)
-
-        # Containers are still there
-        retrieved = [
-            x for x in containers if x['Id'].startswith(container1_id) or
-            x['Id'].startswith(container2_id)
-        ]
-        self.assertEqual(len(retrieved), 2)
 
 
 class LoadConfigTest(BaseAPIIntegrationTest):

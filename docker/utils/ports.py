@@ -67,6 +67,8 @@ def split_port(port):
 
     if len(parts) == 1:
         internal_port, = parts
+        if not internal_port:
+            _raise_invalid_port(port)
         return to_port_range(internal_port), None
     if len(parts) == 2:
         external_port, internal_port = parts
