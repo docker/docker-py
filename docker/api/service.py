@@ -167,6 +167,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.25')
+    @utils.check_resource
     def service_logs(self, service, details=False, follow=False, stdout=False,
                      stderr=False, since=0, timestamps=False, tail='all',
                      is_tty=None):
@@ -176,7 +177,7 @@ class ServiceApiMixin(object):
             or ``journald`` logging drivers.
 
             Args:
-                service (str): ID or name of the container
+                service (str): ID or name of the service
                 details (bool): Show extra details provided to logs.
                     Default: ``False``
                 follow (bool): Keep connection open to read logs as they are
