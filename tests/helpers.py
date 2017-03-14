@@ -1,3 +1,4 @@
+import functools
 import os
 import os.path
 import random
@@ -51,6 +52,15 @@ def requires_api_version(version):
         docker.utils.version_lt(test_version, version),
         reason="API version is too low (< {0})".format(version)
     )
+
+
+def requires_experimental(f):
+    @functools.wraps(f)
+    def wrapped(self, *args, **kwargs):
+        if not self.client.info()['ExperimentalBuild']:
+            pytest.skip('Feature requires Docker Engine experimental mode')
+        return f(self, *args, **kwargs)
+    return wrapped
 
 
 def wait_on_condition(condition, delay=0.1, timeout=40):
