@@ -4,6 +4,7 @@ import random
 import time
 
 import docker
+import six
 
 from ..helpers import (
     force_leave_swarm, requires_api_version, requires_experimental
@@ -108,6 +109,8 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert self.get_service_container(name, include_stopped=True)
         logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
         log_line = next(logs)
+        if six.PY3:
+            log_line = log_line.decode('utf-8')
         assert 'hello\n' in log_line
         assert 'com.docker.swarm.service.id={}'.format(
             svc_id['ID']
