@@ -63,7 +63,7 @@ def runTests = { Map settings ->
         def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         try {
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
-            dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375 --experimental
+            dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
             --name ${testContainerName} --volumes-from ${dindContainerName} \\
