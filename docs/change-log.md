@@ -1,6 +1,36 @@
 Change log
 ==========
 
+2.2.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/30?closed=1)
+
+### Features
+
+* Default API version has been bumped to `1.26` (Engine 1.13.1+)
+* Upgrade plugin:
+  * Added the `upgrade_plugin` method to the `APIClient` class
+  * Added the `upgrade` method to the `Plugin` class
+* Service logs:
+  * Added the `service_logs` method to the `APIClient` class
+  * Added the `logs` method to the `Service` class
+* Added the `df` method to `APIClient` and `DockerClient`
+* Added support for `init` and `init_path` parameters in `HostConfig`
+  and `DockerClient.containers.run`
+* Added support for `hostname` parameter in `ContainerSpec` and
+  `DockerClient.service.create`
+* Added support for port range to single port in port mappings
+  (e.g. `8000-8010:80`)
+
+### Bugfixes
+
+* Fixed a bug where a missing container port in a port mapping would raise
+  an unexpected `TypeError`
+* Fixed a bug where the `events` method in `APIClient` and `DockerClient`
+  would not respect custom headers set in `config.json`
+
+
 2.1.0
 -----
 
