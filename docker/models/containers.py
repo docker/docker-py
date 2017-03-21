@@ -491,6 +491,9 @@ class ContainerCollection(Collection):
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
             hostname (str): Optional hostname for the container.
+            init (bool): Run an init inside the container that forwards
+                signals and reaps processes
+            init_path (str): Path to the docker-init binary
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: `None`.
             labels (dict or list): A dictionary of name-value labels (e.g.
@@ -726,7 +729,7 @@ class ContainerCollection(Collection):
 
         Args:
             all (bool): Show all containers. Only running containers are shown
-                by default trunc (bool): Truncate output
+                by default
             since (str): Show only containers created since Id or Name, include
                 non-running ones
             before (str): Show only container created before Id or Name,
@@ -814,6 +817,8 @@ RUN_HOST_CONFIG_KWARGS = [
     'dns',
     'extra_hosts',
     'group_add',
+    'init',
+    'init_path',
     'ipc_mode',
     'isolation',
     'kernel_memory',

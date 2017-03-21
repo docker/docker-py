@@ -228,7 +228,8 @@ class DockerApiTest(BaseAPIClientTest):
             'GET',
             url_prefix + 'events',
             params={'since': None, 'until': None, 'filters': None},
-            stream=True
+            stream=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_events_with_since_until(self):
@@ -247,7 +248,8 @@ class DockerApiTest(BaseAPIClientTest):
                 'until': ts + 10,
                 'filters': None
             },
-            stream=True
+            stream=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def test_events_with_filters(self):
@@ -265,7 +267,8 @@ class DockerApiTest(BaseAPIClientTest):
                 'until': None,
                 'filters': expected_filters
             },
-            stream=True
+            stream=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
     def _socket_path_for_client_session(self, client):

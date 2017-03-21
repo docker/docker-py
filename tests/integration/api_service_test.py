@@ -4,8 +4,11 @@ import random
 import time
 
 import docker
+import six
 
-from ..helpers import force_leave_swarm, requires_api_version
+from ..helpers import (
+    force_leave_swarm, requires_api_version, requires_experimental
+)
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
@@ -27,13 +30,15 @@ class ServiceTest(BaseAPIIntegrationTest):
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
 
-    def get_service_container(self, service_name, attempts=20, interval=0.5):
+    def get_service_container(self, service_name, attempts=20, interval=0.5,
+                              include_stopped=False):
         # There is some delay between the service's creation and the creation
         # of the service's containers. This method deals with the uncertainty
         # when trying to retrieve the container associated with a service.
         while True:
             containers = self.client.containers(
-                filters={'name': [service_name]}, quiet=True
+                filters={'name': [service_name]}, quiet=True,
+                all=include_stopped
             )
             if len(containers) > 0:
                 return containers[0]
@@ -96,6 +101,20 @@ class ServiceTest(BaseAPIIntegrationTest):
         services = self.client.services(filters={'name': name})
         assert len(services) == 1
         assert services[0]['ID'] == svc_id['ID']
+
+    @requires_api_version('1.25')
+    @requires_experimental
+    def test_service_logs(self):
+        name, svc_id = self.create_simple_service()
+        assert self.get_service_container(name, include_stopped=True)
+        logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
+        log_line = next(logs)
+        if six.PY3:
+            log_line = log_line.decode('utf-8')
+        assert 'hello\n' in log_line
+        assert 'com.docker.swarm.service.id={}'.format(
+            svc_id['ID']
+        ) in log_line
 
     def test_create_service_custom_log_driver(self):
         container_spec = docker.types.ContainerSpec(

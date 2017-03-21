@@ -35,3 +35,4 @@ Plugin objects
   .. automethod:: reload
   .. automethod:: push
   .. automethod:: remove
+  .. automethod:: upgrade

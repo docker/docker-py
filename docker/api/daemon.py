@@ -7,6 +7,22 @@ from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
 
 
 class DaemonApiMixin(object):
+    @utils.minimum_version('1.25')
+    def df(self):
+        """
+        Get data usage information.
+
+        Returns:
+            (dict): A dictionary representing different resource categories
+            and their respective data usage.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        url = self._url('/system/df')
+        return self._result(self._get(url), True)
+
     def events(self, since=None, until=None, filters=None, decode=None):
         """
         Get real-time events from the server. Similar to the ``docker events``
@@ -54,7 +70,7 @@ class DaemonApiMixin(object):
         }
 
         return self._stream_helper(
-            self.get(self._url('/events'), params=params, stream=True),
+            self._get(self._url('/events'), params=params, stream=True),
             decode=decode
         )
 

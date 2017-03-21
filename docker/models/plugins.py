@@ -1,3 +1,4 @@
+from .. import errors
 from .resource import Collection, Model
 
 
@@ -95,6 +96,30 @@ class Plugin(Model):
                     If the server returns an error.
         """
         return self.client.api.remove_plugin(self.name, force=force)
+
+    def upgrade(self, remote=None):
+        """
+            Upgrade the plugin.
+
+            Args:
+                remote (string): Remote reference to upgrade to. The
+                ``:latest`` tag is optional and is the default if omitted.
+                Default: this plugin's name.
+
+            Returns:
+                A generator streaming the decoded API logs
+        """
+        if self.enabled:
+            raise errors.DockerError(
+                'Plugin must be disabled before upgrading.'
+            )
+
+        if remote is None:
+            remote = self.name
+        privileges = self.client.api.plugin_privileges(remote)
+        for d in self.client.api.upgrade_plugin(self.name, remote, privileges):
+            yield d
+        self._reload()
 
 
 class PluginCollection(Collection):
