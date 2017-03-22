@@ -21,6 +21,7 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
     'requests >= 2.5.2, != 2.11.0, != 2.12.2',
+    'urllib3 >= 1.8',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
     'docker-pycreds >= 0.2.1'
