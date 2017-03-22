@@ -363,7 +363,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         self.tmp_secrets.append(secret_id)
         secret_ref = docker.types.SecretReference(secret_id, secret_name)
         container_spec = docker.types.ContainerSpec(
-            'busybox', ['top'], secrets=[secret_ref]
+            'busybox', ['sleep', '999'], secrets=[secret_ref]
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -388,7 +388,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         self.tmp_secrets.append(secret_id)
         secret_ref = docker.types.SecretReference(secret_id, secret_name)
         container_spec = docker.types.ContainerSpec(
-            'busybox', ['top'], secrets=[secret_ref]
+            'busybox', ['sleep', '999'], secrets=[secret_ref]
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
