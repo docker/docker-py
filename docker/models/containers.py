@@ -456,10 +456,13 @@ class ContainerCollection(Collection):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
+            cpu_count (int): CPU count (Windows only).
             cpu_group (int): The length of a CPU period in microseconds.
+            cpu_percent (int): CPU percent (Windows only).
             cpu_period (int): Microseconds of CPU time that the container can
                 get in a CPU period.
             cpu_shares (int): CPU shares (relative weight).
+            cpus (float): Number of CPUs.
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
                 ``0,1``).
             detach (bool): Run container in the background and return a
@@ -803,9 +806,12 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cpu_count',
+    'cpu_percent',
     'cpu_period',
     'cpu_quota',
     'cpu_shares',
+    'cpus',
     'cpuset_cpus',
     'device_read_bps',
     'device_read_iops',

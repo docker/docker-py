@@ -165,6 +165,39 @@ class HostConfigTest(unittest.TestCase):
         with pytest.raises(TypeError):
             create_host_config(version='1.24', mem_swappiness='40')
 
+    def test_create_host_config_invalid_cpu_count_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_count='1')
+
+    def test_create_host_config_with_cpu_count(self):
+        config = create_host_config(version='1.25', cpu_count=2)
+        self.assertEqual(config.get('CpuCount'), 2)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_count=1))
+
+    def test_create_host_config_invalid_cpu_percent_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_percent='1')
+
+    def test_create_host_config_with_cpu_percent(self):
+        config = create_host_config(version='1.25', cpu_percent=15)
+        self.assertEqual(config.get('CpuPercent'), 15)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_percent=10))
+
+    def test_create_host_config_invalid_cpus_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpus='0')
+
+    def test_create_host_config_with_cpus(self):
+        config = create_host_config(version='1.25', cpus=100)
+        self.assertEqual(config.get('NanoCpus'), 100000000000)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpus=1))
+
 
 class UlimitTest(unittest.TestCase):
     def test_create_host_config_dict_ulimit(self):
