@@ -798,6 +798,7 @@ RUN_CREATE_KWARGS = [
 
 # kwargs to copy straight from run to host_config
 RUN_HOST_CONFIG_KWARGS = [
+    'auto_remove',
     'blkio_weight_device',
     'blkio_weight',
     'cap_add',
