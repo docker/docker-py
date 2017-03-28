@@ -40,6 +40,7 @@ Container objects
   .. automethod:: logs
   .. automethod:: pause
   .. automethod:: put_archive
+  .. automethod:: reload
   .. automethod:: remove
   .. automethod:: rename
   .. automethod:: resize
