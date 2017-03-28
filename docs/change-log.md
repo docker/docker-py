@@ -1,6 +1,19 @@
 Change log
 ==========
 
+2.2.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/32?closed=1)
+
+### Bugfixes
+
+* Fixed a bug where the `status_code` attribute of `APIError` exceptions would
+  not reflect the expected value.
+* Fixed an issue where the `events` method would time out unexpectedly if no
+  data was sent by the engine for a given amount of time.
+
+
 2.2.0
 -----
 
