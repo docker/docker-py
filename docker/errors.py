@@ -59,7 +59,7 @@ class APIError(requests.exceptions.HTTPError, DockerException):
 
     @property
     def status_code(self):
-        if self.response:
+        if self.response is not None:
             return self.response.status_code
 
     def is_client_error(self):

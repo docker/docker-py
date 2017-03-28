@@ -26,4 +26,5 @@ Secret objects
 
     The raw representation of this object from the server.
 
+  .. automethod:: reload
   .. automethod:: remove
