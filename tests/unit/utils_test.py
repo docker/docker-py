@@ -618,9 +618,11 @@ class PortsTest(unittest.TestCase):
 
 
 def convert_paths(collection):
-    if not IS_WINDOWS_PLATFORM:
-        return collection
-    return set(map(lambda x: x.replace('/', '\\'), collection))
+    return set(map(convert_path, collection))
+
+
+def convert_path(path):
+    return path.replace('/', os.path.sep)
 
 
 class ExcludePathsTest(unittest.TestCase):
@@ -685,12 +687,12 @@ class ExcludePathsTest(unittest.TestCase):
             set(['Dockerfile.alt', '.dockerignore'])
 
         assert self.exclude(['*'], dockerfile='foo/Dockerfile3') == \
-            set(['foo/Dockerfile3', '.dockerignore'])
+            convert_paths(set(['foo/Dockerfile3', '.dockerignore']))
 
     def test_exclude_dockerfile_child(self):
         includes = self.exclude(['foo/'], dockerfile='foo/Dockerfile3')
-        assert 'foo/Dockerfile3' in includes
-        assert 'foo/a.py' not in includes
+        assert convert_path('foo/Dockerfile3') in includes
+        assert convert_path('foo/a.py') not in includes
 
     def test_single_filename(self):
         assert self.exclude(['a.py']) == convert_paths(
@@ -917,6 +919,7 @@ class TarTest(unittest.TestCase):
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
             )
 
+    @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No UNIX sockets on Win32')
     def test_tar_socket_file(self):
         base = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base)
@@ -945,62 +948,53 @@ class ShouldCheckDirectoryTest(unittest.TestCase):
     ]
 
     def test_should_check_directory_not_excluded(self):
-        self.assertTrue(
-            should_check_directory('not_excluded', self.exclude_patterns,
-                                   self.include_patterns)
+        assert should_check_directory(
+            'not_excluded', self.exclude_patterns, self.include_patterns
         )
-
-        self.assertTrue(
-            should_check_directory('dir/with', self.exclude_patterns,
-                                   self.include_patterns)
+        assert should_check_directory(
+            convert_path('dir/with'), self.exclude_patterns,
+            self.include_patterns
         )
 
     def test_shoud_check_parent_directories_of_excluded(self):
-        self.assertTrue(
-            should_check_directory('dir', self.exclude_patterns,
-                                   self.include_patterns)
+        assert should_check_directory(
+            'dir', self.exclude_patterns, self.include_patterns
         )
-        self.assertTrue(
-            should_check_directory('dir/with', self.exclude_patterns,
-                                   self.include_patterns)
+        assert should_check_directory(
+            convert_path('dir/with'), self.exclude_patterns,
+            self.include_patterns
         )
 
     def test_should_not_check_excluded_directories_with_no_exceptions(self):
-        self.assertFalse(
-            should_check_directory('exclude_rather_large_directory',
-                                   self.exclude_patterns, self.include_patterns
-                                   )
+        assert not should_check_directory(
+            'exclude_rather_large_directory', self.exclude_patterns,
+            self.include_patterns
         )
-        self.assertFalse(
-            should_check_directory('dir/with/subdir_excluded',
-                                   self.exclude_patterns, self.include_patterns
-                                   )
+        assert not should_check_directory(
+            convert_path('dir/with/subdir_excluded'), self.exclude_patterns,
+            self.include_patterns
         )
 
     def test_should_check_excluded_directory_with_exceptions(self):
-        self.assertTrue(
-            should_check_directory('dir/with/exceptions',
-                                   self.exclude_patterns, self.include_patterns
-                                   )
+        assert should_check_directory(
+            convert_path('dir/with/exceptions'), self.exclude_patterns,
+            self.include_patterns
         )
-        self.assertTrue(
-            should_check_directory('dir/with/exceptions/in',
-                                   self.exclude_patterns, self.include_patterns
-                                   )
+        assert should_check_directory(
+            convert_path('dir/with/exceptions/in'), self.exclude_patterns,
+            self.include_patterns
         )
 
     def test_should_not_check_siblings_of_exceptions(self):
-        self.assertFalse(
-            should_check_directory('dir/with/exceptions/but_not_here',
-                                   self.exclude_patterns, self.include_patterns
-                                   )
+        assert not should_check_directory(
+            convert_path('dir/with/exceptions/but_not_here'),
+            self.exclude_patterns, self.include_patterns
         )
 
     def test_should_check_subdirectories_of_exceptions(self):
-        self.assertTrue(
-            should_check_directory('dir/with/exceptions/like_this_one/subdir',
-                                   self.exclude_patterns, self.include_patterns
-                                   )
+        assert should_check_directory(
+            convert_path('dir/with/exceptions/like_this_one/subdir'),
+            self.exclude_patterns, self.include_patterns
         )
 
 

@@ -1,5 +1,6 @@
 import os
 
+from ..constants import IS_WINDOWS_PLATFORM
 from .fnmatch import fnmatch
 from .utils import create_archive
 
@@ -39,7 +40,7 @@ def exclude_paths(root, patterns, dockerfile=None):
         # If the Dockerfile is in a subdirectory that is excluded, get_paths
         # will not descend into it and the file will be skipped. This ensures
         # it doesn't happen.
-        set([dockerfile])
+        set([dockerfile.replace('/', os.path.sep)])
         if os.path.exists(os.path.join(root, dockerfile)) else set()
     )
 
@@ -130,9 +131,12 @@ def match_path(path, pattern):
     if pattern:
         pattern = os.path.relpath(pattern)
 
+    pattern_components = pattern.split(os.path.sep)
+    if len(pattern_components) == 1 and IS_WINDOWS_PLATFORM:
+        pattern_components = pattern.split('/')
+
     if '**' not in pattern:
-        pattern_components = pattern.split(os.path.sep)
         path_components = path.split(os.path.sep)[:len(pattern_components)]
     else:
         path_components = path.split(os.path.sep)
-    return fnmatch('/'.join(path_components), pattern)
+    return fnmatch('/'.join(path_components), '/'.join(pattern_components))
