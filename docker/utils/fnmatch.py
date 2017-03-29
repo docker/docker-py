@@ -39,15 +39,13 @@ def fnmatch(name, pat):
     If you don't want this, use fnmatchcase(FILENAME, PATTERN).
     """
 
-    import os
-    name = os.path.normcase(name)
-    pat = os.path.normcase(pat)
+    name = name.lower()
+    pat = pat.lower()
     return fnmatchcase(name, pat)
 
 
 def fnmatchcase(name, pat):
     """Test whether FILENAME matches PATTERN, including case.
-
     This is a version of fnmatch() which doesn't case-normalize
     its arguments.
     """
@@ -67,7 +65,6 @@ def translate(pat):
 
     There is no way to quote meta-characters.
     """
-
     recursive_mode = False
     i, n = 0, len(pat)
     res = ''
@@ -100,7 +97,7 @@ def translate(pat):
                     stuff = '\\' + stuff
                 res = '%s[%s]' % (res, stuff)
         elif recursive_mode and c == '/':
-            res = res + '/?'
+            res = res + re.escape(c) + '?'
         else:
             res = res + re.escape(c)
     return res + '\Z(?ms)'
