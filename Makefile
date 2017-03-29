@@ -14,6 +14,14 @@ build:
 build-py3:
 	docker build -t docker-sdk-python3 -f Dockerfile-py3 .
 
+.PHONY: build-pypy
+build-pypy:
+	docker build -t docker-sdk-pypy -f Dockerfile-pypy .
+
+.PHONY: build-pypy3
+build-pypy3:
+	docker build -t docker-sdk-pypy3 -f Dockerfile-pypy3 .
+
 .PHONY: build-docs
 build-docs:
 	docker build -t docker-sdk-python-docs -f Dockerfile-docs .
@@ -23,7 +31,7 @@ build-dind-certs:
 	docker build -t dpy-dind-certs -f tests/Dockerfile-dind-certs .
 
 .PHONY: test
-test: flake8 unit-test unit-test-py3 integration-dind integration-dind-ssl
+test: flake8 unit-test unit-test-py3 unit-test-pypy unit-test-pypy3 integration-dind integration-dind-ssl
 
 .PHONY: unit-test
 unit-test: build
@@ -33,6 +41,14 @@ unit-test: build
 unit-test-py3: build-py3
 	docker run --rm docker-sdk-python3 py.test tests/unit
 
+.PHONY: unit-test-pypy
+unit-test-pypy: build-pypy
+	docker run docker-sdk-pypy py.test tests/unit
+
+.PHONY: unit-test-pypy3
+unit-test-pypy3: build-pypy3
+	docker run docker-sdk-pypy3 py.test tests/unit
+
 .PHONY: integration-test
 integration-test: build
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python py.test tests/integration/${file}
@@ -40,6 +56,14 @@ integration-test: build
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
+
+.PHONY: integration-test-pypy
+integration-test-pypy: build-pypy
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-pypy py.test tests/integration/${file}
+
+.PHONY: integration-test-pypy3
+integration-test-pypy3: build-pypy3
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-pypy3 py.test tests/integration/${file}
 
 .PHONY: integration-dind
 integration-dind: build build-py3
