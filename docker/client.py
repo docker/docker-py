@@ -24,7 +24,7 @@ class DockerClient(object):
         base_url (str): URL to the Docker server. For example,
             ``unix:///var/run/docker.sock`` or ``tcp://127.0.0.1:1234``.
         version (str): The version of the API to use. Set to ``auto`` to
-            automatically detect the server's version. Default: ``1.24``
+            automatically detect the server's version. Default: ``1.26``
         timeout (int): Default timeout for API calls, in seconds.
         tls (bool or :py:class:`~docker.tls.TLSConfig`): Enable TLS. Pass
             ``True`` to enable it with default options, or pass a
@@ -58,7 +58,7 @@ class DockerClient(object):
 
         Args:
             version (str): The version of the API to use. Set to ``auto`` to
-                automatically detect the server's version. Default: ``1.24``
+                automatically detect the server's version. Default: ``1.26``
             timeout (int): Default timeout for API calls, in seconds.
             ssl_version (int): A valid `SSL version`_.
             assert_hostname (bool): Verify the hostname of the server.
