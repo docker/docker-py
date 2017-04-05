@@ -585,7 +585,7 @@ class ContainerCollection(Collection):
             stdin_open (bool): Keep ``STDIN`` open even if not attached.
             stdout (bool): Return logs from ``STDOUT`` when ``detach=False``.
                 Default: ``True``.
-            stdout (bool): Return logs from ``STDERR`` when ``detach=False``.
+            stderr (bool): Return logs from ``STDERR`` when ``detach=False``.
                 Default: ``False``.
             stop_signal (str): The stop signal to use to stop the container
                 (e.g. ``SIGINT``).
