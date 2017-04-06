@@ -457,10 +457,10 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cpu_count (int): CPU count (Windows only).
-            cpu_group (int): The length of a CPU period in microseconds.
-            cpu_percent (int): CPU percent (Windows only).
-            cpu_period (int): Microseconds of CPU time that the container can
+            cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
+            cpu_percent (int): CPU percent (Windows only).
+            cpu_period (int): The length of a CPU period in microseconds.
             cpu_shares (int): CPU shares (relative weight).
             cpus (float): Number of CPUs.
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
