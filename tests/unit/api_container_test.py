@@ -407,11 +407,8 @@ class CreateContainerTest(BaseAPIClientTest):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_empty_volumes_from(self):
-        self.client.create_container('busybox', 'true', volumes_from=[])
-
-        args = fake_request.call_args
-        data = json.loads(args[1]['data'])
-        self.assertTrue('VolumesFrom' not in data)
+        with pytest.raises(docker.errors.InvalidVersion):
+            self.client.create_container('busybox', 'true', volumes_from=[])
 
     def test_create_named_container(self):
         self.client.create_container('busybox', 'true',
@@ -978,11 +975,11 @@ class CreateContainerTest(BaseAPIClientTest):
         self.client.create_container(
             'busybox', 'true',
             host_config=self.client.create_host_config(
+                volume_driver='foodriver',
                 binds={volume_name: {
                     "bind": mount_dest,
                     "ro": False
                 }}),
-            volume_driver='foodriver',
         )
 
         args = fake_request.call_args
@@ -990,8 +987,8 @@ class CreateContainerTest(BaseAPIClientTest):
             args[0][1], url_prefix + 'containers/create'
         )
         expected_payload = self.base_create_payload()
-        expected_payload['VolumeDriver'] = 'foodriver'
         expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['VolumeDriver'] = 'foodriver'
         expected_payload['HostConfig']['Binds'] = ["name:/mnt:rw"]
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
