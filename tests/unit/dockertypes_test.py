@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import warnings
 
 import pytest
 
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    EndpointConfig, HostConfig, IPAMConfig, IPAMPool, LogConfig, Mount,
-    ServiceMode, Ulimit,
+    ContainerConfig, EndpointConfig, HostConfig, IPAMConfig, IPAMPool,
+    LogConfig, Mount, ServiceMode, Ulimit,
 )
 
 try:
@@ -164,6 +165,26 @@ class HostConfigTest(unittest.TestCase):
     def test_create_host_config_invalid_mem_swappiness(self):
         with pytest.raises(TypeError):
             create_host_config(version='1.24', mem_swappiness='40')
+
+    def test_create_host_config_with_volume_driver(self):
+        with pytest.raises(InvalidVersion):
+            create_host_config(version='1.20', volume_driver='local')
+
+        config = create_host_config(version='1.21', volume_driver='local')
+        assert config.get('VolumeDriver') == 'local'
+
+
+class ContainerConfigTest(unittest.TestCase):
+    def test_create_container_config_volume_driver_warning(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            ContainerConfig(
+                version='1.21', image='scratch', command=None,
+                volume_driver='local'
+            )
+
+        assert len(w) == 1
+        assert 'The volume_driver option has been moved' in str(w[0].message)
 
 
 class UlimitTest(unittest.TestCase):

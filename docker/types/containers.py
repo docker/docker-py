@@ -118,7 +118,7 @@ class HostConfig(dict):
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
                  isolation=None, auto_remove=False, storage_opt=None,
-                 init=None, init_path=None):
+                 init=None, init_path=None, volume_driver=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -428,6 +428,11 @@ class HostConfig(dict):
                 raise host_config_version_error('init_path', '1.25')
             self['InitPath'] = init_path
 
+        if volume_driver is not None:
+            if version_lt(version, '1.21'):
+                raise host_config_version_error('volume_driver', '1.21')
+            self['VolumeDriver'] = volume_driver
+
 
 def host_config_type_error(param, param_value, expected):
     error_msg = 'Invalid type for {0} param: expected {1} but found {2}'
@@ -456,42 +461,26 @@ class ContainerConfig(dict):
         stop_signal=None, networking_config=None, healthcheck=None,
         stop_timeout=None
     ):
-        if isinstance(command, six.string_types):
-            command = split_command(command)
+        if version_gte(version, '1.10'):
+            message = ('{0!r} parameter has no effect on create_container().'
+                       ' It has been moved to host_config')
+            if dns is not None:
+                raise errors.InvalidVersion(message.format('dns'))
+            if volumes_from is not None:
+                raise errors.InvalidVersion(message.format('volumes_from'))
 
-        if isinstance(entrypoint, six.string_types):
-            entrypoint = split_command(entrypoint)
-
-        if isinstance(environment, dict):
-            environment = format_environment(environment)
-
-        if labels is not None and version_lt(version, '1.18'):
-            raise errors.InvalidVersion(
-                'labels were only introduced in API version 1.18'
-            )
-
-        if cpuset is not None or cpu_shares is not None:
-            if version_gte(version, '1.18'):
+        if version_lt(version, '1.18'):
+            if labels is not None:
+                raise errors.InvalidVersion(
+                    'labels were only introduced in API version 1.18'
+                )
+        else:
+            if cpuset is not None or cpu_shares is not None:
                 warnings.warn(
                     'The cpuset_cpus and cpu_shares options have been moved to'
                     ' host_config in API version 1.18, and will be removed',
                     DeprecationWarning
                 )
-
-        if stop_signal is not None and version_lt(version, '1.21'):
-            raise errors.InvalidVersion(
-                'stop_signal was only introduced in API version 1.21'
-            )
-
-        if stop_timeout is not None and version_lt(version, '1.25'):
-            raise errors.InvalidVersion(
-                'stop_timeout was only introduced in API version 1.25'
-            )
-
-        if healthcheck is not None and version_lt(version, '1.24'):
-            raise errors.InvalidVersion(
-                'Health options were only introduced in API version 1.24'
-            )
 
         if version_lt(version, '1.19'):
             if volume_driver is not None:
@@ -512,6 +501,38 @@ class ContainerConfig(dict):
                     'memswap_limit has been moved to host_config in API '
                     'version 1.19'
                 )
+
+        if version_lt(version, '1.21'):
+            if stop_signal is not None:
+                raise errors.InvalidVersion(
+                    'stop_signal was only introduced in API version 1.21'
+                )
+        else:
+            if volume_driver is not None:
+                warnings.warn(
+                    'The volume_driver option has been moved to'
+                    ' host_config in API version 1.21, and will be removed',
+                    DeprecationWarning
+                )
+
+        if stop_timeout is not None and version_lt(version, '1.25'):
+            raise errors.InvalidVersion(
+                'stop_timeout was only introduced in API version 1.25'
+            )
+
+        if healthcheck is not None and version_lt(version, '1.24'):
+            raise errors.InvalidVersion(
+                'Health options were only introduced in API version 1.24'
+            )
+
+        if isinstance(command, six.string_types):
+            command = split_command(command)
+
+        if isinstance(entrypoint, six.string_types):
+            entrypoint = split_command(entrypoint)
+
+        if isinstance(environment, dict):
+            environment = format_environment(environment)
 
         if isinstance(labels, list):
             labels = dict((lbl, six.text_type('')) for lbl in labels)
@@ -565,14 +586,6 @@ class ContainerConfig(dict):
             if stdin_open:
                 attach_stdin = True
                 stdin_once = True
-
-        if version_gte(version, '1.10'):
-            message = ('{0!r} parameter has no effect on create_container().'
-                       ' It has been moved to host_config')
-            if dns is not None:
-                raise errors.InvalidVersion(message.format('dns'))
-            if volumes_from is not None:
-                raise errors.InvalidVersion(message.format('volumes_from'))
 
         self.update({
             'Hostname': hostname,
