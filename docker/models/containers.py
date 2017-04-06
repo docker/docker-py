@@ -513,14 +513,12 @@ class ContainerCollection(Collection):
                   driver.
 
             mac_address (str): MAC address to assign to the container.
-            mem_limit (float or str): Memory limit. Accepts float values
+            mem_limit (int or str): Memory limit. Accepts float values
                 (which represent the memory limit of the created container in
                 bytes) or a string with a units identification char
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
                 intended unit.
-            mem_limit (str or int): Maximum amount of memory container is
-                allowed to consume. (e.g. ``1G``).
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
