@@ -456,8 +456,8 @@ class ContainerCollection(Collection):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
-            cpu_group (int): The length of a CPU period in microseconds.
-            cpu_period (int): Microseconds of CPU time that the container can
+            cpu_period (int): The length of a CPU period in microseconds.
+            cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
             cpu_shares (int): CPU shares (relative weight).
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
@@ -512,14 +512,12 @@ class ContainerCollection(Collection):
                   driver.
 
             mac_address (str): MAC address to assign to the container.
-            mem_limit (float or str): Memory limit. Accepts float values
+            mem_limit (int or str): Memory limit. Accepts float values
                 (which represent the memory limit of the created container in
                 bytes) or a string with a units identification char
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
                 intended unit.
-            mem_limit (str or int): Maximum amount of memory container is
-                allowed to consume. (e.g. ``1G``).
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a

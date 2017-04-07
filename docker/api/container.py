@@ -473,8 +473,8 @@ class ContainerApiMixin(object):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
-            cpu_group (int): The length of a CPU period in microseconds.
-            cpu_period (int): Microseconds of CPU time that the container can
+            cpu_period (int): The length of a CPU period in microseconds.
+            cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
             cpu_shares (int): CPU shares (relative weight).
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
