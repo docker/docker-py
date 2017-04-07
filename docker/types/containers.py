@@ -116,9 +116,9 @@ class HostConfig(dict):
                  device_read_iops=None, device_write_iops=None,
                  oom_kill_disable=False, shm_size=None, sysctls=None,
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                 cpuset_cpus=None, cpuset_mems=None, userns_mode=None, pids_limit=None,
-                 isolation=None, auto_remove=False, storage_opt=None,
-                 init=None, init_path=None):
+                 cpuset_cpus=None, cpuset_mems=None, userns_mode=None,
+                 pids_limit=None, isolation=None, auto_remove=False,
+                 storage_opt=None, init=None, init_path=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
