@@ -168,14 +168,23 @@ class NetworkApiMixin(object):
         self._raise_for_status(res)
 
     @minimum_version('1.21')
-    def inspect_network(self, net_id):
+    def inspect_network(self, net_id, verbose=False):
         """
         Get detailed information about a network.
 
         Args:
             net_id (str): ID of network
+            verbose (bool): If set shows the service details across the cluster
+                in swarm mode
         """
-        url = self._url("/networks/{0}", net_id)
+        if verbose is True:
+            if version_lt(self._version, '1.28'):
+                raise InvalidVersion(
+                    'Verbose option was introduced in API 1.28'
+                )
+            url = self._url("/networks/{0}?verbose=true", net_id)
+        else:
+            url = self._url("/networks/{0}", net_id)
         res = self._get(url)
         return self._result(res, json=True)
 
