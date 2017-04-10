@@ -166,6 +166,13 @@ class HostConfigTest(unittest.TestCase):
         with pytest.raises(TypeError):
             create_host_config(version='1.24', mem_swappiness='40')
 
+    def test_create_host_config_with_volume_driver(self):
+        with pytest.raises(InvalidVersion):
+            create_host_config(version='1.20', volume_driver='local')
+
+        config = create_host_config(version='1.21', volume_driver='local')
+        assert config.get('VolumeDriver') == 'local'
+
     def test_create_host_config_invalid_cpu_count_types(self):
         with pytest.raises(TypeError):
             create_host_config(version='1.25', cpu_count='1')
@@ -198,13 +205,6 @@ class HostConfigTest(unittest.TestCase):
         self.assertRaises(
             InvalidVersion, lambda: create_host_config(
                 version='1.24', cpus=1))
-
-    def test_create_host_config_with_volume_driver(self):
-        with pytest.raises(InvalidVersion):
-            create_host_config(version='1.20', volume_driver='local')
-
-        config = create_host_config(version='1.21', volume_driver='local')
-        assert config.get('VolumeDriver') == 'local'
 
 
 class ContainerConfigTest(unittest.TestCase):
