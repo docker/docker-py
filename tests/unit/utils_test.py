@@ -934,6 +934,18 @@ class TarTest(unittest.TestCase):
                 sorted(tar_data.getnames()), ['bar', 'foo']
             )
 
+    def test_tar_unicode_filenames(self):
+
+        dirs = {'foo', 'bar', '千本桜'}
+        files = {'foo/∆.jpg', '서울.html', '千本桜/sample.mp3'}
+
+        base = make_tree(dirs, files)
+        self.addCleanup(shutil.rmtree, base)
+
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            assert set(tar_data.getnames()) == set.union(dirs, files)
+
 
 class ShouldCheckDirectoryTest(unittest.TestCase):
     exclude_patterns = [
