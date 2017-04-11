@@ -1,6 +1,9 @@
+import os
+import re
 import six
 import warnings
 from datetime import datetime
+from distutils.spawn import find_executable
 
 from .. import errors
 from .. import utils
@@ -445,8 +448,49 @@ class ContainerApiMixin(object):
         )
         return self.create_container_from_config(config, name)
 
-    def create_container_config(self, *args, **kwargs):
-        return ContainerConfig(self._version, *args, **kwargs)
+    def create_container_config(self, image, *args, **kwargs):
+        container_config = ContainerConfig(self._version, image, 
+                                           *args, **kwargs)
+
+        ###Try/catch or some robustness around this?
+        use_nvidia_docker = (self.inspect_image(image)['Config']['Labels'].\
+                get('com.nvidia.volumes.needed', None) == 'nvidia_driver') \
+            and find_executable('nvidia-docker') ### Is it neccessary to check for nvidia-docker?
+
+        if use_nvidia_docker:
+            # Get the nvidia driver version
+            with open('/proc/driver/nvidia/version', 'r') as fid:
+                nvidia_driver_version = fid.read().split('Kernel Module')[1]\
+                        .split()[0]
+            #It's important not to contain the project name as a prefix here
+            container_config['HostConfig']['Binds'] += \
+                ['nvidia_driver_'+nvidia_driver_version+\
+                 ':/usr/local/nvidia:ro']
+
+            devices = container_config['HostConfig'].get('Devices', [])
+            devices += [{'PathInContainer': '/dev/nvidiactl', 
+                         'PathOnHost': '/dev/nvidiactl', 
+                         'CgroupPermissions': 'rwm'},
+                        {'PathInContainer': '/dev/nvidia-uvm', 
+                         'PathOnHost': '/dev/nvidia-uvm', 
+                         'CgroupPermissions': 'rwm'}]
+
+            #suport both '0 1' and '0, 1' formats, just like nvidia-docker
+            gpu_isolation = os.getenv('NV_GPU', '').replace(',', ' ').split()
+            if gpu_isolation:
+                gpus = ['nvidia'+gpu for gpu in gpu_isolation]
+            else:
+                gpus = os.listdir('/dev/')
+                pattern = re.compile(r'nvidia[0-9]+$')
+                gpus = [x for x in gpus if re.match(pattern, x)]
+            for gpu in gpus:
+                devices += [{'PathInContainer': '/dev/'+gpu,
+                             'PathOnHost': '/dev/'+gpu, 
+                             'CgroupPermissions': 'rwm'}]
+            
+            container_config['HostConfig']['Devices'] = devices
+            
+        return container_config
 
     def create_container_from_config(self, config, name=None):
         u = self._url("/containers/create")
