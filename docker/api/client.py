@@ -453,15 +453,36 @@ class APIClient(
 
 class NvidiaAPIClient(NvidiaContainerApiMixin, APIClient):
     """
-    A version of APIClient that used nvidia-docker API to support nvidia GPUs
+    Version of APIClient that uses the nvidia-docker API to support nvidia GPUs
+
+    Requires `nvidia-docker` to be installed in order to function correctly
 
     Example:
 
-        >>> import docker
+        >>> import os, docker
         >>> client = docker.from_env()
-        >>> client.run('nvidia/cuda')
-
-    """
+        >>> os.environ['NV_GPU'] = '0 1'
+        >>> print(client.containers.run('nvidia/cuda', 'nvidia-smi'))
+        Wed Apr 12 20:22:34 2017
+        +-----------------------------------------------------------------------------+
+        | NVIDIA-SMI 375.39                 Driver Version: 375.39                    |
+        |-------------------------------+----------------------+----------------------+
+        | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+        | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+        |===============================+======================+======================|
+        |   0  TITAN X (Pascal)    Off  | 0000:01:00.0      On |                  N/A |
+        | 23%   38C    P8    10W / 250W |      1MiB / 12181MiB |      0%      Default |
+        +-------------------------------+----------------------+----------------------+
+        |   1  GeForce GTX 680     Off  | 0000:02:00.0     N/A |                  N/A |
+        | 31%   45C    P8    N/A /  N/A |    489MiB /  4036MiB |     N/A      Default |
+        +-------------------------------+----------------------+----------------------+
+        +-----------------------------------------------------------------------------+
+        | Processes:                                                       GPU Memory |
+        |  GPU       PID  Type  Process name                               Usage      |
+        |=============================================================================|
+        |    1                  Not Supported                                         |
+        +-----------------------------------------------------------------------------+
+    """  # noqa: E501
 
     def is_nvidia_image(self, image):
         return (self.inspect_image(image).get('Config', {}).get('Labels', {}).

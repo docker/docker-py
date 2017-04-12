@@ -44,6 +44,8 @@ class NvidiaContainerApiMixin(object):
 
     def add_nvidia_docker_to_config(self, container_config, image):
 
+        container_config.setdefault('HostConfig', {})
+        container_config['HostConfig'].setdefault('Binds', [])
         # It's important not to contain the project name as a prefix here
         container_config['HostConfig']['Binds'] += \
             [self.get_nvidia_driver_volume() + ':/usr/local/nvidia:ro']
