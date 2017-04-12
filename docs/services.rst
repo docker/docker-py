@@ -34,3 +34,4 @@ Service objects
   .. automethod:: remove
   .. automethod:: tasks
   .. automethod:: update
+  .. automethod:: update_preserve

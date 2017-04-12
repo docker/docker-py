@@ -53,10 +53,39 @@ class Service(Model):
         filters['service'] = self.id
         return self.client.api.tasks(filters=filters)
 
+    def update_preserve(self, **kwargs):
+        """
+        Update a service's configuration. Similar to ``docker service
+        update`` command.
+
+        Takes the same parameters as :py:meth:`~ServiceCollection.create`.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        # Image is required, so if it hasn't been set, use current image
+        if 'image' not in kwargs:
+            spec = self.attrs['Spec']['TaskTemplate']['ContainerSpec']
+            kwargs['image'] = spec['Image']
+
+        create_kwargs = _get_create_service_kwargs('update', kwargs)
+
+        return self.client.api.update_service(
+            self.id,
+            self.version,
+            base_spec=self.attrs['Spec'],
+            **create_kwargs
+        )
+
     def update(self, **kwargs):
         """
-        Update a service's configuration. Similar to the ``docker service
-        update`` command.
+        Update a service's configuration. Similar to ``docker service
+        update`` command, but all arguments must be provided to preserve
+        old definitions. All ommited arguments will be removed from the
+        service.
+
+        To update only given arguments, see :py:meth:`update_preserve`.
 
         Takes the same parameters as :py:meth:`~ServiceCollection.create`.
 
