@@ -14,6 +14,7 @@ from .daemon import DaemonApiMixin
 from .exec_api import ExecApiMixin
 from .image import ImageApiMixin
 from .network import NetworkApiMixin
+from .nvidia import NvidiaContainerApiMixin
 from .plugin import PluginApiMixin
 from .secret import SecretApiMixin
 from .service import ServiceApiMixin
@@ -447,3 +448,26 @@ class APIClient(
             None
         """
         self._auth_configs = auth.load_config(dockercfg_path)
+
+
+class NvidiaAPIClient(NvidiaContainerApiMixin, APIClient):
+    """
+    A version of APIClient that used nvidia-docker API to support nvidia GPUs
+
+    Example:
+
+        >>> import docker
+        >>> client = docker.from_env()
+        >>> client.run('nvidia/cuda')
+
+    """
+
+    def create_container_config(self, image, *args, **kwargs):
+        container_config = super(NvidiaAPIClient, self).\
+            create_container_config(image, *args, **kwargs)
+
+        if (self.inspect_image(image).get('Config', {}).get('Labels', {}).
+                get('com.nvidia.volumes.needed', None) == 'nvidia_driver'):
+            self.add_nvidia_docker_to_config(container_config, image)
+
+        return container_config
