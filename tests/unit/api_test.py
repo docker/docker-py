@@ -12,6 +12,7 @@ import unittest
 
 import docker
 from docker.api import APIClient
+from docker.api.client import NvidiaAPIClient
 import requests
 from requests.packages import urllib3
 import six
@@ -50,6 +51,22 @@ def fake_resolve_authconfig(authconfig, registry=None):
 
 def fake_inspect_container(self, container, tty=False):
     return fake_api.get_fake_inspect_container(tty=tty)[1]
+
+
+def fake_inspect_image(self, image):
+    return fake_api.get_fake_inspect_image()[1]
+
+
+def fake_get_nvidia_driver_version():
+    return "111.11"
+
+
+def fake_nvidia_docker_compatible():
+    return True
+
+
+def fake_is_nvidia_image(self, image):
+    return True
 
 
 def fake_resp(method, url, *args, **kwargs):
@@ -121,6 +138,37 @@ class BaseAPIClientTest(unittest.TestCase):
                 "StdinOnce": False,
                 "OpenStdin": False, "NetworkDisabled": False,
                 }
+
+
+class NvidiaAPIClientTest(BaseAPIClientTest):
+    def setUp(self):
+        self.patcher = mock.patch.multiple(
+            'docker.api.client.NvidiaAPIClient',
+            get=fake_get,
+            post=fake_post,
+            put=fake_put,
+            delete=fake_delete,
+            _read_from_socket=fake_read_from_socket,
+            inspect_image=fake_inspect_image,
+            is_nvidia_image=fake_is_nvidia_image
+        )
+        self.patcher2 = mock.patch.multiple(
+            'docker.utils.nvidia',
+            get_nvidia_driver_version=fake_get_nvidia_driver_version,
+            nvidia_docker_compatible=fake_nvidia_docker_compatible,
+            )
+
+        self.patcher.start()
+        self.patcher2.start()
+
+        self.client = NvidiaAPIClient()
+        # Force-clear authconfig to avoid tampering with the tests
+        self.client._cfg = {'Configs': {}}
+
+    def tearDown(self):
+        self.client.close()
+        self.patcher.stop()
+        self.patcher2.stop()
 
 
 class DockerApiTest(BaseAPIClientTest):

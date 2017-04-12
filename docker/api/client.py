@@ -15,13 +15,13 @@ from .daemon import DaemonApiMixin
 from .exec_api import ExecApiMixin
 from .image import ImageApiMixin
 from .network import NetworkApiMixin
-from .nvidia import NvidiaContainerApiMixin
 from .plugin import PluginApiMixin
 from .secret import SecretApiMixin
 from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
 from .. import auth
+from ..utils import nvidia
 from ..constants import (
     DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
     DEFAULT_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
@@ -451,7 +451,7 @@ class APIClient(
         self._auth_configs = auth.load_config(dockercfg_path)
 
 
-class NvidiaAPIClient(NvidiaContainerApiMixin, APIClient):
+class NvidiaAPIClient(APIClient):
     """
     Version of APIClient that uses the nvidia-docker API to support nvidia GPUs
 
@@ -493,13 +493,13 @@ class NvidiaAPIClient(NvidiaContainerApiMixin, APIClient):
                             create_container_config(image, *args, **kwargs))
 
         if self.is_nvidia_image(image):
-            self.add_nvidia_docker_to_config(container_config, image)
+            nvidia.add_nvidia_docker_to_config(container_config)
 
         return container_config
 
     def create_nvidia_driver(self, test):
         try:
-            self.inspect_volume(self.get_nvidia_driver_volume())
+            self.inspect_volume(nvidia.get_nvidia_driver_volume())
         except NotFound:
             # Super hacky! Need something much better. I could make an image
             # from scratch and set the label com.nvidia.volumes.needed, but

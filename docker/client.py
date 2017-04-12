@@ -9,6 +9,7 @@ from .models.services import ServiceCollection
 from .models.swarm import Swarm
 from .models.volumes import VolumeCollection
 from .utils import kwargs_from_env
+from .utils.nvidia import nvidia_docker_compatible
 
 
 class DockerClient(object):
@@ -33,7 +34,7 @@ class DockerClient(object):
         user_agent (str): Set a custom user agent for requests to the server.
     """
     def __init__(self, *args, **kwargs):
-        if NvidiaAPIClient.nvidia_docker_compatible():
+        if nvidia_docker_compatible():
             self.api = NvidiaAPIClient(*args, **kwargs)
         else:
             self.api = APIClient(*args, **kwargs)
