@@ -3,6 +3,10 @@ import re
 import sys
 from distutils.spawn import find_executable
 
+NVIDIA_DEVICES = ['/dev/nvidiactl',
+                  '/dev/nvidia-uvm',
+                  '/dev/nvidia-uvm-tools']
+
 
 class NvidiaContainerApiMixin(object):
 
@@ -12,47 +16,59 @@ class NvidiaContainerApiMixin(object):
                 os.path.isfile('/proc/driver/nvidia/version') and
                 find_executable('nvidia-docker'))
 
+    @staticmethod
+    def get_nvidia_driver_version():
+        '''
+        Determine the version of nvidia driver installed
+
+        Parses the /proc/driver/nvidia/version to determine version.
+
+        Example:
+
+        NVRM version: NVIDIA UNIX x86_64 Kernel Module  375.39  Tue Jan 31 20:47:00 PST 2017
+        GCC version:  gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.4)
+
+        '''  # noqa: E501
+
+        with open('/proc/driver/nvidia/version', 'r') as fid:
+            return fid.read().split('Kernel Module')[1].split()[0]
+
+    @staticmethod
+    def get_nvidia_driver_volume():
+        '''
+        Get the nvidia_docker driver volume name
+        '''
+
+        return ('nvidia_driver_' +
+                NvidiaContainerApiMixin.get_nvidia_driver_version())
+
     def add_nvidia_docker_to_config(self, container_config, image):
 
-        try:
-            use_nvidia_docker = sys.platform.startswith('linux') \
-                and (self.inspect_image(image)['Config']['Labels'].
-                     get('com.nvidia.volumes.needed', None) ==
-                     'nvidia_driver') \
-                and find_executable('nvidia-docker')
-            # ### Is it necessary to check for nvidia-docker?
-        except:
-            use_nvidia_docker = False
+        # It's important not to contain the project name as a prefix here
+        container_config['HostConfig']['Binds'] += \
+            [self.get_nvidia_driver_volume() + ':/usr/local/nvidia:ro']
 
-        if use_nvidia_docker:
-            # Get the nvidia driver version
-            with open('/proc/driver/nvidia/version', 'r') as fid:
-                nvidia_driver_version = fid.read().split('Kernel Module')[1]\
-                        .split()[0]
-            # It's important not to contain the project name as a prefix here
-            container_config['HostConfig']['Binds'] += \
-                ['nvidia_driver_' + nvidia_driver_version +
-                 ':/usr/local/nvidia:ro']
+        # Get nvidia control devices
+        devices = container_config['HostConfig'].get('Devices', [])
+        for device in NVIDIA_DEVICES:
+            if os.path.exists(device):
+                devices.append({'PathInContainer': device,
+                                'PathOnHost': device,
+                                'CgroupPermissions': 'rwm'})
 
-            devices = container_config['HostConfig'].get('Devices', [])
-            devices += [{'PathInContainer': '/dev/nvidiactl',
-                         'PathOnHost': '/dev/nvidiactl',
-                         'CgroupPermissions': 'rwm'},
-                        {'PathInContainer': '/dev/nvidia-uvm',
-                         'PathOnHost': '/dev/nvidia-uvm',
-                         'CgroupPermissions': 'rwm'}]
+        # suport both '0 1' and '0, 1' formats, just like nvidia-docker
+        gpu_isolation = os.getenv('NV_GPU', '').replace(',', ' ').split()
+        if gpu_isolation:
+            gpus = ['nvidia'+gpu for gpu in gpu_isolation]
+        else:
+            gpus = os.listdir('/dev/')
+            pattern = re.compile(r'nvidia[0-9]+$')
+            gpus = [x for x in gpus if re.match(pattern, x)]
+        for gpu in gpus:
+            devices.append({'PathInContainer': '/dev/'+gpu,
+                            'PathOnHost': '/dev/'+gpu,
+                            'CgroupPermissions': 'rwm'})
 
-            # suport both '0 1' and '0, 1' formats, just like nvidia-docker
-            gpu_isolation = os.getenv('NV_GPU', '').replace(',', ' ').split()
-            if gpu_isolation:
-                gpus = ['nvidia'+gpu for gpu in gpu_isolation]
-            else:
-                gpus = os.listdir('/dev/')
-                pattern = re.compile(r'nvidia[0-9]+$')
-                gpus = [x for x in gpus if re.match(pattern, x)]
-            for gpu in gpus:
-                devices += [{'PathInContainer': '/dev/'+gpu,
-                             'PathOnHost': '/dev/'+gpu,
-                             'CgroupPermissions': 'rwm'}]
+        container_config['HostConfig']['Devices'] = devices
 
-            container_config['HostConfig']['Devices'] = devices
+        container_config['NvidiaDocker'] = True

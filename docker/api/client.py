@@ -1,5 +1,6 @@
 import json
 import struct
+import subprocess
 import warnings
 from functools import partial
 
@@ -27,7 +28,7 @@ from ..constants import (
     MINIMUM_DOCKER_API_VERSION
 )
 from ..errors import (
-    DockerException, TLSParameterError,
+    DockerException, TLSParameterError, NotFound,
     create_api_error_from_http_exception
 )
 from ..tls import TLSConfig
@@ -462,12 +463,24 @@ class NvidiaAPIClient(NvidiaContainerApiMixin, APIClient):
 
     """
 
-    def create_container_config(self, image, *args, **kwargs):
-        container_config = super(NvidiaAPIClient, self).\
-            create_container_config(image, *args, **kwargs)
+    def is_nvidia_image(self, image):
+        return (self.inspect_image(image).get('Config', {}).get('Labels', {}).
+                get('com.nvidia.volumes.needed', None) == 'nvidia_driver')
 
-        if (self.inspect_image(image).get('Config', {}).get('Labels', {}).
-                get('com.nvidia.volumes.needed', None) == 'nvidia_driver'):
+    def create_container_config(self, image, *args, **kwargs):
+        container_config = (super(NvidiaAPIClient, self).
+                            create_container_config(image, *args, **kwargs))
+
+        if self.is_nvidia_image(image):
             self.add_nvidia_docker_to_config(container_config, image)
 
         return container_config
+
+    def create_nvidia_driver(self, test):
+        try:
+            self.inspect_volume(self.get_nvidia_driver_volume())
+        except NotFound:
+            # Super hacky! Need something much better. I could make an image
+            # from scratch and set the label com.nvidia.volumes.needed, but
+            # that's still pretty hacky
+            subprocess.call(['nvidia-docker', 'run', '--rm', 'nvidia/cuda'])
