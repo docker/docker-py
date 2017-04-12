@@ -245,7 +245,7 @@ class ServiceApiMixin(object):
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,
-                       endpoint_spec=None):
+                       endpoint_spec=None, base_spec=None):
         """
         Update a service.
 
@@ -283,7 +283,7 @@ class ServiceApiMixin(object):
             endpoint_spec = endpoint_config
 
         url = self._url('/services/{0}/update', service)
-        data = {}
+        data = base_spec or {}
         headers = {}
         if name is not None:
             data['Name'] = name

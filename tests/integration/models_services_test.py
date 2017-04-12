@@ -101,3 +101,23 @@ class ServiceTest(unittest.TestCase):
         service.reload()
         container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert container_spec['Command'] == ["sleep", "600"]
+
+    def test_update_preserve(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        old_img = \
+            service.attrs['Spec']['TaskTemplate']['ContainerSpec']['Image']
+        service.update_preserve(
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert container_spec['Command'] == ["sleep", "600"]
+        assert container_spec['Image'] == old_img
