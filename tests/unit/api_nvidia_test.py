@@ -4,9 +4,11 @@ import json
 from .api_test import (
     NvidiaAPIClientTest, fake_request, url_prefix, DEFAULT_TIMEOUT_SECONDS
 )
+from pytest import mark
 
 
 class StartContainerTest(NvidiaAPIClientTest):
+    @mark.skipif("sys.platform == 'win32'")
     def test_create_container_with_nvidia_docker(self):
         self.maxDiff = None
 
