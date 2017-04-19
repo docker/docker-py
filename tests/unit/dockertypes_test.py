@@ -165,7 +165,7 @@ class HostConfigTest(unittest.TestCase):
     def test_create_host_config_invalid_mem_swappiness(self):
         with pytest.raises(TypeError):
             create_host_config(version='1.24', mem_swappiness='40')
-    
+
     def test_create_host_config_with_volume_driver(self):
         with pytest.raises(InvalidVersion):
             create_host_config(version='1.20', volume_driver='local')
@@ -205,8 +205,6 @@ class HostConfigTest(unittest.TestCase):
         self.assertRaises(
             InvalidVersion, lambda: create_host_config(
                 version='1.24', cpus=1))
-
-    
 
 
 class ContainerConfigTest(unittest.TestCase):

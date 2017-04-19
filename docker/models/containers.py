@@ -458,7 +458,7 @@ class ContainerCollection(Collection):
             cap_drop (list of str): Drop kernel capabilities.
             cpu_count (int): CPU count (Windows only).
             cpu_quota (int): Microseconds of CPU time that the container can
-                get in a CPU period.           
+                get in a CPU period.
             cpu_percent (int): CPU percent (Windows only).
             cpu_period (int): The length of a CPU period in microseconds.
             cpu_shares (int): CPU shares (relative weight).
