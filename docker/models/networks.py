@@ -22,7 +22,7 @@ class Network(Model):
         """
         return [
             self.client.containers.get(cid) for cid in
-            self.attrs.get('Containers', {}).keys()
+            (self.attrs.get('Containers') or {}).keys()
         ]
 
     def connect(self, container):
