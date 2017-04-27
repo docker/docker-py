@@ -305,6 +305,12 @@ class ServiceModeTest(unittest.TestCase):
         assert mode.mode == 'replicated'
         assert mode.replicas == 21
 
+    def test_replicated_replicas_0(self):
+        mode = ServiceMode('replicated', 0)
+        assert mode == {'replicated': {'Replicas': 0}}
+        assert mode.mode == 'replicated'
+        assert mode.replicas == 0
+
     def test_invalid_mode(self):
         with pytest.raises(InvalidArgument):
             ServiceMode('foobar')

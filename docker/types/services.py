@@ -407,7 +407,7 @@ class ServiceMode(dict):
                 'replicas can only be used for replicated mode'
             )
         self[mode] = {}
-        if replicas:
+        if replicas is not None:
             self[mode]['Replicas'] = replicas
 
     @property
