@@ -1,8 +1,11 @@
 import json
+import os
 import struct
 import subprocess
+import uuid
 import warnings
 from functools import partial
+from io import StringIO
 
 import requests
 import requests.exceptions
@@ -493,15 +496,31 @@ class NvidiaAPIClient(APIClient):
                             create_container_config(image, *args, **kwargs))
 
         if self.is_nvidia_image(image):
+            self.create_nvidia_driver()
             nvidia.add_nvidia_docker_to_config(container_config)
 
         return container_config
 
-    def create_nvidia_driver(self, test):
+    def create_nvidia_driver(self):
+        from ..models.images import ImageCollection
+
         try:
             self.inspect_volume(nvidia.get_nvidia_driver_volume())
         except NotFound:
-            # Super hacky! Need something much better. I could make an image
-            # from scratch and set the label com.nvidia.volumes.needed, but
-            # that's still pretty hacky
-            subprocess.call(['nvidia-docker', 'run', '--rm', 'nvidia/cuda'])
+            # Create a simple image to make nvidia-docker build the volume
+            s = StringIO(u'''FROM scratch
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+SHELL ["/usr/local/nvidia/bin/nvidia-smi"]
+CMD -L''')
+            # Build the image without tagging it so it will be prune-able
+            image = ImageCollection(
+                client=type('TempClient', (object,),
+                            {'api': self})).build(fileobj=s)
+            with open(os.devnull, 'w') as devnull:
+                # Run nvidia-docker
+                subprocess.Popen(['nvidia-docker', 'run', '--rm', image.id],
+                                 stdout=devnull,
+                                 stderr=subprocess.STDOUT).wait()
+                # Note: This will actually fail to run because the necessary
+                # .so files are missing, but there is no need for it to
+                # actually run nvidia-smi, only to create the library volume
