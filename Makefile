@@ -16,7 +16,7 @@ build-py3:
 
 .PHONY: build-docs
 build-docs:
-	docker build -t docker-sdk-python-docs -f Dockerfile-docs .
+	docker build -t docker-sdk-python-docs -f Dockerfile-docs --build-arg uid=$(shell id -u) --build-arg gid=$(shell id -g) .
 
 .PHONY: build-dind-certs
 build-dind-certs:
@@ -77,7 +77,7 @@ flake8: build
 
 .PHONY: docs
 docs: build-docs
-	docker run --rm -it -v `pwd`:/code docker-sdk-python-docs sphinx-build docs ./_build
+	docker run --rm -it -v `pwd`:/src docker-sdk-python-docs sphinx-build docs docs/_build
 
 .PHONY: shell
 shell: build
