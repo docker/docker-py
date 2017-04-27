@@ -502,8 +502,6 @@ class NvidiaAPIClient(APIClient):
         return container_config
 
     def create_nvidia_driver(self):
-        from ..models.images import ImageCollection
-
         try:
             self.inspect_volume(nvidia.get_nvidia_driver_volume())
         except NotFound:
@@ -513,14 +511,14 @@ LABEL com.nvidia.volumes.needed="nvidia_driver"
 SHELL ["/usr/local/nvidia/bin/nvidia-smi"]
 CMD -L''')
             # Build the image without tagging it so it will be prune-able
-            image = ImageCollection(
-                client=type('TempClient', (object,),
-                            {'api': self})).build(fileobj=s)
+            name = str(uuid.uuid4())
+            list(self.build(fileobj=s, tag=name))
             with open(os.devnull, 'w') as devnull:
                 # Run nvidia-docker
-                subprocess.Popen(['nvidia-docker', 'run', '--rm', image.id],
+                subprocess.Popen(['nvidia-docker', 'run', '--rm', name],
                                  stdout=devnull,
                                  stderr=subprocess.STDOUT).wait()
                 # Note: This will actually fail to run because the necessary
                 # .so files are missing, but there is no need for it to
                 # actually run nvidia-smi, only to create the library volume
+            self.remove_image(name)
