@@ -57,6 +57,10 @@ def fake_inspect_image(self, image):
     return fake_api.get_fake_inspect_image()[1]
 
 
+def fake_inspect_volume(self, volume):
+    return fake_api.get_fake_volume()[1]
+
+
 def fake_get_nvidia_driver_version():
     return "111.11"
 
@@ -150,6 +154,7 @@ class NvidiaAPIClientTest(BaseAPIClientTest):
             delete=fake_delete,
             _read_from_socket=fake_read_from_socket,
             inspect_image=fake_inspect_image,
+            inspect_volume=fake_inspect_volume,
             is_nvidia_image=fake_is_nvidia_image
         )
         self.patcher2 = mock.patch.multiple(
