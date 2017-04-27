@@ -52,10 +52,9 @@ class Network(Model):
         """
         if isinstance(container, Container):
             container = container.id
-        return self.client.api.connect_container_to_network(container,
-                                                            self.id,
-                                                            *args,
-                                                            **kwargs)
+        return self.client.api.connect_container_to_network(
+            container, self.id, *args, **kwargs
+        )
 
     def disconnect(self, container, *args, **kwargs):
         """
@@ -74,10 +73,9 @@ class Network(Model):
         """
         if isinstance(container, Container):
             container = container.id
-        return self.client.api.disconnect_container_from_network(container,
-                                                                 self.id,
-                                                                 *args,
-                                                                 **kwargs)
+        return self.client.api.disconnect_container_from_network(
+            container, self.id, *args, **kwargs
+        )
 
     def remove(self):
         """
