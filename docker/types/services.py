@@ -302,8 +302,8 @@ class RestartPolicy(dict):
         condition (string): Condition for restart (``none``, ``on-failure``,
           or ``any``). Default: `none`.
         delay (int): Delay between restart attempts. Default: 0
-        attempts (int): Maximum attempts to restart a given container before
-          giving up. Default value is 0, which is ignored.
+        max_attempts (int): Maximum attempts to restart a given container
+          before giving up. Default value is 0, which is ignored.
         window (int): Time window used to evaluate the restart policy. Default
           value is 0, which is unbounded.
     """
