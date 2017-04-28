@@ -169,14 +169,15 @@ class ImageCollection(Collection):
         events = list(json_stream(resp))
         if not events:
             return BuildError('Unknown')
-        event = events[-1]
-        if 'stream' in event:
-            match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
-                              event.get('stream', ''))
-            if match:
-                image_id = match.group(2)
-                return self.get(image_id)
+        for event in events:
+            if 'stream' in event:
+                match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
+                                  event.get('stream', ''))
+                if match:
+                    image_id = match.group(2)
+                    return self.get(image_id)
 
+        event = events[-1]
         raise BuildError(event.get('error') or event)
 
     def get(self, name):
