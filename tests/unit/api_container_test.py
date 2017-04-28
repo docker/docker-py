@@ -1152,6 +1152,38 @@ class CreateContainerTest(BaseAPIClientTest):
         self.assertEqual(args[0][1], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['Env'], expected)
 
+    @requires_api_version('1.25')
+    def test_create_container_with_host_config_cpus(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpu_count=1,
+                cpu_percent=20,
+                nano_cpus=1000
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpuCount": 1,
+                                "CpuPercent": 20,
+                                "NanoCpus": 1000,
+                                "NetworkMode": "default"
+                             }}'''))
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
+
 
 class ContainerTest(BaseAPIClientTest):
     def test_list_containers(self):

@@ -173,6 +173,39 @@ class HostConfigTest(unittest.TestCase):
         config = create_host_config(version='1.21', volume_driver='local')
         assert config.get('VolumeDriver') == 'local'
 
+    def test_create_host_config_invalid_cpu_count_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_count='1')
+
+    def test_create_host_config_with_cpu_count(self):
+        config = create_host_config(version='1.25', cpu_count=2)
+        self.assertEqual(config.get('CpuCount'), 2)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_count=1))
+
+    def test_create_host_config_invalid_cpu_percent_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_percent='1')
+
+    def test_create_host_config_with_cpu_percent(self):
+        config = create_host_config(version='1.25', cpu_percent=15)
+        self.assertEqual(config.get('CpuPercent'), 15)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_percent=10))
+
+    def test_create_host_config_invalid_nano_cpus_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', nano_cpus='0')
+
+    def test_create_host_config_with_nano_cpus(self):
+        config = create_host_config(version='1.25', nano_cpus=1000)
+        self.assertEqual(config.get('NanoCpus'), 1000)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', nano_cpus=1))
+
 
 class ContainerConfigTest(unittest.TestCase):
     def test_create_container_config_volume_driver_warning(self):

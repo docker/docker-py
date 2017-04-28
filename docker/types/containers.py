@@ -118,7 +118,8 @@ class HostConfig(dict):
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
                  isolation=None, auto_remove=False, storage_opt=None,
-                 init=None, init_path=None, volume_driver=None):
+                 init=None, init_path=None, volume_driver=None,
+                 cpu_count=None, cpu_percent=None, nano_cpus=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -432,6 +433,30 @@ class HostConfig(dict):
             if version_lt(version, '1.21'):
                 raise host_config_version_error('volume_driver', '1.21')
             self['VolumeDriver'] = volume_driver
+
+        if cpu_count:
+            if not isinstance(cpu_count, int):
+                raise host_config_type_error('cpu_count', cpu_count, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_count', '1.25')
+
+            self['CpuCount'] = cpu_count
+
+        if cpu_percent:
+            if not isinstance(cpu_percent, int):
+                raise host_config_type_error('cpu_percent', cpu_percent, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_percent', '1.25')
+
+            self['CpuPercent'] = cpu_percent
+
+        if nano_cpus:
+            if not isinstance(nano_cpus, int):
+                raise host_config_type_error('nano_cpus', nano_cpus, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('nano_cpus', '1.25')
+
+            self['NanoCpus'] = nano_cpus
 
 
 def host_config_type_error(param, param_value, expected):
