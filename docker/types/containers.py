@@ -119,7 +119,7 @@ class HostConfig(dict):
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
                  isolation=None, auto_remove=False, storage_opt=None,
                  init=None, init_path=None, volume_driver=None,
-                 cpu_count=None, cpu_percent=None, cpus=None):
+                 cpu_count=None, cpu_percent=None, nano_cpus=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -450,13 +450,13 @@ class HostConfig(dict):
 
             self['CpuPercent'] = cpu_percent
 
-        if cpus:
-            if not isinstance(cpus, (float, int)):
-                raise host_config_type_error('cpus', cpus, 'float')
+        if nano_cpus:
+            if not isinstance(nano_cpus, int):
+                raise host_config_type_error('nano_cpus', nano_cpus, 'int')
             if version_lt(version, '1.25'):
-                raise host_config_version_error('cpus', '1.25')
+                raise host_config_version_error('nano_cpus', '1.25')
 
-            self['NanoCpus'] = int(1000000000 * cpus)
+            self['NanoCpus'] = nano_cpus
 
 
 def host_config_type_error(param, param_value, expected):

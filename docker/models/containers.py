@@ -456,13 +456,13 @@ class ContainerCollection(Collection):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
-            cpu_count (int): CPU count (Windows only).
-            cpu_percent (int): CPU percent (Windows only).
+            cpu_count (int): Number of usable CPUs (Windows only).
+            cpu_percent (int): Usable percentage of the available CPUs
+                (Windows only).
             cpu_period (int): The length of a CPU period in microseconds.
             cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
             cpu_shares (int): CPU shares (relative weight).
-            cpus (float): Number of CPUs.
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
                 ``0,1``).
             detach (bool): Run container in the background and return a
@@ -526,6 +526,7 @@ class ContainerCollection(Collection):
             networks (:py:class:`list`): A list of network names to connect
                 this container to.
             name (str): The name for this container.
+            nano_cpus (int):  CPU quota in units of 10-9 CPUs.
             network_disabled (bool): Disable networking.
             network_mode (str): One of:
 
@@ -809,7 +810,6 @@ RUN_HOST_CONFIG_KWARGS = [
     'cpu_period',
     'cpu_quota',
     'cpu_shares',
-    'cpus',
     'cpuset_cpus',
     'device_read_bps',
     'device_read_iops',
@@ -833,6 +833,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'mem_reservation',
     'mem_swappiness',
     'memswap_limit',
+    'nano_cpus',
     'network_mode',
     'oom_kill_disable',
     'oom_score_adj',

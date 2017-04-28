@@ -1158,7 +1158,7 @@ class CreateContainerTest(BaseAPIClientTest):
             'busybox', 'ls', host_config=self.client.create_host_config(
                 cpu_count=1,
                 cpu_percent=20,
-                cpus=10
+                nano_cpus=1000
             )
         )
 
@@ -1177,10 +1177,12 @@ class CreateContainerTest(BaseAPIClientTest):
                              "HostConfig": {
                                 "CpuCount": 1,
                                 "CpuPercent": 20,
-                                "NanoCpus": 10000000000,
+                                "NanoCpus": 1000,
                                 "NetworkMode": "default"
                              }}'''))
-        self.assertEqual(args[1]['headers'], {'Content-Type': 'application/json'})
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
 
 
 class ContainerTest(BaseAPIClientTest):
