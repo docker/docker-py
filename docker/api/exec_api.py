@@ -8,7 +8,8 @@ class ExecApiMixin(object):
     @utils.minimum_version('1.15')
     @utils.check_resource
     def exec_create(self, container, cmd, stdout=True, stderr=True,
-                    stdin=False, tty=False, privileged=False, user=''):
+                    stdin=False, tty=False, privileged=False, user='',
+                    environment=None):
         """
         Sets up an exec instance in a running container.
 
@@ -22,6 +23,9 @@ class ExecApiMixin(object):
             tty (bool): Allocate a pseudo-TTY. Default: False
             privileged (bool): Run as privileged.
             user (str): User to execute command as. Default: root
+            environment (dict or list): A dictionary or a list of strings in
+                the following format ``["PASSWORD=xxx"]`` or
+                ``{"PASSWORD": "xxx"}``.
 
         Returns:
             (dict): A dictionary with an exec ``Id`` key.
@@ -39,8 +43,15 @@ class ExecApiMixin(object):
             raise errors.InvalidVersion(
                 'User-specific exec is not supported in API < 1.19'
             )
+        if environment and utils.compare_version('1.25', self._version) < 0:
+            raise errors.InvalidVersion(
+                'Setting environment for exec is not supported in API < 1.25'
+            )
         if isinstance(cmd, six.string_types):
             cmd = utils.split_command(cmd)
+
+        if isinstance(environment, dict):
+            environment = utils.utils.format_environment(environment)
 
         data = {
             'Container': container,
@@ -50,7 +61,8 @@ class ExecApiMixin(object):
             'AttachStdin': stdin,
             'AttachStdout': stdout,
             'AttachStderr': stderr,
-            'Cmd': cmd
+            'Cmd': cmd,
+            'Env': environment,
         }
 
         url = self._url('/containers/{0}/exec', container)
