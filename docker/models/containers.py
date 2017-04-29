@@ -483,6 +483,8 @@ class ContainerCollection(Collection):
             cpu_shares (int): CPU shares (relative weight).
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
                 ``0,1``).
+            cpuset_mems (str): MEMs in which to allow execution (``0-3``,
+                ``0,1``).
             detach (bool): Run container in the background and return a
                 :py:class:`Container` object.
             device_read_bps: Limit read rate (bytes per second) from a device
@@ -829,6 +831,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cpu_quota',
     'cpu_shares',
     'cpuset_cpus',
+    'cpuset_mems',
     'device_read_bps',
     'device_read_iops',
     'device_write_bps',
