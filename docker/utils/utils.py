@@ -103,6 +103,10 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
             # ignore it and proceed.
             continue
 
+        # Clear uname/gname as the docker client does.
+        i.uname = ''
+        i.gname = ''
+
         if constants.IS_WINDOWS_PLATFORM:
             # Windows doesn't keep track of the execute bit, so we make files
             # and directories executable by default.
