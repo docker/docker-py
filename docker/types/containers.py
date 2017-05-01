@@ -327,7 +327,7 @@ class HostConfig(dict):
             if version_lt(version, '1.18'):
                 raise host_config_version_error('cpuset_cpus', '1.18')
 
-            self['CpuSetCpus'] = cpuset_cpus
+            self['CpusetCpus'] = cpuset_cpus
 
         if cpuset_mems:
             if version_lt(version, '1.19'):

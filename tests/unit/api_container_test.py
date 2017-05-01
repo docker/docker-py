@@ -332,7 +332,7 @@ class CreateContainerTest(BaseAPIClientTest):
                              "StdinOnce": false,
                              "NetworkDisabled": false,
                              "HostConfig": {
-                                "CpuSetCpus": "0,1",
+                                "CpusetCpus": "0,1",
                                 "NetworkMode": "default"
                              }}'''))
         self.assertEqual(args[1]['headers'],
