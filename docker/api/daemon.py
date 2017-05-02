@@ -123,9 +123,9 @@ class DaemonApiMixin(object):
         # If dockercfg_path is passed check to see if the config file exists,
         # if so load that config.
         if dockercfg_path and os.path.exists(dockercfg_path):
-            self._auth_configs = auth.load_config(dockercfg_path)
+            self._auth_configs = self.reload_config(dockercfg_path)
         elif not self._auth_configs:
-            self._auth_configs = auth.load_config()
+            self._auth_configs = self.reload_config()
 
         authcfg = auth.resolve_authconfig(self._auth_configs, registry)
         # If we found an existing auth config for this registry and username
@@ -174,3 +174,17 @@ class DaemonApiMixin(object):
         """
         url = self._url("/version", versioned_api=api_version)
         return self._result(self._get(url), json=True)
+
+    def reload_config(self, dockercfg_path=None):
+        """
+        Forces a reload of the auth configuration
+
+        Args:
+            dockercfg_path (str): Use a custom path for the Docker config file
+                (default ``$HOME/.docker/config.json`` if present,
+                otherwise``$HOME/.dockercfg``)
+
+        Returns:
+            None
+        """
+        self._auth_configs = auth.load_config(dockercfg_path)
