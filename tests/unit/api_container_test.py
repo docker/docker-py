@@ -332,7 +332,34 @@ class CreateContainerTest(BaseAPIClientTest):
                              "StdinOnce": false,
                              "NetworkDisabled": false,
                              "HostConfig": {
-                                "CpuSetCpus": "0,1",
+                                "CpusetCpus": "0,1",
+                                "NetworkMode": "default"
+                             }}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    @requires_api_version('1.19')
+    def test_create_container_with_host_config_cpuset_mems(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpuset_mems='0'
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpusetMems": "0",
                                 "NetworkMode": "default"
                              }}'''))
         self.assertEqual(args[1]['headers'],

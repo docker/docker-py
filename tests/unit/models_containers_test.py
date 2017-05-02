@@ -135,7 +135,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'CpuPeriod': 1,
                 'CpuQuota': 2,
                 'CpuShares': 5,
-                'CpuSetCpus': '0-3',
+                'CpusetCpus': '0-3',
                 'Devices': [{'PathOnHost': '/dev/sda',
                              'CgroupPermissions': 'rwm',
                              'PathInContainer': '/dev/xvda'}],
