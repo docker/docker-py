@@ -433,3 +433,17 @@ class APIClient(
     @property
     def api_version(self):
         return self._version
+
+    def reload_config(self, dockercfg_path=None):
+        """
+        Force a reload of the auth configuration
+
+        Args:
+            dockercfg_path (str): Use a custom path for the Docker config file
+                (default ``$HOME/.docker/config.json`` if present,
+                otherwise``$HOME/.dockercfg``)
+
+        Returns:
+            None
+        """
+        self._auth_configs = auth.load_config(dockercfg_path)
