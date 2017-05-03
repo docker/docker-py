@@ -125,7 +125,7 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False):
+                 socket=False, environment=None):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -141,6 +141,9 @@ class Container(Model):
             detach (bool): If true, detach from the exec command.
                 Default: False
             stream (bool): Stream response data. Default: False
+            environment (dict or list): A dictionary or a list of strings in
+                the following format ``["PASSWORD=xxx"]`` or
+                ``{"PASSWORD": "xxx"}``.
 
         Returns:
             (generator or str): If ``stream=True``, a generator yielding
@@ -152,7 +155,7 @@ class Container(Model):
         """
         resp = self.client.api.exec_create(
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
-            privileged=privileged, user=user
+            privileged=privileged, user=user, environment=environment
         )
         return self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
