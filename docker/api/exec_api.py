@@ -35,18 +35,19 @@ class ExecApiMixin(object):
                 If the server returns an error.
         """
 
-        if privileged and utils.compare_version('1.19', self._version) < 0:
+        if privileged and utils.version_lt(self._version, '1.19'):
             raise errors.InvalidVersion(
                 'Privileged exec is not supported in API < 1.19'
             )
-        if user and utils.compare_version('1.19', self._version) < 0:
+        if user and utils.version_lt(self._version, '1.19'):
             raise errors.InvalidVersion(
                 'User-specific exec is not supported in API < 1.19'
             )
-        if environment and utils.compare_version('1.25', self._version) < 0:
+        if environment is not None and utils.version_lt(self._version, '1.25'):
             raise errors.InvalidVersion(
                 'Setting environment for exec is not supported in API < 1.25'
             )
+
         if isinstance(cmd, six.string_types):
             cmd = utils.split_command(cmd)
 
@@ -109,6 +110,7 @@ class ExecApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.15')
+    @utils.check_resource
     def exec_start(self, exec_id, detach=False, tty=False, stream=False,
                    socket=False):
         """
@@ -130,8 +132,6 @@ class ExecApiMixin(object):
                 If the server returns an error.
         """
         # we want opened socket if socket == True
-        if isinstance(exec_id, dict):
-            exec_id = exec_id.get('Id')
 
         data = {
             'Tty': tty,

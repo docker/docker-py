@@ -132,7 +132,7 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
 
         res = self.client.exec_create(id, 'env', environment=["X=Y"])
-        self.assertIn('Id', res)
+        assert 'Id' in res
 
         exec_log = self.client.exec_start(res)
-        self.assertIn(b'X=Y\n', exec_log)
+        assert b'X=Y\n' in exec_log
