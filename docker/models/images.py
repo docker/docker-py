@@ -166,18 +166,18 @@ class ImageCollection(Collection):
         resp = self.client.api.build(**kwargs)
         if isinstance(resp, six.string_types):
             return self.get(resp)
-        events = list(json_stream(resp))
-        if not events:
-            return BuildError('Unknown')
-        event = events[-1]
-        if 'stream' in event:
-            match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
-                              event.get('stream', ''))
-            if match:
-                image_id = match.group(2)
-                return self.get(image_id)
+        for chunk in json_stream(resp):
+            if 'error' in chunk:
+                raise BuildError(chunk['error'])
+                break
+            if 'stream' in chunk:
+                match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
+                                  chunk['stream'])
+                if match:
+                    image_id = match.group(2)
+                    return self.get(image_id)
 
-        raise BuildError(event.get('error') or event)
+        return BuildError('Unknown')
 
     def get(self, name):
         """
