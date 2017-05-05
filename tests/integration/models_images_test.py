@@ -28,6 +28,15 @@ class ImageCollectionTest(BaseIntegrationTest):
         assert str(cm.exception) == ("Unknown instruction: "
                                      "NOTADOCKERFILECOMMAND")
 
+    def test_build_with_multiple_success(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.build(tag='some-tag', fileobj=io.BytesIO(
+            "FROM alpine\n"
+            "CMD echo hello world".encode('ascii')
+            ))
+        self.tmp_imgs.append(image.id)
+        assert client.containers.run(image) == b"hello world\n"
+
     def test_list(self):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
