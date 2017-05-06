@@ -224,7 +224,7 @@ class ImageCollection(Collection):
                 If the server returns an error.
         """
         resp = self.client.api.images(name=name, all=all, filters=filters)
-        return [self.prepare_model(r) for r in resp]
+        return [self.get(r["Id"]) for r in resp]
 
     def load(self, data):
         """
