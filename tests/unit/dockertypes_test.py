@@ -8,8 +8,8 @@ import pytest
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    ContainerConfig, EndpointConfig, HostConfig, IPAMConfig, IPAMPool,
-    LogConfig, Mount, ServiceMode, Ulimit,
+    ContainerConfig, ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
+    IPAMPool, LogConfig, Mount, ServiceMode, Ulimit,
 )
 
 try:
@@ -218,6 +218,22 @@ class ContainerConfigTest(unittest.TestCase):
 
         assert len(w) == 1
         assert 'The volume_driver option has been moved' in str(w[0].message)
+
+
+class ContainerSpecTest(unittest.TestCase):
+    def test_parse_mounts(self):
+        spec = ContainerSpec(
+            image='scratch', mounts=[
+                '/local:/container',
+                '/local2:/container2:ro',
+                Mount(target='/target', source='/source')
+            ]
+        )
+
+        assert 'Mounts' in spec
+        assert len(spec['Mounts']) == 3
+        for mount in spec['Mounts']:
+            assert isinstance(mount, Mount)
 
 
 class UlimitTest(unittest.TestCase):
