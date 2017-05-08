@@ -107,11 +107,14 @@ class ContainerSpec(dict):
         if labels is not None:
             self['Labels'] = labels
         if mounts is not None:
+            parsed_mounts = []
             for mount in mounts:
                 if isinstance(mount, six.string_types):
-                    mounts.append(Mount.parse_mount_string(mount))
-                    mounts.remove(mount)
-            self['Mounts'] = mounts
+                    parsed_mounts.append(Mount.parse_mount_string(mount))
+                else:
+                    # If mount already parsed
+                    parsed_mounts.append(mount)
+            self['Mounts'] = parsed_mounts
         if stop_grace_period is not None:
             self['StopGracePeriod'] = stop_grace_period
 
