@@ -30,10 +30,12 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_build_with_multiple_success(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(tag='some-tag', fileobj=io.BytesIO(
-            "FROM alpine\n"
-            "CMD echo hello world".encode('ascii')
-            ))
+        image = client.images.build(
+            tag='some-tag', fileobj=io.BytesIO(
+                "FROM alpine\n"
+                "CMD echo hello world".encode('ascii')
+            )
+        )
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
 
@@ -52,6 +54,11 @@ class ImageCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
         assert 'alpine:latest' in image.attrs['RepoTags']
+
+    def test_pull_with_tag(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.pull('alpine', tag='3.3')
+        assert 'alpine:3.3' in image.attrs['RepoTags']
 
 
 class ImageTest(BaseIntegrationTest):
