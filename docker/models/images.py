@@ -238,7 +238,7 @@ class ImageCollection(Collection):
         """
         return self.client.api.load_image(data)
 
-    def pull(self, name, **kwargs):
+    def pull(self, name, tag=None, **kwargs):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
@@ -267,8 +267,8 @@ class ImageCollection(Collection):
 
             >>> image = client.images.pull('busybox')
         """
-        self.client.api.pull(name, **kwargs)
-        return self.get(name)
+        self.client.api.pull(name, tag=tag, **kwargs)
+        return self.get('{0}:{1}'.format(name, tag) if tag else name)
 
     def push(self, repository, tag=None, **kwargs):
         return self.client.api.push(repository, tag=tag, **kwargs)
