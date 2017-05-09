@@ -1,12 +1,27 @@
 import os
 import re
+import requests
 import sys
 from distutils.spawn import find_executable
-
 
 NVIDIA_DEVICES = ['/dev/nvidiactl',
                   '/dev/nvidia-uvm',
                   '/dev/nvidia-uvm-tools']
+
+NVIDIA_DEFAULT_HOST = 'localhost'
+NVIDIA_DEFAULT_PORT = 3476
+NVIDIA_HOST = 'NV_HOST'
+
+
+def get_nvidia_docker_endpoint():
+    host = os.environ.get(NVIDIA_HOST,
+                          "http://{}:{}".format(NVIDIA_DEFAULT_HOST,
+                                                NVIDIA_DEFAULT_PORT))
+    return host+'/docker/cli/json'
+
+
+def get_nvidia_configuration():
+    return requests.get(get_nvidia_docker_endpoint()).json()
 
 
 def nvidia_docker_compatible():
@@ -15,60 +30,33 @@ def nvidia_docker_compatible():
             find_executable('nvidia-docker'))
 
 
-def get_nvidia_driver_version():
-    '''
-    Determine the version of nvidia driver installed
-
-    Parses the /proc/driver/nvidia/version to determine version.
-
-    Example:
-
-    NVRM version: NVIDIA UNIX x86_64 Kernel Module  375.39  Tue Jan 31 20:47:00 PST 2017
-    GCC version:  gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.4)
-
-    '''  # noqa: E501
-
-    with open('/proc/driver/nvidia/version', 'r') as fid:
-        return fid.read().split('Kernel Module')[1].split()[0]
-
-
-def get_nvidia_driver_volume():
-    '''
-    Get the nvidia_docker driver volume name
-    '''
-
-    return ('nvidia_driver_' +
-            get_nvidia_driver_version())
-
-
 def add_nvidia_docker_to_config(container_config):
 
     if not container_config.get('HostConfig', None):
         container_config['HostConfig'] = {}
+
+    nvidia_config = get_nvidia_configuration()
+
+    # Setup the Volumes
+    container_config['HostConfig'].setdefault('VolumeDriver',
+                                              nvidia_config['VolumeDriver'])
+
     container_config['HostConfig'].setdefault('Binds', [])
-    # It's important not to contain the project name as a prefix here
-    container_config['HostConfig']['Binds'] += \
-        [get_nvidia_driver_volume() + ':/usr/local/nvidia:ro']
+    container_config['HostConfig']['Binds'].extend(nvidia_config['Volumes'])
 
     # Get nvidia control devices
     devices = container_config['HostConfig'].get('Devices', [])
-    for device in NVIDIA_DEVICES:
-        if os.path.exists(device):
-            devices.append({'PathInContainer': device,
-                            'PathOnHost': device,
-                            'CgroupPermissions': 'rwm'})
-
     # suport both '0 1' and '0, 1' formats, just like nvidia-docker
     gpu_isolation = os.getenv('NV_GPU', '').replace(',', ' ').split()
-    if gpu_isolation:
-        gpus = ['nvidia'+gpu for gpu in gpu_isolation]
-    else:
-        gpus = os.listdir('/dev/')
-        pattern = re.compile(r'nvidia[0-9]+$')
-        gpus = [x for x in gpus if re.match(pattern, x)]
-    for gpu in gpus:
-        devices.append({'PathInContainer': '/dev/'+gpu,
-                        'PathOnHost': '/dev/'+gpu,
+    pattern = re.compile(r'/nvidia([0-9]+)$')
+    for device in nvidia_config['Devices']:
+        if gpu_isolation:
+            card_number = pattern.search(device)
+            if card_number and (card_number.group(1) not in gpu_isolation):
+                continue
+        # Add device
+        devices.append({'PathInContainer': device,
+                        'PathOnHost': device,
                         'CgroupPermissions': 'rwm'})
 
     container_config['HostConfig']['Devices'] = devices

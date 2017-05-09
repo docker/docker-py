@@ -61,8 +61,8 @@ def fake_inspect_volume(self, volume):
     return fake_api.get_fake_volume()[1]
 
 
-def fake_get_nvidia_driver_version():
-    return "111.11"
+def fake_nvidia_config():
+    return fake_api.get_fake_nvidia_config()
 
 
 def fake_nvidia_docker_compatible():
@@ -159,7 +159,7 @@ class NvidiaAPIClientTest(BaseAPIClientTest):
         )
         self.patcher2 = mock.patch.multiple(
             'docker.utils.nvidia',
-            get_nvidia_driver_version=fake_get_nvidia_driver_version,
+            get_nvidia_configuration=fake_nvidia_config,
             nvidia_docker_compatible=fake_nvidia_docker_compatible,
             )
 

@@ -12,10 +12,6 @@ class StartContainerTest(NvidiaAPIClientTest):
     def test_create_container_with_nvidia_docker(self):
         self.maxDiff = None
 
-        self.assertEqual(nvidia.get_nvidia_driver_version(), '111.11')
-        self.assertEqual(nvidia.get_nvidia_driver_volume(),
-                         'nvidia_driver_111.11')
-
         self.client.create_container('busybox', 'true')
 
         args = fake_request.call_args
