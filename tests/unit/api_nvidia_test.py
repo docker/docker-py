@@ -1,5 +1,5 @@
-import docker.utils.nvidia as nvidia
 import json
+from docker.utils.utils import parse_devices
 
 from .api_test import (
     NvidiaAPIClientTest, fake_request, url_prefix, DEFAULT_TIMEOUT_SECONDS
@@ -20,8 +20,12 @@ class StartContainerTest(NvidiaAPIClientTest):
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = {}
         expected_payload['HostConfig']['Binds'] = [
-                'nvidia_driver_111.11:/usr/local/nvidia:ro']
-        expected_payload['HostConfig']['Devices'] = []
+                'nvidia_driver_375.39:/usr/local/nvidia:ro']
+        expected_payload['HostConfig']['Devices'] = parse_devices([
+            '/dev/nvidiactl', '/dev/nvidia-uvm', '/dev/nvidia0', '/dev/nvidia1'
+            ])
+        expected_payload['HostConfig']['VolumeDriver'] = 'nvidia-docker'
+
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
                          {'Content-Type': 'application/json'})

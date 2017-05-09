@@ -62,7 +62,7 @@ def fake_inspect_volume(self, volume):
 
 
 def fake_nvidia_config():
-    return fake_api.get_fake_nvidia_config()
+    return fake_api.get_fake_nvidia_config()[1]
 
 
 def fake_nvidia_docker_compatible():

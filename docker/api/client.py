@@ -1,11 +1,7 @@
 import json
-import os
 import struct
-import subprocess
-import uuid
 import warnings
 from functools import partial
-from io import StringIO
 
 import requests
 import requests.exceptions
@@ -31,7 +27,7 @@ from ..constants import (
     MINIMUM_DOCKER_API_VERSION
 )
 from ..errors import (
-    DockerException, TLSParameterError, NotFound,
+    DockerException, TLSParameterError,
     create_api_error_from_http_exception
 )
 from ..tls import TLSConfig

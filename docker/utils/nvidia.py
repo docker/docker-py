@@ -4,6 +4,8 @@ import requests
 import sys
 from distutils.spawn import find_executable
 
+from .utils import parse_devices
+
 NVIDIA_DEVICES = ['/dev/nvidiactl',
                   '/dev/nvidia-uvm',
                   '/dev/nvidia-uvm-tools']
@@ -54,9 +56,6 @@ def add_nvidia_docker_to_config(container_config):
             card_number = pattern.search(device)
             if card_number and (card_number.group(1) not in gpu_isolation):
                 continue
-        # Add device
-        devices.append({'PathInContainer': device,
-                        'PathOnHost': device,
-                        'CgroupPermissions': 'rwm'})
+        devices.extend(parse_devices([device]))
 
     container_config['HostConfig']['Devices'] = devices
