@@ -438,6 +438,10 @@ class HostConfig(dict):
         if init_path is not None:
             if version_lt(version, '1.25'):
                 raise host_config_version_error('init_path', '1.25')
+
+            if version_gte(version, '1.29'):
+                # https://github.com/moby/moby/pull/32470
+                raise host_config_version_error('init_path', '1.29', False)
             self['InitPath'] = init_path
 
         if volume_driver is not None:
