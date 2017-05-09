@@ -1,4 +1,6 @@
 import warnings
+
+from docker.types.services import EndpointSpec
 from .. import auth, errors, utils
 from ..types import ServiceMode
 
@@ -42,7 +44,8 @@ class ServiceApiMixin(object):
                 DeprecationWarning
             )
             endpoint_spec = endpoint_config
-
+        if not endpoint_spec:
+            endpoint_spec = EndpointSpec(mode='vip')
         url = self._url('/services/create')
         headers = {}
         image = task_template.get('ContainerSpec', {}).get('Image', None)
