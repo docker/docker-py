@@ -103,18 +103,28 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert services[0]['ID'] == svc_id['ID']
 
     @requires_api_version('1.25')
-    @requires_experimental
+    @requires_experimental(until='1.29')
     def test_service_logs(self):
         name, svc_id = self.create_simple_service()
         assert self.get_service_container(name, include_stopped=True)
-        logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
-        log_line = next(logs)
+        attempts = 20
+        while True:
+            if attempts == 0:
+                self.fail('No service logs produced by endpoint')
+                return
+            logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
+            try:
+                log_line = next(logs)
+            except StopIteration:
+                attempts -= 1
+                time.sleep(0.1)
+                continue
+            else:
+                break
+
         if six.PY3:
             log_line = log_line.decode('utf-8')
         assert 'hello\n' in log_line
-        assert 'com.docker.swarm.service.id={}'.format(
-            svc_id['ID']
-        ) in log_line
 
     def test_create_service_custom_log_driver(self):
         container_spec = docker.types.ContainerSpec(
