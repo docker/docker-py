@@ -451,6 +451,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['Init'] is True
 
+    @pytest.mark.xfail(True, reason='init-path removed in 17.05.0')
     @requires_api_version('1.25')
     def test_create_with_init_path(self):
         ctnr = self.client.create_container(
