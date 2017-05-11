@@ -3,6 +3,7 @@ import re
 import requests
 import sys
 from distutils.spawn import find_executable
+from ..errors import NvidiaConnectionError
 
 from .utils import parse_devices
 
@@ -23,7 +24,14 @@ def get_nvidia_docker_endpoint():
 
 
 def get_nvidia_configuration():
-    return requests.get(get_nvidia_docker_endpoint()).json()
+    try:
+        return requests.get(get_nvidia_docker_endpoint()).json()
+    except requests.exceptions.ConnectionError:
+        raise NvidiaConnectionError((
+            "Couldn't connect to nvidia-driver-plugin at {url} - is it "
+            "running and accessible?.\n\n"
+            "Try: \"curl {url}\" or \"systemctl start nvidia-docker\"").format(
+            url=get_nvidia_docker_endpoint()), get_nvidia_docker_endpoint())
 
 
 def nvidia_docker_compatible():
