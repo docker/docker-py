@@ -127,7 +127,7 @@ class ContainerSpec(dict):
 class Mount(dict):
     """
     Describes a mounted folder's configuration inside a container. A list of
-    :py:class:`Mount`s would be used as part of a
+    :py:class:`Mount` would be used as part of a
     :py:class:`~docker.types.ContainerSpec`.
 
     Args:
