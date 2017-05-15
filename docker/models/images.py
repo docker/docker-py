@@ -193,8 +193,8 @@ class ImageCollection(Collection):
             (:py:class:`Image`): The image.
 
         Raises:
-            :py:class:`docker.errors.ImageNotFound` If the image does not
-            exist.
+            :py:class:`docker.errors.ImageNotFound`
+                If the image does not exist.
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
