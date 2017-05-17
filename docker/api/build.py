@@ -18,7 +18,7 @@ class BuildApiMixin(object):
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
-              labels=None, cache_from=None):
+              labels=None, cache_from=None, target=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -94,6 +94,8 @@ class BuildApiMixin(object):
             labels (dict): A dictionary of labels to set on the image.
             cache_from (list): A list of images used for build cache
                 resolution.
+            target (str): Name of the build-stage to build in a multi-stage
+                Dockerfile.
 
         Returns:
             A generator for the build output.
@@ -196,6 +198,14 @@ class BuildApiMixin(object):
             else:
                 raise errors.InvalidVersion(
                     'cache_from was only introduced in API version 1.25'
+                )
+
+        if target:
+            if utils.version_gte(self._version, '1.29'):
+                params.update({'target': target})
+            else:
+                raise errors.InvalidVersion(
+                    'target was only introduced in API version 1.29'
                 )
 
         if context is not None:

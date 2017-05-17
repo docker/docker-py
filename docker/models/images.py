@@ -151,6 +151,8 @@ class ImageCollection(Collection):
                 decoded into dicts on the fly. Default ``False``.
             cache_from (list): A list of images used for build cache
                 resolution.
+            target (str): Name of the build-stage to build in a multi-stage
+                Dockerfile.
 
         Returns:
             (:py:class:`Image`): The built image.
