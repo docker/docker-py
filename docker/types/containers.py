@@ -451,7 +451,7 @@ class HostConfig(dict):
             self['CpuPercent'] = cpu_percent
 
         if nano_cpus:
-            if not isinstance(nano_cpus, int):
+            if not isinstance(nano_cpus, six.integer_types):
                 raise host_config_type_error('nano_cpus', nano_cpus, 'int')
             if version_lt(version, '1.25'):
                 raise host_config_version_error('nano_cpus', '1.25')
