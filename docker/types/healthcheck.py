@@ -12,12 +12,14 @@ class Healthcheck(DictType):
         interval = kwargs.get('interval', kwargs.get('Interval'))
         timeout = kwargs.get('timeout', kwargs.get('Timeout'))
         retries = kwargs.get('retries', kwargs.get('Retries'))
+        start_period = kwargs.get('start_period', kwargs.get('StartPeriod'))
 
         super(Healthcheck, self).__init__({
             'Test': test,
             'Interval': interval,
             'Timeout': timeout,
-            'Retries': retries
+            'Retries': retries,
+            'StartPeriod': start_period
         })
 
     @property
@@ -51,3 +53,11 @@ class Healthcheck(DictType):
     @retries.setter
     def retries(self, value):
         self['Retries'] = value
+
+    @property
+    def start_period(self):
+        return self['StartPeriod']
+
+    @start_period.setter
+    def start_period(self, value):
+        self['StartPeriod'] = value

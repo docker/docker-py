@@ -565,10 +565,17 @@ class ContainerConfig(dict):
                 'stop_timeout was only introduced in API version 1.25'
             )
 
-        if healthcheck is not None and version_lt(version, '1.24'):
-            raise errors.InvalidVersion(
-                'Health options were only introduced in API version 1.24'
-            )
+        if healthcheck is not None:
+            if version_lt(version, '1.24'):
+                raise errors.InvalidVersion(
+                    'Health options were only introduced in API version 1.24'
+                )
+
+            if version_lt(version, '1.29') and 'StartPeriod' in healthcheck:
+                raise errors.InvalidVersion(
+                    'healthcheck start period was introduced in API '
+                    'version 1.29'
+                )
 
         if isinstance(command, six.string_types):
             command = split_command(command)

@@ -516,6 +516,8 @@ class ContainerCollection(Collection):
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
+            healthcheck (dict): Specify a test to perform to check that the
+                container is healthy.
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
