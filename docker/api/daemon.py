@@ -100,10 +100,11 @@ class DaemonApiMixin(object):
             email (str): The email for the registry account
             registry (str): URL to the registry.  E.g.
                 ``https://index.docker.io/v1/``
-            reauth (bool): Whether refresh existing authentication on the
-                Docker server.
-            dockercfg_path (str): Use a custom path for the ``.dockercfg`` file
-        (default ``$HOME/.dockercfg``)
+            reauth (bool): Whether or not to refresh existing authentication on
+                the Docker server.
+            dockercfg_path (str): Use a custom path for the Docker config file
+                (default ``$HOME/.docker/config.json`` if present,
+                otherwise``$HOME/.dockercfg``)
 
         Returns:
             (dict): The response from the login request

@@ -8,8 +8,8 @@ import pytest
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    ContainerConfig, EndpointConfig, HostConfig, IPAMConfig, IPAMPool,
-    LogConfig, Mount, ServiceMode, Ulimit,
+    ContainerConfig, ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
+    IPAMPool, LogConfig, Mount, ServiceMode, Ulimit,
 )
 
 try:
@@ -173,6 +173,39 @@ class HostConfigTest(unittest.TestCase):
         config = create_host_config(version='1.21', volume_driver='local')
         assert config.get('VolumeDriver') == 'local'
 
+    def test_create_host_config_invalid_cpu_count_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_count='1')
+
+    def test_create_host_config_with_cpu_count(self):
+        config = create_host_config(version='1.25', cpu_count=2)
+        self.assertEqual(config.get('CpuCount'), 2)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_count=1))
+
+    def test_create_host_config_invalid_cpu_percent_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_percent='1')
+
+    def test_create_host_config_with_cpu_percent(self):
+        config = create_host_config(version='1.25', cpu_percent=15)
+        self.assertEqual(config.get('CpuPercent'), 15)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_percent=10))
+
+    def test_create_host_config_invalid_nano_cpus_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', nano_cpus='0')
+
+    def test_create_host_config_with_nano_cpus(self):
+        config = create_host_config(version='1.25', nano_cpus=1000)
+        self.assertEqual(config.get('NanoCpus'), 1000)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', nano_cpus=1))
+
 
 class ContainerConfigTest(unittest.TestCase):
     def test_create_container_config_volume_driver_warning(self):
@@ -185,6 +218,22 @@ class ContainerConfigTest(unittest.TestCase):
 
         assert len(w) == 1
         assert 'The volume_driver option has been moved' in str(w[0].message)
+
+
+class ContainerSpecTest(unittest.TestCase):
+    def test_parse_mounts(self):
+        spec = ContainerSpec(
+            image='scratch', mounts=[
+                '/local:/container',
+                '/local2:/container2:ro',
+                Mount(target='/target', source='/source')
+            ]
+        )
+
+        assert 'Mounts' in spec
+        assert len(spec['Mounts']) == 3
+        for mount in spec['Mounts']:
+            assert isinstance(mount, Mount)
 
 
 class UlimitTest(unittest.TestCase):
@@ -304,6 +353,12 @@ class ServiceModeTest(unittest.TestCase):
         assert mode == {'replicated': {'Replicas': 21}}
         assert mode.mode == 'replicated'
         assert mode.replicas == 21
+
+    def test_replicated_replicas_0(self):
+        mode = ServiceMode('replicated', 0)
+        assert mode == {'replicated': {'Replicas': 0}}
+        assert mode.mode == 'replicated'
+        assert mode.replicas == 0
 
     def test_invalid_mode(self):
         with pytest.raises(InvalidArgument):

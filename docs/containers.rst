@@ -21,11 +21,13 @@ Container objects
 
 .. autoclass:: Container()
 
-  .. autoattribute:: id
-  .. autoattribute:: short_id
-  .. autoattribute:: name
-  .. autoattribute:: status
   .. py:attribute:: attrs
+  .. autoattribute:: id
+  .. autoattribute:: image
+  .. autoattribute:: labels
+  .. autoattribute:: name
+  .. autoattribute:: short_id
+  .. autoattribute:: status
 
     The raw representation of this object from the server.
 

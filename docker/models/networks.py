@@ -22,10 +22,10 @@ class Network(Model):
         """
         return [
             self.client.containers.get(cid) for cid in
-            self.attrs.get('Containers', {}).keys()
+            (self.attrs.get('Containers') or {}).keys()
         ]
 
-    def connect(self, container):
+    def connect(self, container, *args, **kwargs):
         """
         Connect a container to this network.
 
@@ -52,9 +52,11 @@ class Network(Model):
         """
         if isinstance(container, Container):
             container = container.id
-        return self.client.api.connect_container_to_network(container, self.id)
+        return self.client.api.connect_container_to_network(
+            container, self.id, *args, **kwargs
+        )
 
-    def disconnect(self, container):
+    def disconnect(self, container, *args, **kwargs):
         """
         Disconnect a container from this network.
 
@@ -71,8 +73,9 @@ class Network(Model):
         """
         if isinstance(container, Container):
             container = container.id
-        return self.client.api.disconnect_container_from_network(container,
-                                                                 self.id)
+        return self.client.api.disconnect_container_from_network(
+            container, self.id, *args, **kwargs
+        )
 
     def remove(self):
         """

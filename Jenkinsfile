@@ -7,7 +7,7 @@ def images = [:]
 
 // Note: Swarm in dind seem notoriously flimsy with 1.12.1+, which is why we're
 // sticking with 1.12.0 for the 1.12 series
-def dockerVersions = ["1.12.0", "1.13.1", "17.04.0-ce-rc1"]
+def dockerVersions = ["1.12.0", "1.13.1", "17.04.0-ce", "17.05.0-ce"]
 
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
@@ -35,7 +35,7 @@ def buildImages = { ->
 }
 
 def getAPIVersion = { engineVersion ->
-  def versionMap = ['1.12.': '1.24', '1.13.': '1.26', '17.04': '1.27']
+  def versionMap = ['1.12.': '1.24', '1.13.': '1.26', '17.04': '1.27', '17.05': '1.29']
   return versionMap[engineVersion.substring(0, 5)]
 }
 

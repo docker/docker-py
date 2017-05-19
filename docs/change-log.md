@@ -1,6 +1,47 @@
 Change log
 ==========
 
+2.3.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/31?closed=1)
+
+### Features
+
+* Added support for the following `HostConfig` parameters: `volume_driver`,
+  `cpu_count`, `cpu_percent`, `nano_cpus`, `cpuset_mems`.
+* Added support for `verbose` parameter in `APIClient.inspect_network` and
+  `DockerClient.networks.get`.
+* Added support for the `environment` parameter in `APIClient.exec_create`
+  and `Container.exec_run`
+* Added `reload_config` method to `APIClient`, that lets the user reload
+  the `config.json` data from disk.
+* Added `labels` property to the `Image` and `Container` classes.
+* Added `image` property to the `Container` class.
+
+### Bugfixes
+
+* Fixed a bug where setting `replicas` to zero in `ServiceMode` would not
+  register as a valid entry.
+* Fixed a bug where `DockerClient.images.build` would report a failure after
+  a successful build if a `tag` was set.
+* Fixed an issue where `DockerClient.images.pull` would fail to return the
+  corresponding image object if a `tag` was set.
+* Fixed a bug where a list of `mounts` provided to `APIClient.create_service`
+  would sometimes be parsed incorrectly.
+* Fixed a bug where calling `Network.containers` would crash when no containers
+  were associated with the network.
+* Fixed an issue where `Network.connect` and `Network.disconnect` would not
+  accept some of the documented parameters.
+* Fixed a bug where the `cpuset_cpus` parameter would not be properly set in
+  `APIClient.create_host_config`.
+
+### Miscellaneous
+
+* The invalid `networks` argument in `DockerClient.containers.run` has been
+  replaced with a (working) singular `network` argument.
+
+
 2.2.1
 -----
 

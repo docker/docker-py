@@ -19,6 +19,24 @@ class Container(Model):
             return self.attrs['Name'].lstrip('/')
 
     @property
+    def image(self):
+        """
+        The image of the container.
+        """
+        image_id = self.attrs['Image']
+        if image_id is None:
+            return None
+        return self.client.images.get(image_id.split(':')[1])
+
+    @property
+    def labels(self):
+        """
+        The labels of a container as dictionary.
+        """
+        result = self.attrs['Config'].get('Labels')
+        return result or {}
+
+    @property
     def status(self):
         """
         The status of the container. For example, ``running``, or ``exited``.
@@ -107,7 +125,7 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False):
+                 socket=False, environment=None):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -123,10 +141,13 @@ class Container(Model):
             detach (bool): If true, detach from the exec command.
                 Default: False
             stream (bool): Stream response data. Default: False
+            environment (dict or list): A dictionary or a list of strings in
+                the following format ``["PASSWORD=xxx"]`` or
+                ``{"PASSWORD": "xxx"}``.
 
         Returns:
             (generator or str): If ``stream=True``, a generator yielding
-            response chunks. A string containing response data otherwise.
+                response chunks. A string containing response data otherwise.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -134,7 +155,7 @@ class Container(Model):
         """
         resp = self.client.api.exec_create(
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
-            privileged=privileged, user=user
+            privileged=privileged, user=user, environment=environment
         )
         return self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
@@ -456,12 +477,17 @@ class ContainerCollection(Collection):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
+            cpu_count (int): Number of usable CPUs (Windows only).
+            cpu_percent (int): Usable percentage of the available CPUs
+                (Windows only).
             cpu_period (int): The length of a CPU period in microseconds.
             cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
             cpu_shares (int): CPU shares (relative weight).
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
                 ``0,1``).
+            cpuset_mems (str): Memory nodes (MEMs) in which to allow execution
+                (``0-3``, ``0,1``). Only effective on NUMA systems.
             detach (bool): Run container in the background and return a
                 :py:class:`Container` object.
             device_read_bps: Limit read rate (bytes per second) from a device
@@ -520,9 +546,12 @@ class ContainerCollection(Collection):
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
                 container is allowed to consume.
-            networks (:py:class:`list`): A list of network names to connect
-                this container to.
             name (str): The name for this container.
+            nano_cpus (int):  CPU quota in units of 10-9 CPUs.
+            network (str): Name of the network this container will be connected
+                to at creation time. You can connect to additional networks
+                using :py:meth:`Network.connect`. Incompatible with
+                ``network_mode``.
             network_disabled (bool): Disable networking.
             network_mode (str): One of:
 
@@ -532,6 +561,7 @@ class ContainerCollection(Collection):
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
                 - ``host`` Use the host network stack.
+                Incompatible with ``network``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -652,6 +682,12 @@ class ContainerCollection(Collection):
         if detach and remove:
             raise RuntimeError("The options 'detach' and 'remove' cannot be "
                                "used together.")
+
+        if kwargs.get('network') and kwargs.get('network_mode'):
+            raise RuntimeError(
+                'The options "network" and "network_mode" can not be used '
+                'together.'
+            )
 
         try:
             container = self.create(image=image, command=command,
@@ -801,10 +837,13 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cpu_count',
+    'cpu_percent',
     'cpu_period',
     'cpu_quota',
     'cpu_shares',
     'cpuset_cpus',
+    'cpuset_mems',
     'device_read_bps',
     'device_read_iops',
     'device_write_bps',
@@ -827,6 +866,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'mem_reservation',
     'mem_swappiness',
     'memswap_limit',
+    'nano_cpus',
     'network_mode',
     'oom_kill_disable',
     'oom_score_adj',
@@ -871,10 +911,10 @@ def _create_container_args(kwargs):
     if volumes:
         host_config_kwargs['binds'] = volumes
 
-    networks = kwargs.pop('networks', [])
-    if networks:
-        create_kwargs['networking_config'] = {network: None
-                                              for network in networks}
+    network = kwargs.pop('network', None)
+    if network:
+        create_kwargs['networking_config'] = {network: None}
+        host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
     # error if any are left

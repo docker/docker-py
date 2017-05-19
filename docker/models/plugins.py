@@ -103,8 +103,8 @@ class Plugin(Model):
 
             Args:
                 remote (string): Remote reference to upgrade to. The
-                ``:latest`` tag is optional and is the default if omitted.
-                Default: this plugin's name.
+                    ``:latest`` tag is optional and is the default if omitted.
+                    Default: this plugin's name.
 
             Returns:
                 A generator streaming the decoded API logs

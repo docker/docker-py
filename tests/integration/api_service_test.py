@@ -103,18 +103,28 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert services[0]['ID'] == svc_id['ID']
 
     @requires_api_version('1.25')
-    @requires_experimental
+    @requires_experimental(until='1.29')
     def test_service_logs(self):
         name, svc_id = self.create_simple_service()
         assert self.get_service_container(name, include_stopped=True)
-        logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
-        log_line = next(logs)
+        attempts = 20
+        while True:
+            if attempts == 0:
+                self.fail('No service logs produced by endpoint')
+                return
+            logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
+            try:
+                log_line = next(logs)
+            except StopIteration:
+                attempts -= 1
+                time.sleep(0.1)
+                continue
+            else:
+                break
+
         if six.PY3:
             log_line = log_line.decode('utf-8')
         assert 'hello\n' in log_line
-        assert 'com.docker.swarm.service.id={}'.format(
-            svc_id['ID']
-        ) in log_line
 
     def test_create_service_custom_log_driver(self):
         container_spec = docker.types.ContainerSpec(
@@ -259,6 +269,49 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Placement' in svc_info['Spec']['TaskTemplate']
         assert (svc_info['Spec']['TaskTemplate']['Placement'] ==
                 {'Constraints': ['node.id=={}'.format(node_id)]})
+
+    def test_create_service_with_placement_object(self):
+        node_id = self.client.nodes()[0]['ID']
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        placemt = docker.types.Placement(
+            constraints=['node.id=={}'.format(node_id)]
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
+
+    @requires_api_version('1.30')
+    def test_create_service_with_placement_platform(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        placemt = docker.types.Placement(platforms=[('x86_64', 'linux')])
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
+
+    @requires_api_version('1.27')
+    def test_create_service_with_placement_preferences(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        placemt = docker.types.Placement(preferences=[
+            {'Spread': {'SpreadDescriptor': 'com.dockerpy.test'}}
+        ])
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
 
     def test_create_service_with_endpoint_spec(self):
         container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])

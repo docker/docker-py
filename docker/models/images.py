@@ -16,6 +16,14 @@ class Image(Model):
         return "<%s: '%s'>" % (self.__class__.__name__, "', '".join(self.tags))
 
     @property
+    def labels(self):
+        """
+        The labels of an image as dictionary.
+        """
+        result = self.attrs['Config'].get('Labels')
+        return result or {}
+
+    @property
     def short_id(self):
         """
         The ID of the image truncated to 10 characters, plus the ``sha256:``
@@ -143,6 +151,8 @@ class ImageCollection(Collection):
                 decoded into dicts on the fly. Default ``False``.
             cache_from (list): A list of images used for build cache
                 resolution.
+            target (str): Name of the build-stage to build in a multi-stage
+                Dockerfile.
 
         Returns:
             (:py:class:`Image`): The built image.
@@ -158,18 +168,21 @@ class ImageCollection(Collection):
         resp = self.client.api.build(**kwargs)
         if isinstance(resp, six.string_types):
             return self.get(resp)
-        events = list(json_stream(resp))
-        if not events:
-            return BuildError('Unknown')
-        event = events[-1]
-        if 'stream' in event:
-            match = re.search(r'(Successfully built |sha256:)([0-9a-f]+)',
-                              event.get('stream', ''))
-            if match:
-                image_id = match.group(2)
-                return self.get(image_id)
+        last_event = None
+        for chunk in json_stream(resp):
+            if 'error' in chunk:
+                raise BuildError(chunk['error'])
+            if 'stream' in chunk:
+                match = re.search(
+                    r'(Successfully built |sha256:)([0-9a-f]+)',
+                    chunk['stream']
+                )
+                if match:
+                    image_id = match.group(2)
+                    return self.get(image_id)
+            last_event = chunk
 
-        raise BuildError(event.get('error') or event)
+        raise BuildError(last_event or 'Unknown')
 
     def get(self, name):
         """
@@ -182,8 +195,8 @@ class ImageCollection(Collection):
             (:py:class:`Image`): The image.
 
         Raises:
-            :py:class:`docker.errors.ImageNotFound` If the image does not
-            exist.
+            :py:class:`docker.errors.ImageNotFound`
+                If the image does not exist.
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
@@ -227,7 +240,7 @@ class ImageCollection(Collection):
         """
         return self.client.api.load_image(data)
 
-    def pull(self, name, **kwargs):
+    def pull(self, name, tag=None, **kwargs):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
@@ -256,8 +269,8 @@ class ImageCollection(Collection):
 
             >>> image = client.images.pull('busybox')
         """
-        self.client.api.pull(name, **kwargs)
-        return self.get(name)
+        self.client.api.pull(name, tag=tag, **kwargs)
+        return self.get('{0}:{1}'.format(name, tag) if tag else name)
 
     def push(self, repository, tag=None, **kwargs):
         return self.client.api.push(repository, tag=tag, **kwargs)

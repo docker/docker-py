@@ -189,6 +189,28 @@ class BuildTest(BaseAPIIntegrationTest):
                 counter += 1
         assert counter == 0
 
+    @requires_api_version('1.29')
+    def test_build_container_with_target(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox as first',
+            'RUN mkdir -p /tmp/test',
+            'RUN touch /tmp/silence.tar.gz',
+            'FROM alpine:latest',
+            'WORKDIR /root/'
+            'COPY --from=first /tmp/silence.tar.gz .',
+            'ONBUILD RUN echo "This should not be in the final image"'
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, target='first', tag='build1'
+        )
+        self.tmp_imgs.append('build1')
+        for chunk in stream:
+            pass
+
+        info = self.client.inspect_image('build1')
+        self.assertEqual(info['Config']['OnBuild'], [])
+
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']
         snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'

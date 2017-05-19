@@ -8,7 +8,8 @@ class ExecApiMixin(object):
     @utils.minimum_version('1.15')
     @utils.check_resource
     def exec_create(self, container, cmd, stdout=True, stderr=True,
-                    stdin=False, tty=False, privileged=False, user=''):
+                    stdin=False, tty=False, privileged=False, user='',
+                    environment=None):
         """
         Sets up an exec instance in a running container.
 
@@ -22,6 +23,9 @@ class ExecApiMixin(object):
             tty (bool): Allocate a pseudo-TTY. Default: False
             privileged (bool): Run as privileged.
             user (str): User to execute command as. Default: root
+            environment (dict or list): A dictionary or a list of strings in
+                the following format ``["PASSWORD=xxx"]`` or
+                ``{"PASSWORD": "xxx"}``.
 
         Returns:
             (dict): A dictionary with an exec ``Id`` key.
@@ -31,16 +35,24 @@ class ExecApiMixin(object):
                 If the server returns an error.
         """
 
-        if privileged and utils.compare_version('1.19', self._version) < 0:
+        if privileged and utils.version_lt(self._version, '1.19'):
             raise errors.InvalidVersion(
                 'Privileged exec is not supported in API < 1.19'
             )
-        if user and utils.compare_version('1.19', self._version) < 0:
+        if user and utils.version_lt(self._version, '1.19'):
             raise errors.InvalidVersion(
                 'User-specific exec is not supported in API < 1.19'
             )
+        if environment is not None and utils.version_lt(self._version, '1.25'):
+            raise errors.InvalidVersion(
+                'Setting environment for exec is not supported in API < 1.25'
+            )
+
         if isinstance(cmd, six.string_types):
             cmd = utils.split_command(cmd)
+
+        if isinstance(environment, dict):
+            environment = utils.utils.format_environment(environment)
 
         data = {
             'Container': container,
@@ -50,7 +62,8 @@ class ExecApiMixin(object):
             'AttachStdin': stdin,
             'AttachStdout': stdout,
             'AttachStderr': stderr,
-            'Cmd': cmd
+            'Cmd': cmd,
+            'Env': environment,
         }
 
         url = self._url('/containers/{0}/exec', container)
@@ -97,6 +110,7 @@ class ExecApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.15')
+    @utils.check_resource
     def exec_start(self, exec_id, detach=False, tty=False, stream=False,
                    socket=False):
         """
@@ -118,8 +132,6 @@ class ExecApiMixin(object):
                 If the server returns an error.
         """
         # we want opened socket if socket == True
-        if isinstance(exec_id, dict):
-            exec_id = exec_id.get('Id')
 
         data = {
             'Tty': tty,
