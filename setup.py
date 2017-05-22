@@ -36,10 +36,10 @@ extras_require = {
     # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
     ':python_version < "3.3"': 'ipaddress >= 1.0.16',
 
-    # If using docker-py over TLS, highly recommend this option is pip-installed
-    # or pinned.
+    # If using docker-py over TLS, highly recommend this option is
+    # pip-installed or pinned.
 
-    # TODO: if pip installign both "requests" and "requests[security]", the
+    # TODO: if pip installing both "requests" and "requests[security]", the
     # extra package from the "security" option are not installed (see
     # https://github.com/pypa/pip/issues/4391).  Once that's fixed, instead of
     # installing the extra dependencies, install the following instead:
