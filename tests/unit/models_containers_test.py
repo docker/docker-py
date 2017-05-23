@@ -33,6 +33,7 @@ class ContainerCollectionTest(unittest.TestCase):
         create_kwargs = _create_container_args(dict(
             image='alpine',
             command='echo hello world',
+            auto_remove=True,
             blkio_weight_device=[{'Path': 'foo', 'Weight': 3}],
             blkio_weight=2,
             cap_add=['foo'],
@@ -94,7 +95,7 @@ class ContainerCollectionTest(unittest.TestCase):
             ulimits=[{"Name": "nofile", "Soft": 1024, "Hard": 2048}],
             user='bob',
             userns_mode='host',
-            version='1.23',
+            version='1.25',
             volume_driver='some_driver',
             volumes=[
                 '/home/user1/:/mnt/vol2',
@@ -115,6 +116,7 @@ class ContainerCollectionTest(unittest.TestCase):
             entrypoint='/bin/sh',
             environment={'FOO': 'BAR'},
             host_config={
+                'AutoRemove': True,
                 'Binds': [
                     '/home/user1/:/mnt/vol2',
                     '/var/www:/mnt/vol1:ro',
