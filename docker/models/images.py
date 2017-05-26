@@ -169,19 +169,20 @@ class ImageCollection(Collection):
         if isinstance(resp, six.string_types):
             return self.get(resp)
         last_event = None
+        image_id = None
         for chunk in json_stream(resp):
             if 'error' in chunk:
                 raise BuildError(chunk['error'])
             if 'stream' in chunk:
                 match = re.search(
-                    r'(Successfully built |sha256:)([0-9a-f]+)',
+                    r'(^Successfully built |sha256:)([0-9a-f]+)$',
                     chunk['stream']
                 )
                 if match:
                     image_id = match.group(2)
-                    return self.get(image_id)
             last_event = chunk
-
+        if image_id:
+            return self.get(image_id)
         raise BuildError(last_event or 'Unknown')
 
     def get(self, name):
