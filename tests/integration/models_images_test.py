@@ -44,11 +44,11 @@ class ImageCollectionTest(BaseIntegrationTest):
         image = client.images.build(
             tag='dup-txt-tag', fileobj=io.BytesIO(
                 "FROM alpine\n"
-                "CMD echo Successfully built 33c838732b70".encode('ascii')
+                "CMD echo Successfully built abcd1234".encode('ascii')
             )
         )
         self.tmp_imgs.append(image.id)
-        assert client.containers.run(image) == b"Successfully built 33c838732b70\n"
+        assert client.containers.run(image) == b"Successfully built abcd1234\n"
 
     def test_list(self):
         client = docker.from_env(version=TEST_API_VERSION)
