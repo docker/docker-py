@@ -126,9 +126,6 @@ class ImageCollection(Collection):
             rm (bool): Remove intermediate containers. The ``docker build``
                 command now defaults to ``--rm=true``, but we have kept the old
                 default of `False` to preserve backward compatibility
-            stream (bool): *Deprecated for API version > 1.8 (always True)*.
-                Return a blocking generator you can iterate over to retrieve
-                build output as it happens
             timeout (int): HTTP timeout
             custom_context (bool): Optional if using ``fileobj``
             encoding (str): The encoding for a stream. Set to ``gzip`` for
