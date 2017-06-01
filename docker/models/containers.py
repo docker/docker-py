@@ -659,6 +659,7 @@ class ContainerCollection(Collection):
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.
+            runtime (str): The name of the runtime tool to create container.
 
         Returns:
             The container logs, either ``STDOUT``, ``STDERR``, or both,
@@ -885,6 +886,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'userns_mode',
     'version',
     'volumes_from',
+    'runtime'
 ]
 
 

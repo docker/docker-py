@@ -238,7 +238,7 @@ class ContainerApiMixin(object):
                          memswap_limit=None, cpuset=None, host_config=None,
                          mac_address=None, labels=None, volume_driver=None,
                          stop_signal=None, networking_config=None,
-                         healthcheck=None, stop_timeout=None):
+                         healthcheck=None, stop_timeout=None, runtime=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -417,6 +417,7 @@ class ContainerApiMixin(object):
                 Default: 10
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
+            runtime (str): The name of the runtime tool to create container.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -441,7 +442,7 @@ class ContainerApiMixin(object):
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
             volume_driver, stop_signal, networking_config, healthcheck,
-            stop_timeout
+            stop_timeout, runtime
         )
         return self.create_container_from_config(config, name)
 
@@ -576,6 +577,7 @@ class ContainerApiMixin(object):
                 values are: ``host``
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
+            runtime (str): The name of the runtime tool to manage container.
 
 
         Returns:

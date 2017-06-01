@@ -120,7 +120,7 @@ class HostConfig(dict):
                  isolation=None, auto_remove=False, storage_opt=None,
                  init=None, init_path=None, volume_driver=None,
                  cpu_count=None, cpu_percent=None, nano_cpus=None,
-                 cpuset_mems=None):
+                 cpuset_mems=None, runtime=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -473,6 +473,9 @@ class HostConfig(dict):
 
             self['NanoCpus'] = nano_cpus
 
+        if runtime:
+            self['Runtime'] = runtime
+
 
 def host_config_type_error(param, param_value, expected):
     error_msg = 'Invalid type for {0} param: expected {1} but found {2}'
@@ -499,7 +502,7 @@ class ContainerConfig(dict):
         working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
         host_config=None, mac_address=None, labels=None, volume_driver=None,
         stop_signal=None, networking_config=None, healthcheck=None,
-        stop_timeout=None
+        stop_timeout=None, runtime=None
     ):
         if version_gte(version, '1.10'):
             message = ('{0!r} parameter has no effect on create_container().'
@@ -659,5 +662,6 @@ class ContainerConfig(dict):
             'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
-            'StopTimeout': stop_timeout
+            'StopTimeout': stop_timeout,
+            'Runtime': runtime
         })
