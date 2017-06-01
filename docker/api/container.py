@@ -417,7 +417,7 @@ class ContainerApiMixin(object):
                 Default: 10
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
-            runtime (str): The name of the runtime tool to create container.
+            runtime (str): Runtime to use with this container.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -577,7 +577,7 @@ class ContainerApiMixin(object):
                 values are: ``host``
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
-            runtime (str): The name of the runtime tool to manage container.
+            runtime (str): Runtime to use with this container.
 
 
         Returns:

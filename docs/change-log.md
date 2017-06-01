@@ -122,8 +122,6 @@ Change log
 * Added support for `force_update` in `TaskTemplate`
 * Made `name` parameter optional in `APIClient.create_volume` and
   `DockerClient.volumes.create`
-* Added support for `runtime` in `APIClient.create_container` and
-  `DockerClient.containers.run`
 
 ### Bugfixes
 

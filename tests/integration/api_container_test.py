@@ -1255,14 +1255,14 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
 
-
-   def test_create_with_runtime(self):
+    @requires_api_version('1.25')
+    def test_create_with_runtime(self):
         container = self.client.create_container(
             BUSYBOX, ['echo', 'test'], runtime='runc'
         )
         self.tmp_containers.append(container['Id'])
         config = self.client.inspect_container(container)
-        assert config['Config']['Runtime'] == 'runc'
+        assert config['HostConfig']['Runtime'] == 'runc'
 
 
 class LinkTest(BaseAPIIntegrationTest):

@@ -474,6 +474,8 @@ class HostConfig(dict):
             self['NanoCpus'] = nano_cpus
 
         if runtime:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('runtime', '1.25')
             self['Runtime'] = runtime
 
 
