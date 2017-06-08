@@ -40,6 +40,22 @@ def _check_api_features(version, task_template, update_config):
                     )
 
 
+def merge(a, b, path=None):
+    "merges b into a"
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a
+
+
 class ServiceApiMixin(object):
     @utils.minimum_version('1.24')
     def create_service(
@@ -330,7 +346,7 @@ class ServiceApiMixin(object):
                 auth_header = auth.get_config_header(self, registry)
                 if auth_header:
                     headers['X-Registry-Auth'] = auth_header
-            data['TaskTemplate'] = task_template
+            merge(data.setdefault('TaskTemplate', {}), task_template)
         if update_config is not None:
             data['UpdateConfig'] = update_config
 
