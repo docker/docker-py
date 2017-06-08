@@ -83,8 +83,7 @@ class APIClient(
             configuration.
         user_agent (str): Set a custom user agent for requests to the server.
     """
-    def __init__(self, base_url=None, version=None,
-                 timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
+    def __init__(self, base_url=None, version=None, timeout=None, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS):
         super(APIClient, self).__init__()
 
@@ -94,7 +93,11 @@ class APIClient(
             )
 
         self.base_url = base_url
-        self.timeout = timeout
+        if timeout is not None:
+            self.timeout = timeout
+        else:
+            self.timeout = DEFAULT_TIMEOUT_SECONDS
+
         self.headers['User-Agent'] = user_agent
 
         self._auth_configs = auth.load_config()
