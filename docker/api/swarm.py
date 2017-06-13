@@ -171,6 +171,12 @@ class SwarmApiMixin(object):
             "JoinToken": join_token,
             "AdvertiseAddr": advertise_addr,
         }
+        # We should never send empty value for ListenAddr.
+        # Docker Engine could decide by self about handling default case (use '0.0.0.0:2377')
+        # (accept if applicable or otherwise raise error).
+        if listen_addr is None:
+            del data["ListenAddr"]
+
         url = self._url('/swarm/join')
         response = self._post_json(url, data=data)
         self._raise_for_status(response)
