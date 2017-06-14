@@ -20,7 +20,7 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'requests >= 2.5.2, != 2.11.0, != 2.12.2',
+    'requests >= 2.5.2, != 2.11.0, != 2.12.2, != 2.18.0',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
     'docker-pycreds >= 0.2.1'
