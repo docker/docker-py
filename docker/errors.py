@@ -113,6 +113,12 @@ class TLSParameterError(DockerException):
                            "for API details.")
 
 
+class NvidiaConnectionError(DockerException):
+    def __init__(self, msg, nvidia_url):
+        self.msg = msg
+        self.url = nvidia_url
+
+
 class NullResource(DockerException, ValueError):
     pass
 

@@ -20,6 +20,7 @@ from .service import ServiceApiMixin
 from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
 from .. import auth
+from ..utils import nvidia
 from ..constants import (
     DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
     DEFAULT_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
@@ -447,3 +448,50 @@ class APIClient(
             None
         """
         self._auth_configs = auth.load_config(dockercfg_path)
+
+
+class NvidiaAPIClient(APIClient):
+    """
+    Version of APIClient that uses the nvidia-docker API to support nvidia GPUs
+
+    Requires `nvidia-docker` to be installed in order to function correctly
+
+    Example:
+
+        >>> import os, docker
+        >>> client = docker.from_env()
+        >>> os.environ['NV_GPU'] = '0 1'
+        >>> print(client.containers.run('nvidia/cuda', 'nvidia-smi'))
+        Wed Apr 12 20:22:34 2017
+        +-----------------------------------------------------------------------------+
+        | NVIDIA-SMI 375.39                 Driver Version: 375.39                    |
+        |-------------------------------+----------------------+----------------------+
+        | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+        | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+        |===============================+======================+======================|
+        |   0  TITAN X (Pascal)    Off  | 0000:01:00.0      On |                  N/A |
+        | 23%   38C    P8    10W / 250W |      1MiB / 12181MiB |      0%      Default |
+        +-------------------------------+----------------------+----------------------+
+        |   1  GeForce GTX 680     Off  | 0000:02:00.0     N/A |                  N/A |
+        | 31%   45C    P8    N/A /  N/A |    489MiB /  4036MiB |     N/A      Default |
+        +-------------------------------+----------------------+----------------------+
+        +-----------------------------------------------------------------------------+
+        | Processes:                                                       GPU Memory |
+        |  GPU       PID  Type  Process name                               Usage      |
+        |=============================================================================|
+        |    1                  Not Supported                                         |
+        +-----------------------------------------------------------------------------+
+    """  # noqa: E501
+
+    def is_nvidia_image(self, image):
+        return (self.inspect_image(image).get('Config', {}).get('Labels', {}).
+                get('com.nvidia.volumes.needed', None) == 'nvidia_driver')
+
+    def create_container_config(self, image, *args, **kwargs):
+        container_config = (super(NvidiaAPIClient, self).
+                            create_container_config(image, *args, **kwargs))
+
+        if self.is_nvidia_image(image):
+            nvidia.add_nvidia_docker_to_config(container_config)
+
+        return container_config

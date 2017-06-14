@@ -484,6 +484,24 @@ def post_fake_network_disconnect():
     return 200, None
 
 
+def get_fake_nvidia_config():
+    status_code = 200
+    response = {
+        'VolumeDriver': 'nvidia-docker',
+        'Devices': [
+            '/dev/nvidiactl',
+            '/dev/nvidia-uvm',
+            '/dev/nvidia0',
+            '/dev/nvidia1'
+        ],
+        'Volumes': [
+            'nvidia_driver_375.39:/usr/local/nvidia:ro'
+        ]
+    }
+
+    return status_code, response
+
+
 # Maps real api url to fake response callback
 prefix = 'http+docker://localunixsocket'
 if constants.IS_WINDOWS_PLATFORM:

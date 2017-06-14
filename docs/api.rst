@@ -9,6 +9,8 @@ It's possible to use :py:class:`APIClient` directly. Some basic things (e.g. run
 
 .. autoclass:: docker.api.client.APIClient
 
+.. autoclass:: docker.api.client.NvidiaAPIClient
+
 Containers
 ----------
 
