@@ -120,6 +120,7 @@ class DockerClient(object):
         """
         return PluginCollection(client=self)
 
+    @property
     def secrets(self):
         """
         An object for managing secrets on the server. See the
