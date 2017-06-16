@@ -1,4 +1,5 @@
 
+
 def add_port_mapping(port_bindings, internal_port, external):
     if internal_port in port_bindings:
         port_bindings[internal_port].append(external)
@@ -60,7 +61,7 @@ def _raise_invalid_port(port):
 
 
 def split_port(port):
-    parts = str(port).split(':')
+    parts = str(port).rsplit(':',2)
 
     if not 1 <= len(parts) <= 3:
         _raise_invalid_port(port)
