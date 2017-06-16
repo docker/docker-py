@@ -273,6 +273,7 @@ class ImageApiMixin(object):
         """
         res = self._post(self._url("/images/load"), data=data)
         self._raise_for_status(res)
+        return res.text
 
     @utils.minimum_version('1.25')
     def prune_images(self, filters=None):
