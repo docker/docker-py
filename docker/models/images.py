@@ -126,7 +126,8 @@ class ImageCollection(Collection):
             rm (bool): Remove intermediate containers. The ``docker build``
                 command now defaults to ``--rm=true``, but we have kept the old
                 default of `False` to preserve backward compatibility
-            stream (bool): *Deprecated for API version > 1.8 (always True)*.
+            stream (bool): *Deprecated for API version > 1.8 (always True). To
+                stream build logs, use APIClient.build() in the Low-level API*.
                 Return a blocking generator you can iterate over to retrieve
                 build output as it happens
             timeout (int): HTTP timeout
