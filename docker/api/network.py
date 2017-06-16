@@ -41,7 +41,8 @@ class NetworkApiMixin(object):
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False, labels=None,
-                       enable_ipv6=False, attachable=None, scope=None):
+                       enable_ipv6=False, attachable=None, scope=None,
+                       ingress=None):
         """
         Create a network. Similar to the ``docker network create``.
 
@@ -60,6 +61,8 @@ class NetworkApiMixin(object):
             attachable (bool): If enabled, and the network is in the global
                 scope,  non-service containers on worker nodes will be able to
                 connect to the network.
+            ingress (bool): If set, create an ingress network which provides
+                the routing-mesh in swarm mode.
 
         Returns:
             (dict): The created network reference object
@@ -128,6 +131,14 @@ class NetworkApiMixin(object):
                     'attachable is not supported in API version < 1.24'
                 )
             data['Attachable'] = attachable
+
+        if ingress is not None:
+            if version_lt(self._version, '1.29'):
+                raise InvalidVersion(
+                    'ingress is not supported in API version < 1.29'
+                )
+
+            data['Ingress'] = ingress
 
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)
