@@ -262,7 +262,7 @@ class ImageApiMixin(object):
             self._get(self._url("/images/{0}/json", image)), True
         )
 
-    def load_image(self, data):
+    def load_image(self, data, quiet=None):
         """
         Load an image that was previously saved using
         :py:meth:`~docker.api.image.ImageApiMixin.get_image` (or ``docker
@@ -270,9 +270,32 @@ class ImageApiMixin(object):
 
         Args:
             data (binary): Image data to be loaded.
+            quiet (boolean): Suppress progress details in response.
+
+        Returns:
+            (generator): Progress output as JSON objects. Only available for
+                         API version >= 1.23
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
         """
-        res = self._post(self._url("/images/load"), data=data)
-        return self._result(res, True)
+        params = {}
+
+        if quiet is not None:
+            if utils.version_lt(self._version, '1.23'):
+                raise errors.InvalidVersion(
+                    'quiet is not supported in API version < 1.23'
+                )
+            params['quiet'] = quiet
+
+        res = self._post(
+            self._url("/images/load"), data=data, params=params, stream=True
+        )
+        if utils.version_gte(self._version, '1.23'):
+            return self._stream_helper(res, decode=True)
+
+        self._raise_for_status(res)
 
     @utils.minimum_version('1.25')
     def prune_images(self, filters=None):

@@ -5,9 +5,8 @@ def imageNamePy2
 def imageNamePy3
 def images = [:]
 
-// Note: Swarm in dind seem notoriously flimsy with 1.12.1+, which is why we're
-// sticking with 1.12.0 for the 1.12 series
-def dockerVersions = ["1.13.1", "17.04.0-ce", "17.05.0-ce", "17.06.0-ce-rc5"]
+
+def dockerVersions = ["1.13.1", "17.04.0-ce", "17.05.0-ce", "17.06.0-ce"]
 
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
