@@ -825,6 +825,11 @@ class ContainerApiMixin(object):
                         params['since'] = utils.datetime_to_timestamp(since)
                     elif (isinstance(since, int) and since > 0):
                         params['since'] = since
+                    else:
+                        raise errors.InvalidArgument(
+                            'since value should be datetime or int, not {}'.
+                            format(type(since))
+                        )
             url = self._url("/containers/{0}/logs", container)
             res = self._get(url, params=params, stream=stream)
             return self._get_result(container, stream, res)
