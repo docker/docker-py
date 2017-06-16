@@ -369,5 +369,19 @@ class ImageTest(BaseAPIClientTest):
             'POST',
             url_prefix + 'images/load',
             data='Byte Stream....',
+            stream=True,
+            params={},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_load_image_quiet(self):
+        self.client.load_image('Byte Stream....', quiet=True)
+
+        fake_request.assert_called_with(
+            'POST',
+            url_prefix + 'images/load',
+            data='Byte Stream....',
+            stream=True,
+            params={'quiet': True},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

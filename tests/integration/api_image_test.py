@@ -249,6 +249,19 @@ class ImportImageTest(BaseAPIIntegrationTest):
         assert img_data['Config']['Cmd'] == ['echo']
         assert img_data['Config']['User'] == 'foobar'
 
+    # Docs say output is available in 1.23, but this test fails on 1.12.0
+    @requires_api_version('1.24')
+    def test_get_load_image(self):
+        test_img = 'hello-world:latest'
+        self.client.pull(test_img)
+        data = self.client.get_image(test_img)
+        assert data
+        output = self.client.load_image(data)
+        assert any([
+            line for line in output
+            if 'Loaded image: {}'.format(test_img) in line.get('stream', '')
+        ])
+
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):
         '''Serve data from an IO stream over HTTP.'''
