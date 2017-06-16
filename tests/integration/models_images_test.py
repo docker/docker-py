@@ -71,7 +71,8 @@ class ImageTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
 
-        image.tag(repo, tag)
+        result = image.tag(repo, tag)
+        assert result is True
         self.tmp_imgs.append(identifier)
         assert image.id in get_ids(client.images.list(repo))
         assert image.id in get_ids(client.images.list(identifier))
