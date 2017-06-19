@@ -248,7 +248,7 @@ class APIClient(
             'stream': 1
         }
 
-    @check_resource
+    @check_resource('container')
     def _attach_websocket(self, container, params=None):
         url = self._url("/containers/{0}/attach/ws", container)
         req = requests.Request("POST", url, params=self._attach_params(params))

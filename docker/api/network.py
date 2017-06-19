@@ -167,6 +167,7 @@ class NetworkApiMixin(object):
         return self._result(self._post(url, params=params), True)
 
     @minimum_version('1.21')
+    @check_resource('net_id')
     def remove_network(self, net_id):
         """
         Remove a network. Similar to the ``docker network rm`` command.
@@ -179,6 +180,7 @@ class NetworkApiMixin(object):
         self._raise_for_status(res)
 
     @minimum_version('1.21')
+    @check_resource('net_id')
     def inspect_network(self, net_id, verbose=None):
         """
         Get detailed information about a network.
@@ -198,7 +200,7 @@ class NetworkApiMixin(object):
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
-    @check_resource
+    @check_resource('image')
     @minimum_version('1.21')
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
@@ -235,7 +237,7 @@ class NetworkApiMixin(object):
         res = self._post_json(url, data=data)
         self._raise_for_status(res)
 
-    @check_resource
+    @check_resource('image')
     @minimum_version('1.21')
     def disconnect_container_from_network(self, container, net_id,
                                           force=False):

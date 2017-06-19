@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 class ImageApiMixin(object):
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def get_image(self, image):
         """
         Get a tarball of an image. Similar to the ``docker save`` command.
@@ -39,7 +39,7 @@ class ImageApiMixin(object):
         self._raise_for_status(res)
         return res.raw
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def history(self, image):
         """
         Show the history of an image.
@@ -228,7 +228,7 @@ class ImageApiMixin(object):
             image=image, repository=repository, tag=tag, changes=changes
         )
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def insert(self, image, url, path):
         if utils.compare_version('1.12', self._version) >= 0:
             raise errors.DeprecatedMethod(
@@ -241,7 +241,7 @@ class ImageApiMixin(object):
         }
         return self._result(self._post(api_url, params=params))
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def inspect_image(self, image):
         """
         Get detailed information about an image. Similar to the ``docker
@@ -443,7 +443,7 @@ class ImageApiMixin(object):
 
         return self._result(response)
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def remove_image(self, image, force=False, noprune=False):
         """
         Remove an image. Similar to the ``docker rmi`` command.
@@ -477,7 +477,7 @@ class ImageApiMixin(object):
             True
         )
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def tag(self, image, repository, tag=None, force=False):
         """
         Tag an image into a repository. Similar to the ``docker tag`` command.

@@ -443,7 +443,7 @@ class SecretReference(dict):
             gid (string): GID of the secret file's group. Default: 0
             mode (int): File access mode inside the container. Default: 0o444
     """
-    @check_resource
+    @check_resource('secret_id')
     def __init__(self, secret_id, secret_name, filename=None, uid=None,
                  gid=None, mode=0o444):
         self['SecretName'] = secret_name
