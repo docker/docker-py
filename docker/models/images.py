@@ -144,12 +144,15 @@ class ImageCollection(Collection):
                 - cpushares (int): CPU shares (relative weight)
                 - cpusetcpus (str): CPUs in which to allow execution, e.g.,
                     ``"0-3"``, ``"0,1"``
-            decode (bool): If set to ``True``, the returned stream will be
-                decoded into dicts on the fly. Default ``False``.
+            shmsize (int): Size of `/dev/shm` in bytes. The size must be
+                greater than 0. If omitted the system uses 64MB
+            labels (dict): A dictionary of labels to set on the image
             cache_from (list): A list of images used for build cache
-                resolution.
+                resolution
             target (str): Name of the build-stage to build in a multi-stage
-                Dockerfile.
+                Dockerfile
+            network_mode (str): networking mode for the run commands during
+                build
 
         Returns:
             (:py:class:`Image`): The built image.
