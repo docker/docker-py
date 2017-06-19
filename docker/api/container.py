@@ -418,6 +418,8 @@ class ContainerApiMixin(object):
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
             runtime (str): Runtime to use with this container.
+            healthcheck (dict): Specify a test to perform to check that the
+                container is healthy.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
