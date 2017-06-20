@@ -1139,7 +1139,9 @@ class PauseTest(BaseAPIIntegrationTest):
 class PruneTest(BaseAPIIntegrationTest):
     @requires_api_version('1.25')
     def test_prune_containers(self):
-        container1 = self.client.create_container(BUSYBOX, ['echo', 'hello'])
+        container1 = self.client.create_container(
+            BUSYBOX, ['sh', '-c', 'echo hello > /data.txt']
+        )
         container2 = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.client.start(container1)
         self.client.start(container2)
