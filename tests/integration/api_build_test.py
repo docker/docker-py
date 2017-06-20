@@ -5,6 +5,7 @@ import tempfile
 
 from docker import errors
 
+import pytest
 import six
 
 from .base import BaseAPIIntegrationTest
@@ -210,6 +211,38 @@ class BuildTest(BaseAPIIntegrationTest):
 
         info = self.client.inspect_image('build1')
         self.assertEqual(info['Config']['OnBuild'], [])
+
+    @requires_api_version('1.25')
+    def test_build_with_network_mode(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'RUN wget http://google.com'
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, network_mode='bridge',
+            tag='dockerpytest_bridgebuild'
+        )
+
+        self.tmp_imgs.append('dockerpytest_bridgebuild')
+        for chunk in stream:
+            pass
+
+        assert self.client.inspect_image('dockerpytest_bridgebuild')
+
+        script.seek(0)
+        stream = self.client.build(
+            fileobj=script, network_mode='none',
+            tag='dockerpytest_nonebuild', nocache=True, decode=True
+        )
+
+        self.tmp_imgs.append('dockerpytest_nonebuild')
+        logs = [chunk for chunk in stream]
+        assert 'errorDetail' in logs[-1]
+        assert logs[-1]['errorDetail']['code'] == 1
+
+        with pytest.raises(errors.NotFound):
+            self.client.inspect_image('dockerpytest_nonebuild')
 
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']
