@@ -146,6 +146,7 @@ class ServiceCollection(Collection):
                 of the service. Default: ``None``
             user (str): User to run commands as.
             workdir (str): Working directory for commands to run.
+            tty (boolean): Whether a pseudo-TTY should be allocated.
 
         Returns:
             (:py:class:`Service`) The created service.
@@ -212,6 +213,7 @@ CONTAINER_SPEC_KWARGS = [
     'mounts',
     'stop_grace_period',
     'secrets',
+    'tty'
 ]
 
 # kwargs to copy straight over to TaskTemplate
