@@ -5,7 +5,6 @@ def imageNamePy2
 def imageNamePy3
 def images = [:]
 
-
 def dockerVersions = ["1.13.1", "17.04.0-ce", "17.05.0-ce", "17.06.0-ce", "17.07.0-ce-rc3"]
 
 def buildImage = { name, buildargs, pyTag ->
