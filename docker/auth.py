@@ -70,6 +70,15 @@ def split_repo_name(repo_name):
     return tuple(parts)
 
 
+def get_credential_store(authconfig, registry):
+    if not registry or registry == INDEX_NAME:
+        registry = 'https://index.docker.io/v1/'
+
+    return authconfig.get('credHelpers', {}).get(registry) or authconfig.get(
+        'credsStore'
+    )
+
+
 def resolve_authconfig(authconfig, registry=None):
     """
     Returns the authentication data from the given auth configuration for a
@@ -77,13 +86,17 @@ def resolve_authconfig(authconfig, registry=None):
     with full URLs are stripped down to hostnames before checking for a match.
     Returns None if no match was found.
     """
-    if 'credsStore' in authconfig:
-        log.debug(
-            'Using credentials store "{0}"'.format(authconfig['credsStore'])
-        )
-        return _resolve_authconfig_credstore(
-            authconfig, registry, authconfig['credsStore']
-        )
+
+    if 'credHelpers' in authconfig or 'credsStore' in authconfig:
+        store_name = get_credential_store(authconfig, registry)
+        if store_name is not None:
+            log.debug(
+                'Using credentials store "{0}"'.format(store_name)
+            )
+            return _resolve_authconfig_credstore(
+                authconfig, registry, store_name
+            )
+
     # Default to the public index server
     registry = resolve_index_name(registry) if registry else INDEX_NAME
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
@@ -274,6 +287,9 @@ def load_config(config_path=None):
             if data.get('credsStore'):
                 log.debug("Found 'credsStore' section")
                 res.update({'credsStore': data['credsStore']})
+            if data.get('credHelpers'):
+                log.debug("Found 'credHelpers' section")
+                res.update({'credHelpers': data['credHelpers']})
             if res:
                 return res
             else:
