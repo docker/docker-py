@@ -69,6 +69,11 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 
 
 class NpipeAdapter(requests.adapters.HTTPAdapter):
+
+    __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + ['npipe_path',
+                                                           'pools',
+                                                           'timeout']
+
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS):
         self.npipe_path = base_url.replace('npipe://', '')
