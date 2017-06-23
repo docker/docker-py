@@ -1,6 +1,44 @@
 Change log
 ==========
 
+2.4.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/33?closed=1)
+
+### Features
+
+* Added support for the `target` and `network_mode` parameters in
+  `APIClient.build` and `DockerClient.images.build`.
+* Added support for the `runtime` parameter in `APIClient.create_container`
+  and `DockerClient.containers.run`.
+* Added support for the `ingress` parameter in `APIClient.create_network` and
+  `DockerClient.networks.create`.
+* Added support for `placement` configuration in `docker.types.TaskTemplate`.
+* Added support for `tty` configuration in `docker.types.ContainerSpec`.
+* Added support for `start_period` configuration in `docker.types.Healthcheck`.
+* The `credHelpers` section in Docker's configuration file is now recognized.
+* Port specifications including IPv6 endpoints are now supported.
+
+### Bugfixes
+
+* Fixed a bug where instantiating a `DockerClient` using `docker.from_env`
+  wouldn't correctly set the default timeout value.
+* Fixed a bug where `DockerClient.secrets` was not accessible as a property.
+* Fixed a bug where `DockerClient.build` would sometimes return the wrong
+  image.
+* Fixed a bug where values for `HostConfig.nano_cpus` exceeding 2^32 would
+  raise a type error.
+* `Image.tag` now properly returns `True` when the operation is successful.
+* `APIClient.logs` and `Container.logs` now raise an exception if the `since`
+  argument uses an unsupported type instead of ignoring the value.
+* Fixed a bug where some methods would raise a `NullResource` exception when
+  the resource ID was provided using a keyword argument.
+
+### Miscellaneous
+
+* `APIClient` instances can now be pickled.
+
 2.3.0
 -----
 
