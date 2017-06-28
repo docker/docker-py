@@ -54,6 +54,11 @@ def port_range(start, end, proto, randomly_available_port=False):
 
 
 def split_port(port):
+    if hasattr(port, 'legacy_repr'):
+        # This is the worst hack, but it prevents a bug in Compose 1.14.0
+        # https://github.com/docker/docker-py/issues/1668
+        # TODO: remove once fixed in Compose stable
+        port = port.legacy_repr()
     port = str(port)
     match = PORT_SPEC.match(port)
     if match is None:
