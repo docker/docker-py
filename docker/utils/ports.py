@@ -54,6 +54,7 @@ def port_range(start, end, proto, randomly_available_port=False):
 
 
 def split_port(port):
+    port = str(port)
     match = PORT_SPEC.match(port)
     if match is None:
         _raise_invalid_port(port)
