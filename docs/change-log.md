@@ -1,6 +1,16 @@
 Change log
 ==========
 
+2.4.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/35?closed=1)
+
+### Bugfixes
+
+* Fixed a bug where the `split_port` utility would raise an exception when
+  passed a non-string argument.
+
 2.4.0
 -----
 
