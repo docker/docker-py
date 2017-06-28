@@ -128,6 +128,7 @@ Configuration types
 .. autoclass:: DriverConfig
 .. autoclass:: EndpointSpec
 .. autoclass:: Mount
+.. autoclass:: Placement
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
 .. autoclass:: SecretReference

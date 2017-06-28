@@ -6,7 +6,7 @@ from .. import utils
 
 class ExecApiMixin(object):
     @utils.minimum_version('1.15')
-    @utils.check_resource
+    @utils.check_resource('container')
     def exec_create(self, container, cmd, stdout=True, stderr=True,
                     stdin=False, tty=False, privileged=False, user='',
                     environment=None):
@@ -110,7 +110,7 @@ class ExecApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.15')
-    @utils.check_resource
+    @utils.check_resource('exec_id')
     def exec_start(self, exec_id, detach=False, tty=False, stream=False,
                    socket=False):
         """

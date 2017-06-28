@@ -1,6 +1,9 @@
 import datetime
 import docker
 from docker.utils import kwargs_from_env
+from docker.constants import (
+    DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS
+)
 import os
 import unittest
 
@@ -96,3 +99,13 @@ class FromEnvTest(unittest.TestCase):
         client = docker.from_env(version='2.32')
         self.assertEqual(client.api.base_url, "https://192.168.59.103:2376")
         self.assertEqual(client.api._version, '2.32')
+
+    def test_from_env_without_version_uses_default(self):
+        client = docker.from_env()
+
+        self.assertEqual(client.api._version, DEFAULT_DOCKER_API_VERSION)
+
+    def test_from_env_without_timeout_uses_default(self):
+        client = docker.from_env()
+
+        self.assertEqual(client.api.timeout, DEFAULT_TIMEOUT_SECONDS)

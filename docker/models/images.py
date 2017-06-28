@@ -96,7 +96,7 @@ class Image(Model):
         Returns:
             (bool): ``True`` if successful
         """
-        self.client.api.tag(self.id, repository, tag=tag, **kwargs)
+        return self.client.api.tag(self.id, repository, tag=tag, **kwargs)
 
 
 class ImageCollection(Collection):
@@ -126,9 +126,6 @@ class ImageCollection(Collection):
             rm (bool): Remove intermediate containers. The ``docker build``
                 command now defaults to ``--rm=true``, but we have kept the old
                 default of `False` to preserve backward compatibility
-            stream (bool): *Deprecated for API version > 1.8 (always True)*.
-                Return a blocking generator you can iterate over to retrieve
-                build output as it happens
             timeout (int): HTTP timeout
             custom_context (bool): Optional if using ``fileobj``
             encoding (str): The encoding for a stream. Set to ``gzip`` for
@@ -147,10 +144,15 @@ class ImageCollection(Collection):
                 - cpushares (int): CPU shares (relative weight)
                 - cpusetcpus (str): CPUs in which to allow execution, e.g.,
                     ``"0-3"``, ``"0,1"``
-            decode (bool): If set to ``True``, the returned stream will be
-                decoded into dicts on the fly. Default ``False``.
+            shmsize (int): Size of `/dev/shm` in bytes. The size must be
+                greater than 0. If omitted the system uses 64MB
+            labels (dict): A dictionary of labels to set on the image
             cache_from (list): A list of images used for build cache
-                resolution.
+                resolution
+            target (str): Name of the build-stage to build in a multi-stage
+                Dockerfile
+            network_mode (str): networking mode for the run commands during
+                build
 
         Returns:
             (:py:class:`Image`): The built image.
@@ -167,19 +169,20 @@ class ImageCollection(Collection):
         if isinstance(resp, six.string_types):
             return self.get(resp)
         last_event = None
+        image_id = None
         for chunk in json_stream(resp):
             if 'error' in chunk:
                 raise BuildError(chunk['error'])
             if 'stream' in chunk:
                 match = re.search(
-                    r'(Successfully built |sha256:)([0-9a-f]+)',
+                    r'(^Successfully built |sha256:)([0-9a-f]+)$',
                     chunk['stream']
                 )
                 if match:
                     image_id = match.group(2)
-                    return self.get(image_id)
             last_event = chunk
-
+        if image_id:
+            return self.get(image_id)
         raise BuildError(last_event or 'Unknown')
 
     def get(self, name):

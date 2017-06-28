@@ -36,7 +36,7 @@ class SecretApiMixin(object):
         )
 
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('id')
     def inspect_secret(self, id):
         """
             Retrieve secret metadata
@@ -54,7 +54,7 @@ class SecretApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('id')
     def remove_secret(self, id):
         """
             Remove a secret

@@ -552,6 +552,12 @@ class PortsTest(unittest.TestCase):
         self.assertEqual(external_port,
                          [("127.0.0.1", "1000"), ("127.0.0.1", "1001")])
 
+    def test_split_port_with_ipv6_address(self):
+        internal_port, external_port = split_port(
+            "2001:abcd:ef00::2:1000:2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, [("2001:abcd:ef00::2", "1000")])
+
     def test_split_port_invalid(self):
         self.assertRaises(ValueError,
                           lambda: split_port("0.0.0.0:1000:2000:tcp"))

@@ -120,7 +120,7 @@ class HostConfig(dict):
                  isolation=None, auto_remove=False, storage_opt=None,
                  init=None, init_path=None, volume_driver=None,
                  cpu_count=None, cpu_percent=None, nano_cpus=None,
-                 cpuset_mems=None):
+                 cpuset_mems=None, runtime=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -466,12 +466,17 @@ class HostConfig(dict):
             self['CpuPercent'] = cpu_percent
 
         if nano_cpus:
-            if not isinstance(nano_cpus, int):
+            if not isinstance(nano_cpus, six.integer_types):
                 raise host_config_type_error('nano_cpus', nano_cpus, 'int')
             if version_lt(version, '1.25'):
                 raise host_config_version_error('nano_cpus', '1.25')
 
             self['NanoCpus'] = nano_cpus
+
+        if runtime:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('runtime', '1.25')
+            self['Runtime'] = runtime
 
 
 def host_config_type_error(param, param_value, expected):
@@ -499,7 +504,7 @@ class ContainerConfig(dict):
         working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
         host_config=None, mac_address=None, labels=None, volume_driver=None,
         stop_signal=None, networking_config=None, healthcheck=None,
-        stop_timeout=None
+        stop_timeout=None, runtime=None
     ):
         if version_gte(version, '1.10'):
             message = ('{0!r} parameter has no effect on create_container().'
@@ -560,10 +565,17 @@ class ContainerConfig(dict):
                 'stop_timeout was only introduced in API version 1.25'
             )
 
-        if healthcheck is not None and version_lt(version, '1.24'):
-            raise errors.InvalidVersion(
-                'Health options were only introduced in API version 1.24'
-            )
+        if healthcheck is not None:
+            if version_lt(version, '1.24'):
+                raise errors.InvalidVersion(
+                    'Health options were only introduced in API version 1.24'
+                )
+
+            if version_lt(version, '1.29') and 'StartPeriod' in healthcheck:
+                raise errors.InvalidVersion(
+                    'healthcheck start period was introduced in API '
+                    'version 1.29'
+                )
 
         if isinstance(command, six.string_types):
             command = split_command(command)
@@ -659,5 +671,6 @@ class ContainerConfig(dict):
             'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
-            'StopTimeout': stop_timeout
+            'StopTimeout': stop_timeout,
+            'Runtime': runtime
         })

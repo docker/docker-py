@@ -173,4 +173,4 @@ class SwarmTest(BaseAPIIntegrationTest):
         with pytest.raises(docker.errors.APIError) as e:
             self.client.remove_node(node_id, True)
 
-        assert e.value.response.status_code == 500
+        assert e.value.response.status_code >= 400

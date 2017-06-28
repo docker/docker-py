@@ -516,6 +516,8 @@ class ContainerCollection(Collection):
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
+            healthcheck (dict): Specify a test to perform to check that the
+                container is healthy.
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
@@ -659,6 +661,7 @@ class ContainerCollection(Collection):
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.
+            runtime (str): Runtime to use with this container.
 
         Returns:
             The container logs, either ``STDOUT``, ``STDERR``, or both,
@@ -885,6 +888,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'userns_mode',
     'version',
     'volumes_from',
+    'runtime'
 ]
 
 

@@ -20,7 +20,9 @@ class TaskTemplate(dict):
           individual container created as part of the service.
         restart_policy (RestartPolicy): Specification for the restart policy
           which applies to containers created as part of this service.
-        placement (:py:class:`list`): A list of constraints.
+        placement (Placement): Placement instructions for the scheduler.
+            If a list is passed instead, it is assumed to be a list of
+            constraints as part of a :py:class:`Placement` object.
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
@@ -33,7 +35,7 @@ class TaskTemplate(dict):
             self['RestartPolicy'] = restart_policy
         if placement:
             if isinstance(placement, list):
-                placement = {'Constraints': placement}
+                placement = Placement(constraints=placement)
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
@@ -82,10 +84,11 @@ class ContainerSpec(dict):
             terminate before forcefully killing it.
         secrets (list of py:class:`SecretReference`): List of secrets to be
             made available inside the containers.
+        tty (boolean): Whether a pseudo-TTY should be allocated.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
-                 stop_grace_period=None, secrets=None):
+                 stop_grace_period=None, secrets=None, tty=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -122,6 +125,9 @@ class ContainerSpec(dict):
             if not isinstance(secrets, list):
                 raise TypeError('secrets must be a list')
             self['Secrets'] = secrets
+
+        if tty is not None:
+            self['TTY'] = tty
 
 
 class Mount(dict):
@@ -441,7 +447,7 @@ class SecretReference(dict):
             gid (string): GID of the secret file's group. Default: 0
             mode (int): File access mode inside the container. Default: 0o444
     """
-    @check_resource
+    @check_resource('secret_id')
     def __init__(self, secret_id, secret_name, filename=None, uid=None,
                  gid=None, mode=0o444):
         self['SecretName'] = secret_name
@@ -452,3 +458,28 @@ class SecretReference(dict):
             'GID': gid or '0',
             'Mode': mode
         }
+
+
+class Placement(dict):
+    """
+        Placement constraints to be used as part of a :py:class:`TaskTemplate`
+
+        Args:
+            constraints (list): A list of constraints
+            preferences (list): Preferences provide a way to make the
+                scheduler aware of factors such as topology. They are provided
+                in order from highest to lowest precedence.
+            platforms (list): A list of platforms expressed as ``(arch, os)``
+                tuples
+    """
+    def __init__(self, constraints=None, preferences=None, platforms=None):
+        if constraints is not None:
+            self['Constraints'] = constraints
+        if preferences is not None:
+            self['Preferences'] = preferences
+        if platforms:
+            self['Platforms'] = []
+            for plat in platforms:
+                self['Platforms'].append({
+                    'Architecture': plat[0], 'OS': plat[1]
+                })

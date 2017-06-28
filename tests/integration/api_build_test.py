@@ -5,6 +5,7 @@ import tempfile
 
 from docker import errors
 
+import pytest
 import six
 
 from .base import BaseAPIIntegrationTest
@@ -188,6 +189,60 @@ class BuildTest(BaseAPIIntegrationTest):
             if 'Using cache' in chunk.get('stream', ''):
                 counter += 1
         assert counter == 0
+
+    @requires_api_version('1.29')
+    def test_build_container_with_target(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox as first',
+            'RUN mkdir -p /tmp/test',
+            'RUN touch /tmp/silence.tar.gz',
+            'FROM alpine:latest',
+            'WORKDIR /root/'
+            'COPY --from=first /tmp/silence.tar.gz .',
+            'ONBUILD RUN echo "This should not be in the final image"'
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, target='first', tag='build1'
+        )
+        self.tmp_imgs.append('build1')
+        for chunk in stream:
+            pass
+
+        info = self.client.inspect_image('build1')
+        self.assertEqual(info['Config']['OnBuild'], [])
+
+    @requires_api_version('1.25')
+    def test_build_with_network_mode(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'RUN wget http://google.com'
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, network_mode='bridge',
+            tag='dockerpytest_bridgebuild'
+        )
+
+        self.tmp_imgs.append('dockerpytest_bridgebuild')
+        for chunk in stream:
+            pass
+
+        assert self.client.inspect_image('dockerpytest_bridgebuild')
+
+        script.seek(0)
+        stream = self.client.build(
+            fileobj=script, network_mode='none',
+            tag='dockerpytest_nonebuild', nocache=True, decode=True
+        )
+
+        self.tmp_imgs.append('dockerpytest_nonebuild')
+        logs = [chunk for chunk in stream]
+        assert 'errorDetail' in logs[-1]
+        assert logs[-1]['errorDetail']['code'] == 1
+
+        with pytest.raises(errors.NotFound):
+            self.client.inspect_image('dockerpytest_nonebuild')
 
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']

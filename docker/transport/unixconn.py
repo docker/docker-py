@@ -50,6 +50,11 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 
 
 class UnixAdapter(requests.adapters.HTTPAdapter):
+
+    __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + ['pools',
+                                                           'socket_path',
+                                                           'timeout']
+
     def __init__(self, socket_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS):
         socket_path = socket_url.replace('http+unix://', '')
