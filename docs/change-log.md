@@ -1,10 +1,10 @@
 Change log
 ==========
 
-2.4.1
+2.4.2
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/35?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/36?closed=1)
 
 ### Bugfixes
 
