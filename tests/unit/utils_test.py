@@ -639,6 +639,14 @@ class ExcludePathsTest(unittest.TestCase):
         'foo',
         'foo/bar',
         'bar',
+        'target',
+        'target/subdir',
+        'subdir',
+        'subdir/target',
+        'subdir/target/subdir',
+        'subdir/subdir2',
+        'subdir/subdir2/target',
+        'subdir/subdir2/target/subdir'
     ]
 
     files = [
@@ -654,6 +662,14 @@ class ExcludePathsTest(unittest.TestCase):
         'foo/bar/a.py',
         'bar/a.py',
         'foo/Dockerfile3',
+        'target/file.txt',
+        'target/subdir/file.txt',
+        'subdir/file.txt',
+        'subdir/target/file.txt',
+        'subdir/target/subdir/file.txt',
+        'subdir/subdir2/file.txt',
+        'subdir/subdir2/target/file.txt',
+        'subdir/subdir2/target/subdir/file.txt',
     ]
 
     all_paths = set(dirs + files)
@@ -842,6 +858,15 @@ class ExcludePathsTest(unittest.TestCase):
 
         assert self.exclude(['foo/**/bar']) == convert_paths(
             self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
+        )
+
+    def test_single_and_double_wildcard(self):
+        assert self.exclude(['**/target/*/*']) == convert_paths(
+            self.all_paths - set(
+                ['target/subdir/file.txt',
+                 'subdir/target/subdir/file.txt',
+                 'subdir/subdir2/target/subdir/file.txt']
+            )
         )
 
 
