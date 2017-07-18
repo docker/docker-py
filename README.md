@@ -22,7 +22,7 @@ client = docker.from_env()
 You can run containers:
 
 ```python
->>> client.containers.run("ubuntu", "echo hello world")
+>>> client.containers.run("ubuntu:latest", "echo hello world")
 'hello world\n'
 ```
 
