@@ -146,6 +146,12 @@ def get_fake_inspect_container(tty=False):
             "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
             "Ghost": False
         },
+        "HostConfig": {
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+        },
         "MacAddress": "02:42:ac:11:00:0a"
     }
     return status_code, response

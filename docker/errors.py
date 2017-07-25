@@ -127,8 +127,14 @@ class ContainerError(DockerException):
         self.command = command
         self.image = image
         self.stderr = stderr
-        msg = ("Command '{}' in image '{}' returned non-zero exit status {}: "
-               "{}").format(command, image, exit_status, stderr)
+
+        if stderr is None:
+            msg = ("Command '{}' in image '{}' returned non-zero exit "
+                   "status {}").format(command, image, exit_status, stderr)
+        else:
+            msg = ("Command '{}' in image '{}' returned non-zero exit "
+                   "status {}: {}").format(command, image, exit_status, stderr)
+
         super(ContainerError, self).__init__(msg)
 
 
