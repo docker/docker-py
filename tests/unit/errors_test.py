@@ -2,8 +2,10 @@ import unittest
 
 import requests
 
-from docker.errors import (APIError, DockerException,
+from docker.errors import (APIError, ContainerError, DockerException,
                            create_unexpected_kwargs_error)
+from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID
+from .fake_api_client import make_fake_client
 
 
 class APIErrorTest(unittest.TestCase):
@@ -75,6 +77,36 @@ class APIErrorTest(unittest.TestCase):
         resp.status_code = 400
         err = APIError('', response=resp)
         assert err.is_client_error() is True
+
+
+class ContainerErrorTest(unittest.TestCase):
+    def test_container_without_stderr(self):
+        """The massage does not contain stderr"""
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        command = "echo Hello World"
+        exit_status = 42
+        image = FAKE_IMAGE_ID
+        stderr = None
+
+        err = ContainerError(container, exit_status, command, image, stderr)
+        msg = ("Command '{}' in image '{}' returned non-zero exit status {}"
+               ).format(command, image, exit_status, stderr)
+        assert str(err) == msg
+
+    def test_container_with_stderr(self):
+        """The massage contains stderr"""
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        command = "echo Hello World"
+        exit_status = 42
+        image = FAKE_IMAGE_ID
+        stderr = "Something went wrong"
+
+        err = ContainerError(container, exit_status, command, image, stderr)
+        msg = ("Command '{}' in image '{}' returned non-zero exit status {}: "
+               "{}").format(command, image, exit_status, stderr)
+        assert str(err) == msg
 
 
 class CreateUnexpectedKwargsErrorTest(unittest.TestCase):

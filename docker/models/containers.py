@@ -667,6 +667,13 @@ class ContainerCollection(Collection):
             The container logs, either ``STDOUT``, ``STDERR``, or both,
             depending on the value of the ``stdout`` and ``stderr`` arguments.
 
+            ``STDOUT`` and ``STDERR`` may be read only if either ``json-file``
+            or ``journald`` logging driver used. Thus, if you are using none of
+            these drivers, a ``None`` object is returned instead. See the
+            `Engine API documentation
+            <https://docs.docker.com/engine/api/v1.30/#operation/ContainerLogs/>`_
+            for full details.
+
             If ``detach`` is ``True``, a :py:class:`Container` object is
             returned instead.
 
@@ -709,7 +716,14 @@ class ContainerCollection(Collection):
         if exit_status != 0:
             stdout = False
             stderr = True
-        out = container.logs(stdout=stdout, stderr=stderr)
+
+        logging_driver = container.attrs['HostConfig']['LogConfig']['Type']
+
+        if logging_driver == 'json-file' or logging_driver == 'journald':
+            out = container.logs(stdout=stdout, stderr=stderr)
+        else:
+            out = None
+
         if remove:
             container.remove()
         if exit_status != 0:
