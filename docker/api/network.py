@@ -52,7 +52,7 @@ class NetworkApiMixin(object):
             options (dict): Driver options as a key-value dictionary
             ipam (IPAMConfig): Optional custom IP scheme for the network.
             check_duplicate (bool): Request daemon to check for networks with
-                same name. Default: ``True``.
+                same name. Default: ``None``.
             internal (bool): Restrict external access to the network. Default
                 ``False``.
             labels (dict): Map of labels to set on the network. Default
