@@ -113,7 +113,8 @@ class RemoveImageTest(BaseAPIIntegrationTest):
         self.assertIn('Id', res)
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
-        self.client.remove_image(img_id, force=True)
+        logs = self.client.remove_image(img_id, force=True)
+        self.assertIn({"Deleted": img_id}, logs)
         images = self.client.images(all=True)
         res = [x for x in images if x['Id'].startswith(img_id)]
         self.assertEqual(len(res), 0)

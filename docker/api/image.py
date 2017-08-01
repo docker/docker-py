@@ -272,7 +272,7 @@ class ImageApiMixin(object):
             data (binary): Image data to be loaded.
         """
         res = self._post(self._url("/images/load"), data=data)
-        self._raise_for_status(res)
+        return self._result(res, True)
 
     @utils.minimum_version('1.25')
     def prune_images(self, filters=None):
@@ -455,7 +455,7 @@ class ImageApiMixin(object):
         """
         params = {'force': force, 'noprune': noprune}
         res = self._delete(self._url("/images/{0}", image), params=params)
-        self._raise_for_status(res)
+        return self._result(res, True)
 
     def search(self, term):
         """
