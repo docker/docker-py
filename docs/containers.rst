@@ -53,3 +53,4 @@ Container objects
   .. automethod:: top
   .. automethod:: unpause
   .. automethod:: update
+  .. automethod:: wait
