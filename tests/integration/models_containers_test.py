@@ -88,6 +88,24 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
 
+    def test_run_with_none_driver(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+
+        out = client.containers.run(
+            "alpine", "echo hello",
+            log_config=dict(type='none')
+        )
+        self.assertEqual(out, None)
+
+    def test_run_with_json_file_driver(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+
+        out = client.containers.run(
+            "alpine", "echo hello",
+            log_config=dict(type='json-file')
+        )
+        self.assertEqual(out, b'hello\n')
+
     def test_get(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
