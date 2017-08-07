@@ -399,7 +399,7 @@ class ContainerApiMixin(object):
             name (str): A name for the container
             entrypoint (str or list): An entrypoint
             working_dir (str): Path to the working directory
-            domainname (str or list): Set custom DNS search domains
+            domainname (str): The domain name to use for the container
             memswap_limit (int):
             host_config (dict): A dictionary created with
                 :py:meth:`create_host_config`.
