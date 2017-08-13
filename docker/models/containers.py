@@ -861,6 +861,8 @@ RUN_HOST_CONFIG_KWARGS = [
     'cpu_shares',
     'cpuset_cpus',
     'cpuset_mems',
+    'cpu_rt_period',
+    'cpu_rt_runtime',
     'device_read_bps',
     'device_read_iops',
     'device_write_bps',
