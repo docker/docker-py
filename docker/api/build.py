@@ -274,7 +274,10 @@ class BuildApiMixin(object):
                         self._auth_configs, registry
                     )
             else:
-                auth_data = self._auth_configs
+                auth_data = self._auth_configs.copy()
+                # See https://github.com/docker/docker-py/issues/1683
+                if auth.INDEX_NAME in auth_data:
+                    auth_data[auth.INDEX_URL] = auth_data[auth.INDEX_NAME]
 
             log.debug(
                 'Sending auth config ({0})'.format(
