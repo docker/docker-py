@@ -10,7 +10,7 @@ from . import errors
 from .constants import IS_WINDOWS_PLATFORM
 
 INDEX_NAME = 'docker.io'
-INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
+INDEX_URL = 'https://index.{0}/v1/'.format(INDEX_NAME)
 DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
 LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 TOKEN_USERNAME = '<token>'
@@ -118,7 +118,7 @@ def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
     if not registry or registry == INDEX_NAME:
         # The ecosystem is a little schizophrenic with index.docker.io VS
         # docker.io - in that case, it seems the full URL is necessary.
-        registry = 'https://index.docker.io/v1/'
+        registry = INDEX_URL
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
     store = dockerpycreds.Store(credstore_name)
     try:
