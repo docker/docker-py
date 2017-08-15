@@ -768,6 +768,11 @@ class ExcludePathsTest(unittest.TestCase):
             self.all_paths - set(['foo/a.py'])
         )
 
+    def test_single_subdir_single_filename_leading_slash(self):
+        assert self.exclude(['/foo/a.py']) == convert_paths(
+            self.all_paths - set(['foo/a.py'])
+        )
+
     def test_single_subdir_with_path_traversal(self):
         assert self.exclude(['foo/whoops/../a.py']) == convert_paths(
             self.all_paths - set(['foo/a.py'])
