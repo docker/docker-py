@@ -38,7 +38,7 @@ def _check_api_features(version, task_template, update_config):
                         'Placement.preferences is not supported in'
                         ' API version < 1.27'
                     )
-        if task_template.container_spec.get('TTY'):
+        if task_template.get('ContainerSpec', {}).get('TTY'):
             if utils.version_lt(version, '1.25'):
                 raise errors.InvalidVersion(
                     'ContainerSpec.TTY is not supported in API version < 1.25'
