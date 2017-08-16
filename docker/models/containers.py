@@ -4,7 +4,7 @@ from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
-from ..utils import compare_version
+from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
 
@@ -691,8 +691,7 @@ class ContainerCollection(Collection):
             image = image.id
         detach = kwargs.pop("detach", False)
         if detach and remove:
-            if compare_version("1.24",
-                               self.client.api._version) > 0:
+            if version_gte(self.client.api._version, '1.25'):
                 kwargs["auto_remove"] = True
             else:
                 raise RuntimeError("The options 'detach' and 'remove' cannot "
