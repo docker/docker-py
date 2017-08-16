@@ -109,6 +109,12 @@ class ServiceApiMixin(object):
             'Networks': utils.convert_service_networks(networks),
             'EndpointSpec': endpoint_spec
         }
+        try:
+            hostname = data["TaskTemplate"]["ContainerSpec"]["Hostname"]
+        except KeyError:
+            pass
+        if hostname is not None:
+            data["Network"][0]["Aliases"] = [hostname]
 
         if update_config is not None:
             data['UpdateConfig'] = update_config
