@@ -95,6 +95,8 @@ class BuildApiMixin(object):
             labels (dict): A dictionary of labels to set on the image
             cache_from (list): A list of images used for build cache
                 resolution
+            squash (bool): Squash the resulting images layers into a
+                single layer
             target (str): Name of the build-stage to build in a multi-stage
                 Dockerfile
             network_mode (str): networking mode for the run commands during
@@ -205,6 +207,13 @@ class BuildApiMixin(object):
                     'cache_from was only introduced in API version 1.25'
                 )
 
+        if squash:
+            if utils.version_gte(self._version, '1.25'):
+                params.update({'squash': squash})
+            else:
+                raise errors.InvalidVersion(
+                    'squash was only introduced in API version 1.25'
+                )
         if target:
             if utils.version_gte(self._version, '1.29'):
                 params.update({'target': target})
