@@ -2,6 +2,7 @@ from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
 
 from .base import BaseAPIIntegrationTest, BUSYBOX
+from ..helpers import requires_api_version
 
 
 class ExecTest(BaseAPIIntegrationTest):
@@ -121,3 +122,17 @@ class ExecTest(BaseAPIIntegrationTest):
         exec_info = self.client.exec_inspect(exec_id)
         self.assertIn('ExitCode', exec_info)
         self.assertNotEqual(exec_info['ExitCode'], 0)
+
+    @requires_api_version('1.25')
+    def test_exec_command_with_env(self):
+        container = self.client.create_container(BUSYBOX, 'cat',
+                                                 detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        res = self.client.exec_create(id, 'env', environment=["X=Y"])
+        assert 'Id' in res
+
+        exec_log = self.client.exec_start(res)
+        assert b'X=Y\n' in exec_log

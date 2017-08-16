@@ -10,7 +10,7 @@ from ..types import (
 
 
 class ContainerApiMixin(object):
-    @utils.check_resource
+    @utils.check_resource('container')
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False):
         """
@@ -54,7 +54,7 @@ class ContainerApiMixin(object):
 
         return self._read_from_socket(response, stream)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def attach_socket(self, container, params=None, ws=False):
         """
         Like ``attach``, but returns the underlying socket-like object for the
@@ -93,7 +93,7 @@ class ContainerApiMixin(object):
             )
         )
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def commit(self, container, repository=None, tag=None, message=None,
                author=None, changes=None, conf=None):
         """
@@ -195,7 +195,7 @@ class ContainerApiMixin(object):
                 x['Id'] = x['Id'][:12]
         return res
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def copy(self, container, resource):
         """
         Identical to the ``docker cp`` command. Get files/folders from the
@@ -238,7 +238,7 @@ class ContainerApiMixin(object):
                          memswap_limit=None, cpuset=None, host_config=None,
                          mac_address=None, labels=None, volume_driver=None,
                          stop_signal=None, networking_config=None,
-                         healthcheck=None, stop_timeout=None):
+                         healthcheck=None, stop_timeout=None, runtime=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -391,8 +391,6 @@ class ContainerApiMixin(object):
                 ``{"PASSWORD": "xxx"}``.
             dns (:py:class:`list`): DNS name servers. Deprecated since API
                 version 1.10. Use ``host_config`` instead.
-            dns_opt (:py:class:`list`): Additional options to be added to the
-                container's ``resolv.conf`` file
             volumes (str or list): List of paths inside the container to use
                 as volumes.
             volumes_from (:py:class:`list`): List of container names or Ids to
@@ -401,7 +399,7 @@ class ContainerApiMixin(object):
             name (str): A name for the container
             entrypoint (str or list): An entrypoint
             working_dir (str): Path to the working directory
-            domainname (str or list): Set custom DNS search domains
+            domainname (str): The domain name to use for the container
             memswap_limit (int):
             host_config (dict): A dictionary created with
                 :py:meth:`create_host_config`.
@@ -417,6 +415,9 @@ class ContainerApiMixin(object):
                 Default: 10
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
+            runtime (str): Runtime to use with this container.
+            healthcheck (dict): Specify a test to perform to check that the
+                container is healthy.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -441,7 +442,7 @@ class ContainerApiMixin(object):
             network_disabled, entrypoint, cpu_shares, working_dir, domainname,
             memswap_limit, cpuset, host_config, mac_address, labels,
             volume_driver, stop_signal, networking_config, healthcheck,
-            stop_timeout
+            stop_timeout, runtime
         )
         return self.create_container_from_config(config, name)
 
@@ -473,12 +474,14 @@ class ContainerApiMixin(object):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
-            cpu_group (int): The length of a CPU period in microseconds.
-            cpu_period (int): Microseconds of CPU time that the container can
+            cpu_period (int): The length of a CPU period in microseconds.
+            cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
             cpu_shares (int): CPU shares (relative weight).
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
                 ``0,1``).
+            cpuset_mems (str): Memory nodes (MEMs) in which to allow execution
+                (``0-3``, ``0,1``). Only effective on NUMA systems.
             device_read_bps: Limit read rate (bytes per second) from a device
                 in the form of: `[{"Path": "device_path", "Rate": rate}]`
             device_read_iops: Limit read rate (IO per second) from a device.
@@ -493,6 +496,8 @@ class ContainerApiMixin(object):
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
             dns (:py:class:`list`): Set custom DNS servers.
+            dns_opt (:py:class:`list`): Additional options to be added to the
+                container's ``resolv.conf`` file
             dns_search (:py:class:`list`): DNS search domains.
             extra_hosts (dict): Addtional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
@@ -574,6 +579,7 @@ class ContainerApiMixin(object):
                 values are: ``host``
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
+            runtime (str): Runtime to use with this container.
 
 
         Returns:
@@ -657,7 +663,7 @@ class ContainerApiMixin(object):
         """
         return EndpointConfig(self._version, *args, **kwargs)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def diff(self, container):
         """
         Inspect changes on a container's filesystem.
@@ -676,7 +682,7 @@ class ContainerApiMixin(object):
             self._get(self._url("/containers/{0}/changes", container)), True
         )
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def export(self, container):
         """
         Export the contents of a filesystem as a tar archive.
@@ -697,7 +703,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
         return res.raw
 
-    @utils.check_resource
+    @utils.check_resource('container')
     @utils.minimum_version('1.20')
     def get_archive(self, container, path):
         """
@@ -728,7 +734,7 @@ class ContainerApiMixin(object):
             utils.decode_json_header(encoded_stat) if encoded_stat else None
         )
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def inspect_container(self, container):
         """
         Identical to the `docker inspect` command, but only for containers.
@@ -748,7 +754,7 @@ class ContainerApiMixin(object):
             self._get(self._url("/containers/{0}/json", container)), True
         )
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def kill(self, container, signal=None):
         """
         Kill a container or send a signal to a container.
@@ -771,7 +777,7 @@ class ContainerApiMixin(object):
 
         self._raise_for_status(res)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def logs(self, container, stdout=True, stderr=True, stream=False,
              timestamps=False, tail='all', since=None, follow=None):
         """
@@ -823,6 +829,11 @@ class ContainerApiMixin(object):
                         params['since'] = utils.datetime_to_timestamp(since)
                     elif (isinstance(since, int) and since > 0):
                         params['since'] = since
+                    else:
+                        raise errors.InvalidArgument(
+                            'since value should be datetime or int, not {}'.
+                            format(type(since))
+                        )
             url = self._url("/containers/{0}/logs", container)
             res = self._get(url, params=params, stream=stream)
             return self._get_result(container, stream, res)
@@ -834,7 +845,7 @@ class ContainerApiMixin(object):
             logs=True
         )
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def pause(self, container):
         """
         Pauses all processes within a container.
@@ -850,7 +861,7 @@ class ContainerApiMixin(object):
         res = self._post(url)
         self._raise_for_status(res)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def port(self, container, private_port):
         """
         Lookup the public-facing port that is NAT-ed to ``private_port``.
@@ -899,7 +910,7 @@ class ContainerApiMixin(object):
 
         return h_ports
 
-    @utils.check_resource
+    @utils.check_resource('container')
     @utils.minimum_version('1.20')
     def put_archive(self, container, path, data):
         """
@@ -947,7 +958,7 @@ class ContainerApiMixin(object):
         url = self._url('/containers/prune')
         return self._result(self._post(url, params=params), True)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def remove_container(self, container, v=False, link=False, force=False):
         """
         Remove a container. Similar to the ``docker rm`` command.
@@ -971,7 +982,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.17')
-    @utils.check_resource
+    @utils.check_resource('container')
     def rename(self, container, name):
         """
         Rename a container. Similar to the ``docker rename`` command.
@@ -989,7 +1000,7 @@ class ContainerApiMixin(object):
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def resize(self, container, height, width):
         """
         Resize the tty session.
@@ -1008,7 +1019,7 @@ class ContainerApiMixin(object):
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def restart(self, container, timeout=10):
         """
         Restart a container. Similar to the ``docker restart`` command.
@@ -1029,7 +1040,7 @@ class ContainerApiMixin(object):
         res = self._post(url, params=params)
         self._raise_for_status(res)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def start(self, container, *args, **kwargs):
         """
         Start a container. Similar to the ``docker start`` command, but
@@ -1068,7 +1079,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.17')
-    @utils.check_resource
+    @utils.check_resource('container')
     def stats(self, container, decode=None, stream=True):
         """
         Stream statistics for a specific container. Similar to the
@@ -1094,7 +1105,7 @@ class ContainerApiMixin(object):
             return self._result(self._get(url, params={'stream': False}),
                                 json=True)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def stop(self, container, timeout=10):
         """
         Stops a container. Similar to the ``docker stop`` command.
@@ -1115,7 +1126,7 @@ class ContainerApiMixin(object):
                          timeout=(timeout + (self.timeout or 0)))
         self._raise_for_status(res)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def top(self, container, ps_args=None):
         """
         Display the running processes of a container.
@@ -1137,7 +1148,7 @@ class ContainerApiMixin(object):
             params['ps_args'] = ps_args
         return self._result(self._get(u, params=params), True)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def unpause(self, container):
         """
         Unpause all processes within a container.
@@ -1150,7 +1161,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
 
     @utils.minimum_version('1.22')
-    @utils.check_resource
+    @utils.check_resource('container')
     def update_container(
         self, container, blkio_weight=None, cpu_period=None, cpu_quota=None,
         cpu_shares=None, cpuset_cpus=None, cpuset_mems=None, mem_limit=None,
@@ -1215,7 +1226,7 @@ class ContainerApiMixin(object):
         res = self._post_json(url, data=data)
         return self._result(res, True)
 
-    @utils.check_resource
+    @utils.check_resource('container')
     def wait(self, container, timeout=None):
         """
         Block until a container stops, then return its exit code. Similar to

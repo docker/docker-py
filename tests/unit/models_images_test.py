@@ -21,6 +21,11 @@ class ImageCollectionTest(unittest.TestCase):
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
 
+    def test_labels(self):
+        client = make_fake_client()
+        image = client.images.get(FAKE_IMAGE_ID)
+        assert image.labels == {'bar': 'foo'}
+
     def test_list(self):
         client = make_fake_client()
         images = client.images.list(all=True)
@@ -37,7 +42,7 @@ class ImageCollectionTest(unittest.TestCase):
     def test_pull(self):
         client = make_fake_client()
         image = client.images.pull('test_image')
-        client.api.pull.assert_called_with('test_image')
+        client.api.pull.assert_called_with('test_image', tag=None)
         client.api.inspect_image.assert_called_with('test_image')
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID

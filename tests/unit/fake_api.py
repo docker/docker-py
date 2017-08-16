@@ -134,7 +134,7 @@ def get_fake_inspect_container(tty=False):
     status_code = 200
     response = {
         'Id': FAKE_CONTAINER_ID,
-        'Config': {'Privileged': True, 'Tty': tty},
+        'Config': {'Labels': {'foo': 'bar'}, 'Privileged': True, 'Tty': tty},
         'ID': FAKE_CONTAINER_ID,
         'Image': 'busybox:latest',
         'Name': 'foobar',
@@ -145,6 +145,12 @@ def get_fake_inspect_container(tty=False):
             "ExitCode": 0,
             "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
             "Ghost": False
+        },
+        "HostConfig": {
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
         },
         "MacAddress": "02:42:ac:11:00:0a"
     }
@@ -158,6 +164,7 @@ def get_fake_inspect_image():
         'Parent': "27cf784147099545",
         'Created': "2013-03-23T22:24:18.818426-07:00",
         'Container': FAKE_CONTAINER_ID,
+        'Config': {'Labels': {'bar': 'foo'}},
         'ContainerConfig':
         {
             "Hostname": "",

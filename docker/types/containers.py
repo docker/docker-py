@@ -118,7 +118,9 @@ class HostConfig(dict):
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
                  cpuset_cpus=None, userns_mode=None, pids_limit=None,
                  isolation=None, auto_remove=False, storage_opt=None,
-                 init=None, init_path=None):
+                 init=None, init_path=None, volume_driver=None,
+                 cpu_count=None, cpu_percent=None, nano_cpus=None,
+                 cpuset_mems=None, runtime=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -325,7 +327,17 @@ class HostConfig(dict):
             if version_lt(version, '1.18'):
                 raise host_config_version_error('cpuset_cpus', '1.18')
 
-            self['CpuSetCpus'] = cpuset_cpus
+            self['CpusetCpus'] = cpuset_cpus
+
+        if cpuset_mems:
+            if version_lt(version, '1.19'):
+                raise host_config_version_error('cpuset_mems', '1.19')
+
+            if not isinstance(cpuset_mems, str):
+                raise host_config_type_error(
+                    'cpuset_mems', cpuset_mems, 'str'
+                )
+            self['CpusetMems'] = cpuset_mems
 
         if blkio_weight:
             if not isinstance(blkio_weight, int):
@@ -426,7 +438,45 @@ class HostConfig(dict):
         if init_path is not None:
             if version_lt(version, '1.25'):
                 raise host_config_version_error('init_path', '1.25')
+
+            if version_gte(version, '1.29'):
+                # https://github.com/moby/moby/pull/32470
+                raise host_config_version_error('init_path', '1.29', False)
             self['InitPath'] = init_path
+
+        if volume_driver is not None:
+            if version_lt(version, '1.21'):
+                raise host_config_version_error('volume_driver', '1.21')
+            self['VolumeDriver'] = volume_driver
+
+        if cpu_count:
+            if not isinstance(cpu_count, int):
+                raise host_config_type_error('cpu_count', cpu_count, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_count', '1.25')
+
+            self['CpuCount'] = cpu_count
+
+        if cpu_percent:
+            if not isinstance(cpu_percent, int):
+                raise host_config_type_error('cpu_percent', cpu_percent, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_percent', '1.25')
+
+            self['CpuPercent'] = cpu_percent
+
+        if nano_cpus:
+            if not isinstance(nano_cpus, six.integer_types):
+                raise host_config_type_error('nano_cpus', nano_cpus, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('nano_cpus', '1.25')
+
+            self['NanoCpus'] = nano_cpus
+
+        if runtime:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('runtime', '1.25')
+            self['Runtime'] = runtime
 
 
 def host_config_type_error(param, param_value, expected):
@@ -454,44 +504,28 @@ class ContainerConfig(dict):
         working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
         host_config=None, mac_address=None, labels=None, volume_driver=None,
         stop_signal=None, networking_config=None, healthcheck=None,
-        stop_timeout=None
+        stop_timeout=None, runtime=None
     ):
-        if isinstance(command, six.string_types):
-            command = split_command(command)
+        if version_gte(version, '1.10'):
+            message = ('{0!r} parameter has no effect on create_container().'
+                       ' It has been moved to host_config')
+            if dns is not None:
+                raise errors.InvalidVersion(message.format('dns'))
+            if volumes_from is not None:
+                raise errors.InvalidVersion(message.format('volumes_from'))
 
-        if isinstance(entrypoint, six.string_types):
-            entrypoint = split_command(entrypoint)
-
-        if isinstance(environment, dict):
-            environment = format_environment(environment)
-
-        if labels is not None and version_lt(version, '1.18'):
-            raise errors.InvalidVersion(
-                'labels were only introduced in API version 1.18'
-            )
-
-        if cpuset is not None or cpu_shares is not None:
-            if version_gte(version, '1.18'):
+        if version_lt(version, '1.18'):
+            if labels is not None:
+                raise errors.InvalidVersion(
+                    'labels were only introduced in API version 1.18'
+                )
+        else:
+            if cpuset is not None or cpu_shares is not None:
                 warnings.warn(
                     'The cpuset_cpus and cpu_shares options have been moved to'
                     ' host_config in API version 1.18, and will be removed',
                     DeprecationWarning
                 )
-
-        if stop_signal is not None and version_lt(version, '1.21'):
-            raise errors.InvalidVersion(
-                'stop_signal was only introduced in API version 1.21'
-            )
-
-        if stop_timeout is not None and version_lt(version, '1.25'):
-            raise errors.InvalidVersion(
-                'stop_timeout was only introduced in API version 1.25'
-            )
-
-        if healthcheck is not None and version_lt(version, '1.24'):
-            raise errors.InvalidVersion(
-                'Health options were only introduced in API version 1.24'
-            )
 
         if version_lt(version, '1.19'):
             if volume_driver is not None:
@@ -512,6 +546,45 @@ class ContainerConfig(dict):
                     'memswap_limit has been moved to host_config in API '
                     'version 1.19'
                 )
+
+        if version_lt(version, '1.21'):
+            if stop_signal is not None:
+                raise errors.InvalidVersion(
+                    'stop_signal was only introduced in API version 1.21'
+                )
+        else:
+            if volume_driver is not None:
+                warnings.warn(
+                    'The volume_driver option has been moved to'
+                    ' host_config in API version 1.21, and will be removed',
+                    DeprecationWarning
+                )
+
+        if stop_timeout is not None and version_lt(version, '1.25'):
+            raise errors.InvalidVersion(
+                'stop_timeout was only introduced in API version 1.25'
+            )
+
+        if healthcheck is not None:
+            if version_lt(version, '1.24'):
+                raise errors.InvalidVersion(
+                    'Health options were only introduced in API version 1.24'
+                )
+
+            if version_lt(version, '1.29') and 'StartPeriod' in healthcheck:
+                raise errors.InvalidVersion(
+                    'healthcheck start period was introduced in API '
+                    'version 1.29'
+                )
+
+        if isinstance(command, six.string_types):
+            command = split_command(command)
+
+        if isinstance(entrypoint, six.string_types):
+            entrypoint = split_command(entrypoint)
+
+        if isinstance(environment, dict):
+            environment = format_environment(environment)
 
         if isinstance(labels, list):
             labels = dict((lbl, six.text_type('')) for lbl in labels)
@@ -566,14 +639,6 @@ class ContainerConfig(dict):
                 attach_stdin = True
                 stdin_once = True
 
-        if version_gte(version, '1.10'):
-            message = ('{0!r} parameter has no effect on create_container().'
-                       ' It has been moved to host_config')
-            if dns is not None:
-                raise errors.InvalidVersion(message.format('dns'))
-            if volumes_from is not None:
-                raise errors.InvalidVersion(message.format('volumes_from'))
-
         self.update({
             'Hostname': hostname,
             'Domainname': domainname,
@@ -606,5 +671,6 @@ class ContainerConfig(dict):
             'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
-            'StopTimeout': stop_timeout
+            'StopTimeout': stop_timeout,
+            'Runtime': runtime
         })

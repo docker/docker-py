@@ -3,6 +3,48 @@ from .. import auth, errors, utils
 from ..types import ServiceMode
 
 
+def _check_api_features(version, task_template, update_config):
+    if update_config is not None:
+        if utils.version_lt(version, '1.25'):
+            if 'MaxFailureRatio' in update_config:
+                raise errors.InvalidVersion(
+                    'UpdateConfig.max_failure_ratio is not supported in'
+                    ' API version < 1.25'
+                )
+            if 'Monitor' in update_config:
+                raise errors.InvalidVersion(
+                    'UpdateConfig.monitor is not supported in'
+                    ' API version < 1.25'
+                )
+
+    if task_template is not None:
+        if 'ForceUpdate' in task_template and utils.version_lt(
+                version, '1.25'):
+            raise errors.InvalidVersion(
+                'force_update is not supported in API version < 1.25'
+            )
+
+        if task_template.get('Placement'):
+            if utils.version_lt(version, '1.30'):
+                if task_template['Placement'].get('Platforms'):
+                    raise errors.InvalidVersion(
+                        'Placement.platforms is not supported in'
+                        ' API version < 1.30'
+                    )
+
+            if utils.version_lt(version, '1.27'):
+                if task_template['Placement'].get('Preferences'):
+                    raise errors.InvalidVersion(
+                        'Placement.preferences is not supported in'
+                        ' API version < 1.27'
+                    )
+        if task_template.get('ContainerSpec', {}).get('TTY'):
+            if utils.version_lt(version, '1.25'):
+                raise errors.InvalidVersion(
+                    'ContainerSpec.TTY is not supported in API version < 1.25'
+                )
+
+
 class ServiceApiMixin(object):
     @utils.minimum_version('1.24')
     def create_service(
@@ -43,6 +85,8 @@ class ServiceApiMixin(object):
             )
             endpoint_spec = endpoint_config
 
+        _check_api_features(self._version, task_template, update_config)
+
         url = self._url('/services/create')
         headers = {}
         image = task_template.get('ContainerSpec', {}).get('Image', None)
@@ -67,17 +111,6 @@ class ServiceApiMixin(object):
         }
 
         if update_config is not None:
-            if utils.version_lt(self._version, '1.25'):
-                if 'MaxFailureRatio' in update_config:
-                    raise errors.InvalidVersion(
-                        'UpdateConfig.max_failure_ratio is not supported in'
-                        ' API version < 1.25'
-                    )
-                if 'Monitor' in update_config:
-                    raise errors.InvalidVersion(
-                        'UpdateConfig.monitor is not supported in'
-                        ' API version < 1.25'
-                    )
             data['UpdateConfig'] = update_config
 
         return self._result(
@@ -85,7 +118,7 @@ class ServiceApiMixin(object):
         )
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('service')
     def inspect_service(self, service):
         """
         Return information about a service.
@@ -104,7 +137,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('task')
     def inspect_task(self, task):
         """
         Retrieve information about a task.
@@ -123,7 +156,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('service')
     def remove_service(self, service):
         """
         Stop and remove a service.
@@ -167,7 +200,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('service')
     def service_logs(self, service, details=False, follow=False, stdout=False,
                      stderr=False, since=0, timestamps=False, tail='all',
                      is_tty=None):
@@ -241,7 +274,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('service')
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,
@@ -282,6 +315,8 @@ class ServiceApiMixin(object):
             )
             endpoint_spec = endpoint_config
 
+        _check_api_features(self._version, task_template, update_config)
+
         url = self._url('/services/{0}/update', service)
         data = {}
         headers = {}
@@ -294,12 +329,6 @@ class ServiceApiMixin(object):
                 mode = ServiceMode(mode)
             data['Mode'] = mode
         if task_template is not None:
-            if 'ForceUpdate' in task_template and utils.version_lt(
-                    self._version, '1.25'):
-                raise errors.InvalidVersion(
-                    'force_update is not supported in API version < 1.25'
-                )
-
             image = task_template.get('ContainerSpec', {}).get('Image', None)
             if image is not None:
                 registry, repo_name = auth.resolve_repository_name(image)
@@ -308,17 +337,6 @@ class ServiceApiMixin(object):
                     headers['X-Registry-Auth'] = auth_header
             data['TaskTemplate'] = task_template
         if update_config is not None:
-            if utils.version_lt(self._version, '1.25'):
-                if 'MaxFailureRatio' in update_config:
-                    raise errors.InvalidVersion(
-                        'UpdateConfig.max_failure_ratio is not supported in'
-                        ' API version < 1.25'
-                    )
-                if 'Monitor' in update_config:
-                    raise errors.InvalidVersion(
-                        'UpdateConfig.monitor is not supported in'
-                        ' API version < 1.25'
-                    )
             data['UpdateConfig'] = update_config
 
         if networks is not None:

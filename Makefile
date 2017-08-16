@@ -16,7 +16,7 @@ build-py3:
 
 .PHONY: build-docs
 build-docs:
-	docker build -t docker-sdk-python-docs -f Dockerfile-docs .
+	docker build -t docker-sdk-python-docs -f Dockerfile-docs --build-arg uid=$(shell id -u) --build-arg gid=$(shell id -g) .
 
 .PHONY: build-dind-certs
 build-dind-certs:
@@ -41,8 +41,8 @@ integration-test: build
 integration-test-py3: build-py3
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
 
-TEST_API_VERSION ?= 1.27
-TEST_ENGINE_VERSION ?= 17.04.0-ce-rc1
+TEST_API_VERSION ?= 1.29
+TEST_ENGINE_VERSION ?= 17.05.0-ce
 
 .PHONY: integration-dind
 integration-dind: build build-py3
@@ -77,7 +77,7 @@ flake8: build
 
 .PHONY: docs
 docs: build-docs
-	docker run --rm -it -v `pwd`:/code docker-sdk-python-docs sphinx-build docs ./_build
+	docker run --rm -it -v `pwd`:/src docker-sdk-python-docs sphinx-build docs docs/_build
 
 .PHONY: shell
 shell: build

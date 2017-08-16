@@ -332,7 +332,34 @@ class CreateContainerTest(BaseAPIClientTest):
                              "StdinOnce": false,
                              "NetworkDisabled": false,
                              "HostConfig": {
-                                "CpuSetCpus": "0,1",
+                                "CpusetCpus": "0,1",
+                                "NetworkMode": "default"
+                             }}'''))
+        self.assertEqual(args[1]['headers'],
+                         {'Content-Type': 'application/json'})
+
+    @requires_api_version('1.19')
+    def test_create_container_with_host_config_cpuset_mems(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpuset_mems='0'
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpusetMems": "0",
                                 "NetworkMode": "default"
                              }}'''))
         self.assertEqual(args[1]['headers'],
@@ -407,11 +434,8 @@ class CreateContainerTest(BaseAPIClientTest):
                          {'Content-Type': 'application/json'})
 
     def test_create_container_empty_volumes_from(self):
-        self.client.create_container('busybox', 'true', volumes_from=[])
-
-        args = fake_request.call_args
-        data = json.loads(args[1]['data'])
-        self.assertTrue('VolumesFrom' not in data)
+        with pytest.raises(docker.errors.InvalidVersion):
+            self.client.create_container('busybox', 'true', volumes_from=[])
 
     def test_create_named_container(self):
         self.client.create_container('busybox', 'true',
@@ -978,11 +1002,11 @@ class CreateContainerTest(BaseAPIClientTest):
         self.client.create_container(
             'busybox', 'true',
             host_config=self.client.create_host_config(
+                volume_driver='foodriver',
                 binds={volume_name: {
                     "bind": mount_dest,
                     "ro": False
                 }}),
-            volume_driver='foodriver',
         )
 
         args = fake_request.call_args
@@ -990,8 +1014,8 @@ class CreateContainerTest(BaseAPIClientTest):
             args[0][1], url_prefix + 'containers/create'
         )
         expected_payload = self.base_create_payload()
-        expected_payload['VolumeDriver'] = 'foodriver'
         expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['VolumeDriver'] = 'foodriver'
         expected_payload['HostConfig']['Binds'] = ["name:/mnt:rw"]
         self.assertEqual(json.loads(args[1]['data']), expected_payload)
         self.assertEqual(args[1]['headers'],
@@ -1154,6 +1178,38 @@ class CreateContainerTest(BaseAPIClientTest):
         args = fake_request.call_args
         self.assertEqual(args[0][1], url_prefix + 'containers/create')
         self.assertEqual(json.loads(args[1]['data'])['Env'], expected)
+
+    @requires_api_version('1.25')
+    def test_create_container_with_host_config_cpus(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cpu_count=1,
+                cpu_percent=20,
+                nano_cpus=1000
+            )
+        )
+
+        args = fake_request.call_args
+        self.assertEqual(args[0][1],
+                         url_prefix + 'containers/create')
+
+        self.assertEqual(json.loads(args[1]['data']),
+                         json.loads('''
+                            {"Tty": false, "Image": "busybox",
+                             "Cmd": ["ls"], "AttachStdin": false,
+                             "AttachStderr": true,
+                             "AttachStdout": true, "OpenStdin": false,
+                             "StdinOnce": false,
+                             "NetworkDisabled": false,
+                             "HostConfig": {
+                                "CpuCount": 1,
+                                "CpuPercent": 20,
+                                "NanoCpus": 1000,
+                                "NetworkMode": "default"
+                             }}'''))
+        self.assertEqual(
+            args[1]['headers'], {'Content-Type': 'application/json'}
+        )
 
 
 class ContainerTest(BaseAPIClientTest):
@@ -1364,6 +1420,13 @@ class ContainerTest(BaseAPIClientTest):
             timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
+
+    def test_log_since_with_invalid_value_raises_error(self):
+        with mock.patch('docker.api.client.APIClient.inspect_container',
+                        fake_inspect_container):
+            with self.assertRaises(docker.errors.InvalidArgument):
+                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                                 follow=False, since=42.42)
 
     def test_log_tty(self):
         m = mock.Mock()

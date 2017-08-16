@@ -83,6 +83,12 @@ class APIClient(
             configuration.
         user_agent (str): Set a custom user agent for requests to the server.
     """
+
+    __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
+                                              '_version',
+                                              'base_url',
+                                              'timeout']
+
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS):
@@ -248,7 +254,7 @@ class APIClient(
             'stream': 1
         }
 
-    @check_resource
+    @check_resource('container')
     def _attach_websocket(self, container, params=None):
         url = self._url("/containers/{0}/attach/ws", container)
         req = requests.Request("POST", url, params=self._attach_params(params))
@@ -433,3 +439,17 @@ class APIClient(
     @property
     def api_version(self):
         return self._version
+
+    def reload_config(self, dockercfg_path=None):
+        """
+        Force a reload of the auth configuration
+
+        Args:
+            dockercfg_path (str): Use a custom path for the Docker config file
+                (default ``$HOME/.docker/config.json`` if present,
+                otherwise``$HOME/.dockercfg``)
+
+        Returns:
+            None
+        """
+        self._auth_configs = auth.load_config(dockercfg_path)

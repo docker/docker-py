@@ -451,6 +451,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['Init'] is True
 
+    @pytest.mark.xfail(True, reason='init-path removed in 17.05.0')
     @requires_api_version('1.25')
     def test_create_with_init_path(self):
         ctnr = self.client.create_container(
@@ -1138,7 +1139,9 @@ class PauseTest(BaseAPIIntegrationTest):
 class PruneTest(BaseAPIIntegrationTest):
     @requires_api_version('1.25')
     def test_prune_containers(self):
-        container1 = self.client.create_container(BUSYBOX, ['echo', 'hello'])
+        container1 = self.client.create_container(
+            BUSYBOX, ['sh', '-c', 'echo hello > /data.txt']
+        )
         container2 = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.client.start(container1)
         self.client.start(container2)
@@ -1253,6 +1256,15 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         self.client.start(container)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
+
+    @requires_api_version('1.25')
+    def test_create_with_runtime(self):
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], runtime='runc'
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['Runtime'] == 'runc'
 
 
 class LinkTest(BaseAPIIntegrationTest):

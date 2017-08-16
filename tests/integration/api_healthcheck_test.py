@@ -28,8 +28,8 @@ class HealthcheckTest(BaseAPIIntegrationTest):
         container = self.client.create_container(
             BUSYBOX, 'top', healthcheck=dict(
                 test="true",
-                interval=1*SECOND,
-                timeout=1*SECOND,
+                interval=1 * SECOND,
+                timeout=1 * SECOND,
                 retries=1,
             ))
         self.tmp_containers.append(container)
@@ -41,10 +41,27 @@ class HealthcheckTest(BaseAPIIntegrationTest):
         container = self.client.create_container(
             BUSYBOX, 'top', healthcheck=dict(
                 test="false",
-                interval=1*SECOND,
-                timeout=1*SECOND,
+                interval=1 * SECOND,
+                timeout=1 * SECOND,
                 retries=1,
             ))
         self.tmp_containers.append(container)
         self.client.start(container)
         wait_on_health_status(self.client, container, "unhealthy")
+
+    @helpers.requires_api_version('1.29')
+    def test_healthcheck_start_period(self):
+        container = self.client.create_container(
+            BUSYBOX, 'top', healthcheck=dict(
+                test="echo 'x' >> /counter.txt && "
+                     "test `cat /counter.txt | wc -l` -ge 3",
+                interval=1 * SECOND,
+                timeout=1 * SECOND,
+                retries=1,
+                start_period=3 * SECOND
+            )
+        )
+
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        wait_on_health_status(self.client, container, "healthy")

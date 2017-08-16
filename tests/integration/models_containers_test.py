@@ -1,6 +1,7 @@
 import docker
 import tempfile
 from .base import BaseIntegrationTest, TEST_API_VERSION
+from ..helpers import random_name
 
 
 class ContainerCollectionTest(BaseIntegrationTest):
@@ -66,6 +67,42 @@ class ContainerCollectionTest(BaseIntegrationTest):
         out = client.containers.run(
             "alpine", "cat /insidecontainer/test",
             volumes=["somevolume:/insidecontainer"]
+        )
+        self.assertEqual(out, b'hello\n')
+
+    def test_run_with_network(self):
+        net_name = random_name()
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.networks.create(net_name)
+        self.tmp_networks.append(net_name)
+
+        container = client.containers.run(
+            'alpine', 'echo hello world', network=net_name,
+            detach=True
+        )
+        self.tmp_containers.append(container.id)
+
+        attrs = container.attrs
+
+        assert 'NetworkSettings' in attrs
+        assert 'Networks' in attrs['NetworkSettings']
+        assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
+
+    def test_run_with_none_driver(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+
+        out = client.containers.run(
+            "alpine", "echo hello",
+            log_config=dict(type='none')
+        )
+        self.assertEqual(out, None)
+
+    def test_run_with_json_file_driver(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+
+        out = client.containers.run(
+            "alpine", "echo hello",
+            log_config=dict(type='json-file')
         )
         self.assertEqual(out, b'hello\n')
 

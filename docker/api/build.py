@@ -18,7 +18,8 @@ class BuildApiMixin(object):
               custom_context=False, encoding=None, pull=False,
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
-              labels=None, cache_from=None, squash=None):
+              labels=None, cache_from=None, target=None, network_mode=None,
+              squash=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -88,14 +89,18 @@ class BuildApiMixin(object):
                 - cpusetcpus (str): CPUs in which to allow execution, e.g.,
                     ``"0-3"``, ``"0,1"``
             decode (bool): If set to ``True``, the returned stream will be
-                decoded into dicts on the fly. Default ``False``.
+                decoded into dicts on the fly. Default ``False``
             shmsize (int): Size of `/dev/shm` in bytes. The size must be
-                greater than 0. If omitted the system uses 64MB.
-            labels (dict): A dictionary of labels to set on the image.
+                greater than 0. If omitted the system uses 64MB
+            labels (dict): A dictionary of labels to set on the image
             cache_from (list): A list of images used for build cache
-                resolution.
+                resolution
             squash (bool): Squash the resulting images layers into a
-                single layer.
+                single layer
+            target (str): Name of the build-stage to build in a multi-stage
+                Dockerfile
+            network_mode (str): networking mode for the run commands during
+                build
 
         Returns:
             A generator for the build output.
@@ -207,6 +212,21 @@ class BuildApiMixin(object):
                 raise errors.InvalidVersion(
                     'squash was only introduced in API version 1.25'
                 )
+        if target:
+            if utils.version_gte(self._version, '1.29'):
+                params.update({'target': target})
+            else:
+                raise errors.InvalidVersion(
+                    'target was only introduced in API version 1.29'
+                )
+
+        if network_mode:
+            if utils.version_gte(self._version, '1.25'):
+                params.update({'networkmode': network_mode})
+            else:
+                raise errors.InvalidVersion(
+                    'network_mode was only introduced in API version 1.25'
+                )
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
@@ -264,7 +284,10 @@ class BuildApiMixin(object):
                         self._auth_configs, registry
                     )
             else:
-                auth_data = self._auth_configs
+                auth_data = self._auth_configs.copy()
+                # See https://github.com/docker/docker-py/issues/1683
+                if auth.INDEX_NAME in auth_data:
+                    auth_data[auth.INDEX_URL] = auth_data[auth.INDEX_NAME]
 
             log.debug(
                 'Sending auth config ({0})'.format(

@@ -28,6 +28,28 @@ class ImageCollectionTest(BaseIntegrationTest):
         assert str(cm.exception) == ("Unknown instruction: "
                                      "NOTADOCKERFILECOMMAND")
 
+    def test_build_with_multiple_success(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.build(
+            tag='some-tag', fileobj=io.BytesIO(
+                "FROM alpine\n"
+                "CMD echo hello world".encode('ascii')
+            )
+        )
+        self.tmp_imgs.append(image.id)
+        assert client.containers.run(image) == b"hello world\n"
+
+    def test_build_with_success_build_output(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.build(
+            tag='dup-txt-tag', fileobj=io.BytesIO(
+                "FROM alpine\n"
+                "CMD echo Successfully built abcd1234".encode('ascii')
+            )
+        )
+        self.tmp_imgs.append(image.id)
+        assert client.containers.run(image) == b"Successfully built abcd1234\n"
+
     def test_list(self):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
@@ -44,6 +66,11 @@ class ImageCollectionTest(BaseIntegrationTest):
         image = client.images.pull('alpine:latest')
         assert 'alpine:latest' in image.attrs['RepoTags']
 
+    def test_pull_with_tag(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.pull('alpine', tag='3.3')
+        assert 'alpine:3.3' in image.attrs['RepoTags']
+
 
 class ImageTest(BaseIntegrationTest):
 
@@ -55,7 +82,8 @@ class ImageTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
 
-        image.tag(repo, tag)
+        result = image.tag(repo, tag)
+        assert result is True
         self.tmp_imgs.append(identifier)
         assert image.id in get_ids(client.images.list(repo))
         assert image.id in get_ids(client.images.list(identifier))

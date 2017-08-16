@@ -5,7 +5,7 @@ from .. import auth, utils
 
 class PluginApiMixin(object):
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('name')
     def configure_plugin(self, name, options):
         """
             Configure a plugin.
@@ -171,7 +171,7 @@ class PluginApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('name')
     def push_plugin(self, name):
         """
             Push a plugin to the registry.
@@ -195,7 +195,7 @@ class PluginApiMixin(object):
         return self._stream_helper(res, decode=True)
 
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('name')
     def remove_plugin(self, name, force=False):
         """
             Remove an installed plugin.
@@ -215,7 +215,7 @@ class PluginApiMixin(object):
         return True
 
     @utils.minimum_version('1.26')
-    @utils.check_resource
+    @utils.check_resource('name')
     def upgrade_plugin(self, name, remote, privileges):
         """
             Upgrade an installed plugin.

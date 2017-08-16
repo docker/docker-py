@@ -147,8 +147,8 @@ class NetworkTest(BaseAPIClientTest):
 
         with mock.patch('docker.api.client.APIClient.post', post):
             self.client.connect_container_to_network(
-                {'Id': container_id},
-                network_id,
+                container={'Id': container_id},
+                net_id=network_id,
                 aliases=['foo', 'bar'],
                 links=[('baz', 'quux')]
             )
@@ -176,7 +176,7 @@ class NetworkTest(BaseAPIClientTest):
 
         with mock.patch('docker.api.client.APIClient.post', post):
             self.client.disconnect_container_from_network(
-                {'Id': container_id}, network_id)
+                container={'Id': container_id}, net_id=network_id)
 
         self.assertEqual(
             post.call_args[0][0],

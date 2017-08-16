@@ -272,6 +272,57 @@ class ResolveAuthTest(unittest.TestCase):
         )
 
 
+class CredStoreTest(unittest.TestCase):
+    def test_get_credential_store(self):
+        auth_config = {
+            'credHelpers': {
+                'registry1.io': 'truesecret',
+                'registry2.io': 'powerlock'
+            },
+            'credsStore': 'blackbox',
+        }
+
+        assert auth.get_credential_store(
+            auth_config, 'registry1.io'
+        ) == 'truesecret'
+        assert auth.get_credential_store(
+            auth_config, 'registry2.io'
+        ) == 'powerlock'
+        assert auth.get_credential_store(
+            auth_config, 'registry3.io'
+        ) == 'blackbox'
+
+    def test_get_credential_store_no_default(self):
+        auth_config = {
+            'credHelpers': {
+                'registry1.io': 'truesecret',
+                'registry2.io': 'powerlock'
+            },
+        }
+        assert auth.get_credential_store(
+            auth_config, 'registry2.io'
+        ) == 'powerlock'
+        assert auth.get_credential_store(
+            auth_config, 'registry3.io'
+        ) is None
+
+    def test_get_credential_store_default_index(self):
+        auth_config = {
+            'credHelpers': {
+                'https://index.docker.io/v1/': 'powerlock'
+            },
+            'credsStore': 'truesecret'
+        }
+
+        assert auth.get_credential_store(auth_config, None) == 'powerlock'
+        assert auth.get_credential_store(
+            auth_config, 'docker.io'
+        ) == 'powerlock'
+        assert auth.get_credential_store(
+            auth_config, 'images.io'
+        ) == 'truesecret'
+
+
 class FindConfigFileTest(unittest.TestCase):
     def tmpdir(self, name):
         tmpdir = ensuretemp(name)

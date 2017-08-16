@@ -42,7 +42,7 @@ class PullImageTest(BaseAPIIntegrationTest):
             self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        res = self.client.pull('hello-world')
+        res = self.client.pull('hello-world', tag='latest')
         self.tmp_imgs.append('hello-world')
         self.assertEqual(type(res), six.text_type)
         self.assertGreaterEqual(
@@ -56,7 +56,8 @@ class PullImageTest(BaseAPIIntegrationTest):
             self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        stream = self.client.pull('hello-world', stream=True, decode=True)
+        stream = self.client.pull(
+            'hello-world', tag='latest', stream=True, decode=True)
         self.tmp_imgs.append('hello-world')
         for chunk in stream:
             assert isinstance(chunk, dict)
@@ -112,7 +113,8 @@ class RemoveImageTest(BaseAPIIntegrationTest):
         self.assertIn('Id', res)
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
-        self.client.remove_image(img_id, force=True)
+        logs = self.client.remove_image(img_id, force=True)
+        self.assertIn({"Deleted": img_id}, logs)
         images = self.client.images(all=True)
         res = [x for x in images if x['Id'].startswith(img_id)]
         self.assertEqual(len(res), 0)
@@ -247,6 +249,19 @@ class ImportImageTest(BaseAPIIntegrationTest):
         assert img_data['Config']['Cmd'] == ['echo']
         assert img_data['Config']['User'] == 'foobar'
 
+    # Docs say output is available in 1.23, but this test fails on 1.12.0
+    @requires_api_version('1.24')
+    def test_get_load_image(self):
+        test_img = 'hello-world:latest'
+        self.client.pull(test_img)
+        data = self.client.get_image(test_img)
+        assert data
+        output = self.client.load_image(data)
+        assert any([
+            line for line in output
+            if 'Loaded image: {}'.format(test_img) in line.get('stream', '')
+        ])
+
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):
         '''Serve data from an IO stream over HTTP.'''
@@ -300,7 +315,7 @@ class PruneImagesTest(BaseAPIIntegrationTest):
         ctnr = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.tmp_containers.append(ctnr)
 
-        self.client.pull('hello-world')
+        self.client.pull('hello-world', tag='latest')
         self.tmp_imgs.append('hello-world')
         img_id = self.client.inspect_image('hello-world')['Id']
         result = self.client.prune_images()

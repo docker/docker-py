@@ -71,8 +71,7 @@ class ContainerCollectionTest(unittest.TestCase):
             memswap_limit=456,
             name='somename',
             network_disabled=False,
-            network_mode='blah',
-            networks=['foo'],
+            network='foo',
             oom_kill_disable=True,
             oom_score_adj=5,
             pid_mode='host',
@@ -135,7 +134,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'CpuPeriod': 1,
                 'CpuQuota': 2,
                 'CpuShares': 5,
-                'CpuSetCpus': '0-3',
+                'CpusetCpus': '0-3',
                 'Devices': [{'PathOnHost': '/dev/sda',
                              'CgroupPermissions': 'rwm',
                              'PathInContainer': '/dev/xvda'}],
@@ -153,7 +152,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'MemoryReservation': 123,
                 'MemorySwap': 456,
                 'MemorySwappiness': 2,
-                'NetworkMode': 'blah',
+                'NetworkMode': 'foo',
                 'OomKillDisable': True,
                 'OomScoreAdj': 5,
                 'PidMode': 'host',
@@ -227,7 +226,7 @@ class ContainerCollectionTest(unittest.TestCase):
         container = client.containers.run('alpine', 'sleep 300', detach=True)
 
         assert container.id == FAKE_CONTAINER_ID
-        client.api.pull.assert_called_with('alpine')
+        client.api.pull.assert_called_with('alpine', tag=None)
 
     def test_run_with_error(self):
         client = make_fake_client()
@@ -274,8 +273,38 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)
 
         client = make_fake_client()
+        client.api._version = '1.24'
         with self.assertRaises(RuntimeError):
             client.containers.run("alpine", detach=True, remove=True)
+
+        client = make_fake_client()
+        client.api._version = '1.23'
+        with self.assertRaises(RuntimeError):
+            client.containers.run("alpine", detach=True, remove=True)
+
+        client = make_fake_client()
+        client.api._version = '1.25'
+        client.containers.run("alpine", detach=True, remove=True)
+        client.api.remove_container.assert_not_called()
+        client.api.create_container.assert_called_with(
+            command=None,
+            image='alpine',
+            detach=True,
+            host_config={'AutoRemove': True,
+                         'NetworkMode': 'default'}
+        )
+
+        client = make_fake_client()
+        client.api._version = '1.26'
+        client.containers.run("alpine", detach=True, remove=True)
+        client.api.remove_container.assert_not_called()
+        client.api.create_container.assert_called_with(
+            command=None,
+            image='alpine',
+            detach=True,
+            host_config={'AutoRemove': True,
+                         'NetworkMode': 'default'}
+        )
 
     def test_create(self):
         client = make_fake_client()
@@ -366,7 +395,7 @@ class ContainerTest(unittest.TestCase):
         container.exec_run("echo hello world", privileged=True, stream=True)
         client.api.exec_create.assert_called_with(
             FAKE_CONTAINER_ID, "echo hello world", stdout=True, stderr=True,
-            stdin=False, tty=False, privileged=True, user=''
+            stdin=False, tty=False, privileged=True, user='', environment=None
         )
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False
@@ -384,11 +413,21 @@ class ContainerTest(unittest.TestCase):
         container.get_archive('foo')
         client.api.get_archive.assert_called_with(FAKE_CONTAINER_ID, 'foo')
 
+    def test_image(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        assert container.image.id == FAKE_IMAGE_ID
+
     def test_kill(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
         container.kill(signal=5)
         client.api.kill.assert_called_with(FAKE_CONTAINER_ID, signal=5)
+
+    def test_labels(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        assert container.labels == {'foo': 'bar'}
 
     def test_logs(self):
         client = make_fake_client()

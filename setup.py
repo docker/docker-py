@@ -20,7 +20,7 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'requests >= 2.5.2, != 2.11.0, != 2.12.2',
+    'requests >= 2.5.2, != 2.11.0, != 2.12.2, != 2.18.0',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
     'docker-pycreds >= 0.2.1'
@@ -35,6 +35,16 @@ extras_require = {
     # ssl_match_hostname to verify hosts match with certificates via
     # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
     ':python_version < "3.3"': 'ipaddress >= 1.0.16',
+
+    # If using docker-py over TLS, highly recommend this option is
+    # pip-installed or pinned.
+
+    # TODO: if pip installing both "requests" and "requests[security]", the
+    # extra package from the "security" option are not installed (see
+    # https://github.com/pypa/pip/issues/4391).  Once that's fixed, instead of
+    # installing the extra dependencies, install the following instead:
+    # 'requests[security] >= 2.5.2, != 2.11.0, != 2.12.2'
+    'tls': ['pyOpenSSL>=0.14', 'cryptography>=1.3.4', 'idna>=2.0.0'],
 }
 
 version = None
