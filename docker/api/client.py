@@ -1,5 +1,4 @@
 import json
-import struct
 import warnings
 from functools import partial
 
@@ -22,7 +21,7 @@ from .volume import VolumeApiMixin
 from .. import auth
 from ..constants import (
     DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
-    DEFAULT_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
+    DEFAULT_DOCKER_API_VERSION, DEFAULT_NUM_POOLS,
     MINIMUM_DOCKER_API_VERSION
 )
 from ..errors import (
@@ -310,43 +309,6 @@ class APIClient(
             # encountered an error immediately
             yield self._result(response, json=decode)
 
-    def _multiplexed_buffer_helper(self, response):
-        """A generator of multiplexed data blocks read from a buffered
-        response."""
-        buf = self._result(response, binary=True)
-        buf_length = len(buf)
-        walker = 0
-        while True:
-            if buf_length - walker < STREAM_HEADER_SIZE_BYTES:
-                break
-            header = buf[walker:walker + STREAM_HEADER_SIZE_BYTES]
-            _, length = struct.unpack_from('>BxxxL', header)
-            start = walker + STREAM_HEADER_SIZE_BYTES
-            end = start + length
-            walker = end
-            yield buf[start:end]
-
-    def _multiplexed_response_stream_helper(self, response):
-        """A generator of multiplexed data blocks coming from a response
-        stream."""
-
-        # Disable timeout on the underlying socket to prevent
-        # Read timed out(s) for long running processes
-        socket = self._get_raw_response_socket(response)
-        self._disable_socket_timeout(socket)
-
-        while True:
-            header = response.raw.read(STREAM_HEADER_SIZE_BYTES)
-            if not header:
-                break
-            _, length = struct.unpack('>BxxxL', header)
-            if not length:
-                continue
-            data = response.raw.read(length)
-            if not data:
-                break
-            yield data
-
     def _stream_raw_result_old(self, response):
         ''' Stream raw output for API versions below 1.6 '''
         self._raise_for_status(response)
@@ -415,13 +377,7 @@ class APIClient(
                 self._result(res, binary=True)
 
         self._raise_for_status(res)
-        sep = six.binary_type()
-        if stream:
-            return self._multiplexed_response_stream_helper(res)
-        else:
-            return sep.join(
-                [x for x in self._multiplexed_buffer_helper(res)]
-            )
+        return self._read_from_socket(res, stream)
 
     def _unmount(self, *args):
         for proto in args:

@@ -5,6 +5,8 @@ import struct
 
 import six
 
+from ..constants import STREAM_HEADER_SIZE_BYTES
+
 try:
     from ..transport import NpipeSocket
 except ImportError:
@@ -57,7 +59,7 @@ def next_frame_size(socket):
     https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/attach-to-a-container
     """
     try:
-        data = read_exactly(socket, 8)
+        data = read_exactly(socket, STREAM_HEADER_SIZE_BYTES)
     except SocketError:
         return 0
 
@@ -75,5 +77,10 @@ def frames_iter(socket):
             break
         while n > 0:
             result = read(socket, n)
-            n -= len(result)
+            data_length = len(result)
+            if data_length == 0:
+                # We have reached EOF
+                return
+
+            n -= data_length
             yield result
