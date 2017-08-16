@@ -4,6 +4,7 @@ from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
+from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
 
@@ -690,8 +691,11 @@ class ContainerCollection(Collection):
             image = image.id
         detach = kwargs.pop("detach", False)
         if detach and remove:
-            raise RuntimeError("The options 'detach' and 'remove' cannot be "
-                               "used together.")
+            if version_gte(self.client.api._version, '1.25'):
+                kwargs["auto_remove"] = True
+            else:
+                raise RuntimeError("The options 'detach' and 'remove' cannot "
+                                   "be used together in api versions < 1.25.")
 
         if kwargs.get('network') and kwargs.get('network_mode'):
             raise RuntimeError(
@@ -849,6 +853,7 @@ RUN_CREATE_KWARGS = [
 
 # kwargs to copy straight from run to host_config
 RUN_HOST_CONFIG_KWARGS = [
+    'auto_remove',
     'blkio_weight_device',
     'blkio_weight',
     'cap_add',

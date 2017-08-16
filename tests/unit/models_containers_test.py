@@ -273,8 +273,38 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)
 
         client = make_fake_client()
+        client.api._version = '1.24'
         with self.assertRaises(RuntimeError):
             client.containers.run("alpine", detach=True, remove=True)
+
+        client = make_fake_client()
+        client.api._version = '1.23'
+        with self.assertRaises(RuntimeError):
+            client.containers.run("alpine", detach=True, remove=True)
+
+        client = make_fake_client()
+        client.api._version = '1.25'
+        client.containers.run("alpine", detach=True, remove=True)
+        client.api.remove_container.assert_not_called()
+        client.api.create_container.assert_called_with(
+            command=None,
+            image='alpine',
+            detach=True,
+            host_config={'AutoRemove': True,
+                         'NetworkMode': 'default'}
+        )
+
+        client = make_fake_client()
+        client.api._version = '1.26'
+        client.containers.run("alpine", detach=True, remove=True)
+        client.api.remove_container.assert_not_called()
+        client.api.create_container.assert_called_with(
+            command=None,
+            image='alpine',
+            detach=True,
+            host_config={'AutoRemove': True,
+                         'NetworkMode': 'default'}
+        )
 
     def test_create(self):
         client = make_fake_client()
