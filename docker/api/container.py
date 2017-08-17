@@ -52,7 +52,9 @@ class ContainerApiMixin(object):
         u = self._url("/containers/{0}/attach", container)
         response = self._post(u, headers=headers, params=params, stream=stream)
 
-        return self._read_from_socket(response, stream)
+        return self._read_from_socket(
+            response, stream, self._check_is_tty(container)
+        )
 
     @utils.check_resource('container')
     def attach_socket(self, container, params=None, ws=False):

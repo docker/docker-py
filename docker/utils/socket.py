@@ -75,5 +75,24 @@ def frames_iter(socket):
             break
         while n > 0:
             result = read(socket, n)
-            n -= len(result)
+            if result is None:
+                continue
+            data_length = len(result)
+            if data_length == 0:
+                # We have reached EOF
+                return
+            n -= data_length
             yield result
+
+
+def socket_raw_iter(socket):
+    """
+    Returns a generator of data read from the socket.
+    This is used for non-multiplexed streams.
+    """
+    while True:
+        result = read(socket)
+        if len(result) == 0:
+            # We have reached EOF
+            return
+        yield result
