@@ -244,8 +244,8 @@ class BuildTest(BaseAPIIntegrationTest):
         with pytest.raises(errors.NotFound):
             self.client.inspect_image('dockerpytest_nonebuild')
 
+    @requires_experimental(until=None)
     @requires_api_version('1.25')
-    @requires_experimental
     def test_build_squash(self):
         script = io.BytesIO('\n'.join([
             'FROM busybox',

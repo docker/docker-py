@@ -32,7 +32,7 @@ from ..errors import (
 from ..tls import TLSConfig
 from ..transport import SSLAdapter, UnixAdapter
 from ..utils import utils, check_resource, update_headers
-from ..utils.socket import frames_iter
+from ..utils.socket import frames_iter, socket_raw_iter
 from ..utils.json_stream import json_stream
 try:
     from ..transport import NpipeAdapter
@@ -362,13 +362,19 @@ class APIClient(
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
 
-    def _read_from_socket(self, response, stream):
+    def _read_from_socket(self, response, stream, tty=False):
         socket = self._get_raw_response_socket(response)
 
-        if stream:
-            return frames_iter(socket)
+        gen = None
+        if tty is False:
+            gen = frames_iter(socket)
         else:
-            return six.binary_type().join(frames_iter(socket))
+            gen = socket_raw_iter(socket)
+
+        if stream:
+            return gen
+        else:
+            return six.binary_type().join(gen)
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
@@ -398,9 +404,13 @@ class APIClient(
 
             s.settimeout(None)
 
-    def _get_result(self, container, stream, res):
+    @check_resource('container')
+    def _check_is_tty(self, container):
         cont = self.inspect_container(container)
-        return self._get_result_tty(stream, res, cont['Config']['Tty'])
+        return cont['Config']['Tty']
+
+    def _get_result(self, container, stream, res):
+        return self._get_result_tty(stream, res, self._check_is_tty(container))
 
     def _get_result_tty(self, stream, res, is_tty):
         # Stream multi-plexing was only introduced in API v1.6. Anything
