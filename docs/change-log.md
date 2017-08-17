@@ -4,7 +4,7 @@ Change log
 2.5.0
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/33?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/34?closed=1)
 
 ### Features
 
