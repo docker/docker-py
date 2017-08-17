@@ -1,6 +1,40 @@
 Change log
 ==========
 
+2.5.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/33?closed=1)
+
+### Features
+
+* Added support for the `squash` parameter in `APIClient.build` and
+  `DockerClient.images.build`.
+* When using API version 1.23 or above, `load_image` will now return a
+  generator of progress as JSON `dict`s.
+* `remove_image` now returns the content of the API's response.
+
+
+### Bugfixes
+
+* Fixed an issue where the `auto_remove` parameter in
+  `DockerClient.containers.run` was not taken into account.
+* Fixed a bug where `.dockerignore` patterns starting with a slash
+  were ignored.
+* Fixed an issue with the handling of `**` patterns in `.dockerignore`
+* Fixed a bug where building `FROM` a private Docker Hub image when not
+  using a cred store would fail.
+* Fixed a bug where calling `create_service` or `update_service` with
+  `task_template` as a `dict` would raise an exception.
+* Fixed the handling of TTY-enabled containers in `attach` and `exec_run`.
+* `DockerClient.containers.run` will no longer attempt to stream logs if the
+  log driver doesn't support the operation.
+
+### Miscellaneous
+
+* Added extra requirements for better TLS support on some platforms.
+  These can be installed or required through the `docker[tls]` notation.
+
 2.4.2
 -----
 
