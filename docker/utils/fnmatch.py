@@ -75,7 +75,7 @@ def translate(pat):
                 # is some flavor of "**"
                 i = i + 1
                 # Treat **/ as ** so eat the "/"
-                if pat[i] == '/':
+                if i < n and pat[i] == '/':
                     i = i + 1
                 if i >= n:
                     # is "**EOF" - to align with .gitignore just accept all
