@@ -874,6 +874,23 @@ class ExcludePathsTest(unittest.TestCase):
             )
         )
 
+    def test_trailing_double_wildcard(self):
+        assert self.exclude(['subdir/**']) == convert_paths(
+            self.all_paths - set(
+                ['subdir/file.txt',
+                 'subdir/target/file.txt',
+                 'subdir/target/subdir/file.txt',
+                 'subdir/subdir2/file.txt',
+                 'subdir/subdir2/target/file.txt',
+                 'subdir/subdir2/target/subdir/file.txt',
+                 'subdir/target',
+                 'subdir/target/subdir',
+                 'subdir/subdir2',
+                 'subdir/subdir2/target',
+                 'subdir/subdir2/target/subdir']
+            )
+        )
+
 
 class TarTest(unittest.TestCase):
     def test_tar_with_excludes(self):
