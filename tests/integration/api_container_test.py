@@ -1092,19 +1092,27 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         command = "printf '{0}'".format(line)
         container = self.client.create_container(BUSYBOX, command,
                                                  detach=True, tty=False)
-        ident = container['Id']
-        self.tmp_containers.append(ident)
+        self.tmp_containers.append(container)
 
         opts = {"stdout": 1, "stream": 1, "logs": 1}
-        pty_stdout = self.client.attach_socket(ident, opts)
+        pty_stdout = self.client.attach_socket(container, opts)
         self.addCleanup(pty_stdout.close)
 
-        self.client.start(ident)
+        self.client.start(container)
 
         next_size = next_frame_size(pty_stdout)
         self.assertEqual(next_size, len(line))
         data = read_exactly(pty_stdout, next_size)
         self.assertEqual(data.decode('utf-8'), line)
+
+    def test_attach_no_stream(self):
+        container = self.client.create_container(
+            BUSYBOX, 'echo hello'
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        output = self.client.attach(container, stream=False, logs=True)
+        assert output == 'hello\n'.encode(encoding='ascii')
 
 
 class PauseTest(BaseAPIIntegrationTest):
