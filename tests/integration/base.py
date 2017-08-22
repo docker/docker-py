@@ -110,6 +110,3 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
     def init_swarm(self, **kwargs):
         pass
-        return self.client.init_swarm(
-            'eth0', listen_addr=helpers.swarm_listen_addr(), **kwargs
-        )

@@ -11,12 +11,9 @@ class ServiceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         client = docker.from_env(version=TEST_API_VERSION)
-        helpers.force_leave_swarm(client)
-        client.swarm.init('eth0', listen_addr=helpers.swarm_listen_addr())
 
     @classmethod
     def tearDownClass(cls):
-        helpers.force_leave_swarm(docker.from_env(version=TEST_API_VERSION))
 
     def test_create(self):
         client = docker.from_env(version=TEST_API_VERSION)
