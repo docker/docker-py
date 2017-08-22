@@ -1,6 +1,18 @@
 Change log
 ==========
 
+2.5.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/37?closed=1)
+
+### Bugfixes
+
+* Fixed a bug where patterns ending with `**` in `.dockerignore` would
+  raise an exception
+* Fixed a bug where using `attach` with the `stream` argument set to `False`
+  would raise an exception
+
 2.5.0
 -----
 
