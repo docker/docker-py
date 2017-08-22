@@ -14,6 +14,7 @@ class SwarmTest(unittest.TestCase):
         helpers.force_leave_swarm(docker.from_env(version=TEST_API_VERSION))
 
     def test_init_update_leave(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         client = docker.from_env(version=TEST_API_VERSION)
         client.swarm.init(
             advertise_addr='eth0', snapshot_interval=5000,

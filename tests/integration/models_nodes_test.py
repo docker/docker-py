@@ -14,6 +14,7 @@ class NodesTest(unittest.TestCase):
         helpers.force_leave_swarm(docker.from_env(version=TEST_API_VERSION))
 
     def test_list_get_update(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         client = docker.from_env(version=TEST_API_VERSION)
         client.swarm.init('eth0', listen_addr=helpers.swarm_listen_addr())
         nodes = client.nodes.list()

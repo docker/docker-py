@@ -17,10 +17,12 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
 
     @requires_api_version('1.24')
     def test_init_swarm_force_new_cluster(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         pytest.skip('Test stalls the engine on 1.12.0')
 
         assert self.init_swarm()
@@ -31,12 +33,14 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_init_already_in_cluster(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         with pytest.raises(docker.errors.APIError):
             self.init_swarm()
 
     @requires_api_version('1.24')
     def test_init_swarm_custom_raft_spec(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         spec = self.client.create_swarm_spec(
             snapshot_interval=5000, log_entries_for_slow_followers=1200
         )
@@ -47,6 +51,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_leave_swarm(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         with pytest.raises(docker.errors.APIError) as exc_info:
             self.client.leave_swarm()
@@ -59,6 +64,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_update_swarm(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         swarm_info_1 = self.client.inspect_swarm()
         spec = self.client.create_swarm_spec(
@@ -90,6 +96,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_update_swarm_name(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         swarm_info_1 = self.client.inspect_swarm()
         spec = self.client.create_swarm_spec(
@@ -108,6 +115,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_list_nodes(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         nodes_list = self.client.nodes()
         assert len(nodes_list) == 1
@@ -127,6 +135,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_inspect_node(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         nodes_list = self.client.nodes()
         assert len(nodes_list) == 1
@@ -137,6 +146,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_update_node(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         nodes_list = self.client.nodes()
         node = nodes_list[0]
@@ -160,6 +170,7 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_remove_main_node(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         assert self.init_swarm()
         nodes_list = self.client.nodes()
         node_id = nodes_list[0]['ID']

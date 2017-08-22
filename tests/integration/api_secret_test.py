@@ -18,6 +18,7 @@ class SecretAPITest(BaseAPIIntegrationTest):
         force_leave_swarm(self.client)
 
     def test_create_secret(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         secret_id = self.client.create_secret(
             'favorite_character', 'sakuya izayoi'
         )
@@ -27,6 +28,7 @@ class SecretAPITest(BaseAPIIntegrationTest):
         assert data['Spec']['Name'] == 'favorite_character'
 
     def test_create_secret_unicode_data(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         secret_id = self.client.create_secret(
             'favorite_character', u'いざよいさくや'
         )
@@ -36,6 +38,7 @@ class SecretAPITest(BaseAPIIntegrationTest):
         assert data['Spec']['Name'] == 'favorite_character'
 
     def test_inspect_secret(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         secret_name = 'favorite_character'
         secret_id = self.client.create_secret(
             secret_name, 'sakuya izayoi'
@@ -47,6 +50,7 @@ class SecretAPITest(BaseAPIIntegrationTest):
         assert 'Version' in data
 
     def test_remove_secret(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         secret_name = 'favorite_character'
         secret_id = self.client.create_secret(
             secret_name, 'sakuya izayoi'
@@ -58,6 +62,7 @@ class SecretAPITest(BaseAPIIntegrationTest):
             self.client.inspect_secret(secret_id)
 
     def test_list_secrets(self):
+        pytest.skip('Swarm is not supported at rce-docker')
         secret_name = 'favorite_character'
         secret_id = self.client.create_secret(
             secret_name, 'sakuya izayoi'
