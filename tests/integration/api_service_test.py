@@ -7,7 +7,7 @@ import docker
 import six
 
 from ..helpers import (
-    force_leave_swarm, requires_api_version, requires_experimental
+    requires_api_version, requires_experimental
 )
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
@@ -15,8 +15,6 @@ from .base import BaseAPIIntegrationTest, BUSYBOX
 class ServiceTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(ServiceTest, self).setUp()
-        force_leave_swarm(self.client)
-        self.init_swarm()
 
     def tearDown(self):
         super(ServiceTest, self).tearDown()
@@ -25,7 +23,6 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.client.remove_service(service['ID'])
             except docker.errors.APIError:
                 pass
-        force_leave_swarm(self.client)
 
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))

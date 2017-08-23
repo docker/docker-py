@@ -8,10 +8,9 @@ from .base import TEST_API_VERSION
 
 class NodesTest(unittest.TestCase):
     def setUp(self):
-        helpers.force_leave_swarm(docker.from_env(version=TEST_API_VERSION))
-
+        pass
     def tearDown(self):
-        helpers.force_leave_swarm(docker.from_env(version=TEST_API_VERSION))
+        pass
 
     def test_list_get_update(self):
         pytest.skip('Swarm is not supported at rce-docker')
