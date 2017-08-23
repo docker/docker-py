@@ -7,7 +7,6 @@ from .models.nodes import NodeCollection
 from .models.plugins import PluginCollection
 from .models.secrets import SecretCollection
 from .models.services import ServiceCollection
-from .models.swarm import Swarm
 from .models.volumes import VolumeCollection
 from .utils import kwargs_from_env
 
@@ -135,14 +134,6 @@ class DockerClient(object):
         :doc:`services documentation <services>` for full details.
         """
         return ServiceCollection(client=self)
-
-    @property
-    def swarm(self):
-        """
-        An object for managing a swarm on the server. See the
-        :doc:`swarm documentation <swarm>` for full details.
-        """
-        return Swarm(client=self)
 
     @property
     def volumes(self):

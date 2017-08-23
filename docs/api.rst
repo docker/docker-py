@@ -67,16 +67,6 @@ Executing commands in containers
   :members:
   :undoc-members:
 
-Swarms
-------
-
-.. py:module:: docker.api.swarm
-
-.. rst-class:: hide-signature
-.. autoclass:: SwarmApiMixin
-  :members:
-  :undoc-members:
-
 Services
 --------
 
@@ -84,26 +74,6 @@ Services
 
 .. rst-class:: hide-signature
 .. autoclass:: ServiceApiMixin
-  :members:
-  :undoc-members:
-
-Plugins
--------
-
-.. py:module:: docker.api.plugin
-
-.. rst-class:: hide-signature
-.. autoclass:: PluginApiMixin
-  :members:
-  :undoc-members:
-
-Secrets
--------
-
-.. py:module:: docker.api.secret
-
-.. rst-class:: hide-signature
-.. autoclass:: SecretApiMixin
   :members:
   :undoc-members:
 

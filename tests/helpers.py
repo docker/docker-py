@@ -86,19 +86,7 @@ def random_name():
 
 
 def force_leave_swarm(client):
-    """Actually force leave a Swarm. There seems to be a bug in Swarm that
-    occasionally throws "context deadline exceeded" errors when leaving."""
-    while True:
-        try:
-            if isinstance(client, docker.DockerClient):
-                return client.swarm.leave(force=True)
-            return client.leave_swarm(force=True)  # elif APIClient
-        except docker.errors.APIError as e:
-            if e.explanation == "context deadline exceeded":
-                continue
-            else:
-                return
-
+    pass
 
 def swarm_listen_addr():
     return '0.0.0.0:{0}'.format(random.randrange(10000, 25000))

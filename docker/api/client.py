@@ -17,7 +17,6 @@ from .network import NetworkApiMixin
 from .plugin import PluginApiMixin
 from .secret import SecretApiMixin
 from .service import ServiceApiMixin
-from .swarm import SwarmApiMixin
 from .volume import VolumeApiMixin
 from .. import auth
 from ..constants import (
@@ -51,7 +50,6 @@ class APIClient(
         PluginApiMixin,
         SecretApiMixin,
         ServiceApiMixin,
-        SwarmApiMixin,
         VolumeApiMixin):
     """
     A low-level client for the Docker Engine API.

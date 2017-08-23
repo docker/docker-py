@@ -109,6 +109,4 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
         assert actual_exit_code == exit_code, msg
 
     def init_swarm(self, **kwargs):
-        return self.client.init_swarm(
-            'eth0', listen_addr=helpers.swarm_listen_addr(), **kwargs
-        )
+        pass
