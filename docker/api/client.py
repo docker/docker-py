@@ -50,7 +50,6 @@ class APIClient(
         PluginApiMixin,
         SecretApiMixin,
         ServiceApiMixin,
-        SwarmApiMixin,
         VolumeApiMixin):
     """
     A low-level client for the Docker Engine API.
