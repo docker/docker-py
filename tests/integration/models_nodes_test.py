@@ -1,6 +1,7 @@
 import unittest
 
 import docker
+import pytest
 
 from .. import helpers
 from .base import TEST_API_VERSION

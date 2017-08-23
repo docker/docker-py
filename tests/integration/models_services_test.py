@@ -14,6 +14,7 @@ class ServiceTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        pass
 
     def test_create(self):
         client = docker.from_env(version=TEST_API_VERSION)
