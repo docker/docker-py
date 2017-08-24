@@ -22,6 +22,7 @@ Container objects
 .. autoclass:: Container()
 
   .. py:attribute:: attrs
+  .. autoattribute:: health
   .. autoattribute:: id
   .. autoattribute:: image
   .. autoattribute:: labels

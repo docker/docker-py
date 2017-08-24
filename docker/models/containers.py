@@ -44,6 +44,16 @@ class Container(Model):
         """
         return self.attrs['State']['Status']
 
+    @property
+    def health(self):
+        """
+        The health of the app in the container.
+        """
+        if self.attrs['State'].get('Health') is not None:
+            return self.attrs['State']['Health']['Status']
+        else:
+            return 'none'
+
     def attach(self, **kwargs):
         """
         Attach to this container.

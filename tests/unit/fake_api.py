@@ -141,6 +141,7 @@ def get_fake_inspect_container(tty=False):
         "State": {
             "Status": "running",
             "Running": True,
+            "Health": {"Status": "healthy"},
             "Pid": 0,
             "ExitCode": 0,
             "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
