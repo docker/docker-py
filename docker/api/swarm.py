@@ -137,7 +137,7 @@ class SwarmApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.24')
-    def join_swarm(self, remote_addrs, join_token, listen_addr=None,
+    def join_swarm(self, remote_addrs, join_token, listen_addr='0.0.0.0:2377',
                    advertise_addr=None):
         """
         Make this Engine join a swarm that has already been created.
