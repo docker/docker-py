@@ -3,6 +3,7 @@ import six
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import check_resource, format_environment, split_command
+from .healthcheck import Healthcheck
 
 
 class TaskTemplate(dict):
@@ -85,10 +86,13 @@ class ContainerSpec(dict):
         secrets (list of py:class:`SecretReference`): List of secrets to be
             made available inside the containers.
         tty (boolean): Whether a pseudo-TTY should be allocated.
+        health_check (dict): A dict of Healthcheck args for the service. See
+            the :py:class:`~docker.types.Healthcheck` class for details.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
-                 stop_grace_period=None, secrets=None, tty=None):
+                 stop_grace_period=None, secrets=None, tty=None,
+                 healthcheck=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -128,6 +132,9 @@ class ContainerSpec(dict):
 
         if tty is not None:
             self['TTY'] = tty
+
+        if healthcheck is not None and isinstance(healthcheck, dict):
+            self['Healthcheck'] = Healthcheck(**healthcheck)
 
 
 class Mount(dict):

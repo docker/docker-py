@@ -43,6 +43,21 @@ def _check_api_features(version, task_template, update_config):
                 raise errors.InvalidVersion(
                     'ContainerSpec.TTY is not supported in API version < 1.25'
                 )
+        healthcheck = task_template.get('ContainerSpec', {})\
+            .get('Healthcheck')
+        if healthcheck:
+            if utils.version_lt(version, '1.26'):
+                raise errors.InvalidVersion(
+                    'ContainerSpec.Healthcheck is not supported in '
+                    'API version < 1.26'
+                )
+            if 'StartPeriod' in healthcheck and\
+                    healthcheck['StartPeriod'] is not None and\
+                    utils.version_lt(version, '1.29'):
+                raise errors.InvalidVersion(
+                    'ContainerSpec.Healthcheck.StartPeriod is not supported '
+                    'in API version < 1.29'
+                )
 
 
 class ServiceApiMixin(object):

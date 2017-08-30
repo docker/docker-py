@@ -26,6 +26,11 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'mounts': [{'some': 'mounts'}],
             'stop_grace_period': 5,
             'constraints': ['foo=bar'],
+            'healthcheck': {'test': 'curl -fs http://127.0.0.1',
+                            'interval': 3 * 10**9,
+                            'timeout': 30 * 10**9,
+                            'retries': 3,
+                            'start_period': 10 * 10**9}
         })
 
         task_template = kwargs.pop('task_template')
@@ -49,5 +54,5 @@ class CreateServiceKwargsTest(unittest.TestCase):
         }
         assert set(task_template['ContainerSpec'].keys()) == set([
             'Image', 'Command', 'Args', 'Hostname', 'Env', 'Dir', 'User',
-            'Labels', 'Mounts', 'StopGracePeriod'
+            'Labels', 'Mounts', 'StopGracePeriod', 'Healthcheck'
         ])
