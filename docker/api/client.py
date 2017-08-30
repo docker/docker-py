@@ -141,7 +141,7 @@ class APIClient(
 
         # version detection needs to be after unix adapter mounting
         if version is None:
-            self._version = DEFAULT_DOCKER_API_VERSION
+            self._version = self._retrieve_server_version()
         elif isinstance(version, six.string_types):
             if version.lower() == 'auto':
                 self._version = self._retrieve_server_version()
