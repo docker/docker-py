@@ -110,5 +110,5 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
     def init_swarm(self, **kwargs):
         return self.client.init_swarm(
-            'eth0', listen_addr=helpers.swarm_listen_addr(), **kwargs
+            '127.0.0.1', listen_addr=helpers.swarm_listen_addr(), **kwargs
         )
