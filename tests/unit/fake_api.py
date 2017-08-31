@@ -205,7 +205,9 @@ def get_fake_wait():
 
 def get_fake_logs():
     status_code = 200
-    response = (b'\x01\x00\x00\x00\x00\x00\x00\x11Flowering Nights\n'
+    response = (b'\x01\x00\x00\x00\x00\x00\x00\x00'
+                b'\x02\x00\x00\x00\x00\x00\x00\x00'
+                b'\x01\x00\x00\x00\x00\x00\x00\x11Flowering Nights\n'
                 b'\x01\x00\x00\x00\x00\x00\x00\x10(Sakuya Iyazoi)\n')
     return status_code, response
 
