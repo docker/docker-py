@@ -59,7 +59,7 @@ def next_frame_size(socket):
     try:
         data = read_exactly(socket, 8)
     except SocketError:
-        return 0
+        return -1
 
     _, actual = struct.unpack('>BxxxL', data)
     return actual
@@ -71,7 +71,7 @@ def frames_iter(socket):
     """
     while True:
         n = next_frame_size(socket)
-        if n == 0:
+        if n < 0:
             break
         while n > 0:
             result = read(socket, n)
