@@ -305,8 +305,8 @@ class ImageApiMixin(object):
         Args:
             filters (dict): Filters to process on the prune list.
                 Available filters:
-                    - dangling (bool):  When set to true (or 1), prune only
-                        unused and untagged images.
+                - dangling (bool):  When set to true (or 1), prune only
+                unused and untagged images.
 
         Returns:
             (dict): A dict containing a list of deleted image IDs and
