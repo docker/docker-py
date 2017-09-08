@@ -65,8 +65,10 @@ class ServiceApiMixin(object):
                 or global). Defaults to replicated.
             update_config (UpdateConfig): Specification for the update strategy
                 of the service. Default: ``None``
-            networks (:py:class:`list`): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list` NetworkAttachment): List of
+                NetworkAttachments specifying the network names or IDs to
+                attach the service to and the aliases on the respective
+                networks. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
@@ -106,7 +108,7 @@ class ServiceApiMixin(object):
             'Labels': labels,
             'TaskTemplate': task_template,
             'Mode': mode,
-            'Networks': utils.convert_service_networks(networks),
+            'Networks': networks,
             'EndpointSpec': endpoint_spec
         }
 

@@ -483,3 +483,19 @@ class Placement(dict):
                 self['Platforms'].append({
                     'Architecture': plat[0], 'OS': plat[1]
                 })
+
+
+class NetworkAttachment(dict):
+    """
+        Placement constraints to be used as part of a :py:class:`TaskTemplate`
+
+        Args:
+            network (string): Network to attach to
+            aliases (list): List of aliases under which the service should be
+                reachable on the network
+    """
+    def __init__(self, network=None, aliases=None):
+        if network is not None:
+            self['Target'] = network
+        if aliases is not None:
+            self['Aliases'] = aliases
