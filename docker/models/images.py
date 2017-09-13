@@ -254,7 +254,7 @@ class ImageCollection(Collection):
         low-level API.
 
         Args:
-            repository (str): The repository to pull
+            name (str): The repository to pull
             tag (str): The tag to pull
             insecure_registry (bool): Use an insecure registry
             auth_config (dict): Override the credentials that
