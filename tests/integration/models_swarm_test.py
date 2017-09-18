@@ -22,6 +22,7 @@ class SwarmTest(unittest.TestCase):
         assert client.swarm.attrs['Spec']['Raft']['SnapshotInterval'] == 5000
         client.swarm.update(snapshot_interval=10000)
         assert client.swarm.attrs['Spec']['Raft']['SnapshotInterval'] == 10000
+        assert client.swarm.id
         assert client.swarm.leave(force=True)
         with self.assertRaises(docker.errors.APIError) as cm:
             client.swarm.reload()
