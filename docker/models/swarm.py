@@ -9,6 +9,8 @@ class Swarm(Model):
     The server's Swarm state. This a singleton that must be reloaded to get
     the current state of the Swarm.
     """
+    id_attribute = 'ID'
+
     def __init__(self, *args, **kwargs):
         super(Swarm, self).__init__(*args, **kwargs)
         if self.client:
