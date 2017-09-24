@@ -216,7 +216,7 @@ class NetworkApiMixin(object):
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
-                                     link_local_ips=None):
+                                     link_local_ips=None, mac_address=None):
         """
         Connect a container to a network.
 
@@ -235,6 +235,8 @@ class NetworkApiMixin(object):
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local
                 (IPv4/IPv6) addresses.
+            mac_address (str): The MAC address of this container on the
+                network. Defaults to ``None``.
         """
         data = {
             "Container": container,
