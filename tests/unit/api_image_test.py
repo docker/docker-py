@@ -332,6 +332,17 @@ class ImageTest(BaseAPIClientTest):
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_get_images(self):
+        self.client.get_images([fake_api.FAKE_IMAGE_ID])
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'images/get',
+            stream=True,
+            params={"names": ["e9aa60c60128"]},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_load_image(self):
         self.client.load_image('Byte Stream....')
 

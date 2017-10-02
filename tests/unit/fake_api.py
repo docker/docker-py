@@ -343,6 +343,12 @@ def get_fake_get_image():
     return status_code, response
 
 
+def get_fake_get_images():
+    status_code = 200
+    response = 'Byte Stream....'
+    return status_code, response
+
+
 def post_fake_load_image():
     status_code = 200
     response = {'Id': FAKE_IMAGE_ID}
@@ -588,6 +594,8 @@ fake_responses = {
     delete_fake_remove_image,
     '{1}/{0}/images/e9aa60c60128/get'.format(CURRENT_VERSION, prefix):
     get_fake_get_image,
+    '{1}/{0}/images/get'.format(CURRENT_VERSION, prefix):
+    get_fake_get_images,
     '{1}/{0}/images/load'.format(CURRENT_VERSION, prefix):
     post_fake_load_image,
     '{1}/{0}/images/test_image/json'.format(CURRENT_VERSION, prefix):
