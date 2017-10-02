@@ -35,7 +35,29 @@ class ImageApiMixin(object):
             >>> f.write(image.data)
             >>> f.close()
         """
-        res = self._get(self._url("/images/{0}/get", image), stream=True)
+        return self.get_images([image])
+
+    def get_images(self, images):
+        """
+        Get a tarball of images. Similar to the ``docker save`` command.
+        Args:
+            images (str[]): Image names to get
+        Returns:
+            (urllib3.response.HTTPResponse object): The response from the
+            daemon.
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        Example:
+            >>> image = cli.get_image(["fedora:latest", "nginx:latest"])
+            >>> f = open('/tmp/fedora-latest.tar', 'w')
+            >>> f.write(image.data)
+            >>> f.close()
+        """
+        params = {
+            "names": images
+        }
+        res = self._get(self._url("/images/get"), params=params, stream=True)
         self._raise_for_status(res)
         return res.raw
 
