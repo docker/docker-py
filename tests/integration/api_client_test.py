@@ -16,7 +16,6 @@ class InformationTest(BaseAPIIntegrationTest):
         res = self.client.version()
         self.assertIn('GoVersion', res)
         self.assertIn('Version', res)
-        self.assertEqual(len(res['Version'].split('.')), 3)
 
     def test_info(self):
         res = self.client.info()
