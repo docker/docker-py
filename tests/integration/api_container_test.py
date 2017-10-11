@@ -1092,19 +1092,27 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         command = "printf '{0}'".format(line)
         container = self.client.create_container(BUSYBOX, command,
                                                  detach=True, tty=False)
-        ident = container['Id']
-        self.tmp_containers.append(ident)
+        self.tmp_containers.append(container)
 
         opts = {"stdout": 1, "stream": 1, "logs": 1}
-        pty_stdout = self.client.attach_socket(ident, opts)
+        pty_stdout = self.client.attach_socket(container, opts)
         self.addCleanup(pty_stdout.close)
 
-        self.client.start(ident)
+        self.client.start(container)
 
         next_size = next_frame_size(pty_stdout)
         self.assertEqual(next_size, len(line))
         data = read_exactly(pty_stdout, next_size)
         self.assertEqual(data.decode('utf-8'), line)
+
+    def test_attach_no_stream(self):
+        container = self.client.create_container(
+            BUSYBOX, 'echo hello'
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        output = self.client.attach(container, stream=False, logs=True)
+        assert output == 'hello\n'.encode(encoding='ascii')
 
 
 class PauseTest(BaseAPIIntegrationTest):
@@ -1139,7 +1147,9 @@ class PauseTest(BaseAPIIntegrationTest):
 class PruneTest(BaseAPIIntegrationTest):
     @requires_api_version('1.25')
     def test_prune_containers(self):
-        container1 = self.client.create_container(BUSYBOX, ['echo', 'hello'])
+        container1 = self.client.create_container(
+            BUSYBOX, ['sh', '-c', 'echo hello > /data.txt']
+        )
         container2 = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.client.start(container1)
         self.client.start(container2)
@@ -1254,6 +1264,15 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         self.client.start(container)
         inspect_data = self.client.inspect_container(container)
         self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
+
+    @requires_api_version('1.25')
+    def test_create_with_runtime(self):
+        container = self.client.create_container(
+            BUSYBOX, ['echo', 'test'], runtime='runc'
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['Runtime'] == 'runc'
 
 
 class LinkTest(BaseAPIIntegrationTest):

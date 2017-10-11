@@ -84,10 +84,11 @@ class ContainerSpec(dict):
             terminate before forcefully killing it.
         secrets (list of py:class:`SecretReference`): List of secrets to be
             made available inside the containers.
+        tty (boolean): Whether a pseudo-TTY should be allocated.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
-                 stop_grace_period=None, secrets=None):
+                 stop_grace_period=None, secrets=None, tty=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -124,6 +125,9 @@ class ContainerSpec(dict):
             if not isinstance(secrets, list):
                 raise TypeError('secrets must be a list')
             self['Secrets'] = secrets
+
+        if tty is not None:
+            self['TTY'] = tty
 
 
 class Mount(dict):
@@ -443,7 +447,7 @@ class SecretReference(dict):
             gid (string): GID of the secret file's group. Default: 0
             mode (int): File access mode inside the container. Default: 0o444
     """
-    @check_resource
+    @check_resource('secret_id')
     def __init__(self, secret_id, secret_name, filename=None, uid=None,
                  gid=None, mode=0o444):
         self['SecretName'] = secret_name

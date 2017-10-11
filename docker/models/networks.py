@@ -111,6 +111,8 @@ class NetworkCollection(Collection):
             labels (dict): Map of labels to set on the network. Default
                 ``None``.
             enable_ipv6 (bool): Enable IPv6 on the network. Default ``False``.
+            ingress (bool): If set, create an ingress network which provides
+                the routing-mesh in swarm mode.
 
         Returns:
             (:py:class:`Network`): The network that was created.

@@ -1,4 +1,5 @@
 from .api.client import APIClient
+from .constants import DEFAULT_TIMEOUT_SECONDS
 from .models.containers import ContainerCollection
 from .models.images import ImageCollection
 from .models.networks import NetworkCollection
@@ -73,7 +74,7 @@ class DockerClient(object):
         .. _`SSL version`:
             https://docs.python.org/3.5/library/ssl.html#ssl.PROTOCOL_TLSv1
         """
-        timeout = kwargs.pop('timeout', None)
+        timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
         version = kwargs.pop('version', None)
         return cls(timeout=timeout, version=version,
                    **kwargs_from_env(**kwargs))
@@ -119,6 +120,7 @@ class DockerClient(object):
         """
         return PluginCollection(client=self)
 
+    @property
     def secrets(self):
         """
         An object for managing secrets on the server. See the

@@ -59,7 +59,7 @@ def next_frame_size(socket):
     try:
         data = read_exactly(socket, 8)
     except SocketError:
-        return 0
+        return -1
 
     _, actual = struct.unpack('>BxxxL', data)
     return actual
@@ -71,9 +71,28 @@ def frames_iter(socket):
     """
     while True:
         n = next_frame_size(socket)
-        if n == 0:
+        if n < 0:
             break
         while n > 0:
             result = read(socket, n)
-            n -= len(result)
+            if result is None:
+                continue
+            data_length = len(result)
+            if data_length == 0:
+                # We have reached EOF
+                return
+            n -= data_length
             yield result
+
+
+def socket_raw_iter(socket):
+    """
+    Returns a generator of data read from the socket.
+    This is used for non-multiplexed streams.
+    """
+    while True:
+        result = read(socket)
+        if len(result) == 0:
+            # We have reached EOF
+            return
+        yield result

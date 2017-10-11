@@ -447,10 +447,18 @@ class TestNetworks(BaseAPIIntegrationTest):
 
     @requires_api_version('1.25')
     def test_create_network_attachable(self):
-        assert self.client.init_swarm('eth0')
+        assert self.init_swarm()
         _, net_id = self.create_network(driver='overlay', attachable=True)
         net = self.client.inspect_network(net_id)
         assert net['Attachable'] is True
+
+    @requires_api_version('1.29')
+    def test_create_network_ingress(self):
+        assert self.init_swarm()
+        self.client.remove_network('ingress')
+        _, net_id = self.create_network(driver='overlay', ingress=True)
+        net = self.client.inspect_network(net_id)
+        assert net['Ingress'] is True
 
     @requires_api_version('1.25')
     def test_prune_networks(self):

@@ -38,6 +38,11 @@ def _check_api_features(version, task_template, update_config):
                         'Placement.preferences is not supported in'
                         ' API version < 1.27'
                     )
+        if task_template.get('ContainerSpec', {}).get('TTY'):
+            if utils.version_lt(version, '1.25'):
+                raise errors.InvalidVersion(
+                    'ContainerSpec.TTY is not supported in API version < 1.25'
+                )
 
 
 def merge(a, b, path=None):
@@ -135,7 +140,7 @@ class ServiceApiMixin(object):
         )
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('service')
     def inspect_service(self, service):
         """
         Return information about a service.
@@ -154,7 +159,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('task')
     def inspect_task(self, task):
         """
         Retrieve information about a task.
@@ -173,7 +178,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url), True)
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('service')
     def remove_service(self, service):
         """
         Stop and remove a service.
@@ -217,7 +222,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.25')
-    @utils.check_resource
+    @utils.check_resource('service')
     def service_logs(self, service, details=False, follow=False, stdout=False,
                      stderr=False, since=0, timestamps=False, tail='all',
                      is_tty=None):
@@ -291,7 +296,7 @@ class ServiceApiMixin(object):
         return self._result(self._get(url, params=params), True)
 
     @utils.minimum_version('1.24')
-    @utils.check_resource
+    @utils.check_resource('service')
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,

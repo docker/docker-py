@@ -552,6 +552,12 @@ class PortsTest(unittest.TestCase):
         self.assertEqual(external_port,
                          [("127.0.0.1", "1000"), ("127.0.0.1", "1001")])
 
+    def test_split_port_with_ipv6_address(self):
+        internal_port, external_port = split_port(
+            "2001:abcd:ef00::2:1000:2000")
+        self.assertEqual(internal_port, ["2000"])
+        self.assertEqual(external_port, [("2001:abcd:ef00::2", "1000")])
+
     def test_split_port_invalid(self):
         self.assertRaises(ValueError,
                           lambda: split_port("0.0.0.0:1000:2000:tcp"))
@@ -580,6 +586,9 @@ class PortsTest(unittest.TestCase):
 
     def test_split_port_empty_string(self):
         self.assertRaises(ValueError, lambda: split_port(""))
+
+    def test_split_port_non_string(self):
+        assert split_port(1243) == (['1243'], None)
 
     def test_build_port_bindings_with_one_port(self):
         port_bindings = build_port_bindings(["127.0.0.1:1000:1000"])
@@ -630,6 +639,14 @@ class ExcludePathsTest(unittest.TestCase):
         'foo',
         'foo/bar',
         'bar',
+        'target',
+        'target/subdir',
+        'subdir',
+        'subdir/target',
+        'subdir/target/subdir',
+        'subdir/subdir2',
+        'subdir/subdir2/target',
+        'subdir/subdir2/target/subdir'
     ]
 
     files = [
@@ -645,6 +662,14 @@ class ExcludePathsTest(unittest.TestCase):
         'foo/bar/a.py',
         'bar/a.py',
         'foo/Dockerfile3',
+        'target/file.txt',
+        'target/subdir/file.txt',
+        'subdir/file.txt',
+        'subdir/target/file.txt',
+        'subdir/target/subdir/file.txt',
+        'subdir/subdir2/file.txt',
+        'subdir/subdir2/target/file.txt',
+        'subdir/subdir2/target/subdir/file.txt',
     ]
 
     all_paths = set(dirs + files)
@@ -743,6 +768,11 @@ class ExcludePathsTest(unittest.TestCase):
             self.all_paths - set(['foo/a.py'])
         )
 
+    def test_single_subdir_single_filename_leading_slash(self):
+        assert self.exclude(['/foo/a.py']) == convert_paths(
+            self.all_paths - set(['foo/a.py'])
+        )
+
     def test_single_subdir_with_path_traversal(self):
         assert self.exclude(['foo/whoops/../a.py']) == convert_paths(
             self.all_paths - set(['foo/a.py'])
@@ -833,6 +863,32 @@ class ExcludePathsTest(unittest.TestCase):
 
         assert self.exclude(['foo/**/bar']) == convert_paths(
             self.all_paths - set(['foo/bar', 'foo/bar/a.py'])
+        )
+
+    def test_single_and_double_wildcard(self):
+        assert self.exclude(['**/target/*/*']) == convert_paths(
+            self.all_paths - set(
+                ['target/subdir/file.txt',
+                 'subdir/target/subdir/file.txt',
+                 'subdir/subdir2/target/subdir/file.txt']
+            )
+        )
+
+    def test_trailing_double_wildcard(self):
+        assert self.exclude(['subdir/**']) == convert_paths(
+            self.all_paths - set(
+                ['subdir/file.txt',
+                 'subdir/target/file.txt',
+                 'subdir/target/subdir/file.txt',
+                 'subdir/subdir2/file.txt',
+                 'subdir/subdir2/target/file.txt',
+                 'subdir/subdir2/target/subdir/file.txt',
+                 'subdir/target',
+                 'subdir/target/subdir',
+                 'subdir/subdir2',
+                 'subdir/subdir2/target',
+                 'subdir/subdir2/target/subdir']
+            )
         )
 
 

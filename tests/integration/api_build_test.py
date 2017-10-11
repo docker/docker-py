@@ -5,10 +5,11 @@ import tempfile
 
 from docker import errors
 
+import pytest
 import six
 
 from .base import BaseAPIIntegrationTest
-from ..helpers import requires_api_version
+from ..helpers import requires_api_version, requires_experimental
 
 
 class BuildTest(BaseAPIIntegrationTest):
@@ -210,6 +211,64 @@ class BuildTest(BaseAPIIntegrationTest):
 
         info = self.client.inspect_image('build1')
         self.assertEqual(info['Config']['OnBuild'], [])
+
+    @requires_api_version('1.25')
+    def test_build_with_network_mode(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'RUN wget http://google.com'
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, network_mode='bridge',
+            tag='dockerpytest_bridgebuild'
+        )
+
+        self.tmp_imgs.append('dockerpytest_bridgebuild')
+        for chunk in stream:
+            pass
+
+        assert self.client.inspect_image('dockerpytest_bridgebuild')
+
+        script.seek(0)
+        stream = self.client.build(
+            fileobj=script, network_mode='none',
+            tag='dockerpytest_nonebuild', nocache=True, decode=True
+        )
+
+        self.tmp_imgs.append('dockerpytest_nonebuild')
+        logs = [chunk for chunk in stream]
+        assert 'errorDetail' in logs[-1]
+        assert logs[-1]['errorDetail']['code'] == 1
+
+        with pytest.raises(errors.NotFound):
+            self.client.inspect_image('dockerpytest_nonebuild')
+
+    @requires_experimental(until=None)
+    @requires_api_version('1.25')
+    def test_build_squash(self):
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'RUN echo blah > /file_1',
+            'RUN echo blahblah > /file_2',
+            'RUN echo blahblahblah > /file_3'
+        ]).encode('ascii'))
+
+        def build_squashed(squash):
+            tag = 'squash' if squash else 'nosquash'
+            stream = self.client.build(
+                fileobj=script, tag=tag, squash=squash
+            )
+            self.tmp_imgs.append(tag)
+            for chunk in stream:
+                pass
+
+            return self.client.inspect_image(tag)
+
+        non_squashed = build_squashed(False)
+        squashed = build_squashed(True)
+        self.assertEqual(len(non_squashed['RootFS']['Layers']), 4)
+        self.assertEqual(len(squashed['RootFS']['Layers']), 2)
 
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']

@@ -39,6 +39,17 @@ class ImageCollectionTest(BaseIntegrationTest):
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
 
+    def test_build_with_success_build_output(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.build(
+            tag='dup-txt-tag', fileobj=io.BytesIO(
+                "FROM alpine\n"
+                "CMD echo Successfully built abcd1234".encode('ascii')
+            )
+        )
+        self.tmp_imgs.append(image.id)
+        assert client.containers.run(image) == b"Successfully built abcd1234\n"
+
     def test_list(self):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
@@ -71,7 +82,8 @@ class ImageTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')
 
-        image.tag(repo, tag)
+        result = image.tag(repo, tag)
+        assert result is True
         self.tmp_imgs.append(identifier)
         assert image.id in get_ids(client.images.list(repo))
         assert image.id in get_ids(client.images.list(identifier))

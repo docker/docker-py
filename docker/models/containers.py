@@ -4,6 +4,7 @@ from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
+from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
 
@@ -516,6 +517,8 @@ class ContainerCollection(Collection):
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
+            healthcheck (dict): Specify a test to perform to check that the
+                container is healthy.
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
@@ -659,10 +662,18 @@ class ContainerCollection(Collection):
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.
+            runtime (str): Runtime to use with this container.
 
         Returns:
             The container logs, either ``STDOUT``, ``STDERR``, or both,
             depending on the value of the ``stdout`` and ``stderr`` arguments.
+
+            ``STDOUT`` and ``STDERR`` may be read only if either ``json-file``
+            or ``journald`` logging driver used. Thus, if you are using none of
+            these drivers, a ``None`` object is returned instead. See the
+            `Engine API documentation
+            <https://docs.docker.com/engine/api/v1.30/#operation/ContainerLogs/>`_
+            for full details.
 
             If ``detach`` is ``True``, a :py:class:`Container` object is
             returned instead.
@@ -680,8 +691,11 @@ class ContainerCollection(Collection):
             image = image.id
         detach = kwargs.pop("detach", False)
         if detach and remove:
-            raise RuntimeError("The options 'detach' and 'remove' cannot be "
-                               "used together.")
+            if version_gte(self.client.api._version, '1.25'):
+                kwargs["auto_remove"] = True
+            else:
+                raise RuntimeError("The options 'detach' and 'remove' cannot "
+                                   "be used together in api versions < 1.25.")
 
         if kwargs.get('network') and kwargs.get('network_mode'):
             raise RuntimeError(
@@ -706,7 +720,14 @@ class ContainerCollection(Collection):
         if exit_status != 0:
             stdout = False
             stderr = True
-        out = container.logs(stdout=stdout, stderr=stderr)
+
+        logging_driver = container.attrs['HostConfig']['LogConfig']['Type']
+
+        if logging_driver == 'json-file' or logging_driver == 'journald':
+            out = container.logs(stdout=stdout, stderr=stderr)
+        else:
+            out = None
+
         if remove:
             container.remove()
         if exit_status != 0:
@@ -832,6 +853,7 @@ RUN_CREATE_KWARGS = [
 
 # kwargs to copy straight from run to host_config
 RUN_HOST_CONFIG_KWARGS = [
+    'auto_remove',
     'blkio_weight_device',
     'blkio_weight',
     'cap_add',
@@ -885,6 +907,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'userns_mode',
     'version',
     'volumes_from',
+    'runtime'
 ]
 
 

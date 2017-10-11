@@ -10,6 +10,10 @@ The latest stable version [is available on PyPI](https://pypi.python.org/pypi/do
 
     pip install docker
 
+If you are intending to connect to a docker host via TLS, add `docker[tls]` to your requirements instead, or install with pip:
+
+    pip install docker[tls]
+
 ## Usage
 
 Connect to Docker using the default socket or the configuration in your environment:
@@ -22,7 +26,7 @@ client = docker.from_env()
 You can run containers:
 
 ```python
->>> client.containers.run("ubuntu", "echo hello world")
+>>> client.containers.run("ubuntu:latest", "echo hello world")
 'hello world\n'
 ```
 

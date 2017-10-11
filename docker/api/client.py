@@ -32,7 +32,7 @@ from ..errors import (
 from ..tls import TLSConfig
 from ..transport import SSLAdapter, UnixAdapter
 from ..utils import utils, check_resource, update_headers
-from ..utils.socket import frames_iter
+from ..utils.socket import frames_iter, socket_raw_iter
 from ..utils.json_stream import json_stream
 try:
     from ..transport import NpipeAdapter
@@ -83,6 +83,12 @@ class APIClient(
             configuration.
         user_agent (str): Set a custom user agent for requests to the server.
     """
+
+    __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
+                                              '_version',
+                                              'base_url',
+                                              'timeout']
+
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS):
@@ -248,7 +254,7 @@ class APIClient(
             'stream': 1
         }
 
-    @check_resource
+    @check_resource('container')
     def _attach_websocket(self, container, params=None):
         url = self._url("/containers/{0}/attach/ws", container)
         req = requests.Request("POST", url, params=self._attach_params(params))
@@ -356,13 +362,19 @@ class APIClient(
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
 
-    def _read_from_socket(self, response, stream):
+    def _read_from_socket(self, response, stream, tty=False):
         socket = self._get_raw_response_socket(response)
 
-        if stream:
-            return frames_iter(socket)
+        gen = None
+        if tty is False:
+            gen = frames_iter(socket)
         else:
-            return six.binary_type().join(frames_iter(socket))
+            gen = socket_raw_iter(socket)
+
+        if stream:
+            return gen
+        else:
+            return six.binary_type().join(gen)
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
@@ -392,9 +404,13 @@ class APIClient(
 
             s.settimeout(None)
 
-    def _get_result(self, container, stream, res):
+    @check_resource('container')
+    def _check_is_tty(self, container):
         cont = self.inspect_container(container)
-        return self._get_result_tty(stream, res, cont['Config']['Tty'])
+        return cont['Config']['Tty']
+
+    def _get_result(self, container, stream, res):
+        return self._get_result_tty(stream, res, self._check_is_tty(container))
 
     def _get_result_tty(self, stream, res, is_tty):
         # Stream multi-plexing was only introduced in API v1.6. Anything

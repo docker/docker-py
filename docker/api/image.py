@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 class ImageApiMixin(object):
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def get_image(self, image):
         """
         Get a tarball of an image. Similar to the ``docker save`` command.
@@ -39,7 +39,7 @@ class ImageApiMixin(object):
         self._raise_for_status(res)
         return res.raw
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def history(self, image):
         """
         Show the history of an image.
@@ -228,7 +228,7 @@ class ImageApiMixin(object):
             image=image, repository=repository, tag=tag, changes=changes
         )
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def insert(self, image, url, path):
         if utils.compare_version('1.12', self._version) >= 0:
             raise errors.DeprecatedMethod(
@@ -241,7 +241,7 @@ class ImageApiMixin(object):
         }
         return self._result(self._post(api_url, params=params))
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def inspect_image(self, image):
         """
         Get detailed information about an image. Similar to the ``docker
@@ -262,7 +262,7 @@ class ImageApiMixin(object):
             self._get(self._url("/images/{0}/json", image)), True
         )
 
-    def load_image(self, data):
+    def load_image(self, data, quiet=None):
         """
         Load an image that was previously saved using
         :py:meth:`~docker.api.image.ImageApiMixin.get_image` (or ``docker
@@ -270,8 +270,31 @@ class ImageApiMixin(object):
 
         Args:
             data (binary): Image data to be loaded.
+            quiet (boolean): Suppress progress details in response.
+
+        Returns:
+            (generator): Progress output as JSON objects. Only available for
+                         API version >= 1.23
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
         """
-        res = self._post(self._url("/images/load"), data=data)
+        params = {}
+
+        if quiet is not None:
+            if utils.version_lt(self._version, '1.23'):
+                raise errors.InvalidVersion(
+                    'quiet is not supported in API version < 1.23'
+                )
+            params['quiet'] = quiet
+
+        res = self._post(
+            self._url("/images/load"), data=data, params=params, stream=True
+        )
+        if utils.version_gte(self._version, '1.23'):
+            return self._stream_helper(res, decode=True)
+
         self._raise_for_status(res)
 
     @utils.minimum_version('1.25')
@@ -282,8 +305,8 @@ class ImageApiMixin(object):
         Args:
             filters (dict): Filters to process on the prune list.
                 Available filters:
-                    - dangling (bool):  When set to true (or 1), prune only
-                        unused and untagged images.
+                - dangling (bool):  When set to true (or 1), prune only
+                unused and untagged images.
 
         Returns:
             (dict): A dict containing a list of deleted image IDs and
@@ -443,7 +466,7 @@ class ImageApiMixin(object):
 
         return self._result(response)
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def remove_image(self, image, force=False, noprune=False):
         """
         Remove an image. Similar to the ``docker rmi`` command.
@@ -455,7 +478,7 @@ class ImageApiMixin(object):
         """
         params = {'force': force, 'noprune': noprune}
         res = self._delete(self._url("/images/{0}", image), params=params)
-        self._raise_for_status(res)
+        return self._result(res, True)
 
     def search(self, term):
         """
@@ -477,7 +500,7 @@ class ImageApiMixin(object):
             True
         )
 
-    @utils.check_resource
+    @utils.check_resource('image')
     def tag(self, image, repository, tag=None, force=False):
         """
         Tag an image into a repository. Similar to the ``docker tag`` command.

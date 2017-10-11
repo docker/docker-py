@@ -117,7 +117,7 @@ class SwarmApiMixin(object):
         url = self._url('/swarm')
         return self._result(self._get(url), True)
 
-    @utils.check_resource
+    @utils.check_resource('node_id')
     @utils.minimum_version('1.24')
     def inspect_node(self, node_id):
         """
@@ -228,7 +228,7 @@ class SwarmApiMixin(object):
 
         return self._result(self._get(url, params=params), True)
 
-    @utils.check_resource
+    @utils.check_resource('node_id')
     @utils.minimum_version('1.24')
     def remove_node(self, node_id, force=False):
         """

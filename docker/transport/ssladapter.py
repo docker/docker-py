@@ -25,6 +25,10 @@ if sys.version_info[0] < 3 or sys.version_info[1] < 5:
 class SSLAdapter(HTTPAdapter):
     '''An HTTPS Transport Adapter that uses an arbitrary SSL version.'''
 
+    __attrs__ = HTTPAdapter.__attrs__ + ['assert_fingerprint',
+                                         'assert_hostname',
+                                         'ssl_version']
+
     def __init__(self, ssl_version=None, assert_hostname=None,
                  assert_fingerprint=None, **kwargs):
         self.ssl_version = ssl_version

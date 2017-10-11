@@ -1421,6 +1421,13 @@ class ContainerTest(BaseAPIClientTest):
             stream=False
         )
 
+    def test_log_since_with_invalid_value_raises_error(self):
+        with mock.patch('docker.api.client.APIClient.inspect_container',
+                        fake_inspect_container):
+            with self.assertRaises(docker.errors.InvalidArgument):
+                self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                                 follow=False, since=42.42)
+
     def test_log_tty(self):
         m = mock.Mock()
         with mock.patch('docker.api.client.APIClient.inspect_container',

@@ -10,7 +10,7 @@ from . import errors
 from .constants import IS_WINDOWS_PLATFORM
 
 INDEX_NAME = 'docker.io'
-INDEX_URL = 'https://{0}/v1/'.format(INDEX_NAME)
+INDEX_URL = 'https://index.{0}/v1/'.format(INDEX_NAME)
 DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
 LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 TOKEN_USERNAME = '<token>'
@@ -70,6 +70,15 @@ def split_repo_name(repo_name):
     return tuple(parts)
 
 
+def get_credential_store(authconfig, registry):
+    if not registry or registry == INDEX_NAME:
+        registry = 'https://index.docker.io/v1/'
+
+    return authconfig.get('credHelpers', {}).get(registry) or authconfig.get(
+        'credsStore'
+    )
+
+
 def resolve_authconfig(authconfig, registry=None):
     """
     Returns the authentication data from the given auth configuration for a
@@ -77,13 +86,17 @@ def resolve_authconfig(authconfig, registry=None):
     with full URLs are stripped down to hostnames before checking for a match.
     Returns None if no match was found.
     """
-    if 'credsStore' in authconfig:
-        log.debug(
-            'Using credentials store "{0}"'.format(authconfig['credsStore'])
-        )
-        return _resolve_authconfig_credstore(
-            authconfig, registry, authconfig['credsStore']
-        )
+
+    if 'credHelpers' in authconfig or 'credsStore' in authconfig:
+        store_name = get_credential_store(authconfig, registry)
+        if store_name is not None:
+            log.debug(
+                'Using credentials store "{0}"'.format(store_name)
+            )
+            return _resolve_authconfig_credstore(
+                authconfig, registry, store_name
+            )
+
     # Default to the public index server
     registry = resolve_index_name(registry) if registry else INDEX_NAME
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
@@ -105,7 +118,7 @@ def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
     if not registry or registry == INDEX_NAME:
         # The ecosystem is a little schizophrenic with index.docker.io VS
         # docker.io - in that case, it seems the full URL is necessary.
-        registry = 'https://index.docker.io/v1/'
+        registry = INDEX_URL
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
     store = dockerpycreds.Store(credstore_name)
     try:
@@ -274,6 +287,9 @@ def load_config(config_path=None):
             if data.get('credsStore'):
                 log.debug("Found 'credsStore' section")
                 res.update({'credsStore': data['credsStore']})
+            if data.get('credHelpers'):
+                log.debug("Found 'credHelpers' section")
+                res.update({'credHelpers': data['credHelpers']})
             if res:
                 return res
             else:

@@ -5,9 +5,8 @@ def imageNamePy2
 def imageNamePy3
 def images = [:]
 
-// Note: Swarm in dind seem notoriously flimsy with 1.12.1+, which is why we're
-// sticking with 1.12.0 for the 1.12 series
-def dockerVersions = ["1.12.0", "1.13.1", "17.04.0-ce", "17.05.0-ce"]
+
+def dockerVersions = ["1.13.1", "17.04.0-ce", "17.05.0-ce", "17.06.0-ce", "17.07.0-ce-rc3"]
 
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
@@ -35,7 +34,7 @@ def buildImages = { ->
 }
 
 def getAPIVersion = { engineVersion ->
-  def versionMap = ['1.12.': '1.24', '1.13.': '1.26', '17.04': '1.27', '17.05': '1.29']
+  def versionMap = ['1.13.': '1.26', '17.04': '1.27', '17.05': '1.29', '17.06': '1.30', '17.07': '1.31']
   return versionMap[engineVersion.substring(0, 5)]
 }
 
@@ -63,7 +62,7 @@ def runTests = { Map settings ->
         def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         try {
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
-            dockerswarm/dind:${dockerVersion} docker daemon -H tcp://0.0.0.0:2375
+            dockerswarm/dind:${dockerVersion} dockerd -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
             --name ${testContainerName} --volumes-from ${dindContainerName} \\

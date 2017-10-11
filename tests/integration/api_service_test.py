@@ -359,6 +359,40 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Env' in con_spec
         assert con_spec['Env'] == ['DOCKER_PY_TEST=1']
 
+    @requires_api_version('1.25')
+    def test_create_service_with_tty(self):
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['true'], tty=True
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec,
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        con_spec = svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'TTY' in con_spec
+        assert con_spec['TTY'] is True
+
+    @requires_api_version('1.25')
+    def test_create_service_with_tty_dict(self):
+        container_spec = {
+            'Image': BUSYBOX,
+            'Command': ['true'],
+            'TTY': True
+        }
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        con_spec = svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'TTY' in con_spec
+        assert con_spec['TTY'] is True
+
     def test_create_service_global_mode(self):
         container_spec = docker.types.ContainerSpec(
             BUSYBOX, ['echo', 'hello']

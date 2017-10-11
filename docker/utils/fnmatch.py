@@ -65,19 +65,32 @@ def translate(pat):
 
     There is no way to quote meta-characters.
     """
-    recursive_mode = False
     i, n = 0, len(pat)
-    res = ''
+    res = '^'
     while i < n:
         c = pat[i]
         i = i + 1
         if c == '*':
             if i < n and pat[i] == '*':
-                recursive_mode = True
+                # is some flavor of "**"
                 i = i + 1
-            res = res + '.*'
+                # Treat **/ as ** so eat the "/"
+                if i < n and pat[i] == '/':
+                    i = i + 1
+                if i >= n:
+                    # is "**EOF" - to align with .gitignore just accept all
+                    res = res + '.*'
+                else:
+                    # is "**"
+                    # Note that this allows for any # of /'s (even 0) because
+                    # the .* will eat everything, even /'s
+                    res = res + '(.*/)?'
+            else:
+                # is "*" so map it to anything but "/"
+                res = res + '[^/]*'
         elif c == '?':
-            res = res + '.'
+            # "?" is any char except "/"
+            res = res + '[^/]'
         elif c == '[':
             j = i
             if j < n and pat[j] == '!':
@@ -96,8 +109,6 @@ def translate(pat):
                 elif stuff[0] == '^':
                     stuff = '\\' + stuff
                 res = '%s[%s]' % (res, stuff)
-        elif recursive_mode and c == '/':
-            res = res + re.escape(c) + '?'
         else:
             res = res + re.escape(c)
-    return res + '\Z(?ms)'
+    return res + '$'

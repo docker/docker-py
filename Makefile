@@ -41,13 +41,13 @@ integration-test: build
 integration-test-py3: build-py3
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
 
-TEST_API_VERSION ?= 1.29
-TEST_ENGINE_VERSION ?= 17.05.0-ce
+TEST_API_VERSION ?= 1.30
+TEST_ENGINE_VERSION ?= 17.06.0-ce
 
 .PHONY: integration-dind
 integration-dind: build build-py3
 	docker rm -vf dpy-dind || :
-	docker run -d --name dpy-dind --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} docker daemon\
+	docker run -d --name dpy-dind --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd\
 		-H tcp://0.0.0.0:2375 --experimental
 	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--link=dpy-dind:docker docker-sdk-python py.test tests/integration
@@ -60,7 +60,7 @@ integration-dind-ssl: build-dind-certs build build-py3
 	docker run -d --name dpy-dind-certs dpy-dind-certs
 	docker run -d --env="DOCKER_HOST=tcp://localhost:2375" --env="DOCKER_TLS_VERIFY=1"\
 		--env="DOCKER_CERT_PATH=/certs" --volumes-from dpy-dind-certs --name dpy-dind-ssl\
-		-v /tmp --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} docker daemon --tlsverify\
+		-v /tmp --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd --tlsverify\
 		--tlscacert=/certs/ca.pem --tlscert=/certs/server-cert.pem\
 		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375 --experimental
 	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\

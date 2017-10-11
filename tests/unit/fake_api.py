@@ -146,6 +146,12 @@ def get_fake_inspect_container(tty=False):
             "StartedAt": "2013-09-25T14:01:18.869545111+02:00",
             "Ghost": False
         },
+        "HostConfig": {
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+        },
         "MacAddress": "02:42:ac:11:00:0a"
     }
     return status_code, response
@@ -199,7 +205,9 @@ def get_fake_wait():
 
 def get_fake_logs():
     status_code = 200
-    response = (b'\x01\x00\x00\x00\x00\x00\x00\x11Flowering Nights\n'
+    response = (b'\x01\x00\x00\x00\x00\x00\x00\x00'
+                b'\x02\x00\x00\x00\x00\x00\x00\x00'
+                b'\x01\x00\x00\x00\x00\x00\x00\x11Flowering Nights\n'
                 b'\x01\x00\x00\x00\x00\x00\x00\x10(Sakuya Iyazoi)\n')
     return status_code, response
 
