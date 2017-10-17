@@ -11,6 +11,8 @@ from ..helpers import (
 )
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
+SECOND = 1000000000
+
 
 class ServiceTest(BaseAPIIntegrationTest):
     def setUp(self):
@@ -493,3 +495,57 @@ class ServiceTest(BaseAPIIntegrationTest):
         container_secret = self.client.exec_start(exec_id)
         container_secret = container_secret.decode('utf-8')
         assert container_secret == secret_data
+
+    @requires_api_version('1.26')
+    def test_create_service_with_healthcheck(self):
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['top'], healthcheck=dict(
+                test="curl -fs http://127.0.0.1",
+                interval=1 * SECOND,
+                timeout=1 * SECOND,
+                retries=1,
+            )
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Healthcheck' in \
+               svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        healthcheck = \
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Healthcheck']
+        assert healthcheck['Test'] == ["CMD-SHELL",
+                                       'curl -fs http://127.0.0.1']
+        assert healthcheck['Interval'] == 1 * SECOND
+        assert healthcheck['Timeout'] == 1 * SECOND
+        assert healthcheck['Retries'] == 1
+
+    @requires_api_version('1.29')
+    def test_create_service_with_healthcheck_start_period(self):
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['top'], healthcheck=dict(
+                test="curl -fs http://127.0.0.1",
+                interval=1 * SECOND,
+                timeout=1 * SECOND,
+                retries=1,
+                start_period=3 * SECOND
+            )
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Healthcheck' in \
+               svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        healthcheck = \
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Healthcheck']
+        assert healthcheck['Test'] == ["CMD-SHELL",
+                                       'curl -fs http://127.0.0.1']
+        assert healthcheck['Interval'] == 1 * SECOND
+        assert healthcheck['Timeout'] == 1 * SECOND
+        assert healthcheck['Retries'] == 1
+        assert healthcheck['StartPeriod'] == 3 * SECOND
