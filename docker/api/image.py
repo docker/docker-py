@@ -245,10 +245,10 @@ class ImageApiMixin(object):
     def inspect_image(self, image):
         """
         Get detailed information about an image. Similar to the ``docker
-        inspect`` command, but only for containers.
+        inspect`` command, but only for images.
 
         Args:
-            container (str): The container to inspect
+            image (str): The image to inspect
 
         Returns:
             (dict): Similar to the output of ``docker inspect``, but as a
