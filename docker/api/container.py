@@ -529,7 +529,7 @@ class ContainerApiMixin(object):
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
                 container is allowed to consume.
-            network_mode (str): One of:
+            network_mode (str): Supported standard value is one of:
 
                 - ``bridge`` Create a new network stack for the container on
                   on the bridge network.
@@ -537,6 +537,9 @@ class ContainerApiMixin(object):
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
                 - ``host`` Use the host network stack.
+
+                Any other value is taken as a custom network's name to which
+                this container should connect to.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
