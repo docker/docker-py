@@ -152,15 +152,18 @@ class Mount(dict):
           for the ``volume`` type.
         driver_config (DriverConfig): Volume driver configuration. Only valid
           for the ``volume`` type.
+        tmpfs_size (int): The size for the tmpfs mount in bytes.
+        tmpfs_mode (string): The permission mode for the tmpfs mount in an
+          integer.
     """
     def __init__(self, target, source, type='volume', read_only=False,
                  propagation=None, no_copy=False, labels=None,
-                 driver_config=None):
+                 driver_config=None, tmpfs_size=None, tmpfs_mode=None):
         self['Target'] = target
         self['Source'] = source
-        if type not in ('bind', 'volume'):
+        if type not in ('bind', 'volume', 'tmpfs'):
             raise errors.InvalidArgument(
-                'Only acceptable mount types are `bind` and `volume`.'
+                'Only acceptable mount types are `bind`, `volume` and `tmpfs`.'
             )
         self['Type'] = type
         self['ReadOnly'] = read_only
@@ -175,6 +178,14 @@ class Mount(dict):
                     'Mount type is binding but volume options have been '
                     'provided.'
                 )
+        elif type == 'tmpfs':
+            tmpfs_opts = {}
+            if tmpfs_size:
+                tmpfs_opts['SizeBytes'] = tmpfs_size
+            if tmpfs_mode:
+                tmpfs_opts['Mode'] = tmpfs_mode
+            if tmpfs_opts:
+                self['TmpfsOptions'] = tmpfs_opts
         else:
             volume_opts = {}
             if no_copy:
