@@ -17,7 +17,7 @@ class NetworkApiMixin(object):
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
                 - ``label=[<key>]`` or ``label=[<key>=<value>]``.
-                - ``type=["custom"|"builtin"]`` Filters networks by type.
+                - ``type=['custom'|'builtin']`` Filters networks by type.
 
         Returns:
             (dict): List of network objects.
@@ -34,13 +34,13 @@ class NetworkApiMixin(object):
         if ids:
             filters['id'] = ids
         params = {'filters': utils.convert_filters(filters)}
-        url = self._url("/networks")
+        url = self._url('/networks')
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
-                       check_duplicate=None, internal=False, labels=None,
+                       check_duplicate=True, internal=False, labels=None,
                        enable_ipv6=False, attachable=None, scope=None,
                        ingress=None):
         """
@@ -52,7 +52,7 @@ class NetworkApiMixin(object):
             options (dict): Driver options as a key-value dictionary
             ipam (IPAMConfig): Optional custom IP scheme for the network.
             check_duplicate (bool): Request daemon to check for networks with
-                same name. Default: ``None``.
+                same name. Default: ``True``.
             internal (bool): Restrict external access to the network. Default
                 ``False``.
             labels (dict): Map of labels to set on the network. Default
@@ -74,7 +74,7 @@ class NetworkApiMixin(object):
         Example:
             A network using the bridge driver:
 
-                >>> client.create_network("network1", driver="bridge")
+                >>> client.create_network('network1', driver='bridge')
 
             You can also create more advanced networks with custom IPAM
             configurations. For example, setting the subnet to
@@ -89,7 +89,7 @@ class NetworkApiMixin(object):
                 >>> ipam_config = docker.types.IPAMConfig(
                     pool_configs=[ipam_pool]
                 )
-                >>> docker_client.create_network("network1", driver="bridge",
+                >>> docker_client.create_network('network1', driver='bridge',
                                                  ipam=ipam_config)
         """
         if options is not None and not isinstance(options, dict):
@@ -110,7 +110,7 @@ class NetworkApiMixin(object):
                 )
             if not isinstance(labels, dict):
                 raise TypeError('labels must be a dictionary')
-            data["Labels"] = labels
+            data['Labels'] = labels
 
         if enable_ipv6:
             if version_lt(self._version, '1.23'):
@@ -140,7 +140,7 @@ class NetworkApiMixin(object):
 
             data['Ingress'] = ingress
 
-        url = self._url("/networks/create")
+        url = self._url('/networks/create')
         res = self._post_json(url, data=data)
         return self._result(res, json=True)
 
@@ -175,7 +175,7 @@ class NetworkApiMixin(object):
         Args:
             net_id (str): The network's id
         """
-        url = self._url("/networks/{0}", net_id)
+        url = self._url('/networks/{0}', net_id)
         res = self._delete(url)
         self._raise_for_status(res)
 
@@ -196,7 +196,7 @@ class NetworkApiMixin(object):
                 raise InvalidVersion('verbose was introduced in API 1.28')
             params['verbose'] = verbose
 
-        url = self._url("/networks/{0}", net_id)
+        url = self._url('/networks/{0}', net_id)
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
@@ -226,14 +226,14 @@ class NetworkApiMixin(object):
             (IPv4/IPv6) addresses.
         """
         data = {
-            "Container": container,
-            "EndpointConfig": self.create_endpoint_config(
+            'Container': container,
+            'EndpointConfig': self.create_endpoint_config(
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
                 ipv6_address=ipv6_address, link_local_ips=link_local_ips
             ),
         }
 
-        url = self._url("/networks/{0}/connect", net_id)
+        url = self._url('/networks/{0}/connect', net_id)
         res = self._post_json(url, data=data)
         self._raise_for_status(res)
 
@@ -251,13 +251,13 @@ class NetworkApiMixin(object):
             force (bool): Force the container to disconnect from a network.
                 Default: ``False``
         """
-        data = {"Container": container}
+        data = {'Container': container}
         if force:
             if version_lt(self._version, '1.22'):
                 raise InvalidVersion(
                     'Forced disconnect was introduced in API 1.22'
                 )
             data['Force'] = force
-        url = self._url("/networks/{0}/disconnect", net_id)
+        url = self._url('/networks/{0}/disconnect', net_id)
         res = self._post_json(url, data=data)
         self._raise_for_status(res)

@@ -17,16 +17,16 @@ class NetworkTest(BaseAPIClientTest):
     def test_list_networks(self):
         networks = [
             {
-                "name": "none",
-                "id": "8e4e55c6863ef424",
-                "type": "null",
-                "endpoints": []
+                'name': 'none',
+                'id': '8e4e55c6863ef424',
+                'type': 'null',
+                'endpoints': []
             },
             {
-                "name": "host",
-                "id": "062b6d9ea7913fde",
-                "type": "host",
-                "endpoints": []
+                'name': 'host',
+                'id': '062b6d9ea7913fde',
+                'type': 'host',
+                'endpoints': []
             },
         ]
 
@@ -52,8 +52,8 @@ class NetworkTest(BaseAPIClientTest):
     @requires_api_version('1.21')
     def test_create_network(self):
         network_data = {
-            "id": 'abc12345',
-            "warning": "",
+            'id': 'abc12345',
+            'warning': '',
         }
 
         network_response = response(status_code=200, content=network_data)
@@ -69,7 +69,7 @@ class NetworkTest(BaseAPIClientTest):
 
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
-                {"Name": "foo"})
+                {'CheckDuplicate': True, 'Name': 'foo'})
 
             opts = {
                 'com.docker.network.bridge.enable_icc': False,
@@ -79,27 +79,32 @@ class NetworkTest(BaseAPIClientTest):
 
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
-                {"Name": "foo", "Driver": "bridge", "Options": opts})
+                {'CheckDuplicate': True,
+                 'Name': 'foo',
+                 'Driver': 'bridge',
+                 'Options': opts
+                 })
 
-            ipam_pool_config = IPAMPool(subnet="192.168.52.0/24",
-                                        gateway="192.168.52.254")
+            ipam_pool_config = IPAMPool(subnet='192.168.52.0/24',
+                                        gateway='192.168.52.254')
             ipam_config = IPAMConfig(pool_configs=[ipam_pool_config])
 
-            self.client.create_network("bar", driver="bridge",
+            self.client.create_network('bar', driver='bridge',
                                        ipam=ipam_config)
 
             self.assertEqual(
                 json.loads(post.call_args[1]['data']),
                 {
-                    "Name": "bar",
-                    "Driver": "bridge",
-                    "IPAM": {
-                        "Driver": "default",
-                        "Config": [{
-                            "IPRange": None,
-                            "Gateway": "192.168.52.254",
-                            "Subnet": "192.168.52.0/24",
-                            "AuxiliaryAddresses": None,
+                    'CheckDuplicate': True,
+                    'Name': 'bar',
+                    'Driver': 'bridge',
+                    'IPAM': {
+                        'Driver': 'default',
+                        'Config': [{
+                            'IPRange': None,
+                            'Gateway': '192.168.52.254',
+                            'Subnet': '192.168.52.0/24',
+                            'AuxiliaryAddresses': None,
                         }],
                     }
                 })
