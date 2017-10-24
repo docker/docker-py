@@ -2,7 +2,9 @@ import six
 
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
-from ..utils import check_resource, format_environment, split_command
+from ..utils import (
+    check_resource, format_environment, parse_bytes, split_command
+)
 
 
 class TaskTemplate(dict):
@@ -140,9 +142,11 @@ class Mount(dict):
 
         target (string): Container path.
         source (string): Mount source (e.g. a volume name or a host path).
-        type (string): The mount type (``bind`` or ``volume``).
-          Default: ``volume``.
+        type (string): The mount type (``bind`` / ``volume`` / ``tmpfs`` /
+            ``npipe``). Default: ``volume``.
         read_only (bool): Whether the mount should be read-only.
+        consistency (string): The consistency requirement for the mount. One of
+        ``default```, ``consistent``, ``cached``, ``delegated``.
         propagation (string): A propagation mode with the value ``[r]private``,
           ``[r]shared``, or ``[r]slave``. Only valid for the ``bind`` type.
         no_copy (bool): False if the volume should be populated with the data
@@ -152,30 +156,36 @@ class Mount(dict):
           for the ``volume`` type.
         driver_config (DriverConfig): Volume driver configuration. Only valid
           for the ``volume`` type.
+        tmpfs_size (int or string): The size for the tmpfs mount in bytes.
+        tmpfs_mode (int): The permission mode for the tmpfs mount.
     """
     def __init__(self, target, source, type='volume', read_only=False,
-                 propagation=None, no_copy=False, labels=None,
-                 driver_config=None):
+                 consistency=None, propagation=None, no_copy=False,
+                 labels=None, driver_config=None, tmpfs_size=None,
+                 tmpfs_mode=None):
         self['Target'] = target
         self['Source'] = source
-        if type not in ('bind', 'volume'):
+        if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
             raise errors.InvalidArgument(
-                'Only acceptable mount types are `bind` and `volume`.'
+                'Unsupported mount type: "{}"'.format(type)
             )
         self['Type'] = type
         self['ReadOnly'] = read_only
+
+        if consistency:
+            self['Consistency'] = consistency
 
         if type == 'bind':
             if propagation is not None:
                 self['BindOptions'] = {
                     'Propagation': propagation
                 }
-            if any([labels, driver_config, no_copy]):
+            if any([labels, driver_config, no_copy, tmpfs_size, tmpfs_mode]):
                 raise errors.InvalidArgument(
-                    'Mount type is binding but volume options have been '
-                    'provided.'
+                    'Incompatible options have been provided for the bind '
+                    'type mount.'
                 )
-        else:
+        elif type == 'volume':
             volume_opts = {}
             if no_copy:
                 volume_opts['NoCopy'] = True
@@ -185,10 +195,27 @@ class Mount(dict):
                 volume_opts['DriverConfig'] = driver_config
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
-            if propagation:
+            if any([propagation, tmpfs_size, tmpfs_mode]):
                 raise errors.InvalidArgument(
-                    'Mount type is volume but `propagation` argument has been '
-                    'provided.'
+                    'Incompatible options have been provided for the volume '
+                    'type mount.'
+                )
+        elif type == 'tmpfs':
+            tmpfs_opts = {}
+            if tmpfs_mode:
+                if not isinstance(tmpfs_mode, six.integer_types):
+                    raise errors.InvalidArgument(
+                        'tmpfs_mode must be an integer'
+                    )
+                tmpfs_opts['Mode'] = tmpfs_mode
+            if tmpfs_size:
+                tmpfs_opts['SizeBytes'] = parse_bytes(tmpfs_size)
+            if tmpfs_opts:
+                self['TmpfsOptions'] = tmpfs_opts
+            if any([propagation, labels, driver_config, no_copy]):
+                raise errors.InvalidArgument(
+                    'Incompatible options have been provided for the tmpfs '
+                    'type mount.'
                 )
 
     @classmethod
