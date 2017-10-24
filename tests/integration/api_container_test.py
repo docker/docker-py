@@ -522,6 +522,71 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
 
+    @pytest.mark.xfail(
+        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
+    )
+    @requires_api_version('1.30')
+    def test_create_with_mounts(self):
+        mount = docker.types.Mount(
+            type="bind", source=self.mount_origin, target=self.mount_dest
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.run_container(
+            BUSYBOX, ['ls', self.mount_dest],
+            host_config=host_config
+        )
+        assert container
+        logs = self.client.logs(container)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, True)
+
+    @pytest.mark.xfail(
+        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
+    )
+    @requires_api_version('1.30')
+    def test_create_with_mounts_ro(self):
+        mount = docker.types.Mount(
+            type="bind", source=self.mount_origin, target=self.mount_dest,
+            read_only=True
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.run_container(
+            BUSYBOX, ['ls', self.mount_dest],
+            host_config=host_config
+        )
+        assert container
+        logs = self.client.logs(container)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False)
+
+    @requires_api_version('1.30')
+    def test_create_with_volume_mount(self):
+        mount = docker.types.Mount(
+            type="volume", source=helpers.random_name(),
+            target=self.mount_dest, labels={'com.dockerpy.test': 'true'}
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.client.create_container(
+            BUSYBOX, ['true'], host_config=host_config,
+        )
+        assert container
+        inspect_data = self.client.inspect_container(container)
+        assert 'Mounts' in inspect_data
+        filtered = list(filter(
+            lambda x: x['Destination'] == self.mount_dest,
+            inspect_data['Mounts']
+        ))
+        assert len(filtered) == 1
+        mount_data = filtered[0]
+        assert mount['Source'] == mount_data['Name']
+        assert mount_data['RW'] is True
+
     def check_container_data(self, inspect_data, rw):
         if docker.utils.compare_version('1.20', self.client._version) < 0:
             self.assertIn('Volumes', inspect_data)

@@ -529,6 +529,10 @@ class ContainerApiMixin(object):
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
                 container is allowed to consume.
+            mounts (:py:class:`list`): Specification for mounts to be added to
+                the container. More powerful alternative to ``binds``. Each
+                item in the list is expected to be a
+                :py:class:`docker.types.Mount` object.
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
