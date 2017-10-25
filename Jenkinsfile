@@ -6,7 +6,7 @@ def imageNamePy3
 def images = [:]
 
 
-def dockerVersions = ["1.13.1", "17.04.0-ce", "17.05.0-ce", "17.06.0-ce", "17.07.0-ce-rc3"]
+def dockerVersions = ["17.06.2-ce", "17.09.0-ce", "17.10.0-ce"]
 
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
@@ -34,7 +34,7 @@ def buildImages = { ->
 }
 
 def getAPIVersion = { engineVersion ->
-  def versionMap = ['1.13.': '1.26', '17.04': '1.27', '17.05': '1.29', '17.06': '1.30', '17.07': '1.31']
+  def versionMap = ['17.06': '1.30', '17.09': '1.32', '17.10': '1.33']
   return versionMap[engineVersion.substring(0, 5)]
 }
 

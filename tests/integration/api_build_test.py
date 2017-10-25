@@ -210,7 +210,7 @@ class BuildTest(BaseAPIIntegrationTest):
             pass
 
         info = self.client.inspect_image('build1')
-        self.assertEqual(info['Config']['OnBuild'], [])
+        assert not info['Config']['OnBuild']
 
     @requires_api_version('1.25')
     def test_build_with_network_mode(self):
