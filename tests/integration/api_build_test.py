@@ -244,6 +244,38 @@ class BuildTest(BaseAPIIntegrationTest):
         with pytest.raises(errors.NotFound):
             self.client.inspect_image('dockerpytest_nonebuild')
 
+    @requires_api_version('1.27')
+    def test_build_with_extra_hosts(self):
+        img_name = 'dockerpytest_extrahost_build'
+        self.tmp_imgs.append(img_name)
+
+        script = io.BytesIO('\n'.join([
+            'FROM busybox',
+            'RUN ping -c1 hello.world.test',
+            'RUN ping -c1 extrahost.local.test',
+            'RUN cp /etc/hosts /hosts-file'
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, tag=img_name,
+            extra_hosts={
+                'extrahost.local.test': '127.0.0.1',
+                'hello.world.test': '8.8.8.8',
+            }, decode=True
+        )
+        for chunk in stream:
+            if 'errorDetail' in chunk:
+                pytest.fail(chunk)
+
+        assert self.client.inspect_image(img_name)
+        ctnr = self.run_container(img_name, 'cat /hosts-file')
+        self.tmp_containers.append(ctnr)
+        logs = self.client.logs(ctnr)
+        if six.PY3:
+            logs = logs.decode('utf-8')
+        assert '127.0.0.1\textrahost.local.test' in logs
+        assert '8.8.8.8\thello.world.test' in logs
+
     @requires_experimental(until=None)
     @requires_api_version('1.25')
     def test_build_squash(self):
