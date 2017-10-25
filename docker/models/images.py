@@ -153,6 +153,10 @@ class ImageCollection(Collection):
                 Dockerfile
             network_mode (str): networking mode for the run commands during
                 build
+            squash (bool): Squash the resulting images layers into a
+                single layer.
+            extra_hosts (dict): Extra hosts to add to /etc/hosts in building
+                containers, as a mapping of hostname to IP address.
 
         Returns:
             (:py:class:`Image`): The built image.
