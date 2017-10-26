@@ -9,13 +9,16 @@ from .base import BaseAPIIntegrationTest
 
 @requires_api_version('1.25')
 class SecretAPITest(BaseAPIIntegrationTest):
-    def setUp(self):
-        super(SecretAPITest, self).setUp()
-        self.init_swarm()
+    @classmethod
+    def setup_class(cls):
+        client = cls.get_client_instance()
+        force_leave_swarm(client)
+        cls._init_swarm(client)
 
-    def tearDown(self):
-        super(SecretAPITest, self).tearDown()
-        force_leave_swarm(self.client)
+    @classmethod
+    def teardown_class(cls):
+        client = cls.get_client_instance()
+        force_leave_swarm(client)
 
     def test_create_secret(self):
         secret_id = self.client.create_secret(
