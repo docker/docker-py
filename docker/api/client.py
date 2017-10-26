@@ -9,6 +9,7 @@ import six
 import websocket
 
 from .build import BuildApiMixin
+from .config import ConfigApiMixin
 from .container import ContainerApiMixin
 from .daemon import DaemonApiMixin
 from .exec_api import ExecApiMixin
@@ -43,6 +44,7 @@ except ImportError:
 class APIClient(
         requests.Session,
         BuildApiMixin,
+        ConfigApiMixin,
         ContainerApiMixin,
         DaemonApiMixin,
         ExecApiMixin,

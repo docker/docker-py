@@ -15,6 +15,7 @@ Client reference
 
 .. autoclass:: DockerClient()
 
+  .. autoattribute:: configs
   .. autoattribute:: containers
   .. autoattribute:: images
   .. autoattribute:: networks
