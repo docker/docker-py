@@ -1,5 +1,6 @@
 from .api.client import APIClient
 from .constants import DEFAULT_TIMEOUT_SECONDS
+from .models.configs import ConfigCollection
 from .models.containers import ContainerCollection
 from .models.images import ImageCollection
 from .models.networks import NetworkCollection
@@ -80,6 +81,14 @@ class DockerClient(object):
                    **kwargs_from_env(**kwargs))
 
     # Resources
+    @property
+    def configs(self):
+        """
+        An object for managing configs on the server. See the
+        :doc:`configs documentation <configs>` for full details.
+        """
+        return ConfigCollection(client=self)
+
     @property
     def containers(self):
         """
