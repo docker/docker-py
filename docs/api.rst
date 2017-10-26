@@ -9,6 +9,16 @@ It's possible to use :py:class:`APIClient` directly. Some basic things (e.g. run
 
 .. autoclass:: docker.api.client.APIClient
 
+Configs
+-------
+
+.. py:module:: docker.api.config
+
+.. rst-class:: hide-signature
+.. autoclass:: ConfigApiMixin
+  :members:
+  :undoc-members:
+
 Containers
 ----------
 
