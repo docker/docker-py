@@ -4,45 +4,62 @@ from ..types import ServiceMode
 
 
 def _check_api_features(version, task_template, update_config):
+
+    def raise_version_error(param, min_version):
+        raise errors.InvalidVersion(
+            '{} is not supported in API version < {}'.format(
+                param, min_version
+            )
+        )
+
     if update_config is not None:
         if utils.version_lt(version, '1.25'):
             if 'MaxFailureRatio' in update_config:
-                raise errors.InvalidVersion(
-                    'UpdateConfig.max_failure_ratio is not supported in'
-                    ' API version < 1.25'
-                )
+                raise_version_error('UpdateConfig.max_failure_ratio', '1.25')
             if 'Monitor' in update_config:
-                raise errors.InvalidVersion(
-                    'UpdateConfig.monitor is not supported in'
-                    ' API version < 1.25'
-                )
+                raise_version_error('UpdateConfig.monitor', '1.25')
 
     if task_template is not None:
         if 'ForceUpdate' in task_template and utils.version_lt(
                 version, '1.25'):
-            raise errors.InvalidVersion(
-                'force_update is not supported in API version < 1.25'
-            )
+                raise_version_error('force_update', '1.25')
 
         if task_template.get('Placement'):
             if utils.version_lt(version, '1.30'):
                 if task_template['Placement'].get('Platforms'):
-                    raise errors.InvalidVersion(
-                        'Placement.platforms is not supported in'
-                        ' API version < 1.30'
-                    )
-
+                    raise_version_error('Placement.platforms', '1.30')
             if utils.version_lt(version, '1.27'):
                 if task_template['Placement'].get('Preferences'):
-                    raise errors.InvalidVersion(
-                        'Placement.preferences is not supported in'
-                        ' API version < 1.27'
-                    )
-        if task_template.get('ContainerSpec', {}).get('TTY'):
+                    raise_version_error('Placement.preferences', '1.27')
+
+        if task_template.get('ContainerSpec'):
+            container_spec = task_template.get('ContainerSpec')
+
             if utils.version_lt(version, '1.25'):
-                raise errors.InvalidVersion(
-                    'ContainerSpec.TTY is not supported in API version < 1.25'
-                )
+                if container_spec.get('TTY'):
+                    raise_version_error('ContainerSpec.tty', '1.25')
+                if container_spec.get('Hostname') is not None:
+                    raise_version_error('ContainerSpec.hostname', '1.25')
+                if container_spec.get('Hosts') is not None:
+                    raise_version_error('ContainerSpec.hosts', '1.25')
+                if container_spec.get('Groups') is not None:
+                    raise_version_error('ContainerSpec.groups', '1.25')
+                if container_spec.get('DNSConfig') is not None:
+                    raise_version_error('ContainerSpec.dns_config', '1.25')
+                if container_spec.get('Healthcheck') is not None:
+                    raise_version_error('ContainerSpec.healthcheck', '1.25')
+
+            if utils.version_lt(version, '1.28'):
+                if container_spec.get('ReadOnly') is not None:
+                    raise_version_error('ContainerSpec.dns_config', '1.28')
+                if container_spec.get('StopSignal') is not None:
+                    raise_version_error('ContainerSpec.stop_signal', '1.28')
+
+            if utils.version_lt(version, '1.30'):
+                if container_spec.get('Configs') is not None:
+                    raise_version_error('ContainerSpec.configs', '1.30')
+                if container_spec.get('Privileges') is not None:
+                    raise_version_error('ContainerSpec.privileges', '1.30')
 
 
 class ServiceApiMixin(object):
