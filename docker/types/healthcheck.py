@@ -4,6 +4,30 @@ import six
 
 
 class Healthcheck(DictType):
+    """
+        Defines a healthcheck configuration for a container or service.
+
+        Args:
+
+            test (:py:class:`list` or str): Test to perform to determine
+                container health. Possible values:
+                    - Empty list: Inherit healthcheck from parent image
+                    - ``["NONE"]``: Disable healthcheck
+                    - ``["CMD", args...]``: exec arguments directly.
+                    - ``["CMD-SHELL", command]``: RUn command in the system's
+                      default shell.
+                If a string is provided, it will be used as a ``CMD-SHELL``
+                command.
+            interval (int): The time to wait between checks in nanoseconds. It
+                should be 0 or at least 1000000 (1 ms).
+            timeout (int): The time to wait before considering the check to
+                have hung. It should be 0 or at least 1000000 (1 ms).
+            retries (integer): The number of consecutive failures needed to
+                consider a container as unhealthy.
+            start_period (integer): Start period for the container to
+                initialize before starting health-retries countdown in
+                nanoseconds. It should be 0 or at least 1000000 (1 ms).
+    """
     def __init__(self, **kwargs):
         test = kwargs.get('test', kwargs.get('Test'))
         if isinstance(test, six.string_types):

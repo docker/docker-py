@@ -237,10 +237,9 @@ class BuildApiMixin(object):
                     'extra_hosts was only introduced in API version 1.27'
                 )
 
-            encoded_extra_hosts = [
-                '{}:{}'.format(k, v) for k, v in extra_hosts.items()
-            ]
-            params.update({'extrahosts': encoded_extra_hosts})
+            if isinstance(extra_hosts, dict):
+                extra_hosts = utils.format_extra_hosts(extra_hosts)
+            params.update({'extrahosts': extra_hosts})
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}

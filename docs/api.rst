@@ -122,13 +122,17 @@ Configuration types
 
 .. py:module:: docker.types
 
-.. autoclass:: IPAMConfig
-.. autoclass:: IPAMPool
+.. autoclass:: ConfigReference
 .. autoclass:: ContainerSpec
+.. autoclass:: DNSConfig
 .. autoclass:: DriverConfig
 .. autoclass:: EndpointSpec
+.. autoclass:: Healthcheck
+.. autoclass:: IPAMConfig
+.. autoclass:: IPAMPool
 .. autoclass:: Mount
 .. autoclass:: Placement
+.. autoclass:: Privileges
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
 .. autoclass:: SecretReference
