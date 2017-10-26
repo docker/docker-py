@@ -4,8 +4,8 @@ import warnings
 from .. import errors
 from ..utils.utils import (
     convert_port_bindings, convert_tmpfs_mounts, convert_volume_binds,
-    format_environment, normalize_links, parse_bytes, parse_devices,
-    split_command, version_gte, version_lt,
+    format_environment, format_extra_hosts, normalize_links, parse_bytes,
+    parse_devices, split_command, version_gte, version_lt,
 )
 from .base import DictType
 from .healthcheck import Healthcheck
@@ -257,10 +257,7 @@ class HostConfig(dict):
 
         if extra_hosts is not None:
             if isinstance(extra_hosts, dict):
-                extra_hosts = [
-                    '{0}:{1}'.format(k, v)
-                    for k, v in sorted(six.iteritems(extra_hosts))
-                ]
+                extra_hosts = format_extra_hosts(extra_hosts)
 
             self['ExtraHosts'] = extra_hosts
 

@@ -564,6 +564,12 @@ def format_environment(environment):
     return [format_env(*var) for var in six.iteritems(environment)]
 
 
+def format_extra_hosts(extra_hosts):
+    return [
+        '{}:{}'.format(k, v) for k, v in sorted(six.iteritems(extra_hosts))
+    ]
+
+
 def create_host_config(self, *args, **kwargs):
     raise errors.DeprecatedMethod(
         'utils.create_host_config has been removed. Please use a '

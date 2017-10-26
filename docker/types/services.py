@@ -3,7 +3,8 @@ import six
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import (
-    check_resource, format_environment, parse_bytes, split_command
+    check_resource, format_environment, format_extra_hosts, parse_bytes,
+    split_command,
 )
 
 
@@ -84,13 +85,31 @@ class ContainerSpec(dict):
             :py:class:`~docker.types.Mount` class for details.
         stop_grace_period (int): Amount of time to wait for the container to
             terminate before forcefully killing it.
-        secrets (list of py:class:`SecretReference`): List of secrets to be
+        secrets (:py:class:`list`): List of :py:class:`SecretReference` to be
             made available inside the containers.
         tty (boolean): Whether a pseudo-TTY should be allocated.
+        groups (:py:class:`list`): A list of additional groups that the
+            container process will run as.
+        open_stdin (boolean): Open ``stdin``
+        read_only (boolean): Mount the container's root filesystem as read
+            only.
+        stop_signal (string): Set signal to stop the service's containers
+        healthcheck (Healthcheck): Healthcheck
+            configuration for this service.
+        hosts (:py:class:`dict`): A set of host to IP mappings to add to
+            the container's `hosts` file.
+        dns_config (DNSConfig): Specification for DNS
+            related configurations in resolver configuration file.
+        configs (:py:class:`list`): List of :py:class:`ConfigReference` that
+            will be exposed to the service.
+        privileges (Privileges): Security options for the service's containers.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
-                 stop_grace_period=None, secrets=None, tty=None):
+                 stop_grace_period=None, secrets=None, tty=None, groups=None,
+                 open_stdin=None, read_only=None, stop_signal=None,
+                 healthcheck=None, hosts=None, dns_config=None, configs=None,
+                 privileges=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -109,8 +128,17 @@ class ContainerSpec(dict):
             self['Dir'] = workdir
         if user is not None:
             self['User'] = user
+        if groups is not None:
+            self['Groups'] = groups
+        if stop_signal is not None:
+            self['StopSignal'] = stop_signal
+        if stop_grace_period is not None:
+            self['StopGracePeriod'] = stop_grace_period
         if labels is not None:
             self['Labels'] = labels
+        if hosts is not None:
+            self['Hosts'] = format_extra_hosts(hosts)
+
         if mounts is not None:
             parsed_mounts = []
             for mount in mounts:
@@ -120,16 +148,30 @@ class ContainerSpec(dict):
                     # If mount already parsed
                     parsed_mounts.append(mount)
             self['Mounts'] = parsed_mounts
-        if stop_grace_period is not None:
-            self['StopGracePeriod'] = stop_grace_period
 
         if secrets is not None:
             if not isinstance(secrets, list):
                 raise TypeError('secrets must be a list')
             self['Secrets'] = secrets
 
+        if configs is not None:
+            if not isinstance(configs, list):
+                raise TypeError('configs must be a list')
+            self['Configs'] = configs
+
+        if dns_config is not None:
+            self['DNSConfig'] = dns_config
+        if privileges is not None:
+            self['Privileges'] = privileges
+        if healthcheck is not None:
+            self['Healthcheck'] = healthcheck
+
         if tty is not None:
             self['TTY'] = tty
+        if open_stdin is not None:
+            self['OpenStdin'] = open_stdin
+        if read_only is not None:
+            self['ReadOnly'] = read_only
 
 
 class Mount(dict):
@@ -487,6 +529,34 @@ class SecretReference(dict):
         }
 
 
+class ConfigReference(dict):
+    """
+        Config reference to be used as part of a :py:class:`ContainerSpec`.
+        Describes how a config is made accessible inside the service's
+        containers.
+
+        Args:
+            config_id (string): Config's ID
+            config_name (string): Config's name as defined at its creation.
+            filename (string): Name of the file containing the config. Defaults
+                to the config's name if not specified.
+            uid (string): UID of the config file's owner. Default: 0
+            gid (string): GID of the config file's group. Default: 0
+            mode (int): File access mode inside the container. Default: 0o444
+    """
+    @check_resource('config_id')
+    def __init__(self, config_id, config_name, filename=None, uid=None,
+                 gid=None, mode=0o444):
+        self['ConfigName'] = config_name
+        self['ConfigID'] = config_id
+        self['File'] = {
+            'Name': filename or config_name,
+            'UID': uid or '0',
+            'GID': gid or '0',
+            'Mode': mode
+        }
+
+
 class Placement(dict):
     """
         Placement constraints to be used as part of a :py:class:`TaskTemplate`
@@ -510,3 +580,75 @@ class Placement(dict):
                 self['Platforms'].append({
                     'Architecture': plat[0], 'OS': plat[1]
                 })
+
+
+class DNSConfig(dict):
+    """
+        Specification for DNS related configurations in resolver configuration
+        file (``resolv.conf``). Part of a :py:class:`ContainerSpec` definition.
+
+        Args:
+            nameservers (:py:class:`list`): The IP addresses of the name
+                servers.
+            search (:py:class:`list`): A search list for host-name lookup.
+            options (:py:class:`list`): A list of internal resolver variables
+                to be modified (e.g., ``debug``, ``ndots:3``, etc.).
+    """
+    def __init__(self, nameservers=None, search=None, options=None):
+        self['Nameservers'] = nameservers
+        self['Search'] = search
+        self['Options'] = options
+
+
+class Privileges(dict):
+    """
+        Security options for a service's containers.
+        Part of a :py:class:`ContainerSpec` definition.
+
+        Args:
+            credentialspec_file (str): Load credential spec from this file.
+                The file is read by the daemon, and must be present in the
+                CredentialSpecs subdirectory in the docker data directory,
+                which defaults to ``C:\ProgramData\Docker\`` on Windows.
+                Can not be combined with credentialspec_registry.
+
+            credentialspec_registry (str): Load credential spec from this value
+                in the Windows registry. The specified registry value must be
+                located in: ``HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+                \Virtualization\Containers\CredentialSpecs``.
+                Can not be combined with credentialspec_file.
+
+            selinux_disable (boolean): Disable SELinux
+            selinux_user (string): SELinux user label
+            selinux_role (string): SELinux role label
+            selinux_type (string): SELinux type label
+            selinux_level (string): SELinux level label
+    """
+    def __init__(self, credentialspec_file=None, credentialspec_registry=None,
+                 selinux_disable=None, selinux_user=None, selinux_role=None,
+                 selinux_type=None, selinux_level=None):
+        credential_spec = {}
+        if credentialspec_registry is not None:
+            credential_spec['Registry'] = credentialspec_registry
+        if credentialspec_file is not None:
+            credential_spec['File'] = credentialspec_file
+
+        if len(credential_spec) > 1:
+            raise errors.InvalidArgument(
+                'credentialspec_file and credentialspec_registry are mutually'
+                ' exclusive'
+            )
+
+        selinux_context = {
+            'Disable': selinux_disable,
+            'User': selinux_user,
+            'Role': selinux_role,
+            'Type': selinux_type,
+            'Level': selinux_level,
+        }
+
+        if len(credential_spec) > 0:
+            self['CredentialSpec'] = credential_spec
+
+        if len(selinux_context) > 0:
+            self['SELinuxContext'] = selinux_context
