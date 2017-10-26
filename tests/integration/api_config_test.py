@@ -9,13 +9,16 @@ from .base import BaseAPIIntegrationTest
 
 @requires_api_version('1.30')
 class ConfigAPITest(BaseAPIIntegrationTest):
-    def setUp(self):
-        super(ConfigAPITest, self).setUp()
-        self.init_swarm()
+    @classmethod
+    def setup_class(cls):
+        client = cls.get_client_instance()
+        force_leave_swarm(client)
+        cls._init_swarm(client)
 
-    def tearDown(self):
-        super(ConfigAPITest, self).tearDown()
-        force_leave_swarm(self.client)
+    @classmethod
+    def teardown_class(cls):
+        client = cls.get_client_instance()
+        force_leave_swarm(client)
 
     def test_create_config(self):
         config_id = self.client.create_config(

@@ -13,19 +13,24 @@ from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
 class ServiceTest(BaseAPIIntegrationTest):
-    def setUp(self):
-        super(ServiceTest, self).setUp()
-        force_leave_swarm(self.client)
-        self.init_swarm()
+    @classmethod
+    def setup_class(cls):
+        client = cls.get_client_instance()
+        force_leave_swarm(client)
+        cls._init_swarm(client)
+
+    @classmethod
+    def teardown_class(cls):
+        client = cls.get_client_instance()
+        force_leave_swarm(client)
 
     def tearDown(self):
-        super(ServiceTest, self).tearDown()
         for service in self.client.services(filters={'name': 'dockerpytest_'}):
             try:
                 self.client.remove_service(service['ID'])
             except docker.errors.APIError:
                 pass
-        force_leave_swarm(self.client)
+        super(ServiceTest, self).tearDown()
 
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
@@ -473,7 +478,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         secret_data = u'東方花映塚'
         secret_id = self.client.create_secret(secret_name, secret_data)
         self.tmp_secrets.append(secret_id)
-        secret_ref = docker.types.ConfigReference(secret_id, secret_name)
+        secret_ref = docker.types.SecretReference(secret_id, secret_name)
         container_spec = docker.types.ContainerSpec(
             'busybox', ['sleep', '999'], secrets=[secret_ref]
         )
@@ -481,8 +486,8 @@ class ServiceTest(BaseAPIIntegrationTest):
         name = self.get_service_name()
         svc_id = self.client.create_service(task_tmpl, name=name)
         svc_info = self.client.inspect_service(svc_id)
-        assert 'Configs' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
-        secrets = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Configs']
+        assert 'Secrets' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        secrets = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Secrets']
         assert secrets[0] == secret_ref
 
         container = self.get_service_container(name)
@@ -494,7 +499,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         container_secret = container_secret.decode('utf-8')
         assert container_secret == secret_data
 
-    @requires_api_version('1.25')
+    @requires_api_version('1.30')
     def test_create_service_with_config(self):
         config_name = 'favorite_touhou'
         config_data = b'phantasmagoria of flower view'
@@ -515,11 +520,11 @@ class ServiceTest(BaseAPIIntegrationTest):
         container = self.get_service_container(name)
         assert container is not None
         exec_id = self.client.exec_create(
-            container, 'cat /run/configs/{0}'.format(config_name)
+            container, 'cat /{0}'.format(config_name)
         )
         assert self.client.exec_start(exec_id) == config_data
 
-    @requires_api_version('1.25')
+    @requires_api_version('1.30')
     def test_create_service_with_unicode_config(self):
         config_name = 'favorite_touhou'
         config_data = u'東方花映塚'
@@ -540,7 +545,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         container = self.get_service_container(name)
         assert container is not None
         exec_id = self.client.exec_create(
-            container, 'cat /run/configs/{0}'.format(config_name)
+            container, 'cat /{0}'.format(config_name)
         )
         container_config = self.client.exec_start(exec_id)
         container_config = container_config.decode('utf-8')
@@ -618,7 +623,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         second = 1000000000
         hc = docker.types.Healthcheck(
             test='true', retries=3, timeout=1 * second,
-            start_period=3 * second, interval=second / 2,
+            start_period=3 * second, interval=int(second / 2),
         )
         container_spec = docker.types.ContainerSpec(
             BUSYBOX, ['sleep', '999'], healthcheck=hc
@@ -665,3 +670,21 @@ class ServiceTest(BaseAPIIntegrationTest):
             svc_info['Spec']['TaskTemplate']['ContainerSpec']['StopSignal'] ==
             'SIGINT'
         )
+
+    @requires_api_version('1.30')
+    def test_create_service_with_privileges(self):
+        priv = docker.types.Privileges(selinux_disable=True)
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], privileges=priv
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert (
+            'Privileges' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        )
+        privileges = (
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Privileges']
+        )
+        assert privileges['SELinuxContext']['Disable'] is True
