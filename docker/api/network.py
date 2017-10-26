@@ -223,7 +223,7 @@ class NetworkApiMixin(object):
             ipv6_address (str): The IP address of this container on the
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local
-            (IPv4/IPv6) addresses.
+                (IPv4/IPv6) addresses.
         """
         data = {
             "Container": container,
