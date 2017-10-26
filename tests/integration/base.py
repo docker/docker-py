@@ -78,13 +78,23 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
     def setUp(self):
         super(BaseAPIIntegrationTest, self).setUp()
-        self.client = docker.APIClient(
-            version=TEST_API_VERSION, timeout=60, **kwargs_from_env()
-        )
+        self.client = self.get_client_instance()
 
     def tearDown(self):
         super(BaseAPIIntegrationTest, self).tearDown()
         self.client.close()
+
+    @staticmethod
+    def get_client_instance():
+        return docker.APIClient(
+            version=TEST_API_VERSION, timeout=60, **kwargs_from_env()
+        )
+
+    @staticmethod
+    def _init_swarm(client, **kwargs):
+        return client.init_swarm(
+            '127.0.0.1', listen_addr=helpers.swarm_listen_addr(), **kwargs
+        )
 
     def run_container(self, *args, **kwargs):
         container = self.client.create_container(*args, **kwargs)
@@ -116,6 +126,4 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
         assert actual_exit_code == exit_code, msg
 
     def init_swarm(self, **kwargs):
-        return self.client.init_swarm(
-            '127.0.0.1', listen_addr=helpers.swarm_listen_addr(), **kwargs
-        )
+        return self._init_swarm(self.client, **kwargs)
