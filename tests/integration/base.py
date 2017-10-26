@@ -29,6 +29,7 @@ class BaseIntegrationTest(unittest.TestCase):
         self.tmp_networks = []
         self.tmp_plugins = []
         self.tmp_secrets = []
+        self.tmp_configs = []
 
     def tearDown(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -56,6 +57,12 @@ class BaseIntegrationTest(unittest.TestCase):
         for secret in self.tmp_secrets:
             try:
                 client.api.remove_secret(secret)
+            except docker.errors.APIError:
+                pass
+
+        for config in self.tmp_configs:
+            try:
+                client.api.remove_config(config)
             except docker.errors.APIError:
                 pass
 

@@ -473,7 +473,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         secret_data = u'東方花映塚'
         secret_id = self.client.create_secret(secret_name, secret_data)
         self.tmp_secrets.append(secret_id)
-        secret_ref = docker.types.SecretReference(secret_id, secret_name)
+        secret_ref = docker.types.ConfigReference(secret_id, secret_name)
         container_spec = docker.types.ContainerSpec(
             'busybox', ['sleep', '999'], secrets=[secret_ref]
         )
@@ -481,8 +481,8 @@ class ServiceTest(BaseAPIIntegrationTest):
         name = self.get_service_name()
         svc_id = self.client.create_service(task_tmpl, name=name)
         svc_info = self.client.inspect_service(svc_id)
-        assert 'Secrets' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
-        secrets = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Secrets']
+        assert 'Configs' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        secrets = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Configs']
         assert secrets[0] == secret_ref
 
         container = self.get_service_container(name)
@@ -493,3 +493,175 @@ class ServiceTest(BaseAPIIntegrationTest):
         container_secret = self.client.exec_start(exec_id)
         container_secret = container_secret.decode('utf-8')
         assert container_secret == secret_data
+
+    @requires_api_version('1.25')
+    def test_create_service_with_config(self):
+        config_name = 'favorite_touhou'
+        config_data = b'phantasmagoria of flower view'
+        config_id = self.client.create_config(config_name, config_data)
+        self.tmp_configs.append(config_id)
+        config_ref = docker.types.ConfigReference(config_id, config_name)
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['sleep', '999'], configs=[config_ref]
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Configs' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        configs = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Configs']
+        assert configs[0] == config_ref
+
+        container = self.get_service_container(name)
+        assert container is not None
+        exec_id = self.client.exec_create(
+            container, 'cat /run/configs/{0}'.format(config_name)
+        )
+        assert self.client.exec_start(exec_id) == config_data
+
+    @requires_api_version('1.25')
+    def test_create_service_with_unicode_config(self):
+        config_name = 'favorite_touhou'
+        config_data = u'東方花映塚'
+        config_id = self.client.create_config(config_name, config_data)
+        self.tmp_configs.append(config_id)
+        config_ref = docker.types.ConfigReference(config_id, config_name)
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['sleep', '999'], configs=[config_ref]
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Configs' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        configs = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Configs']
+        assert configs[0] == config_ref
+
+        container = self.get_service_container(name)
+        assert container is not None
+        exec_id = self.client.exec_create(
+            container, 'cat /run/configs/{0}'.format(config_name)
+        )
+        container_config = self.client.exec_start(exec_id)
+        container_config = container_config.decode('utf-8')
+        assert container_config == config_data
+
+    @requires_api_version('1.25')
+    def test_create_service_with_hosts(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['sleep', '999'], hosts={
+                'foobar': '127.0.0.1',
+                'baz': '8.8.8.8',
+            }
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Hosts' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        hosts = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Hosts']
+        assert len(hosts) == 2
+        assert 'foobar:127.0.0.1' in hosts
+        assert 'baz:8.8.8.8' in hosts
+
+    @requires_api_version('1.25')
+    def test_create_service_with_hostname(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['sleep', '999'], hostname='foobar.baz.com'
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Hostname' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert (
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Hostname'] ==
+            'foobar.baz.com'
+        )
+
+    @requires_api_version('1.25')
+    def test_create_service_with_groups(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['sleep', '999'], groups=['shrinemaidens', 'youkais']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Groups' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        groups = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Groups']
+        assert len(groups) == 2
+        assert 'shrinemaidens' in groups
+        assert 'youkais' in groups
+
+    @requires_api_version('1.25')
+    def test_create_service_with_dns_config(self):
+        dns_config = docker.types.DNSConfig(
+            nameservers=['8.8.8.8', '8.8.4.4'],
+            search=['local'], options=['debug']
+        )
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], dns_config=dns_config
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'DNSConfig' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert (
+            dns_config ==
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['DNSConfig']
+        )
+
+    @requires_api_version('1.25')
+    def test_create_service_with_healthcheck(self):
+        second = 1000000000
+        hc = docker.types.Healthcheck(
+            test='true', retries=3, timeout=1 * second,
+            start_period=3 * second, interval=second / 2,
+        )
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], healthcheck=hc
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert (
+            'Healthcheck' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        )
+        assert (
+            hc ==
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Healthcheck']
+        )
+
+    @requires_api_version('1.28')
+    def test_create_service_with_readonly(self):
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], read_only=True
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert (
+            'ReadOnly' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        )
+        assert svc_info['Spec']['TaskTemplate']['ContainerSpec']['ReadOnly']
+
+    @requires_api_version('1.28')
+    def test_create_service_with_stop_signal(self):
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], stop_signal='SIGINT'
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert (
+            'StopSignal' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        )
+        assert (
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['StopSignal'] ==
+            'SIGINT'
+        )
