@@ -201,7 +201,8 @@ class ServiceCollection(Collection):
 
         Args:
             filters (dict): Filters to process on the nodes list. Valid
-                filters: ``id`` and ``name``. Default: ``None``.
+                filters: ``id``, ``name`` , ``label`` and ``mode``.
+                Default: ``None``.
 
         Returns:
             (list of :py:class:`Service`): The services.
