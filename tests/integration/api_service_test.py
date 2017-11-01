@@ -52,7 +52,7 @@ class ServiceTest(BaseAPIIntegrationTest):
                 return None
             time.sleep(interval)
 
-    def create_simple_service(self, name=None):
+    def create_simple_service(self, name=None, labels=None):
         if name:
             name = 'dockerpytest_{0}'.format(name)
         else:
@@ -62,7 +62,9 @@ class ServiceTest(BaseAPIIntegrationTest):
             BUSYBOX, ['echo', 'hello']
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
-        return name, self.client.create_service(task_tmpl, name=name)
+        return name, self.client.create_service(
+            task_tmpl, name=name, labels=labels
+        )
 
     @requires_api_version('1.24')
     def test_list_services(self):
@@ -75,6 +77,15 @@ class ServiceTest(BaseAPIIntegrationTest):
         test_services = self.client.services(filters={'name': 'dockerpytest_'})
         assert len(test_services) == 1
         assert 'dockerpytest_' in test_services[0]['Spec']['Name']
+
+    @requires_api_version('1.24')
+    def test_list_services_filter_by_label(self):
+        test_services = self.client.services(filters={'label': 'test_label'})
+        assert len(test_services) == 0
+        self.create_simple_service(labels={'test_label': 'testing'})
+        test_services = self.client.services(filters={'label': 'test_label'})
+        assert len(test_services) == 1
+        assert test_services[0]['Spec']['Labels']['test_label'] == 'testing'
 
     def test_inspect_service_by_id(self):
         svc_name, svc_id = self.create_simple_service()
