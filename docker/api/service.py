@@ -201,7 +201,8 @@ class ServiceApiMixin(object):
 
         Args:
             filters (dict): Filters to process on the nodes list. Valid
-                filters: ``id`` and ``name``. Default: ``None``.
+                filters: ``id``, ``name`` , ``label`` and ``mode``.
+                Default: ``None``.
 
         Returns:
             A list of dictionaries containing data about each service.
