@@ -8,8 +8,8 @@ from docker import errors
 import pytest
 import six
 
-from .base import BaseAPIIntegrationTest
-from ..helpers import requires_api_version, requires_experimental
+from .base import BaseAPIIntegrationTest, BUSYBOX
+from ..helpers import random_name, requires_api_version, requires_experimental
 
 
 class BuildTest(BaseAPIIntegrationTest):
@@ -214,21 +214,31 @@ class BuildTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.25')
     def test_build_with_network_mode(self):
+        # Set up pingable endpoint on custom network
+        network = self.client.create_network(random_name())['Id']
+        self.tmp_networks.append(network)
+        container = self.client.create_container(BUSYBOX, 'top')
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        self.client.connect_container_to_network(
+            container, network, aliases=['pingtarget.docker']
+        )
+
         script = io.BytesIO('\n'.join([
             'FROM busybox',
-            'RUN wget http://google.com'
+            'RUN ping -c1 pingtarget.docker'
         ]).encode('ascii'))
 
         stream = self.client.build(
-            fileobj=script, network_mode='bridge',
-            tag='dockerpytest_bridgebuild'
+            fileobj=script, network_mode=network,
+            tag='dockerpytest_customnetbuild'
         )
 
-        self.tmp_imgs.append('dockerpytest_bridgebuild')
+        self.tmp_imgs.append('dockerpytest_customnetbuild')
         for chunk in stream:
-            pass
+            print chunk
 
-        assert self.client.inspect_image('dockerpytest_bridgebuild')
+        assert self.client.inspect_image('dockerpytest_customnetbuild')
 
         script.seek(0)
         stream = self.client.build(
@@ -260,7 +270,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag=img_name,
             extra_hosts={
                 'extrahost.local.test': '127.0.0.1',
-                'hello.world.test': '8.8.8.8',
+                'hello.world.test': '127.0.0.1',
             }, decode=True
         )
         for chunk in stream:
@@ -274,7 +284,7 @@ class BuildTest(BaseAPIIntegrationTest):
         if six.PY3:
             logs = logs.decode('utf-8')
         assert '127.0.0.1\textrahost.local.test' in logs
-        assert '8.8.8.8\thello.world.test' in logs
+        assert '127.0.0.1\thello.world.test' in logs
 
     @requires_experimental(until=None)
     @requires_api_version('1.25')
