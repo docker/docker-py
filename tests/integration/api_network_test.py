@@ -50,13 +50,13 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="172.28.0.0/16",
-                        iprange="172.28.5.0/24",
-                        gateway="172.28.5.254",
+                        subnet='172.28.0.0/16',
+                        iprange='172.28.5.0/24',
+                        gateway='172.28.5.254',
                         aux_addresses={
-                            "a": "172.28.1.5",
-                            "b": "172.28.1.6",
-                            "c": "172.28.1.7",
+                            'a': '172.28.1.5',
+                            'b': '172.28.1.6',
+                            'c': '172.28.1.7',
                         },
                     ),
                 ],
@@ -71,13 +71,13 @@ class TestNetworks(BaseAPIIntegrationTest):
         assert ipam['Driver'] == 'default'
 
         assert ipam['Config'] == [{
-            'Subnet': "172.28.0.0/16",
-            'IPRange': "172.28.5.0/24",
-            'Gateway': "172.28.5.254",
+            'Subnet': '172.28.0.0/16',
+            'IPRange': '172.28.5.0/24',
+            'Gateway': '172.28.5.254',
             'AuxiliaryAddresses': {
-                "a": "172.28.1.5",
-                "b": "172.28.1.6",
-                "c": "172.28.1.7",
+                'a': '172.28.1.5',
+                'b': '172.28.1.6',
+                'c': '172.28.1.7',
             },
         }]
 
@@ -218,7 +218,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network(
             ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[IPAMPool(subnet="132.124.0.0/16")],
+                pool_configs=[IPAMPool(subnet='132.124.0.0/16')],
             ),
         )
         container = self.client.create_container(
@@ -247,7 +247,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network(
             ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[IPAMPool(subnet="2001:389::1/64")],
+                pool_configs=[IPAMPool(subnet='2001:389::1/64')],
             ),
         )
         container = self.client.create_container(
@@ -325,6 +325,12 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_id = self.client.create_network(net_name, check_duplicate=False)
         self.tmp_networks.append(net_id['Id'])
 
+    @requires_api_version('1.21')
+    def test_create_check_duplicate_with_default_param(self):
+        net_name, net_od = self.create_network()
+        with self.assertRaises(docker.errors.APIError):
+            self.client.create_network(net_name)
+
     @requires_api_version('1.22')
     def test_connect_with_links(self):
         net_name, net_id = self.create_network()
@@ -356,8 +362,8 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="172.28.0.0/16", iprange="172.28.5.0/24",
-                        gateway="172.28.5.254"
+                        subnet='172.28.0.0/16', iprange='172.28.5.0/24',
+                        gateway='172.28.5.254'
                     )
                 ]
             )
@@ -384,8 +390,8 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="2001:389::1/64", iprange="2001:389::0/96",
-                        gateway="2001:389::ffff"
+                        subnet='2001:389::1/64', iprange='2001:389::0/96',
+                        gateway='2001:389::ffff'
                     )
                 ]
             )
@@ -436,8 +442,8 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="2001:389::1/64", iprange="2001:389::0/96",
-                        gateway="2001:389::ffff"
+                        subnet='2001:389::1/64', iprange='2001:389::0/96',
+                        gateway='2001:389::ffff'
                     )
                 ]
             )
