@@ -102,15 +102,19 @@ class NetworkCollection(Collection):
             name (str): Name of the network
             driver (str): Name of the driver used to create the network
             options (dict): Driver options as a key-value dictionary
-            ipam (dict): Optional custom IP scheme for the network.
-                Created with :py:class:`~docker.types.IPAMConfig`.
+            ipam (IPAMConfig): Optional custom IP scheme for the network.
             check_duplicate (bool): Request daemon to check for networks with
-                same name. Default: ``True``.
+                same name. Default: ``None``.
             internal (bool): Restrict external access to the network. Default
                 ``False``.
             labels (dict): Map of labels to set on the network. Default
                 ``None``.
             enable_ipv6 (bool): Enable IPv6 on the network. Default ``False``.
+            attachable (bool): If enabled, and the network is in the global
+                scope,  non-service containers on worker nodes will be able to
+                connect to the network.
+            scope (str): Specify the network's scope (``local``, ``global`` or
+                ``swarm``)
             ingress (bool): If set, create an ingress network which provides
                 the routing-mesh in swarm mode.
 
@@ -155,6 +159,10 @@ class NetworkCollection(Collection):
 
         Args:
             network_id (str): The ID of the network.
+            verbose (bool): Retrieve the service details across the cluster in
+                swarm mode.
+            scope (str): Filter the network by scope (``swarm``, ``global``
+                or ``local``).
 
         Returns:
             (:py:class:`Network`) The network.
