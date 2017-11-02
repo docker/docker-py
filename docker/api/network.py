@@ -61,6 +61,8 @@ class NetworkApiMixin(object):
             attachable (bool): If enabled, and the network is in the global
                 scope,  non-service containers on worker nodes will be able to
                 connect to the network.
+            scope (str): Specify the network's scope (``local``, ``global`` or
+                ``swarm``)
             ingress (bool): If set, create an ingress network which provides
                 the routing-mesh in swarm mode.
 
@@ -140,6 +142,13 @@ class NetworkApiMixin(object):
 
             data['Ingress'] = ingress
 
+        if scope is not None:
+            if version_lt(self._version, '1.30'):
+                raise InvalidVersion(
+                    'scope is not supported in API version < 1.30'
+                )
+            data['Scope'] = scope
+
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)
         return self._result(res, json=True)
@@ -181,7 +190,7 @@ class NetworkApiMixin(object):
 
     @minimum_version('1.21')
     @check_resource('net_id')
-    def inspect_network(self, net_id, verbose=None):
+    def inspect_network(self, net_id, verbose=None, scope=None):
         """
         Get detailed information about a network.
 
@@ -189,12 +198,18 @@ class NetworkApiMixin(object):
             net_id (str): ID of network
             verbose (bool): Show the service details across the cluster in
                 swarm mode.
+            scope (str): Filter the network by scope (``swarm``, ``global``
+                or ``local``).
         """
         params = {}
         if verbose is not None:
             if version_lt(self._version, '1.28'):
                 raise InvalidVersion('verbose was introduced in API 1.28')
             params['verbose'] = verbose
+        if scope is not None:
+            if version_lt(self._version, '1.31'):
+                raise InvalidVersion('scope was introduced in API 1.31')
+            params['scope'] = scope
 
         url = self._url("/networks/{0}", net_id)
         res = self._get(url, params=params)

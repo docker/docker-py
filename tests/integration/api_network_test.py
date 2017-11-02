@@ -465,3 +465,22 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, _ = self.create_network()
         result = self.client.prune_networks()
         assert net_name in result['NetworksDeleted']
+
+    @requires_api_version('1.31')
+    def test_create_inspect_network_with_scope(self):
+        assert self.init_swarm()
+        net_name_loc, net_id_loc = self.create_network(scope='local')
+
+        assert self.client.inspect_network(net_name_loc)
+        assert self.client.inspect_network(net_name_loc, scope='local')
+        with pytest.raises(docker.errors.NotFound):
+            self.client.inspect_network(net_name_loc, scope='global')
+
+        net_name_swarm, net_id_swarm = self.create_network(
+            driver='overlay', scope='swarm'
+        )
+
+        assert self.client.inspect_network(net_name_swarm)
+        assert self.client.inspect_network(net_name_swarm, scope='swarm')
+        with pytest.raises(docker.errors.NotFound):
+            self.client.inspect_network(net_name_swarm, scope='local')
