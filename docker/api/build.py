@@ -93,8 +93,8 @@ class BuildApiMixin(object):
             shmsize (int): Size of `/dev/shm` in bytes. The size must be
                 greater than 0. If omitted the system uses 64MB
             labels (dict): A dictionary of labels to set on the image
-            cache_from (list): A list of images used for build cache
-                resolution
+            cache_from (:py:class:`list`): A list of images used for build
+                cache resolution
             target (str): Name of the build-stage to build in a multi-stage
                 Dockerfile
             network_mode (str): networking mode for the run commands during

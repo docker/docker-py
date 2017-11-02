@@ -405,8 +405,9 @@ class DriverConfig(dict):
     """
     Indicates which driver to use, as well as its configuration. Can be used
     as ``log_driver`` in a :py:class:`~docker.types.ContainerSpec`,
-    and for the `driver_config` in a volume
-    :py:class:`~docker.types.Mount`.
+    for the `driver_config` in a volume :py:class:`~docker.types.Mount`, or
+    as the driver object in
+    :py:meth:`create_secret`.
 
     Args:
 
@@ -562,12 +563,12 @@ class Placement(dict):
         Placement constraints to be used as part of a :py:class:`TaskTemplate`
 
         Args:
-            constraints (list): A list of constraints
-            preferences (list): Preferences provide a way to make the
-                scheduler aware of factors such as topology. They are provided
-                in order from highest to lowest precedence.
-            platforms (list): A list of platforms expressed as ``(arch, os)``
-                tuples
+            constraints (:py:class:`list`): A list of constraints
+            preferences (:py:class:`list`): Preferences provide a way to make
+                the scheduler aware of factors such as topology. They are
+                provided in order from highest to lowest precedence.
+            platforms (:py:class:`list`): A list of platforms expressed as
+                ``(arch, os)`` tuples
     """
     def __init__(self, constraints=None, preferences=None, platforms=None):
         if constraints is not None:

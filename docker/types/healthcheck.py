@@ -8,14 +8,15 @@ class Healthcheck(DictType):
         Defines a healthcheck configuration for a container or service.
 
         Args:
-
             test (:py:class:`list` or str): Test to perform to determine
                 container health. Possible values:
-                    - Empty list: Inherit healthcheck from parent image
-                    - ``["NONE"]``: Disable healthcheck
-                    - ``["CMD", args...]``: exec arguments directly.
-                    - ``["CMD-SHELL", command]``: RUn command in the system's
-                      default shell.
+
+                - Empty list: Inherit healthcheck from parent image
+                - ``["NONE"]``: Disable healthcheck
+                - ``["CMD", args...]``: exec arguments directly.
+                - ``["CMD-SHELL", command]``: RUn command in the system's
+                  default shell.
+
                 If a string is provided, it will be used as a ``CMD-SHELL``
                 command.
             interval (int): The time to wait between checks in nanoseconds. It
