@@ -59,6 +59,25 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
         return UnixHTTPResponse(sock, *args, **kwargs)
 
 
+class AttachHTTPResponse(httplib.HTTPResponse):
+    '''
+    A HTTPResponse object that doesn't use a buffered fileobject.
+    '''
+    def __init__(self, sock, *args, **kwargs):
+        # Delegate to super class
+        httplib.HTTPResponse.__init__(self, sock, *args, **kwargs)
+
+        # Override fp with a fileobject that doesn't buffer
+        self.fp = sock.makefile('rb', 0)
+
+
+class AttachUnixHTTPConnection(UnixHTTPConnection):
+    '''
+    A HTTPConnection that returns responses that don't used buffering.
+    '''
+    response_class = AttachHTTPResponse
+
+
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     def __init__(self, base_url, socket_path, timeout=60, maxsize=10):
         super(UnixHTTPConnectionPool, self).__init__(
@@ -69,9 +88,17 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         self.timeout = timeout
 
     def _new_conn(self):
-        return UnixHTTPConnection(
-            self.base_url, self.socket_path, self.timeout
-        )
+        # Special case for attach url, as we do a http upgrade to tcp and
+        # a buffered connection can cause data loss.
+        path = urllib3.util.parse_url(self.base_url).path
+        if path.endswith('attach'):
+            return AttachUnixHTTPConnection(
+                self.base_url, self.socket_path, self.timeout
+            )
+        else:
+            return UnixHTTPConnection(
+                self.base_url, self.socket_path, self.timeout
+            )
 
 
 class UnixAdapter(requests.adapters.HTTPAdapter):
