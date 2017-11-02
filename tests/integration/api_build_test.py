@@ -236,7 +236,7 @@ class BuildTest(BaseAPIIntegrationTest):
 
         self.tmp_imgs.append('dockerpytest_customnetbuild')
         for chunk in stream:
-            print chunk
+            pass
 
         assert self.client.inspect_image('dockerpytest_customnetbuild')
 
