@@ -27,19 +27,19 @@ test: flake8 unit-test unit-test-py3 integration-dind integration-dind-ssl
 
 .PHONY: unit-test
 unit-test: build
-	docker run --rm docker-sdk-python py.test tests/unit
+	docker run -t --rm docker-sdk-python py.test tests/unit
 
 .PHONY: unit-test-py3
 unit-test-py3: build-py3
-	docker run --rm docker-sdk-python3 py.test tests/unit
+	docker run -t --rm docker-sdk-python3 py.test tests/unit
 
 .PHONY: integration-test
 integration-test: build
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python py.test tests/integration/${file}
+	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python py.test -v tests/integration/${file}
 
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
+	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
 
 TEST_API_VERSION ?= 1.30
 TEST_ENGINE_VERSION ?= 17.06.0-ce
@@ -49,9 +49,9 @@ integration-dind: build build-py3
 	docker rm -vf dpy-dind || :
 	docker run -d --name dpy-dind --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd\
 		-H tcp://0.0.0.0:2375 --experimental
-	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
+	docker run -t --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--link=dpy-dind:docker docker-sdk-python py.test tests/integration
-	docker run --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
+	docker run -t --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--link=dpy-dind:docker docker-sdk-python3 py.test tests/integration
 	docker rm -vf dpy-dind
 
@@ -63,21 +63,21 @@ integration-dind-ssl: build-dind-certs build build-py3
 		-v /tmp --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd --tlsverify\
 		--tlscacert=/certs/ca.pem --tlscert=/certs/server-cert.pem\
 		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375 --experimental
-	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
+	docker run -t --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
 		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--link=dpy-dind-ssl:docker docker-sdk-python py.test tests/integration
-	docker run --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
+	docker run -t --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
 		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--link=dpy-dind-ssl:docker docker-sdk-python3 py.test tests/integration
 	docker rm -vf dpy-dind-ssl dpy-dind-certs
 
 .PHONY: flake8
 flake8: build
-	docker run --rm docker-sdk-python flake8 docker tests
+	docker run -t --rm docker-sdk-python flake8 docker tests
 
 .PHONY: docs
 docs: build-docs
-	docker run --rm -it -v `pwd`:/src docker-sdk-python-docs sphinx-build docs docs/_build
+	docker run --rm -t -v `pwd`:/src docker-sdk-python-docs sphinx-build docs docs/_build
 
 .PHONY: shell
 shell: build
