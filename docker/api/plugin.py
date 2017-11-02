@@ -110,8 +110,8 @@ class PluginApiMixin(object):
                 remote (string): Remote reference for the plugin to install.
                     The ``:latest`` tag is optional, and is the default if
                     omitted.
-                privileges (list): A list of privileges the user consents to
-                    grant to the plugin. Can be retrieved using
+                privileges (:py:class:`list`): A list of privileges the user
+                    consents to grant to the plugin. Can be retrieved using
                     :py:meth:`~plugin_privileges`.
                 name (string): Local name for the pulled plugin. The
                     ``:latest`` tag is optional, and is the default if omitted.
@@ -225,8 +225,8 @@ class PluginApiMixin(object):
                     tag is optional and is the default if omitted.
                 remote (string): Remote reference to upgrade to. The
                     ``:latest`` tag is optional and is the default if omitted.
-                privileges (list): A list of privileges the user consents to
-                    grant to the plugin. Can be retrieved using
+                privileges (:py:class:`list`): A list of privileges the user
+                    consents to grant to the plugin. Can be retrieved using
                     :py:meth:`~plugin_privileges`.
 
             Returns:
