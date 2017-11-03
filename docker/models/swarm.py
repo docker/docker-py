@@ -1,6 +1,5 @@
 from docker.api import APIClient
 from docker.errors import APIError
-from docker.types import SwarmSpec
 from .resource import Model
 
 
@@ -72,6 +71,18 @@ class Swarm(Model):
                 to an external certificate authority. Use
                 ``docker.types.SwarmExternalCA``.
             name (string): Swarm's name
+            labels (dict): User-defined key/value metadata.
+            signing_ca_cert (str): The desired signing CA certificate for all
+                swarm node TLS leaf certificates, in PEM format.
+            signing_ca_key (str): The desired signing CA key for all swarm
+                node TLS leaf certificates, in PEM format.
+            ca_force_rotate (int): An integer whose purpose is to force swarm
+                to generate a new signing CA certificate and key, if none have
+                been specified.
+            autolock_managers (boolean): If set, generate a key and use it to
+                lock data stored on the managers.
+            log_driver (DriverConfig): The default log driver to use for tasks
+                created in the orchestrator.
 
         Returns:
             ``True`` if the request went through.
@@ -94,7 +105,7 @@ class Swarm(Model):
             'listen_addr': listen_addr,
             'force_new_cluster': force_new_cluster
         }
-        init_kwargs['swarm_spec'] = SwarmSpec(**kwargs)
+        init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
         self.client.api.init_swarm(**init_kwargs)
         self.reload()
 
@@ -143,7 +154,7 @@ class Swarm(Model):
 
         return self.client.api.update_swarm(
             version=self.version,
-            swarm_spec=SwarmSpec(**kwargs),
+            swarm_spec=self.client.api.create_swarm_spec(**kwargs),
             rotate_worker_token=rotate_worker_token,
             rotate_manager_token=rotate_manager_token
         )

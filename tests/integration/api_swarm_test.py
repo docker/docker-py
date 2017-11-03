@@ -45,6 +45,44 @@ class SwarmTest(BaseAPIIntegrationTest):
         assert swarm_info['Spec']['Raft']['SnapshotInterval'] == 5000
         assert swarm_info['Spec']['Raft']['LogEntriesForSlowFollowers'] == 1200
 
+    @requires_api_version('1.30')
+    def test_init_swarm_with_ca_config(self):
+        spec = self.client.create_swarm_spec(
+            node_cert_expiry=7776000000000000, ca_force_rotate=6000000000000
+        )
+
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+        assert swarm_info['Spec']['CAConfig']['NodeCertExpiry'] == (
+            spec['CAConfig']['NodeCertExpiry']
+        )
+        assert swarm_info['Spec']['CAConfig']['ForceRotate'] == (
+            spec['CAConfig']['ForceRotate']
+        )
+
+    @requires_api_version('1.25')
+    def test_init_swarm_with_autolock_managers(self):
+        spec = self.client.create_swarm_spec(autolock_managers=True)
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+
+        assert (
+            swarm_info['Spec']['EncryptionConfig']['AutoLockManagers'] is True
+        )
+
+    @requires_api_version('1.25')
+    @pytest.mark.xfail(
+        reason="This doesn't seem to be taken into account by the engine"
+    )
+    def test_init_swarm_with_log_driver(self):
+        spec = {'TaskDefaults': {'LogDriver': {'Name': 'syslog'}}}
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+
+        assert swarm_info['Spec']['TaskDefaults']['LogDriver']['Name'] == (
+            'syslog'
+        )
+
     @requires_api_version('1.24')
     def test_leave_swarm(self):
         assert self.init_swarm()

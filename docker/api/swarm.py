@@ -9,8 +9,8 @@ class SwarmApiMixin(object):
 
     def create_swarm_spec(self, *args, **kwargs):
         """
-        Create a ``docker.types.SwarmSpec`` instance that can be used as the
-        ``swarm_spec`` argument in
+        Create a :py:class:`docker.types.SwarmSpec` instance that can be used
+        as the ``swarm_spec`` argument in
         :py:meth:`~docker.api.swarm.SwarmApiMixin.init_swarm`.
 
         Args:
@@ -29,13 +29,25 @@ class SwarmApiMixin(object):
             dispatcher_heartbeat_period (int):  The delay for an agent to send
                 a heartbeat to the dispatcher.
             node_cert_expiry (int): Automatic expiry for nodes certificates.
-            external_ca (dict): Configuration for forwarding signing requests
-                to an external certificate authority. Use
-                ``docker.types.SwarmExternalCA``.
+            external_cas (:py:class:`list`): Configuration for forwarding
+                signing requests to an external certificate authority. Use
+                a list of :py:class:`docker.types.SwarmExternalCA`.
             name (string): Swarm's name
+            labels (dict): User-defined key/value metadata.
+            signing_ca_cert (str): The desired signing CA certificate for all
+                swarm node TLS leaf certificates, in PEM format.
+            signing_ca_key (str): The desired signing CA key for all swarm
+                node TLS leaf certificates, in PEM format.
+            ca_force_rotate (int): An integer whose purpose is to force swarm
+                to generate a new signing CA certificate and key, if none have
+                been specified.
+            autolock_managers (boolean): If set, generate a key and use it to
+                lock data stored on the managers.
+            log_driver (DriverConfig): The default log driver to use for tasks
+                created in the orchestrator.
 
         Returns:
-            ``docker.types.SwarmSpec`` instance.
+            :py:class:`docker.types.SwarmSpec`
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -51,7 +63,10 @@ class SwarmApiMixin(object):
               force_new_cluster=False, swarm_spec=spec
             )
         """
-        return types.SwarmSpec(*args, **kwargs)
+        ext_ca = kwargs.pop('external_ca', None)
+        if ext_ca:
+            kwargs['external_cas'] = [ext_ca]
+        return types.SwarmSpec(self._version, *args, **kwargs)
 
     @utils.minimum_version('1.24')
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
