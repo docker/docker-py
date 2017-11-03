@@ -147,5 +147,7 @@ Configuration types
 .. autoclass:: RestartPolicy
 .. autoclass:: SecretReference
 .. autoclass:: ServiceMode
+.. autoclass:: SwarmExternalCA
+.. autoclass:: SwarmSpec(*args, **kwargs)
 .. autoclass:: TaskTemplate
 .. autoclass:: UpdateConfig
