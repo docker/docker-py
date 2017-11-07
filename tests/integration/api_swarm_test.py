@@ -13,6 +13,13 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     def tearDown(self):
         super(SwarmTest, self).tearDown()
+        try:
+            unlock_key = self.client.get_unlock_key()
+            if unlock_key.get('UnlockKey'):
+                self.unlock_swarm(unlock_key)
+        except docker.errors.APIError:
+            pass
+
         force_leave_swarm(self.client)
 
     @requires_api_version('1.24')
@@ -69,6 +76,9 @@ class SwarmTest(BaseAPIIntegrationTest):
         assert (
             swarm_info['Spec']['EncryptionConfig']['AutoLockManagers'] is True
         )
+
+        unlock_key = self.get_unlock_key()
+        assert unlock_key.get('UnlockKey')
 
     @requires_api_version('1.25')
     @pytest.mark.xfail(

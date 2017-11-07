@@ -1,7 +1,9 @@
 import logging
 from six.moves import http_client
+from .. import errors
 from .. import types
 from .. import utils
+
 log = logging.getLogger(__name__)
 
 
@@ -67,6 +69,16 @@ class SwarmApiMixin(object):
         if ext_ca:
             kwargs['external_cas'] = [ext_ca]
         return types.SwarmSpec(self._version, *args, **kwargs)
+
+    @utils.minimum_version('1.24')
+    def get_unlock_key(self):
+        """
+            Get the unlock key for this Swarm manager.
+
+            Returns:
+                A ``dict`` containing an ``UnlockKey`` member
+        """
+        return self._result(self._get(self._url('/swarm/unlockkey')), True)
 
     @utils.minimum_version('1.24')
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
@@ -271,9 +283,45 @@ class SwarmApiMixin(object):
         return True
 
     @utils.minimum_version('1.24')
+    def unlock_swarm(self, key):
+        """
+            Unlock a locked swarm.
+
+            Args:
+                key (string): The unlock key as provided by
+                    :py:meth:`get_unlock_key`
+
+            Raises:
+                :py:class:`docker.errors.InvalidArgument`
+                    If the key argument is in an incompatible format
+
+                :py:class:`docker.errors.APIError`
+                    If the server returns an error.
+
+            Returns:
+                `True` if the request was successful.
+
+            Example:
+
+                >>> key = client.get_unlock_key()
+                >>> client.unlock_node(key)
+
+        """
+        if isinstance(key, dict):
+            if 'UnlockKey' not in key:
+                raise errors.InvalidArgument('Invalid unlock key format')
+        else:
+            key = {'UnlockKey': key}
+
+        url = self._url('/swarm/unlock')
+        res = self._post_json(url, data=key)
+        self._raise_for_status(res)
+        return True
+
+    @utils.minimum_version('1.24')
     def update_node(self, node_id, version, node_spec=None):
         """
-        Update the Node's configuration
+        Update the node's configuration
 
         Args:
 
