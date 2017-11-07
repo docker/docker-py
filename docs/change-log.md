@@ -1,6 +1,50 @@
 Change log
 ==========
 
+2.6.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/34?closed=1)
+
+### Features
+
+* Added support for `mounts` in `APIClient.create_host_config` and
+  `DockerClient.containers.run`
+* Added support for `consistency`, `tmpfs_size` and `tmpfs_mode` when
+  creating mount objects.
+* `Mount` objects now support the `tmpfs` and `npipe` types.
+* Added support for `extra_hosts` in the `build` methods.
+* Added support for the configs API:
+    * In `APIClient`: `create_config`, `inspect_config`, `remove_config`,
+      `configs`
+    * In `DockerClient`: `configs.create`, `configs.get`, `configs.list` and
+      the `Config` model.
+    * Added `configs` parameter to `ContainerSpec`. Each item in the `configs`
+      list must be a `docker.types.ConfigReference` instance.
+* Added support for the following parameters when creating a `ContainerSpec`
+  object: `groups`, `open_stdin`, `read_only`, `stop_signal`, `helathcheck`,
+  `hosts`, `ns_config`, `configs`, `privileges`.
+* Added the following configuration classes to `docker.types`:
+  `ConfigReference`, `DNSConfig`, `Privileges`, `SwarmExternalCA`.
+* Added support for `driver` in `APIClient.create_secret` and
+  `DockerClient.secrets.create`.
+* Added support for `scope` in `APIClient.inspect_network` and
+  `APIClient.create_network`, and their `DockerClient` equivalent.
+* Added support for the following parameters to `create_swarm_spec`:
+  `external_cas`, `labels`, `signing_ca_cert`, `signing_ca_key`,
+  `ca_force_rotate`, `autolock_managers`, `log_driver`. These additions
+  also apply to `DockerClient.swarm.init`.
+* Added support for `insert_defaults` in `APIClient.inspect_service` and
+  `DockerClient.services.get`.
+
+### Bugfixes
+
+* Fixed a bug where reading a 0-length frame in log streams would incorrectly
+  interrupt streaming.
+* Fixed a bug where the `id` member on `Swarm` objects wasn't being populated.
+* Fixed a bug that would cause some data at the beginning of an upgraded
+  connection stream (`attach`, `exec_run`) to disappear.
+
 2.5.1
 -----
 
