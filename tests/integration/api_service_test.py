@@ -99,6 +99,17 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'ID' in svc_info
         assert svc_info['ID'] == svc_id['ID']
 
+    @requires_api_version('1.29')
+    def test_inspect_service_insert_defaults(self):
+        svc_name, svc_id = self.create_simple_service()
+        svc_info = self.client.inspect_service(svc_id)
+        svc_info_defaults = self.client.inspect_service(
+            svc_id, insert_defaults=True
+        )
+        assert svc_info != svc_info_defaults
+        assert 'RollbackConfig' in svc_info_defaults['Spec']
+        assert 'RollbackConfig' not in svc_info['Spec']
+
     def test_remove_service_by_id(self):
         svc_name, svc_id = self.create_simple_service()
         assert self.client.remove_service(svc_id)
