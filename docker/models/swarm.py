@@ -29,6 +29,10 @@ class Swarm(Model):
         """
         return self.attrs.get('Version').get('Index')
 
+    def get_unlock_key(self):
+        return self.client.api.get_unlock_key()
+    get_unlock_key.__doc__ = APIClient.get_unlock_key.__doc__
+
     def init(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
              force_new_cluster=False, **kwargs):
         """
@@ -127,6 +131,10 @@ class Swarm(Model):
                 If the server returns an error.
         """
         self.attrs = self.client.api.inspect_swarm()
+
+    def unlock(self, key):
+        return self.client.api.unlock_swarm(key)
+    unlock.__doc__ = APIClient.unlock_swarm.__doc__
 
     def update(self, rotate_worker_token=False, rotate_manager_token=False,
                **kwargs):
