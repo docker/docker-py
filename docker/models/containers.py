@@ -149,10 +149,14 @@ class Container(Model):
                 ``{"PASSWORD": "xxx"}``.
 
         Returns:
-            (generator or str):
-                If ``stream=True``, a generator yielding response chunks.
-                If ``socket=True``, a socket object for the connection.
-                A string containing response data otherwise.
+            dict:
+                output: (generator or str):
+                    If ``stream=True``, a generator yielding response chunks.
+                    If ``socket=True``, a socket object for the connection.
+                    A string containing response data otherwise.
+                exit_code: (int):
+                    Exited code of execution
+
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
@@ -161,9 +165,16 @@ class Container(Model):
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
             privileged=privileged, user=user, environment=environment
         )
-        return self.client.api.exec_start(
+        exec_output = self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
         )
+        exit_code = 0
+        if stream is False:
+            exit_code = self.client.api.exec_inspect(resp['Id'])['ExitCode']
+        return {
+            'exit_code': exit_code,
+            'output': exec_output
+        }
 
     def export(self):
         """
