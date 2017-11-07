@@ -142,15 +142,16 @@ class Container(Model):
             detach (bool): If true, detach from the exec command.
                 Default: False
             stream (bool): Stream response data. Default: False
-            socket (bool): Whether to return a socket object or not. Default: False
+            socket (bool): Return the connection socket to allow custom
+                read/write operations. Default: False
             environment (dict or list): A dictionary or a list of strings in
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
 
         Returns:
-            (generator or str): 
+            (generator or str):
                 If ``stream=True``, a generator yielding response chunks.
-                If ``socket=True``, a socket object of the connection (an SSL wrapped socket for TLS-based docker, on which one must call ``sendall`` and ``recv`` -- and **not** os.read / os.write).
+                If ``socket=True``, a socket object for the connection.
                 A string containing response data otherwise.
         Raises:
             :py:class:`docker.errors.APIError`

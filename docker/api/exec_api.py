@@ -122,10 +122,13 @@ class ExecApiMixin(object):
                 Default: False
             tty (bool): Allocate a pseudo-TTY. Default: False
             stream (bool): Stream response data. Default: False
+            socket (bool): Return the connection socket to allow custom
+                read/write operations.
 
         Returns:
             (generator or str): If ``stream=True``, a generator yielding
-            response chunks. A string containing response data otherwise.
+            response chunks. If ``socket=True``, a socket object for the
+            connection. A string containing response data otherwise.
 
         Raises:
             :py:class:`docker.errors.APIError`
