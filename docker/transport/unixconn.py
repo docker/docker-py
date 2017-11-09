@@ -21,13 +21,12 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 class UnixHTTPResponse(httplib.HTTPResponse, object):
     def __init__(self, sock, *args, **kwargs):
         disable_buffering = kwargs.pop('disable_buffering', False)
+        if six.PY2:
+            # FIXME: We may need to disable buffering on Py3 as well,
+            # but there's no clear way to do it at the moment. See:
+            # https://github.com/docker/docker-py/issues/1799
+            kwargs['buffering'] = not disable_buffering
         super(UnixHTTPResponse, self).__init__(sock, *args, **kwargs)
-        if disable_buffering is True:
-            # We must first create a new pointer then close the old one
-            # to avoid closing the underlying socket.
-            new_fp = sock.makefile('rb', 0)
-            self.fp.close()
-            self.fp = new_fp
 
 
 class UnixHTTPConnection(httplib.HTTPConnection, object):

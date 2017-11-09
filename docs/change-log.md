@@ -1,10 +1,21 @@
 Change log
 ==========
 
+2.6.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/40?closed=1)
+
+### Bugfixes
+
+* Fixed a bug on Python 3 installations preventing the use of the `attach` and
+  `exec_run` methods.
+
+
 2.6.0
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/34?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/38?closed=1)
 
 ### Features
 
