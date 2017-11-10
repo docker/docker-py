@@ -521,7 +521,9 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert len(task_template['Networks']) > 0
         assert task_template['Networks'][0]['Target'] == net1['Id']
 
-        task_tmpl = docker.types.TaskTemplate(container_spec, networks=[net2['Id']])
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, networks=[net2['Id']]
+        )
         self.client.update_service(
             name, new_index, task_tmpl, name=name
         )
