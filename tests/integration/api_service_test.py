@@ -469,6 +469,68 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert new_index > version_index
         assert svc_info['Spec']['TaskTemplate']['ForceUpdate'] == 10
 
+    @requires_api_version('1.29')
+    def test_update_service_with_network_change(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        net1 = self.client.create_network(
+            'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(net1['Id'])
+        net2 = self.client.create_network(
+            'dockerpytest_2', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(net2['Id'])
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, networks=[net1['Id']]
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Networks' in svc_info['Spec']
+        assert len(svc_info['Spec']['Networks']) > 0
+        assert svc_info['Spec']['Networks'][0]['Target'] == net1['Id']
+        version_index = svc_info['Version']['Index']
+
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        self.client.update_service(
+            name, version_index, task_tmpl, name=name, networks=[net2['Id']]
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        task_template = svc_info['Spec']['TaskTemplate']
+        assert 'Networks' in task_template
+        assert len(task_template['Networks']) > 0
+        assert task_template['Networks'][0]['Target'] == net2['Id']
+
+        self.client.update_service(
+            name, new_index, name=name, networks=[net1['Id']]
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        task_template = svc_info['Spec']['TaskTemplate']
+        assert 'ContainerSpec' in task_template
+        new_spec = task_template['ContainerSpec']
+        assert 'Image' in new_spec
+        assert new_spec['Image'].split(':')[0] == 'busybox'
+        assert 'Command' in new_spec
+        assert new_spec['Command'] == ['echo', 'hello']
+        assert 'Networks' in task_template
+        assert len(task_template['Networks']) > 0
+        assert task_template['Networks'][0]['Target'] == net1['Id']
+
+        task_tmpl = docker.types.TaskTemplate(container_spec, networks=[net2['Id']])
+        self.client.update_service(
+            name, new_index, task_tmpl, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        task_template = svc_info['Spec']['TaskTemplate']
+        assert 'Networks' in task_template
+        assert len(task_template['Networks']) > 0
+        assert task_template['Networks'][0]['Target'] == net2['Id']
+
     @requires_api_version('1.25')
     def test_create_service_with_secret(self):
         secret_name = 'favorite_touhou'
