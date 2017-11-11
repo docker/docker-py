@@ -491,6 +491,8 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Networks' in svc_info['Spec']
         assert len(svc_info['Spec']['Networks']) > 0
         assert svc_info['Spec']['Networks'][0]['Target'] == net1['Id']
+
+        svc_info = self.client.inspect_service(svc_id)
         version_index = svc_info['Version']['Index']
 
         task_tmpl = docker.types.TaskTemplate(container_spec)
@@ -504,6 +506,9 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Networks' in task_template
         assert len(task_template['Networks']) > 0
         assert task_template['Networks'][0]['Target'] == net2['Id']
+
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
 
         self.client.update_service(
             name, new_index, name=name, networks=[net1['Id']]
@@ -520,6 +525,9 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Networks' in task_template
         assert len(task_template['Networks']) > 0
         assert task_template['Networks'][0]['Target'] == net1['Id']
+
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
 
         task_tmpl = docker.types.TaskTemplate(
             container_spec, networks=[net2['Id']]
