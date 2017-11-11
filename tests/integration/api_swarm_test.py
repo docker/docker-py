@@ -127,24 +127,6 @@ class SwarmTest(BaseAPIIntegrationTest):
         )
 
     @requires_api_version('1.24')
-    def test_update_swarm_name(self):
-        assert self.init_swarm()
-        swarm_info_1 = self.client.inspect_swarm()
-        spec = self.client.create_swarm_spec(
-            node_cert_expiry=7776000000000000, name='reimuhakurei'
-        )
-        assert self.client.update_swarm(
-            version=swarm_info_1['Version']['Index'], swarm_spec=spec
-        )
-        swarm_info_2 = self.client.inspect_swarm()
-
-        assert (
-            swarm_info_1['Version']['Index'] !=
-            swarm_info_2['Version']['Index']
-        )
-        assert swarm_info_2['Spec']['Name'] == 'reimuhakurei'
-
-    @requires_api_version('1.24')
     def test_list_nodes(self):
         assert self.init_swarm()
         nodes_list = self.client.nodes()
