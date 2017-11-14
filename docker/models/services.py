@@ -251,6 +251,7 @@ CONTAINER_SPEC_KWARGS = [
 
 # kwargs to copy straight over to TaskTemplate
 TASK_TEMPLATE_KWARGS = [
+    'networks',
     'resources',
     'restart_policy',
 ]
@@ -261,7 +262,6 @@ CREATE_SERVICE_KWARGS = [
     'labels',
     'mode',
     'update_config',
-    'networks',
     'endpoint_spec',
 ]
 
@@ -294,6 +294,15 @@ def _get_create_service_kwargs(func_name, kwargs):
             'Name': kwargs.pop('log_driver'),
             'Options': kwargs.pop('log_driver_options', {})
         }
+
+    if func_name == 'update':
+        if 'force_update' in kwargs:
+            task_template_kwargs['force_update'] = kwargs.pop('force_update')
+
+        # use the current spec by default if updating the service
+        # through the model
+        use_current_spec = kwargs.pop('use_current_spec', True)
+        create_kwargs['use_current_spec'] = use_current_spec
 
     # All kwargs should have been consumed by this point, so raise
     # error if any are left

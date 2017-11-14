@@ -363,8 +363,15 @@ class ServiceApiMixin(object):
         data = {}
         headers = {}
 
-        data['Name'] = name if name is not None else current.get('Name')
-        data['Labels'] = labels if labels is not None else current.get('Labels')
+        if name is not None:
+            data['Name'] = name
+        else:
+            data['Name'] = current.get('Name')
+
+        if labels is not None:
+            data['Labels'] = labels
+        else:
+            data['Labels'] = current.get('Labels')
 
         if mode is not None:
             if not isinstance(mode, dict):
@@ -373,23 +380,17 @@ class ServiceApiMixin(object):
         else:
             data['Mode'] = current.get('Mode')
 
-        merged_task_template = current.get('TaskTemplate', {})
-        if task_template is not None:
-            for task_template_key, task_template_value in task_template.items():
-                if task_template_key == 'ContainerSpec':
-                    if 'ContainerSpec' not in merged_task_template:
-                        merged_task_template['ContainerSpec'] = {}
-                    for container_spec_key, container_spec_value in task_template['ContainerSpec'].items():
-                        merged_task_template['ContainerSpec'][container_spec_key] = container_spec_value
-                else:
-                    merged_task_template[task_template_key] = task_template_value
-            image = merged_task_template.get('ContainerSpec', {}).get('Image', None)
-            if image is not None:
-                registry, repo_name = auth.resolve_repository_name(image)
-                auth_header = auth.get_config_header(self, registry)
-                if auth_header:
-                    headers['X-Registry-Auth'] = auth_header
-        data['TaskTemplate'] = merged_task_template
+        data['TaskTemplate'] = self._merge_task_template(
+            current.get('TaskTemplate', {}), task_template
+        )
+
+        container_spec = data['TaskTemplate'].get('ContainerSpec', {})
+        image = container_spec.get('Image', None)
+        if image is not None:
+            registry, repo_name = auth.resolve_repository_name(image)
+            auth_header = auth.get_config_header(self, registry)
+            if auth_header:
+                headers['X-Registry-Auth'] = auth_header
 
         if update_config is not None:
             data['UpdateConfig'] = update_config
@@ -397,11 +398,15 @@ class ServiceApiMixin(object):
             data['UpdateConfig'] = current.get('UpdateConfig')
 
         if networks is not None:
-            data['TaskTemplate']['Networks'] = utils.convert_service_networks(networks)
-        else:
-            existing_networks = current.get('TaskTemplate', {}).get('Networks') or current.get('Networks')
-            if existing_networks is not None:
-                data['TaskTemplate']['Networks'] = existing_networks
+            converted_networks = utils.convert_service_networks(networks)
+            data['TaskTemplate']['Networks'] = converted_networks
+        elif data['TaskTemplate'].get('Networks') is None:
+            current_task_template = current.get('TaskTemplate', {})
+            current_networks = current_task_template.get('Networks')
+            if current_networks is None:
+                current_networks = current.get('Networks')
+            if current_networks is not None:
+                data['TaskTemplate']['Networks'] = current_networks
 
         if endpoint_spec is not None:
             data['EndpointSpec'] = endpoint_spec
@@ -413,3 +418,17 @@ class ServiceApiMixin(object):
         )
         self._raise_for_status(resp)
         return True
+
+    @staticmethod
+    def _merge_task_template(current, override):
+        merged = current.copy()
+        if override is not None:
+            for ts_key, ts_value in override.items():
+                if ts_key == 'ContainerSpec':
+                    if 'ContainerSpec' not in merged:
+                        merged['ContainerSpec'] = {}
+                    for cs_key, cs_value in override['ContainerSpec'].items():
+                        merged['ContainerSpec'][cs_key] = cs_value
+                else:
+                    merged[ts_key] = ts_value
+        return merged
