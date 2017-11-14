@@ -306,7 +306,7 @@ class ServiceApiMixin(object):
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,
-                       endpoint_spec=None):
+                       endpoint_spec=None, use_current_spec=False):
         """
         Update a service.
 
@@ -328,6 +328,8 @@ class ServiceApiMixin(object):
                 the service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
+            use_current_spec (boolean): Use the undefined settings from the
+                previous specification of the service. Default: ``False``
 
         Returns:
             ``True`` if successful.
@@ -345,32 +347,66 @@ class ServiceApiMixin(object):
 
         _check_api_features(self._version, task_template, update_config)
 
+        if use_current_spec:
+            if utils.version_lt(self._version, '1.29'):
+                inspect_defaults = None
+            else:
+                inspect_defaults = True
+            current = self.inspect_service(
+                service, insert_defaults=inspect_defaults
+            )['Spec']
+
+        else:
+            current = {}
+
         url = self._url('/services/{0}/update', service)
         data = {}
         headers = {}
-        if name is not None:
-            data['Name'] = name
-        if labels is not None:
-            data['Labels'] = labels
+
+        data['Name'] = name if name is not None else current.get('Name')
+        data['Labels'] = labels if labels is not None else current.get('Labels')
+
         if mode is not None:
             if not isinstance(mode, dict):
                 mode = ServiceMode(mode)
             data['Mode'] = mode
+        else:
+            data['Mode'] = current.get('Mode')
+
+        merged_task_template = current.get('TaskTemplate', {})
         if task_template is not None:
-            image = task_template.get('ContainerSpec', {}).get('Image', None)
+            for task_template_key, task_template_value in task_template.items():
+                if task_template_key == 'ContainerSpec':
+                    if 'ContainerSpec' not in merged_task_template:
+                        merged_task_template['ContainerSpec'] = {}
+                    for container_spec_key, container_spec_value in task_template['ContainerSpec'].items():
+                        merged_task_template['ContainerSpec'][container_spec_key] = container_spec_value
+                else:
+                    merged_task_template[task_template_key] = task_template_value
+            image = merged_task_template.get('ContainerSpec', {}).get('Image', None)
             if image is not None:
                 registry, repo_name = auth.resolve_repository_name(image)
                 auth_header = auth.get_config_header(self, registry)
                 if auth_header:
                     headers['X-Registry-Auth'] = auth_header
-            data['TaskTemplate'] = task_template
+        data['TaskTemplate'] = merged_task_template
+
         if update_config is not None:
             data['UpdateConfig'] = update_config
+        else:
+            data['UpdateConfig'] = current.get('UpdateConfig')
 
         if networks is not None:
-            data['Networks'] = utils.convert_service_networks(networks)
+            data['TaskTemplate']['Networks'] = utils.convert_service_networks(networks)
+        else:
+            existing_networks = current.get('TaskTemplate', {}).get('Networks') or current.get('Networks')
+            if existing_networks is not None:
+                data['TaskTemplate']['Networks'] = existing_networks
+
         if endpoint_spec is not None:
             data['EndpointSpec'] = endpoint_spec
+        else:
+            data['EndpointSpec'] = current.get('EndpointSpec')
 
         resp = self._post_json(
             url, data=data, params={'version': version}, headers=headers

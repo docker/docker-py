@@ -710,3 +710,316 @@ class ServiceTest(BaseAPIIntegrationTest):
             svc_info['Spec']['TaskTemplate']['ContainerSpec']['Privileges']
         )
         assert privileges['SELinuxContext']['Disable'] is True
+
+    @requires_api_version('1.25')
+    def test_update_service_with_defaults_name(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Name' in svc_info['Spec']
+        assert svc_info['Spec']['Name'] == name
+        version_index = svc_info['Version']['Index']
+
+        task_tmpl = docker.types.TaskTemplate(container_spec, force_update=10)
+        self.client.update_service(name, version_index, task_tmpl, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'Name' in svc_info['Spec']
+        assert svc_info['Spec']['Name'] == name
+
+    @requires_api_version('1.25')
+    def test_update_service_with_defaults_labels(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name, labels={'service.label': 'SampleLabel'})
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Labels' in svc_info['Spec']
+        assert 'service.label' in svc_info['Spec']['Labels']
+        assert svc_info['Spec']['Labels']['service.label'] == 'SampleLabel'
+        version_index = svc_info['Version']['Index']
+
+        task_tmpl = docker.types.TaskTemplate(container_spec, force_update=10)
+        self.client.update_service(name, version_index, task_tmpl, name=name, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'Labels' in svc_info['Spec']
+        assert 'service.label' in svc_info['Spec']['Labels']
+        assert svc_info['Spec']['Labels']['service.label'] == 'SampleLabel'
+
+    def test_update_service_with_defaults_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name,
+                                            mode=docker.types.ServiceMode(mode='replicated', replicas=2))
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'Replicated' in svc_info['Spec']['Mode']
+        assert 'Replicas' in svc_info['Spec']['Mode']['Replicated']
+        assert svc_info['Spec']['Mode']['Replicated']['Replicas'] == 2
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, labels={'force': 'update'}, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'Mode' in svc_info['Spec']
+        assert 'Replicated' in svc_info['Spec']['Mode']
+        assert 'Replicas' in svc_info['Spec']['Mode']['Replicated']
+        assert svc_info['Spec']['Mode']['Replicated']['Replicas'] == 2
+
+    def test_update_service_with_defaults_container_labels(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello'],
+            labels={'container.label': 'SampleLabel'}
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name, labels={'service.label': 'SampleLabel'})
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        assert 'Labels' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert svc_info['Spec']['TaskTemplate']['ContainerSpec']['Labels']['container.label'] == 'SampleLabel'
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, labels={'force': 'update'}, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        assert 'Labels' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert svc_info['Spec']['TaskTemplate']['ContainerSpec']['Labels']['container.label'] == 'SampleLabel'
+
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        self.client.update_service(name, new_index, task_tmpl, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        newer_index = svc_info['Version']['Index']
+        assert newer_index > new_index
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        assert 'Labels' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert svc_info['Spec']['TaskTemplate']['ContainerSpec']['Labels']['container.label'] == 'SampleLabel'
+
+    def test_update_service_with_defaults_update_config(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        update_config = docker.types.UpdateConfig(
+            parallelism=10, delay=5, failure_action='pause'
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, update_config=update_config, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'UpdateConfig' in svc_info['Spec']
+        uc = svc_info['Spec']['UpdateConfig']
+        assert update_config['Parallelism'] == uc['Parallelism']
+        assert update_config['Delay'] == uc['Delay']
+        assert update_config['FailureAction'] == uc['FailureAction']
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, labels={'force': 'update'}, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'UpdateConfig' in svc_info['Spec']
+        uc = svc_info['Spec']['UpdateConfig']
+        assert update_config['Parallelism'] == uc['Parallelism']
+        assert update_config['Delay'] == uc['Delay']
+        assert update_config['FailureAction'] == uc['FailureAction']
+
+    def test_update_service_with_defaults_networks(self):
+        net1 = self.client.create_network(
+            'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(net1['Id'])
+        net2 = self.client.create_network(
+            'dockerpytest_2', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(net2['Id'])
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, networks=[
+                'dockerpytest_1', {'Target': 'dockerpytest_2'}
+            ]
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Networks' in svc_info['Spec']
+        assert svc_info['Spec']['Networks'] == [
+            {'Target': net1['Id']}, {'Target': net2['Id']}
+        ]
+
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, labels={'force': 'update'}, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'Networks' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Networks'] == [
+            {'Target': net1['Id']}, {'Target': net2['Id']}
+        ]
+
+        self.client.update_service(name, new_index, networks=[net1['Id']], use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Networks' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Networks'] == [
+            {'Target': net1['Id']}
+        ]
+
+    def test_update_service_with_defaults_endpoint_spec(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        endpoint_spec = docker.types.EndpointSpec(ports={
+            12357: (1990, 'udp'),
+            12562: (678,),
+            53243: 8080,
+        })
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, endpoint_spec=endpoint_spec
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        print(svc_info)
+        ports = svc_info['Spec']['EndpointSpec']['Ports']
+        for port in ports:
+            if port['PublishedPort'] == 12562:
+                assert port['TargetPort'] == 678
+                assert port['Protocol'] == 'tcp'
+            elif port['PublishedPort'] == 53243:
+                assert port['TargetPort'] == 8080
+                assert port['Protocol'] == 'tcp'
+            elif port['PublishedPort'] == 12357:
+                assert port['TargetPort'] == 1990
+                assert port['Protocol'] == 'udp'
+            else:
+                self.fail('Invalid port specification: {0}'.format(port))
+
+        assert len(ports) == 3
+
+        svc_info = self.client.inspect_service(svc_id)
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, labels={'force': 'update'}, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+
+        ports = svc_info['Spec']['EndpointSpec']['Ports']
+        for port in ports:
+            if port['PublishedPort'] == 12562:
+                assert port['TargetPort'] == 678
+                assert port['Protocol'] == 'tcp'
+            elif port['PublishedPort'] == 53243:
+                assert port['TargetPort'] == 8080
+                assert port['Protocol'] == 'tcp'
+            elif port['PublishedPort'] == 12357:
+                assert port['TargetPort'] == 1990
+                assert port['Protocol'] == 'udp'
+            else:
+                self.fail('Invalid port specification: {0}'.format(port))
+
+        assert len(ports) == 3
+
+    @requires_api_version('1.25')
+    def test_update_service_remove_healthcheck(self):
+        second = 1000000000
+        hc = docker.types.Healthcheck(
+            test='true', retries=3, timeout=1 * second,
+            start_period=3 * second, interval=int(second / 2),
+        )
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], healthcheck=hc
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert (
+            'Healthcheck' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        )
+        assert (
+            hc ==
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Healthcheck']
+        )
+
+        container_spec = docker.types.ContainerSpec(
+            BUSYBOX, ['sleep', '999'], healthcheck={}
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, task_tmpl, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert (
+            'Healthcheck' not in svc_info['Spec']['TaskTemplate']['ContainerSpec'] or
+            not svc_info['Spec']['TaskTemplate']['ContainerSpec']['Healthcheck']
+        )
+
+    def test_update_service_remove_labels(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name, labels={'service.label': 'SampleLabel'})
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Labels' in svc_info['Spec']
+        assert 'service.label' in svc_info['Spec']['Labels']
+        assert svc_info['Spec']['Labels']['service.label'] == 'SampleLabel'
+        version_index = svc_info['Version']['Index']
+
+        self.client.update_service(name, version_index, labels={}, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert not svc_info['Spec'].get('Labels')
+
+    def test_update_service_remove_container_labels(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello'],
+            labels={'container.label': 'SampleLabel'}
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name, labels={'service.label': 'SampleLabel'})
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        assert 'Labels' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert svc_info['Spec']['TaskTemplate']['ContainerSpec']['Labels']['container.label'] == 'SampleLabel'
+        version_index = svc_info['Version']['Index']
+
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['echo', 'hello'],
+            labels={}
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        self.client.update_service(name, version_index, task_tmpl, use_current_spec=True)
+        svc_info = self.client.inspect_service(svc_id)
+        new_index = svc_info['Version']['Index']
+        assert new_index > version_index
+        assert 'TaskTemplate' in svc_info['Spec']
+        assert 'ContainerSpec' in svc_info['Spec']['TaskTemplate']
+        assert not svc_info['Spec']['TaskTemplate']['ContainerSpec'].get('Labels')
