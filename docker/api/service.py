@@ -368,7 +368,11 @@ class ServiceApiMixin(object):
             data['UpdateConfig'] = update_config
 
         if networks is not None:
-            data['Networks'] = utils.convert_service_networks(networks)
+            if task_template is None:
+                service_spec = self.inspect_service(service)['Spec']
+                data['TaskTemplate'] = service_spec['TaskTemplate']
+            api_networks = utils.convert_service_networks(networks)
+            data['TaskTemplate']['Networks'] = api_networks
         if endpoint_spec is not None:
             data['EndpointSpec'] = endpoint_spec
 
