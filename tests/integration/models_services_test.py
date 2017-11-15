@@ -193,15 +193,15 @@ class ServiceTest(unittest.TestCase):
             tasks = service.tasks()
         assert len(tasks) == 1
         service.update(
-            # create argument
-            name=service.name,
             mode=docker.types.ServiceMode('replicated', replicas=2),
-            # ContainerSpec argument
-            command="sleep 600"
         )
         while len(tasks) == 1:
             tasks = service.tasks()
         assert len(tasks) >= 2
+        # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
 
     @helpers.requires_api_version('1.25')
     def test_restart_service(self):

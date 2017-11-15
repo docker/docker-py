@@ -428,7 +428,8 @@ class ServiceApiMixin(object):
                     if 'ContainerSpec' not in merged:
                         merged['ContainerSpec'] = {}
                     for cs_key, cs_value in override['ContainerSpec'].items():
-                        merged['ContainerSpec'][cs_key] = cs_value
-                else:
+                        if cs_value is not None:
+                            merged['ContainerSpec'][cs_key] = cs_value
+                elif ts_value is not None:
                     merged[ts_key] = ts_value
         return merged
