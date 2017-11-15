@@ -188,7 +188,10 @@ class ServiceTest(unittest.TestCase):
             image="alpine",
             command="sleep 300"
         )
-        assert len(service.tasks()) == 1
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
         service.update(
             # create argument
             name=service.name,
@@ -196,8 +199,9 @@ class ServiceTest(unittest.TestCase):
             # ContainerSpec argument
             command="sleep 600"
         )
-        service.reload()
-        assert len(service.tasks()) >= 2
+        while len(tasks) == 1:
+            tasks = service.tasks()
+        assert len(tasks) >= 2
 
     @helpers.requires_api_version('1.25')
     def test_restart_service(self):

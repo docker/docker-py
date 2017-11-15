@@ -1150,7 +1150,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         try:
             self.client.update_service(*args, **kwargs)
         except docker.errors.APIError as e:
-            if e.explanation == "update out of sequence":
+            if e.explanation.endswith("update out of sequence"):
                 svc_info = self.client.inspect_service(svc_id)
                 version_index = svc_info['Version']['Index']
 
@@ -1160,3 +1160,5 @@ class ServiceTest(BaseAPIIntegrationTest):
                     kwargs['version'] = version_index
 
                 self.client.update_service(*args, **kwargs)
+            else:
+                raise
