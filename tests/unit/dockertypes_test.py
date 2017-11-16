@@ -9,7 +9,7 @@ from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
     ContainerConfig, ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
-    IPAMPool, LogConfig, Mount, ServiceMode, Ulimit,
+    IPAMPool, LogConfig, Mount, Resources, ServiceMode, TaskTemplate, Ulimit,
 )
 
 try:
@@ -220,6 +220,121 @@ class ContainerConfigTest(unittest.TestCase):
         assert 'The volume_driver option has been moved' in str(w[0].message)
 
 
+class TaskTemplateTest(unittest.TestCase):
+    def test_simple(self):
+        spec = ContainerSpec(
+            image='alpine', command='sleep 30'
+        )
+        task_template = TaskTemplate(
+            container_spec=spec, resources=Resources(
+                mem_limit=123, mem_reservation=45
+            )
+        )
+
+        assert 'ContainerSpec' in task_template
+        container_spec = task_template['ContainerSpec']
+        assert container_spec['Image'] == 'alpine'
+        assert container_spec['Command'] == ['sleep', '30']
+        assert 'Resources' in task_template
+        resources = task_template['Resources']
+        assert resources['Limits']['MemoryBytes'] == 123
+        assert resources['Reservations']['MemoryBytes'] == 45
+
+    def test_from_spec(self):
+        task_template = TaskTemplate.from_spec({
+            'ContainerSpec': {
+                'Image': 'alpine',
+                'Command': ['sleep', '30']
+            },
+            'Resources': {
+                'Limits': {
+                    'MemoryBytes': 123
+                },
+                'Reservations': {
+                    'MemoryBytes': 45
+                }
+            },
+            'RestartPolicy': {
+                'Condition': 'any',
+                'Delay': 5678,
+                'MaxAttempts': 9
+            },
+            'LogDriver': {
+                'Name': 'json'
+            },
+            'ForceUpdate': 42
+        })
+
+        assert type(task_template) == TaskTemplate
+        assert type(task_template.container_spec) == ContainerSpec
+        assert task_template.container_spec.image == 'alpine'
+        assert task_template.container_spec.command == ['sleep', '30']
+        assert task_template.resources.mem_limit == 123
+        assert task_template.resources.mem_reservation == 45
+        assert task_template.restart_policy.condition == 'any'
+        assert task_template.restart_policy.delay == 5678
+        assert task_template.restart_policy.max_attempts == 9
+        assert task_template.placement is None
+        assert task_template.log_driver.name == 'json'
+        assert task_template.networks == []
+        assert task_template.force_update == 42
+
+    def test_task_networks(self):
+        task_template = TaskTemplate.from_spec({
+            'ContainerSpec': {
+                'Image': 'alpine',
+                'Command': ['sleep', '30']
+            },
+            'Networks': [
+                {
+                    'Target': 'net1xaaa'
+                },
+                {
+                    'Target': 'net2xbbb'
+                }
+            ]
+        })
+
+        assert task_template.networks == ['net1xaaa', 'net2xbbb']
+
+    def test_task_placement(self):
+        task_template = TaskTemplate.from_spec({
+            'ContainerSpec': {
+                'Image': 'alpine',
+                'Command': ['sleep', '30']
+            },
+            'Placement': {
+                'Constraints': [
+                    'node.role==worker'
+                ],
+                'Preferences': [
+                    {
+                        'Spread': {
+                            'SpreadDescriptor': 'node.labels.rack'
+                        }
+                    }
+                ],
+                'Platforms': [
+                    {
+                        'Architecture': 'amd64',
+                        'OS': 'linux'
+                    },
+                    {
+                        'OS': 'linux'
+                    }
+                ]
+            }
+        })
+
+        assert task_template.placement.constraints == ['node.role==worker']
+        assert task_template.placement.preferences == [{
+            'Spread': {'SpreadDescriptor': 'node.labels.rack'}
+        }]
+        assert task_template.placement.platforms == [
+            ('amd64', 'linux'), (None, 'linux')
+        ]
+
+
 class ContainerSpecTest(unittest.TestCase):
     def test_parse_mounts(self):
         spec = ContainerSpec(
@@ -234,6 +349,117 @@ class ContainerSpecTest(unittest.TestCase):
         assert len(spec['Mounts']) == 3
         for mount in spec['Mounts']:
             assert isinstance(mount, Mount)
+
+    def test_from_spec(self):
+        spec = ContainerSpec.from_spec({
+            'Image': 'alpine',
+            'Command': ['/bin/sh', '-c'],
+            'Args': ['sleep', '60'],
+            'Hostname': 'abcd1234',
+            'Env': ['KEY=value', 'ENV_VAR=12345'],
+            'Dir': '/var/workdir',
+            'User': 'somebody',
+            'Groups': ['sudo', 'wheel'],
+            'StopSignal': 'SIGINT',
+            'StopGracePeriod': 1000000000,
+            'Labels': {
+                'container.label': 'SampleLabel'
+            },
+            'Hosts': ['1.2.3.4 test.local'],
+            'Mounts': [
+                {
+                    'Type': 'tmpfs',
+                    'Target': '/var/cache'
+                },
+                {
+                    'Type': 'bind',
+                    'Source': '/var/app',
+                    'Target': '/usr/local/app'
+                }
+            ],
+            'Secrets': [
+                {
+                    'File': {
+                        'Name': 'top-secret',
+                        'UID': '0',
+                        'GID': '0',
+                        'Mode': 292
+                    },
+                    'SecretID': 'abcd12secret',
+                    'SecretName': 'top-secret'
+                }
+            ],
+            'Configs': [
+                {
+                    'File': {
+                        'Name': 'svc-conf',
+                        'UID': '0',
+                        'GID': '0',
+                        'Mode': 292
+                    },
+                    'ConfigID': 'abcd12config',
+                    'ConfigName': 'svc-conf'
+                }
+            ],
+            'DNSConfig': {
+                'Nameservers': ['8.8.8.8', '8.8.4.4'],
+                'Search': ['test.local']
+            },
+            'Healthcheck': {
+                'Test': ['CMD-SHELL', 'exit 0'],
+                'Interval': 2000000000,
+                'Timeout': 1000000000,
+                'StartPeriod': 5000000000,
+                'Retries': 3
+            },
+            'TTY': True,
+            'ReadOnly': True
+        })
+
+        assert type(spec) == ContainerSpec
+        assert spec.image == 'alpine'
+        assert spec.command == ['/bin/sh', '-c']
+        assert spec.args == ['sleep', '60']
+        assert spec.hostname == 'abcd1234'
+        assert spec.env == ['KEY=value', 'ENV_VAR=12345']
+        assert spec.workdir == '/var/workdir'
+        assert spec.user == 'somebody'
+        assert spec.groups == ['sudo', 'wheel']
+        assert spec.stop_signal == 'SIGINT'
+        assert spec.stop_grace_period == 1000000000
+        assert spec.labels == {'container.label': 'SampleLabel'}
+        assert spec.hosts == ['1.2.3.4 test.local']
+        assert spec.mounts[0].type == 'tmpfs'
+        assert spec.mounts[0].target == '/var/cache'
+        assert spec.mounts[0].source is None
+        assert spec.mounts[1].type == 'bind'
+        assert spec.mounts[1].target == '/usr/local/app'
+        assert spec.mounts[1].source == '/var/app'
+        assert spec.secrets[0].id == 'abcd12secret'
+        assert spec.secrets[0].name == 'top-secret'
+        assert spec.secrets[0].options == {
+            'Name': 'top-secret',
+            'UID': '0',
+            'GID': '0',
+            'Mode': 292
+        }
+        assert spec.configs[0].id == 'abcd12config'
+        assert spec.configs[0].name == 'svc-conf'
+        assert spec.configs[0].options == {
+            'Name': 'svc-conf',
+            'UID': '0',
+            'GID': '0',
+            'Mode': 292
+        }
+        assert spec.dns_config.nameservers == ['8.8.8.8', '8.8.4.4']
+        assert spec.dns_config.search == ['test.local']
+        assert spec.healthcheck.test == ['CMD-SHELL', 'exit 0']
+        assert spec.healthcheck.interval == 2000000000
+        assert spec.healthcheck.timeout == 1000000000
+        assert spec.healthcheck.start_period == 5000000000
+        assert spec.healthcheck.retries == 3
+        assert spec.tty is True
+        assert spec.read_only is True
 
 
 class UlimitTest(unittest.TestCase):
@@ -363,6 +589,15 @@ class ServiceModeTest(unittest.TestCase):
     def test_invalid_mode(self):
         with pytest.raises(InvalidArgument):
             ServiceMode('foobar')
+
+    def test_from_spec(self):
+        mode = ServiceMode.from_spec({'Replicated': {'Replicas': 3}})
+        assert type(mode) == ServiceMode
+        assert mode.mode == 'replicated'
+        assert mode.replicas == 3
+
+        mode = ServiceMode.from_spec({'Global': {}})
+        assert mode.mode == 'global'
 
 
 class MountTest(unittest.TestCase):

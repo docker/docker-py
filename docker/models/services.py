@@ -1,6 +1,8 @@
 import copy
 from docker.errors import create_unexpected_kwargs_error
-from docker.types import TaskTemplate, ContainerSpec
+from docker.types import (
+    TaskTemplate, ContainerSpec, ServiceMode, UpdateConfig, EndpointSpec
+)
 from .resource import Model, Collection
 
 
@@ -21,6 +23,45 @@ class Service(Model):
         need to call :py:meth:`reload` before calling it again.
         """
         return self.attrs.get('Version').get('Index')
+
+    @property
+    def labels(self):
+        """The labels attached to the service."""
+        return self.attrs['Spec'].get('Labels')
+
+    @property
+    def task_template(self):
+        """The task template as :py:class:`docker.types.TaskTemplate`."""
+        return TaskTemplate.from_spec(self.attrs['Spec']['TaskTemplate'])
+
+    @property
+    def mode(self):
+        """The service mode as :py:class:`docker.types.ServiceMode`."""
+        return ServiceMode.from_spec(self.attrs['Spec']['Mode'])
+
+    @property
+    def update_config(self):
+        """
+        The service's update config
+        as :py:class:`docker.types.UpdateConfig`.
+        """
+        return UpdateConfig.from_spec(self.attrs['Spec']['UpdateConfig'])
+
+    @property
+    def rollback_config(self):
+        """
+        The service's rollback config
+        as :py:class:`docker.types.UpdateConfig`.
+        """
+        return UpdateConfig.from_spec(self.attrs['Spec']['RollbackConfig'])
+
+    @property
+    def endpoint_spec(self):
+        """
+        The service's endpoint specification
+        as :py:class:`docker.types.EndpointSpec`.
+        """
+        return EndpointSpec.from_spec(self.attrs['Spec']['EndpointSpec'])
 
     def remove(self):
         """
@@ -66,8 +107,12 @@ class Service(Model):
         """
         # Image is required, so if it hasn't been set, use current image
         if 'image' not in kwargs:
-            spec = self.attrs['Spec']['TaskTemplate']['ContainerSpec']
-            kwargs['image'] = spec['Image']
+            kwargs['image'] = self.task_template.container_spec.image
+
+        # For convenience: if force_update is True, use the current value + 1
+        if 'force_update' in kwargs and kwargs['force_update'] is True:
+            current_value = self.task_template.force_update
+            kwargs['force_update'] = current_value + 1
 
         create_kwargs = _get_create_service_kwargs('update', kwargs)
 
@@ -100,9 +145,7 @@ class Service(Model):
 
             Returns (generator): Logs for the service.
         """
-        is_tty = self.attrs['Spec']['TaskTemplate']['ContainerSpec'].get(
-            'TTY', False
-        )
+        is_tty = self.task_template.container_spec.tty
         return self.client.api.service_logs(self.id, is_tty=is_tty, **kwargs)
 
 

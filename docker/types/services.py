@@ -1,14 +1,34 @@
 import six
 
+from .healthcheck import Healthcheck
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import (
-    check_resource, format_environment, format_extra_hosts, parse_bytes,
-    split_command,
+    check_resource, convert_service_networks, format_environment,
+    format_extra_hosts, parse_bytes, split_command,
 )
 
 
-class TaskTemplate(dict):
+class BaseServiceType(dict):
+    """Base class for types related to services."""
+    _required_keys = ()
+
+    @classmethod
+    def from_spec(cls, spec):
+        """
+        Create an instance of the type from the spec received from the
+        Docker server. The ``_required_keys`` class attribute can select
+        properties from the spec to pass in as required constructor arguments.
+        """
+        if spec is None:
+            return spec
+
+        model = cls(*(spec.get(key) for key in cls._required_keys))
+        model.update(spec)
+        return model
+
+
+class TaskTemplate(BaseServiceType):
     """
     Describe the task specification to be used when creating or updating a
     service.
@@ -26,11 +46,14 @@ class TaskTemplate(dict):
         placement (Placement): Placement instructions for the scheduler.
             If a list is passed instead, it is assumed to be a list of
             constraints as part of a :py:class:`Placement` object.
+        networks (:py:class:`list`): List of network names or IDs to attach
+            the containers to.
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
-                 placement=None, log_driver=None, force_update=None):
+                 placement=None, log_driver=None, networks=None,
+                 force_update=None):
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -42,6 +65,8 @@ class TaskTemplate(dict):
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
+        if networks:
+            self['Networks'] = convert_service_networks(networks)
 
         if force_update is not None:
             if not isinstance(force_update, int):
@@ -50,22 +75,39 @@ class TaskTemplate(dict):
 
     @property
     def container_spec(self):
-        return self.get('ContainerSpec')
+        return ContainerSpec.from_spec(self['ContainerSpec'])
 
     @property
     def resources(self):
-        return self.get('Resources')
+        return Resources.from_spec(self.get('Resources'))
 
     @property
     def restart_policy(self):
-        return self.get('RestartPolicy')
+        return RestartPolicy.from_spec(self.get('RestartPolicy'))
 
     @property
     def placement(self):
-        return self.get('Placement')
+        return Placement.from_spec(self.get('Placement'))
+
+    @property
+    def log_driver(self):
+        return DriverConfig.from_spec(self.get('LogDriver'))
+
+    @property
+    def networks(self):
+        return [
+            network['Target']
+            for network in self.get('Networks', [])
+        ]
+
+    @property
+    def force_update(self):
+        return self.get('ForceUpdate', 0)
+
+    _required_keys = ('ContainerSpec',)
 
 
-class ContainerSpec(dict):
+class ContainerSpec(BaseServiceType):
     """
     Describes the behavior of containers that are part of a task, and is used
     when declaring a :py:class:`~docker.types.TaskTemplate`.
@@ -77,7 +119,7 @@ class ContainerSpec(dict):
         args (:py:class:`list`): Arguments to the command.
         hostname (string): The hostname to set on the container.
         env (dict): Environment variables.
-        dir (string): The working directory for commands to run in.
+        workdir (string): The working directory for commands to run in.
         user (string): The user inside the container.
         labels (dict): A map of labels to associate with the service.
         mounts (:py:class:`list`): A list of specifications for mounts to be
@@ -173,8 +215,105 @@ class ContainerSpec(dict):
         if read_only is not None:
             self['ReadOnly'] = read_only
 
+    @property
+    def image(self):
+        return self['Image']
 
-class Mount(dict):
+    @property
+    def command(self):
+        return self['Command']
+
+    @property
+    def args(self):
+        return self['Args']
+
+    @property
+    def hostname(self):
+        return self.get('Hostname')
+
+    @property
+    def env(self):
+        return self.get('Env')
+
+    @property
+    def workdir(self):
+        return self.get('Dir')
+
+    @property
+    def user(self):
+        return self.get('User')
+
+    @property
+    def groups(self):
+        return self.get('Groups')
+
+    @property
+    def stop_signal(self):
+        return self.get('StopSignal')
+
+    @property
+    def stop_grace_period(self):
+        return self.get('StopGracePeriod')
+
+    @property
+    def labels(self):
+        return self.get('Labels')
+
+    @property
+    def hosts(self):
+        return self.get('Hosts')
+
+    @property
+    def mounts(self):
+        return [
+            Mount.from_spec(mount)
+            for mount in self.get('Mounts', [])
+        ]
+
+    @property
+    def secrets(self):
+        return [
+            SecretReference.from_spec(secret)
+            for secret in self.get('Secrets', [])
+        ]
+
+    @property
+    def configs(self):
+        return [
+            ConfigReference.from_spec(config)
+            for config in self.get('Configs', [])
+        ]
+
+    @property
+    def dns_config(self):
+        return DNSConfig.from_spec(self.get('DNSConfig'))
+
+    @property
+    def privileges(self):
+        return Privileges.from_spec(self.get('Privileges'))
+
+    @property
+    def healthcheck(self):
+        spec = self.get('Healthcheck')
+        if spec:
+            return Healthcheck(**spec)
+
+    @property
+    def tty(self):
+        return self.get('TTY', False)
+
+    @property
+    def open_stdin(self):
+        return self.get('OpenStdin')
+
+    @property
+    def read_only(self):
+        return self.get('ReadOnly')
+
+    _required_keys = ('Image',)
+
+
+class Mount(BaseServiceType):
     """
     Describes a mounted folder's configuration inside a container. A list of
     :py:class:`Mount` would be used as part of a
@@ -260,6 +399,38 @@ class Mount(dict):
                     'type mount.'
                 )
 
+    @property
+    def target(self):
+        return self.get('Target')
+
+    @property
+    def source(self):
+        return self.get('Source')
+
+    @property
+    def type(self):
+        return self.get('Type')
+
+    @property
+    def read_only(self):
+        return self.get('ReadOnly')
+
+    @property
+    def consistency(self):
+        return self.get('Consistency')
+
+    @property
+    def bind_options(self):
+        return self.get('BindOptions')
+
+    @property
+    def volume_options(self):
+        return self.get('VolumeOptions')
+
+    @property
+    def tmpfs_options(self):
+        return self.get('TmpfsOptions')
+
     @classmethod
     def parse_mount_string(cls, string):
         parts = string.split(':')
@@ -284,8 +455,10 @@ class Mount(dict):
             read_only = not (len(parts) == 2 or parts[2] == 'rw')
             return cls(target, source, read_only=read_only, type=mount_type)
 
+    _required_keys = ('Target', 'Source')
 
-class Resources(dict):
+
+class Resources(BaseServiceType):
     """
     Configures resource allocation for containers when made part of a
     :py:class:`~docker.types.ContainerSpec`.
@@ -315,8 +488,24 @@ class Resources(dict):
         if reservation:
             self['Reservations'] = reservation
 
+    @property
+    def cpu_limit(self):
+        return self.get('Limits', {}).get('NanoCPUs')
 
-class UpdateConfig(dict):
+    @property
+    def mem_limit(self):
+        return self.get('Limits', {}).get('MemoryBytes')
+
+    @property
+    def cpu_reservation(self):
+        return self.get('Reservations', {}).get('NanoCPUs')
+
+    @property
+    def mem_reservation(self):
+        return self.get('Reservations', {}).get('MemoryBytes')
+
+
+class UpdateConfig(BaseServiceType):
     """
 
     Used to specify the way container updates should be performed by a service.
@@ -334,9 +523,11 @@ class UpdateConfig(dict):
         max_failure_ratio (float): The fraction of tasks that may fail during
           an update before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
+        order (str): The order for the operation (``stop-first``,
+          ``start-first``). Default: ``stop-first``
     """
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
-                 monitor=None, max_failure_ratio=None):
+                 monitor=None, max_failure_ratio=None, order='stop-first'):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
@@ -360,6 +551,33 @@ class UpdateConfig(dict):
                 )
             self['MaxFailureRatio'] = max_failure_ratio
 
+        if order is not None:
+            self['Order'] = order
+
+    @property
+    def parallelism(self):
+        return self.get('Parallelism')
+
+    @property
+    def delay(self):
+        return self.get('Delay')
+
+    @property
+    def failure_action(self):
+        return self.get('FailureAction')
+
+    @property
+    def monitor(self):
+        return self.get('Monitor')
+
+    @property
+    def max_failure_ratio(self):
+        return self.get('MaxFailureRatio')
+
+    @property
+    def order(self):
+        return self.get('Order')
+
 
 class RestartConditionTypesEnum(object):
     _values = (
@@ -370,7 +588,7 @@ class RestartConditionTypesEnum(object):
     NONE, ON_FAILURE, ANY = _values
 
 
-class RestartPolicy(dict):
+class RestartPolicy(BaseServiceType):
     """
     Used when creating a :py:class:`~docker.types.ContainerSpec`,
     dictates whether a container should restart after stopping or failing.
@@ -400,8 +618,24 @@ class RestartPolicy(dict):
         self['MaxAttempts'] = max_attempts
         self['Window'] = window
 
+    @property
+    def condition(self):
+        return self.get('Condition')
 
-class DriverConfig(dict):
+    @property
+    def delay(self):
+        return self.get('Delay')
+
+    @property
+    def max_attempts(self):
+        return self.get('MaxAttempts')
+
+    @property
+    def window(self):
+        return self.get('Window')
+
+
+class DriverConfig(BaseServiceType):
     """
     Indicates which driver to use, as well as its configuration. Can be used
     as ``log_driver`` in a :py:class:`~docker.types.ContainerSpec`,
@@ -419,8 +653,18 @@ class DriverConfig(dict):
         if options:
             self['Options'] = options
 
+    @property
+    def name(self):
+        return self.get('Name')
 
-class EndpointSpec(dict):
+    @property
+    def options(self):
+        return self.get('Options')
+
+    _required_keys = ('Name',)
+
+
+class EndpointSpec(BaseServiceType):
     """
     Describes properties to access and load-balance a service.
 
@@ -439,6 +683,14 @@ class EndpointSpec(dict):
             self['Ports'] = convert_service_ports(ports)
         if mode:
             self['Mode'] = mode
+
+    @property
+    def mode(self):
+        return self.get('Mode')
+
+    @property
+    def ports(self):
+        return self.get('Ports')
 
 
 def convert_service_ports(ports):
@@ -467,7 +719,7 @@ def convert_service_ports(ports):
     return result
 
 
-class ServiceMode(dict):
+class ServiceMode(BaseServiceType):
     """
         Indicate whether a service should be deployed as a replicated or global
         service, and associated parameters
@@ -491,7 +743,7 @@ class ServiceMode(dict):
 
     @property
     def mode(self):
-        if 'global' in self:
+        if 'global' in self or 'Global' in self:
             return 'global'
         return 'replicated'
 
@@ -501,8 +753,20 @@ class ServiceMode(dict):
             return None
         return self['replicated'].get('Replicas')
 
+    @classmethod
+    def from_spec(cls, spec):
+        instance = ServiceMode(
+            'global'
+            if 'global' in spec or 'Global' in spec
+            else 'replicated'
+        )
+        if instance.mode == 'replicated':
+            mode = spec.get('Replicated') or spec.get('replicated')
+            instance['replicated']['Replicas'] = mode['Replicas']
+        return instance
 
-class SecretReference(dict):
+
+class SecretReference(BaseServiceType):
     """
         Secret reference to be used as part of a :py:class:`ContainerSpec`.
         Describes how a secret is made accessible inside the service's
@@ -529,8 +793,22 @@ class SecretReference(dict):
             'Mode': mode
         }
 
+    @property
+    def id(self):
+        return self.get('SecretID')
 
-class ConfigReference(dict):
+    @property
+    def name(self):
+        return self.get('SecretName')
+
+    @property
+    def options(self):
+        return self.get('File')
+
+    _required_keys = ('SecretID', 'SecretName')
+
+
+class ConfigReference(BaseServiceType):
     """
         Config reference to be used as part of a :py:class:`ContainerSpec`.
         Describes how a config is made accessible inside the service's
@@ -557,8 +835,22 @@ class ConfigReference(dict):
             'Mode': mode
         }
 
+    @property
+    def id(self):
+        return self.get('ConfigID')
 
-class Placement(dict):
+    @property
+    def name(self):
+        return self.get('ConfigName')
+
+    @property
+    def options(self):
+        return self.get('File')
+
+    _required_keys = ('ConfigID', 'ConfigName')
+
+
+class Placement(BaseServiceType):
     """
         Placement constraints to be used as part of a :py:class:`TaskTemplate`
 
@@ -582,8 +874,23 @@ class Placement(dict):
                     'Architecture': plat[0], 'OS': plat[1]
                 })
 
+    @property
+    def constraints(self):
+        return self.get('Constraints')
 
-class DNSConfig(dict):
+    @property
+    def preferences(self):
+        return self.get('Preferences')
+
+    @property
+    def platforms(self):
+        return [
+            (platform.get('Architecture'), platform.get('OS'))
+            for platform in self.get('Platforms', [])
+        ]
+
+
+class DNSConfig(BaseServiceType):
     """
         Specification for DNS related configurations in resolver configuration
         file (``resolv.conf``). Part of a :py:class:`ContainerSpec` definition.
@@ -600,8 +907,20 @@ class DNSConfig(dict):
         self['Search'] = search
         self['Options'] = options
 
+    @property
+    def nameservers(self):
+        return self.get('Nameservers')
 
-class Privileges(dict):
+    @property
+    def search(self):
+        return self.get('Search')
+
+    @property
+    def options(self):
+        return self.get('Options')
+
+
+class Privileges(BaseServiceType):
     """
         Security options for a service's containers.
         Part of a :py:class:`ContainerSpec` definition.
@@ -653,3 +972,19 @@ class Privileges(dict):
 
         if len(selinux_context) > 0:
             self['SELinuxContext'] = selinux_context
+
+    @property
+    def registry(self):
+        return self.get('Registry')
+
+    @property
+    def file(self):
+        return self.get('File')
+
+    @property
+    def credential_spec(self):
+        return self.get('CredentialSpec')
+
+    @property
+    def selinux_context(self):
+        return self.get('SELinuxContext')
