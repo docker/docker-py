@@ -112,6 +112,16 @@ class TestNetworks(BaseAPIIntegrationTest):
             [container['Id']]
         )
 
+        network_list = self.client.networks(ids=[net_id], greedy=True)
+        self.assertEqual(
+            list(
+                key
+                for net in network_list
+                for key in net['Containers'].keys()
+            ),
+            [container['Id']]
+        )
+
         with pytest.raises(docker.errors.APIError):
             self.client.connect_container_to_network(container, net_id)
 
@@ -140,9 +150,26 @@ class TestNetworks(BaseAPIIntegrationTest):
             [container['Id']]
         )
 
+        network_list = self.client.networks(ids=[net_id], greedy=True)
+        self.assertEqual(
+            list(
+                key
+                for net in network_list
+                for key in net['Containers'].keys()
+            ),
+            [container['Id']]
+        )
+
         self.client.disconnect_container_from_network(container, net_id, True)
         network_data = self.client.inspect_network(net_id)
         self.assertFalse(network_data.get('Containers'))
+
+        network_list = self.client.networks(ids=[net_id], greedy=True)
+        self.assertFalse(list(
+            key
+            for net in network_list
+            for key in net['Containers'].keys()
+        ))
 
         with pytest.raises(docker.errors.APIError):
             self.client.disconnect_container_from_network(
@@ -182,6 +209,16 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.assertEqual(
             list(network_data['Containers'].keys()),
             [container['Id']])
+
+        network_list = self.client.networks(ids=[net_id], greedy=True)
+        self.assertEqual(
+            list(
+                key
+                for net in network_list
+                for key in net['Containers'].keys()
+            ),
+            [container['Id']]
+        )
 
         self.client.disconnect_container_from_network(container, net_id)
         network_data = self.client.inspect_network(net_id)

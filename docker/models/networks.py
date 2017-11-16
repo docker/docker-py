@@ -153,7 +153,7 @@ class NetworkCollection(Collection):
         resp = self.client.api.create_network(name, *args, **kwargs)
         return self.get(resp['Id'])
 
-    def get(self, network_id):
+    def get(self, network_id, *args, **kwargs):
         """
         Get a network by its ID.
 
@@ -175,7 +175,9 @@ class NetworkCollection(Collection):
                 If the server returns an error.
 
         """
-        return self.prepare_model(self.client.api.inspect_network(network_id))
+        return self.prepare_model(
+            self.client.api.inspect_network(network_id, *args, **kwargs)
+        )
 
     def list(self, *args, **kwargs):
         """
@@ -184,6 +186,13 @@ class NetworkCollection(Collection):
         Args:
             names (:py:class:`list`): List of names to filter by.
             ids (:py:class:`list`): List of ids to filter by.
+            filters (dict): Filters to be processed on the network list.
+                Available filters:
+                - ``driver=[<driver-name>]`` Matches a network's driver.
+                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - ``type=["custom"|"builtin"]`` Filters networks by type.
+            greedy (bool): Fetch more details for each network individually.
+                You might want this to get the containers attached to them.
 
         Returns:
             (list of :py:class:`Network`) The networks on the server.

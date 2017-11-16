@@ -4,7 +4,7 @@ from .fake_api import FAKE_NETWORK_ID, FAKE_CONTAINER_ID
 from .fake_api_client import make_fake_client
 
 
-class ImageCollectionTest(unittest.TestCase):
+class NetworkCollectionTest(unittest.TestCase):
 
     def test_create(self):
         client = make_fake_client()
@@ -36,8 +36,12 @@ class ImageCollectionTest(unittest.TestCase):
         client.networks.list(names=["foobar"])
         assert client.api.networks.called_once_with(names=["foobar"])
 
+        client = make_fake_client()
+        client.networks.list(greedy=True)
+        assert client.api.networks.called_once_with(greedy=True)
 
-class ImageTest(unittest.TestCase):
+
+class NetworkTest(unittest.TestCase):
 
     def test_connect(self):
         client = make_fake_client()

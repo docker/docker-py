@@ -6,7 +6,7 @@ from .. import utils
 
 class NetworkApiMixin(object):
     @minimum_version('1.21')
-    def networks(self, names=None, ids=None, filters=None):
+    def networks(self, names=None, ids=None, filters=None, greedy=False):
         """
         List networks. Similar to the ``docker networks ls`` command.
 
@@ -18,6 +18,8 @@ class NetworkApiMixin(object):
                 - ``driver=[<driver-name>]`` Matches a network's driver.
                 - ``label=[<key>]`` or ``label=[<key>=<value>]``.
                 - ``type=["custom"|"builtin"]`` Filters networks by type.
+            greedy (bool): Fetch more details for each network individually.
+                You might want this to get the containers attached to them.
 
         Returns:
             (dict): List of network objects.
@@ -36,7 +38,11 @@ class NetworkApiMixin(object):
         params = {'filters': utils.convert_filters(filters)}
         url = self._url("/networks")
         res = self._get(url, params=params)
-        return self._result(res, json=True)
+        result = self._result(res, json=True)
+        if greedy:
+            return [self.inspect_network(net['Id']) for net in result]
+        else:
+            return result
 
     @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
