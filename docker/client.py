@@ -32,6 +32,9 @@ class DockerClient(object):
             ``True`` to enable it with default options, or pass a
             :py:class:`~docker.tls.TLSConfig` object to use custom
             configuration.
+        verify (bool or str): Either a boolean, in which case it controls whether we verify
+            the server's TLS certificate, or a string, in which case it must be a path
+            to a CA bundle to use. Defaults to ``True``.
         user_agent (str): Set a custom user agent for requests to the server.
     """
     def __init__(self, *args, **kwargs):

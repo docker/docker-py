@@ -83,6 +83,9 @@ class APIClient(
             ``True`` to enable it with default options, or pass a
             :py:class:`~docker.tls.TLSConfig` object to use custom
             configuration.
+        verify (bool or str): Either a boolean, in which case it controls whether we verify
+            the server's TLS certificate, or a string, in which case it must be a path
+            to a CA bundle to use. Defaults to ``True``.
         user_agent (str): Set a custom user agent for requests to the server.
     """
 
@@ -92,7 +95,7 @@ class APIClient(
                                               'timeout']
 
     def __init__(self, base_url=None, version=None,
-                 timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
+                 timeout=DEFAULT_TIMEOUT_SECONDS, tls=False, verify=True,
                  user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS):
         super(APIClient, self).__init__()
 
@@ -103,6 +106,7 @@ class APIClient(
 
         self.base_url = base_url
         self.timeout = timeout
+        self.verify = verify
         self.headers['User-Agent'] = user_agent
 
         self._auth_configs = auth.load_config()
