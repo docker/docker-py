@@ -61,7 +61,7 @@ class NetworkTest(BaseIntegrationTest):
         assert client.networks.get(network.id).containers == [container]
         network_containers = list(
             c
-            for net in client.networks.list(greedy=True)
+            for net in client.networks.list(ids=[network.id], greedy=True)
             for c in net.containers
         )
         assert network_containers == [container]

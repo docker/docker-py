@@ -118,6 +118,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 key
                 for net in network_list
                 for key in net['Containers'].keys()
+                if net['Id'] == net_id
             ),
             [container['Id']]
         )
@@ -156,6 +157,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 key
                 for net in network_list
                 for key in net['Containers'].keys()
+                if net['Id'] == net_id
             ),
             [container['Id']]
         )
@@ -169,6 +171,7 @@ class TestNetworks(BaseAPIIntegrationTest):
             key
             for net in network_list
             for key in net['Containers'].keys()
+            if net['Id'] == net_id
         ))
 
         with pytest.raises(docker.errors.APIError):
@@ -216,6 +219,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 key
                 for net in network_list
                 for key in net['Containers'].keys()
+                if net['Id'] == net_id
             ),
             [container['Id']]
         )
