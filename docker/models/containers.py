@@ -1,5 +1,4 @@
 import copy
-import datetime
 
 from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,

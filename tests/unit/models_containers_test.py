@@ -367,6 +367,11 @@ class ContainerTest(unittest.TestCase):
         container = client.containers.get(FAKE_CONTAINER_ID)
         assert container.status == "running"
 
+    def test_started_at(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        assert container.started_at == "2013-09-25T14:01:18.869545111+02:00"
+
     def test_attach(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
