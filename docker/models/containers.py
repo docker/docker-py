@@ -1,4 +1,5 @@
 import copy
+import datetime
 
 from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
@@ -43,6 +44,13 @@ class Container(Model):
         The status of the container. For example, ``running``, or ``exited``.
         """
         return self.attrs['State']['Status']
+
+    @property
+    def started_at(self):
+        """
+        The started at information of the container.
+        """
+        return self.attrs['State']['StartedAt']
 
     def attach(self, **kwargs):
         """
