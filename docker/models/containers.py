@@ -44,6 +44,13 @@ class Container(Model):
         """
         return self.attrs['State']['Status']
 
+    @property
+    def started_at(self):
+        """
+        The started at information of the container.
+        """
+        return self.attrs['State']['StartedAt']
+
     def attach(self, **kwargs):
         """
         Attach to this container.

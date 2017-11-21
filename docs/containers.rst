@@ -48,6 +48,7 @@ Container objects
   .. automethod:: resize
   .. automethod:: restart
   .. automethod:: start
+  .. automethod:: started_at
   .. automethod:: stats
   .. automethod:: stop
   .. automethod:: top
