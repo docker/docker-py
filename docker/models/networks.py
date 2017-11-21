@@ -1,4 +1,5 @@
 from ..api import APIClient
+from ..utils import version_gte
 from .containers import Container
 from .resource import Model, Collection
 
@@ -201,8 +202,13 @@ class NetworkCollection(Collection):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+        greedy = kwargs.pop('greedy', False)
         resp = self.client.api.networks(*args, **kwargs)
-        return [self.prepare_model(item) for item in resp]
+        networks = [self.prepare_model(item) for item in resp]
+        if greedy and version_gte(self.client.api._version, '1.28'):
+            for net in networks:
+                net.reload()
+        return networks
 
     def prune(self, filters=None):
         self.client.api.prune_networks(filters=filters)

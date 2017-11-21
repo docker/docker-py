@@ -36,10 +36,6 @@ class NetworkCollectionTest(unittest.TestCase):
         client.networks.list(names=["foobar"])
         assert client.api.networks.called_once_with(names=["foobar"])
 
-        client = make_fake_client()
-        client.networks.list(greedy=True)
-        assert client.api.networks.called_once_with(greedy=True)
-
 
 class NetworkTest(unittest.TestCase):
 
