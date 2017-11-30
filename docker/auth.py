@@ -1,18 +1,15 @@
 import base64
 import json
 import logging
-import os
 
 import dockerpycreds
 import six
 
 from . import errors
-from .constants import IS_WINDOWS_PLATFORM
+from .utils import config
 
 INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://index.{0}/v1/'.format(INDEX_NAME)
-DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
-LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 TOKEN_USERNAME = '<token>'
 
 log = logging.getLogger(__name__)
@@ -105,10 +102,10 @@ def resolve_authconfig(authconfig, registry=None):
         log.debug("Found {0}".format(repr(registry)))
         return authconfig[registry]
 
-    for key, config in six.iteritems(authconfig):
+    for key, conf in six.iteritems(authconfig):
         if resolve_index_name(key) == registry:
             log.debug("Found {0}".format(repr(key)))
-            return config
+            return conf
 
     log.debug("No entry found")
     return None
@@ -223,44 +220,6 @@ def parse_auth(entries, raise_on_error=False):
     return conf
 
 
-def find_config_file(config_path=None):
-    paths = list(filter(None, [
-        config_path,  # 1
-        config_path_from_environment(),  # 2
-        os.path.join(home_dir(), DOCKER_CONFIG_FILENAME),  # 3
-        os.path.join(home_dir(), LEGACY_DOCKER_CONFIG_FILENAME),  # 4
-    ]))
-
-    log.debug("Trying paths: {0}".format(repr(paths)))
-
-    for path in paths:
-        if os.path.exists(path):
-            log.debug("Found file at path: {0}".format(path))
-            return path
-
-    log.debug("No config file found")
-
-    return None
-
-
-def config_path_from_environment():
-    config_dir = os.environ.get('DOCKER_CONFIG')
-    if not config_dir:
-        return None
-    return os.path.join(config_dir, os.path.basename(DOCKER_CONFIG_FILENAME))
-
-
-def home_dir():
-    """
-    Get the user's home directory, using the same logic as the Docker Engine
-    client - use %USERPROFILE% on Windows, $HOME/getuid on POSIX.
-    """
-    if IS_WINDOWS_PLATFORM:
-        return os.environ.get('USERPROFILE', '')
-    else:
-        return os.path.expanduser('~')
-
-
 def load_config(config_path=None):
     """
     Loads authentication data from a Docker configuration file in the given
@@ -269,7 +228,7 @@ def load_config(config_path=None):
         explicit config_path parameter > DOCKER_CONFIG environment variable >
         ~/.docker/config.json > ~/.dockercfg
     """
-    config_file = find_config_file(config_path)
+    config_file = config.find_config_file(config_path)
 
     if not config_file:
         return {}
