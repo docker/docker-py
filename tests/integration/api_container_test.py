@@ -1,4 +1,5 @@
 import os
+import re
 import signal
 import tempfile
 from datetime import datetime
@@ -15,8 +16,9 @@ import six
 
 from .base import BUSYBOX, BaseAPIIntegrationTest
 from .. import helpers
-from ..helpers import requires_api_version
-import re
+from ..helpers import (
+    requires_api_version, ctrl_with, assert_socket_closed_with_keys
+)
 
 
 class ListContainersTest(BaseAPIIntegrationTest):
@@ -1222,6 +1224,58 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
+
+    def test_detach_with_default(self):
+        container = self.client.create_container(
+            BUSYBOX, '/bin/sh',
+            detach=True, stdin_open=True, tty=True
+        )
+        id = container['Id']
+        self.tmp_containers.append(id)
+        self.client.start(id)
+
+        sock = self.client.attach_socket(
+            container,
+            {'stdin': True, 'stream': True}
+        )
+
+        assert_socket_closed_with_keys(sock, [ctrl_with('p'), ctrl_with('q')])
+
+    def test_detach_with_config_file(self):
+        self.client._general_configs['detachKeys'] = 'ctrl-p'
+
+        container = self.client.create_container(
+            BUSYBOX, '/bin/sh',
+            detach=True, stdin_open=True, tty=True
+        )
+        id = container['Id']
+        self.tmp_containers.append(id)
+        self.client.start(id)
+
+        sock = self.client.attach_socket(
+            container,
+            {'stdin': True, 'stream': True}
+        )
+
+        assert_socket_closed_with_keys(sock, [ctrl_with('p')])
+
+    def test_detach_with_arg(self):
+        self.client._general_configs['detachKeys'] = 'ctrl-p'
+
+        container = self.client.create_container(
+            BUSYBOX, '/bin/sh',
+            detach=True, stdin_open=True, tty=True
+        )
+        id = container['Id']
+        self.tmp_containers.append(id)
+        self.client.start(id)
+
+        sock = self.client.attach_socket(
+            container,
+            {'stdin': True, 'stream': True, 'detachKeys': 'ctrl-x'}
+        )
+
+        assert_socket_closed_with_keys(sock, [ctrl_with('x')])
 
 
 class PauseTest(BaseAPIIntegrationTest):
