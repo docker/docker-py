@@ -588,8 +588,8 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Hosts' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
         hosts = svc_info['Spec']['TaskTemplate']['ContainerSpec']['Hosts']
         assert len(hosts) == 2
-        assert 'foobar:127.0.0.1' in hosts
-        assert 'baz:8.8.8.8' in hosts
+        assert '127.0.0.1 foobar' in hosts
+        assert '8.8.8.8 baz' in hosts
 
     @requires_api_version('1.25')
     def test_create_service_with_hostname(self):

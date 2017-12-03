@@ -141,7 +141,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'Dns': ['8.8.8.8'],
                 'DnsOptions': ['foo'],
                 'DnsSearch': ['example.com'],
-                'ExtraHosts': ['foo:1.2.3.4'],
+                'ExtraHosts': ['1.2.3.4 foo'],
                 'GroupAdd': ['blah'],
                 'IpcMode': 'foo',
                 'KernelMemory': 123,

@@ -566,7 +566,7 @@ def format_environment(environment):
 
 def format_extra_hosts(extra_hosts):
     return [
-        '{}:{}'.format(k, v) for k, v in sorted(six.iteritems(extra_hosts))
+        '{} {}'.format(v, k) for k, v in sorted(six.iteritems(extra_hosts))
     ]
 
 
