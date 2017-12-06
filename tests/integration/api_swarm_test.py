@@ -110,10 +110,12 @@ class SwarmTest(BaseAPIIntegrationTest):
     def test_update_swarm(self):
         assert self.init_swarm()
         swarm_info_1 = self.client.inspect_swarm()
-        spec = self.client.create_swarm_spec(
-            snapshot_interval=5000, log_entries_for_slow_followers=1200,
-            node_cert_expiry=7776000000000000
-        )
+        # Clients should do a read-modify-write when updating swarmkit objects.
+        spec = swarm_info_1['Spec']
+        spec['Raft']['SnapshotInterval'] = 5000
+        spec['Raft']['log_entries_for_slow_followers'] = 1200
+        spec['CAConfig']['NodeCertExpiry'] = 7776000000000000
+
         assert self.client.update_swarm(
             version=swarm_info_1['Version']['Index'],
             swarm_spec=spec, rotate_worker_token=True
