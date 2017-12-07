@@ -139,7 +139,8 @@ class ContainerApiMixin(object):
         Args:
             quiet (bool): Only display numeric Ids
             all (bool): Show all containers. Only running containers are shown
-                by default trunc (bool): Truncate output
+                by default
+            trunc (bool): Truncate output
             latest (bool): Show only the latest created container, include
                 non-running ones.
             since (str): Show only containers created since Id or Name, include
