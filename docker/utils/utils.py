@@ -97,7 +97,12 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
     if files is None:
         files = build_file_list(root)
     for path in files:
-        i = t.gettarinfo(os.path.join(root, path), arcname=path)
+        full_path = os.path.join(root, path)
+        if not os.access(full_path, os.R_OK):
+            raise IOError(
+                'Can not access file in context: {}'.format(full_path)
+            )
+        i = t.gettarinfo(full_path, arcname=path)
         if i is None:
             # This happens when we encounter a socket file. We can safely
             # ignore it and proceed.
@@ -108,12 +113,14 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
             # and directories executable by default.
             i.mode = i.mode & 0o755 | 0o111
 
-        try:
-            # We open the file object in binary mode for Windows support.
-            with open(os.path.join(root, path), 'rb') as f:
-                t.addfile(i, f)
-        except IOError:
-            # When we encounter a directory the file object is set to None.
+        if i.isfile():
+            try:
+                with open(full_path, 'rb') as f:
+                    t.addfile(i, f)
+            except IOError:
+                t.addfile(i, None)
+        else:
+            # Directories, FIFOs, symlinks... don't need to be read.
             t.addfile(i, None)
     t.close()
     fileobj.seek(0)
