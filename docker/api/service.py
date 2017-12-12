@@ -62,6 +62,28 @@ def _check_api_features(version, task_template, update_config):
                     raise_version_error('ContainerSpec.privileges', '1.30')
 
 
+def merge(a, b, path=None):
+    """
+    merges b into a
+    :arg dict a: the dict which will receive b, and will be mutated
+    :arg dict b: the dict which will be added to a
+    :arg path: a helpfull variable for debuging
+    """
+    if path is None:
+        path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass  # same leaf value
+            else:
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
+
+
 class ServiceApiMixin(object):
     @utils.minimum_version('1.24')
     def create_service(
@@ -306,7 +328,7 @@ class ServiceApiMixin(object):
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,
-                       endpoint_spec=None):
+                       endpoint_spec=None, base_spec=None):
         """
         Update a service.
 
@@ -346,7 +368,7 @@ class ServiceApiMixin(object):
         _check_api_features(self._version, task_template, update_config)
 
         url = self._url('/services/{0}/update', service)
-        data = {}
+        data = base_spec or {}
         headers = {}
         if name is not None:
             data['Name'] = name
@@ -363,7 +385,7 @@ class ServiceApiMixin(object):
                 auth_header = auth.get_config_header(self, registry)
                 if auth_header:
                     headers['X-Registry-Auth'] = auth_header
-            data['TaskTemplate'] = task_template
+            merge(data.setdefault('TaskTemplate', {}), task_template)
         if update_config is not None:
             data['UpdateConfig'] = update_config
 
