@@ -19,6 +19,10 @@ def _check_api_features(version, task_template, update_config):
             if 'Monitor' in update_config:
                 raise_version_error('UpdateConfig.monitor', '1.25')
 
+        if utils.version_lt(version, '1.29'):
+            if 'Order' in update_config:
+                raise_version_error('UpdateConfig.order', '1.29')
+
     if task_template is not None:
         if 'ForceUpdate' in task_template and utils.version_lt(
                 version, '1.25'):
