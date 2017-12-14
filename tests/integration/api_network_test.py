@@ -484,3 +484,10 @@ class TestNetworks(BaseAPIIntegrationTest):
         assert self.client.inspect_network(net_name_swarm, scope='swarm')
         with pytest.raises(docker.errors.NotFound):
             self.client.inspect_network(net_name_swarm, scope='local')
+
+    @requires_api_version('1.21')
+    def test_create_remove_network_with_space_in_name(self):
+        net_id = self.client.create_network('test 01')
+        self.tmp_networks.append(net_id)
+        assert self.client.inspect_network('test 01')
+        assert self.client.remove_network('test 01') is None  # does not raise
