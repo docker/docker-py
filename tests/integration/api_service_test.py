@@ -726,7 +726,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         task_tmpl = docker.types.TaskTemplate(container_spec, force_update=10)
         self._update_service(
-            svc_id, name, version_index, task_tmpl, use_current_spec=True
+            svc_id, name, version_index, task_tmpl, fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -753,7 +753,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         task_tmpl = docker.types.TaskTemplate(container_spec, force_update=10)
         self._update_service(
             svc_id, name, version_index, task_tmpl, name=name,
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -781,7 +781,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, version_index, labels={'force': 'update'},
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -811,7 +811,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, version_index, labels={'force': 'update'},
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -827,7 +827,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         self._update_service(
-            svc_id, name, new_index, task_tmpl, use_current_spec=True
+            svc_id, name, new_index, task_tmpl, fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         newer_index = svc_info['Version']['Index']
@@ -858,7 +858,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, version_index, labels={'force': 'update'},
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -896,7 +896,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, version_index, labels={'force': 'update'},
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -908,7 +908,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, new_index, networks=[net1['Id']],
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         assert 'Networks' in svc_info['Spec']['TaskTemplate']
@@ -951,7 +951,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, version_index, labels={'force': 'update'},
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -1003,7 +1003,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         version_index = svc_info['Version']['Index']
 
         self._update_service(
-            svc_id, name, version_index, task_tmpl, use_current_spec=True
+            svc_id, name, version_index, task_tmpl, fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -1030,7 +1030,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         version_index = svc_info['Version']['Index']
 
         self._update_service(
-            svc_id, name, version_index, labels={}, use_current_spec=True
+            svc_id, name, version_index, labels={}, fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -1061,7 +1061,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         self._update_service(
-            svc_id, name, version_index, task_tmpl, use_current_spec=True
+            svc_id, name, version_index, task_tmpl, fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         new_index = svc_info['Version']['Index']
@@ -1100,7 +1100,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         task_tmpl = docker.types.TaskTemplate(container_spec)
         self._update_service(
             svc_id, name, version_index, task_tmpl, name=name,
-            networks=[net2['Id']], use_current_spec=True
+            networks=[net2['Id']], fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         task_template = svc_info['Spec']['TaskTemplate']
@@ -1114,7 +1114,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
         self._update_service(
             svc_id, name, new_index, name=name, networks=[net1['Id']],
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         task_template = svc_info['Spec']['TaskTemplate']
@@ -1136,7 +1136,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         )
         self._update_service(
             svc_id, name, new_index, task_tmpl, name=name,
-            use_current_spec=True
+            fetch_current_spec=True
         )
         svc_info = self.client.inspect_service(svc_id)
         task_template = svc_info['Spec']['TaskTemplate']

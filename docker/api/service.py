@@ -62,6 +62,21 @@ def _check_api_features(version, task_template, update_config):
                     raise_version_error('ContainerSpec.privileges', '1.30')
 
 
+def _merge_task_template(current, override):
+    merged = current.copy()
+    if override is not None:
+        for ts_key, ts_value in override.items():
+            if ts_key == 'ContainerSpec':
+                if 'ContainerSpec' not in merged:
+                    merged['ContainerSpec'] = {}
+                for cs_key, cs_value in override['ContainerSpec'].items():
+                    if cs_value is not None:
+                        merged['ContainerSpec'][cs_key] = cs_value
+            elif ts_value is not None:
+                merged[ts_key] = ts_value
+    return merged
+
+
 class ServiceApiMixin(object):
     @utils.minimum_version('1.24')
     def create_service(
@@ -306,7 +321,7 @@ class ServiceApiMixin(object):
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,
-                       endpoint_spec=None, use_current_spec=False):
+                       endpoint_spec=None, fetch_current_spec=False):
         """
         Update a service.
 
@@ -328,8 +343,8 @@ class ServiceApiMixin(object):
                 the service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
-            use_current_spec (boolean): Use the undefined settings from the
-                previous specification of the service. Default: ``False``
+            fetch_current_spec (boolean): Use the undefined settings from the
+                current specification of the service. Default: ``False``
 
         Returns:
             ``True`` if successful.
@@ -347,11 +362,10 @@ class ServiceApiMixin(object):
 
         _check_api_features(self._version, task_template, update_config)
 
-        if use_current_spec:
+        if fetch_current_spec:
+            inspect_defaults = True
             if utils.version_lt(self._version, '1.29'):
                 inspect_defaults = None
-            else:
-                inspect_defaults = True
             current = self.inspect_service(
                 service, insert_defaults=inspect_defaults
             )['Spec']
@@ -363,15 +377,9 @@ class ServiceApiMixin(object):
         data = {}
         headers = {}
 
-        if name is not None:
-            data['Name'] = name
-        else:
-            data['Name'] = current.get('Name')
+        data['Name'] = current.get('Name') if name is None else name
 
-        if labels is not None:
-            data['Labels'] = labels
-        else:
-            data['Labels'] = current.get('Labels')
+        data['Labels'] = current.get('Labels') if labels is None else labels
 
         if mode is not None:
             if not isinstance(mode, dict):
@@ -380,7 +388,7 @@ class ServiceApiMixin(object):
         else:
             data['Mode'] = current.get('Mode')
 
-        data['TaskTemplate'] = self._merge_task_template(
+        data['TaskTemplate'] = _merge_task_template(
             current.get('TaskTemplate', {}), task_template
         )
 
@@ -418,18 +426,3 @@ class ServiceApiMixin(object):
         )
         self._raise_for_status(resp)
         return True
-
-    @staticmethod
-    def _merge_task_template(current, override):
-        merged = current.copy()
-        if override is not None:
-            for ts_key, ts_value in override.items():
-                if ts_key == 'ContainerSpec':
-                    if 'ContainerSpec' not in merged:
-                        merged['ContainerSpec'] = {}
-                    for cs_key, cs_value in override['ContainerSpec'].items():
-                        if cs_value is not None:
-                            merged['ContainerSpec'][cs_key] = cs_value
-                elif ts_value is not None:
-                    merged[ts_key] = ts_value
-        return merged

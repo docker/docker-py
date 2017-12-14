@@ -299,10 +299,10 @@ def _get_create_service_kwargs(func_name, kwargs):
         if 'force_update' in kwargs:
             task_template_kwargs['force_update'] = kwargs.pop('force_update')
 
-        # use the current spec by default if updating the service
+        # fetch the current spec by default if updating the service
         # through the model
-        use_current_spec = kwargs.pop('use_current_spec', True)
-        create_kwargs['use_current_spec'] = use_current_spec
+        fetch_current_spec = kwargs.pop('fetch_current_spec', True)
+        create_kwargs['fetch_current_spec'] = fetch_current_spec
 
     # All kwargs should have been consumed by this point, so raise
     # error if any are left
