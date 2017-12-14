@@ -336,10 +336,9 @@ class UpdateConfig(dict):
           floating point number between 0 and 1. Default: 0
         order (string): Specifies the order of operations when rolling out an
           updated task. Either ``start_first`` or ``stop_first`` are accepted.
-          Default: ``stop_first``
     """
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
-                 monitor=None, max_failure_ratio=None, order='stop-first'):
+                 monitor=None, max_failure_ratio=None, order=None):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
@@ -363,11 +362,12 @@ class UpdateConfig(dict):
                 )
             self['MaxFailureRatio'] = max_failure_ratio
 
-        if order not in ('start-first', 'stop-first'):
-            raise errors.InvalidArgument(
-                'order must be either `start-first` or `stop-first`'
-            )
-        self['Order'] = order
+        if order is not None:
+            if order not in ('start-first', 'stop-first'):
+                raise errors.InvalidArgument(
+                    'order must be either `start-first` or `stop-first`'
+                )
+            self['Order'] = order
 
 
 class RestartConditionTypesEnum(object):
