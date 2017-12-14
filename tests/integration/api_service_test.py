@@ -386,6 +386,24 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Env' in con_spec
         assert con_spec['Env'] == ['DOCKER_PY_TEST=1']
 
+    @requires_api_version('1.29')
+    def test_create_service_with_update_order(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        update_config = docker.types.UpdateConfig(
+            parallelism=10, delay=5, order='start-first'
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, update_config=update_config, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'UpdateConfig' in svc_info['Spec']
+        uc = svc_info['Spec']['UpdateConfig']
+        assert update_config['Parallelism'] == uc['Parallelism']
+        assert update_config['Delay'] == uc['Delay']
+        assert update_config['Order'] == uc['Order']
+
     @requires_api_version('1.25')
     def test_create_service_with_tty(self):
         container_spec = docker.types.ContainerSpec(
