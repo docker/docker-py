@@ -571,7 +571,13 @@ def format_environment(environment):
     return [format_env(*var) for var in six.iteritems(environment)]
 
 
-def format_extra_hosts(extra_hosts):
+def format_extra_hosts(extra_hosts, task=False):
+    # Use format dictated by Swarm API if container is part of a task
+    if task:
+        return [
+            '{} {}'.format(v, k) for k, v in sorted(six.iteritems(extra_hosts))
+        ]
+
     return [
         '{}:{}'.format(k, v) for k, v in sorted(six.iteritems(extra_hosts))
     ]

@@ -137,7 +137,7 @@ class ContainerSpec(dict):
         if labels is not None:
             self['Labels'] = labels
         if hosts is not None:
-            self['Hosts'] = format_extra_hosts(hosts)
+            self['Hosts'] = format_extra_hosts(hosts, task=True)
 
         if mounts is not None:
             parsed_mounts = []
