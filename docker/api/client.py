@@ -206,7 +206,7 @@ class APIClient(
                     'instead'.format(arg, type(arg))
                 )
 
-        quote_f = partial(six.moves.urllib.parse.quote_plus, safe="/:")
+        quote_f = partial(six.moves.urllib.parse.quote, safe="/:")
         args = map(quote_f, args)
 
         if kwargs.get('versioned_api', True):
