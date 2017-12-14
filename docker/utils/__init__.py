@@ -1,6 +1,7 @@
 # flake8: noqa
 from .build import tar, exclude_paths
 from .decorators import check_resource, minimum_version, update_headers
+from .git import make_git_build_context, is_git_url
 from .utils import (
     compare_version, convert_port_bindings, convert_volume_binds,
     mkbuildcontext, parse_repository_tag, parse_host,
