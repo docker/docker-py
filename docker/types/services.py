@@ -4,7 +4,7 @@ from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import (
     check_resource, format_environment, format_extra_hosts, parse_bytes,
-    split_command,
+    split_command, convert_service_networks,
 )
 
 
@@ -26,11 +26,14 @@ class TaskTemplate(dict):
         placement (Placement): Placement instructions for the scheduler.
             If a list is passed instead, it is assumed to be a list of
             constraints as part of a :py:class:`Placement` object.
+        networks (:py:class:`list`): List of network names or IDs to attach
+            the containers to.
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
-                 placement=None, log_driver=None, force_update=None):
+                 placement=None, log_driver=None, networks=None,
+                 force_update=None):
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -42,6 +45,8 @@ class TaskTemplate(dict):
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
+        if networks:
+            self['Networks'] = convert_service_networks(networks)
 
         if force_update is not None:
             if not isinstance(force_update, int):

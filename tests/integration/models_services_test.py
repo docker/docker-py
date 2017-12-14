@@ -1,7 +1,6 @@
 import unittest
 
 import docker
-import pytest
 
 from .. import helpers
 from .base import TEST_API_VERSION
@@ -35,6 +34,25 @@ class ServiceTest(unittest.TestCase):
         container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert "alpine" in container_spec['Image']
         assert container_spec['Labels'] == {'container': 'label'}
+
+    def test_create_with_network(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        name = helpers.random_name()
+        network = client.networks.create(
+            helpers.random_name(), driver='overlay'
+        )
+        service = client.services.create(
+            # create arguments
+            name=name,
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300",
+            networks=[network.id]
+        )
+        assert 'Networks' in service.attrs['Spec']['TaskTemplate']
+        networks = service.attrs['Spec']['TaskTemplate']['Networks']
+        assert len(networks) == 1
+        assert networks[0]['Target'] == network.id
 
     def test_get(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -82,7 +100,6 @@ class ServiceTest(unittest.TestCase):
         assert len(tasks) == 1
         assert tasks[0]['ServiceID'] == service2.id
 
-    @pytest.mark.skip(reason="Makes Swarm unstable?")
     def test_update(self):
         client = docker.from_env(version=TEST_API_VERSION)
         service = client.services.create(
@@ -101,3 +118,109 @@ class ServiceTest(unittest.TestCase):
         service.reload()
         container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert container_spec['Command'] == ["sleep", "600"]
+
+    def test_update_retains_service_labels(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            labels={'service.label': 'SampleLabel'},
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        service.update(
+            # create argument
+            name=service.name,
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        labels = service.attrs['Spec']['Labels']
+        assert labels == {'service.label': 'SampleLabel'}
+
+    def test_update_retains_container_labels(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300",
+            container_labels={'container.label': 'SampleLabel'}
+        )
+        service.update(
+            # create argument
+            name=service.name,
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert container_spec['Labels'] == {'container.label': 'SampleLabel'}
+
+    def test_update_remove_service_labels(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            labels={'service.label': 'SampleLabel'},
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        service.update(
+            # create argument
+            name=service.name,
+            labels={},
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        assert not service.attrs['Spec'].get('Labels')
+
+    def test_scale_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
+        service.update(
+            mode=docker.types.ServiceMode('replicated', replicas=2),
+        )
+        while len(tasks) == 1:
+            tasks = service.tasks()
+        assert len(tasks) >= 2
+        # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
+
+    @helpers.requires_api_version('1.25')
+    def test_restart_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        initial_version = service.version
+        service.update(
+            # create argument
+            name=service.name,
+            # task template argument
+            force_update=10,
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        assert service.version > initial_version
