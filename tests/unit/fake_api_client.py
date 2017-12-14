@@ -43,7 +43,7 @@ def make_fake_api_client():
             fake_api.get_fake_inspect_container()[1],
         'inspect_image.return_value': fake_api.get_fake_inspect_image()[1],
         'inspect_network.return_value': fake_api.get_fake_network()[1],
-        'logs.return_value': 'hello world\n',
+        'logs.return_value': [b'hello world\n'],
         'networks.return_value': fake_api.get_fake_network_list()[1],
         'start.return_value': None,
         'wait.return_value': 0,
