@@ -1,7 +1,7 @@
 import docker
 import tempfile
 from .base import BaseIntegrationTest, TEST_API_VERSION
-from ..helpers import random_name
+from ..helpers import random_name, requires_api_version
 
 
 class ContainerCollectionTest(BaseIntegrationTest):
@@ -95,7 +95,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
             "alpine", "echo hello",
             log_config=dict(type='none')
         )
-        self.assertEqual(out, None)
+        assert out is None
 
     def test_run_with_json_file_driver(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -104,7 +104,24 @@ class ContainerCollectionTest(BaseIntegrationTest):
             "alpine", "echo hello",
             log_config=dict(type='json-file')
         )
-        self.assertEqual(out, b'hello\n')
+        assert out == b'hello\n'
+
+    @requires_api_version('1.25')
+    def test_run_with_auto_remove(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        out = client.containers.run(
+            'alpine', 'echo hello', auto_remove=True
+        )
+        assert out == b'hello\n'
+
+    def test_run_with_streamed_logs(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        out = client.containers.run(
+            'alpine', 'sh -c "echo hello && echo world"', stream=True
+        )
+        logs = [line for line in out]
+        assert logs[0] == b'hello\n'
+        assert logs[1] == b'world\n'
 
     def test_get(self):
         client = docker.from_env(version=TEST_API_VERSION)

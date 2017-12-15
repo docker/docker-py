@@ -12,7 +12,7 @@ class ContainerCollectionTest(unittest.TestCase):
         client = make_fake_client()
         out = client.containers.run("alpine", "echo hello world")
 
-        assert out == 'hello world\n'
+        assert out == b'hello world\n'
 
         client.api.create_container.assert_called_with(
             image="alpine",
@@ -24,9 +24,8 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.start.assert_called_with(FAKE_CONTAINER_ID)
         client.api.wait.assert_called_with(FAKE_CONTAINER_ID)
         client.api.logs.assert_called_with(
-            FAKE_CONTAINER_ID,
-            stderr=False,
-            stdout=True
+            FAKE_CONTAINER_ID, stderr=False, stdout=True, stream=True,
+            follow=True
         )
 
     def test_create_container_args(self):

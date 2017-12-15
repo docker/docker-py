@@ -629,6 +629,9 @@ class ContainerCollection(Collection):
                 (e.g. ``SIGINT``).
             storage_opt (dict): Storage driver options per container as a
                 key-value mapping.
+            stream (bool): If true and ``detach`` is false, return a log
+                generator instead of a string. Ignored if ``detach`` is true.
+                Default: ``False``.
             sysctls (dict): Kernel parameters to set in the container.
             tmpfs (dict): Temporary filesystems to mount, as a dictionary
                 mapping a path inside the container to options for that path.
@@ -696,6 +699,7 @@ class ContainerCollection(Collection):
         """
         if isinstance(image, Image):
             image = image.id
+        stream = kwargs.pop('stream', False)
         detach = kwargs.pop("detach", False)
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -723,23 +727,28 @@ class ContainerCollection(Collection):
         if detach:
             return container
 
-        exit_status = container.wait()
-        if exit_status != 0:
-            stdout = False
-            stderr = True
-
         logging_driver = container.attrs['HostConfig']['LogConfig']['Type']
 
+        out = None
         if logging_driver == 'json-file' or logging_driver == 'journald':
-            out = container.logs(stdout=stdout, stderr=stderr)
-        else:
-            out = None
+            out = container.logs(
+                stdout=stdout, stderr=stderr, stream=True, follow=True
+            )
+
+        exit_status = container.wait()
+        if exit_status != 0:
+            out = container.logs(stdout=False, stderr=True)
 
         if remove:
             container.remove()
         if exit_status != 0:
-            raise ContainerError(container, exit_status, command, image, out)
-        return out
+            raise ContainerError(
+                container, exit_status, command, image, out
+            )
+
+        return out if stream or out is None else b''.join(
+            [line for line in out]
+        )
 
     def create(self, image, command=None, **kwargs):
         """
