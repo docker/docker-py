@@ -63,21 +63,21 @@ class APIClient(
         >>> import docker
         >>> client = docker.APIClient(base_url='unix://var/run/docker.sock')
         >>> client.version()
-        {u'ApiVersion': u'1.24',
+        {u'ApiVersion': u'1.33',
          u'Arch': u'amd64',
-         u'BuildTime': u'2016-09-27T23:38:15.810178467+00:00',
-         u'Experimental': True,
-         u'GitCommit': u'45bed2c',
-         u'GoVersion': u'go1.6.3',
-         u'KernelVersion': u'4.4.22-moby',
+         u'BuildTime': u'2017-11-19T18:46:37.000000000+00:00',
+         u'GitCommit': u'f4ffd2511c',
+         u'GoVersion': u'go1.9.2',
+         u'KernelVersion': u'4.14.3-1-ARCH',
+         u'MinAPIVersion': u'1.12',
          u'Os': u'linux',
-         u'Version': u'1.12.2-rc1'}
+         u'Version': u'17.10.0-ce'}
 
     Args:
         base_url (str): URL to the Docker server. For example,
             ``unix:///var/run/docker.sock`` or ``tcp://127.0.0.1:1234``.
         version (str): The version of the API to use. Set to ``auto`` to
-            automatically detect the server's version. Default: ``1.26``
+            automatically detect the server's version. Default: ``1.30``
         timeout (int): Default timeout for API calls, in seconds.
         tls (bool or :py:class:`~docker.tls.TLSConfig`): Enable TLS. Pass
             ``True`` to enable it with default options, or pass a
