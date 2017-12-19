@@ -838,8 +838,8 @@ class ContainerApiMixin(object):
                         params['since'] = since
                     else:
                         raise errors.InvalidArgument(
-                            'since value should be datetime or positive int\
-                            , not {}'.
+                            'since value should be datetime or positive int, '
+                            'not {}'.
                             format(type(since))
                         )
             url = self._url("/containers/{0}/logs", container)
