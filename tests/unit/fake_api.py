@@ -437,6 +437,10 @@ def post_fake_update_node():
     return 200, None
 
 
+def post_fake_join_swarm():
+    return 200, None
+
+
 def get_fake_network_list():
     return 200, [{
         "Name": "bridge",
@@ -601,6 +605,8 @@ fake_responses = {
         CURRENT_VERSION, prefix, FAKE_NODE_ID
     ), 'POST'):
     post_fake_update_node,
+    ('{1}/{0}/swarm/join'.format(CURRENT_VERSION, prefix), 'POST'):
+    post_fake_join_swarm,
     ('{1}/{0}/networks'.format(CURRENT_VERSION, prefix), 'GET'):
     get_fake_network_list,
     ('{1}/{0}/networks/create'.format(CURRENT_VERSION, prefix), 'POST'):
