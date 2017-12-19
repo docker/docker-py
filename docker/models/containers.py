@@ -737,7 +737,9 @@ class ContainerCollection(Collection):
 
         exit_status = container.wait()
         if exit_status != 0:
-            out = container.logs(stdout=False, stderr=True)
+            out = None
+            if not kwargs.get('auto_remove'):
+                out = container.logs(stdout=False, stderr=True)
 
         if remove:
             container.remove()
