@@ -139,7 +139,8 @@ class ContainerApiMixin(object):
         Args:
             quiet (bool): Only display numeric Ids
             all (bool): Show all containers. Only running containers are shown
-                by default trunc (bool): Truncate output
+                by default
+            trunc (bool): Truncate output
             latest (bool): Show only the latest created container, include
                 non-running ones.
             since (str): Show only containers created since Id or Name, include
@@ -1112,20 +1113,26 @@ class ContainerApiMixin(object):
                                 json=True)
 
     @utils.check_resource('container')
-    def stop(self, container, timeout=10):
+    def stop(self, container, timeout=None):
         """
         Stops a container. Similar to the ``docker stop`` command.
 
         Args:
             container (str): The container to stop
             timeout (int): Timeout in seconds to wait for the container to
-                stop before sending a ``SIGKILL``. Default: 10
+                stop before sending a ``SIGKILL``. If None, then the
+                StopTimeout value of the container will be used.
+                Default: None
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        params = {'t': timeout}
+        if timeout is None:
+            params = {}
+            timeout = 10
+        else:
+            params = {'t': timeout}
         url = self._url("/containers/{0}/stop", container)
 
         res = self._post(url, params=params,

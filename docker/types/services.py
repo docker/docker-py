@@ -4,7 +4,7 @@ from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import (
     check_resource, format_environment, format_extra_hosts, parse_bytes,
-    split_command,
+    split_command, convert_service_networks,
 )
 
 
@@ -26,11 +26,14 @@ class TaskTemplate(dict):
         placement (Placement): Placement instructions for the scheduler.
             If a list is passed instead, it is assumed to be a list of
             constraints as part of a :py:class:`Placement` object.
+        networks (:py:class:`list`): List of network names or IDs to attach
+            the containers to.
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
-                 placement=None, log_driver=None, force_update=None):
+                 placement=None, log_driver=None, networks=None,
+                 force_update=None):
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -42,6 +45,8 @@ class TaskTemplate(dict):
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
+        if networks:
+            self['Networks'] = convert_service_networks(networks)
 
         if force_update is not None:
             if not isinstance(force_update, int):
@@ -137,7 +142,7 @@ class ContainerSpec(dict):
         if labels is not None:
             self['Labels'] = labels
         if hosts is not None:
-            self['Hosts'] = format_extra_hosts(hosts)
+            self['Hosts'] = format_extra_hosts(hosts, task=True)
 
         if mounts is not None:
             parsed_mounts = []
@@ -334,9 +339,11 @@ class UpdateConfig(dict):
         max_failure_ratio (float): The fraction of tasks that may fail during
           an update before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
+        order (string): Specifies the order of operations when rolling out an
+          updated task. Either ``start_first`` or ``stop_first`` are accepted.
     """
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
-                 monitor=None, max_failure_ratio=None):
+                 monitor=None, max_failure_ratio=None, order=None):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
@@ -359,6 +366,13 @@ class UpdateConfig(dict):
                     'max_failure_ratio must be a number between 0 and 1'
                 )
             self['MaxFailureRatio'] = max_failure_ratio
+
+        if order is not None:
+            if order not in ('start-first', 'stop-first'):
+                raise errors.InvalidArgument(
+                    'order must be either `start-first` or `stop-first`'
+                )
+            self['Order'] = order
 
 
 class RestartConditionTypesEnum(object):

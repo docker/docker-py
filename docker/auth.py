@@ -203,7 +203,7 @@ def parse_auth(entries, raise_on_error=False):
             # https://github.com/docker/compose/issues/3265
             log.debug(
                 'Auth data for {0} is absent. Client might be using a '
-                'credentials store instead.'
+                'credentials store instead.'.format(registry)
             )
             conf[registry] = {}
             continue

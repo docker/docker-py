@@ -1,4 +1,5 @@
 from ..api import APIClient
+from ..utils import version_gte
 from .containers import Container
 from .resource import Model, Collection
 
@@ -153,7 +154,7 @@ class NetworkCollection(Collection):
         resp = self.client.api.create_network(name, *args, **kwargs)
         return self.get(resp['Id'])
 
-    def get(self, network_id):
+    def get(self, network_id, *args, **kwargs):
         """
         Get a network by its ID.
 
@@ -175,7 +176,9 @@ class NetworkCollection(Collection):
                 If the server returns an error.
 
         """
-        return self.prepare_model(self.client.api.inspect_network(network_id))
+        return self.prepare_model(
+            self.client.api.inspect_network(network_id, *args, **kwargs)
+        )
 
     def list(self, *args, **kwargs):
         """
@@ -184,6 +187,13 @@ class NetworkCollection(Collection):
         Args:
             names (:py:class:`list`): List of names to filter by.
             ids (:py:class:`list`): List of ids to filter by.
+            filters (dict): Filters to be processed on the network list.
+                Available filters:
+                - ``driver=[<driver-name>]`` Matches a network's driver.
+                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - ``type=["custom"|"builtin"]`` Filters networks by type.
+            greedy (bool): Fetch more details for each network individually.
+                You might want this to get the containers attached to them.
 
         Returns:
             (list of :py:class:`Network`) The networks on the server.
@@ -192,8 +202,13 @@ class NetworkCollection(Collection):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+        greedy = kwargs.pop('greedy', False)
         resp = self.client.api.networks(*args, **kwargs)
-        return [self.prepare_model(item) for item in resp]
+        networks = [self.prepare_model(item) for item in resp]
+        if greedy and version_gte(self.client.api._version, '1.28'):
+            for net in networks:
+                net.reload()
+        return networks
 
     def prune(self, filters=None):
         self.client.api.prune_networks(filters=filters)

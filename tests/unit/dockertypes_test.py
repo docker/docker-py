@@ -206,6 +206,28 @@ class HostConfigTest(unittest.TestCase):
             InvalidVersion, lambda: create_host_config(
                 version='1.24', nano_cpus=1))
 
+    def test_create_host_config_with_cpu_rt_period_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_rt_period='1000')
+
+    def test_create_host_config_with_cpu_rt_period(self):
+        config = create_host_config(version='1.25', cpu_rt_period=1000)
+        self.assertEqual(config.get('CPURealtimePeriod'), 1000)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_rt_period=1000))
+
+    def test_ctrate_host_config_with_cpu_rt_runtime_types(self):
+        with pytest.raises(TypeError):
+            create_host_config(version='1.25', cpu_rt_runtime='1000')
+
+    def test_create_host_config_with_cpu_rt_runtime(self):
+        config = create_host_config(version='1.25', cpu_rt_runtime=1000)
+        self.assertEqual(config.get('CPURealtimeRuntime'), 1000)
+        self.assertRaises(
+            InvalidVersion, lambda: create_host_config(
+                version='1.24', cpu_rt_runtime=1000))
+
 
 class ContainerConfigTest(unittest.TestCase):
     def test_create_container_config_volume_driver_warning(self):

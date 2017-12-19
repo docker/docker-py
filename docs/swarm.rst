@@ -12,9 +12,11 @@ These methods are available on ``client.swarm``:
 .. rst-class:: hide-signature
 .. py:class:: Swarm
 
+  .. automethod:: get_unlock_key()
   .. automethod:: init()
   .. automethod:: join()
   .. automethod:: leave()
+  .. automethod:: unlock()
   .. automethod:: update()
   .. automethod:: reload()
 

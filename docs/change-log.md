@@ -1,6 +1,41 @@
 Change log
 ==========
 
+2.7.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/41?closed=1)
+
+### Features
+
+* Added `unlock_swarm` and `get_unlock_key` methods to the `APIClient`.
+    * Added `unlock` and `get_unlock_key` to `DockerClient.swarm`.
+* Added a `greedy` parameter to `DockerClient.networks.list`, yielding
+  additional details about the listed networks.
+* Added `cpu_rt_runtime` and `cpu_rt_period` as parameters to
+  `APIClient.create_host_config` and `DockerClient.containers.run`.
+* Added the `order` argument to `UpdateConfig`.
+* Added `fetch_current_spec` to `APIClient.update_service` and `Service.update`
+  that will retrieve the current configuration of the service and merge it with
+  the provided parameters to determine the new configuration.
+
+### Bugfixes
+
+* Fixed a bug where the `build` method tried to include inaccessible files
+  in the context, leading to obscure errors during the build phase
+  (inaccessible files inside the context now raise an `IOError` instead).
+* Fixed a bug where the `build` method would try to read from FIFOs present
+  inside the build context, causing it to hang.
+* `APIClient.stop` will no longer override the `stop_timeout` value present
+  in the container's configuration.
+* Fixed a bug preventing removal of networks with names containing a space.
+* Fixed a bug where `DockerClient.containers.run` would crash if the
+  `auto_remove` parameter was set to `True`.
+* Changed the default value of `listen_addr` in `join_swarm` to match the
+  one in `init_swarm`.
+* Fixed a bug where handling HTTP errors with no body would cause an unexpected
+  exception to be thrown while generating an `APIError` object.
+
 2.6.1
 -----
 

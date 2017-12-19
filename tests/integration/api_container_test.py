@@ -464,6 +464,20 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['InitPath'] == "/usr/libexec/docker-init"
 
+    @requires_api_version('1.24')
+    @pytest.mark.xfail(not os.path.exists('/sys/fs/cgroup/cpu.rt_runtime_us'),
+                       reason='CONFIG_RT_GROUP_SCHED isn\'t enabled')
+    def test_create_with_cpu_rt_options(self):
+        ctnr = self.client.create_container(
+            BUSYBOX, 'true', host_config=self.client.create_host_config(
+                cpu_rt_period=1000, cpu_rt_runtime=500
+            )
+        )
+        self.tmp_containers.append(ctnr)
+        config = self.client.inspect_container(ctnr)
+        assert config['HostConfig']['CpuRealtimeRuntime'] == 500
+        assert config['HostConfig']['CpuRealtimePeriod'] == 1000
+
 
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):

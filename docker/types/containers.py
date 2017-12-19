@@ -120,7 +120,8 @@ class HostConfig(dict):
                  isolation=None, auto_remove=False, storage_opt=None,
                  init=None, init_path=None, volume_driver=None,
                  cpu_count=None, cpu_percent=None, nano_cpus=None,
-                 cpuset_mems=None, runtime=None, mounts=None):
+                 cpuset_mems=None, runtime=None, mounts=None,
+                 cpu_rt_period=None, cpu_rt_runtime=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -335,6 +336,26 @@ class HostConfig(dict):
                     'cpuset_mems', cpuset_mems, 'str'
                 )
             self['CpusetMems'] = cpuset_mems
+
+        if cpu_rt_period:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_rt_period', '1.25')
+
+            if not isinstance(cpu_rt_period, int):
+                raise host_config_type_error(
+                    'cpu_rt_period', cpu_rt_period, 'int'
+                )
+            self['CPURealtimePeriod'] = cpu_rt_period
+
+        if cpu_rt_runtime:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_rt_runtime', '1.25')
+
+            if not isinstance(cpu_rt_runtime, int):
+                raise host_config_type_error(
+                    'cpu_rt_runtime', cpu_rt_runtime, 'int'
+                )
+            self['CPURealtimeRuntime'] = cpu_rt_runtime
 
         if blkio_weight:
             if not isinstance(blkio_weight, int):

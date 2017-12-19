@@ -30,3 +30,46 @@ class SwarmTest(BaseAPIClientTest):
         self.assertEqual(
             args[1]['headers']['Content-Type'], 'application/json'
         )
+
+    @requires_api_version('1.24')
+    def test_join_swarm(self):
+        remote_addr = ['1.2.3.4:2377']
+        listen_addr = '2.3.4.5:2377'
+        join_token = 'A_BEAUTIFUL_JOIN_TOKEN'
+
+        data = {
+            'RemoteAddrs': remote_addr,
+            'ListenAddr': listen_addr,
+            'JoinToken': join_token
+        }
+
+        self.client.join_swarm(
+            remote_addrs=remote_addr,
+            listen_addr=listen_addr,
+            join_token=join_token
+        )
+
+        args = fake_request.call_args
+
+        assert (args[0][1] == url_prefix + 'swarm/join')
+        assert (json.loads(args[1]['data']) == data)
+        assert (args[1]['headers']['Content-Type'] == 'application/json')
+
+    @requires_api_version('1.24')
+    def test_join_swarm_no_listen_address_takes_default(self):
+        remote_addr = ['1.2.3.4:2377']
+        join_token = 'A_BEAUTIFUL_JOIN_TOKEN'
+
+        data = {
+            'RemoteAddrs': remote_addr,
+            'ListenAddr': '0.0.0.0:2377',
+            'JoinToken': join_token
+        }
+
+        self.client.join_swarm(remote_addrs=remote_addr, join_token=join_token)
+
+        args = fake_request.call_args
+
+        assert (args[0][1] == url_prefix + 'swarm/join')
+        assert (json.loads(args[1]['data']) == data)
+        assert (args[1]['headers']['Content-Type'] == 'application/json')
