@@ -1,5 +1,7 @@
-import docker
 import tempfile
+
+import docker
+import pytest
 from .base import BaseIntegrationTest, TEST_API_VERSION
 from ..helpers import random_name, requires_api_version
 
@@ -113,6 +115,16 @@ class ContainerCollectionTest(BaseIntegrationTest):
             'alpine', 'echo hello', auto_remove=True
         )
         assert out == b'hello\n'
+
+    @requires_api_version('1.25')
+    def test_run_with_auto_remove_error(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        with pytest.raises(docker.errors.ContainerError) as e:
+            client.containers.run(
+                'alpine', 'sh -c ">&2 echo error && exit 1"', auto_remove=True
+            )
+        assert e.value.exit_status == 1
+        assert e.value.stderr is None
 
     def test_run_with_streamed_logs(self):
         client = docker.from_env(version=TEST_API_VERSION)
