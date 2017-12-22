@@ -203,6 +203,28 @@ class ServiceTest(unittest.TestCase):
         spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert spec.get('Command') == ['sleep', '300']
 
+    def test_scale_method_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
+        service.scale(2)
+        while len(tasks) == 1:
+            tasks = service.tasks()
+        assert len(tasks) >= 2
+        # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
+
     @helpers.requires_api_version('1.25')
     def test_restart_service(self):
         client = docker.from_env(version=TEST_API_VERSION)

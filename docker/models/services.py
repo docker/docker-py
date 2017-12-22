@@ -1,6 +1,6 @@
 import copy
 from docker.errors import create_unexpected_kwargs_error
-from docker.types import TaskTemplate, ContainerSpec
+from docker.types import TaskTemplate, ContainerSpec, ServiceMode
 from .resource import Model, Collection
 
 
@@ -104,6 +104,22 @@ class Service(Model):
             'TTY', False
         )
         return self.client.api.service_logs(self.id, is_tty=is_tty, **kwargs)
+
+    def scale(self, replicas):
+        """
+        Scale service container.
+
+        Args:
+            replicas (int): The number of containers that should be running.
+
+        Returns:
+            ``True``if successful.
+        """
+
+        service_mode = ServiceMode('replicated', replicas)
+        return self.client.api.update_service(self.id, self.version,
+                                              service_mode,
+                                              fetch_current_spec=True)
 
 
 class ServiceCollection(Collection):
