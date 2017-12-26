@@ -1,5 +1,5 @@
 import copy
-from docker.errors import create_unexpected_kwargs_error
+from docker.errors import create_unexpected_kwargs_error, InvalidArgument
 from docker.types import TaskTemplate, ContainerSpec, ServiceMode
 from .resource import Model, Collection
 
@@ -115,6 +115,9 @@ class Service(Model):
         Returns:
             ``True``if successful.
         """
+
+        if not self.attrs['Spec']['Mode'].get('Global'):
+            raise InvalidArgument('Cannot scale a global container')
 
         service_mode = ServiceMode('replicated', replicas)
         return self.client.api.update_service(self.id, self.version,
