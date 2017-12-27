@@ -444,8 +444,8 @@ class EndpointSpec(dict):
           balancing between tasks (``'vip'`` or ``'dnsrr'``). Defaults to
           ``'vip'`` if not provided.
         ports (dict): Exposed ports that this service is accessible on from the
-          outside, in the form of ``{ target_port: published_port }`` or
-          ``{ target_port: (published_port, protocol) }``. Ports can only be
+          outside, in the form of ``{ published_port: target_port }`` or
+          ``{ published_port: (target_port, protocol) }``. Ports can only be
           provided if the ``vip`` resolution mode is used.
     """
     def __init__(self, mode=None, ports=None):
