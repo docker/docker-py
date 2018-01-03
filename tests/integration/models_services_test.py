@@ -5,7 +5,7 @@ import docker
 from .. import helpers
 from .base import TEST_API_VERSION
 from docker.errors import InvalidArgument
-from docker.models.services import ServiceMode
+from docker.types.services import ServiceMode
 
 
 class ServiceTest(unittest.TestCase):
@@ -212,7 +212,7 @@ class ServiceTest(unittest.TestCase):
             name=helpers.random_name(),
             # ContainerSpec arguments
             image="alpine",
-            command="sleep 300"
+            command="sleep 300",
         )
         tasks = []
         while len(tasks) == 0:

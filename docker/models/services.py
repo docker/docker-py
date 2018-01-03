@@ -116,7 +116,7 @@ class Service(Model):
             ``True``if successful.
         """
 
-        if not self.attrs['Spec']['Mode'].get('Global'):
+        if 'Global' in self.attrs['Spec']['Mode'].keys():
             raise InvalidArgument('Cannot scale a global container')
 
         service_mode = ServiceMode('replicated', replicas)
