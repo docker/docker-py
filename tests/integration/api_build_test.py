@@ -352,6 +352,28 @@ class BuildTest(BaseAPIIntegrationTest):
 
         assert 'Successfully built' in lines[-1]['stream']
 
+    def test_build_with_dockerfile_empty_lines(self):
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+        with open(os.path.join(base_dir, 'Dockerfile'), 'w') as f:
+            f.write('FROM busybox\n')
+        with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
+            f.write('\n'.join([
+                '   ',
+                '',
+                '\t\t',
+                '\t     ',
+            ]))
+
+        stream = self.client.build(
+            path=base_dir, stream=True, decode=True, nocache=True
+        )
+
+        lines = []
+        for chunk in stream:
+            lines.append(chunk)
+        assert 'Successfully built' in lines[-1]['stream']
+
     def test_build_gzip_custom_encoding(self):
         with self.assertRaises(errors.DockerException):
             self.client.build(path='.', gzip=True, encoding='text/html')
