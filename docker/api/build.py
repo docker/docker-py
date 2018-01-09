@@ -19,7 +19,7 @@ class BuildApiMixin(object):
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
-              squash=None, extra_hosts=None):
+              squash=None, extra_hosts=None, platform=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -103,6 +103,7 @@ class BuildApiMixin(object):
                 single layer.
             extra_hosts (dict): Extra hosts to add to /etc/hosts in building
                 containers, as a mapping of hostname to IP address.
+            platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
             A generator for the build output.
@@ -242,6 +243,13 @@ class BuildApiMixin(object):
             if isinstance(extra_hosts, dict):
                 extra_hosts = utils.format_extra_hosts(extra_hosts)
             params.update({'extrahosts': extra_hosts})
+
+        if platform is not None:
+            if utils.version_lt(self._version, '1.32'):
+                raise errors.InvalidVersion(
+                    'platform was only introduced in API version 1.32'
+                )
+            params['platform'] = platform
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}

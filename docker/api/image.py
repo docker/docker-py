@@ -323,7 +323,8 @@ class ImageApiMixin(object):
         return self._result(self._post(url, params=params), True)
 
     def pull(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None, decode=False):
+             insecure_registry=False, auth_config=None, decode=False,
+             platform=None):
         """
         Pulls an image. Similar to the ``docker pull`` command.
 
@@ -336,6 +337,7 @@ class ImageApiMixin(object):
                 :py:meth:`~docker.api.daemon.DaemonApiMixin.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
+            platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
             (generator or str): The output
@@ -376,7 +378,7 @@ class ImageApiMixin(object):
         }
         headers = {}
 
-        if utils.compare_version('1.5', self._version) >= 0:
+        if utils.version_gte(self._version, '1.5'):
             if auth_config is None:
                 header = auth.get_config_header(self, registry)
                 if header:
@@ -384,6 +386,13 @@ class ImageApiMixin(object):
             else:
                 log.debug('Sending supplied auth config')
                 headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+
+        if platform is not None:
+            if utils.version_lt(self._version, '1.32'):
+                raise errors.InvalidVersion(
+                    'platform was only introduced in API version 1.32'
+                )
+            params['platform'] = platform
 
         response = self._post(
             self._url('/images/create'), params=params, headers=headers,

@@ -579,6 +579,8 @@ class ContainerCollection(Collection):
                 inside the container.
             pids_limit (int): Tune a container's pids limit. Set ``-1`` for
                 unlimited.
+            platform (str): Platform in the format ``os[/arch[/variant]]``.
+                Only used if the method needs to pull the requested image.
             ports (dict): Ports to bind inside the container.
 
                 The keys of the dictionary are the ports to bind inside the
@@ -700,7 +702,9 @@ class ContainerCollection(Collection):
         if isinstance(image, Image):
             image = image.id
         stream = kwargs.pop('stream', False)
-        detach = kwargs.pop("detach", False)
+        detach = kwargs.pop('detach', False)
+        platform = kwargs.pop('platform', None)
+
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
                 kwargs["auto_remove"] = True
@@ -718,7 +722,7 @@ class ContainerCollection(Collection):
             container = self.create(image=image, command=command,
                                     detach=detach, **kwargs)
         except ImageNotFound:
-            self.client.images.pull(image)
+            self.client.images.pull(image, platform=platform)
             container = self.create(image=image, command=command,
                                     detach=detach, **kwargs)
 

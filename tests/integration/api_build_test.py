@@ -377,3 +377,18 @@ class BuildTest(BaseAPIIntegrationTest):
     def test_build_gzip_custom_encoding(self):
         with self.assertRaises(errors.DockerException):
             self.client.build(path='.', gzip=True, encoding='text/html')
+
+    @requires_api_version('1.32')
+    @requires_experimental(until=None)
+    def test_build_invalid_platform(self):
+        script = io.BytesIO('FROM busybox\n'.encode('ascii'))
+
+        with pytest.raises(errors.APIError) as excinfo:
+            stream = self.client.build(
+                fileobj=script, stream=True, platform='foobar'
+            )
+            for _ in stream:
+                pass
+
+        assert excinfo.value.status_code == 400
+        assert 'invalid platform' in excinfo.exconly()

@@ -14,7 +14,7 @@ from six.moves import socketserver
 
 import docker
 
-from ..helpers import requires_api_version
+from ..helpers import requires_api_version, requires_experimental
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
@@ -66,6 +66,15 @@ class PullImageTest(BaseAPIIntegrationTest):
         )
         img_info = self.client.inspect_image('hello-world')
         self.assertIn('Id', img_info)
+
+    @requires_api_version('1.32')
+    @requires_experimental(until=None)
+    def test_pull_invalid_platform(self):
+        with pytest.raises(docker.errors.APIError) as excinfo:
+            self.client.pull('hello-world', platform='foobar')
+
+        assert excinfo.value.status_code == 500
+        assert 'invalid platform' in excinfo.exconly()
 
 
 class CommitTest(BaseAPIIntegrationTest):
