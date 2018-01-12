@@ -137,6 +137,8 @@ class ServiceApiMixin(object):
         auth_header = auth.get_config_header(self, registry)
         if auth_header:
             headers['X-Registry-Auth'] = auth_header
+        if utils.version_lt(self._version, '1.25'):
+            networks = networks or task_template.pop('Networks', None)
         data = {
             'Name': name,
             'Labels': labels,
@@ -411,7 +413,12 @@ class ServiceApiMixin(object):
 
         if networks is not None:
             converted_networks = utils.convert_service_networks(networks)
-            data['TaskTemplate']['Networks'] = converted_networks
+            if utils.version_lt(self._version, '1.25'):
+                data['Networks'] = converted_networks
+            else:
+                data['TaskTemplate']['Networks'] = converted_networks
+        elif utils.version_lt(self._version, '1.25'):
+            data['Networks'] = current.get('Networks')
         elif data['TaskTemplate'].get('Networks') is None:
             current_task_template = current.get('TaskTemplate', {})
             current_networks = current_task_template.get('Networks')
