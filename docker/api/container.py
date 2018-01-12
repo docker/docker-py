@@ -1,3 +1,4 @@
+import requests
 import six
 from datetime import datetime
 
@@ -894,8 +895,25 @@ class ContainerApiMixin(object):
         """
         params = {'path': path}
         url = self._url('/containers/{0}/archive', container)
-        res = self._put(url, params=params, data=data)
-        self._raise_for_status(res)
+        try:
+            res = self._put(url, params=params, data=data)
+        except requests.exceptions.ConnectionError as e:
+            # issue #1808
+            #
+            # composing errors.NotFound similarly as it's done
+            # in errors.create_api_error_from_http_exception
+            # to raise a valid exception
+            #
+            # e:           original exception provided to errors.NotFound
+            #              constructor
+            # response:    None, since request raised exception
+            # explanation: imitation of proper response.json()['message']
+            #
+            explanation = ('Could not find the file {0} in container {1}'
+                           .format(path, container))
+            raise errors.NotFound(e, response=None, explanation=explanation)
+        else:
+            self._raise_for_status(res)
         return res.status_code == 200
 
     @utils.minimum_version('1.25')
