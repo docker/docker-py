@@ -179,6 +179,30 @@ class ServiceTest(unittest.TestCase):
         service.reload()
         assert not service.attrs['Spec'].get('Labels')
 
+    def test_update_retains_networks(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        network_name = helpers.random_name()
+        network = client.networks.create(
+            network_name, driver='overlay'
+        )
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            networks=[network.id],
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        service.update(
+            # create argument
+            name=service.name,
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        networks = service.attrs['Spec']['TaskTemplate']['Networks']
+        assert networks == [{'Target': network.id}]
+
     def test_scale_service(self):
         client = docker.from_env(version=TEST_API_VERSION)
         service = client.services.create(
