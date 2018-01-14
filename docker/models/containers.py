@@ -42,7 +42,7 @@ class Container(Model):
         """
         The status of the container. For example, ``running``, or ``exited``.
         """
-        return self.attrs['State']['Status']
+        return self.client.api.inspect_container(self.id)['State']['Status']
 
     def attach(self, **kwargs):
         """
