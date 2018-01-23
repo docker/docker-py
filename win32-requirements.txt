@@ -1,2 +1,2 @@
 -r requirements.txt
-pypiwin32==219
+pypiwin32>=219

@@ -3,7 +3,7 @@ all: test
 
 .PHONY: clean
 clean:
-	-docker rm -vf dpy-dind
+	-docker rm -f dpy-dind-py2 dpy-dind-py3
 	find -name "__pycache__" | xargs rm -rf
 
 .PHONY: build
@@ -45,15 +45,25 @@ TEST_API_VERSION ?= 1.33
 TEST_ENGINE_VERSION ?= 17.10.0-ce
 
 .PHONY: integration-dind
-integration-dind: build build-py3
-	docker rm -vf dpy-dind || :
-	docker run -d --name dpy-dind --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd\
+integration-dind: integration-dind-py2 integration-dind-py3
+
+.PHONY: integration-dind-py2
+integration-dind-py2: build
+	docker rm -vf dpy-dind-py2 || :
+	docker run -d --name dpy-dind-py2 --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd\
 		-H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--link=dpy-dind:docker docker-sdk-python py.test tests/integration
+		--link=dpy-dind-py2:docker docker-sdk-python py.test tests/integration
+	docker rm -vf dpy-dind-py3
+
+.PHONY: integration-dind-py3
+integration-dind-py3: build-py3
+	docker rm -vf dpy-dind-py3 || :
+	docker run -d --name dpy-dind-py3 --privileged dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd\
+		-H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--link=dpy-dind:docker docker-sdk-python3 py.test tests/integration
-	docker rm -vf dpy-dind
+		--link=dpy-dind-py3:docker docker-sdk-python3 py.test tests/integration
+	docker rm -vf dpy-dind-py3
 
 .PHONY: integration-dind-ssl
 integration-dind-ssl: build-dind-certs build build-py3
