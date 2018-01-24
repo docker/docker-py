@@ -51,22 +51,15 @@ class TLSConfig(object):
             # majority of users with reasonably up-to-date software. However,
             # before doing so, detect openssl version to ensure we can support
             # it.
-
-            # ssl.OPENSSL_VERSION_INFO returns a tuple of 5 integers
-            # representing version info. We want any OpenSSL version greater
-            # than 1.0.1. Python compares tuples lexigraphically, which means
-            # this comparison will work.
-            if ssl.OPENSSL_VERSION_INFO > (1, 0, 1, 0, 0):
-                # If this version is high enough to support TLSv1_2, then we
-                # should use it.
-                self.ssl_version = ssl.PROTOCOL_TLSv1_2
+            if ssl.OPENSSL_VERSION_INFO[:3] >= (1, 0, 1) and hasattr(
+                    ssl, 'PROTOCOL_TLSv1_2'):
+                # If the OpenSSL version is high enough to support TLSv1_2,
+                # then we should use it.
+                self.ssl_version = getattr(ssl, 'PROTOCOL_TLSv1_2')
             else:
-                # If we can't, use a differnent default. Before the commit
-                # introducing this version detection, the comment read:
-                # >>> TLS v1.0 seems to be the safest default; SSLv23 fails in
-                # >>> mysterious ways:
-                # >>> https://github.com/docker/docker-py/issues/963
-                # Which is why we choose PROTOCOL_TLSv1
+                # Otherwise, TLS v1.0 seems to be the safest default;
+                # SSLv23 fails in mysterious ways:
+                # https://github.com/docker/docker-py/issues/963
                 self.ssl_version = ssl.PROTOCOL_TLSv1
 
         # "tls" and "tls_verify" must have both or neither cert/key files In
