@@ -41,8 +41,8 @@ integration-test: build
 integration-test-py3: build-py3
 	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
 
-TEST_API_VERSION ?= 1.33
-TEST_ENGINE_VERSION ?= 17.10.0-ce
+TEST_API_VERSION ?= 1.35
+TEST_ENGINE_VERSION ?= 17.12.0-ce
 
 .PHONY: integration-dind
 integration-dind: integration-dind-py2 integration-dind-py3
