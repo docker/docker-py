@@ -1096,11 +1096,13 @@ class ServiceTest(BaseAPIIntegrationTest):
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         net1 = self.client.create_network(
-            'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
+            self.get_service_name(), driver='overlay',
+            ipam={'Driver': 'default'}
         )
         self.tmp_networks.append(net1['Id'])
         net2 = self.client.create_network(
-            'dockerpytest_2', driver='overlay', ipam={'Driver': 'default'}
+            self.get_service_name(), driver='overlay',
+            ipam={'Driver': 'default'}
         )
         self.tmp_networks.append(net2['Id'])
         name = self.get_service_name()
