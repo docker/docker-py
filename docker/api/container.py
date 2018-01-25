@@ -786,7 +786,8 @@ class ContainerApiMixin(object):
 
     @utils.check_resource('container')
     def logs(self, container, stdout=True, stderr=True, stream=False,
-             timestamps=False, tail='all', since=None, follow=None):
+             timestamps=False, tail='all', since=None, follow=None,
+             until=None):
         """
         Get logs from a container. Similar to the ``docker logs`` command.
 
@@ -805,6 +806,8 @@ class ContainerApiMixin(object):
             since (datetime or int): Show logs since a given datetime or
                 integer epoch (in seconds)
             follow (bool): Follow log output
+            until (datetime or int): Show logs that occurred before the given
+                datetime or integer epoch (in seconds)
 
         Returns:
             (generator or str)
@@ -827,21 +830,35 @@ class ContainerApiMixin(object):
                 params['tail'] = tail
 
             if since is not None:
-                if utils.compare_version('1.19', self._version) < 0:
+                if utils.version_lt(self._version, '1.19'):
                     raise errors.InvalidVersion(
-                        'since is not supported in API < 1.19'
+                        'since is not supported for API version < 1.19'
                     )
+                if isinstance(since, datetime):
+                    params['since'] = utils.datetime_to_timestamp(since)
+                elif (isinstance(since, int) and since > 0):
+                    params['since'] = since
                 else:
-                    if isinstance(since, datetime):
-                        params['since'] = utils.datetime_to_timestamp(since)
-                    elif (isinstance(since, int) and since > 0):
-                        params['since'] = since
-                    else:
-                        raise errors.InvalidArgument(
-                            'since value should be datetime or positive int, '
-                            'not {}'.
-                            format(type(since))
-                        )
+                    raise errors.InvalidArgument(
+                        'since value should be datetime or positive int, '
+                        'not {}'.format(type(since))
+                    )
+
+            if until is not None:
+                if utils.version_lt(self._version, '1.35'):
+                    raise errors.InvalidVersion(
+                        'until is not supported for API version < 1.35'
+                    )
+                if isinstance(until, datetime):
+                    params['until'] = utils.datetime_to_timestamp(until)
+                elif (isinstance(until, int) and until > 0):
+                    params['until'] = until
+                else:
+                    raise errors.InvalidArgument(
+                        'until value should be datetime or positive int, '
+                        'not {}'.format(type(until))
+                    )
+
             url = self._url("/containers/{0}/logs", container)
             res = self._get(url, params=params, stream=stream)
             return self._get_result(container, stream, res)
@@ -1241,7 +1258,7 @@ class ContainerApiMixin(object):
         return self._result(res, True)
 
     @utils.check_resource('container')
-    def wait(self, container, timeout=None):
+    def wait(self, container, timeout=None, condition=None):
         """
         Block until a container stops, then return its exit code. Similar to
         the ``docker wait`` command.
@@ -1250,10 +1267,13 @@ class ContainerApiMixin(object):
             container (str or dict): The container to wait on. If a dict, the
                 ``Id`` key is used.
             timeout (int): Request timeout
+            condition (str): Wait until a container state reaches the given
+                condition, either ``not-running`` (default), ``next-exit``,
+                or ``removed``
 
         Returns:
-            (int): The exit code of the container. Returns ``-1`` if the API
-            responds without a ``StatusCode`` attribute.
+            (int or dict): The exit code of the container. Returns the full API
+                response if no ``StatusCode`` field is included.
 
         Raises:
             :py:class:`requests.exceptions.ReadTimeout`
@@ -1262,9 +1282,17 @@ class ContainerApiMixin(object):
                 If the server returns an error.
         """
         url = self._url("/containers/{0}/wait", container)
-        res = self._post(url, timeout=timeout)
+        params = {}
+        if condition is not None:
+            if utils.version_lt(self._version, '1.30'):
+                raise errors.InvalidVersion(
+                    'wait condition is not supported for API version < 1.30'
+                )
+            params['condition'] = condition
+
+        res = self._post(url, timeout=timeout, params=params)
         self._raise_for_status(res)
         json_ = res.json()
         if 'StatusCode' in json_:
             return json_['StatusCode']
-        return -1
+        return json_

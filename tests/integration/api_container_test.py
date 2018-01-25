@@ -1,6 +1,7 @@
 import os
 import signal
 import tempfile
+from datetime import datetime
 
 import docker
 from docker.constants import IS_WINDOWS_PLATFORM
@@ -9,6 +10,7 @@ from docker.utils.socket import read_exactly
 
 import pytest
 
+import requests
 import six
 
 from .base import BUSYBOX, BaseAPIIntegrationTest
@@ -816,6 +818,21 @@ class WaitTest(BaseAPIIntegrationTest):
         self.assertIn('ExitCode', inspect['State'])
         self.assertEqual(inspect['State']['ExitCode'], exitcode)
 
+    @requires_api_version('1.30')
+    def test_wait_with_condition(self):
+        ctnr = self.client.create_container(BUSYBOX, 'true')
+        self.tmp_containers.append(ctnr)
+        with pytest.raises(requests.exceptions.ConnectionError):
+            self.client.wait(ctnr, condition='removed', timeout=1)
+
+        ctnr = self.client.create_container(
+            BUSYBOX, ['sleep', '3'],
+            host_config=self.client.create_host_config(auto_remove=True)
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        assert self.client.wait(ctnr, condition='removed', timeout=5) == 0
+
 
 class LogsTest(BaseAPIIntegrationTest):
     def test_logs(self):
@@ -887,6 +904,22 @@ Line2'''
         self.assertEqual(exitcode, 0)
         logs = self.client.logs(id, tail=0)
         self.assertEqual(logs, ''.encode(encoding='ascii'))
+
+    @requires_api_version('1.35')
+    def test_logs_with_until(self):
+        snippet = 'Shanghai Teahouse (Hong Meiling)'
+        container = self.client.create_container(
+            BUSYBOX, 'echo "{0}"'.format(snippet)
+        )
+
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        exitcode = self.client.wait(container)
+        assert exitcode == 0
+        logs_until_1 = self.client.logs(container, until=1)
+        assert logs_until_1 == b''
+        logs_until_now = self.client.logs(container, datetime.now())
+        assert logs_until_now == (snippet + '\n').encode(encoding='ascii')
 
 
 class DiffTest(BaseAPIIntegrationTest):

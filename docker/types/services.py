@@ -102,19 +102,21 @@ class ContainerSpec(dict):
         healthcheck (Healthcheck): Healthcheck
             configuration for this service.
         hosts (:py:class:`dict`): A set of host to IP mappings to add to
-            the container's `hosts` file.
+            the container's ``hosts`` file.
         dns_config (DNSConfig): Specification for DNS
             related configurations in resolver configuration file.
         configs (:py:class:`list`): List of :py:class:`ConfigReference` that
             will be exposed to the service.
         privileges (Privileges): Security options for the service's containers.
+        isolation (string): Isolation technology used by the service's
+            containers. Only used for Windows containers.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
                  stop_grace_period=None, secrets=None, tty=None, groups=None,
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
-                 privileges=None):
+                 privileges=None, isolation=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -177,6 +179,9 @@ class ContainerSpec(dict):
             self['OpenStdin'] = open_stdin
         if read_only is not None:
             self['ReadOnly'] = read_only
+
+        if isolation is not None:
+            self['Isolation'] = isolation
 
 
 class Mount(dict):

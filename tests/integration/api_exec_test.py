@@ -136,3 +136,15 @@ class ExecTest(BaseAPIIntegrationTest):
 
         exec_log = self.client.exec_start(res)
         assert b'X=Y\n' in exec_log
+
+    @requires_api_version('1.35')
+    def test_exec_command_with_workdir(self):
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        res = self.client.exec_create(container, 'pwd', workdir='/var/www')
+        exec_log = self.client.exec_start(res)
+        assert exec_log == b'/var/www\n'

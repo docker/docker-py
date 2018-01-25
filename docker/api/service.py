@@ -65,6 +65,10 @@ def _check_api_features(version, task_template, update_config):
                 if container_spec.get('Privileges') is not None:
                     raise_version_error('ContainerSpec.privileges', '1.30')
 
+            if utils.version_lt(version, '1.35'):
+                if container_spec.get('Isolation') is not None:
+                    raise_version_error('ContainerSpec.isolation', '1.35')
+
 
 def _merge_task_template(current, override):
     merged = current.copy()
