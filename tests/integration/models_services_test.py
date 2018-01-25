@@ -4,6 +4,8 @@ import docker
 
 from .. import helpers
 from .base import TEST_API_VERSION
+from docker.errors import InvalidArgument
+from docker.types.services import ServiceMode
 
 
 class ServiceTest(unittest.TestCase):
@@ -223,6 +225,50 @@ class ServiceTest(unittest.TestCase):
             tasks = service.tasks()
         assert len(tasks) >= 2
         # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
+
+    def test_scale_method_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300",
+        )
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
+        service.scale(2)
+        while len(tasks) == 1:
+            tasks = service.tasks()
+        assert len(tasks) >= 2
+        # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
+
+    def test_scale_method_global_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        mode = ServiceMode('global')
+        service = client.services.create(
+            name=helpers.random_name(),
+            image="alpine",
+            command="sleep 300",
+            mode=mode
+        )
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
+        with self.assertRaises(InvalidArgument,
+                               msg='Cannot scale a global container'):
+            service.scale(2)
+
+        assert len(tasks) == 1
         service.reload()
         spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert spec.get('Command') == ['sleep', '300']
