@@ -157,6 +157,7 @@ class ImageCollection(Collection):
                 single layer.
             extra_hosts (dict): Extra hosts to add to /etc/hosts in building
                 containers, as a mapping of hostname to IP address.
+            platform (str): Platform in the format ``os[/arch[/variant]]``.
 
         Returns:
             (:py:class:`Image`): The built image.
@@ -265,6 +266,7 @@ class ImageCollection(Collection):
                 :py:meth:`~docker.client.DockerClient.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
+            platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
             (:py:class:`Image`): The image that has been pulled.
