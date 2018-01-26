@@ -9,7 +9,7 @@ class ExecApiMixin(object):
     @utils.check_resource('container')
     def exec_create(self, container, cmd, stdout=True, stderr=True,
                     stdin=False, tty=False, privileged=False, user='',
-                    environment=None):
+                    environment=None, detach_keys=None):
         """
         Sets up an exec instance in a running container.
 
@@ -26,6 +26,11 @@ class ExecApiMixin(object):
             environment (dict or list): A dictionary or a list of strings in
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
+            detach_keys (str): Override the key sequence for detaching
+                a container. Format is a single character `[a-Z]`
+                or `ctrl-<value>` where `<value>` is one of:
+                `a-z`, `@`, `^`, `[`, `,` or `_`.
+                ~/.docker/config.json is used by default.
 
         Returns:
             (dict): A dictionary with an exec ``Id`` key.
@@ -65,6 +70,11 @@ class ExecApiMixin(object):
             'Cmd': cmd,
             'Env': environment,
         }
+
+        if detach_keys:
+            data['detachKeys'] = detach_keys
+        elif 'detachKeys' in self._general_configs:
+            data['detachKeys'] = self._general_configs['detachKeys']
 
         url = self._url('/containers/{0}/exec', container)
         res = self._post_json(url, data=data)

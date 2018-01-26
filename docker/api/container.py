@@ -66,6 +66,7 @@ class ContainerApiMixin(object):
             container (str): The container to attach to.
             params (dict): Dictionary of request parameters (e.g. ``stdout``,
                 ``stderr``, ``stream``).
+                For ``detachKeys``, ~/.docker/config.json is used by default.
             ws (bool): Use websockets instead of raw HTTP.
 
         Raises:
@@ -78,6 +79,11 @@ class ContainerApiMixin(object):
                 'stderr': 1,
                 'stream': 1
             }
+
+        if 'detachKeys' not in params \
+                and 'detachKeys' in self._general_configs:
+
+            params['detachKeys'] = self._general_configs['detachKeys']
 
         if ws:
             return self._attach_websocket(container, params)
