@@ -557,7 +557,7 @@ class ContainerCollection(Collection):
                 item in the list is expected to be a
                 :py:class:`docker.types.Mount` object.
             name (str): The name for this container.
-            nano_cpus (int):  CPU quota in units of 10-9 CPUs.
+            nano_cpus (int):  CPU quota in units of 1e-9 CPUs.
             network (str): Name of the network this container will be connected
                 to at creation time. You can connect to additional networks
                 using :py:meth:`Network.connect`. Incompatible with
