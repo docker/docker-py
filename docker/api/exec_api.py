@@ -9,7 +9,7 @@ class ExecApiMixin(object):
     @utils.check_resource('container')
     def exec_create(self, container, cmd, stdout=True, stderr=True,
                     stdin=False, tty=False, privileged=False, user='',
-                    environment=None):
+                    environment=None, workdir=None):
         """
         Sets up an exec instance in a running container.
 
@@ -26,6 +26,7 @@ class ExecApiMixin(object):
             environment (dict or list): A dictionary or a list of strings in
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
+            workdir (str): Path to working directory for this exec session
 
         Returns:
             (dict): A dictionary with an exec ``Id`` key.
@@ -65,6 +66,13 @@ class ExecApiMixin(object):
             'Cmd': cmd,
             'Env': environment,
         }
+
+        if workdir is not None:
+            if utils.version_lt(self._version, '1.35'):
+                raise errors.InvalidVersion(
+                    'workdir is not supported for API version < 1.35'
+                )
+            data['WorkingDir'] = workdir
 
         url = self._url('/containers/{0}/exec', container)
         res = self._post_json(url, data=data)

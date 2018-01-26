@@ -394,7 +394,8 @@ class ContainerTest(unittest.TestCase):
         container.exec_run("echo hello world", privileged=True, stream=True)
         client.api.exec_create.assert_called_with(
             FAKE_CONTAINER_ID, "echo hello world", stdout=True, stderr=True,
-            stdin=False, tty=False, privileged=True, user='', environment=None
+            stdin=False, tty=False, privileged=True, user='', environment=None,
+            workdir=None
         )
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False

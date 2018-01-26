@@ -144,6 +144,8 @@ class ServiceCollection(Collection):
             env (list of str): Environment variables, in the form
                 ``KEY=val``.
             hostname (string): Hostname to set on the container.
+            isolation (string): Isolation technology used by the service's
+                containers. Only used for Windows containers.
             labels (dict): Labels to apply to the service.
             log_driver (str): Log driver to use for containers.
             log_driver_options (dict): Log driver options.
@@ -255,6 +257,7 @@ CONTAINER_SPEC_KWARGS = [
     'hostname',
     'hosts',
     'image',
+    'isolation',
     'labels',
     'mounts',
     'open_stdin',

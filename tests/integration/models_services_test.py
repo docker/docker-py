@@ -195,6 +195,7 @@ class ServiceTest(unittest.TestCase):
             image="alpine",
             command="sleep 300"
         )
+        service.reload()
         service.update(
             # create argument
             name=service.name,

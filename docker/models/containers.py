@@ -126,7 +126,7 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False, environment=None):
+                 socket=False, environment=None, workdir=None):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -147,6 +147,7 @@ class Container(Model):
             environment (dict or list): A dictionary or a list of strings in
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
+            workdir (str): Path to working directory for this exec session
 
         Returns:
             (generator or str):
@@ -159,7 +160,8 @@ class Container(Model):
         """
         resp = self.client.api.exec_create(
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
-            privileged=privileged, user=user, environment=environment
+            privileged=privileged, user=user, environment=environment,
+            workdir=workdir
         )
         return self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
@@ -427,6 +429,9 @@ class Container(Model):
 
         Args:
             timeout (int): Request timeout
+            condition (str): Wait until a container state reaches the given
+                condition, either ``not-running`` (default), ``next-exit``,
+                or ``removed``
 
         Returns:
             (int): The exit code of the container. Returns ``-1`` if the API

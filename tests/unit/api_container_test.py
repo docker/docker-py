@@ -1263,7 +1263,8 @@ class ContainerTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'POST',
             url_prefix + 'containers/3cc2351ab11b/wait',
-            timeout=None
+            timeout=None,
+            params={}
         )
 
     def test_wait_with_dict_instead_of_id(self):
@@ -1272,7 +1273,8 @@ class ContainerTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'POST',
             url_prefix + 'containers/3cc2351ab11b/wait',
-            timeout=None
+            timeout=None,
+            params={}
         )
 
     def test_logs(self):
