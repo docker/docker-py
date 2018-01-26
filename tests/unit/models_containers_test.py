@@ -401,6 +401,21 @@ class ContainerTest(unittest.TestCase):
             FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False
         )
 
+    def test_exec_run2(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.exec_run2("echo hello world", privileged=True)
+        client.api.exec_create.assert_called_with(
+            FAKE_CONTAINER_ID, "echo hello world", stdout=True, stderr=True,
+            stdin=False, tty=False, privileged=True, user=''
+        )
+        client.api.exec_start.assert_called_with(
+            FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False
+        )
+        client.api.exec_inspect.assert_called_with(
+            FAKE_EXEC_ID
+        )
+
     def test_export(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)

@@ -190,6 +190,16 @@ class ContainerTest(BaseIntegrationTest):
         self.tmp_containers.append(container.id)
         assert container.exec_run("cat /test") == b"hello\n"
 
+    def test_exec_run2(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        container = client.containers.run(
+            "alpine", "sh -c 'echo \"hello\" > /test; sleep 60'", detach=True
+        )
+        self.tmp_containers.append(container.id)
+        assert container.exec_run2("cat /test") == (b"hello\n", 0)
+        assert container.exec_run2("cat /test2") == \
+            (b"cat: can't open '/test2': No such file or directory\n", 1)
+
     def test_kill(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
