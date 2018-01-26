@@ -1,3 +1,4 @@
+import itertools
 import re
 
 import six
@@ -160,7 +161,9 @@ class ImageCollection(Collection):
             platform (str): Platform in the format ``os[/arch[/variant]]``.
 
         Returns:
-            (:py:class:`Image`): The built image.
+            (tuple): The first item is the :py:class:`Image` object for the
+                image that was build. The second item is a generator of the
+                build logs as JSON-decoded objects.
 
         Raises:
             :py:class:`docker.errors.BuildError`
@@ -175,9 +178,10 @@ class ImageCollection(Collection):
             return self.get(resp)
         last_event = None
         image_id = None
-        for chunk in json_stream(resp):
+        result_stream, internal_stream = itertools.tee(json_stream(resp))
+        for chunk in internal_stream:
             if 'error' in chunk:
-                raise BuildError(chunk['error'])
+                raise BuildError(chunk['error'], result_stream)
             if 'stream' in chunk:
                 match = re.search(
                     r'(^Successfully built |sha256:)([0-9a-f]+)$',
@@ -187,8 +191,8 @@ class ImageCollection(Collection):
                     image_id = match.group(2)
             last_event = chunk
         if image_id:
-            return self.get(image_id)
-        raise BuildError(last_event or 'Unknown')
+            return (self.get(image_id), result_stream)
+        raise BuildError(last_event or 'Unknown', result_stream)
 
     def get(self, name):
         """
