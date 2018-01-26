@@ -329,7 +329,7 @@ class PruneImagesTest(BaseAPIIntegrationTest):
         img_id = self.client.inspect_image('hello-world')['Id']
         result = self.client.prune_images()
         assert img_id not in [
-            img.get('Deleted') for img in result['ImagesDeleted']
+            img.get('Deleted') for img in result.get('ImagesDeleted') or []
         ]
         result = self.client.prune_images({'dangling': False})
         assert result['SpaceReclaimed'] > 0
@@ -339,3 +339,25 @@ class PruneImagesTest(BaseAPIIntegrationTest):
         assert img_id in [
             img.get('Deleted') for img in result['ImagesDeleted']
         ]
+
+
+class SaveLoadImagesTest(BaseAPIIntegrationTest):
+    @requires_api_version('1.23')
+    def test_get_image_load_image(self):
+        with tempfile.TemporaryFile() as f:
+            stream = self.client.get_image(BUSYBOX)
+            for chunk in stream:
+                f.write(chunk)
+
+            f.seek(0)
+            result = self.client.load_image(f.read())
+
+        success = False
+        result_line = 'Loaded image: {}\n'.format(BUSYBOX)
+        for data in result:
+            print(data)
+            if 'stream' in data:
+                if data['stream'] == result_line:
+                    success = True
+                    break
+        assert success is True

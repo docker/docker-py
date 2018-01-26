@@ -21,8 +21,7 @@ class ImageApiMixin(object):
             image (str): Image name to get
 
         Returns:
-            (urllib3.response.HTTPResponse object): The response from the
-            daemon.
+            (generator): A stream of raw archive data.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -30,14 +29,14 @@ class ImageApiMixin(object):
 
         Example:
 
-            >>> image = cli.get_image("fedora:latest")
-            >>> f = open('/tmp/fedora-latest.tar', 'w')
-            >>> f.write(image.data)
+            >>> image = cli.get_image("busybox:latest")
+            >>> f = open('/tmp/busybox-latest.tar', 'w')
+            >>> for chunk in image:
+            >>>   f.write(chunk)
             >>> f.close()
         """
         res = self._get(self._url("/images/{0}/get", image), stream=True)
-        self._raise_for_status(res)
-        return res.raw
+        return self._stream_raw_result(res)
 
     @utils.check_resource('image')
     def history(self, image):

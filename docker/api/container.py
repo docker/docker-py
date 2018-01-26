@@ -698,7 +698,7 @@ class ContainerApiMixin(object):
             container (str): The container to export
 
         Returns:
-            (str): The filesystem tar archive
+            (generator): The archived filesystem data stream
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -707,8 +707,7 @@ class ContainerApiMixin(object):
         res = self._get(
             self._url("/containers/{0}/export", container), stream=True
         )
-        self._raise_for_status(res)
-        return res.raw
+        return self._stream_raw_result(res)
 
     @utils.check_resource('container')
     @utils.minimum_version('1.20')
@@ -737,7 +736,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
         encoded_stat = res.headers.get('x-docker-container-path-stat')
         return (
-            res.raw,
+            self._stream_raw_result(res),
             utils.decode_json_header(encoded_stat) if encoded_stat else None
         )
 
