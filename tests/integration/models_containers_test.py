@@ -189,8 +189,8 @@ class ContainerTest(BaseIntegrationTest):
         )
         self.tmp_containers.append(container.id)
         exec_output = container.exec_run("cat /test")
-        assert exec_output["output"] == b"hello\n"
-        assert exec_output["exit_code"] == 0
+        assert exec_output[0] == 0
+        assert exec_output[1] == b"hello\n"
 
     def test_exec_run_failed(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -199,7 +199,7 @@ class ContainerTest(BaseIntegrationTest):
         )
         self.tmp_containers.append(container.id)
         exec_output = container.exec_run("docker ps")
-        assert exec_output["exit_code"] == 126
+        assert exec_output[0] == 126
 
     def test_kill(self):
         client = docker.from_env(version=TEST_API_VERSION)

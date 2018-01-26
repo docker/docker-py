@@ -400,13 +400,15 @@ class ContainerTest(unittest.TestCase):
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False
         )
+
+    def test_exec_run_failure(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
         container.exec_run("docker ps", privileged=True, stream=False)
         client.api.exec_create.assert_called_with(
             FAKE_CONTAINER_ID, "docker ps", stdout=True, stderr=True,
-            stdin=False, tty=False, privileged=True, user='', environment=None
-        )
-        client.api.exec_start.assert_called_with(
-            FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False
+            stdin=False, tty=False, privileged=True, user='', environment=None,
+            workdir=None
         )
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False
