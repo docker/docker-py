@@ -150,10 +150,14 @@ class Container(Model):
             workdir (str): Path to working directory for this exec session
 
         Returns:
-            (generator or str):
-                If ``stream=True``, a generator yielding response chunks.
-                If ``socket=True``, a socket object for the connection.
-                A string containing response data otherwise.
+            (tuple): A tuple of (exit_code, output)
+                exit_code: (int):
+                    Exit code for the executed command
+                output: (generator or str):
+                    If ``stream=True``, a generator yielding response chunks.
+                    If ``socket=True``, a socket object for the connection.
+                    A string containing response data otherwise.
+
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
@@ -163,9 +167,13 @@ class Container(Model):
             privileged=privileged, user=user, environment=environment,
             workdir=workdir
         )
-        return self.client.api.exec_start(
+        exec_output = self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
         )
+        exit_code = 0
+        if stream is False:
+            exit_code = self.client.api.exec_inspect(resp['Id'])['ExitCode']
+        return (exit_code, exec_output)
 
     def export(self):
         """
