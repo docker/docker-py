@@ -3,7 +3,7 @@ import re
 import six
 
 from ..api import APIClient
-from ..errors import BuildError
+from ..errors import BuildError, ImageLoadError
 from ..utils.json_stream import json_stream
 from .resource import Collection, Model
 
@@ -241,13 +241,27 @@ class ImageCollection(Collection):
             data (binary): Image data to be loaded.
 
         Returns:
-            (generator): Progress output as JSON objects
+            (list of :py:class:`Image`): The images.
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.load_image(data)
+        resp = self.client.api.load_image(data)
+        images = []
+        for chunk in resp:
+            if 'stream' in chunk:
+                match = re.search(
+                    r'(^Loaded image ID: |^Loaded image: )(.+)$',
+                    chunk['stream']
+                )
+                if match:
+                    image_id = match.group(2)
+                    images.append(image_id)
+            if 'error' in chunk:
+                raise ImageLoadError(chunk['error'])
+
+        return [self.get(i) for i in images]
 
     def pull(self, name, tag=None, **kwargs):
         """
