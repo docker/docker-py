@@ -3,7 +3,7 @@ import re
 import six
 
 from ..api import APIClient
-from ..errors import BuildError
+from ..errors import BuildError, ImageLoadError
 from ..utils.json_stream import json_stream
 from .resource import Collection, Model
 
@@ -258,6 +258,9 @@ class ImageCollection(Collection):
                 if match:
                     image_id = match.group(2)
                     images.append(image_id)
+            if 'error' in chunk:
+                raise ImageLoadError(chunk['error'])
+
         return [self.get(i) for i in images]
 
     def pull(self, name, tag=None, **kwargs):
