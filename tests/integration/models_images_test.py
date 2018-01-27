@@ -10,27 +10,30 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_build(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(fileobj=io.BytesIO(
+        image, _ = client.images.build(fileobj=io.BytesIO(
             "FROM alpine\n"
             "CMD echo hello world".encode('ascii')
         ))
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
 
-    @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
+    # @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
     def test_build_with_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
         with self.assertRaises(docker.errors.BuildError) as cm:
             client.images.build(fileobj=io.BytesIO(
                 "FROM alpine\n"
-                "NOTADOCKERFILECOMMAND".encode('ascii')
+                "RUN exit 1".encode('ascii')
             ))
-        assert str(cm.exception) == ("Unknown instruction: "
-                                     "NOTADOCKERFILECOMMAND")
+        print(cm.exception)
+        assert str(cm.exception) == (
+            "The command '/bin/sh -c exit 1' returned a non-zero code: 1"
+        )
+        assert cm.exception.build_log
 
     def test_build_with_multiple_success(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(
+        image, _ = client.images.build(
             tag='some-tag', fileobj=io.BytesIO(
                 "FROM alpine\n"
                 "CMD echo hello world".encode('ascii')
@@ -41,7 +44,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_build_with_success_build_output(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(
+        image, _ = client.images.build(
             tag='dup-txt-tag', fileobj=io.BytesIO(
                 "FROM alpine\n"
                 "CMD echo Successfully built abcd1234".encode('ascii')
