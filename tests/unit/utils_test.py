@@ -948,6 +948,20 @@ class TarTest(unittest.TestCase):
             tar_data = tarfile.open(fileobj=archive)
             self.assertEqual(sorted(tar_data.getnames()), ['bar', 'foo'])
 
+    @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No chmod on Windows')
+    def test_tar_with_inaccessible_file(self):
+        base = tempfile.mkdtemp()
+        full_path = os.path.join(base, 'foo')
+        self.addCleanup(shutil.rmtree, base)
+        with open(full_path, 'w') as f:
+            f.write('content')
+        os.chmod(full_path, 0o222)
+        with pytest.raises(IOError) as ei:
+            tar(base)
+
+        assert 'Can not access file in context: {}'.format(full_path) in \
+            ei.exconly()
+
     @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No symlinks on Windows')
     def test_tar_with_file_symlinks(self):
         base = tempfile.mkdtemp()
@@ -974,6 +988,18 @@ class TarTest(unittest.TestCase):
             self.assertEqual(
                 sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
             )
+
+    @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No symlinks on Windows')
+    def test_tar_with_broken_symlinks(self):
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base)
+        for d in ['foo', 'bar']:
+            os.makedirs(os.path.join(base, d))
+
+        os.symlink('../baz', os.path.join(base, 'bar/foo'))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            assert sorted(tar_data.getnames()) == ['bar', 'bar/foo', 'foo']
 
     @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No UNIX sockets on Win32')
     def test_tar_socket_file(self):
