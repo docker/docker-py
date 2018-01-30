@@ -3,7 +3,7 @@ import copy
 from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
-from ..types import HostConfig
+from ..types import ExecResult, HostConfig
 from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
@@ -150,9 +150,10 @@ class Container(Model):
             workdir (str): Path to working directory for this exec session
 
         Returns:
-            (tuple): A tuple of (exit_code, output)
+            (ExecResult): A tuple of (exit_code, output)
                 exit_code: (int):
-                    Exit code for the executed command
+                    Exit code for the executed command or ``None`` if
+                    either ``stream```or ``socket`` is ``True``.
                 output: (generator or str):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
@@ -170,10 +171,12 @@ class Container(Model):
         exec_output = self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
         )
-        exit_code = 0
-        if stream is False:
-            exit_code = self.client.api.exec_inspect(resp['Id'])['ExitCode']
-        return (exit_code, exec_output)
+        if socket or stream:
+            return ExecResult(None, exec_output)
+        else:
+            return ExecResult(
+                self.client.api.exec_inspect(resp['Id'])['ExitCode'],
+                exec_output)
 
     def export(self):
         """

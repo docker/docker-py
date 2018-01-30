@@ -1,3 +1,4 @@
+from collections import namedtuple
 import six
 import warnings
 
@@ -9,6 +10,11 @@ from ..utils.utils import (
 )
 from .base import DictType
 from .healthcheck import Healthcheck
+
+
+ExecResult = namedtuple('ExecResult', 'exit_code,output')
+""" A result of Container.exec_run with the properties ``exit_code`` and
+    ``output``. """
 
 
 class LogConfigTypesEnum(object):
