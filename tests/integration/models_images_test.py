@@ -21,16 +21,15 @@ class ImageCollectionTest(BaseIntegrationTest):
     # @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
     def test_build_with_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        with self.assertRaises(docker.errors.BuildError) as cm:
+        with pytest.raises(docker.errors.BuildError) as cm:
             client.images.build(fileobj=io.BytesIO(
                 "FROM alpine\n"
                 "RUN exit 1".encode('ascii')
             ))
-        print(cm.exception)
-        assert str(cm.exception) == (
+        assert (
             "The command '/bin/sh -c exit 1' returned a non-zero code: 1"
-        )
-        assert cm.exception.build_log
+        ) in cm.exconly()
+        assert cm.value.build_log
 
     def test_build_with_multiple_success(self):
         client = docker.from_env(version=TEST_API_VERSION)

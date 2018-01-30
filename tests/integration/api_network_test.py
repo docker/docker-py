@@ -24,24 +24,24 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
 
         networks = self.client.networks()
-        self.assertTrue(net_id in [n['Id'] for n in networks])
+        assert net_id in [n['Id'] for n in networks]
 
         networks_by_name = self.client.networks(names=[net_name])
-        self.assertEqual([n['Id'] for n in networks_by_name], [net_id])
+        assert [n['Id'] for n in networks_by_name] == [net_id]
 
         networks_by_partial_id = self.client.networks(ids=[net_id[:8]])
-        self.assertEqual([n['Id'] for n in networks_by_partial_id], [net_id])
+        assert [n['Id'] for n in networks_by_partial_id] == [net_id]
 
     @requires_api_version('1.21')
     def test_inspect_network(self):
         net_name, net_id = self.create_network()
 
         net = self.client.inspect_network(net_id)
-        self.assertEqual(net['Id'], net_id)
-        self.assertEqual(net['Name'], net_name)
-        self.assertEqual(net['Driver'], 'bridge')
-        self.assertEqual(net['Scope'], 'local')
-        self.assertEqual(net['IPAM']['Driver'], 'default')
+        assert net['Id'] == net_id
+        assert net['Name'] == net_name
+        assert net['Driver'] == 'bridge'
+        assert net['Scope'] == 'local'
+        assert net['IPAM']['Driver'] == 'default'
 
     @requires_api_version('1.21')
     def test_create_network_with_ipam_config(self):
@@ -103,21 +103,20 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.client.start(container)
 
         network_data = self.client.inspect_network(net_id)
-        self.assertFalse(network_data.get('Containers'))
+        assert not network_data.get('Containers')
 
         self.client.connect_container_to_network(container, net_id)
         network_data = self.client.inspect_network(net_id)
-        self.assertEqual(
-            list(network_data['Containers'].keys()),
-            [container['Id']]
-        )
+        assert list(network_data['Containers'].keys()) == [
+            container['Id']
+        ]
 
         with pytest.raises(docker.errors.APIError):
             self.client.connect_container_to_network(container, net_id)
 
         self.client.disconnect_container_from_network(container, net_id)
         network_data = self.client.inspect_network(net_id)
-        self.assertFalse(network_data.get('Containers'))
+        assert not network_data.get('Containers')
 
         with pytest.raises(docker.errors.APIError):
             self.client.disconnect_container_from_network(container, net_id)
@@ -131,18 +130,16 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.client.start(container)
 
         network_data = self.client.inspect_network(net_id)
-        self.assertFalse(network_data.get('Containers'))
+        assert not network_data.get('Containers')
 
         self.client.connect_container_to_network(container, net_id)
         network_data = self.client.inspect_network(net_id)
-        self.assertEqual(
-            list(network_data['Containers'].keys()),
+        assert list(network_data['Containers'].keys()) == \
             [container['Id']]
-        )
 
         self.client.disconnect_container_from_network(container, net_id, True)
         network_data = self.client.inspect_network(net_id)
-        self.assertFalse(network_data.get('Containers'))
+        assert not network_data.get('Containers')
 
         with pytest.raises(docker.errors.APIError):
             self.client.disconnect_container_from_network(
@@ -179,13 +176,12 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.client.start(container)
 
         network_data = self.client.inspect_network(net_id)
-        self.assertEqual(
-            list(network_data['Containers'].keys()),
-            [container['Id']])
+        assert list(network_data['Containers'].keys()) == \
+            [container['Id']]
 
         self.client.disconnect_container_from_network(container, net_id)
         network_data = self.client.inspect_network(net_id)
-        self.assertFalse(network_data.get('Containers'))
+        assert not network_data.get('Containers')
 
     @requires_api_version('1.22')
     def test_create_with_aliases(self):
@@ -233,14 +229,11 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
 
-        container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data[
-                'NetworkSettings']['Networks'][net_name]['IPAMConfig'][
-                'IPv4Address'
-            ],
-            '132.124.0.23'
-        )
+        net_settings = self.client.inspect_container(container)[
+            'NetworkSettings'
+        ]
+        assert net_settings['Networks'][net_name]['IPAMConfig']['IPv4Address']\
+            == '132.124.0.23'
 
     @requires_api_version('1.22')
     def test_create_with_ipv6_address(self):
@@ -262,14 +255,11 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
 
-        container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data[
-                'NetworkSettings']['Networks'][net_name]['IPAMConfig'][
-                'IPv6Address'
-            ],
-            '2001:389::f00d'
-        )
+        net_settings = self.client.inspect_container(container)[
+            'NetworkSettings'
+        ]
+        assert net_settings['Networks'][net_name]['IPAMConfig']['IPv6Address']\
+            == '2001:389::f00d'
 
     @requires_api_version('1.24')
     def test_create_with_linklocal_ips(self):
@@ -305,10 +295,12 @@ class TestNetworks(BaseAPIIntegrationTest):
             }),
         )
 
-        container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]['Links'],
-            ['docker-py-test-upstream:bar'])
+        net_settings = self.client.inspect_container(container)[
+            'NetworkSettings'
+        ]
+        assert net_settings['Networks'][net_name]['Links'] == [
+            'docker-py-test-upstream:bar'
+        ]
 
         self.create_and_start(
             name='docker-py-test-upstream',
@@ -320,7 +312,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.21')
     def test_create_check_duplicate(self):
         net_name, net_id = self.create_network()
-        with self.assertRaises(docker.errors.APIError):
+        with pytest.raises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
         net_id = self.client.create_network(net_name, check_duplicate=False)
         self.tmp_networks.append(net_id['Id'])
@@ -337,10 +329,12 @@ class TestNetworks(BaseAPIIntegrationTest):
             container, net_name,
             links=[('docker-py-test-upstream', 'bar')])
 
-        container_data = self.client.inspect_container(container)
-        self.assertEqual(
-            container_data['NetworkSettings']['Networks'][net_name]['Links'],
-            ['docker-py-test-upstream:bar'])
+        net_settings = self.client.inspect_container(container)[
+            'NetworkSettings'
+        ]
+        assert net_settings['Networks'][net_name]['Links'] == [
+            'docker-py-test-upstream:bar'
+        ]
 
         self.create_and_start(
             name='docker-py-test-upstream',
@@ -373,9 +367,7 @@ class TestNetworks(BaseAPIIntegrationTest):
 
         container_data = self.client.inspect_container(container)
         net_data = container_data['NetworkSettings']['Networks'][net_name]
-        self.assertEqual(
-            net_data['IPAMConfig']['IPv4Address'], '172.28.5.24'
-        )
+        assert net_data['IPAMConfig']['IPv4Address'] == '172.28.5.24'
 
     @requires_api_version('1.22')
     def test_connect_with_ipv6_address(self):
@@ -401,9 +393,7 @@ class TestNetworks(BaseAPIIntegrationTest):
 
         container_data = self.client.inspect_container(container)
         net_data = container_data['NetworkSettings']['Networks'][net_name]
-        self.assertEqual(
-            net_data['IPAMConfig']['IPv6Address'], '2001:389::f00d'
-        )
+        assert net_data['IPAMConfig']['IPv6Address'] == '2001:389::f00d'
 
     @requires_api_version('1.23')
     def test_create_internal_networks(self):

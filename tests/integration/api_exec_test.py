@@ -14,10 +14,10 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
 
         res = self.client.exec_create(id, ['echo', 'hello'])
-        self.assertIn('Id', res)
+        assert 'Id' in res
 
         exec_log = self.client.exec_start(res)
-        self.assertEqual(exec_log, b'hello\n')
+        assert exec_log == b'hello\n'
 
     def test_exec_command_string(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -27,10 +27,10 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
 
         res = self.client.exec_create(id, 'echo hello world')
-        self.assertIn('Id', res)
+        assert 'Id' in res
 
         exec_log = self.client.exec_start(res)
-        self.assertEqual(exec_log, b'hello world\n')
+        assert exec_log == b'hello world\n'
 
     def test_exec_command_as_user(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -40,10 +40,10 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
 
         res = self.client.exec_create(id, 'whoami', user='default')
-        self.assertIn('Id', res)
+        assert 'Id' in res
 
         exec_log = self.client.exec_start(res)
-        self.assertEqual(exec_log, b'default\n')
+        assert exec_log == b'default\n'
 
     def test_exec_command_as_root(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -53,10 +53,10 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
 
         res = self.client.exec_create(id, 'whoami')
-        self.assertIn('Id', res)
+        assert 'Id' in res
 
         exec_log = self.client.exec_start(res)
-        self.assertEqual(exec_log, b'root\n')
+        assert exec_log == b'root\n'
 
     def test_exec_command_streaming(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -66,12 +66,12 @@ class ExecTest(BaseAPIIntegrationTest):
         self.client.start(id)
 
         exec_id = self.client.exec_create(id, ['echo', 'hello\nworld'])
-        self.assertIn('Id', exec_id)
+        assert 'Id' in exec_id
 
         res = b''
         for chunk in self.client.exec_start(exec_id, stream=True):
             res += chunk
-        self.assertEqual(res, b'hello\nworld\n')
+        assert res == b'hello\nworld\n'
 
     def test_exec_start_socket(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -84,15 +84,15 @@ class ExecTest(BaseAPIIntegrationTest):
         # `echo` appends CRLF, `printf` doesn't
         exec_id = self.client.exec_create(
             container_id, ['printf', line], tty=True)
-        self.assertIn('Id', exec_id)
+        assert 'Id' in exec_id
 
         socket = self.client.exec_start(exec_id, socket=True)
         self.addCleanup(socket.close)
 
         next_size = next_frame_size(socket)
-        self.assertEqual(next_size, len(line))
+        assert next_size == len(line)
         data = read_exactly(socket, next_size)
-        self.assertEqual(data.decode('utf-8'), line)
+        assert data.decode('utf-8') == line
 
     def test_exec_start_detached(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -103,11 +103,11 @@ class ExecTest(BaseAPIIntegrationTest):
 
         exec_id = self.client.exec_create(
             container_id, ['printf', "asdqwe"])
-        self.assertIn('Id', exec_id)
+        assert 'Id' in exec_id
 
         response = self.client.exec_start(exec_id, detach=True)
 
-        self.assertEqual(response, "")
+        assert response == ""
 
     def test_exec_inspect(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -117,11 +117,11 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
 
         exec_id = self.client.exec_create(id, ['mkdir', '/does/not/exist'])
-        self.assertIn('Id', exec_id)
+        assert 'Id' in exec_id
         self.client.exec_start(exec_id)
         exec_info = self.client.exec_inspect(exec_id)
-        self.assertIn('ExitCode', exec_info)
-        self.assertNotEqual(exec_info['ExitCode'], 0)
+        assert 'ExitCode' in exec_info
+        assert exec_info['ExitCode'] != 0
 
     @requires_api_version('1.25')
     def test_exec_command_with_env(self):

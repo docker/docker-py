@@ -6,6 +6,7 @@ from .. import helpers
 from .base import TEST_API_VERSION
 from docker.errors import InvalidArgument
 from docker.types.services import ServiceMode
+import pytest
 
 
 class ServiceTest(unittest.TestCase):
@@ -265,8 +266,7 @@ class ServiceTest(unittest.TestCase):
         while len(tasks) == 0:
             tasks = service.tasks()
         assert len(tasks) == 1
-        with self.assertRaises(InvalidArgument,
-                               msg='Cannot scale a global container'):
+        with pytest.raises(InvalidArgument):
             service.scale(2)
 
         assert len(tasks) == 1

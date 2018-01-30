@@ -80,25 +80,25 @@ class KwargsFromEnvTest(unittest.TestCase):
         os.environ.pop('DOCKER_TLS_VERIFY', None)
 
         kwargs = kwargs_from_env()
-        self.assertEqual(None, kwargs.get('base_url'))
-        self.assertEqual(None, kwargs.get('tls'))
+        assert kwargs.get('base_url') is None
+        assert kwargs.get('tls') is None
 
     def test_kwargs_from_env_tls(self):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
         kwargs = kwargs_from_env(assert_hostname=False)
-        self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
-        self.assertTrue('ca.pem' in kwargs['tls'].ca_cert)
-        self.assertTrue('cert.pem' in kwargs['tls'].cert[0])
-        self.assertTrue('key.pem' in kwargs['tls'].cert[1])
-        self.assertEqual(False, kwargs['tls'].assert_hostname)
-        self.assertTrue(kwargs['tls'].verify)
+        assert 'https://192.168.59.103:2376' == kwargs['base_url']
+        assert 'ca.pem' in kwargs['tls'].ca_cert
+        assert 'cert.pem' in kwargs['tls'].cert[0]
+        assert 'key.pem' in kwargs['tls'].cert[1]
+        assert kwargs['tls'].assert_hostname is False
+        assert kwargs['tls'].verify
         try:
             client = APIClient(**kwargs)
-            self.assertEqual(kwargs['base_url'], client.base_url)
-            self.assertEqual(kwargs['tls'].ca_cert, client.verify)
-            self.assertEqual(kwargs['tls'].cert, client.cert)
+            assert kwargs['base_url'] == client.base_url
+            assert kwargs['tls'].ca_cert == client.verify
+            assert kwargs['tls'].cert == client.cert
         except TypeError as e:
             self.fail(e)
 
@@ -107,17 +107,17 @@ class KwargsFromEnvTest(unittest.TestCase):
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='')
         kwargs = kwargs_from_env(assert_hostname=True)
-        self.assertEqual('https://192.168.59.103:2376', kwargs['base_url'])
-        self.assertTrue('ca.pem' in kwargs['tls'].ca_cert)
-        self.assertTrue('cert.pem' in kwargs['tls'].cert[0])
-        self.assertTrue('key.pem' in kwargs['tls'].cert[1])
-        self.assertEqual(True, kwargs['tls'].assert_hostname)
-        self.assertEqual(False, kwargs['tls'].verify)
+        assert 'https://192.168.59.103:2376' == kwargs['base_url']
+        assert 'ca.pem' in kwargs['tls'].ca_cert
+        assert 'cert.pem' in kwargs['tls'].cert[0]
+        assert 'key.pem' in kwargs['tls'].cert[1]
+        assert kwargs['tls'].assert_hostname is True
+        assert kwargs['tls'].verify is False
         try:
             client = APIClient(**kwargs)
-            self.assertEqual(kwargs['base_url'], client.base_url)
-            self.assertEqual(kwargs['tls'].cert, client.cert)
-            self.assertFalse(kwargs['tls'].verify)
+            assert kwargs['base_url'] == client.base_url
+            assert kwargs['tls'].cert == client.cert
+            assert not kwargs['tls'].verify
         except TypeError as e:
             self.fail(e)
 
@@ -131,7 +131,7 @@ class KwargsFromEnvTest(unittest.TestCase):
                           DOCKER_TLS_VERIFY='')
         os.environ.pop('DOCKER_CERT_PATH', None)
         kwargs = kwargs_from_env(assert_hostname=True)
-        self.assertEqual('tcp://192.168.59.103:2376', kwargs['base_url'])
+        assert 'tcp://192.168.59.103:2376' == kwargs['base_url']
 
     def test_kwargs_from_env_no_cert_path(self):
         try:
@@ -144,10 +144,10 @@ class KwargsFromEnvTest(unittest.TestCase):
                               DOCKER_TLS_VERIFY='1')
 
             kwargs = kwargs_from_env()
-            self.assertTrue(kwargs['tls'].verify)
-            self.assertIn(cert_dir, kwargs['tls'].ca_cert)
-            self.assertIn(cert_dir, kwargs['tls'].cert[0])
-            self.assertIn(cert_dir, kwargs['tls'].cert[1])
+            assert kwargs['tls'].verify
+            assert cert_dir in kwargs['tls'].ca_cert
+            assert cert_dir in kwargs['tls'].cert[0]
+            assert cert_dir in kwargs['tls'].cert[1]
         finally:
             if temp_dir:
                 shutil.rmtree(temp_dir)
@@ -169,12 +169,12 @@ class KwargsFromEnvTest(unittest.TestCase):
 
 class ConverVolumeBindsTest(unittest.TestCase):
     def test_convert_volume_binds_empty(self):
-        self.assertEqual(convert_volume_binds({}), [])
-        self.assertEqual(convert_volume_binds([]), [])
+        assert convert_volume_binds({}) == []
+        assert convert_volume_binds([]) == []
 
     def test_convert_volume_binds_list(self):
         data = ['/a:/a:ro', '/b:/c:z']
-        self.assertEqual(convert_volume_binds(data), data)
+        assert convert_volume_binds(data) == data
 
     def test_convert_volume_binds_complete(self):
         data = {
@@ -183,13 +183,13 @@ class ConverVolumeBindsTest(unittest.TestCase):
                 'mode': 'ro'
             }
         }
-        self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:ro'])
+        assert convert_volume_binds(data) == ['/mnt/vol1:/data:ro']
 
     def test_convert_volume_binds_compact(self):
         data = {
             '/mnt/vol1': '/data'
         }
-        self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
+        assert convert_volume_binds(data) == ['/mnt/vol1:/data:rw']
 
     def test_convert_volume_binds_no_mode(self):
         data = {
@@ -197,7 +197,7 @@ class ConverVolumeBindsTest(unittest.TestCase):
                 'bind': '/data'
             }
         }
-        self.assertEqual(convert_volume_binds(data), ['/mnt/vol1:/data:rw'])
+        assert convert_volume_binds(data) == ['/mnt/vol1:/data:rw']
 
     def test_convert_volume_binds_unicode_bytes_input(self):
         expected = [u'/mnt/지연:/unicode/박:rw']
@@ -208,9 +208,7 @@ class ConverVolumeBindsTest(unittest.TestCase):
                 'mode': 'rw'
             }
         }
-        self.assertEqual(
-            convert_volume_binds(data), expected
-        )
+        assert convert_volume_binds(data) == expected
 
     def test_convert_volume_binds_unicode_unicode_input(self):
         expected = [u'/mnt/지연:/unicode/박:rw']
@@ -221,9 +219,7 @@ class ConverVolumeBindsTest(unittest.TestCase):
                 'mode': 'rw'
             }
         }
-        self.assertEqual(
-            convert_volume_binds(data), expected
-        )
+        assert convert_volume_binds(data) == expected
 
 
 class ParseEnvFileTest(unittest.TestCase):
@@ -242,38 +238,35 @@ class ParseEnvFileTest(unittest.TestCase):
         env_file = self.generate_tempfile(
             file_content='USER=jdoe\nPASS=secret')
         get_parse_env_file = parse_env_file(env_file)
-        self.assertEqual(get_parse_env_file,
-                         {'USER': 'jdoe', 'PASS': 'secret'})
+        assert get_parse_env_file == {'USER': 'jdoe', 'PASS': 'secret'}
         os.unlink(env_file)
 
     def test_parse_env_file_with_equals_character(self):
         env_file = self.generate_tempfile(
             file_content='USER=jdoe\nPASS=sec==ret')
         get_parse_env_file = parse_env_file(env_file)
-        self.assertEqual(get_parse_env_file,
-                         {'USER': 'jdoe', 'PASS': 'sec==ret'})
+        assert get_parse_env_file == {'USER': 'jdoe', 'PASS': 'sec==ret'}
         os.unlink(env_file)
 
     def test_parse_env_file_commented_line(self):
         env_file = self.generate_tempfile(
             file_content='USER=jdoe\n#PASS=secret')
         get_parse_env_file = parse_env_file(env_file)
-        self.assertEqual(get_parse_env_file, {'USER': 'jdoe'})
+        assert get_parse_env_file == {'USER': 'jdoe'}
         os.unlink(env_file)
 
     def test_parse_env_file_newline(self):
         env_file = self.generate_tempfile(
             file_content='\nUSER=jdoe\n\n\nPASS=secret')
         get_parse_env_file = parse_env_file(env_file)
-        self.assertEqual(get_parse_env_file,
-                         {'USER': 'jdoe', 'PASS': 'secret'})
+        assert get_parse_env_file == {'USER': 'jdoe', 'PASS': 'secret'}
         os.unlink(env_file)
 
     def test_parse_env_file_invalid_line(self):
         env_file = self.generate_tempfile(
             file_content='USER jdoe')
-        self.assertRaises(
-            DockerException, parse_env_file, env_file)
+        with pytest.raises(DockerException):
+            parse_env_file(env_file)
         os.unlink(env_file)
 
 
@@ -343,46 +336,34 @@ class ParseRepositoryTagTest(unittest.TestCase):
     sha = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
     def test_index_image_no_tag(self):
-        self.assertEqual(
-            parse_repository_tag("root"), ("root", None)
-        )
+        assert parse_repository_tag("root") == ("root", None)
 
     def test_index_image_tag(self):
-        self.assertEqual(
-            parse_repository_tag("root:tag"), ("root", "tag")
-        )
+        assert parse_repository_tag("root:tag") == ("root", "tag")
 
     def test_index_user_image_no_tag(self):
-        self.assertEqual(
-            parse_repository_tag("user/repo"), ("user/repo", None)
-        )
+        assert parse_repository_tag("user/repo") == ("user/repo", None)
 
     def test_index_user_image_tag(self):
-        self.assertEqual(
-            parse_repository_tag("user/repo:tag"), ("user/repo", "tag")
-        )
+        assert parse_repository_tag("user/repo:tag") == ("user/repo", "tag")
 
     def test_private_reg_image_no_tag(self):
-        self.assertEqual(
-            parse_repository_tag("url:5000/repo"), ("url:5000/repo", None)
-        )
+        assert parse_repository_tag("url:5000/repo") == ("url:5000/repo", None)
 
     def test_private_reg_image_tag(self):
-        self.assertEqual(
-            parse_repository_tag("url:5000/repo:tag"), ("url:5000/repo", "tag")
+        assert parse_repository_tag("url:5000/repo:tag") == (
+            "url:5000/repo", "tag"
         )
 
     def test_index_image_sha(self):
-        self.assertEqual(
-            parse_repository_tag("root@sha256:{0}".format(self.sha)),
-            ("root", "sha256:{0}".format(self.sha))
+        assert parse_repository_tag("root@sha256:{0}".format(self.sha)) == (
+            "root", "sha256:{0}".format(self.sha)
         )
 
     def test_private_reg_image_sha(self):
-        self.assertEqual(
-            parse_repository_tag("url:5000/repo@sha256:{0}".format(self.sha)),
-            ("url:5000/repo", "sha256:{0}".format(self.sha))
-        )
+        assert parse_repository_tag(
+            "url:5000/repo@sha256:{0}".format(self.sha)
+        ) == ("url:5000/repo", "sha256:{0}".format(self.sha))
 
 
 class ParseDeviceTest(unittest.TestCase):
@@ -392,35 +373,35 @@ class ParseDeviceTest(unittest.TestCase):
             'PathInContainer': '/dev/mnt1',
             'CgroupPermissions': 'r'
         }])
-        self.assertEqual(devices[0], {
+        assert devices[0] == {
             'PathOnHost': '/dev/sda1',
             'PathInContainer': '/dev/mnt1',
             'CgroupPermissions': 'r'
-        })
+        }
 
     def test_partial_string_definition(self):
         devices = parse_devices(['/dev/sda1'])
-        self.assertEqual(devices[0], {
+        assert devices[0] == {
             'PathOnHost': '/dev/sda1',
             'PathInContainer': '/dev/sda1',
             'CgroupPermissions': 'rwm'
-        })
+        }
 
     def test_permissionless_string_definition(self):
         devices = parse_devices(['/dev/sda1:/dev/mnt1'])
-        self.assertEqual(devices[0], {
+        assert devices[0] == {
             'PathOnHost': '/dev/sda1',
             'PathInContainer': '/dev/mnt1',
             'CgroupPermissions': 'rwm'
-        })
+        }
 
     def test_full_string_definition(self):
         devices = parse_devices(['/dev/sda1:/dev/mnt1:r'])
-        self.assertEqual(devices[0], {
+        assert devices[0] == {
             'PathOnHost': '/dev/sda1',
             'PathInContainer': '/dev/mnt1',
             'CgroupPermissions': 'r'
-        })
+        }
 
     def test_hybrid_list(self):
         devices = parse_devices([
@@ -432,36 +413,38 @@ class ParseDeviceTest(unittest.TestCase):
             }
         ])
 
-        self.assertEqual(devices[0], {
+        assert devices[0] == {
             'PathOnHost': '/dev/sda1',
             'PathInContainer': '/dev/mnt1',
             'CgroupPermissions': 'rw'
-        })
-        self.assertEqual(devices[1], {
+        }
+        assert devices[1] == {
             'PathOnHost': '/dev/sda2',
             'PathInContainer': '/dev/mnt2',
             'CgroupPermissions': 'r'
-        })
+        }
 
 
 class ParseBytesTest(unittest.TestCase):
     def test_parse_bytes_valid(self):
-        self.assertEqual(parse_bytes("512MB"), 536870912)
-        self.assertEqual(parse_bytes("512M"), 536870912)
-        self.assertEqual(parse_bytes("512m"), 536870912)
+        assert parse_bytes("512MB") == 536870912
+        assert parse_bytes("512M") == 536870912
+        assert parse_bytes("512m") == 536870912
 
     def test_parse_bytes_invalid(self):
-        self.assertRaises(DockerException, parse_bytes, "512MK")
-        self.assertRaises(DockerException, parse_bytes, "512L")
-        self.assertRaises(DockerException, parse_bytes, "127.0.0.1K")
+        with pytest.raises(DockerException):
+            parse_bytes("512MK")
+        with pytest.raises(DockerException):
+            parse_bytes("512L")
+        with pytest.raises(DockerException):
+            parse_bytes("127.0.0.1K")
 
     def test_parse_bytes_float(self):
-        self.assertRaises(DockerException, parse_bytes, "1.5k")
+        with pytest.raises(DockerException):
+            parse_bytes("1.5k")
 
     def test_parse_bytes_maxint(self):
-        self.assertEqual(
-            parse_bytes("{0}k".format(sys.maxsize)), sys.maxsize * 1024
-        )
+        assert parse_bytes("{0}k".format(sys.maxsize)) == sys.maxsize * 1024
 
 
 class UtilsTest(unittest.TestCase):
@@ -476,7 +459,7 @@ class UtilsTest(unittest.TestCase):
         ]
 
         for filters, expected in tests:
-            self.assertEqual(convert_filters(filters), expected)
+            assert convert_filters(filters) == expected
 
     def test_decode_json_header(self):
         obj = {'a': 'b', 'c': 1}
@@ -486,144 +469,144 @@ class UtilsTest(unittest.TestCase):
         else:
             data = base64.urlsafe_b64encode(json.dumps(obj))
         decoded_data = decode_json_header(data)
-        self.assertEqual(obj, decoded_data)
+        assert obj == decoded_data
 
 
 class SplitCommandTest(unittest.TestCase):
     def test_split_command_with_unicode(self):
-        self.assertEqual(split_command(u'echo μμ'), ['echo', 'μμ'])
+        assert split_command(u'echo μμ') == ['echo', 'μμ']
 
     @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
     def test_split_command_with_bytes(self):
-        self.assertEqual(split_command('echo μμ'), ['echo', 'μμ'])
+        assert split_command('echo μμ') == ['echo', 'μμ']
 
 
 class PortsTest(unittest.TestCase):
     def test_split_port_with_host_ip(self):
         internal_port, external_port = split_port("127.0.0.1:1000:2000")
-        self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, [("127.0.0.1", "1000")])
+        assert internal_port == ["2000"]
+        assert external_port == [("127.0.0.1", "1000")]
 
     def test_split_port_with_protocol(self):
         internal_port, external_port = split_port("127.0.0.1:1000:2000/udp")
-        self.assertEqual(internal_port, ["2000/udp"])
-        self.assertEqual(external_port, [("127.0.0.1", "1000")])
+        assert internal_port == ["2000/udp"]
+        assert external_port == [("127.0.0.1", "1000")]
 
     def test_split_port_with_host_ip_no_port(self):
         internal_port, external_port = split_port("127.0.0.1::2000")
-        self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, [("127.0.0.1", None)])
+        assert internal_port == ["2000"]
+        assert external_port == [("127.0.0.1", None)]
 
     def test_split_port_range_with_host_ip_no_port(self):
         internal_port, external_port = split_port("127.0.0.1::2000-2001")
-        self.assertEqual(internal_port, ["2000", "2001"])
-        self.assertEqual(external_port,
-                         [("127.0.0.1", None), ("127.0.0.1", None)])
+        assert internal_port == ["2000", "2001"]
+        assert external_port == [("127.0.0.1", None), ("127.0.0.1", None)]
 
     def test_split_port_with_host_port(self):
         internal_port, external_port = split_port("1000:2000")
-        self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, ["1000"])
+        assert internal_port == ["2000"]
+        assert external_port == ["1000"]
 
     def test_split_port_range_with_host_port(self):
         internal_port, external_port = split_port("1000-1001:2000-2001")
-        self.assertEqual(internal_port, ["2000", "2001"])
-        self.assertEqual(external_port, ["1000", "1001"])
+        assert internal_port == ["2000", "2001"]
+        assert external_port == ["1000", "1001"]
 
     def test_split_port_random_port_range_with_host_port(self):
         internal_port, external_port = split_port("1000-1001:2000")
-        self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, ["1000-1001"])
+        assert internal_port == ["2000"]
+        assert external_port == ["1000-1001"]
 
     def test_split_port_no_host_port(self):
         internal_port, external_port = split_port("2000")
-        self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, None)
+        assert internal_port == ["2000"]
+        assert external_port is None
 
     def test_split_port_range_no_host_port(self):
         internal_port, external_port = split_port("2000-2001")
-        self.assertEqual(internal_port, ["2000", "2001"])
-        self.assertEqual(external_port, None)
+        assert internal_port == ["2000", "2001"]
+        assert external_port is None
 
     def test_split_port_range_with_protocol(self):
         internal_port, external_port = split_port(
             "127.0.0.1:1000-1001:2000-2001/udp")
-        self.assertEqual(internal_port, ["2000/udp", "2001/udp"])
-        self.assertEqual(external_port,
-                         [("127.0.0.1", "1000"), ("127.0.0.1", "1001")])
+        assert internal_port == ["2000/udp", "2001/udp"]
+        assert external_port == [("127.0.0.1", "1000"), ("127.0.0.1", "1001")]
 
     def test_split_port_with_ipv6_address(self):
         internal_port, external_port = split_port(
             "2001:abcd:ef00::2:1000:2000")
-        self.assertEqual(internal_port, ["2000"])
-        self.assertEqual(external_port, [("2001:abcd:ef00::2", "1000")])
+        assert internal_port == ["2000"]
+        assert external_port == [("2001:abcd:ef00::2", "1000")]
 
     def test_split_port_invalid(self):
-        self.assertRaises(ValueError,
-                          lambda: split_port("0.0.0.0:1000:2000:tcp"))
+        with pytest.raises(ValueError):
+            split_port("0.0.0.0:1000:2000:tcp")
 
     def test_non_matching_length_port_ranges(self):
-        self.assertRaises(
-            ValueError,
-            lambda: split_port("0.0.0.0:1000-1010:2000-2002/tcp")
-        )
+        with pytest.raises(ValueError):
+            split_port("0.0.0.0:1000-1010:2000-2002/tcp")
 
     def test_port_and_range_invalid(self):
-        self.assertRaises(ValueError,
-                          lambda: split_port("0.0.0.0:1000:2000-2002/tcp"))
+        with pytest.raises(ValueError):
+            split_port("0.0.0.0:1000:2000-2002/tcp")
 
     def test_port_only_with_colon(self):
-        self.assertRaises(ValueError,
-                          lambda: split_port(":80"))
+        with pytest.raises(ValueError):
+            split_port(":80")
 
     def test_host_only_with_colon(self):
-        self.assertRaises(ValueError,
-                          lambda: split_port("localhost:"))
+        with pytest.raises(ValueError):
+            split_port("localhost:")
 
     def test_with_no_container_port(self):
-        self.assertRaises(ValueError,
-                          lambda: split_port("localhost:80:"))
+        with pytest.raises(ValueError):
+            split_port("localhost:80:")
 
     def test_split_port_empty_string(self):
-        self.assertRaises(ValueError, lambda: split_port(""))
+        with pytest.raises(ValueError):
+            split_port("")
 
     def test_split_port_non_string(self):
         assert split_port(1243) == (['1243'], None)
 
     def test_build_port_bindings_with_one_port(self):
         port_bindings = build_port_bindings(["127.0.0.1:1000:1000"])
-        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
+        assert port_bindings["1000"] == [("127.0.0.1", "1000")]
 
     def test_build_port_bindings_with_matching_internal_ports(self):
         port_bindings = build_port_bindings(
             ["127.0.0.1:1000:1000", "127.0.0.1:2000:1000"])
-        self.assertEqual(port_bindings["1000"],
-                         [("127.0.0.1", "1000"), ("127.0.0.1", "2000")])
+        assert port_bindings["1000"] == [
+            ("127.0.0.1", "1000"), ("127.0.0.1", "2000")
+        ]
 
     def test_build_port_bindings_with_nonmatching_internal_ports(self):
         port_bindings = build_port_bindings(
             ["127.0.0.1:1000:1000", "127.0.0.1:2000:2000"])
-        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
-        self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
+        assert port_bindings["1000"] == [("127.0.0.1", "1000")]
+        assert port_bindings["2000"] == [("127.0.0.1", "2000")]
 
     def test_build_port_bindings_with_port_range(self):
         port_bindings = build_port_bindings(["127.0.0.1:1000-1001:1000-1001"])
-        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
-        self.assertEqual(port_bindings["1001"], [("127.0.0.1", "1001")])
+        assert port_bindings["1000"] == [("127.0.0.1", "1000")]
+        assert port_bindings["1001"] == [("127.0.0.1", "1001")]
 
     def test_build_port_bindings_with_matching_internal_port_ranges(self):
         port_bindings = build_port_bindings(
             ["127.0.0.1:1000-1001:1000-1001", "127.0.0.1:2000-2001:1000-1001"])
-        self.assertEqual(port_bindings["1000"],
-                         [("127.0.0.1", "1000"), ("127.0.0.1", "2000")])
-        self.assertEqual(port_bindings["1001"],
-                         [("127.0.0.1", "1001"), ("127.0.0.1", "2001")])
+        assert port_bindings["1000"] == [
+            ("127.0.0.1", "1000"), ("127.0.0.1", "2000")
+        ]
+        assert port_bindings["1001"] == [
+            ("127.0.0.1", "1001"), ("127.0.0.1", "2001")
+        ]
 
     def test_build_port_bindings_with_nonmatching_internal_port_ranges(self):
         port_bindings = build_port_bindings(
             ["127.0.0.1:1000:1000", "127.0.0.1:2000:2000"])
-        self.assertEqual(port_bindings["1000"], [("127.0.0.1", "1000")])
-        self.assertEqual(port_bindings["2000"], [("127.0.0.1", "2000")])
+        assert port_bindings["1000"] == [("127.0.0.1", "1000")]
+        assert port_bindings["2000"] == [("127.0.0.1", "2000")]
 
 
 def convert_paths(collection):
@@ -708,11 +691,13 @@ class ExcludePathsTest(unittest.TestCase):
         If we're using a custom Dockerfile, make sure that's not
         excluded.
         """
-        assert self.exclude(['*'], dockerfile='Dockerfile.alt') == \
-            set(['Dockerfile.alt', '.dockerignore'])
+        assert self.exclude(['*'], dockerfile='Dockerfile.alt') == set(
+            ['Dockerfile.alt', '.dockerignore']
+        )
 
-        assert self.exclude(['*'], dockerfile='foo/Dockerfile3') == \
-            convert_paths(set(['foo/Dockerfile3', '.dockerignore']))
+        assert self.exclude(
+            ['*'], dockerfile='foo/Dockerfile3'
+        ) == convert_paths(set(['foo/Dockerfile3', '.dockerignore']))
 
     def test_exclude_dockerfile_child(self):
         includes = self.exclude(['foo/'], dockerfile='foo/Dockerfile3')
@@ -946,7 +931,7 @@ class TarTest(unittest.TestCase):
             os.makedirs(os.path.join(base, d))
         with tar(base) as archive:
             tar_data = tarfile.open(fileobj=archive)
-            self.assertEqual(sorted(tar_data.getnames()), ['bar', 'foo'])
+            assert sorted(tar_data.getnames()) == ['bar', 'foo']
 
     @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No symlinks on Windows')
     def test_tar_with_file_symlinks(self):
@@ -958,9 +943,7 @@ class TarTest(unittest.TestCase):
         os.symlink('../foo', os.path.join(base, 'bar/foo'))
         with tar(base) as archive:
             tar_data = tarfile.open(fileobj=archive)
-            self.assertEqual(
-                sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
-            )
+            assert sorted(tar_data.getnames()) == ['bar', 'bar/foo', 'foo']
 
     @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No symlinks on Windows')
     def test_tar_with_directory_symlinks(self):
@@ -971,9 +954,7 @@ class TarTest(unittest.TestCase):
         os.symlink('../foo', os.path.join(base, 'bar/foo'))
         with tar(base) as archive:
             tar_data = tarfile.open(fileobj=archive)
-            self.assertEqual(
-                sorted(tar_data.getnames()), ['bar', 'bar/foo', 'foo']
-            )
+            assert sorted(tar_data.getnames()) == ['bar', 'bar/foo', 'foo']
 
     @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No UNIX sockets on Win32')
     def test_tar_socket_file(self):
@@ -986,9 +967,7 @@ class TarTest(unittest.TestCase):
         sock.bind(os.path.join(base, 'test.sock'))
         with tar(base) as archive:
             tar_data = tarfile.open(fileobj=archive)
-            self.assertEqual(
-                sorted(tar_data.getnames()), ['bar', 'foo']
-            )
+            assert sorted(tar_data.getnames()) == ['bar', 'foo']
 
 
 class ShouldCheckDirectoryTest(unittest.TestCase):
