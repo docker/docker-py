@@ -6,8 +6,8 @@ import tarfile
 import tempfile
 import time
 import re
-import socket
 import six
+import socket
 
 import docker
 import pytest
@@ -107,16 +107,23 @@ def swarm_listen_addr():
     return '0.0.0.0:{0}'.format(random.randrange(10000, 25000))
 
 
-def assert_socket_closed_with_keys(sock, inputs):
+def assert_cat_socket_detached_with_keys(sock, inputs):
     if six.PY3:
         sock = sock._sock
 
     for i in inputs:
         sock.send(i)
-        time.sleep(1)
+        time.sleep(0.5)
 
-    with pytest.raises(socket.error):
+    # If we're using a Unix socket, the sock.send call will fail with a
+    # BrokenPipeError ; INET sockets will just stop receiving / sending data
+    # but will not raise an error
+    if sock.family == getattr(socket, 'AF_UNIX', -1):
+        with pytest.raises(socket.error):
+            sock.send(b'make sure the socket is closed\n')
+    else:
         sock.send(b"make sure the socket is closed\n")
+        assert sock.recv(32) == b''
 
 
 def ctrl_with(char):

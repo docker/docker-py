@@ -54,7 +54,7 @@ integration-dind-py2: build
 		-H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://docker:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--link=dpy-dind-py2:docker docker-sdk-python py.test tests/integration
-	docker rm -vf dpy-dind-py3
+	docker rm -vf dpy-dind-py2
 
 .PHONY: integration-dind-py3
 integration-dind-py3: build-py3

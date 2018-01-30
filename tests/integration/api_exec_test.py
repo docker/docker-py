@@ -3,7 +3,7 @@ from docker.utils.socket import read_exactly
 
 from .base import BaseAPIIntegrationTest, BUSYBOX
 from ..helpers import (
-    requires_api_version, ctrl_with, assert_socket_closed_with_keys
+    requires_api_version, ctrl_with, assert_cat_socket_detached_with_keys
 )
 
 
@@ -152,42 +152,54 @@ class ExecTest(BaseAPIIntegrationTest):
         assert exec_log == b'/var/www\n'
 
     def test_detach_with_default(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
-                                                 detach=True, stdin_open=True)
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-
-        exec_id = self.client.exec_create(id, '/bin/sh', stdin=True, tty=True)
-        sock = self.client.exec_start(exec_id, tty=True, socket=True)
-
-        assert_socket_closed_with_keys(sock, [ctrl_with('p'), ctrl_with('q')])
-
-    def test_detach_with_config_file(self):
-        self.client._general_configs['detachKeys'] = 'ctrl-p'
-        container = self.client.create_container(BUSYBOX, 'cat',
-                                                 detach=True, stdin_open=True)
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-
-        exec_id = self.client.exec_create(id, '/bin/sh', stdin=True, tty=True)
-        sock = self.client.exec_start(exec_id, tty=True, socket=True)
-
-        assert_socket_closed_with_keys(sock, [ctrl_with('p')])
-
-    def test_detach_with_arg(self):
-        self.client._general_configs['detachKeys'] = 'ctrl-p'
-        container = self.client.create_container(BUSYBOX, 'cat',
-                                                 detach=True, stdin_open=True)
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True
+        )
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
 
         exec_id = self.client.exec_create(
-            id, '/bin/sh',
-            stdin=True, tty=True, detach_keys='ctrl-x'
+            id, 'cat', stdin=True, tty=True, stdout=True
         )
         sock = self.client.exec_start(exec_id, tty=True, socket=True)
+        self.addCleanup(sock.close)
 
-        assert_socket_closed_with_keys(sock, [ctrl_with('x')])
+        assert_cat_socket_detached_with_keys(
+            sock, [ctrl_with('p'), ctrl_with('q')]
+        )
+
+    def test_detach_with_config_file(self):
+        self.client._general_configs['detachKeys'] = 'ctrl-p'
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True
+        )
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        exec_id = self.client.exec_create(
+            id, 'cat', stdin=True, tty=True, stdout=True
+        )
+        sock = self.client.exec_start(exec_id, tty=True, socket=True)
+        self.addCleanup(sock.close)
+
+        assert_cat_socket_detached_with_keys(sock, [ctrl_with('p')])
+
+    def test_detach_with_arg(self):
+        self.client._general_configs['detachKeys'] = 'ctrl-p'
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True
+        )
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        exec_id = self.client.exec_create(
+            id, 'cat',
+            stdin=True, tty=True, detach_keys='ctrl-x', stdout=True
+        )
+        sock = self.client.exec_start(exec_id, tty=True, socket=True)
+        self.addCleanup(sock.close)
+
+        assert_cat_socket_detached_with_keys(sock, [ctrl_with('x')])
