@@ -62,8 +62,7 @@ class Image(Model):
         Get a tarball of an image. Similar to the ``docker save`` command.
 
         Returns:
-            (urllib3.response.HTTPResponse object): The response from the
-            daemon.
+            (generator): A stream of raw archive data.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -71,11 +70,10 @@ class Image(Model):
 
         Example:
 
-            >>> image = cli.images.get("fedora:latest")
-            >>> resp = image.save()
-            >>> f = open('/tmp/fedora-latest.tar', 'w')
-            >>> for chunk in resp.stream():
-            >>>     f.write(chunk)
+            >>> image = cli.get_image("busybox:latest")
+            >>> f = open('/tmp/busybox-latest.tar', 'w')
+            >>> for chunk in image:
+            >>>   f.write(chunk)
             >>> f.close()
         """
         return self.client.api.get_image(self.id)

@@ -1,9 +1,10 @@
 import io
+import tempfile
 
 import docker
 import pytest
 
-from .base import BaseIntegrationTest, TEST_API_VERSION
+from .base import BaseIntegrationTest, BUSYBOX, TEST_API_VERSION
 
 
 class ImageCollectionTest(BaseIntegrationTest):
@@ -78,6 +79,20 @@ class ImageCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.ImageLoadError):
             client.images.load('abc')
+
+    def test_save_and_load(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.get(BUSYBOX)
+        with tempfile.TemporaryFile() as f:
+            stream = image.save()
+            for chunk in stream:
+                f.write(chunk)
+
+            f.seek(0)
+            result = client.images.load(f.read())
+
+        assert len(result) == 1
+        assert result[0].id == image.id
 
 
 class ImageTest(BaseIntegrationTest):
