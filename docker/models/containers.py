@@ -1,9 +1,10 @@
 import copy
+from collections import namedtuple
 
 from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
-from ..types import ExecResult, HostConfig
+from ..types import HostConfig
 from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
@@ -173,10 +174,11 @@ class Container(Model):
         )
         if socket or stream:
             return ExecResult(None, exec_output)
-        else:
-            return ExecResult(
-                self.client.api.exec_inspect(resp['Id'])['ExitCode'],
-                exec_output)
+
+        return ExecResult(
+            self.client.api.exec_inspect(resp['Id'])['ExitCode'],
+            exec_output
+        )
 
     def export(self):
         """
@@ -1007,3 +1009,8 @@ def _host_volume_from_bind(bind):
         return bits[0]
     else:
         return bits[1]
+
+
+ExecResult = namedtuple('ExecResult', 'exit_code,output')
+""" A result of Container.exec_run with the properties ``exit_code`` and
+    ``output``. """
