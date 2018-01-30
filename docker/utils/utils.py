@@ -98,7 +98,8 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
         files = build_file_list(root)
     for path in files:
         full_path = os.path.join(root, path)
-        if not os.access(full_path, os.R_OK):
+
+        if os.lstat(full_path).st_mode & os.R_OK == 0:
             raise IOError(
                 'Can not access file in context: {}'.format(full_path)
             )
