@@ -62,6 +62,13 @@ class Container(Model):
             return self.attrs['State']['Status']
         return self.attrs['State']
 
+    @property
+    def ports(self):
+        """
+        The ports that the container exposes as a dictionary.
+        """
+        return self.attrs.get('NetworkSettings', {}).get('Ports', {})
+
     def attach(self, **kwargs):
         """
         Attach to this container.
