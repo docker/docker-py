@@ -1,4 +1,5 @@
 import copy
+from collections import namedtuple
 
 from ..api import APIClient
 from ..errors import (ContainerError, ImageNotFound,
@@ -150,9 +151,10 @@ class Container(Model):
             workdir (str): Path to working directory for this exec session
 
         Returns:
-            (tuple): A tuple of (exit_code, output)
+            (ExecResult): A tuple of (exit_code, output)
                 exit_code: (int):
-                    Exit code for the executed command
+                    Exit code for the executed command or ``None`` if
+                    either ``stream```or ``socket`` is ``True``.
                 output: (generator or str):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
@@ -170,10 +172,13 @@ class Container(Model):
         exec_output = self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
         )
-        exit_code = 0
-        if stream is False:
-            exit_code = self.client.api.exec_inspect(resp['Id'])['ExitCode']
-        return (exit_code, exec_output)
+        if socket or stream:
+            return ExecResult(None, exec_output)
+
+        return ExecResult(
+            self.client.api.exec_inspect(resp['Id'])['ExitCode'],
+            exec_output
+        )
 
     def export(self):
         """
@@ -1004,3 +1009,8 @@ def _host_volume_from_bind(bind):
         return bits[0]
     else:
         return bits[1]
+
+
+ExecResult = namedtuple('ExecResult', 'exit_code,output')
+""" A result of Container.exec_run with the properties ``exit_code`` and
+    ``output``. """
