@@ -3,7 +3,6 @@ import json
 import six
 
 from .api_test import BaseAPIClientTest, url_prefix, response
-from ..helpers import requires_api_version
 from docker.types import IPAMConfig, IPAMPool
 
 try:
@@ -13,7 +12,6 @@ except ImportError:
 
 
 class NetworkTest(BaseAPIClientTest):
-    @requires_api_version('1.21')
     def test_list_networks(self):
         networks = [
             {
@@ -49,7 +47,6 @@ class NetworkTest(BaseAPIClientTest):
             filters = json.loads(get.call_args[1]['params']['filters'])
             assert filters == {'id': ['123']}
 
-    @requires_api_version('1.21')
     def test_create_network(self):
         network_data = {
             "id": 'abc12345',
@@ -98,7 +95,6 @@ class NetworkTest(BaseAPIClientTest):
                 }
             }
 
-    @requires_api_version('1.21')
     def test_remove_network(self):
         network_id = 'abc12345'
         delete = mock.Mock(return_value=response(status_code=200))
@@ -109,7 +105,6 @@ class NetworkTest(BaseAPIClientTest):
         args = delete.call_args
         assert args[0][0] == url_prefix + 'networks/{0}'.format(network_id)
 
-    @requires_api_version('1.21')
     def test_inspect_network(self):
         network_id = 'abc12345'
         network_name = 'foo'
@@ -130,7 +125,6 @@ class NetworkTest(BaseAPIClientTest):
         args = get.call_args
         assert args[0][0] == url_prefix + 'networks/{0}'.format(network_id)
 
-    @requires_api_version('1.21')
     def test_connect_container_to_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'
@@ -157,7 +151,6 @@ class NetworkTest(BaseAPIClientTest):
             },
         }
 
-    @requires_api_version('1.21')
     def test_disconnect_container_from_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'

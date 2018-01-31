@@ -17,7 +17,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.tmp_networks.append(net_id)
         return (net_name, net_id)
 
-    @requires_api_version('1.21')
     def test_list_networks(self):
         networks = self.client.networks()
 
@@ -32,7 +31,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         networks_by_partial_id = self.client.networks(ids=[net_id[:8]])
         assert [n['Id'] for n in networks_by_partial_id] == [net_id]
 
-    @requires_api_version('1.21')
     def test_inspect_network(self):
         net_name, net_id = self.create_network()
 
@@ -43,7 +41,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         assert net['Scope'] == 'local'
         assert net['IPAM']['Driver'] == 'default'
 
-    @requires_api_version('1.21')
     def test_create_network_with_ipam_config(self):
         _, net_id = self.create_network(
             ipam=IPAMConfig(
@@ -81,12 +78,10 @@ class TestNetworks(BaseAPIIntegrationTest):
             },
         }]
 
-    @requires_api_version('1.21')
     def test_create_network_with_host_driver_fails(self):
         with pytest.raises(docker.errors.APIError):
             self.client.create_network(random_name(), driver='host')
 
-    @requires_api_version('1.21')
     def test_remove_network(self):
         net_name, net_id = self.create_network()
         assert net_name in [n['Name'] for n in self.client.networks()]
@@ -94,7 +89,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         self.client.remove_network(net_id)
         assert net_name not in [n['Name'] for n in self.client.networks()]
 
-    @requires_api_version('1.21')
     def test_connect_and_disconnect_container(self):
         net_name, net_id = self.create_network()
 
@@ -163,7 +157,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         assert 'foo' in aliases
         assert 'bar' in aliases
 
-    @requires_api_version('1.21')
     def test_connect_on_container_create(self):
         net_name, net_id = self.create_network()
 
@@ -309,7 +302,6 @@ class TestNetworks(BaseAPIIntegrationTest):
 
         self.execute(container, ['nslookup', 'bar'])
 
-    @requires_api_version('1.21')
     def test_create_check_duplicate(self):
         net_name, net_id = self.create_network()
         with pytest.raises(docker.errors.APIError):
@@ -475,7 +467,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         with pytest.raises(docker.errors.NotFound):
             self.client.inspect_network(net_name_swarm, scope='local')
 
-    @requires_api_version('1.21')
     def test_create_remove_network_with_space_in_name(self):
         net_id = self.client.create_network('test 01')
         self.tmp_networks.append(net_id)

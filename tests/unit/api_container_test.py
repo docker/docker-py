@@ -219,24 +219,6 @@ class CreateContainerTest(BaseAPIClientTest):
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
-    def test_create_container_with_cpu_shares(self):
-        with pytest.deprecated_call():
-            self.client.create_container('busybox', 'ls', cpu_shares=5)
-
-        args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'containers/create'
-        assert json.loads(args[1]['data']) == json.loads('''
-            {"Tty": false, "Image": "busybox",
-             "Cmd": ["ls"], "AttachStdin": false,
-             "AttachStderr": true,
-             "AttachStdout": true, "OpenStdin": false,
-             "StdinOnce": false,
-             "NetworkDisabled": false,
-             "CpuShares": 5}
-        ''')
-        assert args[1]['headers'] == {'Content-Type': 'application/json'}
-
-    @requires_api_version('1.18')
     def test_create_container_with_host_config_cpu_shares(self):
         self.client.create_container(
             'busybox', 'ls', host_config=self.client.create_host_config(
@@ -261,25 +243,6 @@ class CreateContainerTest(BaseAPIClientTest):
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
-    def test_create_container_with_cpuset(self):
-        with pytest.deprecated_call():
-            self.client.create_container('busybox', 'ls', cpuset='0,1')
-
-        args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'containers/create'
-        assert json.loads(args[1]['data']) == json.loads('''
-            {"Tty": false, "Image": "busybox",
-             "Cmd": ["ls"], "AttachStdin": false,
-             "AttachStderr": true,
-             "AttachStdout": true, "OpenStdin": false,
-             "StdinOnce": false,
-             "NetworkDisabled": false,
-             "Cpuset": "0,1",
-             "CpusetCpus": "0,1"}
-        ''')
-        assert args[1]['headers'] == {'Content-Type': 'application/json'}
-
-    @requires_api_version('1.18')
     def test_create_container_with_host_config_cpuset(self):
         self.client.create_container(
             'busybox', 'ls', host_config=self.client.create_host_config(
@@ -304,7 +267,6 @@ class CreateContainerTest(BaseAPIClientTest):
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
-    @requires_api_version('1.19')
     def test_create_container_with_host_config_cpuset_mems(self):
         self.client.create_container(
             'busybox', 'ls', host_config=self.client.create_host_config(
@@ -373,28 +335,6 @@ class CreateContainerTest(BaseAPIClientTest):
              "OpenStdin": true, "NetworkDisabled": false}
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
-
-    def test_create_container_with_volumes_from(self):
-        vol_names = ['foo', 'bar']
-        try:
-            self.client.create_container('busybox', 'true',
-                                         volumes_from=vol_names)
-        except docker.errors.DockerException:
-            assert docker.utils.compare_version(
-                '1.10', self.client._version
-            ) >= 0
-            return
-
-        args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'containers/create'
-        assert json.loads(args[1]['data'])['VolumesFrom'] == ','.join(
-            vol_names
-        )
-        assert args[1]['headers'] == {'Content-Type': 'application/json'}
-
-    def test_create_container_empty_volumes_from(self):
-        with pytest.raises(docker.errors.InvalidVersion):
-            self.client.create_container('busybox', 'true', volumes_from=[])
 
     def test_create_named_container(self):
         self.client.create_container('busybox', 'true',

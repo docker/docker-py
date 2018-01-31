@@ -5,7 +5,6 @@ from .. import utils
 
 
 class NetworkApiMixin(object):
-    @minimum_version('1.21')
     def networks(self, names=None, ids=None, filters=None):
         """
         List networks. Similar to the ``docker networks ls`` command.
@@ -38,7 +37,6 @@ class NetworkApiMixin(object):
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
-    @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False, labels=None,
                        enable_ipv6=False, attachable=None, scope=None,
@@ -175,7 +173,6 @@ class NetworkApiMixin(object):
         url = self._url('/networks/prune')
         return self._result(self._post(url, params=params), True)
 
-    @minimum_version('1.21')
     @check_resource('net_id')
     def remove_network(self, net_id):
         """
@@ -188,7 +185,6 @@ class NetworkApiMixin(object):
         res = self._delete(url)
         self._raise_for_status(res)
 
-    @minimum_version('1.21')
     @check_resource('net_id')
     def inspect_network(self, net_id, verbose=None, scope=None):
         """
@@ -216,7 +212,6 @@ class NetworkApiMixin(object):
         return self._result(res, json=True)
 
     @check_resource('container')
-    @minimum_version('1.21')
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
@@ -253,7 +248,6 @@ class NetworkApiMixin(object):
         self._raise_for_status(res)
 
     @check_resource('container')
-    @minimum_version('1.21')
     def disconnect_container_from_network(self, container, net_id,
                                           force=False):
         """

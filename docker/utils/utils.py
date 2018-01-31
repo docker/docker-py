@@ -6,11 +6,9 @@ import json
 import shlex
 import tarfile
 import tempfile
-import warnings
 from distutils.version import StrictVersion
 from datetime import datetime
 
-import requests
 import six
 
 from .. import constants
@@ -156,29 +154,6 @@ def version_lt(v1, v2):
 
 def version_gte(v1, v2):
     return not version_lt(v1, v2)
-
-
-def ping_registry(url):
-    warnings.warn(
-        'The `ping_registry` method is deprecated and will be removed.',
-        DeprecationWarning
-    )
-
-    return ping(url + '/v2/', [401]) or ping(url + '/v1/_ping')
-
-
-def ping(url, valid_4xx_statuses=None):
-    try:
-        res = requests.get(url, timeout=3)
-    except Exception:
-        return False
-    else:
-        # We don't send yet auth headers
-        # and a v2 registry will respond with status 401
-        return (
-            res.status_code < 400 or
-            (valid_4xx_statuses and res.status_code in valid_4xx_statuses)
-        )
 
 
 def _convert_port_binding(binding):

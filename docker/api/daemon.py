@@ -1,9 +1,7 @@
 import os
-import warnings
 from datetime import datetime
 
 from .. import auth, utils
-from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
 
 
 class DaemonApiMixin(object):
@@ -90,7 +88,7 @@ class DaemonApiMixin(object):
         return self._result(self._get(self._url("/info")), True)
 
     def login(self, username, password=None, email=None, registry=None,
-              reauth=False, insecure_registry=False, dockercfg_path=None):
+              reauth=False, dockercfg_path=None):
         """
         Authenticate with a registry. Similar to the ``docker login`` command.
 
@@ -113,11 +111,6 @@ class DaemonApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if insecure_registry:
-            warnings.warn(
-                INSECURE_REGISTRY_DEPRECATION_WARNING.format('login()'),
-                DeprecationWarning
-            )
 
         # If we don't have any auth data so far, try reloading the config file
         # one more time in case anything showed up in there.

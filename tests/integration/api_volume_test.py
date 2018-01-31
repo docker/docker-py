@@ -5,7 +5,6 @@ from ..helpers import requires_api_version
 from .base import BaseAPIIntegrationTest
 
 
-@requires_api_version('1.21')
 class TestVolumes(BaseAPIIntegrationTest):
     def test_create_volume(self):
         name = 'perfectcherryblossom'

@@ -437,7 +437,6 @@ class StreamTest(unittest.TestCase):
                 try:
                     stream = client.build(
                         path=self.build_context,
-                        stream=True
                     )
                     break
                 except requests.ConnectionError as e:

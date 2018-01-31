@@ -1,11 +1,9 @@
 import logging
 import os
-import warnings
 
 import six
 
 from .. import auth, errors, utils
-from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
 
 log = logging.getLogger(__name__)
 
@@ -56,8 +54,7 @@ class ImageApiMixin(object):
         res = self._get(self._url("/images/{0}/history", image))
         return self._result(res, True)
 
-    def images(self, name=None, quiet=False, all=False, viz=False,
-               filters=None):
+    def images(self, name=None, quiet=False, all=False, filters=None):
         """
         List images. Similar to the ``docker images`` command.
 
@@ -78,10 +75,6 @@ class ImageApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if viz:
-            if utils.compare_version('1.7', self._version) >= 0:
-                raise Exception('Viz output is not supported in API >= 1.7!')
-            return self._result(self._get(self._url("images/viz")))
         params = {
             'filter': name,
             'only_ids': 1 if quiet else 0,
@@ -228,19 +221,6 @@ class ImageApiMixin(object):
         )
 
     @utils.check_resource('image')
-    def insert(self, image, url, path):
-        if utils.compare_version('1.12', self._version) >= 0:
-            raise errors.DeprecatedMethod(
-                'insert is not available for API version >=1.12'
-            )
-        api_url = self._url("/images/{0}/insert", image)
-        params = {
-            'url': url,
-            'path': path
-        }
-        return self._result(self._post(api_url, params=params))
-
-    @utils.check_resource('image')
     def inspect_image(self, image):
         """
         Get detailed information about an image. Similar to the ``docker
@@ -321,9 +301,8 @@ class ImageApiMixin(object):
             params['filters'] = utils.convert_filters(filters)
         return self._result(self._post(url, params=params), True)
 
-    def pull(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None, decode=False,
-             platform=None):
+    def pull(self, repository, tag=None, stream=False, auth_config=None,
+             decode=False, platform=None):
         """
         Pulls an image. Similar to the ``docker pull`` command.
 
@@ -331,11 +310,12 @@ class ImageApiMixin(object):
             repository (str): The repository to pull
             tag (str): The tag to pull
             stream (bool): Stream the output as a generator
-            insecure_registry (bool): Use an insecure registry
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.api.daemon.DaemonApiMixin.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
+            decode (bool): Decode the JSON data from the server into dicts.
+                Only applies with ``stream=True``
             platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
@@ -361,12 +341,6 @@ class ImageApiMixin(object):
             }
 
         """
-        if insecure_registry:
-            warnings.warn(
-                INSECURE_REGISTRY_DEPRECATION_WARNING.format('pull()'),
-                DeprecationWarning
-            )
-
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
@@ -377,14 +351,13 @@ class ImageApiMixin(object):
         }
         headers = {}
 
-        if utils.version_gte(self._version, '1.5'):
-            if auth_config is None:
-                header = auth.get_config_header(self, registry)
-                if header:
-                    headers['X-Registry-Auth'] = header
-            else:
-                log.debug('Sending supplied auth config')
-                headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+        if auth_config is None:
+            header = auth.get_config_header(self, registry)
+            if header:
+                headers['X-Registry-Auth'] = header
+        else:
+            log.debug('Sending supplied auth config')
+            headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         if platform is not None:
             if utils.version_lt(self._version, '1.32'):
@@ -405,8 +378,8 @@ class ImageApiMixin(object):
 
         return self._result(response)
 
-    def push(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None, decode=False):
+    def push(self, repository, tag=None, stream=False, auth_config=None,
+             decode=False):
         """
         Push an image or a repository to the registry. Similar to the ``docker
         push`` command.
@@ -415,12 +388,12 @@ class ImageApiMixin(object):
             repository (str): The repository to push to
             tag (str): An optional tag to push
             stream (bool): Stream the output as a blocking generator
-            insecure_registry (bool): Use ``http://`` to connect to the
-                registry
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.api.daemon.DaemonApiMixin.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
+            decode (bool): Decode the JSON data from the server into dicts.
+                Only applies with ``stream=True``
 
         Returns:
             (generator or str): The output from the server.
@@ -439,12 +412,6 @@ class ImageApiMixin(object):
             ...
 
         """
-        if insecure_registry:
-            warnings.warn(
-                INSECURE_REGISTRY_DEPRECATION_WARNING.format('push()'),
-                DeprecationWarning
-            )
-
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
@@ -454,14 +421,13 @@ class ImageApiMixin(object):
         }
         headers = {}
 
-        if utils.compare_version('1.5', self._version) >= 0:
-            if auth_config is None:
-                header = auth.get_config_header(self, registry)
-                if header:
-                    headers['X-Registry-Auth'] = header
-            else:
-                log.debug('Sending supplied auth config')
-                headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+        if auth_config is None:
+            header = auth.get_config_header(self, registry)
+            if header:
+                headers['X-Registry-Auth'] = header
+        else:
+            log.debug('Sending supplied auth config')
+            headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         response = self._post_json(
             u, None, headers=headers, stream=stream, params=params
