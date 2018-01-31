@@ -161,7 +161,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.start(container3_id)
 
         info = self.client.inspect_container(res2['Id'])
-        self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
+        assert len(info['HostConfig']['VolumesFrom']) == len(vol_names)
 
     def create_container_readonly_fs(self):
         ctnr = self.client.create_container(

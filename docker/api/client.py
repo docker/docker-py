@@ -87,6 +87,7 @@ class APIClient(
     """
 
     __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
+                                              '_general_configs',
                                               '_version',
                                               'base_url',
                                               'timeout']
@@ -105,8 +106,10 @@ class APIClient(
         self.timeout = timeout
         self.headers['User-Agent'] = user_agent
 
-        self._auth_configs = auth.load_config()
         self._general_configs = config.load_general_config()
+        self._auth_configs = auth.load_config(
+            config_dict=self._general_configs
+        )
 
         base_url = utils.parse_host(
             base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)

@@ -46,7 +46,7 @@ class DecoratorsTest(unittest.TestCase):
             return headers
 
         client = APIClient()
-        client._auth_configs = {}
+        client._general_configs = {}
 
         g = update_headers(f)
         assert g(client, headers=None) is None
@@ -55,7 +55,7 @@ class DecoratorsTest(unittest.TestCase):
             'Content-type': 'application/json',
         }
 
-        client._auth_configs = {
+        client._general_configs = {
             'HttpHeaders': sample_headers
         }
 

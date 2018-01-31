@@ -57,9 +57,10 @@ def load_general_config(config_path=None):
     try:
         with open(config_file) as f:
             return json.load(f)
-    except Exception as e:
+    except (IOError, ValueError) as e:
+        # In the case of a legacy `.dockercfg` file, we won't
+        # be able to load any JSON data.
         log.debug(e)
-        pass
 
     log.debug("All parsing attempts failed - returning empty config")
     return {}
