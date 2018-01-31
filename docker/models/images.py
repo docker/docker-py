@@ -266,7 +266,7 @@ class ImageCollection(Collection):
 
         return [self.get(i) for i in images]
 
-    def pull(self, name, tag=None, **kwargs):
+    def pull(self, repository, tag=None, **kwargs):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
@@ -280,7 +280,6 @@ class ImageCollection(Collection):
         Args:
             name (str): The repository to pull
             tag (str): The tag to pull
-            insecure_registry (bool): Use an insecure registry
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.client.DockerClient.login` has set for
                 this request. ``auth_config`` should contain the ``username``
@@ -305,12 +304,12 @@ class ImageCollection(Collection):
             >>> images = client.images.pull('busybox')
         """
         if not tag:
-            name, tag = parse_repository_tag(name)
+            repository, tag = parse_repository_tag(repository)
 
-        self.client.api.pull(name, tag=tag, **kwargs)
+        self.client.api.pull(repository, tag=tag, **kwargs)
         if tag:
-            return self.get('{0}:{1}'.format(name, tag))
-        return self.list(name)
+            return self.get('{0}:{1}'.format(repository, tag))
+        return self.list(repository)
 
     def push(self, repository, tag=None, **kwargs):
         return self.client.api.push(repository, tag=tag, **kwargs)
