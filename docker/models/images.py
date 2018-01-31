@@ -5,6 +5,7 @@ import six
 
 from ..api import APIClient
 from ..errors import BuildError, ImageLoadError
+from ..utils import parse_repository_tag
 from ..utils.json_stream import json_stream
 from .resource import Collection, Model
 
@@ -269,6 +270,8 @@ class ImageCollection(Collection):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
+        If no tag is specified, all tags from that repository will be
+        pulled.
 
         If you want to get the raw pull output, use the
         :py:meth:`~docker.api.image.ImageApiMixin.pull` method in the
@@ -285,7 +288,9 @@ class ImageCollection(Collection):
             platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
-            (:py:class:`Image`): The image that has been pulled.
+            (:py:class:`Image` or list): The image that has been pulled.
+                If no ``tag`` was specified, the method will return a list
+                of :py:class:`Image` objects belonging to this repository.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -293,10 +298,19 @@ class ImageCollection(Collection):
 
         Example:
 
-            >>> image = client.images.pull('busybox')
+            >>> # Pull the image tagged `latest` in the busybox repo
+            >>> image = client.images.pull('busybox:latest')
+
+            >>> # Pull all tags in the busybox repo
+            >>> images = client.images.pull('busybox')
         """
+        if not tag:
+            name, tag = parse_repository_tag(name)
+
         self.client.api.pull(name, tag=tag, **kwargs)
-        return self.get('{0}:{1}'.format(name, tag) if tag else name)
+        if tag:
+            return self.get('{0}:{1}'.format(name, tag))
+        return self.list(name)
 
     def push(self, repository, tag=None, **kwargs):
         return self.client.api.push(repository, tag=tag, **kwargs)

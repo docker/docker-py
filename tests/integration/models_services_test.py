@@ -1,12 +1,12 @@
 import unittest
 
 import docker
+import pytest
 
 from .. import helpers
 from .base import TEST_API_VERSION
 from docker.errors import InvalidArgument
 from docker.types.services import ServiceMode
-import pytest
 
 
 class ServiceTest(unittest.TestCase):
@@ -182,6 +182,7 @@ class ServiceTest(unittest.TestCase):
         service.reload()
         assert not service.attrs['Spec'].get('Labels')
 
+    @pytest.mark.xfail(reason='Flaky test')
     def test_update_retains_networks(self):
         client = docker.from_env(version=TEST_API_VERSION)
         network_name = helpers.random_name()
