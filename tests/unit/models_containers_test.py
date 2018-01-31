@@ -102,6 +102,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'volumename:/mnt/vol3',
                 '/volumewithnohostpath',
                 '/anothervolumewithnohostpath:ro',
+                'C:\\windows\\path:D:\\hello\\world:rw'
             ],
             volumes_from=['container'],
             working_dir='/code'
@@ -120,7 +121,8 @@ class ContainerCollectionTest(unittest.TestCase):
                     '/var/www:/mnt/vol1:ro',
                     'volumename:/mnt/vol3',
                     '/volumewithnohostpath',
-                    '/anothervolumewithnohostpath:ro'
+                    '/anothervolumewithnohostpath:ro',
+                    'C:\\windows\\path:D:\\hello\\world:rw'
                 ],
                 'BlkioDeviceReadBps': [{'Path': 'foo', 'Rate': 3}],
                 'BlkioDeviceReadIOps': [{'Path': 'foo', 'Rate': 3}],
@@ -191,7 +193,8 @@ class ContainerCollectionTest(unittest.TestCase):
                 '/mnt/vol1',
                 '/mnt/vol3',
                 '/volumewithnohostpath',
-                '/anothervolumewithnohostpath'
+                '/anothervolumewithnohostpath',
+                'D:\\hello\\world'
             ],
             working_dir='/code'
         )

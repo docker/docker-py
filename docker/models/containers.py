@@ -1,4 +1,5 @@
 import copy
+import ntpath
 from collections import namedtuple
 
 from ..api import APIClient
@@ -995,20 +996,25 @@ def _create_container_args(kwargs):
         # sort to make consistent for tests
         create_kwargs['ports'] = [tuple(p.split('/', 1))
                                   for p in sorted(port_bindings.keys())]
-    binds = create_kwargs['host_config'].get('Binds')
-    if binds:
-        create_kwargs['volumes'] = [_host_volume_from_bind(v) for v in binds]
+    if volumes:
+        if isinstance(volumes, dict):
+            create_kwargs['volumes'] = [
+                v.get('bind') for v in volumes.values()
+            ]
+        else:
+            create_kwargs['volumes'] = [
+                _host_volume_from_bind(v) for v in volumes
+            ]
     return create_kwargs
 
 
 def _host_volume_from_bind(bind):
-    bits = bind.split(':')
-    if len(bits) == 1:
-        return bits[0]
-    elif len(bits) == 2 and bits[1] in ('ro', 'rw'):
-        return bits[0]
+    drive, rest = ntpath.splitdrive(bind)
+    bits = rest.split(':', 1)
+    if len(bits) == 1 or bits[1] in ('ro', 'rw'):
+        return drive + bits[0]
     else:
-        return bits[1]
+        return bits[1].rstrip(':ro').rstrip(':rw')
 
 
 ExecResult = namedtuple('ExecResult', 'exit_code,output')
