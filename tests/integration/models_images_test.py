@@ -74,6 +74,12 @@ class ImageCollectionTest(BaseIntegrationTest):
         image = client.images.pull('alpine', tag='3.3')
         assert 'alpine:3.3' in image.attrs['RepoTags']
 
+    def test_pull_multiple(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        images = client.images.pull('hello-world')
+        assert len(images) == 1
+        assert 'hello-world:latest' in images[0].attrs['RepoTags']
+
     def test_load_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.ImageLoadError):
