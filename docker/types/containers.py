@@ -129,20 +129,12 @@ class HostConfig(dict):
             self['MemorySwap'] = parse_bytes(memswap_limit)
 
         if mem_reservation:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('mem_reservation', '1.21')
-
             self['MemoryReservation'] = parse_bytes(mem_reservation)
 
         if kernel_memory:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('kernel_memory', '1.21')
-
             self['KernelMemory'] = parse_bytes(kernel_memory)
 
         if mem_swappiness is not None:
-            if version_lt(version, '1.20'):
-                raise host_config_version_error('mem_swappiness', '1.20')
             if not isinstance(mem_swappiness, int):
                 raise host_config_type_error(
                     'mem_swappiness', mem_swappiness, 'int'
@@ -168,9 +160,6 @@ class HostConfig(dict):
             self['Privileged'] = privileged
 
         if oom_kill_disable:
-            if version_lt(version, '1.20'):
-                raise host_config_version_error('oom_kill_disable', '1.19')
-
             self['OomKillDisable'] = oom_kill_disable
 
         if oom_score_adj:
@@ -193,7 +182,7 @@ class HostConfig(dict):
 
         if network_mode:
             self['NetworkMode'] = network_mode
-        elif network_mode is None and version_gte(version, '1.20'):
+        elif network_mode is None:
             self['NetworkMode'] = 'default'
 
         if restart_policy:
@@ -214,18 +203,12 @@ class HostConfig(dict):
             self['Devices'] = parse_devices(devices)
 
         if group_add:
-            if version_lt(version, '1.20'):
-                raise host_config_version_error('group_add', '1.20')
-
             self['GroupAdd'] = [six.text_type(grp) for grp in group_add]
 
         if dns is not None:
             self['Dns'] = dns
 
         if dns_opt is not None:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('dns_opt', '1.21')
-
             self['DnsOptions'] = dns_opt
 
         if security_opt is not None:
@@ -298,38 +281,23 @@ class HostConfig(dict):
         if cpu_quota:
             if not isinstance(cpu_quota, int):
                 raise host_config_type_error('cpu_quota', cpu_quota, 'int')
-            if version_lt(version, '1.19'):
-                raise host_config_version_error('cpu_quota', '1.19')
-
             self['CpuQuota'] = cpu_quota
 
         if cpu_period:
             if not isinstance(cpu_period, int):
                 raise host_config_type_error('cpu_period', cpu_period, 'int')
-            if version_lt(version, '1.19'):
-                raise host_config_version_error('cpu_period', '1.19')
-
             self['CpuPeriod'] = cpu_period
 
         if cpu_shares:
-            if version_lt(version, '1.18'):
-                raise host_config_version_error('cpu_shares', '1.18')
-
             if not isinstance(cpu_shares, int):
                 raise host_config_type_error('cpu_shares', cpu_shares, 'int')
 
             self['CpuShares'] = cpu_shares
 
         if cpuset_cpus:
-            if version_lt(version, '1.18'):
-                raise host_config_version_error('cpuset_cpus', '1.18')
-
             self['CpusetCpus'] = cpuset_cpus
 
         if cpuset_mems:
-            if version_lt(version, '1.19'):
-                raise host_config_version_error('cpuset_mems', '1.19')
-
             if not isinstance(cpuset_mems, str):
                 raise host_config_type_error(
                     'cpuset_mems', cpuset_mems, 'str'
@@ -462,8 +430,6 @@ class HostConfig(dict):
             self['InitPath'] = init_path
 
         if volume_driver is not None:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('volume_driver', '1.21')
             self['VolumeDriver'] = volume_driver
 
         if cpu_count:
@@ -520,53 +486,12 @@ def host_config_value_error(param, param_value):
 class ContainerConfig(dict):
     def __init__(
         self, version, image, command, hostname=None, user=None, detach=False,
-        stdin_open=False, tty=False, mem_limit=None, ports=None, dns=None,
-        environment=None, volumes=None, volumes_from=None,
-        network_disabled=False, entrypoint=None, cpu_shares=None,
-        working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
-        host_config=None, mac_address=None, labels=None, volume_driver=None,
-        stop_signal=None, networking_config=None, healthcheck=None,
-        stop_timeout=None, runtime=None
+        stdin_open=False, tty=False, ports=None, environment=None,
+        volumes=None, network_disabled=False, entrypoint=None,
+        working_dir=None, domainname=None, host_config=None, mac_address=None,
+        labels=None, stop_signal=None, networking_config=None,
+        healthcheck=None, stop_timeout=None, runtime=None
     ):
-        if version_gte(version, '1.10'):
-            message = ('{0!r} parameter has no effect on create_container().'
-                       ' It has been moved to host_config')
-            if dns is not None:
-                raise errors.InvalidVersion(message.format('dns'))
-            if volumes_from is not None:
-                raise errors.InvalidVersion(message.format('volumes_from'))
-
-        if version_lt(version, '1.18'):
-            if labels is not None:
-                raise errors.InvalidVersion(
-                    'labels were only introduced in API version 1.18'
-                )
-
-        if version_lt(version, '1.19'):
-            if volume_driver is not None:
-                raise errors.InvalidVersion(
-                    'Volume drivers were only introduced in API version 1.19'
-                )
-            mem_limit = mem_limit if mem_limit is not None else 0
-            memswap_limit = memswap_limit if memswap_limit is not None else 0
-        else:
-            if mem_limit is not None:
-                raise errors.InvalidVersion(
-                    'mem_limit has been moved to host_config in API version'
-                    ' 1.19'
-                )
-
-            if memswap_limit is not None:
-                raise errors.InvalidVersion(
-                    'memswap_limit has been moved to host_config in API '
-                    'version 1.19'
-                )
-
-        if version_lt(version, '1.21'):
-            if stop_signal is not None:
-                raise errors.InvalidVersion(
-                    'stop_signal was only introduced in API version 1.21'
-                )
 
         if stop_timeout is not None and version_lt(version, '1.25'):
             raise errors.InvalidVersion(
@@ -597,12 +522,6 @@ class ContainerConfig(dict):
         if isinstance(labels, list):
             labels = dict((lbl, six.text_type('')) for lbl in labels)
 
-        if mem_limit is not None:
-            mem_limit = parse_bytes(mem_limit)
-
-        if memswap_limit is not None:
-            memswap_limit = parse_bytes(memswap_limit)
-
         if isinstance(ports, list):
             exposed_ports = {}
             for port_definition in ports:
@@ -623,13 +542,6 @@ class ContainerConfig(dict):
             for vol in volumes:
                 volumes_dict[vol] = {}
             volumes = volumes_dict
-
-        if volumes_from:
-            if not isinstance(volumes_from, six.string_types):
-                volumes_from = ','.join(volumes_from)
-        else:
-            # Force None, an empty list or dict causes client.start to fail
-            volumes_from = None
 
         if healthcheck and isinstance(healthcheck, dict):
             healthcheck = Healthcheck(**healthcheck)
@@ -655,28 +567,20 @@ class ContainerConfig(dict):
             'Tty': tty,
             'OpenStdin': stdin_open,
             'StdinOnce': stdin_once,
-            'Memory': mem_limit,
             'AttachStdin': attach_stdin,
             'AttachStdout': attach_stdout,
             'AttachStderr': attach_stderr,
             'Env': environment,
             'Cmd': command,
-            'Dns': dns,
             'Image': image,
             'Volumes': volumes,
-            'VolumesFrom': volumes_from,
             'NetworkDisabled': network_disabled,
             'Entrypoint': entrypoint,
-            'CpuShares': cpu_shares,
-            'Cpuset': cpuset,
-            'CpusetCpus': cpuset,
             'WorkingDir': working_dir,
-            'MemorySwap': memswap_limit,
             'HostConfig': host_config,
             'NetworkingConfig': networking_config,
             'MacAddress': mac_address,
             'Labels': labels,
-            'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
             'StopTimeout': stop_timeout,

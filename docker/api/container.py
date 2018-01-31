@@ -204,15 +204,13 @@ class ContainerApiMixin(object):
         return res
 
     def create_container(self, image, command=None, hostname=None, user=None,
-                         detach=False, stdin_open=False, tty=False,
-                         mem_limit=None, ports=None, environment=None,
-                         dns=None, volumes=None, volumes_from=None,
+                         detach=False, stdin_open=False, tty=False, ports=None,
+                         environment=None, volumes=None,
                          network_disabled=False, name=None, entrypoint=None,
-                         cpu_shares=None, working_dir=None, domainname=None,
-                         memswap_limit=None, cpuset=None, host_config=None,
-                         mac_address=None, labels=None, volume_driver=None,
-                         stop_signal=None, networking_config=None,
-                         healthcheck=None, stop_timeout=None, runtime=None):
+                         working_dir=None, domainname=None, host_config=None,
+                         mac_address=None, labels=None, stop_signal=None,
+                         networking_config=None, healthcheck=None,
+                         stop_timeout=None, runtime=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -354,27 +352,17 @@ class ContainerApiMixin(object):
                 return container ID
             stdin_open (bool): Keep STDIN open even if not attached
             tty (bool): Allocate a pseudo-TTY
-            mem_limit (float or str): Memory limit. Accepts float values (which
-                represent the memory limit of the created container in bytes)
-                or a string with a units identification char (``100000b``,
-                ``1000k``, ``128m``, ``1g``). If a string is specified without
-                a units character, bytes are assumed as an intended unit.
             ports (list of ints): A list of port numbers
             environment (dict or list): A dictionary or a list of strings in
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
-            dns (:py:class:`list`): DNS name servers. Deprecated since API
-                version 1.10. Use ``host_config`` instead.
             volumes (str or list): List of paths inside the container to use
                 as volumes.
-            volumes_from (:py:class:`list`): List of container names or Ids to
-                get volumes from.
             network_disabled (bool): Disable networking
             name (str): A name for the container
             entrypoint (str or list): An entrypoint
             working_dir (str): Path to the working directory
             domainname (str): The domain name to use for the container
-            memswap_limit (int):
             host_config (dict): A dictionary created with
                 :py:meth:`create_host_config`.
             mac_address (str): The Mac Address to assign the container
@@ -382,7 +370,6 @@ class ContainerApiMixin(object):
                 ``{"label1": "value1", "label2": "value2"}``) or a list of
                 names of labels to set with empty values (e.g.
                 ``["label1", "label2"]``)
-            volume_driver (str): The name of a volume driver/plugin.
             stop_signal (str): The stop signal to use to stop the container
                 (e.g. ``SIGINT``).
             stop_timeout (int): Timeout to stop the container, in seconds.
@@ -405,17 +392,12 @@ class ContainerApiMixin(object):
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
 
-        if host_config and utils.compare_version('1.15', self._version) < 0:
-            raise errors.InvalidVersion(
-                'host_config is not supported in API < 1.15'
-            )
-
         config = self.create_container_config(
-            image, command, hostname, user, detach, stdin_open, tty, mem_limit,
-            ports, dns, environment, volumes, volumes_from,
-            network_disabled, entrypoint, cpu_shares, working_dir, domainname,
-            memswap_limit, cpuset, host_config, mac_address, labels,
-            volume_driver, stop_signal, networking_config, healthcheck,
+            image, command, hostname, user, detach, stdin_open, tty,
+            ports, environment, volumes,
+            network_disabled, entrypoint, working_dir, domainname,
+            host_config, mac_address, labels,
+            stop_signal, networking_config, healthcheck,
             stop_timeout, runtime
         )
         return self.create_container_from_config(config, name)
@@ -681,7 +663,6 @@ class ContainerApiMixin(object):
         return self._stream_raw_result(res)
 
     @utils.check_resource('container')
-    @utils.minimum_version('1.20')
     def get_archive(self, container, path):
         """
         Retrieve a file or folder from a container in the form of a tar
@@ -786,59 +767,46 @@ class ContainerApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if utils.compare_version('1.11', self._version) >= 0:
-            if follow is None:
-                follow = stream
-            params = {'stderr': stderr and 1 or 0,
-                      'stdout': stdout and 1 or 0,
-                      'timestamps': timestamps and 1 or 0,
-                      'follow': follow and 1 or 0,
-                      }
-            if utils.compare_version('1.13', self._version) >= 0:
-                if tail != 'all' and (not isinstance(tail, int) or tail < 0):
-                    tail = 'all'
-                params['tail'] = tail
+        if follow is None:
+            follow = stream
+        params = {'stderr': stderr and 1 or 0,
+                  'stdout': stdout and 1 or 0,
+                  'timestamps': timestamps and 1 or 0,
+                  'follow': follow and 1 or 0,
+                  }
+        if tail != 'all' and (not isinstance(tail, int) or tail < 0):
+            tail = 'all'
+        params['tail'] = tail
 
-            if since is not None:
-                if utils.version_lt(self._version, '1.19'):
-                    raise errors.InvalidVersion(
-                        'since is not supported for API version < 1.19'
-                    )
-                if isinstance(since, datetime):
-                    params['since'] = utils.datetime_to_timestamp(since)
-                elif (isinstance(since, int) and since > 0):
-                    params['since'] = since
-                else:
-                    raise errors.InvalidArgument(
-                        'since value should be datetime or positive int, '
-                        'not {}'.format(type(since))
-                    )
+        if since is not None:
+            if isinstance(since, datetime):
+                params['since'] = utils.datetime_to_timestamp(since)
+            elif (isinstance(since, int) and since > 0):
+                params['since'] = since
+            else:
+                raise errors.InvalidArgument(
+                    'since value should be datetime or positive int, '
+                    'not {}'.format(type(since))
+                )
 
-            if until is not None:
-                if utils.version_lt(self._version, '1.35'):
-                    raise errors.InvalidVersion(
-                        'until is not supported for API version < 1.35'
-                    )
-                if isinstance(until, datetime):
-                    params['until'] = utils.datetime_to_timestamp(until)
-                elif (isinstance(until, int) and until > 0):
-                    params['until'] = until
-                else:
-                    raise errors.InvalidArgument(
-                        'until value should be datetime or positive int, '
-                        'not {}'.format(type(until))
-                    )
+        if until is not None:
+            if utils.version_lt(self._version, '1.35'):
+                raise errors.InvalidVersion(
+                    'until is not supported for API version < 1.35'
+                )
+            if isinstance(until, datetime):
+                params['until'] = utils.datetime_to_timestamp(until)
+            elif (isinstance(until, int) and until > 0):
+                params['until'] = until
+            else:
+                raise errors.InvalidArgument(
+                    'until value should be datetime or positive int, '
+                    'not {}'.format(type(until))
+                )
 
-            url = self._url("/containers/{0}/logs", container)
-            res = self._get(url, params=params, stream=stream)
-            return self._get_result(container, stream, res)
-        return self.attach(
-            container,
-            stdout=stdout,
-            stderr=stderr,
-            stream=stream,
-            logs=True
-        )
+        url = self._url("/containers/{0}/logs", container)
+        res = self._get(url, params=params, stream=stream)
+        return self._get_result(container, stream, res)
 
     @utils.check_resource('container')
     def pause(self, container):
@@ -906,7 +874,6 @@ class ContainerApiMixin(object):
         return h_ports
 
     @utils.check_resource('container')
-    @utils.minimum_version('1.20')
     def put_archive(self, container, path, data):
         """
         Insert a file or folder in an existing container using a tar archive as
@@ -976,7 +943,6 @@ class ContainerApiMixin(object):
         )
         self._raise_for_status(res)
 
-    @utils.minimum_version('1.17')
     @utils.check_resource('container')
     def rename(self, container, name):
         """
@@ -1073,7 +1039,6 @@ class ContainerApiMixin(object):
         res = self._post(url)
         self._raise_for_status(res)
 
-    @utils.minimum_version('1.17')
     @utils.check_resource('container')
     def stats(self, container, decode=None, stream=True):
         """

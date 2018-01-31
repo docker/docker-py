@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import warnings
 
 import pytest
 
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    ContainerConfig, ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
+    ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
     IPAMPool, LogConfig, Mount, ServiceMode, Ulimit,
 )
 from docker.types.services import convert_service_ports
@@ -24,33 +23,29 @@ def create_host_config(*args, **kwargs):
 
 
 class HostConfigTest(unittest.TestCase):
-    def test_create_host_config_no_options(self):
-        config = create_host_config(version='1.19')
-        assert not ('NetworkMode' in config)
-
     def test_create_host_config_no_options_newer_api_version(self):
-        config = create_host_config(version='1.20')
+        config = create_host_config(version='1.21')
         assert config['NetworkMode'] == 'default'
 
     def test_create_host_config_invalid_cpu_cfs_types(self):
         with pytest.raises(TypeError):
-            create_host_config(version='1.20', cpu_quota='0')
+            create_host_config(version='1.21', cpu_quota='0')
 
         with pytest.raises(TypeError):
-            create_host_config(version='1.20', cpu_period='0')
+            create_host_config(version='1.21', cpu_period='0')
 
         with pytest.raises(TypeError):
-            create_host_config(version='1.20', cpu_quota=23.11)
+            create_host_config(version='1.21', cpu_quota=23.11)
 
         with pytest.raises(TypeError):
-            create_host_config(version='1.20', cpu_period=1999.0)
+            create_host_config(version='1.21', cpu_period=1999.0)
 
     def test_create_host_config_with_cpu_quota(self):
-        config = create_host_config(version='1.20', cpu_quota=1999)
+        config = create_host_config(version='1.21', cpu_quota=1999)
         assert config.get('CpuQuota') == 1999
 
     def test_create_host_config_with_cpu_period(self):
-        config = create_host_config(version='1.20', cpu_period=1999)
+        config = create_host_config(version='1.21', cpu_period=1999)
         assert config.get('CpuPeriod') == 1999
 
     def test_create_host_config_with_blkio_constraints(self):
@@ -79,10 +74,8 @@ class HostConfigTest(unittest.TestCase):
         assert config.get('ShmSize') == 67108864
 
     def test_create_host_config_with_oom_kill_disable(self):
-        config = create_host_config(version='1.20', oom_kill_disable=True)
+        config = create_host_config(version='1.21', oom_kill_disable=True)
         assert config.get('OomKillDisable') is True
-        with pytest.raises(InvalidVersion):
-            create_host_config(version='1.18.3', oom_kill_disable=True)
 
     def test_create_host_config_with_userns_mode(self):
         config = create_host_config(version='1.23', userns_mode='host')
@@ -109,20 +102,13 @@ class HostConfigTest(unittest.TestCase):
         assert 'use-vc' in dns_opts
         assert 'no-tld-query' in dns_opts
 
-        with pytest.raises(InvalidVersion):
-            create_host_config(version='1.20', dns_opt=tested_opts)
-
     def test_create_host_config_with_mem_reservation(self):
         config = create_host_config(version='1.21', mem_reservation=67108864)
         assert config.get('MemoryReservation') == 67108864
-        with pytest.raises(InvalidVersion):
-            create_host_config(version='1.20', mem_reservation=67108864)
 
     def test_create_host_config_with_kernel_memory(self):
         config = create_host_config(version='1.21', kernel_memory=67108864)
         assert config.get('KernelMemory') == 67108864
-        with pytest.raises(InvalidVersion):
-            create_host_config(version='1.20', kernel_memory=67108864)
 
     def test_create_host_config_with_pids_limit(self):
         config = create_host_config(version='1.23', pids_limit=1024)
@@ -158,9 +144,6 @@ class HostConfigTest(unittest.TestCase):
             create_host_config(version='1.24', mem_swappiness='40')
 
     def test_create_host_config_with_volume_driver(self):
-        with pytest.raises(InvalidVersion):
-            create_host_config(version='1.20', volume_driver='local')
-
         config = create_host_config(version='1.21', volume_driver='local')
         assert config.get('VolumeDriver') == 'local'
 
@@ -213,19 +196,6 @@ class HostConfigTest(unittest.TestCase):
         assert config.get('CPURealtimeRuntime') == 1000
         with pytest.raises(InvalidVersion):
             create_host_config(version='1.24', cpu_rt_runtime=1000)
-
-
-class ContainerConfigTest(unittest.TestCase):
-    def test_create_container_config_volume_driver_warning(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            ContainerConfig(
-                version='1.21', image='scratch', command=None,
-                volume_driver='local'
-            )
-
-        assert len(w) == 1
-        assert 'The volume_driver option has been moved' in str(w[0].message)
 
 
 class ContainerSpecTest(unittest.TestCase):

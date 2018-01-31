@@ -145,22 +145,18 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         container2_id = res1['Id']
         self.tmp_containers.append(container2_id)
         self.client.start(container2_id)
-        with pytest.raises(docker.errors.DockerException):
-            self.client.create_container(
-                BUSYBOX, 'cat', detach=True, stdin_open=True,
-                volumes_from=vol_names
-            )
-        res2 = self.client.create_container(
+
+        res = self.client.create_container(
             BUSYBOX, 'cat', detach=True, stdin_open=True,
             host_config=self.client.create_host_config(
                 volumes_from=vol_names, network_mode='none'
             )
         )
-        container3_id = res2['Id']
+        container3_id = res['Id']
         self.tmp_containers.append(container3_id)
         self.client.start(container3_id)
 
-        info = self.client.inspect_container(res2['Id'])
+        info = self.client.inspect_container(res['Id'])
         assert len(info['HostConfig']['VolumesFrom']) == len(vol_names)
 
     def create_container_readonly_fs(self):
@@ -222,7 +218,6 @@ class CreateContainerTest(BaseAPIIntegrationTest):
 
         self.client.kill(id)
 
-    @requires_api_version('1.20')
     def test_group_id_ints(self):
         container = self.client.create_container(
             BUSYBOX, 'id -G',
@@ -239,7 +234,6 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert '1000' in groups
         assert '1001' in groups
 
-    @requires_api_version('1.20')
     def test_group_id_strings(self):
         container = self.client.create_container(
             BUSYBOX, 'id -G', host_config=self.client.create_host_config(
@@ -604,24 +598,15 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount_data['RW'] is True
 
     def check_container_data(self, inspect_data, rw):
-        if docker.utils.compare_version('1.20', self.client._version) < 0:
-            assert 'Volumes' in inspect_data
-            assert self.mount_dest in inspect_data['Volumes']
-            assert (
-                self.mount_origin == inspect_data['Volumes'][self.mount_dest]
-            )
-            assert self.mount_dest in inspect_data['VolumesRW']
-            assert not inspect_data['VolumesRW'][self.mount_dest]
-        else:
-            assert 'Mounts' in inspect_data
-            filtered = list(filter(
-                lambda x: x['Destination'] == self.mount_dest,
-                inspect_data['Mounts']
-            ))
-            assert len(filtered) == 1
-            mount_data = filtered[0]
-            assert mount_data['Source'] == self.mount_origin
-            assert mount_data['RW'] == rw
+        assert 'Mounts' in inspect_data
+        filtered = list(filter(
+            lambda x: x['Destination'] == self.mount_dest,
+            inspect_data['Mounts']
+        ))
+        assert len(filtered) == 1
+        mount_data = filtered[0]
+        assert mount_data['Source'] == self.mount_origin
+        assert mount_data['RW'] == rw
 
     def run_with_volume(self, ro, *args, **kwargs):
         return self.run_container(
@@ -640,7 +625,6 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         )
 
 
-@requires_api_version('1.20')
 class ArchiveTest(BaseAPIIntegrationTest):
     def test_get_file_archive_from_container(self):
         data = 'The Maid and the Pocket Watch of Blood'
@@ -1323,7 +1307,6 @@ class PruneTest(BaseAPIIntegrationTest):
 
 
 class GetContainerStatsTest(BaseAPIIntegrationTest):
-    @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
         container = self.client.create_container(
             BUSYBOX, ['sleep', '60'],
@@ -1338,7 +1321,6 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
                     'memory_stats', 'blkio_stats']:
             assert key in response
 
-        @requires_api_version('1.17')
         def test_get_container_stats_stream(self):
             container = self.client.create_container(
                 BUSYBOX, ['sleep', '60'],
@@ -1401,7 +1383,6 @@ class ContainerUpdateTest(BaseAPIIntegrationTest):
 
 
 class ContainerCPUTest(BaseAPIIntegrationTest):
-    @requires_api_version('1.18')
     def test_container_cpu_shares(self):
         cpu_shares = 512
         container = self.client.create_container(
@@ -1414,7 +1395,6 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         assert inspect_data['HostConfig']['CpuShares'] == 512
 
-    @requires_api_version('1.18')
     def test_container_cpuset(self):
         cpuset_cpus = "0,1"
         container = self.client.create_container(

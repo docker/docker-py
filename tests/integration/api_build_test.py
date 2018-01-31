@@ -21,7 +21,7 @@ class BuildTest(BaseAPIIntegrationTest):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
-        stream = self.client.build(fileobj=script, stream=True, decode=True)
+        stream = self.client.build(fileobj=script, decode=True)
         logs = []
         for chunk in stream:
             logs.append(chunk)
@@ -37,7 +37,7 @@ class BuildTest(BaseAPIIntegrationTest):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]))
-        stream = self.client.build(fileobj=script, stream=True)
+        stream = self.client.build(fileobj=script)
         logs = ''
         for chunk in stream:
             if six.PY3:
@@ -45,7 +45,6 @@ class BuildTest(BaseAPIIntegrationTest):
             logs += chunk
         assert logs != ''
 
-    @requires_api_version('1.8')
     def test_build_with_dockerignore(self):
         base_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base_dir)
@@ -97,7 +96,6 @@ class BuildTest(BaseAPIIntegrationTest):
             '/test/not-ignored'
         ])
 
-    @requires_api_version('1.21')
     def test_build_with_buildargs(self):
         script = io.BytesIO('\n'.join([
             'FROM scratch',
@@ -320,7 +318,7 @@ class BuildTest(BaseAPIIntegrationTest):
         ]))
 
         stream = self.client.build(
-            fileobj=script, stream=True, decode=True, nocache=True
+            fileobj=script, decode=True, nocache=True
         )
         lines = []
         for chunk in stream:
@@ -341,7 +339,7 @@ class BuildTest(BaseAPIIntegrationTest):
             ]))
 
         stream = self.client.build(
-            path=base_dir, stream=True, decode=True, nocache=True,
+            path=base_dir, decode=True, nocache=True,
             gzip=True
         )
 
@@ -365,7 +363,7 @@ class BuildTest(BaseAPIIntegrationTest):
             ]))
 
         stream = self.client.build(
-            path=base_dir, stream=True, decode=True, nocache=True
+            path=base_dir, decode=True, nocache=True
         )
 
         lines = []
@@ -383,9 +381,7 @@ class BuildTest(BaseAPIIntegrationTest):
         script = io.BytesIO('FROM busybox\n'.encode('ascii'))
 
         with pytest.raises(errors.APIError) as excinfo:
-            stream = self.client.build(
-                fileobj=script, stream=True, platform='foobar'
-            )
+            stream = self.client.build(fileobj=script, platform='foobar')
             for _ in stream:
                 pass
 

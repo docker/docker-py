@@ -54,8 +54,7 @@ class ImageApiMixin(object):
         res = self._get(self._url("/images/{0}/history", image))
         return self._result(res, True)
 
-    def images(self, name=None, quiet=False, all=False, viz=False,
-               filters=None):
+    def images(self, name=None, quiet=False, all=False, filters=None):
         """
         List images. Similar to the ``docker images`` command.
 
@@ -76,10 +75,6 @@ class ImageApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if viz:
-            if utils.compare_version('1.7', self._version) >= 0:
-                raise Exception('Viz output is not supported in API >= 1.7!')
-            return self._result(self._get(self._url("images/viz")))
         params = {
             'filter': name,
             'only_ids': 1 if quiet else 0,
@@ -226,19 +221,6 @@ class ImageApiMixin(object):
         )
 
     @utils.check_resource('image')
-    def insert(self, image, url, path):
-        if utils.compare_version('1.12', self._version) >= 0:
-            raise errors.DeprecatedMethod(
-                'insert is not available for API version >=1.12'
-            )
-        api_url = self._url("/images/{0}/insert", image)
-        params = {
-            'url': url,
-            'path': path
-        }
-        return self._result(self._post(api_url, params=params))
-
-    @utils.check_resource('image')
     def inspect_image(self, image):
         """
         Get detailed information about an image. Similar to the ``docker
@@ -369,14 +351,13 @@ class ImageApiMixin(object):
         }
         headers = {}
 
-        if utils.version_gte(self._version, '1.5'):
-            if auth_config is None:
-                header = auth.get_config_header(self, registry)
-                if header:
-                    headers['X-Registry-Auth'] = header
-            else:
-                log.debug('Sending supplied auth config')
-                headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+        if auth_config is None:
+            header = auth.get_config_header(self, registry)
+            if header:
+                headers['X-Registry-Auth'] = header
+        else:
+            log.debug('Sending supplied auth config')
+            headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         if platform is not None:
             if utils.version_lt(self._version, '1.32'):
@@ -440,14 +421,13 @@ class ImageApiMixin(object):
         }
         headers = {}
 
-        if utils.compare_version('1.5', self._version) >= 0:
-            if auth_config is None:
-                header = auth.get_config_header(self, registry)
-                if header:
-                    headers['X-Registry-Auth'] = header
-            else:
-                log.debug('Sending supplied auth config')
-                headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+        if auth_config is None:
+            header = auth.get_config_header(self, registry)
+            if header:
+                headers['X-Registry-Auth'] = header
+        else:
+            log.debug('Sending supplied auth config')
+            headers['X-Registry-Auth'] = auth.encode_header(auth_config)
 
         response = self._post_json(
             u, None, headers=headers, stream=stream, params=params
