@@ -5,6 +5,9 @@ import random
 import tarfile
 import tempfile
 import time
+import re
+import six
+import socket
 
 import docker
 import pytest
@@ -102,3 +105,29 @@ def force_leave_swarm(client):
 
 def swarm_listen_addr():
     return '0.0.0.0:{0}'.format(random.randrange(10000, 25000))
+
+
+def assert_cat_socket_detached_with_keys(sock, inputs):
+    if six.PY3:
+        sock = sock._sock
+
+    for i in inputs:
+        sock.send(i)
+        time.sleep(0.5)
+
+    # If we're using a Unix socket, the sock.send call will fail with a
+    # BrokenPipeError ; INET sockets will just stop receiving / sending data
+    # but will not raise an error
+    if sock.family == getattr(socket, 'AF_UNIX', -1):
+        with pytest.raises(socket.error):
+            sock.send(b'make sure the socket is closed\n')
+    else:
+        sock.send(b"make sure the socket is closed\n")
+        assert sock.recv(32) == b''
+
+
+def ctrl_with(char):
+    if re.match('[a-z]', char):
+        return chr(ord(char) - ord('a') + 1).encode('ascii')
+    else:
+        raise(Exception('char must be [a-z]'))

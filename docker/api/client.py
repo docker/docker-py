@@ -32,7 +32,7 @@ from ..errors import (
 )
 from ..tls import TLSConfig
 from ..transport import SSLAdapter, UnixAdapter
-from ..utils import utils, check_resource, update_headers
+from ..utils import utils, check_resource, update_headers, config
 from ..utils.socket import frames_iter, socket_raw_iter
 from ..utils.json_stream import json_stream
 try:
@@ -106,6 +106,7 @@ class APIClient(
         self.headers['User-Agent'] = user_agent
 
         self._auth_configs = auth.load_config()
+        self._general_configs = config.load_general_config()
 
         base_url = utils.parse_host(
             base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)
