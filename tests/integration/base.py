@@ -4,7 +4,6 @@ import unittest
 
 import docker
 from docker.utils import kwargs_from_env
-import six
 
 from .. import helpers
 
@@ -19,9 +18,6 @@ class BaseIntegrationTest(unittest.TestCase):
     """
 
     def setUp(self):
-        if six.PY2:
-            self.assertRegex = self.assertRegexpMatches
-            self.assertCountEqual = self.assertItemsEqual
         self.tmp_imgs = []
         self.tmp_containers = []
         self.tmp_folders = []

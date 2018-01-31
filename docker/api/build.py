@@ -300,14 +300,12 @@ class BuildApiMixin(object):
                 # Matches CLI behavior: https://github.com/docker/docker/blob/
                 # 67b85f9d26f1b0b2b240f2d794748fac0f45243c/cliconfig/
                 # credentials/native_store.go#L68-L83
-                for registry in self._auth_configs.keys():
-                    if registry == 'credsStore' or registry == 'HttpHeaders':
-                        continue
+                for registry in self._auth_configs.get('auths', {}).keys():
                     auth_data[registry] = auth.resolve_authconfig(
                         self._auth_configs, registry
                     )
             else:
-                auth_data = self._auth_configs.copy()
+                auth_data = self._auth_configs.get('auths', {}).copy()
                 # See https://github.com/docker/docker-py/issues/1683
                 if auth.INDEX_NAME in auth_data:
                     auth_data[auth.INDEX_URL] = auth_data[auth.INDEX_NAME]

@@ -106,11 +106,13 @@ class ResolveAuthTest(unittest.TestCase):
     private_config = {'auth': encode_auth({'username': 'privateuser'})}
     legacy_config = {'auth': encode_auth({'username': 'legacyauth'})}
 
-    auth_config = auth.parse_auth({
-        'https://index.docker.io/v1/': index_config,
-        'my.registry.net': private_config,
-        'http://legacy.registry.url/v1/': legacy_config,
-    })
+    auth_config = {
+        'auths': auth.parse_auth({
+            'https://index.docker.io/v1/': index_config,
+            'my.registry.net': private_config,
+            'http://legacy.registry.url/v1/': legacy_config,
+        })
+    }
 
     def test_resolve_authconfig_hostname_only(self):
         assert auth.resolve_authconfig(
@@ -360,9 +362,8 @@ class LoadConfigTest(unittest.TestCase):
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
             cfg = auth.load_config(None)
-            assert registry in cfg
-            assert cfg[registry] is not None
-            cfg = cfg[registry]
+            assert registry in cfg['auths']
+            cfg = cfg['auths'][registry]
             assert cfg['username'] == 'sakuya'
             assert cfg['password'] == 'izayoi'
             assert cfg['email'] == 'sakuya@scarlet.net'
@@ -390,37 +391,12 @@ class LoadConfigTest(unittest.TestCase):
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
             cfg = auth.load_config(None)
-            assert registry in cfg
-            assert cfg[registry] is not None
-            cfg = cfg[registry]
+            assert registry in cfg['auths']
+            cfg = cfg['auths'][registry]
             assert cfg['username'] == b'sakuya\xc3\xa6'.decode('utf8')
             assert cfg['password'] == b'izayoi\xc3\xa6'.decode('utf8')
             assert cfg['email'] == 'sakuya@scarlet.net'
             assert cfg.get('auth') is None
-
-    def test_load_config_custom_config_env_with_headers(self):
-        folder = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, folder)
-
-        dockercfg_path = os.path.join(folder, 'config.json')
-        config = {
-            'HttpHeaders': {
-                'Name': 'Spike',
-                'Surname': 'Spiegel'
-            },
-        }
-
-        with open(dockercfg_path, 'w') as f:
-            json.dump(config, f)
-
-        with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
-            cfg = auth.load_config(None)
-            assert 'HttpHeaders' in cfg
-            assert cfg['HttpHeaders'] is not None
-            cfg = cfg['HttpHeaders']
-
-            assert cfg['Name'] == 'Spike'
-            assert cfg['Surname'] == 'Spiegel'
 
     def test_load_config_unknown_keys(self):
         folder = tempfile.mkdtemp()
@@ -448,7 +424,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg == {'scarlet.net': {}}
+        assert cfg == {'auths': {'scarlet.net': {}}}
 
     def test_load_config_identity_token(self):
         folder = tempfile.mkdtemp()
@@ -469,7 +445,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert registry in cfg
-        cfg = cfg[registry]
+        assert registry in cfg['auths']
+        cfg = cfg['auths'][registry]
         assert 'IdentityToken' in cfg
         assert cfg['IdentityToken'] == token

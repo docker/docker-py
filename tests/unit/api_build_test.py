@@ -73,10 +73,12 @@ class BuildTest(BaseAPIClientTest):
 
     def test_build_remote_with_registry_auth(self):
         self.client._auth_configs = {
-            'https://example.com': {
-                'user': 'example',
-                'password': 'example',
-                'email': 'example@example.com'
+            'auths': {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
             }
         }
 
@@ -85,7 +87,10 @@ class BuildTest(BaseAPIClientTest):
                            'forcerm': False,
                            'remote': 'https://github.com/docker-library/mongo'}
         expected_headers = {
-            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+            'X-Registry-Config': auth.encode_header(
+                self.client._auth_configs['auths']
+            )
+        }
 
         self.client.build(path='https://github.com/docker-library/mongo')
 
@@ -118,32 +123,43 @@ class BuildTest(BaseAPIClientTest):
 
     def test_set_auth_headers_with_empty_dict_and_auth_configs(self):
         self.client._auth_configs = {
-            'https://example.com': {
-                'user': 'example',
-                'password': 'example',
-                'email': 'example@example.com'
+            'auths': {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
             }
         }
 
         headers = {}
         expected_headers = {
-            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+            'X-Registry-Config': auth.encode_header(
+                self.client._auth_configs['auths']
+            )
+        }
+
         self.client._set_auth_headers(headers)
         assert headers == expected_headers
 
     def test_set_auth_headers_with_dict_and_auth_configs(self):
         self.client._auth_configs = {
-            'https://example.com': {
-                'user': 'example',
-                'password': 'example',
-                'email': 'example@example.com'
+            'auths': {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
             }
         }
 
         headers = {'foo': 'bar'}
         expected_headers = {
-            'foo': 'bar',
-            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+            'X-Registry-Config': auth.encode_header(
+                self.client._auth_configs['auths']
+            ),
+            'foo': 'bar'
+        }
 
         self.client._set_auth_headers(headers)
         assert headers == expected_headers

@@ -69,16 +69,55 @@ class LoadConfigTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
         cfg = config.load_general_config(folder)
-        self.assertTrue(cfg is not None)
+        assert cfg is not None
+        assert isinstance(cfg, dict)
+        assert not cfg
 
-    def test_load_config(self):
+    def test_load_config_custom_headers(self):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
-        dockercfg_path = os.path.join(folder, '.dockercfg')
-        cfg = {
+
+        dockercfg_path = os.path.join(folder, 'config.json')
+        config_data = {
+            'HttpHeaders': {
+                'Name': 'Spike',
+                'Surname': 'Spiegel'
+            },
+        }
+
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config_data, f)
+
+        cfg = config.load_general_config(dockercfg_path)
+        assert 'HttpHeaders' in cfg
+        assert cfg['HttpHeaders'] == {
+            'Name': 'Spike',
+            'Surname': 'Spiegel'
+        }
+
+    def test_load_config_detach_keys(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        dockercfg_path = os.path.join(folder, 'config.json')
+        config_data = {
             'detachKeys': 'ctrl-q, ctrl-u, ctrl-i'
         }
         with open(dockercfg_path, 'w') as f:
-            json.dump(cfg, f)
+            json.dump(config_data, f)
 
-        self.assertEqual(config.load_general_config(dockercfg_path), cfg)
+        cfg = config.load_general_config(dockercfg_path)
+        assert cfg == config_data
+
+    def test_load_config_from_env(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        dockercfg_path = os.path.join(folder, 'config.json')
+        config_data = {
+            'detachKeys': 'ctrl-q, ctrl-u, ctrl-i'
+        }
+        with open(dockercfg_path, 'w') as f:
+            json.dump(config_data, f)
+
+        with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
+            cfg = config.load_general_config(None)
+        assert cfg == config_data
