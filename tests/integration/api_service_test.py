@@ -353,7 +353,6 @@ class ServiceTest(BaseAPIIntegrationTest):
             task_tmpl, name=name, endpoint_spec=endpoint_spec
         )
         svc_info = self.client.inspect_service(svc_id)
-        print(svc_info)
         ports = svc_info['Spec']['EndpointSpec']['Ports']
         for port in ports:
             if port['PublishedPort'] == 12562:
@@ -369,6 +368,26 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.fail('Invalid port specification: {0}'.format(port))
 
         assert len(ports) == 3
+
+    @requires_api_version('1.32')
+    def test_create_service_with_endpoint_spec_host_publish_mode(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        endpoint_spec = docker.types.EndpointSpec(ports={
+            12357: (1990, None, 'host'),
+        })
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, endpoint_spec=endpoint_spec
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        ports = svc_info['Spec']['EndpointSpec']['Ports']
+        assert len(ports) == 1
+        port = ports[0]
+        assert port['PublishedPort'] == 12357
+        assert port['TargetPort'] == 1990
+        assert port['Protocol'] == 'tcp'
+        assert port['PublishMode'] == 'host'
 
     def test_create_service_with_env(self):
         container_spec = docker.types.ContainerSpec(
