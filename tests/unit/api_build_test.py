@@ -5,6 +5,7 @@ import docker
 from docker import auth
 
 from .api_test import BaseAPIClientTest, fake_request, url_prefix
+import pytest
 
 
 class BuildTest(BaseAPIClientTest):
@@ -110,12 +111,10 @@ class BuildTest(BaseAPIClientTest):
         })
 
     def test_build_container_invalid_container_limits(self):
-        self.assertRaises(
-            docker.errors.DockerException,
-            lambda: self.client.build('.', container_limits={
+        with pytest.raises(docker.errors.DockerException):
+            self.client.build('.', container_limits={
                 'foo': 'bar'
             })
-        )
 
     def test_set_auth_headers_with_empty_dict_and_auth_configs(self):
         self.client._auth_configs = {
@@ -130,7 +129,7 @@ class BuildTest(BaseAPIClientTest):
         expected_headers = {
             'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
         self.client._set_auth_headers(headers)
-        self.assertEqual(headers, expected_headers)
+        assert headers == expected_headers
 
     def test_set_auth_headers_with_dict_and_auth_configs(self):
         self.client._auth_configs = {
@@ -147,7 +146,7 @@ class BuildTest(BaseAPIClientTest):
             'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
 
         self.client._set_auth_headers(headers)
-        self.assertEqual(headers, expected_headers)
+        assert headers == expected_headers
 
     def test_set_auth_headers_with_dict_and_no_auth_configs(self):
         headers = {'foo': 'bar'}
@@ -156,4 +155,4 @@ class BuildTest(BaseAPIClientTest):
         }
 
         self.client._set_auth_headers(headers)
-        self.assertEqual(headers, expected_headers)
+        assert headers == expected_headers

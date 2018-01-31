@@ -11,10 +11,10 @@ class TestVolumes(BaseAPIIntegrationTest):
         name = 'perfectcherryblossom'
         self.tmp_volumes.append(name)
         result = self.client.create_volume(name)
-        self.assertIn('Name', result)
-        self.assertEqual(result['Name'], name)
-        self.assertIn('Driver', result)
-        self.assertEqual(result['Driver'], 'local')
+        assert 'Name' in result
+        assert result['Name'] == name
+        assert 'Driver' in result
+        assert result['Driver'] == 'local'
 
     def test_create_volume_invalid_driver(self):
         driver_name = 'invalid.driver'
@@ -27,16 +27,16 @@ class TestVolumes(BaseAPIIntegrationTest):
         self.tmp_volumes.append(name)
         volume_info = self.client.create_volume(name)
         result = self.client.volumes()
-        self.assertIn('Volumes', result)
+        assert 'Volumes' in result
         volumes = result['Volumes']
-        self.assertIn(volume_info, volumes)
+        assert volume_info in volumes
 
     def test_inspect_volume(self):
         name = 'embodimentofscarletdevil'
         self.tmp_volumes.append(name)
         volume_info = self.client.create_volume(name)
         result = self.client.inspect_volume(name)
-        self.assertEqual(volume_info, result)
+        assert volume_info == result
 
     def test_inspect_nonexistent_volume(self):
         name = 'embodimentofscarletdevil'

@@ -30,31 +30,20 @@ class StartContainerTest(BaseAPIClientTest):
         self.client.start(fake_api.FAKE_CONTAINER_ID)
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
+        assert args[0][1] == url_prefix + 'containers/3cc2351ab11b/start'
         assert 'data' not in args[1]
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_start_container_none(self):
         with pytest.raises(ValueError) as excinfo:
             self.client.start(container=None)
 
-        self.assertEqual(
-            str(excinfo.value),
-            'Resource ID was not provided',
-        )
+        assert str(excinfo.value) == 'Resource ID was not provided'
 
         with pytest.raises(ValueError) as excinfo:
             self.client.start(None)
 
-        self.assertEqual(
-            str(excinfo.value),
-            'Resource ID was not provided',
-        )
+        assert str(excinfo.value) == 'Resource ID was not provided'
 
     def test_start_container_regression_573(self):
         self.client.start(**{'container': fake_api.FAKE_CONTAINER_ID})
@@ -134,14 +123,9 @@ class StartContainerTest(BaseAPIClientTest):
         self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1],
-            url_prefix + 'containers/3cc2351ab11b/start'
-        )
+        assert args[0][1] == url_prefix + 'containers/3cc2351ab11b/start'
         assert 'data' not in args[1]
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
 
 class CreateContainerTest(BaseAPIClientTest):
@@ -149,17 +133,15 @@ class CreateContainerTest(BaseAPIClientTest):
         self.client.create_container('busybox', 'true')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": false,
-                             "AttachStderr": true, "AttachStdout": true,
-                             "StdinOnce": false,
-                             "OpenStdin": false, "NetworkDisabled": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+             "AttachStdin": false,
+             "AttachStderr": true, "AttachStdout": true,
+             "StdinOnce": false,
+             "OpenStdin": false, "NetworkDisabled": false}
+         ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_binds(self):
         mount_dest = '/mnt'
@@ -168,19 +150,17 @@ class CreateContainerTest(BaseAPIClientTest):
                                      volumes=[mount_dest])
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls", "/mnt"], "AttachStdin": false,
-                             "Volumes": {"/mnt": {}},
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls", "/mnt"], "AttachStdin": false,
+             "Volumes": {"/mnt": {}},
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_volume_string(self):
         mount_dest = '/mnt'
@@ -189,80 +169,72 @@ class CreateContainerTest(BaseAPIClientTest):
                                      volumes=mount_dest)
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls", "/mnt"], "AttachStdin": false,
-                             "Volumes": {"/mnt": {}},
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls", "/mnt"], "AttachStdin": false,
+             "Volumes": {"/mnt": {}},
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_ports(self):
         self.client.create_container('busybox', 'ls',
                                      ports=[1111, (2222, 'udp'), (3333,)])
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "ExposedPorts": {
-                                "1111/tcp": {},
-                                "2222/udp": {},
-                                "3333/tcp": {}
-                             },
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "ExposedPorts": {
+                "1111/tcp": {},
+                "2222/udp": {},
+                "3333/tcp": {}
+             },
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_entrypoint(self):
         self.client.create_container('busybox', 'hello',
                                      entrypoint='cowsay entry')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["hello"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "Entrypoint": ["cowsay", "entry"]}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["hello"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "Entrypoint": ["cowsay", "entry"]}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_cpu_shares(self):
         with pytest.deprecated_call():
             self.client.create_container('busybox', 'ls', cpu_shares=5)
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "CpuShares": 5}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "CpuShares": 5}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     @requires_api_version('1.18')
     def test_create_container_with_host_config_cpu_shares(self):
@@ -273,43 +245,39 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
 
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "HostConfig": {
-                                "CpuShares": 512,
-                                "NetworkMode": "default"
-                             }}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "HostConfig": {
+                "CpuShares": 512,
+                "NetworkMode": "default"
+             }}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_cpuset(self):
         with pytest.deprecated_call():
             self.client.create_container('busybox', 'ls', cpuset='0,1')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "Cpuset": "0,1",
-                             "CpusetCpus": "0,1"}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "Cpuset": "0,1",
+             "CpusetCpus": "0,1"}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     @requires_api_version('1.18')
     def test_create_container_with_host_config_cpuset(self):
@@ -320,23 +288,21 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
 
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "HostConfig": {
-                                "CpusetCpus": "0,1",
-                                "NetworkMode": "default"
-                             }}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "HostConfig": {
+                "CpusetCpus": "0,1",
+                "NetworkMode": "default"
+             }}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     @requires_api_version('1.19')
     def test_create_container_with_host_config_cpuset_mems(self):
@@ -347,23 +313,21 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
 
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "HostConfig": {
-                                "CpusetMems": "0",
-                                "NetworkMode": "default"
-                             }}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "HostConfig": {
+                "CpusetMems": "0",
+                "NetworkMode": "default"
+            }}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_cgroup_parent(self):
         self.client.create_container(
@@ -373,47 +337,42 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         data = json.loads(args[1]['data'])
-        self.assertIn('HostConfig', data)
-        self.assertIn('CgroupParent', data['HostConfig'])
-        self.assertEqual(data['HostConfig']['CgroupParent'], 'test')
+        assert 'HostConfig' in data
+        assert 'CgroupParent' in data['HostConfig']
+        assert data['HostConfig']['CgroupParent'] == 'test'
 
     def test_create_container_with_working_dir(self):
         self.client.create_container('busybox', 'ls',
                                      working_dir='/root')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "WorkingDir": "/root"}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "WorkingDir": "/root"}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_stdin_open(self):
         self.client.create_container('busybox', 'true', stdin_open=True)
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": true,
-                             "AttachStderr": true, "AttachStdout": true,
-                             "StdinOnce": true,
-                             "OpenStdin": true, "NetworkDisabled": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+             "AttachStdin": true,
+             "AttachStderr": true, "AttachStdout": true,
+             "StdinOnce": true,
+             "OpenStdin": true, "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_volumes_from(self):
         vol_names = ['foo', 'bar']
@@ -421,17 +380,17 @@ class CreateContainerTest(BaseAPIClientTest):
             self.client.create_container('busybox', 'true',
                                          volumes_from=vol_names)
         except docker.errors.DockerException:
-            self.assertTrue(
-                docker.utils.compare_version('1.10', self.client._version) >= 0
-            )
+            assert docker.utils.compare_version(
+                '1.10', self.client._version
+            ) >= 0
             return
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data'])['VolumesFrom'],
-                         ','.join(vol_names))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data'])['VolumesFrom'] == ','.join(
+            vol_names
+        )
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_empty_volumes_from(self):
         with pytest.raises(docker.errors.InvalidVersion):
@@ -442,18 +401,16 @@ class CreateContainerTest(BaseAPIClientTest):
                                      name='marisa-kirisame')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
-                             "AttachStdin": false,
-                             "AttachStderr": true, "AttachStdout": true,
-                             "StdinOnce": false,
-                             "OpenStdin": false, "NetworkDisabled": false}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(args[1]['params'], {'name': 'marisa-kirisame'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+             "AttachStdin": false,
+             "AttachStderr": true, "AttachStdout": true,
+             "StdinOnce": false,
+             "OpenStdin": false, "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['params'] == {'name': 'marisa-kirisame'}
 
     def test_create_container_with_mem_limit_as_int(self):
         self.client.create_container(
@@ -464,7 +421,7 @@ class CreateContainerTest(BaseAPIClientTest):
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['HostConfig']['Memory'], 128.0)
+        assert data['HostConfig']['Memory'] == 128.0
 
     def test_create_container_with_mem_limit_as_string(self):
         self.client.create_container(
@@ -475,7 +432,7 @@ class CreateContainerTest(BaseAPIClientTest):
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['HostConfig']['Memory'], 128.0)
+        assert data['HostConfig']['Memory'] == 128.0
 
     def test_create_container_with_mem_limit_as_string_with_k_unit(self):
         self.client.create_container(
@@ -486,7 +443,7 @@ class CreateContainerTest(BaseAPIClientTest):
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['HostConfig']['Memory'], 128.0 * 1024)
+        assert data['HostConfig']['Memory'] == 128.0 * 1024
 
     def test_create_container_with_mem_limit_as_string_with_m_unit(self):
         self.client.create_container(
@@ -497,7 +454,7 @@ class CreateContainerTest(BaseAPIClientTest):
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(data['HostConfig']['Memory'], 128.0 * 1024 * 1024)
+        assert data['HostConfig']['Memory'] == 128.0 * 1024 * 1024
 
     def test_create_container_with_mem_limit_as_string_with_g_unit(self):
         self.client.create_container(
@@ -508,20 +465,14 @@ class CreateContainerTest(BaseAPIClientTest):
 
         args = fake_request.call_args
         data = json.loads(args[1]['data'])
-        self.assertEqual(
-            data['HostConfig']['Memory'], 128.0 * 1024 * 1024 * 1024
-        )
+        assert data['HostConfig']['Memory'] == 128.0 * 1024 * 1024 * 1024
 
     def test_create_container_with_mem_limit_as_string_with_wrong_value(self):
-        self.assertRaises(
-            docker.errors.DockerException,
-            self.client.create_host_config, mem_limit='128p'
-        )
+        with pytest.raises(docker.errors.DockerException):
+            self.client.create_host_config(mem_limit='128p')
 
-        self.assertRaises(
-            docker.errors.DockerException,
-            self.client.create_host_config, mem_limit='1f28'
-        )
+        with pytest.raises(docker.errors.DockerException):
+            self.client.create_host_config(mem_limit='1f28')
 
     def test_create_container_with_lxc_conf(self):
         self.client.create_container(
@@ -531,25 +482,16 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1],
-            url_prefix + 'containers/create'
-        )
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['LxcConf'] = [
             {"Value": "lxc.conf.value", "Key": "lxc.conf.k"}
         ]
 
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'],
-            {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_lxc_conf_compat(self):
         self.client.create_container(
@@ -559,20 +501,15 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['LxcConf'] = [
             {"Value": "lxc.conf.value", "Key": "lxc.conf.k"}
         ]
-        self.assertEqual(
-            json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_binds_ro(self):
         mount_dest = '/mnt'
@@ -588,18 +525,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix +
-                         'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:ro"]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_binds_rw(self):
         mount_dest = '/mnt'
@@ -615,18 +547,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix +
-                         'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:rw"]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_binds_mode(self):
         mount_dest = '/mnt'
@@ -642,18 +569,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix +
-                         'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = ["/tmp:/mnt:z"]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_binds_mode_and_ro_error(self):
         with pytest.raises(ValueError):
@@ -680,21 +602,16 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix +
-                         'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Binds'] = [
             "/tmp:/mnt/1:ro",
             "/tmp:/mnt/2",
         ]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_port_binds(self):
         self.maxDiff = None
@@ -713,42 +630,31 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         data = json.loads(args[1]['data'])
         port_bindings = data['HostConfig']['PortBindings']
-        self.assertTrue('1111/tcp' in port_bindings)
-        self.assertTrue('2222/tcp' in port_bindings)
-        self.assertTrue('3333/udp' in port_bindings)
-        self.assertTrue('4444/tcp' in port_bindings)
-        self.assertTrue('5555/tcp' in port_bindings)
-        self.assertTrue('6666/tcp' in port_bindings)
-        self.assertEqual(
-            [{"HostPort": "", "HostIp": ""}],
-            port_bindings['1111/tcp']
-        )
-        self.assertEqual(
-            [{"HostPort": "2222", "HostIp": ""}],
-            port_bindings['2222/tcp']
-        )
-        self.assertEqual(
-            [{"HostPort": "3333", "HostIp": ""}],
-            port_bindings['3333/udp']
-        )
-        self.assertEqual(
-            [{"HostPort": "", "HostIp": "127.0.0.1"}],
-            port_bindings['4444/tcp']
-        )
-        self.assertEqual(
-            [{"HostPort": "5555", "HostIp": "127.0.0.1"}],
-            port_bindings['5555/tcp']
-        )
-        self.assertEqual(len(port_bindings['6666/tcp']), 2)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert '1111/tcp' in port_bindings
+        assert '2222/tcp' in port_bindings
+        assert '3333/udp' in port_bindings
+        assert '4444/tcp' in port_bindings
+        assert '5555/tcp' in port_bindings
+        assert '6666/tcp' in port_bindings
+        assert [{"HostPort": "", "HostIp": ""}] == port_bindings['1111/tcp']
+        assert [
+            {"HostPort": "2222", "HostIp": ""}
+        ] == port_bindings['2222/tcp']
+        assert [
+            {"HostPort": "3333", "HostIp": ""}
+        ] == port_bindings['3333/udp']
+        assert [
+            {"HostPort": "", "HostIp": "127.0.0.1"}
+        ] == port_bindings['4444/tcp']
+        assert [
+            {"HostPort": "5555", "HostIp": "127.0.0.1"}
+        ] == port_bindings['5555/tcp']
+        assert len(port_bindings['6666/tcp']) == 2
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_mac_address(self):
         expected = "02:42:ac:11:00:0a"
@@ -760,7 +666,7 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         data = json.loads(args[1]['data'])
         assert data['MacAddress'] == expected
 
@@ -775,17 +681,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1], url_prefix + 'containers/create'
-        )
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = ['path:alias']
 
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_multiple_links(self):
         link_path = 'path'
@@ -801,16 +703,14 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = [
             'path1:alias1', 'path2:alias2'
         ]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_with_links_as_list_of_tuples(self):
         link_path = 'path'
@@ -823,15 +723,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Links'] = ['path:alias']
 
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     def test_create_container_privileged(self):
         self.client.create_container(
@@ -843,14 +741,10 @@ class CreateContainerTest(BaseAPIClientTest):
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Privileged'] = True
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_restart_policy(self):
         self.client.create_container(
@@ -863,21 +757,17 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
 
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['RestartPolicy'] = {
             "MaximumRetryCount": 0, "Name": "always"
         }
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
+        assert json.loads(args[1]['data']) == expected_payload
 
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_added_capabilities(self):
         self.client.create_container(
@@ -886,17 +776,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['CapAdd'] = ['MKNOD']
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_dropped_capabilities(self):
         self.client.create_container(
@@ -905,17 +791,13 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['CapDrop'] = ['MKNOD']
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_devices(self):
         self.client.create_container(
@@ -927,7 +809,7 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Devices'] = [
@@ -941,13 +823,9 @@ class CreateContainerTest(BaseAPIClientTest):
              'PathInContainer': '/dev/sdc',
              'PathOnHost': '/dev/sdc'}
         ]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_labels_dict(self):
         labels_dict = {
@@ -961,14 +839,10 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data'])['Labels'] == labels_dict
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_labels_list(self):
         labels_list = [
@@ -986,14 +860,10 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data'])['Labels'], labels_dict)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data'])['Labels'] == labels_dict
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_named_volume(self):
         mount_dest = '/mnt'
@@ -1010,39 +880,31 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1], url_prefix + 'containers/create'
-        )
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['VolumeDriver'] = 'foodriver'
         expected_payload['HostConfig']['Binds'] = ["name:/mnt:rw"]
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_stop_signal(self):
         self.client.create_container('busybox', 'ls',
                                      stop_signal='SIGINT')
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "StopSignal": "SIGINT"}'''))
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "StopSignal": "SIGINT"}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
     @requires_api_version('1.22')
     def test_create_container_with_aliases(self):
@@ -1059,22 +921,22 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "HostConfig": {
-                               "NetworkMode": "some-network"
-                             },
-                             "NetworkingConfig": {
-                               "EndpointsConfig": {
-                                 "some-network": {"Aliases": ["foo", "bar"]}
-                               }
-                             }}'''))
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "HostConfig": {
+               "NetworkMode": "some-network"
+             },
+             "NetworkingConfig": {
+               "EndpointsConfig": {
+                 "some-network": {"Aliases": ["foo", "bar"]}
+               }
+            }}
+        ''')
 
     @requires_api_version('1.22')
     def test_create_container_with_tmpfs_list(self):
@@ -1089,21 +951,16 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix +
-                         'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Tmpfs'] = {
             "/tmp": "",
             "/mnt": "size=3G,uid=100"
         }
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     @requires_api_version('1.22')
     def test_create_container_with_tmpfs_dict(self):
@@ -1118,21 +975,16 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix +
-                         'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Tmpfs'] = {
             "/tmp": "",
             "/mnt": "size=3G,uid=100"
         }
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(args[1]['headers'],
-                         {'Content-Type': 'application/json'})
-        self.assertEqual(
-            args[1]['timeout'],
-            DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     @requires_api_version('1.24')
     def test_create_container_with_sysctl(self):
@@ -1147,19 +999,15 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
         expected_payload = self.base_create_payload()
         expected_payload['HostConfig'] = self.client.create_host_config()
         expected_payload['HostConfig']['Sysctls'] = {
             'net.core.somaxconn': '1024', 'net.ipv4.tcp_syncookies': '0',
         }
-        self.assertEqual(json.loads(args[1]['data']), expected_payload)
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
-        self.assertEqual(
-            args[1]['timeout'], DEFAULT_TIMEOUT_SECONDS
-        )
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_create_container_with_unicode_envvars(self):
         envvars_dict = {
@@ -1176,8 +1024,8 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1], url_prefix + 'containers/create')
-        self.assertEqual(json.loads(args[1]['data'])['Env'], expected)
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data'])['Env'] == expected
 
     @requires_api_version('1.25')
     def test_create_container_with_host_config_cpus(self):
@@ -1190,26 +1038,23 @@ class CreateContainerTest(BaseAPIClientTest):
         )
 
         args = fake_request.call_args
-        self.assertEqual(args[0][1],
-                         url_prefix + 'containers/create')
+        assert args[0][1] == url_prefix + 'containers/create'
 
-        self.assertEqual(json.loads(args[1]['data']),
-                         json.loads('''
-                            {"Tty": false, "Image": "busybox",
-                             "Cmd": ["ls"], "AttachStdin": false,
-                             "AttachStderr": true,
-                             "AttachStdout": true, "OpenStdin": false,
-                             "StdinOnce": false,
-                             "NetworkDisabled": false,
-                             "HostConfig": {
-                                "CpuCount": 1,
-                                "CpuPercent": 20,
-                                "NanoCpus": 1000,
-                                "NetworkMode": "default"
-                             }}'''))
-        self.assertEqual(
-            args[1]['headers'], {'Content-Type': 'application/json'}
-        )
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox",
+             "Cmd": ["ls"], "AttachStdin": false,
+             "AttachStderr": true,
+             "AttachStdout": true, "OpenStdin": false,
+             "StdinOnce": false,
+             "NetworkDisabled": false,
+             "HostConfig": {
+                "CpuCount": 1,
+                "CpuPercent": 20,
+                "NanoCpus": 1000,
+                "NetworkMode": "default"
+            }}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
 
 class ContainerTest(BaseAPIClientTest):
@@ -1291,10 +1136,7 @@ class ContainerTest(BaseAPIClientTest):
             stream=False
         )
 
-        self.assertEqual(
-            logs,
-            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
-        )
+        assert logs == 'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
 
     def test_logs_with_dict_instead_of_id(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',
@@ -1310,10 +1152,7 @@ class ContainerTest(BaseAPIClientTest):
             stream=False
         )
 
-        self.assertEqual(
-            logs,
-            'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
-        )
+        assert logs == 'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
 
     def test_log_streaming(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',
@@ -1426,7 +1265,7 @@ class ContainerTest(BaseAPIClientTest):
     def test_log_since_with_invalid_value_raises_error(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
-            with self.assertRaises(docker.errors.InvalidArgument):
+            with pytest.raises(docker.errors.InvalidArgument):
                 self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
                                  follow=False, since=42.42)
 
@@ -1439,7 +1278,7 @@ class ContainerTest(BaseAPIClientTest):
                 self.client.logs(fake_api.FAKE_CONTAINER_ID,
                                  follow=True, stream=True)
 
-        self.assertTrue(m.called)
+        assert m.called
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'containers/3cc2351ab11b/logs',
@@ -1623,9 +1462,7 @@ class ContainerTest(BaseAPIClientTest):
             with pytest.raises(docker.errors.NullResource) as excinfo:
                 self.client.inspect_container(arg)
 
-            self.assertEqual(
-                excinfo.value.args[0], 'Resource ID was not provided'
-            )
+            assert excinfo.value.args[0] == 'Resource ID was not provided'
 
     def test_container_stats(self):
         self.client.stats(fake_api.FAKE_CONTAINER_ID)
@@ -1664,13 +1501,8 @@ class ContainerTest(BaseAPIClientTest):
             blkio_weight=345
         )
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1], url_prefix + 'containers/3cc2351ab11b/update'
-        )
-        self.assertEqual(
-            json.loads(args[1]['data']),
-            {'Memory': 2 * 1024, 'CpuShares': 124, 'BlkioWeight': 345}
-        )
-        self.assertEqual(
-            args[1]['headers']['Content-Type'], 'application/json'
-        )
+        assert args[0][1] == url_prefix + 'containers/3cc2351ab11b/update'
+        assert json.loads(args[1]['data']) == {
+            'Memory': 2 * 1024, 'CpuShares': 124, 'BlkioWeight': 345
+        }
+        assert args[1]['headers']['Content-Type'] == 'application/json'

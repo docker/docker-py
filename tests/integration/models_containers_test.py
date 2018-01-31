@@ -10,10 +10,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
     def test_run(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        self.assertEqual(
-            client.containers.run("alpine", "echo hello world", remove=True),
-            b'hello world\n'
-        )
+        assert client.containers.run(
+            "alpine", "echo hello world", remove=True
+        ) == b'hello world\n'
 
     def test_run_detach(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -24,16 +23,16 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
     def test_run_with_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        with self.assertRaises(docker.errors.ContainerError) as cm:
+        with pytest.raises(docker.errors.ContainerError) as cm:
             client.containers.run("alpine", "cat /test", remove=True)
-        assert cm.exception.exit_status == 1
-        assert "cat /test" in str(cm.exception)
-        assert "alpine" in str(cm.exception)
-        assert "No such file or directory" in str(cm.exception)
+        assert cm.value.exit_status == 1
+        assert "cat /test" in cm.exconly()
+        assert "alpine" in cm.exconly()
+        assert "No such file or directory" in cm.exconly()
 
     def test_run_with_image_that_does_not_exist(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        with self.assertRaises(docker.errors.ImageNotFound):
+        with pytest.raises(docker.errors.ImageNotFound):
             client.containers.run("dockerpytest_does_not_exist")
 
     def test_run_with_volume(self):
@@ -52,7 +51,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
             "alpine", "cat /insidecontainer/test",
             volumes=["%s:/insidecontainer" % path]
         )
-        self.assertEqual(out, b'hello\n')
+        assert out == b'hello\n'
 
     def test_run_with_named_volume(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -70,7 +69,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
             "alpine", "cat /insidecontainer/test",
             volumes=["somevolume:/insidecontainer"]
         )
-        self.assertEqual(out, b'hello\n')
+        assert out == b'hello\n'
 
     def test_run_with_network(self):
         net_name = random_name()
@@ -170,10 +169,9 @@ class ContainerTest(BaseIntegrationTest):
         self.tmp_containers.append(container.id)
         container.wait()
         image = container.commit()
-        self.assertEqual(
-            client.containers.run(image.id, "cat /test", remove=True),
-            b"hello\n"
-        )
+        assert client.containers.run(
+            image.id, "cat /test", remove=True
+        ) == b"hello\n"
 
     def test_diff(self):
         client = docker.from_env(version=TEST_API_VERSION)

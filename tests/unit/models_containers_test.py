@@ -5,6 +5,7 @@ import unittest
 
 from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID, FAKE_EXEC_ID
 from .fake_api_client import make_fake_client
+import pytest
 
 
 class ContainerCollectionTest(unittest.TestCase):
@@ -232,10 +233,10 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.logs.return_value = "some error"
         client.api.wait.return_value = 1
 
-        with self.assertRaises(docker.errors.ContainerError) as cm:
+        with pytest.raises(docker.errors.ContainerError) as cm:
             client.containers.run('alpine', 'echo hello world')
-        assert cm.exception.exit_status == 1
-        assert "some error" in str(cm.exception)
+        assert cm.value.exit_status == 1
+        assert "some error" in cm.exconly()
 
     def test_run_with_image_object(self):
         client = make_fake_client()
@@ -257,7 +258,7 @@ class ContainerCollectionTest(unittest.TestCase):
 
         client = make_fake_client()
         client.api.wait.return_value = 1
-        with self.assertRaises(docker.errors.ContainerError):
+        with pytest.raises(docker.errors.ContainerError):
             client.containers.run("alpine")
         client.api.remove_container.assert_not_called()
 
@@ -267,18 +268,18 @@ class ContainerCollectionTest(unittest.TestCase):
 
         client = make_fake_client()
         client.api.wait.return_value = 1
-        with self.assertRaises(docker.errors.ContainerError):
+        with pytest.raises(docker.errors.ContainerError):
             client.containers.run("alpine", remove=True)
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)
 
         client = make_fake_client()
         client.api._version = '1.24'
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             client.containers.run("alpine", detach=True, remove=True)
 
         client = make_fake_client()
         client.api._version = '1.23'
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             client.containers.run("alpine", detach=True, remove=True)
 
         client = make_fake_client()

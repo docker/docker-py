@@ -8,6 +8,7 @@ import os
 import unittest
 
 from . import fake_api
+import pytest
 
 try:
     from unittest import mock
@@ -51,25 +52,25 @@ class ClientTest(unittest.TestCase):
 
     def test_call_api_client_method(self):
         client = docker.from_env()
-        with self.assertRaises(AttributeError) as cm:
+        with pytest.raises(AttributeError) as cm:
             client.create_container()
-        s = str(cm.exception)
+        s = cm.exconly()
         assert "'DockerClient' object has no attribute 'create_container'" in s
         assert "this method is now on the object APIClient" in s
 
-        with self.assertRaises(AttributeError) as cm:
+        with pytest.raises(AttributeError) as cm:
             client.abcdef()
-        s = str(cm.exception)
+        s = cm.exconly()
         assert "'DockerClient' object has no attribute 'abcdef'" in s
         assert "this method is now on the object APIClient" not in s
 
     def test_call_containers(self):
         client = docker.DockerClient(**kwargs_from_env())
 
-        with self.assertRaises(TypeError) as cm:
+        with pytest.raises(TypeError) as cm:
             client.containers()
 
-        s = str(cm.exception)
+        s = cm.exconly()
         assert "'ContainerCollection' object is not callable" in s
         assert "docker.APIClient" in s
 
@@ -90,22 +91,22 @@ class FromEnvTest(unittest.TestCase):
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
         client = docker.from_env()
-        self.assertEqual(client.api.base_url, "https://192.168.59.103:2376")
+        assert client.api.base_url == "https://192.168.59.103:2376"
 
     def test_from_env_with_version(self):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
         client = docker.from_env(version='2.32')
-        self.assertEqual(client.api.base_url, "https://192.168.59.103:2376")
-        self.assertEqual(client.api._version, '2.32')
+        assert client.api.base_url == "https://192.168.59.103:2376"
+        assert client.api._version == '2.32'
 
     def test_from_env_without_version_uses_default(self):
         client = docker.from_env()
 
-        self.assertEqual(client.api._version, DEFAULT_DOCKER_API_VERSION)
+        assert client.api._version == DEFAULT_DOCKER_API_VERSION
 
     def test_from_env_without_timeout_uses_default(self):
         client = docker.from_env()
 
-        self.assertEqual(client.api.timeout, DEFAULT_TIMEOUT_SECONDS)
+        assert client.api.timeout == DEFAULT_TIMEOUT_SECONDS
