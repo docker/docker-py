@@ -3,7 +3,7 @@ from .. import auth, errors, utils
 from ..types import ServiceMode
 
 
-def _check_api_features(version, task_template, update_config):
+def _check_api_features(version, task_template, update_config, endpoint_spec):
 
     def raise_version_error(param, min_version):
         raise errors.InvalidVersion(
@@ -22,6 +22,11 @@ def _check_api_features(version, task_template, update_config):
         if utils.version_lt(version, '1.29'):
             if 'Order' in update_config:
                 raise_version_error('UpdateConfig.order', '1.29')
+
+    if endpoint_spec is not None:
+        if utils.version_lt(version, '1.32') and 'Ports' in endpoint_spec:
+            if any(p.get('PublishMode') for p in endpoint_spec['Ports']):
+                raise_version_error('EndpointSpec.Ports[].mode', '1.32')
 
     if task_template is not None:
         if 'ForceUpdate' in task_template and utils.version_lt(
@@ -125,7 +130,9 @@ class ServiceApiMixin(object):
             )
             endpoint_spec = endpoint_config
 
-        _check_api_features(self._version, task_template, update_config)
+        _check_api_features(
+            self._version, task_template, update_config, endpoint_spec
+        )
 
         url = self._url('/services/create')
         headers = {}
@@ -370,7 +377,9 @@ class ServiceApiMixin(object):
             )
             endpoint_spec = endpoint_config
 
-        _check_api_features(self._version, task_template, update_config)
+        _check_api_features(
+            self._version, task_template, update_config, endpoint_spec
+        )
 
         if fetch_current_spec:
             inspect_defaults = True

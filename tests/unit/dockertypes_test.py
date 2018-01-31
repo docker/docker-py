@@ -11,6 +11,7 @@ from docker.types import (
     ContainerConfig, ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
     IPAMPool, LogConfig, Mount, ServiceMode, Ulimit,
 )
+from docker.types.services import convert_service_ports
 
 try:
     from unittest import mock
@@ -423,3 +424,77 @@ class MountTest(unittest.TestCase):
         assert mount['Source'] == "C:/foo/bar"
         assert mount['Target'] == "/baz"
         assert mount['Type'] == 'bind'
+
+
+class ServicePortsTest(unittest.TestCase):
+    def test_convert_service_ports_simple(self):
+        ports = {8080: 80}
+        assert convert_service_ports(ports) == [{
+            'Protocol': 'tcp',
+            'PublishedPort': 8080,
+            'TargetPort': 80,
+        }]
+
+    def test_convert_service_ports_with_protocol(self):
+        ports = {8080: (80, 'udp')}
+
+        assert convert_service_ports(ports) == [{
+            'Protocol': 'udp',
+            'PublishedPort': 8080,
+            'TargetPort': 80,
+        }]
+
+    def test_convert_service_ports_with_protocol_and_mode(self):
+        ports = {8080: (80, 'udp', 'ingress')}
+
+        assert convert_service_ports(ports) == [{
+            'Protocol': 'udp',
+            'PublishedPort': 8080,
+            'TargetPort': 80,
+            'PublishMode': 'ingress',
+        }]
+
+    def test_convert_service_ports_invalid(self):
+        ports = {8080: ('way', 'too', 'many', 'items', 'here')}
+
+        with pytest.raises(ValueError):
+            convert_service_ports(ports)
+
+    def test_convert_service_ports_no_protocol_and_mode(self):
+        ports = {8080: (80, None, 'host')}
+
+        assert convert_service_ports(ports) == [{
+            'Protocol': 'tcp',
+            'PublishedPort': 8080,
+            'TargetPort': 80,
+            'PublishMode': 'host',
+        }]
+
+    def test_convert_service_ports_multiple(self):
+        ports = {
+            8080: (80, None, 'host'),
+            9999: 99,
+            2375: (2375,)
+        }
+
+        converted_ports = convert_service_ports(ports)
+        assert {
+            'Protocol': 'tcp',
+            'PublishedPort': 8080,
+            'TargetPort': 80,
+            'PublishMode': 'host',
+        } in converted_ports
+
+        assert {
+            'Protocol': 'tcp',
+            'PublishedPort': 9999,
+            'TargetPort': 99,
+        } in converted_ports
+
+        assert {
+            'Protocol': 'tcp',
+            'PublishedPort': 2375,
+            'TargetPort': 2375,
+        } in converted_ports
+
+        assert len(converted_ports) == 3
