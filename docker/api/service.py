@@ -1,4 +1,3 @@
-import warnings
 from .. import auth, errors, utils
 from ..types import ServiceMode
 
@@ -123,12 +122,6 @@ class ServiceApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if endpoint_config is not None:
-            warnings.warn(
-                'endpoint_config has been renamed to endpoint_spec.',
-                DeprecationWarning
-            )
-            endpoint_spec = endpoint_config
 
         _check_api_features(
             self._version, task_template, update_config, endpoint_spec
@@ -370,12 +363,6 @@ class ServiceApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if endpoint_config is not None:
-            warnings.warn(
-                'endpoint_config has been renamed to endpoint_spec.',
-                DeprecationWarning
-            )
-            endpoint_spec = endpoint_config
 
         _check_api_features(
             self._version, task_template, update_config, endpoint_spec

@@ -1,11 +1,9 @@
 import logging
 import os
-import warnings
 
 import six
 
 from .. import auth, errors, utils
-from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
 
 log = logging.getLogger(__name__)
 
@@ -321,9 +319,8 @@ class ImageApiMixin(object):
             params['filters'] = utils.convert_filters(filters)
         return self._result(self._post(url, params=params), True)
 
-    def pull(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None, decode=False,
-             platform=None):
+    def pull(self, repository, tag=None, stream=False, auth_config=None,
+             decode=False, platform=None):
         """
         Pulls an image. Similar to the ``docker pull`` command.
 
@@ -331,11 +328,12 @@ class ImageApiMixin(object):
             repository (str): The repository to pull
             tag (str): The tag to pull
             stream (bool): Stream the output as a generator
-            insecure_registry (bool): Use an insecure registry
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.api.daemon.DaemonApiMixin.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
+            decode (bool): Decode the JSON data from the server into dicts.
+                Only applies with ``stream=True``
             platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
@@ -361,12 +359,6 @@ class ImageApiMixin(object):
             }
 
         """
-        if insecure_registry:
-            warnings.warn(
-                INSECURE_REGISTRY_DEPRECATION_WARNING.format('pull()'),
-                DeprecationWarning
-            )
-
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)
@@ -405,8 +397,8 @@ class ImageApiMixin(object):
 
         return self._result(response)
 
-    def push(self, repository, tag=None, stream=False,
-             insecure_registry=False, auth_config=None, decode=False):
+    def push(self, repository, tag=None, stream=False, auth_config=None,
+             decode=False):
         """
         Push an image or a repository to the registry. Similar to the ``docker
         push`` command.
@@ -415,12 +407,12 @@ class ImageApiMixin(object):
             repository (str): The repository to push to
             tag (str): An optional tag to push
             stream (bool): Stream the output as a blocking generator
-            insecure_registry (bool): Use ``http://`` to connect to the
-                registry
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.api.daemon.DaemonApiMixin.login` has set for
                 this request. ``auth_config`` should contain the ``username``
                 and ``password`` keys to be valid.
+            decode (bool): Decode the JSON data from the server into dicts.
+                Only applies with ``stream=True``
 
         Returns:
             (generator or str): The output from the server.
@@ -439,12 +431,6 @@ class ImageApiMixin(object):
             ...
 
         """
-        if insecure_registry:
-            warnings.warn(
-                INSECURE_REGISTRY_DEPRECATION_WARNING.format('push()'),
-                DeprecationWarning
-            )
-
         if not tag:
             repository, tag = utils.parse_repository_tag(repository)
         registry, repo_name = auth.resolve_repository_name(repository)

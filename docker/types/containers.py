@@ -1,5 +1,4 @@
 import six
-import warnings
 
 from .. import errors
 from ..utils.utils import (
@@ -542,13 +541,6 @@ class ContainerConfig(dict):
                 raise errors.InvalidVersion(
                     'labels were only introduced in API version 1.18'
                 )
-        else:
-            if cpuset is not None or cpu_shares is not None:
-                warnings.warn(
-                    'The cpuset_cpus and cpu_shares options have been moved to'
-                    ' host_config in API version 1.18, and will be removed',
-                    DeprecationWarning
-                )
 
         if version_lt(version, '1.19'):
             if volume_driver is not None:
@@ -574,13 +566,6 @@ class ContainerConfig(dict):
             if stop_signal is not None:
                 raise errors.InvalidVersion(
                     'stop_signal was only introduced in API version 1.21'
-                )
-        else:
-            if volume_driver is not None:
-                warnings.warn(
-                    'The volume_driver option has been moved to'
-                    ' host_config in API version 1.21, and will be removed',
-                    DeprecationWarning
                 )
 
         if stop_timeout is not None and version_lt(version, '1.25'):

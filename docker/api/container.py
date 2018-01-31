@@ -1,5 +1,4 @@
 import six
-import warnings
 from datetime import datetime
 
 from .. import errors
@@ -203,40 +202,6 @@ class ContainerApiMixin(object):
             for x in res:
                 x['Id'] = x['Id'][:12]
         return res
-
-    @utils.check_resource('container')
-    def copy(self, container, resource):
-        """
-        Identical to the ``docker cp`` command. Get files/folders from the
-        container.
-
-        **Deprecated for API version >= 1.20.** Use
-        :py:meth:`~ContainerApiMixin.get_archive` instead.
-
-        Args:
-            container (str): The container to copy from
-            resource (str): The path within the container
-
-        Returns:
-            The contents of the file as a string
-
-        Raises:
-            :py:class:`docker.errors.APIError`
-                If the server returns an error.
-        """
-        if utils.version_gte(self._version, '1.20'):
-            warnings.warn(
-                'APIClient.copy() is deprecated for API version >= 1.20, '
-                'please use get_archive() instead',
-                DeprecationWarning
-            )
-        res = self._post_json(
-            self._url("/containers/{0}/copy", container),
-            data={"Resource": resource},
-            stream=True
-        )
-        self._raise_for_status(res)
-        return res.raw
 
     def create_container(self, image, command=None, hostname=None, user=None,
                          detach=False, stdin_open=False, tty=False,
