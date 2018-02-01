@@ -448,8 +448,8 @@ class Container(Model):
                 or ``removed``
 
         Returns:
-            (int): The exit code of the container. Returns ``-1`` if the API
-            responds without a ``StatusCode`` attribute.
+            (dict): The API's response as a Python dictionary, including
+                the container's exit code under the ``StatusCode`` attribute.
 
         Raises:
             :py:class:`requests.exceptions.ReadTimeout`
@@ -758,7 +758,7 @@ class ContainerCollection(Collection):
                 stdout=stdout, stderr=stderr, stream=True, follow=True
             )
 
-        exit_status = container.wait()
+        exit_status = container.wait()['StatusCode']
         if exit_status != 0:
             out = None
             if not kwargs.get('auto_remove'):

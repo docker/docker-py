@@ -1207,8 +1207,8 @@ class ContainerApiMixin(object):
                 or ``removed``
 
         Returns:
-            (int or dict): The exit code of the container. Returns the full API
-                response if no ``StatusCode`` field is included.
+            (dict): The API's response as a Python dictionary, including
+                the container's exit code under the ``StatusCode`` attribute.
 
         Raises:
             :py:class:`requests.exceptions.ReadTimeout`
@@ -1226,8 +1226,4 @@ class ContainerApiMixin(object):
             params['condition'] = condition
 
         res = self._post(url, timeout=timeout, params=params)
-        self._raise_for_status(res)
-        json_ = res.json()
-        if 'StatusCode' in json_:
-            return json_['StatusCode']
-        return json_
+        return self._result(res, True)

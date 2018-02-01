@@ -102,7 +102,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
         self.client.start(container3_id)
-        assert self.client.wait(container3_id) == 0
+        assert self.client.wait(container3_id)['StatusCode'] == 0
 
         logs = self.client.logs(container3_id)
         if six.PY3:
@@ -169,7 +169,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert 'Id' in ctnr
         self.tmp_containers.append(ctnr['Id'])
         self.client.start(ctnr)
-        res = self.client.wait(ctnr)
+        res = self.client.wait(ctnr)['StatusCode']
         assert res != 0
 
     def create_container_with_name(self):
@@ -771,7 +771,7 @@ class StartContainerTest(BaseAPIIntegrationTest):
             id = container['Id']
             self.client.start(id)
             self.tmp_containers.append(id)
-            exitcode = self.client.wait(id)
+            exitcode = self.client.wait(id)['StatusCode']
             assert exitcode == 0, cmd
 
 
@@ -781,7 +781,7 @@ class WaitTest(BaseAPIIntegrationTest):
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         inspect = self.client.inspect_container(id)
         assert 'Running' in inspect['State']
@@ -794,7 +794,7 @@ class WaitTest(BaseAPIIntegrationTest):
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(res)
-        exitcode = self.client.wait(res)
+        exitcode = self.client.wait(res)['StatusCode']
         assert exitcode == 0
         inspect = self.client.inspect_container(res)
         assert 'Running' in inspect['State']
@@ -815,7 +815,9 @@ class WaitTest(BaseAPIIntegrationTest):
         )
         self.tmp_containers.append(ctnr)
         self.client.start(ctnr)
-        assert self.client.wait(ctnr, condition='removed', timeout=5) == 0
+        assert self.client.wait(
+            ctnr, condition='removed', timeout=5
+        )['StatusCode'] == 0
 
 
 class LogsTest(BaseAPIIntegrationTest):
@@ -827,7 +829,7 @@ class LogsTest(BaseAPIIntegrationTest):
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(id)
         assert logs == (snippet + '\n').encode(encoding='ascii')
@@ -841,7 +843,7 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(id, tail=1)
         assert logs == 'Line2\n'.encode(encoding='ascii')
@@ -858,7 +860,7 @@ Line2'''
         for chunk in self.client.logs(id, stream=True, follow=True):
             logs += chunk
 
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
 
         assert logs == (snippet + '\n').encode(encoding='ascii')
@@ -871,7 +873,7 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(container)
         assert logs == (snippet + '\n').encode(encoding='ascii')
@@ -884,7 +886,7 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(id, tail=0)
         assert logs == ''.encode(encoding='ascii')
@@ -898,7 +900,7 @@ Line2'''
 
         self.tmp_containers.append(container)
         self.client.start(container)
-        exitcode = self.client.wait(container)
+        exitcode = self.client.wait(container)['StatusCode']
         assert exitcode == 0
         logs_until_1 = self.client.logs(container, until=1)
         assert logs_until_1 == b''
@@ -912,7 +914,7 @@ class DiffTest(BaseAPIIntegrationTest):
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         diff = self.client.diff(id)
         test_diff = [x for x in diff if x.get('Path', None) == '/test']
@@ -925,7 +927,7 @@ class DiffTest(BaseAPIIntegrationTest):
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         diff = self.client.diff(container)
         test_diff = [x for x in diff if x.get('Path', None) == '/test']
@@ -997,7 +999,7 @@ class KillTest(BaseAPIIntegrationTest):
         self.client.kill(
             id, signal=signal.SIGKILL if not IS_WINDOWS_PLATFORM else 9
         )
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode != 0
         container_info = self.client.inspect_container(id)
         assert 'State' in container_info
@@ -1012,7 +1014,7 @@ class KillTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
         self.client.kill(id, signal='SIGKILL')
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode != 0
         container_info = self.client.inspect_container(id)
         assert 'State' in container_info
@@ -1027,7 +1029,7 @@ class KillTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
         self.client.kill(id, signal=9)
-        exitcode = self.client.wait(id)
+        exitcode = self.client.wait(id)['StatusCode']
         assert exitcode != 0
         container_info = self.client.inspect_container(id)
         assert 'State' in container_info
