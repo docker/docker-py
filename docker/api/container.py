@@ -891,6 +891,8 @@ class ContainerApiMixin(object):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+            :py:class:`docker.errors.NotFound`
+                If specified `path` does not exist inside `container`.
         """
         params = {'path': path}
         url = self._url('/containers/{0}/archive', container)
