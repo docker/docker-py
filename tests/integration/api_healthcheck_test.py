@@ -20,8 +20,9 @@ class HealthcheckTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
 
         res = self.client.inspect_container(container)
-        assert res['Config']['Healthcheck']['Test'] == \
-            ['CMD-SHELL', 'echo "hello world"']
+        assert res['Config']['Healthcheck']['Test'] == [
+            'CMD-SHELL', 'echo "hello world"'
+        ]
 
     @helpers.requires_api_version('1.24')
     def test_healthcheck_passes(self):

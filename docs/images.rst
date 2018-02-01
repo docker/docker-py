@@ -26,13 +26,15 @@ Image objects
 
 .. autoclass:: Image()
 
-.. py:attribute:: attrs
-.. autoattribute:: id
-.. autoattribute:: labels
-.. autoattribute:: short_id
-.. autoattribute:: tags
+  .. py:attribute:: attrs
 
     The raw representation of this object from the server.
+
+  .. autoattribute:: id
+  .. autoattribute:: labels
+  .. autoattribute:: short_id
+  .. autoattribute:: tags
+
 
 
   .. automethod:: history

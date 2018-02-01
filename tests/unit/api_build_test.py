@@ -5,6 +5,7 @@ import docker
 from docker import auth
 
 from .api_test import BaseAPIClientTest, fake_request, url_prefix
+import pytest
 
 
 class BuildTest(BaseAPIClientTest):
@@ -29,17 +30,6 @@ class BuildTest(BaseAPIClientTest):
         ]).encode('ascii'))
 
         self.client.build(fileobj=script, pull=True)
-
-    def test_build_container_stream(self):
-        script = io.BytesIO('\n'.join([
-            'FROM busybox',
-            'RUN mkdir -p /tmp/test',
-            'EXPOSE 8080',
-            'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
-            ' /tmp/silence.tar.gz'
-        ]).encode('ascii'))
-
-        self.client.build(fileobj=script, stream=True)
 
     def test_build_container_custom_context(self):
         script = io.BytesIO('\n'.join([
@@ -72,10 +62,12 @@ class BuildTest(BaseAPIClientTest):
 
     def test_build_remote_with_registry_auth(self):
         self.client._auth_configs = {
-            'https://example.com': {
-                'user': 'example',
-                'password': 'example',
-                'email': 'example@example.com'
+            'auths': {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
             }
         }
 
@@ -84,7 +76,10 @@ class BuildTest(BaseAPIClientTest):
                            'forcerm': False,
                            'remote': 'https://github.com/docker-library/mongo'}
         expected_headers = {
-            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+            'X-Registry-Config': auth.encode_header(
+                self.client._auth_configs['auths']
+            )
+        }
 
         self.client.build(path='https://github.com/docker-library/mongo')
 
@@ -110,44 +105,53 @@ class BuildTest(BaseAPIClientTest):
         })
 
     def test_build_container_invalid_container_limits(self):
-        self.assertRaises(
-            docker.errors.DockerException,
-            lambda: self.client.build('.', container_limits={
+        with pytest.raises(docker.errors.DockerException):
+            self.client.build('.', container_limits={
                 'foo': 'bar'
             })
-        )
 
     def test_set_auth_headers_with_empty_dict_and_auth_configs(self):
         self.client._auth_configs = {
-            'https://example.com': {
-                'user': 'example',
-                'password': 'example',
-                'email': 'example@example.com'
+            'auths': {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
             }
         }
 
         headers = {}
         expected_headers = {
-            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+            'X-Registry-Config': auth.encode_header(
+                self.client._auth_configs['auths']
+            )
+        }
+
         self.client._set_auth_headers(headers)
-        self.assertEqual(headers, expected_headers)
+        assert headers == expected_headers
 
     def test_set_auth_headers_with_dict_and_auth_configs(self):
         self.client._auth_configs = {
-            'https://example.com': {
-                'user': 'example',
-                'password': 'example',
-                'email': 'example@example.com'
+            'auths': {
+                'https://example.com': {
+                    'user': 'example',
+                    'password': 'example',
+                    'email': 'example@example.com'
+                }
             }
         }
 
         headers = {'foo': 'bar'}
         expected_headers = {
-            'foo': 'bar',
-            'X-Registry-Config': auth.encode_header(self.client._auth_configs)}
+            'X-Registry-Config': auth.encode_header(
+                self.client._auth_configs['auths']
+            ),
+            'foo': 'bar'
+        }
 
         self.client._set_auth_headers(headers)
-        self.assertEqual(headers, expected_headers)
+        assert headers == expected_headers
 
     def test_set_auth_headers_with_dict_and_no_auth_configs(self):
         headers = {'foo': 'bar'}
@@ -156,4 +160,4 @@ class BuildTest(BaseAPIClientTest):
         }
 
         self.client._set_auth_headers(headers)
-        self.assertEqual(headers, expected_headers)
+        assert headers == expected_headers

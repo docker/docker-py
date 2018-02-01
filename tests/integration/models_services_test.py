@@ -1,9 +1,12 @@
 import unittest
 
 import docker
+import pytest
 
 from .. import helpers
 from .base import TEST_API_VERSION
+from docker.errors import InvalidArgument
+from docker.types.services import ServiceMode
 
 
 class ServiceTest(unittest.TestCase):
@@ -179,6 +182,32 @@ class ServiceTest(unittest.TestCase):
         service.reload()
         assert not service.attrs['Spec'].get('Labels')
 
+    @pytest.mark.xfail(reason='Flaky test')
+    def test_update_retains_networks(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        network_name = helpers.random_name()
+        network = client.networks.create(
+            network_name, driver='overlay'
+        )
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            networks=[network.id],
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        service.reload()
+        service.update(
+            # create argument
+            name=service.name,
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        networks = service.attrs['Spec']['TaskTemplate']['Networks']
+        assert networks == [{'Target': network.id}]
+
     def test_scale_service(self):
         client = docker.from_env(version=TEST_API_VERSION)
         service = client.services.create(
@@ -199,6 +228,49 @@ class ServiceTest(unittest.TestCase):
             tasks = service.tasks()
         assert len(tasks) >= 2
         # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
+
+    def test_scale_method_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300",
+        )
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
+        service.scale(2)
+        while len(tasks) == 1:
+            tasks = service.tasks()
+        assert len(tasks) >= 2
+        # check that the container spec is not overridden with None
+        service.reload()
+        spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec.get('Command') == ['sleep', '300']
+
+    def test_scale_method_global_service(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        mode = ServiceMode('global')
+        service = client.services.create(
+            name=helpers.random_name(),
+            image="alpine",
+            command="sleep 300",
+            mode=mode
+        )
+        tasks = []
+        while len(tasks) == 0:
+            tasks = service.tasks()
+        assert len(tasks) == 1
+        with pytest.raises(InvalidArgument):
+            service.scale(2)
+
+        assert len(tasks) == 1
         service.reload()
         spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert spec.get('Command') == ['sleep', '300']

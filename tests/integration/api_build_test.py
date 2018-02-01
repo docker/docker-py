@@ -21,7 +21,7 @@ class BuildTest(BaseAPIIntegrationTest):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]).encode('ascii'))
-        stream = self.client.build(fileobj=script, stream=True, decode=True)
+        stream = self.client.build(fileobj=script, decode=True)
         logs = []
         for chunk in stream:
             logs.append(chunk)
@@ -37,15 +37,14 @@ class BuildTest(BaseAPIIntegrationTest):
             'ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz'
             ' /tmp/silence.tar.gz'
         ]))
-        stream = self.client.build(fileobj=script, stream=True)
+        stream = self.client.build(fileobj=script)
         logs = ''
         for chunk in stream:
             if six.PY3:
                 chunk = chunk.decode('utf-8')
             logs += chunk
-        self.assertNotEqual(logs, '')
+        assert logs != ''
 
-    @requires_api_version('1.8')
     def test_build_with_dockerignore(self):
         base_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, base_dir)
@@ -92,13 +91,11 @@ class BuildTest(BaseAPIIntegrationTest):
         if six.PY3:
             logs = logs.decode('utf-8')
 
-        self.assertEqual(
-            sorted(list(filter(None, logs.split('\n')))),
-            sorted(['/test/ignored/subdir/excepted-file',
-                    '/test/not-ignored']),
-        )
+        assert sorted(list(filter(None, logs.split('\n')))) == sorted([
+            '/test/ignored/subdir/excepted-file',
+            '/test/not-ignored'
+        ])
 
-    @requires_api_version('1.21')
     def test_build_with_buildargs(self):
         script = io.BytesIO('\n'.join([
             'FROM scratch',
@@ -114,7 +111,7 @@ class BuildTest(BaseAPIIntegrationTest):
             pass
 
         info = self.client.inspect_image('buildargs')
-        self.assertEqual(info['Config']['User'], 'OK')
+        assert info['Config']['User'] == 'OK'
 
     @requires_api_version('1.22')
     def test_build_shmsize(self):
@@ -152,7 +149,7 @@ class BuildTest(BaseAPIIntegrationTest):
             pass
 
         info = self.client.inspect_image('labels')
-        self.assertEqual(info['Config']['Labels'], labels)
+        assert info['Config']['Labels'] == labels
 
     @requires_api_version('1.25')
     def test_build_with_cache_from(self):
@@ -309,8 +306,8 @@ class BuildTest(BaseAPIIntegrationTest):
 
         non_squashed = build_squashed(False)
         squashed = build_squashed(True)
-        self.assertEqual(len(non_squashed['RootFS']['Layers']), 4)
-        self.assertEqual(len(squashed['RootFS']['Layers']), 2)
+        assert len(non_squashed['RootFS']['Layers']) == 4
+        assert len(squashed['RootFS']['Layers']) == 2
 
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']
@@ -321,7 +318,7 @@ class BuildTest(BaseAPIIntegrationTest):
         ]))
 
         stream = self.client.build(
-            fileobj=script, stream=True, decode=True, nocache=True
+            fileobj=script, decode=True, nocache=True
         )
         lines = []
         for chunk in stream:
@@ -329,7 +326,7 @@ class BuildTest(BaseAPIIntegrationTest):
         expected = '{0}{2}\n{1}'.format(
             control_chars[0], control_chars[1], snippet
         )
-        self.assertTrue(any([line == expected for line in lines]))
+        assert any([line == expected for line in lines])
 
     def test_build_gzip_encoding(self):
         base_dir = tempfile.mkdtemp()
@@ -342,7 +339,7 @@ class BuildTest(BaseAPIIntegrationTest):
             ]))
 
         stream = self.client.build(
-            path=base_dir, stream=True, decode=True, nocache=True,
+            path=base_dir, decode=True, nocache=True,
             gzip=True
         )
 
@@ -352,6 +349,41 @@ class BuildTest(BaseAPIIntegrationTest):
 
         assert 'Successfully built' in lines[-1]['stream']
 
+    def test_build_with_dockerfile_empty_lines(self):
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+        with open(os.path.join(base_dir, 'Dockerfile'), 'w') as f:
+            f.write('FROM busybox\n')
+        with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
+            f.write('\n'.join([
+                '   ',
+                '',
+                '\t\t',
+                '\t     ',
+            ]))
+
+        stream = self.client.build(
+            path=base_dir, decode=True, nocache=True
+        )
+
+        lines = []
+        for chunk in stream:
+            lines.append(chunk)
+        assert 'Successfully built' in lines[-1]['stream']
+
     def test_build_gzip_custom_encoding(self):
-        with self.assertRaises(errors.DockerException):
+        with pytest.raises(errors.DockerException):
             self.client.build(path='.', gzip=True, encoding='text/html')
+
+    @requires_api_version('1.32')
+    @requires_experimental(until=None)
+    def test_build_invalid_platform(self):
+        script = io.BytesIO('FROM busybox\n'.encode('ascii'))
+
+        with pytest.raises(errors.APIError) as excinfo:
+            stream = self.client.build(fileobj=script, platform='foobar')
+            for _ in stream:
+                pass
+
+        assert excinfo.value.status_code == 400
+        assert 'invalid platform' in excinfo.exconly()

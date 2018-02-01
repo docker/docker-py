@@ -1,36 +1,39 @@
 import io
+import tempfile
 
 import docker
 import pytest
 
-from .base import BaseIntegrationTest, TEST_API_VERSION
+from .base import BaseIntegrationTest, BUSYBOX, TEST_API_VERSION
 
 
 class ImageCollectionTest(BaseIntegrationTest):
 
     def test_build(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(fileobj=io.BytesIO(
+        image, _ = client.images.build(fileobj=io.BytesIO(
             "FROM alpine\n"
             "CMD echo hello world".encode('ascii')
         ))
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
 
-    @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
+    # @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
     def test_build_with_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        with self.assertRaises(docker.errors.BuildError) as cm:
+        with pytest.raises(docker.errors.BuildError) as cm:
             client.images.build(fileobj=io.BytesIO(
                 "FROM alpine\n"
-                "NOTADOCKERFILECOMMAND".encode('ascii')
+                "RUN exit 1".encode('ascii')
             ))
-        assert str(cm.exception) == ("Unknown instruction: "
-                                     "NOTADOCKERFILECOMMAND")
+        assert (
+            "The command '/bin/sh -c exit 1' returned a non-zero code: 1"
+        ) in cm.exconly()
+        assert cm.value.build_log
 
     def test_build_with_multiple_success(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(
+        image, _ = client.images.build(
             tag='some-tag', fileobj=io.BytesIO(
                 "FROM alpine\n"
                 "CMD echo hello world".encode('ascii')
@@ -41,7 +44,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_build_with_success_build_output(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.build(
+        image, _ = client.images.build(
             tag='dup-txt-tag', fileobj=io.BytesIO(
                 "FROM alpine\n"
                 "CMD echo Successfully built abcd1234".encode('ascii')
@@ -70,6 +73,31 @@ class ImageCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine', tag='3.3')
         assert 'alpine:3.3' in image.attrs['RepoTags']
+
+    def test_pull_multiple(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        images = client.images.pull('hello-world')
+        assert len(images) == 1
+        assert 'hello-world:latest' in images[0].attrs['RepoTags']
+
+    def test_load_error(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        with pytest.raises(docker.errors.ImageLoadError):
+            client.images.load('abc')
+
+    def test_save_and_load(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.get(BUSYBOX)
+        with tempfile.TemporaryFile() as f:
+            stream = image.save()
+            for chunk in stream:
+                f.write(chunk)
+
+            f.seek(0)
+            result = client.images.load(f.read())
+
+        assert len(result) == 1
+        assert result[0].id == image.id
 
 
 class ImageTest(BaseIntegrationTest):

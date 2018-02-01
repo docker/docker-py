@@ -140,7 +140,14 @@ class StreamParseError(RuntimeError):
         self.msg = reason
 
 
-class BuildError(Exception):
+class BuildError(DockerException):
+    def __init__(self, reason, build_log):
+        super(BuildError, self).__init__(reason)
+        self.msg = reason
+        self.build_log = build_log
+
+
+class ImageLoadError(DockerException):
     pass
 
 

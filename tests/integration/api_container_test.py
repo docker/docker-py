@@ -1,6 +1,8 @@
 import os
+import re
 import signal
 import tempfile
+from datetime import datetime
 
 import docker
 from docker.constants import IS_WINDOWS_PLATFORM
@@ -9,11 +11,14 @@ from docker.utils.socket import read_exactly
 
 import pytest
 
+import requests
 import six
 
 from .base import BUSYBOX, BaseAPIIntegrationTest
 from .. import helpers
-from ..helpers import requires_api_version
+from ..helpers import (
+    requires_api_version, ctrl_with, assert_cat_socket_detached_with_keys
+)
 
 
 class ListContainersTest(BaseAPIIntegrationTest):
@@ -21,26 +26,26 @@ class ListContainersTest(BaseAPIIntegrationTest):
         res0 = self.client.containers(all=True)
         size = len(res0)
         res1 = self.client.create_container(BUSYBOX, 'true')
-        self.assertIn('Id', res1)
+        assert 'Id' in res1
         self.client.start(res1['Id'])
         self.tmp_containers.append(res1['Id'])
         res2 = self.client.containers(all=True)
-        self.assertEqual(size + 1, len(res2))
+        assert size + 1 == len(res2)
         retrieved = [x for x in res2 if x['Id'].startswith(res1['Id'])]
-        self.assertEqual(len(retrieved), 1)
+        assert len(retrieved) == 1
         retrieved = retrieved[0]
-        self.assertIn('Command', retrieved)
-        self.assertEqual(retrieved['Command'], six.text_type('true'))
-        self.assertIn('Image', retrieved)
-        self.assertRegex(retrieved['Image'], r'busybox:.*')
-        self.assertIn('Status', retrieved)
+        assert 'Command' in retrieved
+        assert retrieved['Command'] == six.text_type('true')
+        assert 'Image' in retrieved
+        assert re.search(r'busybox:.*', retrieved['Image'])
+        assert 'Status' in retrieved
 
 
 class CreateContainerTest(BaseAPIIntegrationTest):
 
     def test_create(self):
         res = self.client.create_container(BUSYBOX, 'true')
-        self.assertIn('Id', res)
+        assert 'Id' in res
         self.tmp_containers.append(res['Id'])
 
     def test_create_with_host_pid_mode(self):
@@ -49,14 +54,14 @@ class CreateContainerTest(BaseAPIIntegrationTest):
                 pid_mode='host', network_mode='none'
             )
         )
-        self.assertIn('Id', ctnr)
+        assert 'Id' in ctnr
         self.tmp_containers.append(ctnr['Id'])
         self.client.start(ctnr)
         inspect = self.client.inspect_container(ctnr)
-        self.assertIn('HostConfig', inspect)
+        assert 'HostConfig' in inspect
         host_config = inspect['HostConfig']
-        self.assertIn('PidMode', host_config)
-        self.assertEqual(host_config['PidMode'], 'host')
+        assert 'PidMode' in host_config
+        assert host_config['PidMode'] == 'host'
 
     def test_create_with_links(self):
         res0 = self.client.create_container(
@@ -97,15 +102,15 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         container3_id = res2['Id']
         self.tmp_containers.append(container3_id)
         self.client.start(container3_id)
-        self.assertEqual(self.client.wait(container3_id), 0)
+        assert self.client.wait(container3_id)['StatusCode'] == 0
 
         logs = self.client.logs(container3_id)
         if six.PY3:
             logs = logs.decode('utf-8')
-        self.assertIn('{0}_NAME='.format(link_env_prefix1), logs)
-        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix1), logs)
-        self.assertIn('{0}_NAME='.format(link_env_prefix2), logs)
-        self.assertIn('{0}_ENV_FOO=1'.format(link_env_prefix2), logs)
+        assert '{0}_NAME='.format(link_env_prefix1) in logs
+        assert '{0}_ENV_FOO=1'.format(link_env_prefix1) in logs
+        assert '{0}_NAME='.format(link_env_prefix2) in logs
+        assert '{0}_ENV_FOO=1'.format(link_env_prefix2) in logs
 
     def test_create_with_restart_policy(self):
         container = self.client.create_container(
@@ -118,12 +123,10 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         id = container['Id']
         self.client.start(id)
         self.client.wait(id)
-        with self.assertRaises(docker.errors.APIError) as exc:
+        with pytest.raises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
-        err = exc.exception.explanation
-        self.assertIn(
-            'You cannot remove ', err
-        )
+        err = exc.value.explanation
+        assert 'You cannot remove ' in err
         self.client.remove_container(id, force=True)
 
     def test_create_container_with_volumes_from(self):
@@ -142,23 +145,19 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         container2_id = res1['Id']
         self.tmp_containers.append(container2_id)
         self.client.start(container2_id)
-        with self.assertRaises(docker.errors.DockerException):
-            self.client.create_container(
-                BUSYBOX, 'cat', detach=True, stdin_open=True,
-                volumes_from=vol_names
-            )
-        res2 = self.client.create_container(
+
+        res = self.client.create_container(
             BUSYBOX, 'cat', detach=True, stdin_open=True,
             host_config=self.client.create_host_config(
                 volumes_from=vol_names, network_mode='none'
             )
         )
-        container3_id = res2['Id']
+        container3_id = res['Id']
         self.tmp_containers.append(container3_id)
         self.client.start(container3_id)
 
-        info = self.client.inspect_container(res2['Id'])
-        self.assertCountEqual(info['HostConfig']['VolumesFrom'], vol_names)
+        info = self.client.inspect_container(res['Id'])
+        assert len(info['HostConfig']['VolumesFrom']) == len(vol_names)
 
     def create_container_readonly_fs(self):
         ctnr = self.client.create_container(
@@ -167,19 +166,19 @@ class CreateContainerTest(BaseAPIIntegrationTest):
                 read_only=True, network_mode='none'
             )
         )
-        self.assertIn('Id', ctnr)
+        assert 'Id' in ctnr
         self.tmp_containers.append(ctnr['Id'])
         self.client.start(ctnr)
-        res = self.client.wait(ctnr)
-        self.assertNotEqual(res, 0)
+        res = self.client.wait(ctnr)['StatusCode']
+        assert res != 0
 
     def create_container_with_name(self):
         res = self.client.create_container(BUSYBOX, 'true', name='foobar')
-        self.assertIn('Id', res)
+        assert 'Id' in res
         self.tmp_containers.append(res['Id'])
         inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Name', inspect)
-        self.assertEqual('/foobar', inspect['Name'])
+        assert 'Name' in inspect
+        assert '/foobar' == inspect['Name']
 
     def create_container_privileged(self):
         res = self.client.create_container(
@@ -187,24 +186,24 @@ class CreateContainerTest(BaseAPIIntegrationTest):
                 privileged=True, network_mode='none'
             )
         )
-        self.assertIn('Id', res)
+        assert 'Id' in res
         self.tmp_containers.append(res['Id'])
         self.client.start(res['Id'])
         inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertIn('Id', inspect)
-        self.assertTrue(inspect['Id'].startswith(res['Id']))
-        self.assertIn('Image', inspect)
-        self.assertIn('State', inspect)
-        self.assertIn('Running', inspect['State'])
+        assert 'Config' in inspect
+        assert 'Id' in inspect
+        assert inspect['Id'].startswith(res['Id'])
+        assert 'Image' in inspect
+        assert 'State' in inspect
+        assert 'Running' in inspect['State']
         if not inspect['State']['Running']:
-            self.assertIn('ExitCode', inspect['State'])
-            self.assertEqual(inspect['State']['ExitCode'], 0)
+            assert 'ExitCode' in inspect['State']
+            assert inspect['State']['ExitCode'] == 0
         # Since Nov 2013, the Privileged flag is no longer part of the
         # container's config exposed via the API (safety concerns?).
         #
         if 'Privileged' in inspect['Config']:
-            self.assertEqual(inspect['Config']['Privileged'], True)
+            assert inspect['Config']['Privileged'] is True
 
     def test_create_with_mac_address(self):
         mac_address_expected = "02:42:ac:11:00:0a"
@@ -215,12 +214,10 @@ class CreateContainerTest(BaseAPIIntegrationTest):
 
         self.client.start(container)
         res = self.client.inspect_container(container['Id'])
-        self.assertEqual(mac_address_expected,
-                         res['NetworkSettings']['MacAddress'])
+        assert mac_address_expected == res['NetworkSettings']['MacAddress']
 
         self.client.kill(id)
 
-    @requires_api_version('1.20')
     def test_group_id_ints(self):
         container = self.client.create_container(
             BUSYBOX, 'id -G',
@@ -234,10 +231,9 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         if six.PY3:
             logs = logs.decode('utf-8')
         groups = logs.strip().split(' ')
-        self.assertIn('1000', groups)
-        self.assertIn('1001', groups)
+        assert '1000' in groups
+        assert '1001' in groups
 
-    @requires_api_version('1.20')
     def test_group_id_strings(self):
         container = self.client.create_container(
             BUSYBOX, 'id -G', host_config=self.client.create_host_config(
@@ -253,8 +249,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
             logs = logs.decode('utf-8')
 
         groups = logs.strip().split(' ')
-        self.assertIn('1000', groups)
-        self.assertIn('1001', groups)
+        assert '1000' in groups
+        assert '1001' in groups
 
     def test_valid_log_driver_and_log_opt(self):
         log_config = docker.types.LogConfig(
@@ -272,8 +268,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         info = self.client.inspect_container(container)
         container_log_config = info['HostConfig']['LogConfig']
 
-        self.assertEqual(container_log_config['Type'], log_config.type)
-        self.assertEqual(container_log_config['Config'], log_config.config)
+        assert container_log_config['Type'] == log_config.type
+        assert container_log_config['Config'] == log_config.config
 
     def test_invalid_log_driver_raises_exception(self):
         log_config = docker.types.LogConfig(
@@ -309,8 +305,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         info = self.client.inspect_container(container)
         container_log_config = info['HostConfig']['LogConfig']
 
-        self.assertEqual(container_log_config['Type'], "json-file")
-        self.assertEqual(container_log_config['Config'], log_config.config)
+        assert container_log_config['Type'] == "json-file"
+        assert container_log_config['Config'] == log_config.config
 
     def test_valid_no_config_specified(self):
         log_config = docker.types.LogConfig(
@@ -328,8 +324,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         info = self.client.inspect_container(container)
         container_log_config = info['HostConfig']['LogConfig']
 
-        self.assertEqual(container_log_config['Type'], "json-file")
-        self.assertEqual(container_log_config['Config'], {})
+        assert container_log_config['Type'] == "json-file"
+        assert container_log_config['Config'] == {}
 
     def test_create_with_memory_constraints_with_str(self):
         ctnr = self.client.create_container(
@@ -339,29 +335,29 @@ class CreateContainerTest(BaseAPIIntegrationTest):
                 mem_limit='700M'
             )
         )
-        self.assertIn('Id', ctnr)
+        assert 'Id' in ctnr
         self.tmp_containers.append(ctnr['Id'])
         self.client.start(ctnr)
         inspect = self.client.inspect_container(ctnr)
 
-        self.assertIn('HostConfig', inspect)
+        assert 'HostConfig' in inspect
         host_config = inspect['HostConfig']
         for limit in ['Memory', 'MemorySwap']:
-            self.assertIn(limit, host_config)
+            assert limit in host_config
 
     def test_create_with_memory_constraints_with_int(self):
         ctnr = self.client.create_container(
             BUSYBOX, 'true',
             host_config=self.client.create_host_config(mem_swappiness=40)
         )
-        self.assertIn('Id', ctnr)
+        assert 'Id' in ctnr
         self.tmp_containers.append(ctnr['Id'])
         self.client.start(ctnr)
         inspect = self.client.inspect_container(ctnr)
 
-        self.assertIn('HostConfig', inspect)
+        assert 'HostConfig' in inspect
         host_config = inspect['HostConfig']
-        self.assertIn('MemorySwappiness', host_config)
+        assert 'MemorySwappiness' in host_config
 
     def test_create_with_environment_variable_no_value(self):
         container = self.client.create_container(
@@ -509,7 +505,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
 
         if six.PY3:
             logs = logs.decode('utf-8')
-        self.assertIn(self.filename, logs)
+        assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, True)
 
@@ -531,7 +527,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
 
         if six.PY3:
             logs = logs.decode('utf-8')
-        self.assertIn(self.filename, logs)
+        assert self.filename in logs
 
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
@@ -602,24 +598,15 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount_data['RW'] is True
 
     def check_container_data(self, inspect_data, rw):
-        if docker.utils.compare_version('1.20', self.client._version) < 0:
-            self.assertIn('Volumes', inspect_data)
-            self.assertIn(self.mount_dest, inspect_data['Volumes'])
-            self.assertEqual(
-                self.mount_origin, inspect_data['Volumes'][self.mount_dest]
-            )
-            self.assertIn(self.mount_dest, inspect_data['VolumesRW'])
-            self.assertFalse(inspect_data['VolumesRW'][self.mount_dest])
-        else:
-            self.assertIn('Mounts', inspect_data)
-            filtered = list(filter(
-                lambda x: x['Destination'] == self.mount_dest,
-                inspect_data['Mounts']
-            ))
-            self.assertEqual(len(filtered), 1)
-            mount_data = filtered[0]
-            self.assertEqual(mount_data['Source'], self.mount_origin)
-            self.assertEqual(mount_data['RW'], rw)
+        assert 'Mounts' in inspect_data
+        filtered = list(filter(
+            lambda x: x['Destination'] == self.mount_dest,
+            inspect_data['Mounts']
+        ))
+        assert len(filtered) == 1
+        mount_data = filtered[0]
+        assert mount_data['Source'] == self.mount_origin
+        assert mount_data['RW'] == rw
 
     def run_with_volume(self, ro, *args, **kwargs):
         return self.run_container(
@@ -638,7 +625,6 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         )
 
 
-@requires_api_version('1.20')
 class ArchiveTest(BaseAPIIntegrationTest):
     def test_get_file_archive_from_container(self):
         data = 'The Maid and the Pocket Watch of Blood'
@@ -657,7 +643,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
             retrieved_data = helpers.untar_file(destination, 'data.txt')
             if six.PY3:
                 retrieved_data = retrieved_data.decode('utf-8')
-            self.assertEqual(data, retrieved_data.strip())
+            assert data == retrieved_data.strip()
 
     def test_get_file_stat_from_container(self):
         data = 'The Maid and the Pocket Watch of Blood'
@@ -669,10 +655,10 @@ class ArchiveTest(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         self.client.wait(ctnr)
         strm, stat = self.client.get_archive(ctnr, '/vol1/data.txt')
-        self.assertIn('name', stat)
-        self.assertEqual(stat['name'], 'data.txt')
-        self.assertIn('size', stat)
-        self.assertEqual(stat['size'], len(data))
+        assert 'name' in stat
+        assert stat['name'] == 'data.txt'
+        assert 'size' in stat
+        assert stat['size'] == len(data)
 
     def test_copy_file_to_container(self):
         data = b'Deaf To All But The Song'
@@ -695,7 +681,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
         if six.PY3:
             logs = logs.decode('utf-8')
             data = data.decode('utf-8')
-        self.assertEqual(logs.strip(), data)
+        assert logs.strip() == data
 
     def test_copy_directory_to_container(self):
         files = ['a.py', 'b.py', 'foo/b.py']
@@ -713,10 +699,10 @@ class ArchiveTest(BaseAPIIntegrationTest):
         if six.PY3:
             logs = logs.decode('utf-8')
         results = logs.strip().split()
-        self.assertIn('a.py', results)
-        self.assertIn('b.py', results)
-        self.assertIn('foo/', results)
-        self.assertIn('bar/', results)
+        assert 'a.py' in results
+        assert 'b.py' in results
+        assert 'foo/' in results
+        assert 'bar/' in results
 
 
 class RenameContainerTest(BaseAPIIntegrationTest):
@@ -724,49 +710,49 @@ class RenameContainerTest(BaseAPIIntegrationTest):
         version = self.client.version()['Version']
         name = 'hong_meiling'
         res = self.client.create_container(BUSYBOX, 'true')
-        self.assertIn('Id', res)
+        assert 'Id' in res
         self.tmp_containers.append(res['Id'])
         self.client.rename(res, name)
         inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Name', inspect)
+        assert 'Name' in inspect
         if version == '1.5.0':
-            self.assertEqual(name, inspect['Name'])
+            assert name == inspect['Name']
         else:
-            self.assertEqual('/{0}'.format(name), inspect['Name'])
+            assert '/{0}'.format(name) == inspect['Name']
 
 
 class StartContainerTest(BaseAPIIntegrationTest):
     def test_start_container(self):
         res = self.client.create_container(BUSYBOX, 'true')
-        self.assertIn('Id', res)
+        assert 'Id' in res
         self.tmp_containers.append(res['Id'])
         self.client.start(res['Id'])
         inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertIn('Id', inspect)
-        self.assertTrue(inspect['Id'].startswith(res['Id']))
-        self.assertIn('Image', inspect)
-        self.assertIn('State', inspect)
-        self.assertIn('Running', inspect['State'])
+        assert 'Config' in inspect
+        assert 'Id' in inspect
+        assert inspect['Id'].startswith(res['Id'])
+        assert 'Image' in inspect
+        assert 'State' in inspect
+        assert 'Running' in inspect['State']
         if not inspect['State']['Running']:
-            self.assertIn('ExitCode', inspect['State'])
-            self.assertEqual(inspect['State']['ExitCode'], 0)
+            assert 'ExitCode' in inspect['State']
+            assert inspect['State']['ExitCode'] == 0
 
     def test_start_container_with_dict_instead_of_id(self):
         res = self.client.create_container(BUSYBOX, 'true')
-        self.assertIn('Id', res)
+        assert 'Id' in res
         self.tmp_containers.append(res['Id'])
         self.client.start(res)
         inspect = self.client.inspect_container(res['Id'])
-        self.assertIn('Config', inspect)
-        self.assertIn('Id', inspect)
-        self.assertTrue(inspect['Id'].startswith(res['Id']))
-        self.assertIn('Image', inspect)
-        self.assertIn('State', inspect)
-        self.assertIn('Running', inspect['State'])
+        assert 'Config' in inspect
+        assert 'Id' in inspect
+        assert inspect['Id'].startswith(res['Id'])
+        assert 'Image' in inspect
+        assert 'State' in inspect
+        assert 'Running' in inspect['State']
         if not inspect['State']['Running']:
-            self.assertIn('ExitCode', inspect['State'])
-            self.assertEqual(inspect['State']['ExitCode'], 0)
+            assert 'ExitCode' in inspect['State']
+            assert inspect['State']['ExitCode'] == 0
 
     def test_run_shlex_commands(self):
         commands = [
@@ -785,8 +771,8 @@ class StartContainerTest(BaseAPIIntegrationTest):
             id = container['Id']
             self.client.start(id)
             self.tmp_containers.append(id)
-            exitcode = self.client.wait(id)
-            self.assertEqual(exitcode, 0, msg=cmd)
+            exitcode = self.client.wait(id)['StatusCode']
+            assert exitcode == 0, cmd
 
 
 class WaitTest(BaseAPIIntegrationTest):
@@ -795,26 +781,43 @@ class WaitTest(BaseAPIIntegrationTest):
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         inspect = self.client.inspect_container(id)
-        self.assertIn('Running', inspect['State'])
-        self.assertEqual(inspect['State']['Running'], False)
-        self.assertIn('ExitCode', inspect['State'])
-        self.assertEqual(inspect['State']['ExitCode'], exitcode)
+        assert 'Running' in inspect['State']
+        assert inspect['State']['Running'] is False
+        assert 'ExitCode' in inspect['State']
+        assert inspect['State']['ExitCode'] == exitcode
 
     def test_wait_with_dict_instead_of_id(self):
         res = self.client.create_container(BUSYBOX, ['sleep', '3'])
         id = res['Id']
         self.tmp_containers.append(id)
         self.client.start(res)
-        exitcode = self.client.wait(res)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(res)['StatusCode']
+        assert exitcode == 0
         inspect = self.client.inspect_container(res)
-        self.assertIn('Running', inspect['State'])
-        self.assertEqual(inspect['State']['Running'], False)
-        self.assertIn('ExitCode', inspect['State'])
-        self.assertEqual(inspect['State']['ExitCode'], exitcode)
+        assert 'Running' in inspect['State']
+        assert inspect['State']['Running'] is False
+        assert 'ExitCode' in inspect['State']
+        assert inspect['State']['ExitCode'] == exitcode
+
+    @requires_api_version('1.30')
+    def test_wait_with_condition(self):
+        ctnr = self.client.create_container(BUSYBOX, 'true')
+        self.tmp_containers.append(ctnr)
+        with pytest.raises(requests.exceptions.ConnectionError):
+            self.client.wait(ctnr, condition='removed', timeout=1)
+
+        ctnr = self.client.create_container(
+            BUSYBOX, ['sleep', '3'],
+            host_config=self.client.create_host_config(auto_remove=True)
+        )
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        assert self.client.wait(
+            ctnr, condition='removed', timeout=5
+        )['StatusCode'] == 0
 
 
 class LogsTest(BaseAPIIntegrationTest):
@@ -826,10 +829,10 @@ class LogsTest(BaseAPIIntegrationTest):
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         logs = self.client.logs(id)
-        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
+        assert logs == (snippet + '\n').encode(encoding='ascii')
 
     def test_logs_tail_option(self):
         snippet = '''Line1
@@ -840,10 +843,10 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         logs = self.client.logs(id, tail=1)
-        self.assertEqual(logs, 'Line2\n'.encode(encoding='ascii'))
+        assert logs == 'Line2\n'.encode(encoding='ascii')
 
     def test_logs_streaming_and_follow(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -857,10 +860,10 @@ Line2'''
         for chunk in self.client.logs(id, stream=True, follow=True):
             logs += chunk
 
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
 
-        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
+        assert logs == (snippet + '\n').encode(encoding='ascii')
 
     def test_logs_with_dict_instead_of_id(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -870,10 +873,10 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         logs = self.client.logs(container)
-        self.assertEqual(logs, (snippet + '\n').encode(encoding='ascii'))
+        assert logs == (snippet + '\n').encode(encoding='ascii')
 
     def test_logs_with_tail_0(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -883,10 +886,26 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         logs = self.client.logs(id, tail=0)
-        self.assertEqual(logs, ''.encode(encoding='ascii'))
+        assert logs == ''.encode(encoding='ascii')
+
+    @requires_api_version('1.35')
+    def test_logs_with_until(self):
+        snippet = 'Shanghai Teahouse (Hong Meiling)'
+        container = self.client.create_container(
+            BUSYBOX, 'echo "{0}"'.format(snippet)
+        )
+
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        exitcode = self.client.wait(container)['StatusCode']
+        assert exitcode == 0
+        logs_until_1 = self.client.logs(container, until=1)
+        assert logs_until_1 == b''
+        logs_until_now = self.client.logs(container, datetime.now())
+        assert logs_until_now == (snippet + '\n').encode(encoding='ascii')
 
 
 class DiffTest(BaseAPIIntegrationTest):
@@ -895,26 +914,26 @@ class DiffTest(BaseAPIIntegrationTest):
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         diff = self.client.diff(id)
         test_diff = [x for x in diff if x.get('Path', None) == '/test']
-        self.assertEqual(len(test_diff), 1)
-        self.assertIn('Kind', test_diff[0])
-        self.assertEqual(test_diff[0]['Kind'], 1)
+        assert len(test_diff) == 1
+        assert 'Kind' in test_diff[0]
+        assert test_diff[0]['Kind'] == 1
 
     def test_diff_with_dict_instead_of_id(self):
         container = self.client.create_container(BUSYBOX, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
-        exitcode = self.client.wait(id)
-        self.assertEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode == 0
         diff = self.client.diff(container)
         test_diff = [x for x in diff if x.get('Path', None) == '/test']
-        self.assertEqual(len(test_diff), 1)
-        self.assertIn('Kind', test_diff[0])
-        self.assertEqual(test_diff[0]['Kind'], 1)
+        assert len(test_diff) == 1
+        assert 'Kind' in test_diff[0]
+        assert test_diff[0]['Kind'] == 1
 
 
 class StopTest(BaseAPIIntegrationTest):
@@ -925,23 +944,23 @@ class StopTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
         self.client.stop(id, timeout=2)
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
+        assert 'Running' in state
+        assert state['Running'] is False
 
     def test_stop_with_dict_instead_of_id(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
-        self.assertIn('Id', container)
+        assert 'Id' in container
         id = container['Id']
         self.client.start(container)
         self.tmp_containers.append(id)
         self.client.stop(container, timeout=2)
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
+        assert 'Running' in state
+        assert state['Running'] is False
 
 
 class KillTest(BaseAPIIntegrationTest):
@@ -952,12 +971,12 @@ class KillTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
         self.client.kill(id)
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] != 0
+        assert 'Running' in state
+        assert state['Running'] is False
 
     def test_kill_with_dict_instead_of_id(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
@@ -966,12 +985,12 @@ class KillTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
         self.client.kill(container)
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] != 0
+        assert 'Running' in state
+        assert state['Running'] is False
 
     def test_kill_with_signal(self):
         id = self.client.create_container(BUSYBOX, ['sleep', '60'])
@@ -980,45 +999,45 @@ class KillTest(BaseAPIIntegrationTest):
         self.client.kill(
             id, signal=signal.SIGKILL if not IS_WINDOWS_PLATFORM else 9
         )
-        exitcode = self.client.wait(id)
-        self.assertNotEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode != 0
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False, state)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] != 0
+        assert 'Running' in state
+        assert state['Running'] is False, state
 
     def test_kill_with_signal_name(self):
         id = self.client.create_container(BUSYBOX, ['sleep', '60'])
         self.client.start(id)
         self.tmp_containers.append(id)
         self.client.kill(id, signal='SIGKILL')
-        exitcode = self.client.wait(id)
-        self.assertNotEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode != 0
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False, state)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] != 0
+        assert 'Running' in state
+        assert state['Running'] is False, state
 
     def test_kill_with_signal_integer(self):
         id = self.client.create_container(BUSYBOX, ['sleep', '60'])
         self.client.start(id)
         self.tmp_containers.append(id)
         self.client.kill(id, signal=9)
-        exitcode = self.client.wait(id)
-        self.assertNotEqual(exitcode, 0)
+        exitcode = self.client.wait(id)['StatusCode']
+        assert exitcode != 0
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertNotEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], False, state)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] != 0
+        assert 'Running' in state
+        assert state['Running'] is False, state
 
 
 class PortTest(BaseAPIIntegrationTest):
@@ -1046,8 +1065,8 @@ class PortTest(BaseAPIIntegrationTest):
 
             ip, host_port = port_binding['HostIp'], port_binding['HostPort']
 
-            self.assertEqual(ip, port_bindings[port][0])
-            self.assertEqual(host_port, port_bindings[port][1])
+            assert ip == port_bindings[port][0]
+            assert host_port == port_bindings[port][1]
 
         self.client.kill(id)
 
@@ -1083,13 +1102,12 @@ class ContainerTopTest(BaseAPIIntegrationTest):
 
         self.client.start(container)
         res = self.client.top(container, 'waux')
-        self.assertEqual(
-            res['Titles'],
-            ['USER', 'PID', '%CPU', '%MEM', 'VSZ', 'RSS',
-                'TTY', 'STAT', 'START', 'TIME', 'COMMAND'],
-        )
-        self.assertEqual(len(res['Processes']), 1)
-        self.assertEqual(res['Processes'][0][10], 'sleep 60')
+        assert res['Titles'] == [
+            'USER', 'PID', '%CPU', '%MEM', 'VSZ', 'RSS',
+            'TTY', 'STAT', 'START', 'TIME', 'COMMAND'
+        ]
+        assert len(res['Processes']) == 1
+        assert res['Processes'][0][10] == 'sleep 60'
 
 
 class RestartContainerTest(BaseAPIIntegrationTest):
@@ -1099,37 +1117,37 @@ class RestartContainerTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
         info = self.client.inspect_container(id)
-        self.assertIn('State', info)
-        self.assertIn('StartedAt', info['State'])
+        assert 'State' in info
+        assert 'StartedAt' in info['State']
         start_time1 = info['State']['StartedAt']
         self.client.restart(id, timeout=2)
         info2 = self.client.inspect_container(id)
-        self.assertIn('State', info2)
-        self.assertIn('StartedAt', info2['State'])
+        assert 'State' in info2
+        assert 'StartedAt' in info2['State']
         start_time2 = info2['State']['StartedAt']
-        self.assertNotEqual(start_time1, start_time2)
-        self.assertIn('Running', info2['State'])
-        self.assertEqual(info2['State']['Running'], True)
+        assert start_time1 != start_time2
+        assert 'Running' in info2['State']
+        assert info2['State']['Running'] is True
         self.client.kill(id)
 
     def test_restart_with_dict_instead_of_id(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
-        self.assertIn('Id', container)
+        assert 'Id' in container
         id = container['Id']
         self.client.start(container)
         self.tmp_containers.append(id)
         info = self.client.inspect_container(id)
-        self.assertIn('State', info)
-        self.assertIn('StartedAt', info['State'])
+        assert 'State' in info
+        assert 'StartedAt' in info['State']
         start_time1 = info['State']['StartedAt']
         self.client.restart(container, timeout=2)
         info2 = self.client.inspect_container(id)
-        self.assertIn('State', info2)
-        self.assertIn('StartedAt', info2['State'])
+        assert 'State' in info2
+        assert 'StartedAt' in info2['State']
         start_time2 = info2['State']['StartedAt']
-        self.assertNotEqual(start_time1, start_time2)
-        self.assertIn('Running', info2['State'])
-        self.assertEqual(info2['State']['Running'], True)
+        assert start_time1 != start_time2
+        assert 'Running' in info2['State']
+        assert info2['State']['Running'] is True
         self.client.kill(id)
 
 
@@ -1142,7 +1160,7 @@ class RemoveContainerTest(BaseAPIIntegrationTest):
         self.client.remove_container(id)
         containers = self.client.containers(all=True)
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
-        self.assertEqual(len(res), 0)
+        assert len(res) == 0
 
     def test_remove_with_dict_instead_of_id(self):
         container = self.client.create_container(BUSYBOX, ['true'])
@@ -1152,7 +1170,7 @@ class RemoveContainerTest(BaseAPIIntegrationTest):
         self.client.remove_container(container)
         containers = self.client.containers(all=True)
         res = [x for x in containers if 'Id' in x and x['Id'].startswith(id)]
-        self.assertEqual(len(res), 0)
+        assert len(res) == 0
 
 
 class AttachContainerTest(BaseAPIIntegrationTest):
@@ -1163,7 +1181,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(id)
         self.client.start(id)
         sock = self.client.attach_socket(container, ws=False)
-        self.assertTrue(sock.fileno() > -1)
+        assert sock.fileno() > -1
 
     def test_run_container_reading_socket(self):
         line = 'hi there and stuff and things, words!'
@@ -1180,9 +1198,9 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
 
         next_size = next_frame_size(pty_stdout)
-        self.assertEqual(next_size, len(line))
+        assert next_size == len(line)
         data = read_exactly(pty_stdout, next_size)
-        self.assertEqual(data.decode('utf-8'), line)
+        assert data.decode('utf-8') == line
 
     def test_attach_no_stream(self):
         container = self.client.create_container(
@@ -1193,6 +1211,57 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 
+    def test_detach_with_default(self):
+        container = self.client.create_container(
+            BUSYBOX, 'cat',
+            detach=True, stdin_open=True, tty=True
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        sock = self.client.attach_socket(
+            container,
+            {'stdin': True, 'stream': True}
+        )
+
+        assert_cat_socket_detached_with_keys(
+            sock, [ctrl_with('p'), ctrl_with('q')]
+        )
+
+    def test_detach_with_config_file(self):
+        self.client._general_configs['detachKeys'] = 'ctrl-p'
+
+        container = self.client.create_container(
+            BUSYBOX, 'cat',
+            detach=True, stdin_open=True, tty=True
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        sock = self.client.attach_socket(
+            container,
+            {'stdin': True, 'stream': True}
+        )
+
+        assert_cat_socket_detached_with_keys(sock, [ctrl_with('p')])
+
+    def test_detach_with_arg(self):
+        self.client._general_configs['detachKeys'] = 'ctrl-p'
+
+        container = self.client.create_container(
+            BUSYBOX, 'cat',
+            detach=True, stdin_open=True, tty=True
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        sock = self.client.attach_socket(
+            container,
+            {'stdin': True, 'stream': True, 'detachKeys': 'ctrl-x'}
+        )
+
+        assert_cat_socket_detached_with_keys(sock, [ctrl_with('x')])
+
 
 class PauseTest(BaseAPIIntegrationTest):
     def test_pause_unpause(self):
@@ -1202,25 +1271,25 @@ class PauseTest(BaseAPIIntegrationTest):
         self.client.start(container)
         self.client.pause(id)
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], True)
-        self.assertIn('Paused', state)
-        self.assertEqual(state['Paused'], True)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] == 0
+        assert 'Running' in state
+        assert state['Running'] is True
+        assert 'Paused' in state
+        assert state['Paused'] is True
 
         self.client.unpause(id)
         container_info = self.client.inspect_container(id)
-        self.assertIn('State', container_info)
+        assert 'State' in container_info
         state = container_info['State']
-        self.assertIn('ExitCode', state)
-        self.assertEqual(state['ExitCode'], 0)
-        self.assertIn('Running', state)
-        self.assertEqual(state['Running'], True)
-        self.assertIn('Paused', state)
-        self.assertEqual(state['Paused'], False)
+        assert 'ExitCode' in state
+        assert state['ExitCode'] == 0
+        assert 'Running' in state
+        assert state['Running'] is True
+        assert 'Paused' in state
+        assert state['Paused'] is False
 
 
 class PruneTest(BaseAPIIntegrationTest):
@@ -1240,7 +1309,6 @@ class PruneTest(BaseAPIIntegrationTest):
 
 
 class GetContainerStatsTest(BaseAPIIntegrationTest):
-    @requires_api_version('1.19')
     def test_get_container_stats_no_stream(self):
         container = self.client.create_container(
             BUSYBOX, ['sleep', '60'],
@@ -1250,12 +1318,11 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
         response = self.client.stats(container, stream=0)
         self.client.kill(container)
 
-        self.assertEqual(type(response), dict)
+        assert type(response) == dict
         for key in ['read', 'networks', 'precpu_stats', 'cpu_stats',
                     'memory_stats', 'blkio_stats']:
-            self.assertIn(key, response)
+            assert key in response
 
-        @requires_api_version('1.17')
         def test_get_container_stats_stream(self):
             container = self.client.create_container(
                 BUSYBOX, ['sleep', '60'],
@@ -1264,10 +1331,10 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
             self.client.start(container)
             stream = self.client.stats(container)
             for chunk in stream:
-                self.assertEqual(type(chunk), dict)
+                assert type(chunk) == dict
                 for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
                             'memory_stats', 'blkio_stats']:
-                    self.assertIn(key, chunk)
+                    assert key in chunk
 
 
 class ContainerUpdateTest(BaseAPIIntegrationTest):
@@ -1284,7 +1351,7 @@ class ContainerUpdateTest(BaseAPIIntegrationTest):
         self.client.start(container)
         self.client.update_container(container, mem_limit=new_mem_limit)
         inspect_data = self.client.inspect_container(container)
-        self.assertEqual(inspect_data['HostConfig']['Memory'], new_mem_limit)
+        assert inspect_data['HostConfig']['Memory'] == new_mem_limit
 
     @requires_api_version('1.23')
     def test_restart_policy_update(self):
@@ -1307,18 +1374,17 @@ class ContainerUpdateTest(BaseAPIIntegrationTest):
         self.client.update_container(container,
                                      restart_policy=new_restart_policy)
         inspect_data = self.client.inspect_container(container)
-        self.assertEqual(
-            inspect_data['HostConfig']['RestartPolicy']['MaximumRetryCount'],
+        assert (
+            inspect_data['HostConfig']['RestartPolicy']['MaximumRetryCount'] ==
             new_restart_policy['MaximumRetryCount']
         )
-        self.assertEqual(
-            inspect_data['HostConfig']['RestartPolicy']['Name'],
+        assert (
+            inspect_data['HostConfig']['RestartPolicy']['Name'] ==
             new_restart_policy['Name']
         )
 
 
 class ContainerCPUTest(BaseAPIIntegrationTest):
-    @requires_api_version('1.18')
     def test_container_cpu_shares(self):
         cpu_shares = 512
         container = self.client.create_container(
@@ -1329,9 +1395,8 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
         inspect_data = self.client.inspect_container(container)
-        self.assertEqual(inspect_data['HostConfig']['CpuShares'], 512)
+        assert inspect_data['HostConfig']['CpuShares'] == 512
 
-    @requires_api_version('1.18')
     def test_container_cpuset(self):
         cpuset_cpus = "0,1"
         container = self.client.create_container(
@@ -1342,7 +1407,7 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
         inspect_data = self.client.inspect_container(container)
-        self.assertEqual(inspect_data['HostConfig']['CpusetCpus'], cpuset_cpus)
+        assert inspect_data['HostConfig']['CpusetCpus'] == cpuset_cpus
 
     @requires_api_version('1.25')
     def test_create_with_runtime(self):
@@ -1386,11 +1451,11 @@ class LinkTest(BaseAPIIntegrationTest):
         # Link is gone
         containers = self.client.containers(all=True)
         retrieved = [x for x in containers if link_name in x['Names']]
-        self.assertEqual(len(retrieved), 0)
+        assert len(retrieved) == 0
 
         # Containers are still there
         retrieved = [
             x for x in containers if x['Id'].startswith(container1_id) or
             x['Id'].startswith(container2_id)
         ]
-        self.assertEqual(len(retrieved), 2)
+        assert len(retrieved) == 2

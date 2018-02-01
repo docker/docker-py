@@ -1,6 +1,5 @@
 import json
 import struct
-import warnings
 from functools import partial
 
 import requests
@@ -27,12 +26,12 @@ from ..constants import (
     MINIMUM_DOCKER_API_VERSION
 )
 from ..errors import (
-    DockerException, TLSParameterError,
+    DockerException, InvalidVersion, TLSParameterError,
     create_api_error_from_http_exception
 )
 from ..tls import TLSConfig
 from ..transport import SSLAdapter, UnixAdapter
-from ..utils import utils, check_resource, update_headers
+from ..utils import utils, check_resource, update_headers, config
 from ..utils.socket import frames_iter, socket_raw_iter
 from ..utils.json_stream import json_stream
 try:
@@ -87,6 +86,7 @@ class APIClient(
     """
 
     __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
+                                              '_general_configs',
                                               '_version',
                                               'base_url',
                                               'timeout']
@@ -105,7 +105,10 @@ class APIClient(
         self.timeout = timeout
         self.headers['User-Agent'] = user_agent
 
-        self._auth_configs = auth.load_config()
+        self._general_configs = config.load_general_config()
+        self._auth_configs = auth.load_config(
+            config_dict=self._general_configs
+        )
 
         base_url = utils.parse_host(
             base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)
@@ -156,11 +159,9 @@ class APIClient(
                 )
             )
         if utils.version_lt(self._version, MINIMUM_DOCKER_API_VERSION):
-            warnings.warn(
-                'The minimum API version supported is {}, but you are using '
-                'version {}. It is recommended you either upgrade Docker '
-                'Engine or use an older version of Docker SDK for '
-                'Python.'.format(MINIMUM_DOCKER_API_VERSION, self._version)
+            raise InvalidVersion(
+                'API versions below {} are no longer supported by this '
+                'library.'.format(MINIMUM_DOCKER_API_VERSION)
             )
 
     def _retrieve_server_version(self):
@@ -349,17 +350,8 @@ class APIClient(
                 break
             yield data
 
-    def _stream_raw_result_old(self, response):
-        ''' Stream raw output for API versions below 1.6 '''
-        self._raise_for_status(response)
-        for line in response.iter_lines(chunk_size=1,
-                                        decode_unicode=True):
-            # filter out keep-alive new lines
-            if line:
-                yield line
-
     def _stream_raw_result(self, response):
-        ''' Stream result for TTY-enabled container above API 1.6 '''
+        ''' Stream result for TTY-enabled container '''
         self._raise_for_status(response)
         for out in response.iter_content(chunk_size=1, decode_unicode=True):
             yield out
@@ -415,11 +407,6 @@ class APIClient(
         return self._get_result_tty(stream, res, self._check_is_tty(container))
 
     def _get_result_tty(self, stream, res, is_tty):
-        # Stream multi-plexing was only introduced in API v1.6. Anything
-        # before that needs old-style streaming.
-        if utils.compare_version('1.6', self._version) < 0:
-            return self._stream_raw_result_old(res)
-
         # We should also use raw streaming (without keep-alives)
         # if we're dealing with a tty-enabled container.
         if is_tty:

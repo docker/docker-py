@@ -1,6 +1,6 @@
 import copy
-from docker.errors import create_unexpected_kwargs_error
-from docker.types import TaskTemplate, ContainerSpec
+from docker.errors import create_unexpected_kwargs_error, InvalidArgument
+from docker.types import TaskTemplate, ContainerSpec, ServiceMode
 from .resource import Model, Collection
 
 
@@ -105,6 +105,25 @@ class Service(Model):
         )
         return self.client.api.service_logs(self.id, is_tty=is_tty, **kwargs)
 
+    def scale(self, replicas):
+        """
+        Scale service container.
+
+        Args:
+            replicas (int): The number of containers that should be running.
+
+        Returns:
+            ``True``if successful.
+        """
+
+        if 'Global' in self.attrs['Spec']['Mode'].keys():
+            raise InvalidArgument('Cannot scale a global container')
+
+        service_mode = ServiceMode('replicated', replicas)
+        return self.client.api.update_service(self.id, self.version,
+                                              service_mode,
+                                              fetch_current_spec=True)
+
 
 class ServiceCollection(Collection):
     """Services on the Docker server."""
@@ -125,6 +144,8 @@ class ServiceCollection(Collection):
             env (list of str): Environment variables, in the form
                 ``KEY=val``.
             hostname (string): Hostname to set on the container.
+            isolation (string): Isolation technology used by the service's
+                containers. Only used for Windows containers.
             labels (dict): Labels to apply to the service.
             log_driver (str): Log driver to use for containers.
             log_driver_options (dict): Log driver options.
@@ -236,6 +257,7 @@ CONTAINER_SPEC_KWARGS = [
     'hostname',
     'hosts',
     'image',
+    'isolation',
     'labels',
     'mounts',
     'open_stdin',

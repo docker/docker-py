@@ -5,6 +5,7 @@ import unittest
 
 from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID, FAKE_EXEC_ID
 from .fake_api_client import make_fake_client
+import pytest
 
 
 class ContainerCollectionTest(unittest.TestCase):
@@ -101,6 +102,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'volumename:/mnt/vol3',
                 '/volumewithnohostpath',
                 '/anothervolumewithnohostpath:ro',
+                'C:\\windows\\path:D:\\hello\\world:rw'
             ],
             volumes_from=['container'],
             working_dir='/code'
@@ -119,7 +121,8 @@ class ContainerCollectionTest(unittest.TestCase):
                     '/var/www:/mnt/vol1:ro',
                     'volumename:/mnt/vol3',
                     '/volumewithnohostpath',
-                    '/anothervolumewithnohostpath:ro'
+                    '/anothervolumewithnohostpath:ro',
+                    'C:\\windows\\path:D:\\hello\\world:rw'
                 ],
                 'BlkioDeviceReadBps': [{'Path': 'foo', 'Rate': 3}],
                 'BlkioDeviceReadIOps': [{'Path': 'foo', 'Rate': 3}],
@@ -190,7 +193,8 @@ class ContainerCollectionTest(unittest.TestCase):
                 '/mnt/vol1',
                 '/mnt/vol3',
                 '/volumewithnohostpath',
-                '/anothervolumewithnohostpath'
+                '/anothervolumewithnohostpath',
+                'D:\\hello\\world'
             ],
             working_dir='/code'
         )
@@ -225,17 +229,17 @@ class ContainerCollectionTest(unittest.TestCase):
         container = client.containers.run('alpine', 'sleep 300', detach=True)
 
         assert container.id == FAKE_CONTAINER_ID
-        client.api.pull.assert_called_with('alpine', tag=None)
+        client.api.pull.assert_called_with('alpine', platform=None, tag=None)
 
     def test_run_with_error(self):
         client = make_fake_client()
         client.api.logs.return_value = "some error"
-        client.api.wait.return_value = 1
+        client.api.wait.return_value = {'StatusCode': 1}
 
-        with self.assertRaises(docker.errors.ContainerError) as cm:
+        with pytest.raises(docker.errors.ContainerError) as cm:
             client.containers.run('alpine', 'echo hello world')
-        assert cm.exception.exit_status == 1
-        assert "some error" in str(cm.exception)
+        assert cm.value.exit_status == 1
+        assert "some error" in cm.exconly()
 
     def test_run_with_image_object(self):
         client = make_fake_client()
@@ -256,8 +260,8 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_not_called()
 
         client = make_fake_client()
-        client.api.wait.return_value = 1
-        with self.assertRaises(docker.errors.ContainerError):
+        client.api.wait.return_value = {'StatusCode': 1}
+        with pytest.raises(docker.errors.ContainerError):
             client.containers.run("alpine")
         client.api.remove_container.assert_not_called()
 
@@ -266,19 +270,19 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)
 
         client = make_fake_client()
-        client.api.wait.return_value = 1
-        with self.assertRaises(docker.errors.ContainerError):
+        client.api.wait.return_value = {'StatusCode': 1}
+        with pytest.raises(docker.errors.ContainerError):
             client.containers.run("alpine", remove=True)
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)
 
         client = make_fake_client()
         client.api._version = '1.24'
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             client.containers.run("alpine", detach=True, remove=True)
 
         client = make_fake_client()
         client.api._version = '1.23'
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             client.containers.run("alpine", detach=True, remove=True)
 
         client = make_fake_client()
@@ -394,10 +398,24 @@ class ContainerTest(unittest.TestCase):
         container.exec_run("echo hello world", privileged=True, stream=True)
         client.api.exec_create.assert_called_with(
             FAKE_CONTAINER_ID, "echo hello world", stdout=True, stderr=True,
-            stdin=False, tty=False, privileged=True, user='', environment=None
+            stdin=False, tty=False, privileged=True, user='', environment=None,
+            workdir=None
         )
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False
+        )
+
+    def test_exec_run_failure(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.exec_run("docker ps", privileged=True, stream=False)
+        client.api.exec_create.assert_called_with(
+            FAKE_CONTAINER_ID, "docker ps", stdout=True, stderr=True,
+            stdin=False, tty=False, privileged=True, user='', environment=None,
+            workdir=None
+        )
+        client.api.exec_start.assert_called_with(
+            FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False
         )
 
     def test_export(self):

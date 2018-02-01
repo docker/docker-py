@@ -14,26 +14,26 @@ from six.moves import socketserver
 
 import docker
 
-from ..helpers import requires_api_version
+from ..helpers import requires_api_version, requires_experimental
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
 
 class ListImagesTest(BaseAPIIntegrationTest):
     def test_images(self):
         res1 = self.client.images(all=True)
-        self.assertIn('Id', res1[0])
+        assert 'Id' in res1[0]
         res10 = res1[0]
-        self.assertIn('Created', res10)
-        self.assertIn('RepoTags', res10)
+        assert 'Created' in res10
+        assert 'RepoTags' in res10
         distinct = []
         for img in res1:
             if img['Id'] not in distinct:
                 distinct.append(img['Id'])
-        self.assertEqual(len(distinct), self.client.info()['Images'])
+        assert len(distinct) == self.client.info()['Images']
 
     def test_images_quiet(self):
         res1 = self.client.images(quiet=True)
-        self.assertEqual(type(res1[0]), six.text_type)
+        assert type(res1[0]) == six.text_type
 
 
 class PullImageTest(BaseAPIIntegrationTest):
@@ -44,12 +44,10 @@ class PullImageTest(BaseAPIIntegrationTest):
             pass
         res = self.client.pull('hello-world', tag='latest')
         self.tmp_imgs.append('hello-world')
-        self.assertEqual(type(res), six.text_type)
-        self.assertGreaterEqual(
-            len(self.client.images('hello-world')), 1
-        )
+        assert type(res) == six.text_type
+        assert len(self.client.images('hello-world')) >= 1
         img_info = self.client.inspect_image('hello-world')
-        self.assertIn('Id', img_info)
+        assert 'Id' in img_info
 
     def test_pull_streaming(self):
         try:
@@ -61,11 +59,18 @@ class PullImageTest(BaseAPIIntegrationTest):
         self.tmp_imgs.append('hello-world')
         for chunk in stream:
             assert isinstance(chunk, dict)
-        self.assertGreaterEqual(
-            len(self.client.images('hello-world')), 1
-        )
+        assert len(self.client.images('hello-world')) >= 1
         img_info = self.client.inspect_image('hello-world')
-        self.assertIn('Id', img_info)
+        assert 'Id' in img_info
+
+    @requires_api_version('1.32')
+    @requires_experimental(until=None)
+    def test_pull_invalid_platform(self):
+        with pytest.raises(docker.errors.APIError) as excinfo:
+            self.client.pull('hello-world', platform='foobar')
+
+        assert excinfo.value.status_code == 500
+        assert 'invalid platform' in excinfo.exconly()
 
 
 class CommitTest(BaseAPIIntegrationTest):
@@ -75,18 +80,18 @@ class CommitTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
         res = self.client.commit(id)
-        self.assertIn('Id', res)
+        assert 'Id' in res
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
         img = self.client.inspect_image(img_id)
-        self.assertIn('Container', img)
-        self.assertTrue(img['Container'].startswith(id))
-        self.assertIn('ContainerConfig', img)
-        self.assertIn('Image', img['ContainerConfig'])
-        self.assertEqual(BUSYBOX, img['ContainerConfig']['Image'])
+        assert 'Container' in img
+        assert img['Container'].startswith(id)
+        assert 'ContainerConfig' in img
+        assert 'Image' in img['ContainerConfig']
+        assert BUSYBOX == img['ContainerConfig']['Image']
         busybox_id = self.client.inspect_image(BUSYBOX)['Id']
-        self.assertIn('Parent', img)
-        self.assertEqual(img['Parent'], busybox_id)
+        assert 'Parent' in img
+        assert img['Parent'] == busybox_id
 
     def test_commit_with_changes(self):
         cid = self.client.create_container(BUSYBOX, ['touch', '/test'])
@@ -110,14 +115,14 @@ class RemoveImageTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
         res = self.client.commit(id)
-        self.assertIn('Id', res)
+        assert 'Id' in res
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
         logs = self.client.remove_image(img_id, force=True)
-        self.assertIn({"Deleted": img_id}, logs)
+        assert {"Deleted": img_id} in logs
         images = self.client.images(all=True)
         res = [x for x in images if x['Id'].startswith(img_id)]
-        self.assertEqual(len(res), 0)
+        assert len(res) == 0
 
 
 class ImportImageTest(BaseAPIIntegrationTest):
@@ -171,7 +176,7 @@ class ImportImageTest(BaseAPIIntegrationTest):
         result_text = statuses.splitlines()[-1]
         result = json.loads(result_text)
 
-        self.assertNotIn('error', result)
+        assert 'error' not in result
 
         img_id = result['status']
         self.tmp_imgs.append(img_id)
@@ -186,9 +191,9 @@ class ImportImageTest(BaseAPIIntegrationTest):
         result_text = statuses.splitlines()[-1]
         result = json.loads(result_text)
 
-        self.assertNotIn('error', result)
+        assert 'error' not in result
 
-        self.assertIn('status', result)
+        assert 'status' in result
         img_id = result['status']
         self.tmp_imgs.append(img_id)
 
@@ -201,9 +206,9 @@ class ImportImageTest(BaseAPIIntegrationTest):
         result_text = statuses.splitlines()[-1]
         result = json.loads(result_text)
 
-        self.assertNotIn('error', result)
+        assert 'error' not in result
 
-        self.assertIn('status', result)
+        assert 'status' in result
         img_id = result['status']
         self.tmp_imgs.append(img_id)
 
@@ -296,9 +301,9 @@ class ImportImageTest(BaseAPIIntegrationTest):
         result_text = statuses.splitlines()[-1]
         result = json.loads(result_text)
 
-        self.assertNotIn('error', result)
+        assert 'error' not in result
 
-        self.assertIn('status', result)
+        assert 'status' in result
         img_id = result['status']
         self.tmp_imgs.append(img_id)
 
@@ -320,7 +325,7 @@ class PruneImagesTest(BaseAPIIntegrationTest):
         img_id = self.client.inspect_image('hello-world')['Id']
         result = self.client.prune_images()
         assert img_id not in [
-            img.get('Deleted') for img in result['ImagesDeleted']
+            img.get('Deleted') for img in result.get('ImagesDeleted') or []
         ]
         result = self.client.prune_images({'dangling': False})
         assert result['SpaceReclaimed'] > 0
@@ -330,3 +335,25 @@ class PruneImagesTest(BaseAPIIntegrationTest):
         assert img_id in [
             img.get('Deleted') for img in result['ImagesDeleted']
         ]
+
+
+class SaveLoadImagesTest(BaseAPIIntegrationTest):
+    @requires_api_version('1.23')
+    def test_get_image_load_image(self):
+        with tempfile.TemporaryFile() as f:
+            stream = self.client.get_image(BUSYBOX)
+            for chunk in stream:
+                f.write(chunk)
+
+            f.seek(0)
+            result = self.client.load_image(f.read())
+
+        success = False
+        result_line = 'Loaded image: {}\n'.format(BUSYBOX)
+        for data in result:
+            print(data)
+            if 'stream' in data:
+                if data['stream'] == result_line:
+                    success = True
+                    break
+        assert success is True

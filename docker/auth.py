@@ -1,18 +1,15 @@
 import base64
 import json
 import logging
-import os
 
 import dockerpycreds
 import six
 
 from . import errors
-from .constants import IS_WINDOWS_PLATFORM
+from .utils import config
 
 INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://index.{0}/v1/'.format(INDEX_NAME)
-DOCKER_CONFIG_FILENAME = os.path.join('.docker', 'config.json')
-LEGACY_DOCKER_CONFIG_FILENAME = '.dockercfg'
 TOKEN_USERNAME = '<token>'
 
 log = logging.getLogger(__name__)
@@ -101,14 +98,15 @@ def resolve_authconfig(authconfig, registry=None):
     registry = resolve_index_name(registry) if registry else INDEX_NAME
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
 
-    if registry in authconfig:
+    authdict = authconfig.get('auths', {})
+    if registry in authdict:
         log.debug("Found {0}".format(repr(registry)))
-        return authconfig[registry]
+        return authdict[registry]
 
-    for key, config in six.iteritems(authconfig):
+    for key, conf in six.iteritems(authdict):
         if resolve_index_name(key) == registry:
             log.debug("Found {0}".format(repr(key)))
-            return config
+            return conf
 
     log.debug("No entry found")
     return None
@@ -223,45 +221,7 @@ def parse_auth(entries, raise_on_error=False):
     return conf
 
 
-def find_config_file(config_path=None):
-    paths = list(filter(None, [
-        config_path,  # 1
-        config_path_from_environment(),  # 2
-        os.path.join(home_dir(), DOCKER_CONFIG_FILENAME),  # 3
-        os.path.join(home_dir(), LEGACY_DOCKER_CONFIG_FILENAME),  # 4
-    ]))
-
-    log.debug("Trying paths: {0}".format(repr(paths)))
-
-    for path in paths:
-        if os.path.exists(path):
-            log.debug("Found file at path: {0}".format(path))
-            return path
-
-    log.debug("No config file found")
-
-    return None
-
-
-def config_path_from_environment():
-    config_dir = os.environ.get('DOCKER_CONFIG')
-    if not config_dir:
-        return None
-    return os.path.join(config_dir, os.path.basename(DOCKER_CONFIG_FILENAME))
-
-
-def home_dir():
-    """
-    Get the user's home directory, using the same logic as the Docker Engine
-    client - use %USERPROFILE% on Windows, $HOME/getuid on POSIX.
-    """
-    if IS_WINDOWS_PLATFORM:
-        return os.environ.get('USERPROFILE', '')
-    else:
-        return os.path.expanduser('~')
-
-
-def load_config(config_path=None):
+def load_config(config_path=None, config_dict=None):
     """
     Loads authentication data from a Docker configuration file in the given
     root directory or if config_path is passed use given path.
@@ -269,39 +229,45 @@ def load_config(config_path=None):
         explicit config_path parameter > DOCKER_CONFIG environment variable >
         ~/.docker/config.json > ~/.dockercfg
     """
-    config_file = find_config_file(config_path)
 
-    if not config_file:
-        return {}
+    if not config_dict:
+        config_file = config.find_config_file(config_path)
 
-    try:
-        with open(config_file) as f:
-            data = json.load(f)
-            res = {}
-            if data.get('auths'):
-                log.debug("Found 'auths' section")
-                res.update(parse_auth(data['auths'], raise_on_error=True))
-            if data.get('HttpHeaders'):
-                log.debug("Found 'HttpHeaders' section")
-                res.update({'HttpHeaders': data['HttpHeaders']})
-            if data.get('credsStore'):
-                log.debug("Found 'credsStore' section")
-                res.update({'credsStore': data['credsStore']})
-            if data.get('credHelpers'):
-                log.debug("Found 'credHelpers' section")
-                res.update({'credHelpers': data['credHelpers']})
-            if res:
-                return res
-            else:
-                log.debug("Couldn't find 'auths' or 'HttpHeaders' sections")
-                f.seek(0)
-                return parse_auth(json.load(f))
-    except (IOError, KeyError, ValueError) as e:
-        # Likely missing new Docker config file or it's in an
-        # unknown format, continue to attempt to read old location
-        # and format.
-        log.debug(e)
+        if not config_file:
+            return {}
+        try:
+            with open(config_file) as f:
+                config_dict = json.load(f)
+        except (IOError, KeyError, ValueError) as e:
+            # Likely missing new Docker config file or it's in an
+            # unknown format, continue to attempt to read old location
+            # and format.
+            log.debug(e)
+            return _load_legacy_config(config_file)
 
+    res = {}
+    if config_dict.get('auths'):
+        log.debug("Found 'auths' section")
+        res.update({
+            'auths': parse_auth(config_dict.pop('auths'), raise_on_error=True)
+        })
+    if config_dict.get('credsStore'):
+        log.debug("Found 'credsStore' section")
+        res.update({'credsStore': config_dict.pop('credsStore')})
+    if config_dict.get('credHelpers'):
+        log.debug("Found 'credHelpers' section")
+        res.update({'credHelpers': config_dict.pop('credHelpers')})
+    if res:
+        return res
+
+    log.debug(
+        "Couldn't find auth-related section ; attempting to interpret"
+        "as auth-only file"
+    )
+    return parse_auth(config_dict)
+
+
+def _load_legacy_config(config_file):
     log.debug("Attempting to parse legacy auth file format")
     try:
         data = []

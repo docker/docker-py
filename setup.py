@@ -26,15 +26,18 @@ requirements = [
     'docker-pycreds >= 0.2.1'
 ]
 
-if sys.platform == 'win32':
-    requirements.append('pypiwin32 >= 219')
-
 extras_require = {
     ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
     # While not imported explicitly, the ipaddress module is required for
     # ssl_match_hostname to verify hosts match with certificates via
     # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
     ':python_version < "3.3"': 'ipaddress >= 1.0.16',
+
+    # win32 APIs if on Windows (required for npipe support)
+    # Python 3.6 is only compatible with v220 ; Python < 3.5 is not supported
+    # on v220 ; ALL versions are broken for v222 (as of 2018-01-26)
+    ':sys_platform == "win32" and python_version < "3.6"': 'pypiwin32==219',
+    ':sys_platform == "win32" and python_version >= "3.6"': 'pypiwin32==220',
 
     # If using docker-py over TLS, highly recommend this option is
     # pip-installed or pinned.
@@ -87,6 +90,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],

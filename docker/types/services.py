@@ -102,19 +102,21 @@ class ContainerSpec(dict):
         healthcheck (Healthcheck): Healthcheck
             configuration for this service.
         hosts (:py:class:`dict`): A set of host to IP mappings to add to
-            the container's `hosts` file.
+            the container's ``hosts`` file.
         dns_config (DNSConfig): Specification for DNS
             related configurations in resolver configuration file.
         configs (:py:class:`list`): List of :py:class:`ConfigReference` that
             will be exposed to the service.
         privileges (Privileges): Security options for the service's containers.
+        isolation (string): Isolation technology used by the service's
+            containers. Only used for Windows containers.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
                  stop_grace_period=None, secrets=None, tty=None, groups=None,
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
-                 privileges=None):
+                 privileges=None, isolation=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -177,6 +179,9 @@ class ContainerSpec(dict):
             self['OpenStdin'] = open_stdin
         if read_only is not None:
             self['ReadOnly'] = read_only
+
+        if isolation is not None:
+            self['Isolation'] = isolation
 
 
 class Mount(dict):
@@ -444,9 +449,10 @@ class EndpointSpec(dict):
           balancing between tasks (``'vip'`` or ``'dnsrr'``). Defaults to
           ``'vip'`` if not provided.
         ports (dict): Exposed ports that this service is accessible on from the
-          outside, in the form of ``{ target_port: published_port }`` or
-          ``{ target_port: (published_port, protocol) }``. Ports can only be
-          provided if the ``vip`` resolution mode is used.
+          outside, in the form of ``{ published_port: target_port }`` or
+          ``{ published_port: <port_config_tuple> }``. Port config tuple format
+          is ``(target_port [, protocol [, publish_mode]])``.
+          Ports can only be provided if the ``vip`` resolution mode is used.
     """
     def __init__(self, mode=None, ports=None):
         if ports:
@@ -472,8 +478,15 @@ def convert_service_ports(ports):
 
         if isinstance(v, tuple):
             port_spec['TargetPort'] = v[0]
-            if len(v) == 2:
+            if len(v) >= 2 and v[1] is not None:
                 port_spec['Protocol'] = v[1]
+            if len(v) == 3:
+                port_spec['PublishMode'] = v[2]
+            if len(v) > 3:
+                raise ValueError(
+                    'Service port configuration can have at most 3 elements: '
+                    '(target_port, protocol, mode)'
+                )
         else:
             port_spec['TargetPort'] = v
 

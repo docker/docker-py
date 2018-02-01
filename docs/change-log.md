@@ -1,6 +1,83 @@
 Change log
 ==========
 
+3.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/39?closed=1)
+
+### Breaking changes
+
+* Support for API version < 1.21 has been removed.
+* The following methods have been removed:
+  * `APIClient.copy` has been removed. Users should use `APIClient.get_archive`
+    instead.
+  * `APIClient.insert` has been removed. Users may use `APIClient.put_archive`
+    combined with `APIClient.commit` to replicate the method's behavior.
+  * `utils.ping_registry` and `utils.ping` have been removed.
+* The following parameters have been removed:
+  * `stream` in `APIClient.build`
+  * `cpu_shares`, `cpuset`, `dns`, `mem_limit`, `memswap_limit`,
+    `volume_driver`, `volumes_from` in `APIClient.create_container`. These are
+    all replaced by their equivalent in `create_host_config`
+  * `insecure_registry` in `APIClient.login`, `APIClient.pull`,
+    `APIClient.push`, `DockerClient.images.push` and `DockerClient.images.pull`
+  * `viz` in `APIClient.images`
+* The following parameters have been renamed:
+  * `endpoint_config` in `APIClient.create_service` and
+    `APIClient.update_service` is now `endpoint_spec`
+  * `name` in `DockerClient.images.pull` is now `repository`
+* The return value for the following methods has changed:
+  * `APIClient.wait` and `Container.wait` now return a ``dict`` representing
+    the API's response instead of returning the status code directly.
+  * `DockerClient.images.load` now returns a list of `Image` objects that have
+    for the images that were loaded, instead of a log stream.
+  * `Container.exec_run` now returns a tuple of (exit_code, output) instead of
+    just the output.
+  * `DockerClient.images.build` now returns a tuple of (image, build_logs)
+    instead of just the image object.
+  * `APIClient.export`, `APIClient.get_archive` and `APIClient.get_image` now
+    return generators streaming the raw binary data from the server's response.
+  * When no tag is provided, `DockerClient.images.pull` now returns a list of
+    `Image`s associated to the pulled repository instead of just the `latest`
+    image.
+
+### Features
+
+* The Docker Python SDK is now officially supported on Python 3.6
+* Added `scale` method to the `Service` model ; this method is a shorthand
+  that calls `update_service` with the required number of replicas
+* Added support for the `platform` parameter in `APIClient.build`,
+  `DockerClient.images.build`, `APIClient.pull` and `DockerClient.images.pull`
+* Added support for the `until` parameter in `APIClient.logs` and
+  `Container.logs`
+* Added support for the `workdir` argument in `APIClient.exec_create` and
+  `Container.exec_run`
+* Added support for the `condition` argument in `APIClient.wait` and
+  `Container.wait`
+* Users can now specify a publish mode for ports in `EndpointSpec` using
+  the `{published_port: (target_port, protocol, publish_mode)}` syntax.
+* Added support for the `isolation` parameter in `ContainerSpec`,
+  `DockerClient.services.create` and `Service.update`
+* `APIClient.attach_socket`, `APIClient.exec_create` now allow specifying a
+  `detach_keys` combination. If unspecified, the value from the `config.json`
+  file will be used
+* TLS connections now default to using the TLSv1.2 protocol when available
+
+
+### Bugfixes
+
+* Fixed a bug where whitespace-only lines in `.dockerignore` would break builds
+  on Windows
+* Fixed a bug where broken symlinks inside a build context would cause the
+  build to fail
+* Fixed a bug where specifying volumes with Windows drives would cause
+  incorrect parsing in `DockerClient.containers.run`
+* Fixed a bug where the `networks` data provided to `create_service` and
+  `update_service` would be sent incorrectly to the Engine with API < 1.25
+* Pulling all tags from a repository with no `latest` tag using the
+  `DockerClient` will no longer raise a `NotFound` exception
+
 2.7.0
 -----
 

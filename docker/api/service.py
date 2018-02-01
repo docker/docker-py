@@ -1,9 +1,8 @@
-import warnings
 from .. import auth, errors, utils
 from ..types import ServiceMode
 
 
-def _check_api_features(version, task_template, update_config):
+def _check_api_features(version, task_template, update_config, endpoint_spec):
 
     def raise_version_error(param, min_version):
         raise errors.InvalidVersion(
@@ -22,6 +21,11 @@ def _check_api_features(version, task_template, update_config):
         if utils.version_lt(version, '1.29'):
             if 'Order' in update_config:
                 raise_version_error('UpdateConfig.order', '1.29')
+
+    if endpoint_spec is not None:
+        if utils.version_lt(version, '1.32') and 'Ports' in endpoint_spec:
+            if any(p.get('PublishMode') for p in endpoint_spec['Ports']):
+                raise_version_error('EndpointSpec.Ports[].mode', '1.32')
 
     if task_template is not None:
         if 'ForceUpdate' in task_template and utils.version_lt(
@@ -64,6 +68,10 @@ def _check_api_features(version, task_template, update_config):
                     raise_version_error('ContainerSpec.configs', '1.30')
                 if container_spec.get('Privileges') is not None:
                     raise_version_error('ContainerSpec.privileges', '1.30')
+
+            if utils.version_lt(version, '1.35'):
+                if container_spec.get('Isolation') is not None:
+                    raise_version_error('ContainerSpec.isolation', '1.35')
 
 
 def _merge_task_template(current, override):
@@ -114,14 +122,10 @@ class ServiceApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if endpoint_config is not None:
-            warnings.warn(
-                'endpoint_config has been renamed to endpoint_spec.',
-                DeprecationWarning
-            )
-            endpoint_spec = endpoint_config
 
-        _check_api_features(self._version, task_template, update_config)
+        _check_api_features(
+            self._version, task_template, update_config, endpoint_spec
+        )
 
         url = self._url('/services/create')
         headers = {}
@@ -137,6 +141,8 @@ class ServiceApiMixin(object):
         auth_header = auth.get_config_header(self, registry)
         if auth_header:
             headers['X-Registry-Auth'] = auth_header
+        if utils.version_lt(self._version, '1.25'):
+            networks = networks or task_template.pop('Networks', None)
         data = {
             'Name': name,
             'Labels': labels,
@@ -357,14 +363,10 @@ class ServiceApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if endpoint_config is not None:
-            warnings.warn(
-                'endpoint_config has been renamed to endpoint_spec.',
-                DeprecationWarning
-            )
-            endpoint_spec = endpoint_config
 
-        _check_api_features(self._version, task_template, update_config)
+        _check_api_features(
+            self._version, task_template, update_config, endpoint_spec
+        )
 
         if fetch_current_spec:
             inspect_defaults = True
@@ -411,7 +413,12 @@ class ServiceApiMixin(object):
 
         if networks is not None:
             converted_networks = utils.convert_service_networks(networks)
-            data['TaskTemplate']['Networks'] = converted_networks
+            if utils.version_lt(self._version, '1.25'):
+                data['Networks'] = converted_networks
+            else:
+                data['TaskTemplate']['Networks'] = converted_networks
+        elif utils.version_lt(self._version, '1.25'):
+            data['Networks'] = current.get('Networks')
         elif data['TaskTemplate'].get('Networks') is None:
             current_task_template = current.get('TaskTemplate', {})
             current_networks = current_task_template.get('Networks')
