@@ -27,7 +27,7 @@ class Service(Model):
         """
         The name of the image used by the service.
         """
-        return self.attrs.get('Spec').get('TaskTemplate').get('ContainerSpec').get('Image')
+        return self.attrs['Spec']['TaskTemplate']['ContainerSpec']['Image']
     
     def remove(self):
         """
