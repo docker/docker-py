@@ -42,6 +42,42 @@ Change log
     `Image`s associated to the pulled repository instead of just the `latest`
     image.
 
+### Features
+
+* The Docker Python SDK is now officially supported on Python 3.6
+* Added `scale` method to the `Service` model ; this method is a shorthand
+  that calls `update_service` with the required number of replicas
+* Added support for the `platform` parameter in `APIClient.build`,
+  `DockerClient.images.build`, `APIClient.pull` and `DockerClient.images.pull`
+* Added support for the `until` parameter in `APIClient.logs` and
+  `Container.logs`
+* Added support for the `workdir` argument in `APIClient.exec_create` and
+  `Container.exec_run`
+* Added support for the `condition` argument in `APIClient.wait` and
+  `Container.wait`
+* Users can now specify a publish mode for ports in `EndpointSpec` using
+  the `{published_port: (target_port, protocol, publish_mode)}` syntax.
+* Added support for the `isolation` parameter in `ContainerSpec`,
+  `DockerClient.services.create` and `Service.update`
+* `APIClient.attach_socket`, `APIClient.exec_create` now allow specifying a
+  `detach_keys` combination. If unspecified, the value from the `config.json`
+  file will be used
+* TLS connections now default to using the TLSv1.2 protocol when available
+
+
+### Bugfixes
+
+* Fixed a bug where whitespace-only lines in `.dockerignore` would break builds
+  on Windows
+* Fixed a bug where broken symlinks inside a build context would cause the
+  build to fail
+* Fixed a bug where specifying volumes with Windows drives would cause
+  incorrect parsing in `DockerClient.containers.run`
+* Fixed a bug where the `networks` data provided to `create_service` and
+  `update_service` would be sent incorrectly to the Engine with API < 1.25
+* Pulling all tags from a repository with no `latest` tag using the
+  `DockerClient` will no longer raise a `NotFound` exception
+
 2.7.0
 -----
 

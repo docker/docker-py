@@ -244,6 +244,8 @@ class Container(Model):
             since (datetime or int): Show logs since a given datetime or
                 integer epoch (in seconds)
             follow (bool): Follow log output
+            until (datetime or int): Show logs that occurred before the given
+                datetime or integer epoch (in seconds)
 
         Returns:
             (generator or str): Logs from the container.
