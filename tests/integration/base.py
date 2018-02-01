@@ -96,7 +96,7 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
         container = self.client.create_container(*args, **kwargs)
         self.tmp_containers.append(container)
         self.client.start(container)
-        exitcode = self.client.wait(container)
+        exitcode = self.client.wait(container)['StatusCode']
 
         if exitcode != 0:
             output = self.client.logs(container)

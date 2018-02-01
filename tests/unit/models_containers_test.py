@@ -234,7 +234,7 @@ class ContainerCollectionTest(unittest.TestCase):
     def test_run_with_error(self):
         client = make_fake_client()
         client.api.logs.return_value = "some error"
-        client.api.wait.return_value = 1
+        client.api.wait.return_value = {'StatusCode': 1}
 
         with pytest.raises(docker.errors.ContainerError) as cm:
             client.containers.run('alpine', 'echo hello world')
@@ -260,7 +260,7 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_not_called()
 
         client = make_fake_client()
-        client.api.wait.return_value = 1
+        client.api.wait.return_value = {'StatusCode': 1}
         with pytest.raises(docker.errors.ContainerError):
             client.containers.run("alpine")
         client.api.remove_container.assert_not_called()
@@ -270,7 +270,7 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)
 
         client = make_fake_client()
-        client.api.wait.return_value = 1
+        client.api.wait.return_value = {'StatusCode': 1}
         with pytest.raises(docker.errors.ContainerError):
             client.containers.run("alpine", remove=True)
         client.api.remove_container.assert_called_with(FAKE_CONTAINER_ID)

@@ -1,6 +1,47 @@
 Change log
 ==========
 
+3.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/39?closed=1)
+
+### Breaking changes
+
+* Support for API version < 1.21 has been removed.
+* The following methods have been removed:
+  * `APIClient.copy` has been removed. Users should use `APIClient.get_archive`
+    instead.
+  * `APIClient.insert` has been removed. Users may use `APIClient.put_archive`
+    combined with `APIClient.commit` to replicate the method's behavior.
+  * `utils.ping_registry` and `utils.ping` have been removed.
+* The following parameters have been removed:
+  * `stream` in `APIClient.build`
+  * `cpu_shares`, `cpuset`, `dns`, `mem_limit`, `memswap_limit`,
+    `volume_driver`, `volumes_from` in `APIClient.create_container`. These are
+    all replaced by their equivalent in `create_host_config`
+  * `insecure_registry` in `APIClient.login`, `APIClient.pull`,
+    `APIClient.push`, `DockerClient.images.push` and `DockerClient.images.pull`
+  * `viz` in `APIClient.images`
+* The following parameters have been renamed:
+  * `endpoint_config` in `APIClient.create_service` and
+    `APIClient.update_service` is now `endpoint_spec`
+  * `name` in `DockerClient.images.pull` is now `repository`
+* The return value for the following methods has changed:
+  * `APIClient.wait` and `Container.wait` now return a ``dict`` representing
+    the API's response instead of returning the status code directly.
+  * `DockerClient.images.load` now returns a list of `Image` objects that have
+    for the images that were loaded, instead of a log stream.
+  * `Container.exec_run` now returns a tuple of (exit_code, output) instead of
+    just the output.
+  * `DockerClient.images.build` now returns a tuple of (image, build_logs)
+    instead of just the image object.
+  * `APIClient.export`, `APIClient.get_archive` and `APIClient.get_image` now
+    return generators streaming the raw binary data from the server's response.
+  * When no tag is provided, `DockerClient.images.pull` now returns a list of
+    `Image`s associated to the pulled repository instead of just the `latest`
+    image.
+
 2.7.0
 -----
 

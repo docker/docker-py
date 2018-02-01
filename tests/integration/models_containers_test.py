@@ -309,8 +309,8 @@ class ContainerTest(BaseIntegrationTest):
         container = client.containers.run("alpine", "sh -c 'exit 0'",
                                           detach=True)
         self.tmp_containers.append(container.id)
-        assert container.wait() == 0
+        assert container.wait()['StatusCode'] == 0
         container = client.containers.run("alpine", "sh -c 'exit 1'",
                                           detach=True)
         self.tmp_containers.append(container.id)
-        assert container.wait() == 1
+        assert container.wait()['StatusCode'] == 1
