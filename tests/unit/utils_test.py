@@ -995,6 +995,18 @@ class TarTest(unittest.TestCase):
             tar_data = tarfile.open(fileobj=archive)
             assert sorted(tar_data.getnames()) == ['bar', 'foo']
 
+    def tar_test_negative_mtime_bug(self):
+        base = tempfile.mkdtemp()
+        filename = os.path.join(base, 'th.txt')
+        self.addCleanup(shutil.rmtree, base)
+        with open(filename, 'w') as f:
+            f.write('Invisible Full Moon')
+        os.utime(filename, (12345, -3600.0))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            assert tar_data.getnames() == ['th.txt']
+            assert tar_data.getmember('th.txt').mtime == -3600
+
 
 class ShouldCheckDirectoryTest(unittest.TestCase):
     exclude_patterns = [
