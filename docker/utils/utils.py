@@ -107,6 +107,10 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
             # ignore it and proceed.
             continue
 
+        # Workaround https://bugs.python.org/issue32713
+        if i.mtime < 0 or i.mtime > 8**11 - 1:
+            i.mtime = int(i.mtime)
+
         if constants.IS_WINDOWS_PLATFORM:
             # Windows doesn't keep track of the execute bit, so we make files
             # and directories executable by default.
