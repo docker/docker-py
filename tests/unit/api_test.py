@@ -212,6 +212,24 @@ class DockerApiTest(BaseAPIClientTest):
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
+    def test_login(self):
+        self.client.login('sakuya', 'izayoi')
+        fake_request.assert_called_with(
+            'POST', url_prefix + 'auth',
+            data=json.dumps({'username': 'sakuya', 'password': 'izayoi'}),
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            headers={'Content-Type': 'application/json'}
+        )
+
+        assert self.client._auth_configs['auths'] == {
+            'docker.io': {
+                'email': None,
+                'password': 'izayoi',
+                'username': 'sakuya',
+                'serveraddress': None,
+            }
+        }
+
     def test_events(self):
         self.client.events()
 
