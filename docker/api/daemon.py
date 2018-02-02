@@ -139,7 +139,7 @@ class DaemonApiMixin(object):
         if response.status_code == 200:
             if 'auths' not in self._auth_configs:
                 self._auth_configs['auths'] = {}
-            self._auth_configs[registry or auth.INDEX_NAME] = req_data
+            self._auth_configs['auths'][registry or auth.INDEX_NAME] = req_data
         return self._result(response, json=True)
 
     def ping(self):
