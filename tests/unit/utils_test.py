@@ -933,7 +933,10 @@ class TarTest(unittest.TestCase):
             tar_data = tarfile.open(fileobj=archive)
             assert sorted(tar_data.getnames()) == ['bar', 'foo']
 
-    @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No chmod on Windows')
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM or os.geteuid() == 0,
+        reason='root user always has access ; no chmod on Windows'
+    )
     def test_tar_with_inaccessible_file(self):
         base = tempfile.mkdtemp()
         full_path = os.path.join(base, 'foo')
@@ -944,8 +947,9 @@ class TarTest(unittest.TestCase):
         with pytest.raises(IOError) as ei:
             tar(base)
 
-        assert 'Can not access file in context: {}'.format(full_path) in \
+        assert 'Can not read file in context: {}'.format(full_path) in (
             ei.exconly()
+        )
 
     @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No symlinks on Windows')
     def test_tar_with_file_symlinks(self):
@@ -994,6 +998,18 @@ class TarTest(unittest.TestCase):
         with tar(base) as archive:
             tar_data = tarfile.open(fileobj=archive)
             assert sorted(tar_data.getnames()) == ['bar', 'foo']
+
+    def tar_test_negative_mtime_bug(self):
+        base = tempfile.mkdtemp()
+        filename = os.path.join(base, 'th.txt')
+        self.addCleanup(shutil.rmtree, base)
+        with open(filename, 'w') as f:
+            f.write('Invisible Full Moon')
+        os.utime(filename, (12345, -3600.0))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            assert tar_data.getnames() == ['th.txt']
+            assert tar_data.getmember('th.txt').mtime == -3600
 
 
 class ShouldCheckDirectoryTest(unittest.TestCase):

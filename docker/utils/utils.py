@@ -97,15 +97,15 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
     for path in files:
         full_path = os.path.join(root, path)
 
-        if os.lstat(full_path).st_mode & os.R_OK == 0:
-            raise IOError(
-                'Can not access file in context: {}'.format(full_path)
-            )
         i = t.gettarinfo(full_path, arcname=path)
         if i is None:
             # This happens when we encounter a socket file. We can safely
             # ignore it and proceed.
             continue
+
+        # Workaround https://bugs.python.org/issue32713
+        if i.mtime < 0 or i.mtime > 8**11 - 1:
+            i.mtime = int(i.mtime)
 
         if constants.IS_WINDOWS_PLATFORM:
             # Windows doesn't keep track of the execute bit, so we make files
@@ -117,7 +117,9 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
                 with open(full_path, 'rb') as f:
                     t.addfile(i, f)
             except IOError:
-                t.addfile(i, None)
+                raise IOError(
+                    'Can not read file in context: {}'.format(full_path)
+                )
         else:
             # Directories, FIFOs, symlinks... don't need to be read.
             t.addfile(i, None)
