@@ -1,6 +1,20 @@
 Change log
 ==========
 
+3.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/43?closed=1)
+
+### Bugfixes
+
+* Fixed a bug where `APIClient.login` didn't populate the `_auth_configs`
+  dictionary properly, causing subsequent `pull` and `push` operations to fail
+* Fixed a bug where some build context files were incorrectly recognized as
+  being inaccessible.
+* Fixed a bug where files with a negative mtime value would
+  cause errors when included in a build context
+
 3.0.0
 -----
 
