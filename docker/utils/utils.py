@@ -97,10 +97,6 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
     for path in files:
         full_path = os.path.join(root, path)
 
-        if os.lstat(full_path).st_mode & os.R_OK == 0:
-            raise IOError(
-                'Can not access file in context: {}'.format(full_path)
-            )
         i = t.gettarinfo(full_path, arcname=path)
         if i is None:
             # This happens when we encounter a socket file. We can safely
@@ -121,7 +117,9 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
                 with open(full_path, 'rb') as f:
                     t.addfile(i, f)
             except IOError:
-                t.addfile(i, None)
+                raise IOError(
+                    'Can not read file in context: {}'.format(full_path)
+                )
         else:
             # Directories, FIFOs, symlinks... don't need to be read.
             t.addfile(i, None)
