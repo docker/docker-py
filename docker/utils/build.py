@@ -46,7 +46,7 @@ def exclude_paths(root, patterns, dockerfile=None):
     )
 
 
-def should_include(path, exclude_patterns, include_patterns):
+def should_include(path, exclude_patterns, include_patterns, root):
     """
     Given a path, a list of exclude patterns, and a list of inclusion patterns:
 
@@ -61,11 +61,15 @@ def should_include(path, exclude_patterns, include_patterns):
             for pattern in include_patterns:
                 if match_path(path, pattern):
                     return True
+                if os.path.isabs(pattern) and match_path(
+                        os.path.join(root, path), pattern):
+                    return True
             return False
     return True
 
 
-def should_check_directory(directory_path, exclude_patterns, include_patterns):
+def should_check_directory(directory_path, exclude_patterns, include_patterns,
+                           root):
     """
     Given a directory path, a list of exclude patterns, and a list of inclusion
     patterns:
@@ -91,7 +95,7 @@ def should_check_directory(directory_path, exclude_patterns, include_patterns):
         if (pattern + '/').startswith(path_with_slash)
     ]
     directory_included = should_include(
-        directory_path, exclude_patterns, include_patterns
+        directory_path, exclude_patterns, include_patterns, root
     )
     return directory_included or len(possible_child_patterns) > 0
 
@@ -110,26 +114,28 @@ def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
         # traversal. See https://docs.python.org/2/library/os.html#os.walk
         dirs[:] = [
             d for d in dirs if should_check_directory(
-                os.path.join(parent, d), exclude_patterns, include_patterns
+                os.path.join(parent, d), exclude_patterns, include_patterns,
+                root
             )
         ]
 
         for path in dirs:
             if should_include(os.path.join(parent, path),
-                              exclude_patterns, include_patterns):
+                              exclude_patterns, include_patterns, root):
                 paths.append(os.path.join(parent, path))
 
         for path in files:
             if should_include(os.path.join(parent, path),
-                              exclude_patterns, include_patterns):
+                              exclude_patterns, include_patterns, root):
                 paths.append(os.path.join(parent, path))
 
     return paths
 
 
 def match_path(path, pattern):
+
     pattern = pattern.rstrip('/' + os.path.sep)
-    if pattern:
+    if pattern and not os.path.isabs(pattern):
         pattern = os.path.relpath(pattern)
 
     pattern_components = pattern.split(os.path.sep)
