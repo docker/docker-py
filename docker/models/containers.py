@@ -3,6 +3,7 @@ import ntpath
 from collections import namedtuple
 
 from ..api import APIClient
+from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
@@ -181,9 +182,14 @@ class Container(Model):
             exec_output
         )
 
-    def export(self):
+    def export(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Export the contents of the container's filesystem as a tar archive.
+
+        Args:
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (str): The filesystem tar archive
@@ -192,15 +198,18 @@ class Container(Model):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.export(self.id)
+        return self.client.api.export(self.id, chunk_size)
 
-    def get_archive(self, path):
+    def get_archive(self, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Retrieve a file or folder from the container in the form of a tar
         archive.
 
         Args:
             path (str): Path to the file or folder to retrieve
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (tuple): First element is a raw tar data stream. Second element is
@@ -210,7 +219,7 @@ class Container(Model):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.get_archive(self.id, path)
+        return self.client.api.get_archive(self.id, path, chunk_size)
 
     def kill(self, signal=None):
         """

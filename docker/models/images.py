@@ -4,6 +4,7 @@ import re
 import six
 
 from ..api import APIClient
+from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import BuildError, ImageLoadError
 from ..utils import parse_repository_tag
 from ..utils.json_stream import json_stream
@@ -58,9 +59,14 @@ class Image(Model):
         """
         return self.client.api.history(self.id)
 
-    def save(self):
+    def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Get a tarball of an image. Similar to the ``docker save`` command.
+
+        Args:
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (generator): A stream of raw archive data.
@@ -77,7 +83,7 @@ class Image(Model):
             >>>   f.write(chunk)
             >>> f.close()
         """
-        return self.client.api.get_image(self.id)
+        return self.client.api.get_image(self.id, chunk_size)
 
     def tag(self, repository, tag=None, **kwargs):
         """
