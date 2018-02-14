@@ -210,6 +210,19 @@ class ResolveAuthTest(unittest.TestCase):
             self.auth_config, auth.resolve_repository_name(image)[0]
         ) is None
 
+    def test_resolve_auth_with_empty_credstore_and_auth_dict(self):
+        auth_config = {
+            'auths': auth.parse_auth({
+                'https://index.docker.io/v1/': self.index_config,
+            }),
+            'credsStore': 'blackbox'
+        }
+        with mock.patch('docker.auth._resolve_authconfig_credstore') as m:
+            m.return_value = None
+            assert 'indexuser' == auth.resolve_authconfig(
+                auth_config, None
+            )['username']
+
 
 class CredStoreTest(unittest.TestCase):
     def test_get_credential_store(self):
