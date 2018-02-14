@@ -474,6 +474,21 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert config['HostConfig']['CpuRealtimeRuntime'] == 500
         assert config['HostConfig']['CpuRealtimePeriod'] == 1000
 
+    @requires_api_version('1.28')
+    def test_create_with_device_cgroup_rules(self):
+        rule = 'c 7:128 rwm'
+        ctnr = self.client.create_container(
+            BUSYBOX, 'cat /sys/fs/cgroup/devices/devices.list',
+            host_config=self.client.create_host_config(
+                device_cgroup_rules=[rule]
+            )
+        )
+        self.tmp_containers.append(ctnr)
+        config = self.client.inspect_container(ctnr)
+        assert config['HostConfig']['DeviceCgroupRules'] == [rule]
+        self.client.start(ctnr)
+        assert rule in self.client.logs(ctnr).decode('utf-8')
+
 
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):
