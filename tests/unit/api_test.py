@@ -214,12 +214,13 @@ class DockerApiTest(BaseAPIClientTest):
 
     def test_login(self):
         self.client.login('sakuya', 'izayoi')
-        fake_request.assert_called_with(
-            'POST', url_prefix + 'auth',
-            data=json.dumps({'username': 'sakuya', 'password': 'izayoi'}),
-            timeout=DEFAULT_TIMEOUT_SECONDS,
-            headers={'Content-Type': 'application/json'}
-        )
+        args = fake_request.call_args
+        assert args[0][0] == 'POST'
+        assert args[0][1] == url_prefix + 'auth'
+        assert json.loads(args[1]['data']) == {
+            'username': 'sakuya', 'password': 'izayoi'
+        }
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
         assert self.client._auth_configs['auths'] == {
             'docker.io': {
