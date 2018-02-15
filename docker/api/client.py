@@ -350,10 +350,10 @@ class APIClient(
                 break
             yield data
 
-    def _stream_raw_result(self, response):
-        ''' Stream result for TTY-enabled container '''
+    def _stream_raw_result(self, response, chunk_size=1, decode=True):
+        ''' Stream result for TTY-enabled container and raw binary data'''
         self._raise_for_status(response)
-        for out in response.iter_content(chunk_size=1, decode_unicode=True):
+        for out in response.iter_content(chunk_size, decode):
             yield out
 
     def _read_from_socket(self, response, stream, tty=False):

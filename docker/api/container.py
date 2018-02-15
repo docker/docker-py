@@ -3,6 +3,7 @@ from datetime import datetime
 
 from .. import errors
 from .. import utils
+from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..types import (
     ContainerConfig, EndpointConfig, HostConfig, NetworkingConfig
 )
@@ -645,12 +646,15 @@ class ContainerApiMixin(object):
         )
 
     @utils.check_resource('container')
-    def export(self, container):
+    def export(self, container, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Export the contents of a filesystem as a tar archive.
 
         Args:
             container (str): The container to export
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (generator): The archived filesystem data stream
@@ -662,10 +666,10 @@ class ContainerApiMixin(object):
         res = self._get(
             self._url("/containers/{0}/export", container), stream=True
         )
-        return self._stream_raw_result(res)
+        return self._stream_raw_result(res, chunk_size, False)
 
     @utils.check_resource('container')
-    def get_archive(self, container, path):
+    def get_archive(self, container, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Retrieve a file or folder from a container in the form of a tar
         archive.
@@ -673,6 +677,9 @@ class ContainerApiMixin(object):
         Args:
             container (str): The container where the file is located
             path (str): Path to the file or folder to retrieve
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (tuple): First element is a raw tar data stream. Second element is
@@ -690,7 +697,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
         encoded_stat = res.headers.get('x-docker-container-path-stat')
         return (
-            self._stream_raw_result(res),
+            self._stream_raw_result(res, chunk_size, False),
             utils.decode_json_header(encoded_stat) if encoded_stat else None
         )
 

@@ -1,4 +1,5 @@
 import docker
+from docker.constants import DEFAULT_DATA_CHUNK_SIZE
 from docker.models.containers import Container, _create_container_args
 from docker.models.images import Image
 import unittest
@@ -422,13 +423,17 @@ class ContainerTest(unittest.TestCase):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
         container.export()
-        client.api.export.assert_called_with(FAKE_CONTAINER_ID)
+        client.api.export.assert_called_with(
+            FAKE_CONTAINER_ID, DEFAULT_DATA_CHUNK_SIZE
+        )
 
     def test_get_archive(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
         container.get_archive('foo')
-        client.api.get_archive.assert_called_with(FAKE_CONTAINER_ID, 'foo')
+        client.api.get_archive.assert_called_with(
+            FAKE_CONTAINER_ID, 'foo', DEFAULT_DATA_CHUNK_SIZE
+        )
 
     def test_image(self):
         client = make_fake_client()
