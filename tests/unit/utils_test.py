@@ -758,6 +758,13 @@ class ExcludePathsTest(unittest.TestCase):
             self.all_paths - set(['foo/a.py'])
         )
 
+    def test_exclude_include_absolute_path(self):
+        base = make_tree([], ['a.py', 'b.py'])
+        assert exclude_paths(
+            base,
+            ['/*', '!/*.py']
+        ) == set(['a.py', 'b.py'])
+
     def test_single_subdir_with_path_traversal(self):
         assert self.exclude(['foo/whoops/../a.py']) == convert_paths(
             self.all_paths - set(['foo/a.py'])

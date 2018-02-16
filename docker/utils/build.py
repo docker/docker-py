@@ -26,13 +26,13 @@ def exclude_paths(root, patterns, dockerfile=None):
     if dockerfile is None:
         dockerfile = 'Dockerfile'
 
-    patterns = [p.lstrip('/') for p in patterns]
     exceptions = [p for p in patterns if p.startswith('!')]
 
-    include_patterns = [p[1:] for p in exceptions]
+    include_patterns = [p[1:].lstrip('/') for p in exceptions]
     include_patterns += [dockerfile, '.dockerignore']
 
-    exclude_patterns = list(set(patterns) - set(exceptions))
+    exclude_patterns = [
+        p.lstrip('/') for p in list(set(patterns) - set(exceptions))]
 
     paths = get_paths(root, exclude_patterns, include_patterns,
                       has_exceptions=len(exceptions) > 0)
