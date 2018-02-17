@@ -212,6 +212,57 @@ class ServiceTest(BaseAPIIntegrationTest):
             'Reservations'
         ]
 
+    def _create_service_with_generic_resources(self, generic_resources):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+
+        resources = docker.types.Resources(
+            generic_resources=generic_resources
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, resources=resources
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        return resources, self.client.inspect_service(svc_id)
+
+    def test_create_service_with_generic_resources(self):
+        successful = [{
+            'input': [
+                {'DiscreteResourceSpec': {'Kind': 'gpu', 'Value': 1}},
+                {'NamedResourceSpec': {'Kind': 'gpu', 'Value': 'test'}}
+            ]}, {
+            'input': {'gpu': 2, 'mpi': 'latest'},
+            'expected': [
+                {'DiscreteResourceSpec': {'Kind': 'gpu', 'Value': 2}},
+                {'NamedResourceSpec': {'Kind': 'mpi', 'Value': 'latest'}}
+            ]}
+        ]
+
+        for test in successful:
+            t = test['input']
+            resrcs, svc_info = self._create_service_with_generic_resources(t)
+
+            assert 'TaskTemplate' in svc_info['Spec']
+            res_template = svc_info['Spec']['TaskTemplate']
+            assert 'Resources' in res_template
+            res_reservations = res_template['Resources']['Reservations']
+            assert res_reservations == resrcs['Reservations']
+            assert 'GenericResources' in res_reservations
+
+            def _key(d, specs=('DiscreteResourceSpec', 'NamedResourceSpec')):
+                return [d.get(s, {}).get('Kind', '') for s in specs]
+
+            actual = res_reservations['GenericResources']
+            expected = test.get('expected', test['input'])
+            assert sorted(actual, key=_key) == sorted(expected, key=_key)
+
+        for test_input in ['1', 1.0, lambda: '1', {1, 2}]:
+            try:
+                self._create_service_with_generic_resources(test_input)
+                self.fail('Should fail: {}'.format(test_input))
+            except docker.errors.InvalidArgument:
+                pass
+
     def test_create_service_with_update_config(self):
         container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)

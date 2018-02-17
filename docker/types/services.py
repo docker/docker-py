@@ -306,9 +306,14 @@ class Resources(dict):
         mem_limit (int): Memory limit in Bytes.
         cpu_reservation (int): CPU reservation in units of 10^9 CPU shares.
         mem_reservation (int): Memory reservation in Bytes.
+        generic_resources (dict:`list`): List of node level generic
+          resources, for example a GPU, in the form of
+          ``{ ResourceSpec: { 'Kind': kind, 'Value': value }}``, where
+          ResourceSpec is one of 'DiscreteResourceSpec' or 'NamedResourceSpec'
+          or in the form of ``{ resource_name: resource_value }``.
     """
     def __init__(self, cpu_limit=None, mem_limit=None, cpu_reservation=None,
-                 mem_reservation=None):
+                 mem_reservation=None, generic_resources=None):
         limits = {}
         reservation = {}
         if cpu_limit is not None:
@@ -319,6 +324,33 @@ class Resources(dict):
             reservation['NanoCPUs'] = cpu_reservation
         if mem_reservation is not None:
             reservation['MemoryBytes'] = mem_reservation
+        if generic_resources is not None:
+            # if isinstance(generic_resources, list):
+            #     reservation['GenericResources'] = generic_resources
+            if isinstance(generic_resources, (list, tuple)):
+                reservation['GenericResources'] = list(generic_resources)
+            elif isinstance(generic_resources, dict):
+                resources = []
+                for kind, value in six.iteritems(generic_resources):
+                    resource_type = None
+                    if isinstance(value, int):
+                        resource_type = 'DiscreteResourceSpec'
+                    elif isinstance(value, str):
+                        resource_type = 'NamedResourceSpec'
+                    else:
+                        raise errors.InvalidArgument(
+                            'Unsupported generic resource reservation '
+                            'type: {}'.format({kind: value})
+                        )
+                    resources.append({
+                        resource_type: {'Kind': kind, 'Value': value}
+                    })
+                reservation['GenericResources'] = resources
+            else:
+                raise errors.InvalidArgument(
+                    'Unsupported generic resources '
+                    'type: {}'.format(generic_resources)
+                )
 
         if limits:
             self['Limits'] = limits
