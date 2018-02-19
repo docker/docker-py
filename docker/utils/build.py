@@ -91,6 +91,10 @@ def walk(root, patterns, default=True):
         matched = default if hit is None else hit
         sub = list(filter(lambda p: p[1], sub))
         if os.path.isdir(cur):
+            # Entirely skip directories if there are no chance any subfile will
+            # be included.
+            if all(not p[0] for p in sub) and not matched:
+                continue
             children = False
             for r in (os.path.join(f, p) for p in walk(cur, sub, matched)):
                 yield r
