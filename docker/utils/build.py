@@ -95,6 +95,15 @@ def walk(root, patterns, default=True):
             # be included.
             if all(not p[0] for p in sub) and not matched:
                 continue
+            # I think this would greatly speed up dockerignore handling by not
+            # recursing into directories we are sure would be entirely
+            # included, and only yielding the directory itself, which will be
+            # recursively archived anyway. However the current unit test expect
+            # the full list of subfiles and I'm not 100% sure it would make no
+            # difference yet.
+            # if all(p[0] for p in sub) and matched:
+            #     yield f
+            #     continue
             children = False
             for r in (os.path.join(f, p) for p in walk(cur, sub, matched)):
                 yield r
