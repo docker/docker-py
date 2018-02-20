@@ -74,6 +74,15 @@ class ImageCollectionTest(BaseIntegrationTest):
         image = client.images.pull('alpine', tag='3.3')
         assert 'alpine:3.3' in image.attrs['RepoTags']
 
+    def test_pull_with_sha(self):
+        image_ref = (
+            'hello-world@sha256:083de497cff944f969d8499ab94f07134c50bcf5e6b95'
+            '59b27182d3fa80ce3f7'
+        )
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.pull(image_ref)
+        assert image_ref in image.attrs['RepoDigests']
+
     def test_pull_multiple(self):
         client = docker.from_env(version=TEST_API_VERSION)
         images = client.images.pull('hello-world')

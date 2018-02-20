@@ -314,7 +314,9 @@ class ImageCollection(Collection):
 
         self.client.api.pull(repository, tag=tag, **kwargs)
         if tag:
-            return self.get('{0}:{1}'.format(repository, tag))
+            return self.get('{0}{2}{1}'.format(
+                repository, tag, '@' if tag.startswith('sha256:') else ':'
+            ))
         return self.list(repository)
 
     def push(self, repository, tag=None, **kwargs):
