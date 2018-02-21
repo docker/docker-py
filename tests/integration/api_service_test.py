@@ -226,7 +226,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         svc_id = self.client.create_service(task_tmpl, name=name)
         return resources, self.client.inspect_service(svc_id)
 
-    @requires_api_version('1.35')
+    @requires_api_version('1.32')
     def test_create_service_with_generic_resources(self):
         successful = [{
             'input': [
@@ -258,6 +258,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             expected = test.get('expected', test['input'])
             assert sorted(actual, key=_key) == sorted(expected, key=_key)
 
+    @requires_api_version('1.32')
     def test_create_service_with_invalid_generic_resources(self):
         for test_input in ['1', 1.0, lambda: '1', {1, 2}]:
             with pytest.raises(docker.errors.InvalidArgument):
