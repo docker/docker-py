@@ -4,6 +4,7 @@ import random
 import time
 
 import docker
+import pytest
 import six
 
 from ..helpers import (
@@ -225,6 +226,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         svc_id = self.client.create_service(task_tmpl, name=name)
         return resources, self.client.inspect_service(svc_id)
 
+    @requires_api_version('1.35')
     def test_create_service_with_generic_resources(self):
         successful = [{
             'input': [
@@ -256,12 +258,10 @@ class ServiceTest(BaseAPIIntegrationTest):
             expected = test.get('expected', test['input'])
             assert sorted(actual, key=_key) == sorted(expected, key=_key)
 
+    def test_create_service_with_invalid_generic_resources(self):
         for test_input in ['1', 1.0, lambda: '1', {1, 2}]:
-            try:
+            with pytest.raises(docker.errors.InvalidArgument):
                 self._create_service_with_generic_resources(test_input)
-                self.fail('Should fail: {}'.format(test_input))
-            except docker.errors.InvalidArgument:
-                pass
 
     def test_create_service_with_update_config(self):
         container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
