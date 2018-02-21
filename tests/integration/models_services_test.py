@@ -276,7 +276,7 @@ class ServiceTest(unittest.TestCase):
         assert spec.get('Command') == ['sleep', '300']
 
     @helpers.requires_api_version('1.25')
-    def test_restart_service(self):
+    def test_force_update_service(self):
         client = docker.from_env(version=TEST_API_VERSION)
         service = client.services.create(
             # create arguments
@@ -286,7 +286,7 @@ class ServiceTest(unittest.TestCase):
             command="sleep 300"
         )
         initial_version = service.version
-        service.update(
+        assert service.update(
             # create argument
             name=service.name,
             # task template argument
@@ -294,5 +294,42 @@ class ServiceTest(unittest.TestCase):
             # ContainerSpec argument
             command="sleep 600"
         )
+        service.reload()
+        assert service.version > initial_version
+
+    @helpers.requires_api_version('1.25')
+    def test_force_update_service_using_bool(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        initial_version = service.version
+        assert service.update(
+            # create argument
+            name=service.name,
+            # task template argument
+            force_update=True,
+            # ContainerSpec argument
+            command="sleep 600"
+        )
+        service.reload()
+        assert service.version > initial_version
+
+    @helpers.requires_api_version('1.25')
+    def test_force_update_service_using_shorthand_method(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        service = client.services.create(
+            # create arguments
+            name=helpers.random_name(),
+            # ContainerSpec arguments
+            image="alpine",
+            command="sleep 300"
+        )
+        initial_version = service.version
+        assert service.force_update()
         service.reload()
         assert service.version > initial_version

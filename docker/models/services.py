@@ -69,6 +69,11 @@ class Service(Model):
             spec = self.attrs['Spec']['TaskTemplate']['ContainerSpec']
             kwargs['image'] = spec['Image']
 
+        if kwargs.get('force_update') is True:
+            task_template = self.attrs['Spec']['TaskTemplate']
+            current_value = int(task_template.get('ForceUpdate', 0))
+            kwargs['force_update'] = current_value + 1
+
         create_kwargs = _get_create_service_kwargs('update', kwargs)
 
         return self.client.api.update_service(
@@ -123,6 +128,16 @@ class Service(Model):
         return self.client.api.update_service(self.id, self.version,
                                               service_mode,
                                               fetch_current_spec=True)
+
+    def force_update(self):
+        """
+        Force update the service even if no changes require it.
+
+        Returns:
+            ``True``if successful.
+        """
+
+        return self.update(force_update=True, fetch_current_spec=True)
 
 
 class ServiceCollection(Collection):
