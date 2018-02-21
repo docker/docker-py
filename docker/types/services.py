@@ -306,9 +306,13 @@ class Resources(dict):
         mem_limit (int): Memory limit in Bytes.
         cpu_reservation (int): CPU reservation in units of 10^9 CPU shares.
         mem_reservation (int): Memory reservation in Bytes.
+        generic_resources (dict or :py:class:`list`): Node level generic
+          resources, for example a GPU, using the following format:
+          ``{ resource_name: resource_value }``. Alternatively, a list of
+          of resource specifications as defined by the Engine API.
     """
     def __init__(self, cpu_limit=None, mem_limit=None, cpu_reservation=None,
-                 mem_reservation=None):
+                 mem_reservation=None, generic_resources=None):
         limits = {}
         reservation = {}
         if cpu_limit is not None:
@@ -319,11 +323,40 @@ class Resources(dict):
             reservation['NanoCPUs'] = cpu_reservation
         if mem_reservation is not None:
             reservation['MemoryBytes'] = mem_reservation
-
+        if generic_resources is not None:
+            reservation['GenericResources'] = (
+                _convert_generic_resources_dict(generic_resources)
+            )
         if limits:
             self['Limits'] = limits
         if reservation:
             self['Reservations'] = reservation
+
+
+def _convert_generic_resources_dict(generic_resources):
+    if isinstance(generic_resources, list):
+        return generic_resources
+    if not isinstance(generic_resources, dict):
+        raise errors.InvalidArgument(
+            'generic_resources must be a dict or a list'
+            ' (found {})'.format(type(generic_resources))
+        )
+    resources = []
+    for kind, value in six.iteritems(generic_resources):
+        resource_type = None
+        if isinstance(value, int):
+            resource_type = 'DiscreteResourceSpec'
+        elif isinstance(value, str):
+            resource_type = 'NamedResourceSpec'
+        else:
+            raise errors.InvalidArgument(
+                'Unsupported generic resource reservation '
+                'type: {}'.format({kind: value})
+            )
+        resources.append({
+            resource_type: {'Kind': kind, 'Value': value}
+        })
+    return resources
 
 
 class UpdateConfig(dict):

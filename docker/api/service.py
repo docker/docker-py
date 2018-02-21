@@ -73,6 +73,11 @@ def _check_api_features(version, task_template, update_config, endpoint_spec):
                 if container_spec.get('Isolation') is not None:
                     raise_version_error('ContainerSpec.isolation', '1.35')
 
+        if task_template.get('Resources'):
+            if utils.version_lt(version, '1.35'):
+                if task_template['Resources'].get('GenericResources'):
+                    raise_version_error('Resources.generic_resources', '1.35')
+
 
 def _merge_task_template(current, override):
     merged = current.copy()
