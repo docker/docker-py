@@ -1,4 +1,6 @@
+import os
 import tempfile
+import threading
 
 import docker
 import pytest
@@ -132,6 +134,25 @@ class ContainerCollectionTest(BaseIntegrationTest):
             'alpine', 'sh -c "echo hello && echo world"', stream=True
         )
         logs = [line for line in out]
+        assert logs[0] == b'hello\n'
+        assert logs[1] == b'world\n'
+
+    def test_run_with_streamed_logs_and_cancel(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        out = client.containers.run(
+            'alpine', 'sh -c "echo hello && echo world"', stream=True
+        )
+
+        exit_timer = threading.Timer(3, os._exit, args=[1])
+        exit_timer.start()
+
+        threading.Timer(1, out.close).start()
+
+        logs = [line for line in out]
+
+        exit_timer.cancel()
+
+        assert len(logs) == 2
         assert logs[0] == b'hello\n'
         assert logs[1] == b'world\n'
 

@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from .. import auth, utils
+from .. import auth, types, utils
 
 
 class DaemonApiMixin(object):
@@ -34,8 +34,7 @@ class DaemonApiMixin(object):
                 the fly. False by default.
 
         Returns:
-            (generator): A blocking generator you can iterate over to retrieve
-                events as they happen.
+            A :py:class:`docker.types.daemon.CancellableStream` generator
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -50,6 +49,14 @@ class DaemonApiMixin(object):
              u'status': u'start',
              u'time': 1423339459}
             ...
+
+            or
+
+            >>> events = client.events()
+            >>> for event in events:
+            ...   print event
+            >>> # and cancel from another thread
+            >>> events.close()
         """
 
         if isinstance(since, datetime):
@@ -68,10 +75,10 @@ class DaemonApiMixin(object):
         }
         url = self._url('/events')
 
-        return self._stream_helper(
-            self._get(url, params=params, stream=True, timeout=None),
-            decode=decode
-        )
+        response = self._get(url, params=params, stream=True, timeout=None)
+        stream = self._stream_helper(response, decode=decode)
+
+        return types.CancellableStream(stream, response)
 
     def info(self):
         """

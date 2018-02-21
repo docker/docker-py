@@ -5,7 +5,8 @@ from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..types import (
-    ContainerConfig, EndpointConfig, HostConfig, NetworkingConfig
+    CancellableStream, ContainerConfig, EndpointConfig, HostConfig,
+    NetworkingConfig
 )
 
 
@@ -52,9 +53,14 @@ class ContainerApiMixin(object):
         u = self._url("/containers/{0}/attach", container)
         response = self._post(u, headers=headers, params=params, stream=True)
 
-        return self._read_from_socket(
+        output = self._read_from_socket(
             response, stream, self._check_is_tty(container)
         )
+
+        if stream:
+            return CancellableStream(output, response)
+        else:
+            return output
 
     @utils.check_resource('container')
     def attach_socket(self, container, params=None, ws=False):
@@ -815,7 +821,12 @@ class ContainerApiMixin(object):
 
         url = self._url("/containers/{0}/logs", container)
         res = self._get(url, params=params, stream=stream)
-        return self._get_result(container, stream, res)
+        output = self._get_result(container, stream, res)
+
+        if stream:
+            return CancellableStream(output, res)
+        else:
+            return output
 
     @utils.check_resource('container')
     def pause(self, container):
