@@ -1,18 +1,22 @@
 import os
+import re
 
 from ..constants import IS_WINDOWS_PLATFORM
-from .fnmatch import fnmatch
+from fnmatch import fnmatch
+from itertools import chain
 from .utils import create_archive
 
 
 def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
     root = os.path.abspath(path)
     exclude = exclude or []
-
     return create_archive(
         files=sorted(exclude_paths(root, exclude, dockerfile=dockerfile)),
         root=root, fileobj=fileobj, gzip=gzip
     )
+
+
+_SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
 
 
 def exclude_paths(root, patterns, dockerfile=None):
@@ -23,121 +27,90 @@ def exclude_paths(root, patterns, dockerfile=None):
 
     All paths returned are relative to the root.
     """
+
     if dockerfile is None:
         dockerfile = 'Dockerfile'
 
-    patterns = [p.lstrip('/') for p in patterns]
-    exceptions = [p for p in patterns if p.startswith('!')]
+    def normalize(p):
+        # Leading and trailing slashes are not relevant. Yes,
+        # "foo.py/" must exclude the "foo.py" regular file. "."
+        # components are not relevant either, even if the whole
+        # pattern is only ".", as the Docker reference states: "For
+        # historical reasons, the pattern . is ignored."
+        split = [pt for pt in re.split(_SEP, p) if pt and pt != '.']
+        # ".." component must be cleared with the potential previous
+        # component, regardless of whether it exists: "A preprocessing
+        # step [...]  eliminates . and .. elements using Go's
+        # filepath.".
+        i = 0
+        while i < len(split):
+            if split[i] == '..':
+                del split[i]
+                if i > 0:
+                    del split[i - 1]
+                    i -= 1
+            else:
+                i += 1
+        return split
 
-    include_patterns = [p[1:] for p in exceptions]
-    include_patterns += [dockerfile, '.dockerignore']
-
-    exclude_patterns = list(set(patterns) - set(exceptions))
-
-    paths = get_paths(root, exclude_patterns, include_patterns,
-                      has_exceptions=len(exceptions) > 0)
-
-    return set(paths).union(
-        # If the Dockerfile is in a subdirectory that is excluded, get_paths
-        # will not descend into it and the file will be skipped. This ensures
-        # it doesn't happen.
-        set([dockerfile.replace('/', os.path.sep)])
-        if os.path.exists(os.path.join(root, dockerfile)) else set()
-    )
+    patterns = (
+        (True, normalize(p[1:]))
+        if p.startswith('!') else
+        (False, normalize(p))
+        for p in patterns)
+    patterns = list(reversed(list(chain(
+        # Exclude empty patterns such as "." or the empty string.
+        filter(lambda p: p[1], patterns),
+        # Always include the Dockerfile and .dockerignore
+        [(True, dockerfile.split('/')), (True, ['.dockerignore'])]))))
+    return set(walk(root, patterns))
 
 
-def should_include(path, exclude_patterns, include_patterns):
+def walk(root, patterns, default=True):
     """
-    Given a path, a list of exclude patterns, and a list of inclusion patterns:
-
-    1. Returns True if the path doesn't match any exclusion pattern
-    2. Returns False if the path matches an exclusion pattern and doesn't match
-       an inclusion pattern
-    3. Returns true if the path matches an exclusion pattern and matches an
-       inclusion pattern
-    """
-    for pattern in exclude_patterns:
-        if match_path(path, pattern):
-            for pattern in include_patterns:
-                if match_path(path, pattern):
-                    return True
-            return False
-    return True
-
-
-def should_check_directory(directory_path, exclude_patterns, include_patterns):
-    """
-    Given a directory path, a list of exclude patterns, and a list of inclusion
-    patterns:
-
-    1. Returns True if the directory path should be included according to
-       should_include.
-    2. Returns True if the directory path is the prefix for an inclusion
-       pattern
-    3. Returns False otherwise
+    A collection of file lying below root that should be included according to
+    patterns.
     """
 
-    # To account for exception rules, check directories if their path is a
-    # a prefix to an inclusion pattern. This logic conforms with the current
-    # docker logic (2016-10-27):
-    # https://github.com/docker/docker/blob/bc52939b0455116ab8e0da67869ec81c1a1c3e2c/pkg/archive/archive.go#L640-L671
+    def match(p):
+        if p[1][0] == '**':
+            rec = (p[0], p[1][1:])
+            return [p] + (match(rec) if rec[1] else [rec])
+        elif fnmatch(f, p[1][0]):
+            return [(p[0], p[1][1:])]
+        else:
+            return []
 
-    def normalize_path(path):
-        return path.replace(os.path.sep, '/')
-
-    path_with_slash = normalize_path(directory_path) + '/'
-    possible_child_patterns = [
-        pattern for pattern in map(normalize_path, include_patterns)
-        if (pattern + '/').startswith(path_with_slash)
-    ]
-    directory_included = should_include(
-        directory_path, exclude_patterns, include_patterns
-    )
-    return directory_included or len(possible_child_patterns) > 0
-
-
-def get_paths(root, exclude_patterns, include_patterns, has_exceptions=False):
-    paths = []
-
-    for parent, dirs, files in os.walk(root, topdown=True, followlinks=False):
-        parent = os.path.relpath(parent, root)
-        if parent == '.':
-            parent = ''
-
-        # Remove excluded patterns from the list of directories to traverse
-        # by mutating the dirs we're iterating over.
-        # This looks strange, but is considered the correct way to skip
-        # traversal. See https://docs.python.org/2/library/os.html#os.walk
-        dirs[:] = [
-            d for d in dirs if should_check_directory(
-                os.path.join(parent, d), exclude_patterns, include_patterns
-            )
-        ]
-
-        for path in dirs:
-            if should_include(os.path.join(parent, path),
-                              exclude_patterns, include_patterns):
-                paths.append(os.path.join(parent, path))
-
-        for path in files:
-            if should_include(os.path.join(parent, path),
-                              exclude_patterns, include_patterns):
-                paths.append(os.path.join(parent, path))
-
-    return paths
-
-
-def match_path(path, pattern):
-    pattern = pattern.rstrip('/' + os.path.sep)
-    if pattern:
-        pattern = os.path.relpath(pattern)
-
-    pattern_components = pattern.split(os.path.sep)
-    if len(pattern_components) == 1 and IS_WINDOWS_PLATFORM:
-        pattern_components = pattern.split('/')
-
-    if '**' not in pattern:
-        path_components = path.split(os.path.sep)[:len(pattern_components)]
-    else:
-        path_components = path.split(os.path.sep)
-    return fnmatch('/'.join(path_components), '/'.join(pattern_components))
+    for f in os.listdir(root):
+        cur = os.path.join(root, f)
+        # The patterns if recursing in that directory.
+        sub = list(chain(*(match(p) for p in patterns)))
+        # Whether this file is explicitely included / excluded.
+        hit = next((p[0] for p in sub if not p[1]), None)
+        # Whether this file is implicitely included / excluded.
+        matched = default if hit is None else hit
+        sub = list(filter(lambda p: p[1], sub))
+        if os.path.isdir(cur):
+            # Entirely skip directories if there are no chance any subfile will
+            # be included.
+            if all(not p[0] for p in sub) and not matched:
+                continue
+            # I think this would greatly speed up dockerignore handling by not
+            # recursing into directories we are sure would be entirely
+            # included, and only yielding the directory itself, which will be
+            # recursively archived anyway. However the current unit test expect
+            # the full list of subfiles and I'm not 100% sure it would make no
+            # difference yet.
+            # if all(p[0] for p in sub) and matched:
+            #     yield f
+            #     continue
+            children = False
+            for r in (os.path.join(f, p) for p in walk(cur, sub, matched)):
+                yield r
+                children = True
+            # The current unit tests expect directories only under those
+            # conditions. It might be simplifiable though.
+            if (not sub or not children) and hit or hit is None and default:
+                yield f
+        elif matched:
+            yield f

@@ -90,9 +90,12 @@ def resolve_authconfig(authconfig, registry=None):
             log.debug(
                 'Using credentials store "{0}"'.format(store_name)
             )
-            return _resolve_authconfig_credstore(
+            cfg = _resolve_authconfig_credstore(
                 authconfig, registry, store_name
             )
+            if cfg is not None:
+                return cfg
+            log.debug('No entry in credstore - fetching from auth dict')
 
     # Default to the public index server
     registry = resolve_index_name(registry) if registry else INDEX_NAME

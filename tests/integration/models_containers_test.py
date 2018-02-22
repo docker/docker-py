@@ -55,7 +55,8 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
     def test_run_with_named_volume(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        client.volumes.create(name="somevolume")
+        volume = client.volumes.create(name="somevolume")
+        self.tmp_volumes.append(volume.id)
 
         container = client.containers.run(
             "alpine", "sh -c 'echo \"hello\" > /insidecontainer/test'",

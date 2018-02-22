@@ -1,3 +1,4 @@
+from docker.constants import DEFAULT_DATA_CHUNK_SIZE
 from docker.models.images import Image
 import unittest
 
@@ -116,7 +117,9 @@ class ImageTest(unittest.TestCase):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
         image.save()
-        client.api.get_image.assert_called_with(FAKE_IMAGE_ID)
+        client.api.get_image.assert_called_with(
+            FAKE_IMAGE_ID, DEFAULT_DATA_CHUNK_SIZE
+        )
 
     def test_tag(self):
         client = make_fake_client()

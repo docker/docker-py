@@ -4,6 +4,7 @@ import os
 import six
 
 from .. import auth, errors, utils
+from ..constants import DEFAULT_DATA_CHUNK_SIZE
 
 log = logging.getLogger(__name__)
 
@@ -11,12 +12,15 @@ log = logging.getLogger(__name__)
 class ImageApiMixin(object):
 
     @utils.check_resource('image')
-    def get_image(self, image):
+    def get_image(self, image, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Get a tarball of an image. Similar to the ``docker save`` command.
 
         Args:
             image (str): Image name to get
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (generator): A stream of raw archive data.
@@ -34,7 +38,7 @@ class ImageApiMixin(object):
             >>> f.close()
         """
         res = self._get(self._url("/images/{0}/get", image), stream=True)
-        return self._stream_raw_result(res)
+        return self._stream_raw_result(res, chunk_size, False)
 
     @utils.check_resource('image')
     def history(self, image):

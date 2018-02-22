@@ -3,6 +3,7 @@ import ntpath
 from collections import namedtuple
 
 from ..api import APIClient
+from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (ContainerError, ImageNotFound,
                       create_unexpected_kwargs_error)
 from ..types import HostConfig
@@ -181,9 +182,14 @@ class Container(Model):
             exec_output
         )
 
-    def export(self):
+    def export(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Export the contents of the container's filesystem as a tar archive.
+
+        Args:
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (str): The filesystem tar archive
@@ -192,15 +198,18 @@ class Container(Model):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.export(self.id)
+        return self.client.api.export(self.id, chunk_size)
 
-    def get_archive(self, path):
+    def get_archive(self, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
         Retrieve a file or folder from the container in the form of a tar
         archive.
 
         Args:
             path (str): Path to the file or folder to retrieve
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
 
         Returns:
             (tuple): First element is a raw tar data stream. Second element is
@@ -210,7 +219,7 @@ class Container(Model):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.get_archive(self.id, path)
+        return self.client.api.get_archive(self.id, path, chunk_size)
 
     def kill(self, signal=None):
         """
@@ -515,6 +524,8 @@ class ContainerCollection(Collection):
                 (``0-3``, ``0,1``). Only effective on NUMA systems.
             detach (bool): Run container in the background and return a
                 :py:class:`Container` object.
+            device_cgroup_rules (:py:class:`list`): A list of cgroup rules to
+                apply to the container.
             device_read_bps: Limit read rate (bytes per second) from a device
                 in the form of: `[{"Path": "device_path", "Rate": rate}]`
             device_read_iops: Limit read rate (IO per second) from a device.
@@ -912,6 +923,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cpuset_mems',
     'cpu_rt_period',
     'cpu_rt_runtime',
+    'device_cgroup_rules',
     'device_read_bps',
     'device_read_iops',
     'device_write_bps',

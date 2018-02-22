@@ -1,6 +1,36 @@
 Change log
 ==========
 
+3.1.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/44?closed=1)
+
+### Features
+
+* Added support for `device_cgroup_rules` in host config
+* Added support for `generic_resources` when creating a `Resources`
+  object.
+* Added support for a configurable `chunk_size` parameter in `export`,
+  `get_archive` and `get_image` (`Image.save`)
+* Added a `force_update` method to the `Service` class.
+* In `Service.update`, when the `force_update` parameter is set to `True`,
+  the current `force_update` counter is incremented by one in the update
+  request.
+
+### Bugfixes
+
+* Fixed a bug where authentication through `login()` was being ignored if the
+  SDK was configured to use a credential store.
+* Fixed a bug where download methods would use an absurdly small chunk size,
+  leading to slow data retrieval
+* Fixed a bug where using `DockerClient.images.pull` to pull an image by digest
+  would lead to an exception being raised.
+* `.dockerignore` rules should now be respected as defined by the spec,
+  including respect for last-line precedence and proper handling of absolute
+  paths
+* The `pass` credential store is now properly supported.
+
 3.0.1
 -----
 
