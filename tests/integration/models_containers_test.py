@@ -47,10 +47,13 @@ class ContainerCollectionTest(BaseIntegrationTest):
         self.tmp_containers.append(container.id)
         container.wait()
 
+        name = "container_volume_test"
         out = client.containers.run(
             "alpine", "cat /insidecontainer/test",
-            volumes=["%s:/insidecontainer" % path]
+            volumes=["%s:/insidecontainer" % path],
+            name=name
         )
+        self.tmp_containers.append(name)
         assert out == b'hello\n'
 
     def test_run_with_named_volume(self):
@@ -66,10 +69,13 @@ class ContainerCollectionTest(BaseIntegrationTest):
         self.tmp_containers.append(container.id)
         container.wait()
 
+        name = "container_volume_test"
         out = client.containers.run(
             "alpine", "cat /insidecontainer/test",
-            volumes=["somevolume:/insidecontainer"]
+            volumes=["somevolume:/insidecontainer"],
+            name=name
         )
+        self.tmp_containers.append(name)
         assert out == b'hello\n'
 
     def test_run_with_network(self):
