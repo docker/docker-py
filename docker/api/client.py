@@ -119,7 +119,9 @@ class APIClient(
             )
             self.mount('http+docker://', self._custom_adapter)
             self._unmount('http://', 'https://')
-            self.base_url = 'http+docker://localunixsocket'
+            # host part of URL should be unused, but is resolved by requests
+            # module in proxy_bypass_macosx_sysconf()
+            self.base_url = 'http+docker://localhost'
         elif base_url.startswith('npipe://'):
             if not IS_WINDOWS_PLATFORM:
                 raise DockerException(
