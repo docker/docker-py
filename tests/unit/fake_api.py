@@ -512,7 +512,7 @@ def post_fake_network_disconnect():
 
 
 # Maps real api url to fake response callback
-prefix = 'http+docker://localunixsocket'
+prefix = 'http+docker://localhost'
 if constants.IS_WINDOWS_PLATFORM:
     prefix = 'http+docker://localnpipe'
 
