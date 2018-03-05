@@ -62,11 +62,14 @@ class BuildTest(BaseAPIIntegrationTest):
                 '.dockerignore',
                 '!ignored/subdir/excepted-file',
                 '',  # empty line,
-                '#',  # comment line
+                '#*',  # comment line
             ]))
 
         with open(os.path.join(base_dir, 'not-ignored'), 'w') as f:
             f.write("this file should not be ignored")
+
+        with open(os.path.join(base_dir, '#file.txt'), 'w') as f:
+            f.write('this file should not be ignored')
 
         subdir = os.path.join(base_dir, 'ignored', 'subdir')
         os.makedirs(subdir)
@@ -93,6 +96,7 @@ class BuildTest(BaseAPIIntegrationTest):
             logs = logs.decode('utf-8')
 
         assert sorted(list(filter(None, logs.split('\n')))) == sorted([
+            '/test/#file.txt',
             '/test/ignored/subdir/excepted-file',
             '/test/not-ignored'
         ])
