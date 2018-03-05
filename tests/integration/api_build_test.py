@@ -62,7 +62,7 @@ class BuildTest(BaseAPIIntegrationTest):
                 '.dockerignore',
                 '!ignored/subdir/excepted-file',
                 '',  # empty line,
-                '#', # comment line
+                '#',  # comment line
             ]))
 
         with open(os.path.join(base_dir, 'not-ignored'), 'w') as f:

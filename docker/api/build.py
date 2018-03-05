@@ -143,7 +143,8 @@ class BuildApiMixin(object):
             if os.path.exists(dockerignore):
                 with open(dockerignore, 'r') as f:
                     exclude = list(filter(
-                        lambda x: x != '' and x[0] != '#', [l.strip() for l in f.read().splitlines()]
+                        lambda x: x != '' and x[0] != '#',
+                        [l.strip() for l in f.read().splitlines()]
                     ))
             context = utils.tar(
                 path, exclude=exclude, dockerfile=dockerfile, gzip=gzip
