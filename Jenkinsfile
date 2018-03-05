@@ -38,7 +38,7 @@ def buildImages = { ->
 }
 
 def getAPIVersion = { engineVersion ->
-  def versionMap = ['17.06': '1.30', '17.12': '1.35', '18.01': '1.35']
+  def versionMap = ['17.06': '1.30', '17.12': '1.35', '18.02': '1.36', '18.03': '1.37']
   return versionMap[engineVersion.substring(0, 5)]
 }
 
