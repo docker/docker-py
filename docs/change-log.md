@@ -1,6 +1,18 @@
 Change log
 ==========
 
+3.1.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/46?closed=1)
+
+### Bugfixes
+
+* Fixed a bug that caused costly DNS lookups on Mac OSX when connecting to the
+  engine through UNIX socket
+* Fixed a bug that caused `.dockerignore` comments to be read as exclusion
+  patterns
+
 3.1.0
 -----
 

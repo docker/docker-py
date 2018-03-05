@@ -902,6 +902,22 @@ class ExcludePathsTest(unittest.TestCase):
             ['*.md', '!README*.md', 'README-secret.md']
         ) == set(['README.md', 'README-bis.md'])
 
+    def test_parent_directory(self):
+        base = make_tree(
+            [],
+            ['a.py',
+             'b.py',
+             'c.py'])
+        # Dockerignore reference stipulates that absolute paths are
+        # equivalent to relative paths, hence /../foo should be
+        # equivalent to ../foo. It also stipulates that paths are run
+        # through Go's filepath.Clean, which explicitely "replace
+        # "/.."  by "/" at the beginning of a path".
+        assert exclude_paths(
+            base,
+            ['../a.py', '/../b.py']
+        ) == set(['c.py'])
+
 
 class TarTest(unittest.TestCase):
     def test_tar_with_excludes(self):

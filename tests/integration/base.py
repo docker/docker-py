@@ -36,7 +36,7 @@ class BaseIntegrationTest(unittest.TestCase):
                 pass
         for container in self.tmp_containers:
             try:
-                client.api.remove_container(container, force=True)
+                client.api.remove_container(container, force=True, v=True)
             except docker.errors.APIError:
                 pass
         for network in self.tmp_networks:
