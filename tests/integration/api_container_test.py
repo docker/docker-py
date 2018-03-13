@@ -1165,6 +1165,17 @@ class RestartContainerTest(BaseAPIIntegrationTest):
         assert info2['State']['Running'] is True
         self.client.kill(id)
 
+    def test_restart_with_hight_timeout(self):
+        container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
+        id = container['Id']
+        self.client.start(id)
+        self.client.timeout = 1
+        self.client.restart(id, timeout=3)
+        self.client.timeout = None
+        self.client.restart(id, timeout=3)
+        self.client.timeout = 1
+        self.client.stop(id, timeout=3)
+
     def test_restart_with_dict_instead_of_id(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         assert 'Id' in container
