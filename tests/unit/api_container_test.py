@@ -1264,7 +1264,7 @@ class ContainerTest(BaseAPIClientTest):
             'POST',
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
-            timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
+            timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_stop_container_with_dict_instead_of_id(self):
@@ -1277,7 +1277,7 @@ class ContainerTest(BaseAPIClientTest):
             'POST',
             url_prefix + 'containers/3cc2351ab11b/stop',
             params={'t': timeout},
-            timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
+            timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
     def test_pause_container(self):
