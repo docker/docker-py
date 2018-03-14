@@ -873,9 +873,6 @@ class ContainerCollection(Collection):
                     container. Give the container name or id.
                 - `since` (str): Only containers created after a particular
                     container. Give container name or id.
-            sparse (bool): Do not inspect containers. Returns partial
-                informations, but guaranteed not to block. Use reload() on
-                each container to get the full list of attributes.
 
                 A comprehensive list can be found in the documentation for
                 `docker ps
