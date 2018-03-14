@@ -31,18 +31,21 @@ def exclude_paths(root, patterns, dockerfile=None):
     if dockerfile is None:
         dockerfile = 'Dockerfile'
 
+    def split_path(p):
+        return [pt for pt in re.split(_SEP, p) if pt and pt != '.']
+
     def normalize(p):
         # Leading and trailing slashes are not relevant. Yes,
         # "foo.py/" must exclude the "foo.py" regular file. "."
         # components are not relevant either, even if the whole
         # pattern is only ".", as the Docker reference states: "For
         # historical reasons, the pattern . is ignored."
-        split = [pt for pt in re.split(_SEP, p) if pt and pt != '.']
         # ".." component must be cleared with the potential previous
         # component, regardless of whether it exists: "A preprocessing
         # step [...]  eliminates . and .. elements using Go's
         # filepath.".
         i = 0
+        split = split_path(p)
         while i < len(split):
             if split[i] == '..':
                 del split[i]
@@ -62,7 +65,7 @@ def exclude_paths(root, patterns, dockerfile=None):
         # Exclude empty patterns such as "." or the empty string.
         filter(lambda p: p[1], patterns),
         # Always include the Dockerfile and .dockerignore
-        [(True, dockerfile.split('/')), (True, ['.dockerignore'])]))))
+        [(True, split_path(dockerfile)), (True, ['.dockerignore'])]))))
     return set(walk(root, patterns))
 
 
