@@ -4,8 +4,10 @@ from collections import namedtuple
 
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..errors import (ContainerError, ImageNotFound,
-                      create_unexpected_kwargs_error)
+from ..errors import (
+    ContainerError, DockerException, ImageNotFound,
+    create_unexpected_kwargs_error
+)
 from ..types import HostConfig
 from ..utils import version_gte
 from .images import Image
@@ -27,7 +29,7 @@ class Container(Model):
         """
         The image of the container.
         """
-        image_id = self.attrs['Image']
+        image_id = self.attrs.get('ImageID', self.attrs['Image'])
         if image_id is None:
             return None
         return self.client.images.get(image_id.split(':')[1])
@@ -37,15 +39,23 @@ class Container(Model):
         """
         The labels of a container as dictionary.
         """
-        result = self.attrs['Config'].get('Labels')
-        return result or {}
+        try:
+            result = self.attrs['Config'].get('Labels')
+            return result or {}
+        except KeyError:
+            raise DockerException(
+                'Label data is not available for sparse objects. Call reload()'
+                ' to retrieve all information'
+            )
 
     @property
     def status(self):
         """
         The status of the container. For example, ``running``, or ``exited``.
         """
-        return self.attrs['State']['Status']
+        if isinstance(self.attrs['State'], dict):
+            return self.attrs['State']['Status']
+        return self.attrs['State']
 
     def attach(self, **kwargs):
         """
@@ -833,7 +843,8 @@ class ContainerCollection(Collection):
         resp = self.client.api.inspect_container(container_id)
         return self.prepare_model(resp)
 
-    def list(self, all=False, before=None, filters=None, limit=-1, since=None):
+    def list(self, all=False, before=None, filters=None, limit=-1, since=None,
+             sparse=False):
         """
         List containers. Similar to the ``docker ps`` command.
 
@@ -867,6 +878,11 @@ class ContainerCollection(Collection):
                 `docker ps
                 <https://docs.docker.com/engine/reference/commandline/ps>`_.
 
+            sparse (bool): Do not inspect containers. Returns partial
+                information, but guaranteed not to block. Use
+                :py:meth:`Container.reload` on resulting objects to retrieve
+                all attributes. Default: ``False``
+
         Returns:
             (list of :py:class:`Container`)
 
@@ -877,7 +893,10 @@ class ContainerCollection(Collection):
         resp = self.client.api.containers(all=all, before=before,
                                           filters=filters, limit=limit,
                                           since=since)
-        return [self.get(r['Id']) for r in resp]
+        if sparse:
+            return [self.prepare_model(r) for r in resp]
+        else:
+            return [self.get(r['Id']) for r in resp]
 
     def prune(self, filters=None):
         return self.client.api.prune_containers(filters=filters)
