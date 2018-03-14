@@ -186,6 +186,10 @@ class DockerClient(object):
         return self.api.version(*args, **kwargs)
     version.__doc__ = APIClient.version.__doc__
 
+    def close(self):
+        return self.api.close()
+    close.__doc__ = APIClient.close.__doc__
+
     def __getattr__(self, name):
         s = ["'DockerClient' object has no attribute '{}'".format(name)]
         # If a user calls a method on APIClient, they
