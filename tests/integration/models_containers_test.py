@@ -159,6 +159,28 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
         container = containers[0]
         assert container.attrs['Config']['Image'] == 'alpine'
+        assert container.status == 'running'
+        assert container.image == client.images.get('alpine')
+
+        container.kill()
+        container.remove()
+        assert container_id not in [c.id for c in client.containers.list()]
+
+    def test_list_sparse(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        container_id = client.containers.run(
+            "alpine", "sleep 300", detach=True).id
+        self.tmp_containers.append(container_id)
+        containers = [c for c in client.containers.list(sparse=True) if c.id ==
+                      container_id]
+        assert len(containers) == 1
+
+        container = containers[0]
+        assert container.attrs['Image'] == 'alpine'
+        assert container.status == 'running'
+        assert container.image == client.images.get('alpine')
+        with pytest.raises(docker.errors.DockerException):
+            container.labels
 
         container.kill()
         container.remove()
