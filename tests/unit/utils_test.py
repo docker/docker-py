@@ -698,6 +698,11 @@ class ExcludePathsTest(unittest.TestCase):
             ['*'], dockerfile='foo/Dockerfile3'
         ) == convert_paths(set(['foo/Dockerfile3', '.dockerignore']))
 
+        # https://github.com/docker/docker-py/issues/1956
+        assert self.exclude(
+            ['*'], dockerfile='./foo/Dockerfile3'
+        ) == convert_paths(set(['foo/Dockerfile3', '.dockerignore']))
+
     def test_exclude_dockerfile_child(self):
         includes = self.exclude(['foo/'], dockerfile='foo/Dockerfile3')
         assert convert_path('foo/Dockerfile3') in includes
