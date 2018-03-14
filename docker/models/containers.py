@@ -833,7 +833,8 @@ class ContainerCollection(Collection):
         resp = self.client.api.inspect_container(container_id)
         return self.prepare_model(resp)
 
-    def list(self, all=False, before=None, filters=None, limit=-1, since=None):
+    def list(self, all=False, before=None, filters=None, limit=-1, since=None,
+             sparse=False):
         """
         List containers. Similar to the ``docker ps`` command.
 
@@ -862,6 +863,9 @@ class ContainerCollection(Collection):
                     container. Give the container name or id.
                 - `since` (str): Only containers created after a particular
                     container. Give container name or id.
+            sparse (bool): Do not inspect containers. Returns partial
+                informations, but guaranteed not to block. Use reload() on
+                each container to get the full list of attributes.
 
                 A comprehensive list can be found in the documentation for
                 `docker ps
@@ -877,7 +881,10 @@ class ContainerCollection(Collection):
         resp = self.client.api.containers(all=all, before=before,
                                           filters=filters, limit=limit,
                                           since=since)
-        return [self.get(r['Id']) for r in resp]
+        if sparse:
+            return [self.prepare_model(r) for r in resp]
+        else:
+            return [self.get(r['Id']) for r in resp]
 
     def prune(self, filters=None):
         return self.client.api.prune_containers(filters=filters)
