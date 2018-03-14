@@ -4,8 +4,10 @@ from collections import namedtuple
 
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..errors import (ContainerError, ImageNotFound,
-                      create_unexpected_kwargs_error)
+from ..errors import (
+    ContainerError, DockerException, ImageNotFound,
+    create_unexpected_kwargs_error
+)
 from ..types import HostConfig
 from ..utils import version_gte
 from .images import Image
@@ -27,7 +29,7 @@ class Container(Model):
         """
         The image of the container.
         """
-        image_id = self.attrs['Image']
+        image_id = self.attrs.get('ImageID', self.attrs['Image'])
         if image_id is None:
             return None
         return self.client.images.get(image_id.split(':')[1])
@@ -37,15 +39,23 @@ class Container(Model):
         """
         The labels of a container as dictionary.
         """
-        result = self.attrs['Config'].get('Labels')
-        return result or {}
+        try:
+            result = self.attrs['Config'].get('Labels')
+            return result or {}
+        except KeyError:
+            raise DockerException(
+                'Label data is not available for sparse objects. Call reload()'
+                ' to retrieve all information'
+            )
 
     @property
     def status(self):
         """
         The status of the container. For example, ``running``, or ``exited``.
         """
-        return self.attrs['State']['Status']
+        if isinstance(self.attrs['State'], dict):
+            return self.attrs['State']['Status']
+        return self.attrs['State']
 
     def attach(self, **kwargs):
         """
@@ -863,13 +873,15 @@ class ContainerCollection(Collection):
                     container. Give the container name or id.
                 - `since` (str): Only containers created after a particular
                     container. Give container name or id.
-            sparse (bool): Do not inspect containers. Returns partial
-                informations, but guaranteed not to block. Use reload() on
-                each container to get the full list of attributes.
 
                 A comprehensive list can be found in the documentation for
                 `docker ps
                 <https://docs.docker.com/engine/reference/commandline/ps>`_.
+
+            sparse (bool): Do not inspect containers. Returns partial
+                information, but guaranteed not to block. Use
+                :py:meth:`Container.reload` on resulting objects to retrieve
+                all attributes. Default: ``False``
 
         Returns:
             (list of :py:class:`Container`)
