@@ -284,7 +284,7 @@ class ImageCollection(Collection):
         low-level API.
 
         Args:
-            name (str): The repository to pull
+            repository (str): The repository to pull
             tag (str): The tag to pull
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.client.DockerClient.login` has set for
