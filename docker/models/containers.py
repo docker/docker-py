@@ -6,7 +6,7 @@ from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (
     ContainerError, DockerException, ImageNotFound,
-    create_unexpected_kwargs_error
+    NotFound, create_unexpected_kwargs_error
 )
 from ..types import HostConfig
 from ..utils import version_gte
@@ -896,7 +896,14 @@ class ContainerCollection(Collection):
         if sparse:
             return [self.prepare_model(r) for r in resp]
         else:
-            return [self.get(r['Id']) for r in resp]
+            containers = []
+            for r in resp:
+                try:
+                    containers.append(self.get(r['Id']))
+                # a container may have been removed while iterating
+                except NotFound:
+                    pass
+            return containers
 
     def prune(self, filters=None):
         return self.client.api.prune_containers(filters=filters)
