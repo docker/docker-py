@@ -9,7 +9,7 @@ def dockerVersions = [
   "17.06.2-ce",  // Latest EE
   "17.12.1-ce",  // Latest CE stable
   "18.02.0-ce",  // Latest CE edge
-  "18.03.0-ce-rc1" // Latest CE RC
+  "18.03.0-ce-rc4" // Latest CE RC
 ]
 
 def buildImage = { name, buildargs, pyTag ->
@@ -64,15 +64,18 @@ def runTests = { Map settings ->
         checkout(scm)
         def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
+        def testNetwork = "dpy-testnet-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         try {
-          sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
+          sh """docker network create ${testNetwork}"""
+          sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
             dockerswarm/dind:${dockerVersion} dockerd -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
-            --name ${testContainerName} --volumes-from ${dindContainerName} \\
-            -e 'DOCKER_HOST=tcp://docker:2375' \\
+            --name ${testContainerName} \\
+            -e "DOCKER_HOST=tcp://${dindContainerName}:2375" \\
             -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
-            --link=${dindContainerName}:docker \\
+            --network ${testNetwork} \\
+            --volumes-from ${dindContainerName} \\
             ${testImage} \\
             py.test -v -rxs tests/integration
           """
@@ -80,6 +83,7 @@ def runTests = { Map settings ->
           sh """
             docker stop ${dindContainerName} ${testContainerName}
             docker rm -vf ${dindContainerName} ${testContainerName}
+            docker network rm ${testNetwork}
           """
         }
       }
