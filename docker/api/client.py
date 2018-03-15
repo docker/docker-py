@@ -397,6 +397,12 @@ class APIClient(
     def _stream_raw_result(self, response, chunk_size=1, decode=True):
         ''' Stream result for TTY-enabled container and raw binary data'''
         self._raise_for_status(response)
+
+        # Disable timeout on the underlying socket to prevent
+        # Read timed out(s) for long running processes
+        socket = self._get_raw_response_socket(response)
+        self._disable_socket_timeout(socket)
+
         yield from response.iter_content(chunk_size, decode)
 
     def _read_from_socket(self, response, stream, tty=True, demux=False):
