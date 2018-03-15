@@ -108,21 +108,21 @@ def swarm_listen_addr():
 
 
 def assert_cat_socket_detached_with_keys(sock, inputs):
-    if six.PY3:
+    if six.PY3 and hasattr(sock, '_sock'):
         sock = sock._sock
 
     for i in inputs:
-        sock.send(i)
+        sock.sendall(i)
         time.sleep(0.5)
 
     # If we're using a Unix socket, the sock.send call will fail with a
     # BrokenPipeError ; INET sockets will just stop receiving / sending data
     # but will not raise an error
-    if sock.family == getattr(socket, 'AF_UNIX', -1):
+    if getattr(sock, 'family', -9) == getattr(socket, 'AF_UNIX', -1):
         with pytest.raises(socket.error):
-            sock.send(b'make sure the socket is closed\n')
+            sock.sendall(b'make sure the socket is closed\n')
     else:
-        sock.send(b"make sure the socket is closed\n")
+        sock.sendall(b"make sure the socket is closed\n")
         assert sock.recv(32) == b''
 
 
