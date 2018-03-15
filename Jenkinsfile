@@ -5,7 +5,6 @@ def imageNamePy2
 def imageNamePy3
 def images = [:]
 
-
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
   try {
