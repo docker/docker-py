@@ -22,8 +22,7 @@ def read(socket, n=4096):
 
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
-    # wait for data to become available
-    if not isinstance(socket, NpipeSocket):
+    if six.PY3 and not isinstance(socket, NpipeSocket):
         select.select([socket], [], [])
 
     try:
