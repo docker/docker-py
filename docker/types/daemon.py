@@ -59,5 +59,4 @@ class CancellableStream(object):
                 sock = sock_fp._sock
 
             sock.shutdown(socket.SHUT_RDWR)
-            sock.makefile().close()
             sock.close()
