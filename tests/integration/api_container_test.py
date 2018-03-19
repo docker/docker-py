@@ -881,6 +881,7 @@ Line2'''
 
         assert logs == (snippet + '\n').encode(encoding='ascii')
 
+    @pytest.mark.timeout(5)
     def test_logs_streaming_and_follow_and_cancel(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
@@ -892,16 +893,10 @@ Line2'''
         logs = six.binary_type()
 
         generator = self.client.logs(id, stream=True, follow=True)
-
-        exit_timer = threading.Timer(3, os._exit, args=[1])
-        exit_timer.start()
-
         threading.Timer(1, generator.close).start()
 
         for chunk in generator:
             logs += chunk
-
-        exit_timer.cancel()
 
         assert logs == (snippet + '\n').encode(encoding='ascii')
 
@@ -1251,6 +1246,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 
+    @pytest.mark.timeout(5)
     def test_attach_stream_and_cancel(self):
         container = self.client.create_container(
             BUSYBOX, 'sh -c "echo hello && sleep 60"',
@@ -1260,16 +1256,11 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
         output = self.client.attach(container, stream=True, logs=True)
 
-        exit_timer = threading.Timer(3, os._exit, args=[1])
-        exit_timer.start()
-
         threading.Timer(1, output.close).start()
 
         lines = []
         for line in output:
             lines.append(line)
-
-        exit_timer.cancel()
 
         assert len(lines) == 1
         assert lines[0] == 'hello\r\n'.encode(encoding='ascii')
