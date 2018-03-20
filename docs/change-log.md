@@ -1,6 +1,16 @@
 Change log
 ==========
 
+3.1.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/47?closed=1)
+
+### Bugfixes
+
+* Fixed a bug that led to a Dockerfile not being included in the build context
+  in some situations when the Dockerfile's path was prefixed with `./`
+
 3.1.1
 -----
 
