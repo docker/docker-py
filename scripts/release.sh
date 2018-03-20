@@ -18,6 +18,9 @@ if [ -z $VERSION ]; then
     exit 1
 fi
 
+echo "##> Removing stale build files"
+rm -rf ./build || exit 1
+
 echo "##> Tagging the release as $VERSION"
 git tag $VERSION || exit 1
 if  [[ $2 == 'upload' ]]; then
@@ -30,4 +33,7 @@ pandoc -f markdown -t rst README.md -o README.rst || exit 1
 if [[ $2 == 'upload' ]]; then
     echo "##> Uploading sdist to pypi"
     python setup.py sdist bdist_wheel upload
+else
+    echo "##> sdist & wheel"
+    python setup.py sdist bdist_wheel
 fi

@@ -1,6 +1,13 @@
 Change log
 ==========
 
+3.1.3
+-----
+
+### Bugfixes
+
+* Regenerated invalid wheel package
+
 3.1.2
 -----
 
