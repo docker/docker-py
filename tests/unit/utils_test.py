@@ -1058,6 +1058,21 @@ class TarTest(unittest.TestCase):
             assert tar_data.getnames() == ['th.txt']
             assert tar_data.getmember('th.txt').mtime == -3600
 
+    @pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='No symlinks on Windows')
+    def test_tar_directory_link(self):
+        dirs = ['a', 'b', 'a/c']
+        files = ['a/hello.py', 'b/utils.py', 'a/c/descend.py']
+        base = make_tree(dirs, files)
+        self.addCleanup(shutil.rmtree, base)
+        os.symlink(os.path.join(base, 'b'), os.path.join(base, 'a/c/b'))
+        with tar(base) as archive:
+            tar_data = tarfile.open(fileobj=archive)
+            names = tar_data.getnames()
+            for member in dirs + files:
+                assert member in names
+            assert 'a/c/b' in names
+            assert 'a/c/b/utils.py' not in names
+
 
 class FormatEnvironmentTest(unittest.TestCase):
     def test_format_env_binary_unicode_value(self):
