@@ -1,6 +1,15 @@
 Change log
 ==========
 
+3.1.4
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/48?closed=1)
+
+
+* Fixed a bug where build contexts containing directory symlinks would produce
+  invalid tar archives
+
 3.1.3
 -----
 
