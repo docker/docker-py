@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import six
 
 from .. import auth
 from .. import constants
@@ -18,7 +19,7 @@ class BuildApiMixin(object):
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
-              squash=None, extra_hosts=None, platform=None):
+              squash=None, extra_hosts=None, platform=None, volumes=None):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -100,6 +101,8 @@ class BuildApiMixin(object):
             extra_hosts (dict): Extra hosts to add to /etc/hosts in building
                 containers, as a mapping of hostname to IP address.
             platform (str): Platform in the format ``os[/arch[/variant]]``
+            volumes (str or list): List of bind mounts or named volumes to
+                make available during the build
 
         Returns:
             A generator for the build output.
@@ -231,6 +234,11 @@ class BuildApiMixin(object):
                     'platform was only introduced in API version 1.32'
                 )
             params['platform'] = platform
+
+        if volumes is not None:
+            if isinstance(volumes, six.string_types):
+                volumes = [volumes, ]
+            params.update({'volumes': json.dumps(volumes)})
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
