@@ -5,13 +5,6 @@ def imageNamePy2
 def imageNamePy3
 def images = [:]
 
-def dockerVersions = [
-  "17.06.2-ce",  // Latest EE
-  "17.12.1-ce",  // Latest CE stable
-  "18.02.0-ce",  // Latest CE edge
-  "18.03.0-ce-rc4" // Latest CE RC
-]
-
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
   try {
@@ -37,9 +30,27 @@ def buildImages = { ->
   }
 }
 
+def getDockerVersions = { ->
+  def dockerVersions = ["17.06.2-ce"]
+  wrappedNode(label: "ubuntu && !zfs") {
+    def result = sh(script: """docker run --rm \\
+        --entrypoint=python \\
+        ${imageNamePy3} \\
+        /src/scripts/versions.py
+      """, returnStdout: true
+    )
+    dockerVersions = dockerVersions + result.trim().tokenize(' ')
+  }
+  return dockerVersions
+}
+
 def getAPIVersion = { engineVersion ->
   def versionMap = ['17.06': '1.30', '17.12': '1.35', '18.02': '1.36', '18.03': '1.37']
-  return versionMap[engineVersion.substring(0, 5)]
+  def result = versionMap[engineVersion.substring(0, 5)]
+  if (!result) {
+    return '1.37'
+  }
+  return result
 }
 
 def runTests = { Map settings ->
@@ -93,6 +104,8 @@ def runTests = { Map settings ->
 
 
 buildImages()
+
+def dockerVersions = getDockerVersions()
 
 def testMatrix = [failFast: false]
 
