@@ -138,6 +138,21 @@ class BuildTest(BaseAPIIntegrationTest):
         # There is currently no way to get the shmsize
         # that was used to build the image
 
+    @requires_api_version('1.24')
+    def test_build_isolation(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+            'CMD sh -c "echo \'Deaf To All But The Song\''
+        ]).encode('ascii'))
+
+        stream = self.client.build(
+            fileobj=script, tag='isolation',
+            isolation='default'
+        )
+
+        for chunk in stream:
+            pass
+
     @requires_api_version('1.23')
     def test_build_labels(self):
         script = io.BytesIO('\n'.join([
