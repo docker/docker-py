@@ -164,6 +164,8 @@ class ImageCollection(Collection):
             extra_hosts (dict): Extra hosts to add to /etc/hosts in building
                 containers, as a mapping of hostname to IP address.
             platform (str): Platform in the format ``os[/arch[/variant]]``.
+            isolation (str): Isolation technology used during build.
+                Default: `None`.
 
         Returns:
             (tuple): The first item is the :py:class:`Image` object for the
