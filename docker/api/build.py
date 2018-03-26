@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import random
 
 from .. import auth
 from .. import constants
@@ -148,6 +149,15 @@ class BuildApiMixin(object):
                         lambda x: x != '' and x[0] != '#',
                         [l.strip() for l in f.read().splitlines()]
                     ))
+            if dockerfile and os.path.relpath(dockerfile, path).startswith(
+                    '..'):
+                with open(dockerfile, 'r') as df:
+                    dockerfile = (
+                        '.dockerfile.{0:x}'.format(random.getrandbits(160)),
+                        df.read()
+                    )
+            else:
+                dockerfile = (dockerfile, None)
             context = utils.tar(
                 path, exclude=exclude, dockerfile=dockerfile, gzip=gzip
             )
