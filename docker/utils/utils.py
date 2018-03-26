@@ -88,13 +88,17 @@ def build_file_list(root):
     return files
 
 
-def create_archive(root, files=None, fileobj=None, gzip=False):
+def create_archive(root, files=None, fileobj=None, gzip=False,
+                   extra_files=None):
     if not fileobj:
         fileobj = tempfile.NamedTemporaryFile()
     t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
     if files is None:
         files = build_file_list(root)
     for path in files:
+        if path in [e[0] for e in extra_files]:
+            # Extra files override context files with the same name
+            continue
         full_path = os.path.join(root, path)
 
         i = t.gettarinfo(full_path, arcname=path)
@@ -123,6 +127,12 @@ def create_archive(root, files=None, fileobj=None, gzip=False):
         else:
             # Directories, FIFOs, symlinks... don't need to be read.
             t.addfile(i, None)
+
+    for name, contents in extra_files:
+        info = tarfile.TarInfo(name)
+        info.size = len(contents)
+        t.addfile(info, io.BytesIO(contents.encode('utf-8')))
+
     t.close()
     fileobj.seek(0)
     return fileobj
