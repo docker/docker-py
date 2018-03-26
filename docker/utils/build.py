@@ -1,8 +1,11 @@
+import io
 import os
 import re
+import six
+import tarfile
+import tempfile
 
 from ..constants import IS_WINDOWS_PLATFORM
-from .utils import create_archive
 from fnmatch import fnmatch
 from itertools import chain
 
@@ -127,3 +130,89 @@ def walk(root, patterns, default=True):
                 yield f
         elif matched:
             yield f
+
+
+def build_file_list(root):
+    files = []
+    for dirname, dirnames, fnames in os.walk(root):
+        for filename in fnames + dirnames:
+            longpath = os.path.join(dirname, filename)
+            files.append(
+                longpath.replace(root, '', 1).lstrip('/')
+            )
+
+    return files
+
+
+def create_archive(root, files=None, fileobj=None, gzip=False,
+                   extra_files=None):
+    extra_files = extra_files or []
+    if not fileobj:
+        fileobj = tempfile.NamedTemporaryFile()
+    t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
+    if files is None:
+        files = build_file_list(root)
+    for path in files:
+        if path in [e[0] for e in extra_files]:
+            # Extra files override context files with the same name
+            continue
+        full_path = os.path.join(root, path)
+
+        i = t.gettarinfo(full_path, arcname=path)
+        if i is None:
+            # This happens when we encounter a socket file. We can safely
+            # ignore it and proceed.
+            continue
+
+        # Workaround https://bugs.python.org/issue32713
+        if i.mtime < 0 or i.mtime > 8**11 - 1:
+            i.mtime = int(i.mtime)
+
+        if IS_WINDOWS_PLATFORM:
+            # Windows doesn't keep track of the execute bit, so we make files
+            # and directories executable by default.
+            i.mode = i.mode & 0o755 | 0o111
+
+        if i.isfile():
+            try:
+                with open(full_path, 'rb') as f:
+                    t.addfile(i, f)
+            except IOError:
+                raise IOError(
+                    'Can not read file in context: {}'.format(full_path)
+                )
+        else:
+            # Directories, FIFOs, symlinks... don't need to be read.
+            t.addfile(i, None)
+
+    for name, contents in extra_files:
+        info = tarfile.TarInfo(name)
+        info.size = len(contents)
+        t.addfile(info, io.BytesIO(contents.encode('utf-8')))
+
+    t.close()
+    fileobj.seek(0)
+    return fileobj
+
+
+def mkbuildcontext(dockerfile):
+    f = tempfile.NamedTemporaryFile()
+    t = tarfile.open(mode='w', fileobj=f)
+    if isinstance(dockerfile, io.StringIO):
+        dfinfo = tarfile.TarInfo('Dockerfile')
+        if six.PY3:
+            raise TypeError('Please use io.BytesIO to create in-memory '
+                            'Dockerfiles with Python 3')
+        else:
+            dfinfo.size = len(dockerfile.getvalue())
+            dockerfile.seek(0)
+    elif isinstance(dockerfile, io.BytesIO):
+        dfinfo = tarfile.TarInfo('Dockerfile')
+        dfinfo.size = len(dockerfile.getvalue())
+        dockerfile.seek(0)
+    else:
+        dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
+    t.addfile(dfinfo, dockerfile)
+    t.close()
+    f.seek(0)
+    return f
