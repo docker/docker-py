@@ -407,3 +407,36 @@ class BuildTest(BaseAPIIntegrationTest):
 
         assert excinfo.value.status_code == 400
         assert 'invalid platform' in excinfo.exconly()
+
+    def test_build_out_of_context_dockerfile(self):
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+        with open(os.path.join(base_dir, 'file.txt'), 'w') as f:
+            f.write('hello world')
+        with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
+            f.write('.dockerignore\n')
+        df = tempfile.NamedTemporaryFile()
+        self.addCleanup(df.close)
+        df.write(('\n'.join([
+            'FROM busybox',
+            'COPY . /src',
+            'WORKDIR /src',
+        ])).encode('utf-8'))
+        df.flush()
+        img_name = random_name()
+        self.tmp_imgs.append(img_name)
+        stream = self.client.build(
+            path=base_dir, dockerfile=df.name, tag=img_name,
+            decode=True
+        )
+        lines = []
+        for chunk in stream:
+            lines.append(chunk)
+        assert 'Successfully tagged' in lines[-1]['stream']
+
+        ctnr = self.client.create_container(img_name, 'ls -a')
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        lsdata = self.client.logs(ctnr).strip().split(b'\n')
+        assert len(lsdata) == 3
+        assert sorted([b'.', b'..', b'file.txt']) == sorted(lsdata)
