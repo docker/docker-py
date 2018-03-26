@@ -6,7 +6,6 @@ import tarfile
 import tempfile
 
 from ..constants import IS_WINDOWS_PLATFORM
-from .utils import create_archive
 from fnmatch import fnmatch
 from itertools import chain
 
