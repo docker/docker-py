@@ -11,12 +11,15 @@
 [Org]
 	[Org."Core maintainers"]
 		people = [
+			"shin-",
+		]
+	[Org.Alumni]
+		people = [
 			"aanand",
 			"bfirsh",
 			"dnephin",
 			"mnowster",
 			"mpetazzoni",
-			"shin-",
 		]
 
 [people]
