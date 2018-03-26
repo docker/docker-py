@@ -2,21 +2,31 @@ import os
 import re
 
 from ..constants import IS_WINDOWS_PLATFORM
+from .utils import create_archive
 from fnmatch import fnmatch
 from itertools import chain
-from .utils import create_archive
+
+
+_SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
 
 
 def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
     root = os.path.abspath(path)
     exclude = exclude or []
+    dockerfile = dockerfile or (None, None)
+    extra_files = []
+    if dockerfile[1] is not None:
+        dockerignore_contents = '\n'.join(
+            (exclude or ['.dockerignore']) + [dockerfile[0]]
+        )
+        extra_files = [
+            ('.dockerignore', dockerignore_contents),
+            dockerfile,
+        ]
     return create_archive(
-        files=sorted(exclude_paths(root, exclude, dockerfile=dockerfile)),
-        root=root, fileobj=fileobj, gzip=gzip
+        files=sorted(exclude_paths(root, exclude, dockerfile=dockerfile[0])),
+        root=root, fileobj=fileobj, gzip=gzip, extra_files=extra_files
     )
-
-
-_SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
 
 
 def exclude_paths(root, patterns, dockerfile=None):
