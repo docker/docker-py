@@ -152,8 +152,9 @@ def create_archive(root, files=None, fileobj=None, gzip=False,
     t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
     if files is None:
         files = build_file_list(root)
+    extra_names = set(e[0] for e in extra_files)
     for path in files:
-        if path in [e[0] for e in extra_files]:
+        if path in extra_names:
             # Extra files override context files with the same name
             continue
         full_path = os.path.join(root, path)
