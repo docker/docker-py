@@ -357,3 +357,12 @@ class SaveLoadImagesTest(BaseAPIIntegrationTest):
                     success = True
                     break
         assert success is True
+
+
+@requires_api_version('1.30')
+class InspectDistributionTest(BaseAPIIntegrationTest):
+    def test_inspect_distribution(self):
+        data = self.client.inspect_distribution('busybox:latest')
+        assert data is not None
+        assert 'Platforms' in data
+        assert {'os': 'linux', 'architecture': 'amd64'} in data['Platforms']
