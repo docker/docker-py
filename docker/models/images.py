@@ -5,7 +5,7 @@ import six
 
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..errors import BuildError, ImageLoadError
+from ..errors import BuildError, ImageLoadError, InvalidArgument
 from ..utils import parse_repository_tag
 from ..utils.json_stream import json_stream
 from .resource import Collection, Model
@@ -103,6 +103,81 @@ class Image(Model):
             (bool): ``True`` if successful
         """
         return self.client.api.tag(self.id, repository, tag=tag, **kwargs)
+
+
+class RegistryData(Model):
+    """
+    Image metadata stored on the registry, including available platforms.
+    """
+    def __init__(self, image_name, *args, **kwargs):
+        super(RegistryData, self).__init__(*args, **kwargs)
+        self.image_name = image_name
+
+    @property
+    def id(self):
+        """
+        The ID of the object.
+        """
+        return self.attrs['Descriptor']['digest']
+
+    @property
+    def short_id(self):
+        """
+        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        prefix.
+        """
+        return self.id[:17]
+
+    def pull(self, platform=None):
+        """
+        Pull the image digest.
+
+        Args:
+            platform (str): The platform to pull the image for.
+            Default: ``None``
+
+        Returns:
+            (:py:class:`Image`): A reference to the pulled image.
+        """
+        repository, _ = parse_repository_tag(self.image_name)
+        return self.collection.pull(repository, tag=self.id, platform=platform)
+
+    def has_platform(self, platform):
+        """
+        Check whether the given platform identifier is available for this
+        digest.
+
+        Args:
+            platform (str or dict): A string using the ``os[/arch[/variant]]``
+                format, or a platform dictionary.
+
+        Returns:
+            (bool): ``True`` if the platform is recognized as available,
+            ``False`` otherwise.
+
+        Raises:
+            :py:class:`docker.errors.InvalidArgument`
+                If the platform argument is not a valid descriptor.
+        """
+        if platform and not isinstance(platform, dict):
+            parts = platform.split('/')
+            if len(parts) > 3 or len(parts) < 1:
+                raise InvalidArgument(
+                    '"{0}" is not a valid platform descriptor'.format(platform)
+                )
+            platform = {'os': parts[0]}
+            if len(parts) > 2:
+                platform['variant'] = parts[2]
+            if len(parts) > 1:
+                platform['architecture'] = parts[1]
+        return normalize_platform(
+            platform, self.client.version()
+        ) in self.attrs['Platforms']
+
+    def reload(self):
+        self.attrs = self.client.api.inspect_distribution(self.image_name)
+
+    reload.__doc__ = Model.reload.__doc__
 
 
 class ImageCollection(Collection):
@@ -218,6 +293,26 @@ class ImageCollection(Collection):
                 If the server returns an error.
         """
         return self.prepare_model(self.client.api.inspect_image(name))
+
+    def get_registry_data(self, name):
+        """
+        Gets the registry data for an image.
+
+        Args:
+            name (str): The name of the image.
+
+        Returns:
+            (:py:class:`RegistryData`): The data object.
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        return RegistryData(
+            image_name=name,
+            attrs=self.client.api.inspect_distribution(name),
+            client=self.client,
+            collection=self,
+        )
 
     def list(self, name=None, all=False, filters=None):
         """
@@ -336,3 +431,13 @@ class ImageCollection(Collection):
     def prune(self, filters=None):
         return self.client.api.prune_images(filters=filters)
     prune.__doc__ = APIClient.prune_images.__doc__
+
+
+def normalize_platform(platform, engine_info):
+    if platform is None:
+        platform = {}
+    if 'os' not in platform:
+        platform['os'] = engine_info['Os']
+    if 'architecture' not in platform:
+        platform['architecture'] = engine_info['Arch']
+    return platform

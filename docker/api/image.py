@@ -245,6 +245,27 @@ class ImageApiMixin(object):
             self._get(self._url("/images/{0}/json", image)), True
         )
 
+    @utils.minimum_version('1.30')
+    @utils.check_resource('image')
+    def inspect_distribution(self, image):
+        """
+        Get image digest and platform information by contacting the registry.
+
+        Args:
+            image (str): The image name to inspect
+
+        Returns:
+            (dict): A dict containing distribution data
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+
+        return self._result(
+            self._get(self._url("/distribution/{0}/json", image)), True
+        )
+
     def load_image(self, data, quiet=None):
         """
         Load an image that was previously saved using
