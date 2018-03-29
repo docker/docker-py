@@ -26,6 +26,7 @@ Client reference
   .. autoattribute:: swarm
   .. autoattribute:: volumes
 
+  .. automethod:: close()
   .. automethod:: df()
   .. automethod:: events()
   .. automethod:: info()

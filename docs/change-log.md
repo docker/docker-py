@@ -1,6 +1,63 @@
 Change log
 ==========
 
+3.2.0
+-----
+
+[List of PRs/ issues for this release](https://github.com/docker/docker-py/milestone/45?closed=1)
+
+### Features
+
+* Generators returned by `attach()`, `logs()` and `events()` now have a
+  `cancel()` method to let consumers stop the iteration client-side.
+* `build()` methods can now handle Dockerfiles supplied outside of the
+  build context.
+* Added `sparse` argument to `DockerClient.containers.list()`
+* Added `isolation` parameter to `build()` methods.
+* Added `close()` method to `DockerClient`
+* Added `APIClient.inspect_distribution()` method and
+  `DockerClient.images.get_registry_data()`
+  * The latter returns an instance of the new `RegistryData` class
+
+3.1.4
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/48?closed=1)
+
+### Bugfixes
+
+* Fixed a bug where build contexts containing directory symlinks would produce
+  invalid tar archives
+
+3.1.3
+-----
+
+### Bugfixes
+
+* Regenerated invalid wheel package
+
+3.1.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/47?closed=1)
+
+### Bugfixes
+
+* Fixed a bug that led to a Dockerfile not being included in the build context
+  in some situations when the Dockerfile's path was prefixed with `./`
+
+3.1.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/46?closed=1)
+
+### Bugfixes
+
+* Fixed a bug that caused costly DNS lookups on Mac OSX when connecting to the
+  engine through UNIX socket
+* Fixed a bug that caused `.dockerignore` comments to be read as exclusion
+  patterns
+
 3.1.0
 -----
 
