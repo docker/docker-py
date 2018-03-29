@@ -1,11 +1,30 @@
 Change log
 ==========
 
+3.2.0
+-----
+
+[List of PRs/ issues for this release](https://github.com/docker/docker-py/milestone/45?closed=1)
+
+### Features
+
+* Generators returned by `attach()`, `logs()` and `events()` now have a
+  `cancel()` method to let consumers stop the iteration client-side.
+* `build()` methods can now handle Dockerfiles supplied outside of the
+  build context.
+* Added `sparse` argument to `DockerClient.containers.list()`
+* Added `isolation` parameter to `build()` methods.
+* Added `close()` method to `DockerClient`
+* Added `APIClient.inspect_distribution()` method and
+  `DockerClient.images.get_registry_data()`
+  * The latter returns an instance of the new `RegistryData` class
+
 3.1.4
 -----
 
 [List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/48?closed=1)
 
+### Bugfixes
 
 * Fixed a bug where build contexts containing directory symlinks would produce
   invalid tar archives
