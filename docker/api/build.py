@@ -149,8 +149,15 @@ class BuildApiMixin(object):
                         lambda x: x != '' and x[0] != '#',
                         [l.strip() for l in f.read().splitlines()]
                     ))
-            if dockerfile and os.path.relpath(dockerfile, path).startswith(
-                    '..'):
+            try:
+                if dockerfile:
+                    relative_path = os.path.relpath(dockerfile, path)
+                    inside_parent_dir = relative_path.startswith('..')
+                else:
+                    inside_parent_dir = False
+            except ValueError:
+                inside_parent_dir = False
+            if inside_parent_dir:
                 with open(dockerfile, 'r') as df:
                     dockerfile = (
                         '.dockerfile.{0:x}'.format(random.getrandbits(160)),
