@@ -149,15 +149,7 @@ class BuildApiMixin(object):
                         lambda x: x != '' and x[0] != '#',
                         [l.strip() for l in f.read().splitlines()]
                     ))
-            if dockerfile and os.path.relpath(dockerfile, path).startswith(
-                    '..'):
-                with open(dockerfile, 'r') as df:
-                    dockerfile = (
-                        '.dockerfile.{0:x}'.format(random.getrandbits(160)),
-                        df.read()
-                    )
-            else:
-                dockerfile = (dockerfile, None)
+            dockerfile = process_dockerfile(dockerfile, path)
             context = utils.tar(
                 path, exclude=exclude, dockerfile=dockerfile, gzip=gzip
             )
@@ -312,3 +304,22 @@ class BuildApiMixin(object):
             )
         else:
             log.debug('No auth config found')
+
+
+def process_dockerfile(dockerfile, path):
+    if not dockerfile:
+        return (None, None)
+
+    abs_dockerfile = dockerfile
+    if not os.path.isabs(dockerfile):
+        abs_dockerfile = os.path.join(path, dockerfile)
+
+    if (os.path.splitdrive(path)[0] != os.path.splitdrive(abs_dockerfile)[0] or
+            os.path.relpath(abs_dockerfile, path).startswith('..')):
+        with open(abs_dockerfile, 'r') as df:
+            return (
+                '.dockerfile.{0:x}'.format(random.getrandbits(160)),
+                df.read()
+            )
+    else:
+        return (dockerfile, None)
