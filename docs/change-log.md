@@ -1,6 +1,18 @@
 Change log
 ==========
 
+3.2.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/50?closed=1)
+
+### Bugfixes
+
+* Fixed a bug with builds not properly identifying Dockerfile paths relative
+  to the build context
+* Fixed an issue where builds would raise a `ValueError` when attempting to
+  build with a Dockerfile on a different Windows drive.
+
 3.2.0
 -----
 
