@@ -440,3 +440,35 @@ class BuildTest(BaseAPIIntegrationTest):
         lsdata = self.client.logs(ctnr).strip().split(b'\n')
         assert len(lsdata) == 3
         assert sorted([b'.', b'..', b'file.txt']) == sorted(lsdata)
+
+    def test_build_in_context_dockerfile(self):
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+        with open(os.path.join(base_dir, 'file.txt'), 'w') as f:
+            f.write('hello world')
+        with open(os.path.join(base_dir, 'custom.dockerfile'), 'w') as df:
+            df.write('\n'.join([
+                'FROM busybox',
+                'COPY . /src',
+                'WORKDIR /src',
+            ]))
+        print(os.path.join(base_dir, 'custom.dockerfile'))
+        img_name = random_name()
+        self.tmp_imgs.append(img_name)
+        stream = self.client.build(
+            path=base_dir, dockerfile='custom.dockerfile', tag=img_name,
+            decode=True
+        )
+        lines = []
+        for chunk in stream:
+            lines.append(chunk)
+        assert 'Successfully tagged' in lines[-1]['stream']
+
+        ctnr = self.client.create_container(img_name, 'ls -a')
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        lsdata = self.client.logs(ctnr).strip().split(b'\n')
+        assert len(lsdata) == 4
+        assert sorted(
+            [b'.', b'..', b'file.txt', b'custom.dockerfile']
+        ) == sorted(lsdata)
