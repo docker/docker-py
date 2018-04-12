@@ -316,10 +316,12 @@ def process_dockerfile(dockerfile, path):
 
     if (os.path.splitdrive(path)[0] != os.path.splitdrive(abs_dockerfile)[0] or
             os.path.relpath(abs_dockerfile, path).startswith('..')):
+        # Dockerfile not in context - read data to insert into tar later
         with open(abs_dockerfile, 'r') as df:
             return (
                 '.dockerfile.{0:x}'.format(random.getrandbits(160)),
                 df.read()
             )
-    else:
-        return (dockerfile, None)
+
+    # Dockerfile is inside the context - return path relative to context root
+    return (os.path.relpath(abs_dockerfile, path), None)
