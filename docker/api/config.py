@@ -6,7 +6,7 @@ from .. import utils
 
 
 class ConfigApiMixin(object):
-    @utils.minimum_version('1.25')
+    @utils.minimum_version('1.30')
     def create_config(self, name, data, labels=None):
         """
             Create a config
@@ -35,7 +35,7 @@ class ConfigApiMixin(object):
             self._post_json(url, data=body), True
         )
 
-    @utils.minimum_version('1.25')
+    @utils.minimum_version('1.30')
     @utils.check_resource('id')
     def inspect_config(self, id):
         """
@@ -53,7 +53,7 @@ class ConfigApiMixin(object):
         url = self._url('/configs/{0}', id)
         return self._result(self._get(url), True)
 
-    @utils.minimum_version('1.25')
+    @utils.minimum_version('1.30')
     @utils.check_resource('id')
     def remove_config(self, id):
         """
@@ -73,7 +73,7 @@ class ConfigApiMixin(object):
         self._raise_for_status(res)
         return True
 
-    @utils.minimum_version('1.25')
+    @utils.minimum_version('1.30')
     def configs(self, filters=None):
         """
             List configs
