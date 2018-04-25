@@ -844,7 +844,7 @@ class ContainerCollection(Collection):
         return self.prepare_model(resp)
 
     def list(self, all=False, before=None, filters=None, limit=-1, since=None,
-             sparse=False):
+             sparse=False, ignore_removed=False):
         """
         List containers. Similar to the ``docker ps`` command.
 
@@ -882,6 +882,10 @@ class ContainerCollection(Collection):
                 information, but guaranteed not to block. Use
                 :py:meth:`Container.reload` on resulting objects to retrieve
                 all attributes. Default: ``False``
+            ignore_removed (bool): Ignore failures due to missing containers
+                when attempting to inspect containers from the original list.
+                Set to ``True`` if race conditions are likely. Has no effect
+                if ``sparse=True``. Default: ``False``
 
         Returns:
             (list of :py:class:`Container`)
@@ -902,7 +906,8 @@ class ContainerCollection(Collection):
                     containers.append(self.get(r['Id']))
                 # a container may have been removed while iterating
                 except NotFound:
-                    pass
+                    if not ignore_removed:
+                        raise
             return containers
 
     def prune(self, filters=None):
