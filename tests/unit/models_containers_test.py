@@ -359,6 +359,18 @@ class ContainerCollectionTest(unittest.TestCase):
         assert isinstance(containers[0], Container)
         assert containers[0].id == FAKE_CONTAINER_ID
 
+    def test_list_ignore_removed(self):
+        def side_effect(*args, **kwargs):
+            raise docker.errors.NotFound('Container not found')
+        client = make_fake_client({
+            'inspect_container.side_effect': side_effect
+        })
+
+        with pytest.raises(docker.errors.NotFound):
+            client.containers.list(all=True, ignore_removed=False)
+
+        assert client.containers.list(all=True, ignore_removed=True) == []
+
 
 class ContainerTest(unittest.TestCase):
     def test_name(self):
