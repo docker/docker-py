@@ -3,22 +3,8 @@ from __future__ import print_function
 
 import codecs
 import os
-import sys
-
-import pip
 
 from setuptools import setup, find_packages
-
-try:
-    if 'docker-py' in [
-            x.project_name for x in pip.get_installed_distributions()]:
-        print(
-            'ERROR: "docker-py" needs to be uninstalled before installing this'
-            ' package:\npip uninstall docker-py', file=sys.stderr
-        )
-        sys.exit(1)
-except AttributeError:
-    pass
 
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
