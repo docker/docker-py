@@ -1335,7 +1335,7 @@ class ContainerTest(BaseAPIClientTest):
             'POST',
             url_prefix + 'containers/3cc2351ab11b/restart',
             params={'t': 2},
-            timeout=DEFAULT_TIMEOUT_SECONDS
+            timeout=(DEFAULT_TIMEOUT_SECONDS + 2)
         )
 
     def test_restart_container_with_dict_instead_of_id(self):
@@ -1345,7 +1345,7 @@ class ContainerTest(BaseAPIClientTest):
             'POST',
             url_prefix + 'containers/3cc2351ab11b/restart',
             params={'t': 2},
-            timeout=DEFAULT_TIMEOUT_SECONDS
+            timeout=(DEFAULT_TIMEOUT_SECONDS + 2)
         )
 
     def test_remove_container(self):

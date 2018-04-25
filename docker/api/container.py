@@ -1018,7 +1018,10 @@ class ContainerApiMixin(object):
         """
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart", container)
-        res = self._post(url, params=params)
+        conn_timeout = self.timeout
+        if conn_timeout is not None:
+            conn_timeout += timeout
+        res = self._post(url, params=params, timeout=conn_timeout)
         self._raise_for_status(res)
 
     @utils.check_resource('container')
@@ -1107,9 +1110,10 @@ class ContainerApiMixin(object):
         else:
             params = {'t': timeout}
         url = self._url("/containers/{0}/stop", container)
-
-        res = self._post(url, params=params,
-                         timeout=(timeout + (self.timeout or 0)))
+        conn_timeout = self.timeout
+        if conn_timeout is not None:
+            conn_timeout += timeout
+        res = self._post(url, params=params, timeout=conn_timeout)
         self._raise_for_status(res)
 
     @utils.check_resource('container')
