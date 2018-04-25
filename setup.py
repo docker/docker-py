@@ -5,13 +5,17 @@ import codecs
 import os
 import sys
 
-import pip
+
+try:
+    from pip import get_installed_distributions
+except ImportError:
+    from pip._internal import get_installed_distributions
 
 from setuptools import setup, find_packages
 
 try:
     if 'docker-py' in [
-            x.project_name for x in pip.get_installed_distributions()]:
+            x.project_name for x in get_installed_distributions()]:
         print(
             'ERROR: "docker-py" needs to be uninstalled before installing this'
             ' package:\npip uninstall docker-py', file=sys.stderr
