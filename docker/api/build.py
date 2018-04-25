@@ -264,6 +264,23 @@ class BuildApiMixin(object):
 
         return self._stream_helper(response, decode=decode)
 
+    @utils.minimum_version('1.31')
+    def prune_builds(self):
+        """
+        Delete the builder cache
+
+        Returns:
+            (dict): A dictionary containing information about the operation's
+                    result. The ``SpaceReclaimed`` key indicates the amount of
+                    bytes of disk space reclaimed.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        url = self._url("/build/prune")
+        return self._result(self._post(url), True)
+
     def _set_auth_headers(self, headers):
         log.debug('Looking for auth config')
 
@@ -304,22 +321,6 @@ class BuildApiMixin(object):
             )
         else:
             log.debug('No auth config found')
-
-    @utils.minimum_version('1.31')
-    def prune_build(self):
-        """
-        Delete builder cache
-
-        Returns:
-            (dict): A dict containing
-            the amount of disk space reclaimed in bytes.
-
-        Raises:
-            :py:class:`docker.errors.APIError`
-                If the server returns an error.
-        """
-        url = self._url("/build/prune")
-        return self._result(self._post(url), True)
 
 
 def process_dockerfile(dockerfile, path):
