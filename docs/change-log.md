@@ -1,6 +1,26 @@
 Change log
 ==========
 
+3.3.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/49?closed=1)
+
+### Features
+
+* Added support for `prune_builds` in `APIClient` and `DockerClient.images`
+* Added support for `ignore_removed` parameter in
+  `DockerClient.containers.list`
+
+### Bugfixes
+
+* Fixed an issue that caused builds to fail when an in-context Dockerfile
+  would be specified using its absolute path
+* Installation with pip 10.0.0 and above no longer fails
+* Connection timeout for `stop` and `restart` now gets properly adjusted to
+  allow for the operation to finish in the specified time
+* Improved docker credential store support on Windows
+
 3.2.1
 -----
 
@@ -16,7 +36,7 @@ Change log
 3.2.0
 -----
 
-[List of PRs/ issues for this release](https://github.com/docker/docker-py/milestone/45?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/45?closed=1)
 
 ### Features
 
