@@ -432,6 +432,10 @@ class ImageCollection(Collection):
         return self.client.api.prune_images(filters=filters)
     prune.__doc__ = APIClient.prune_images.__doc__
 
+    def prune_builds(self, *args, **kwargs):
+        return self.client.api.prune_builds(*args, **kwargs)
+    prune_builds.__doc__ = APIClient.prune_builds.__doc__
+
 
 def normalize_platform(platform, engine_info):
     if platform is None:
