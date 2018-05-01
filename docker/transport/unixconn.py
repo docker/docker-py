@@ -1,13 +1,9 @@
 import six
 import requests.adapters
 import socket
+from six.moves import http_client as httplib
 
 from .. import constants
-
-if six.PY3:
-    import http.client as httplib
-else:
-    import httplib
 
 try:
     import requests.packages.urllib3 as urllib3
