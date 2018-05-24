@@ -256,7 +256,7 @@ class ServiceCollection(Collection):
         """
         return [
             self.prepare_model(s)
-            for s in self.client.api.services(**kwargs)
+            for s in self.client.api.services(**(kwargs or {}))
         ]
 
 
