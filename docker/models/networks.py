@@ -211,5 +211,5 @@ class NetworkCollection(Collection):
         return networks
 
     def prune(self, filters=None):
-        self.client.api.prune_networks(filters=filters)
+        return self.client.api.prune_networks(filters=filters)
     prune.__doc__ = APIClient.prune_networks.__doc__
