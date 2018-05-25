@@ -135,7 +135,7 @@ class PluginTest(BaseAPIIntegrationTest):
 
     def test_create_plugin(self):
         plugin_data_dir = os.path.join(
-            os.path.dirname(__file__), 'testdata/dummy-plugin'
+            os.path.dirname(__file__), os.path.join('testdata', 'dummy-plugin')
         )
         assert self.client.create_plugin(
             'docker-sdk-py/dummy', plugin_data_dir
