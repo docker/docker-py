@@ -415,18 +415,20 @@ class BuildTest(BaseAPIIntegrationTest):
             f.write('hello world')
         with open(os.path.join(base_dir, '.dockerignore'), 'w') as f:
             f.write('.dockerignore\n')
-        df = tempfile.NamedTemporaryFile()
-        self.addCleanup(df.close)
-        df.write(('\n'.join([
-            'FROM busybox',
-            'COPY . /src',
-            'WORKDIR /src',
-        ])).encode('utf-8'))
-        df.flush()
+        df_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, df_dir)
+        df_name = os.path.join(df_dir, 'Dockerfile')
+        with open(df_name, 'wb') as df:
+            df.write(('\n'.join([
+                'FROM busybox',
+                'COPY . /src',
+                'WORKDIR /src',
+            ])).encode('utf-8'))
+            df.flush()
         img_name = random_name()
         self.tmp_imgs.append(img_name)
         stream = self.client.build(
-            path=base_dir, dockerfile=df.name, tag=img_name,
+            path=base_dir, dockerfile=df_name, tag=img_name,
             decode=True
         )
         lines = []
@@ -470,6 +472,39 @@ class BuildTest(BaseAPIIntegrationTest):
         assert len(lsdata) == 4
         assert sorted(
             [b'.', b'..', b'file.txt', b'custom.dockerfile']
+        ) == sorted(lsdata)
+
+    def test_build_in_context_nested_dockerfile(self):
+        base_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base_dir)
+        with open(os.path.join(base_dir, 'file.txt'), 'w') as f:
+            f.write('hello world')
+        subdir = os.path.join(base_dir, 'hello', 'world')
+        os.makedirs(subdir)
+        with open(os.path.join(subdir, 'custom.dockerfile'), 'w') as df:
+            df.write('\n'.join([
+                'FROM busybox',
+                'COPY . /src',
+                'WORKDIR /src',
+            ]))
+        img_name = random_name()
+        self.tmp_imgs.append(img_name)
+        stream = self.client.build(
+            path=base_dir, dockerfile='hello/world/custom.dockerfile',
+            tag=img_name, decode=True
+        )
+        lines = []
+        for chunk in stream:
+            lines.append(chunk)
+        assert 'Successfully tagged' in lines[-1]['stream']
+
+        ctnr = self.client.create_container(img_name, 'ls -a')
+        self.tmp_containers.append(ctnr)
+        self.client.start(ctnr)
+        lsdata = self.client.logs(ctnr).strip().split(b'\n')
+        assert len(lsdata) == 4
+        assert sorted(
+            [b'.', b'..', b'file.txt', b'hello']
         ) == sorted(lsdata)
 
     def test_build_in_context_abs_dockerfile(self):

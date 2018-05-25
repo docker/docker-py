@@ -340,4 +340,9 @@ def process_dockerfile(dockerfile, path):
             )
 
     # Dockerfile is inside the context - return path relative to context root
-    return (os.path.relpath(abs_dockerfile, path), None)
+    if dockerfile == abs_dockerfile:
+        # Only calculate relpath if necessary to avoid errors
+        # on Windows client -> Linux Docker
+        # see https://github.com/docker/compose/issues/5969
+        dockerfile = os.path.relpath(abs_dockerfile, path)
+    return (dockerfile, None)
