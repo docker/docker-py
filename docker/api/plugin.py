@@ -44,7 +44,10 @@ class PluginApiMixin(object):
         """
         url = self._url('/plugins/create')
 
-        with utils.create_archive(root=plugin_data_dir, gzip=gzip) as archv:
+        with utils.create_archive(
+            root=plugin_data_dir, gzip=gzip,
+            files=set(utils.build.walk(plugin_data_dir, []))
+        ) as archv:
             res = self._post(url, params={'name': name}, data=archv)
         self._raise_for_status(res)
         return True
