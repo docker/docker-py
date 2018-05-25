@@ -491,6 +491,9 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert rule in self.client.logs(ctnr).decode('utf-8')
 
 
+@pytest.mark.xfail(
+    IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
+)
 class VolumeBindTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(VolumeBindTest, self).setUp()
@@ -507,9 +510,6 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             ['touch', os.path.join(self.mount_dest, self.filename)],
         )
 
-    @pytest.mark.xfail(
-        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
-    )
     def test_create_with_binds_rw(self):
 
         container = self.run_with_volume(
@@ -525,9 +525,6 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, True)
 
-    @pytest.mark.xfail(
-        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
-    )
     def test_create_with_binds_ro(self):
         self.run_with_volume(
             False,
@@ -548,9 +545,6 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
 
-    @pytest.mark.xfail(
-        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
-    )
     @requires_api_version('1.30')
     def test_create_with_mounts(self):
         mount = docker.types.Mount(
@@ -569,9 +563,6 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, True)
 
-    @pytest.mark.xfail(
-        IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
-    )
     @requires_api_version('1.30')
     def test_create_with_mounts_ro(self):
         mount = docker.types.Mount(
@@ -1116,9 +1107,7 @@ class ContainerTopTest(BaseAPIIntegrationTest):
 
         self.client.start(container)
         res = self.client.top(container)
-        if IS_WINDOWS_PLATFORM:
-            assert res['Titles'] == ['PID', 'USER', 'TIME', 'COMMAND']
-        else:
+        if not IS_WINDOWS_PLATFORM:
             assert res['Titles'] == [
                 'UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'
             ]

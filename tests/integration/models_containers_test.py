@@ -36,6 +36,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
         with pytest.raises(docker.errors.ImageNotFound):
             client.containers.run("dockerpytest_does_not_exist")
 
+    @pytest.mark.skipif(
+        docker.constants.IS_WINDOWS_PLATFORM, reason="host mounts on Windows"
+    )
     def test_run_with_volume(self):
         client = docker.from_env(version=TEST_API_VERSION)
         path = tempfile.mkdtemp()
