@@ -57,6 +57,8 @@ class CancellableStream(object):
 
             else:
                 sock = sock_fp._sock
+            if isinstance(sock, urllib3.contrib.pyopenssl.WrappedSocket):
+                sock = sock.socket
 
             sock.shutdown(socket.SHUT_RDWR)
             sock.close()
