@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import io
@@ -227,6 +228,34 @@ class DockerApiTest(BaseAPIClientTest):
                 'password': 'izayoi',
                 'username': 'sakuya',
                 'serveraddress': None,
+            }
+        }
+
+    def test_login_with_dockercfg(self):
+        registry = 'docker.io'
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        config = {
+            "auths": {
+                registry: {
+                    'auth': '{0}'.format(auth_),
+                }
+            }
+        }
+        cfg_file = io.StringIO(six.text_type(json.dumps(config)))
+        self.client.login('sakuya', dockercfg=cfg_file)
+        args = fake_request.call_args
+        assert args[0][0] == 'POST'
+        assert args[0][1] == url_prefix + 'auth'
+        assert json.loads(args[1]['data']) == {
+            'username': 'sakuya', 'password': 'izayoi'
+        }
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert self.client._auth_configs['auths'] == {
+            'docker.io': {
+                'email': None,
+                'password': 'izayoi',
+                'username': 'sakuya',
+                'serveraddress': 'docker.io',
             }
         }
 

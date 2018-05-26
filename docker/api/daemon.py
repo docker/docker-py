@@ -95,7 +95,7 @@ class DaemonApiMixin(object):
         return self._result(self._get(self._url("/info")), True)
 
     def login(self, username, password=None, email=None, registry=None,
-              reauth=False, dockercfg_path=None):
+              reauth=False, dockercfg=None):
         """
         Authenticate with a registry. Similar to the ``docker login`` command.
 
@@ -107,9 +107,9 @@ class DaemonApiMixin(object):
                 ``https://index.docker.io/v1/``
             reauth (bool): Whether or not to refresh existing authentication on
                 the Docker server.
-            dockercfg_path (str): Use a custom path for the Docker config file
-                (default ``$HOME/.docker/config.json`` if present,
-                otherwise``$HOME/.dockercfg``)
+            dockercfg (str or file obj): Use a file path or file object for
+                the Docker config file (default ``$HOME/.docker/config.json``
+                if present, otherwise``$HOME/.dockercfg``)
 
         Returns:
             (dict): The response from the login request
@@ -121,10 +121,11 @@ class DaemonApiMixin(object):
 
         # If we don't have any auth data so far, try reloading the config file
         # one more time in case anything showed up in there.
-        # If dockercfg_path is passed check to see if the config file exists,
+        # If dockercfg is passed check to see if the config file exists,
         # if so load that config.
-        if dockercfg_path and os.path.exists(dockercfg_path):
-            self._auth_configs = auth.load_config(dockercfg_path)
+        if hasattr(dockercfg, 'read') or \
+                (dockercfg and os.path.exists(dockercfg)):
+            self._auth_configs = auth.load_config(dockercfg)
         elif not self._auth_configs:
             self._auth_configs = auth.load_config()
 
