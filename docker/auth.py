@@ -224,14 +224,18 @@ def parse_auth(entries, raise_on_error=False):
     return conf
 
 
-def load_config(config_path=None, config_dict=None):
+def load_config(cfg=None, config_path=None, config_dict=None):
     """
     Loads authentication data from a Docker configuration file in the given
-    root directory or if config_path is passed use given path.
+    root directory or if cfg is passed, use it as a fileobj/path.
     Lookup priority:
         explicit config_path parameter > DOCKER_CONFIG environment variable >
         ~/.docker/config.json > ~/.dockercfg
     """
+    if isinstance(cfg, six.string_types):
+        config_path = cfg
+    elif hasattr(cfg, 'read'):  # file-like object
+        config_dict = json.load(cfg)
 
     if not config_dict:
         config_file = config.find_config_file(config_path)
