@@ -365,7 +365,7 @@ class DockerApiTest(BaseAPIClientTest):
         assert result == content
 
 
-class StreamTest(unittest.TestCase):
+class UnixSocketStreamTest(unittest.TestCase):
     def setUp(self):
         socket_dir = tempfile.mkdtemp()
         self.build_context = tempfile.mkdtemp()
@@ -462,7 +462,64 @@ class StreamTest(unittest.TestCase):
                         raise e
 
             assert list(stream) == [
-                str(i).encode() for i in range(50)]
+                str(i).encode() for i in range(50)
+            ]
+
+
+class TCPSocketStreamTest(unittest.TestCase):
+    text_data = b'''
+    Now, those children out there, they're jumping through the
+    flames in the hope that the god of the fire will make them fruitful.
+    Really, you can't blame them. After all, what girl would not prefer the
+    child of a god to that of some acne-scarred artisan?
+    '''
+
+    def setUp(self):
+
+        self.server = six.moves.socketserver.ThreadingTCPServer(
+            ('', 0), self.get_handler_class()
+        )
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.setDaemon(True)
+        self.thread.start()
+        self.address = 'http://{}:{}'.format(
+            socket.gethostname(), self.server.server_address[1]
+        )
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+
+    def get_handler_class(self):
+        text_data = self.text_data
+
+        class Handler(six.moves.BaseHTTPServer.BaseHTTPRequestHandler, object):
+            def do_POST(self):
+                self.send_response(101)
+                self.send_header(
+                    'Content-Type', 'application/vnd.docker.raw-stream'
+                )
+                self.send_header('Connection', 'Upgrade')
+                self.send_header('Upgrade', 'tcp')
+                self.end_headers()
+                self.wfile.write(text_data)
+                self.wfile.flush()
+
+        return Handler
+
+    def test_read_from_socket(self):
+        with APIClient(base_url=self.address) as client:
+            for i in range(10):
+                # HTTP server is flaky. Retry until we get a response body.
+                resp = client._post(client._url('/dummy'), stream=True)
+                data = client._read_from_socket(resp, stream=True, tty=True)
+                results = b''.join(data)
+                if len(results) > 0:
+                    break
+                time.sleep(0.5)
+
+        assert results == self.text_data
 
 
 class UserAgentTest(unittest.TestCase):
