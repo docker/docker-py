@@ -170,8 +170,16 @@ class PluginApiMixin(object):
             'remote': name,
         }
 
+        headers = {}
+        registry, repo_name = auth.resolve_repository_name(name)
+        header = auth.get_config_header(self, registry)
+        if header:
+            headers['X-Registry-Auth'] = header
+
         url = self._url('/plugins/privileges')
-        return self._result(self._get(url, params=params), True)
+        return self._result(
+            self._get(url, params=params, headers=headers), True
+        )
 
     @utils.minimum_version('1.25')
     @utils.check_resource('name')
