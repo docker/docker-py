@@ -276,7 +276,7 @@ CONTAINER_SPEC_KWARGS = [
     'labels',
     'mounts',
     'open_stdin',
-    'privileges'
+    'privileges',
     'read_only',
     'secrets',
     'stop_grace_period',
