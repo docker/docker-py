@@ -138,7 +138,7 @@ def build_file_list(root):
         for filename in fnames + dirnames:
             longpath = os.path.join(dirname, filename)
             files.append(
-                longpath.replace(root, '', 1).lstrip('/')
+                longpath.replace(root, '', 1).lstrip('/').lstrip('\\')
             )
 
     return files
