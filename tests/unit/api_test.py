@@ -510,7 +510,7 @@ class TCPSocketStreamTest(unittest.TestCase):
 
     def test_read_from_socket(self):
         with APIClient(base_url=self.address) as client:
-            for i in range(10):
+            for i in range(1):
                 # HTTP server is flaky. Retry until we get a response body.
                 resp = client._post(client._url('/dummy'), stream=True)
                 data = client._read_from_socket(resp, stream=True, tty=True)
