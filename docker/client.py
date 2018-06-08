@@ -33,6 +33,8 @@ class DockerClient(object):
             :py:class:`~docker.tls.TLSConfig` object to use custom
             configuration.
         user_agent (str): Set a custom user agent for requests to the server.
+        credstore_env (dict): Override environment variables when calling the
+            credential store process.
     """
     def __init__(self, *args, **kwargs):
         self.api = APIClient(*args, **kwargs)
@@ -66,6 +68,8 @@ class DockerClient(object):
             assert_hostname (bool): Verify the hostname of the server.
             environment (dict): The environment to read environment variables
                 from. Default: the value of ``os.environ``
+            credstore_env (dict): Override environment variables when calling
+                the credential store process.
 
         Example:
 
@@ -77,8 +81,9 @@ class DockerClient(object):
         """
         timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
         version = kwargs.pop('version', None)
-        return cls(timeout=timeout, version=version,
-                   **kwargs_from_env(**kwargs))
+        return cls(
+            timeout=timeout, version=version, **kwargs_from_env(**kwargs)
+        )
 
     # Resources
     @property
