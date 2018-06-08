@@ -301,7 +301,8 @@ class BuildApiMixin(object):
                 # credentials/native_store.go#L68-L83
                 for registry in self._auth_configs.get('auths', {}).keys():
                     auth_data[registry] = auth.resolve_authconfig(
-                        self._auth_configs, registry
+                        self._auth_configs, registry,
+                        credstore_env=self.credstore_env,
                     )
             else:
                 auth_data = self._auth_configs.get('auths', {}).copy()

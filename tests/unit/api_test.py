@@ -44,7 +44,7 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
     return res
 
 
-def fake_resolve_authconfig(authconfig, registry=None):
+def fake_resolve_authconfig(authconfig, registry=None, *args, **kwargs):
     return None
 
 

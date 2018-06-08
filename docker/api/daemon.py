@@ -128,7 +128,9 @@ class DaemonApiMixin(object):
         elif not self._auth_configs:
             self._auth_configs = auth.load_config()
 
-        authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+        authcfg = auth.resolve_authconfig(
+            self._auth_configs, registry, credstore_env=self.credstore_env,
+        )
         # If we found an existing auth config for this registry and username
         # combination, we can return it immediately unless reauth is requested.
         if authcfg and authcfg.get('username', None) == username \
