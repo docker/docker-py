@@ -44,7 +44,9 @@ def get_config_header(client, registry):
             "No auth config in memory - loading from filesystem"
         )
         client._auth_configs = load_config()
-    authcfg = resolve_authconfig(client._auth_configs, registry)
+    authcfg = resolve_authconfig(
+        client._auth_configs, registry, credstore_env=client.credstore_env
+    )
     # Do not fail here if no authentication exists for this
     # specific registry as we can have a readonly pull. Just
     # put the header if we can.
@@ -76,7 +78,7 @@ def get_credential_store(authconfig, registry):
     )
 
 
-def resolve_authconfig(authconfig, registry=None):
+def resolve_authconfig(authconfig, registry=None, credstore_env=None):
     """
     Returns the authentication data from the given auth configuration for a
     specific registry. As with the Docker client, legacy entries in the config
@@ -91,7 +93,7 @@ def resolve_authconfig(authconfig, registry=None):
                 'Using credentials store "{0}"'.format(store_name)
             )
             cfg = _resolve_authconfig_credstore(
-                authconfig, registry, store_name
+                authconfig, registry, store_name, env=credstore_env
             )
             if cfg is not None:
                 return cfg
@@ -115,13 +117,14 @@ def resolve_authconfig(authconfig, registry=None):
     return None
 
 
-def _resolve_authconfig_credstore(authconfig, registry, credstore_name):
+def _resolve_authconfig_credstore(authconfig, registry, credstore_name,
+                                  env=None):
     if not registry or registry == INDEX_NAME:
         # The ecosystem is a little schizophrenic with index.docker.io VS
         # docker.io - in that case, it seems the full URL is necessary.
         registry = INDEX_URL
     log.debug("Looking for auth entry for {0}".format(repr(registry)))
-    store = dockerpycreds.Store(credstore_name)
+    store = dockerpycreds.Store(credstore_name, environment=env)
     try:
         data = store.get(registry)
         res = {
