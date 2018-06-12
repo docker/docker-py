@@ -82,7 +82,7 @@ class ContainerSpec(dict):
         args (:py:class:`list`): Arguments to the command.
         hostname (string): The hostname to set on the container.
         env (dict): Environment variables.
-        dir (string): The working directory for commands to run in.
+        workdir (string): The working directory for commands to run in.
         user (string): The user inside the container.
         labels (dict): A map of labels to associate with the service.
         mounts (:py:class:`list`): A list of specifications for mounts to be
