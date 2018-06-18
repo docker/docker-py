@@ -83,6 +83,8 @@ class APIClient(
             :py:class:`~docker.tls.TLSConfig` object to use custom
             configuration.
         user_agent (str): Set a custom user agent for requests to the server.
+        credstore_env (dict): Override environment variables when calling the
+            credential store process.
     """
 
     __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
@@ -93,7 +95,8 @@ class APIClient(
 
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
-                 user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS):
+                 user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS,
+                 credstore_env=None):
         super(APIClient, self).__init__()
 
         if tls and not base_url:
@@ -109,6 +112,7 @@ class APIClient(
         self._auth_configs = auth.load_config(
             config_dict=self._general_configs
         )
+        self.credstore_env = credstore_env
 
         base_url = utils.parse_host(
             base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)

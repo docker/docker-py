@@ -1,6 +1,7 @@
 import errno
 import os
 import select
+import socket as pysocket
 import struct
 
 import six
@@ -28,6 +29,8 @@ def read(socket, n=4096):
     try:
         if hasattr(socket, 'recv'):
             return socket.recv(n)
+        if six.PY3 and isinstance(socket, getattr(pysocket, 'SocketIO')):
+            return socket.read(n)
         return os.read(socket.fileno(), n)
     except EnvironmentError as e:
         if e.errno not in recoverable_errors:

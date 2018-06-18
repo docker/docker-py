@@ -44,7 +44,10 @@ class PluginApiMixin(object):
         """
         url = self._url('/plugins/create')
 
-        with utils.create_archive(root=plugin_data_dir, gzip=gzip) as archv:
+        with utils.create_archive(
+            root=plugin_data_dir, gzip=gzip,
+            files=set(utils.build.walk(plugin_data_dir, []))
+        ) as archv:
             res = self._post(url, params={'name': name}, data=archv)
         self._raise_for_status(res)
         return True
@@ -167,8 +170,16 @@ class PluginApiMixin(object):
             'remote': name,
         }
 
+        headers = {}
+        registry, repo_name = auth.resolve_repository_name(name)
+        header = auth.get_config_header(self, registry)
+        if header:
+            headers['X-Registry-Auth'] = header
+
         url = self._url('/plugins/privileges')
-        return self._result(self._get(url, params=params), True)
+        return self._result(
+            self._get(url, params=params, headers=headers), True
+        )
 
     @utils.minimum_version('1.25')
     @utils.check_resource('name')

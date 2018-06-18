@@ -1,6 +1,31 @@
 Change log
 ==========
 
+3.4.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/51?closed=1)
+
+### Features
+
+* The `APIClient` and `DockerClient` constructors now accept a `credstore_env`
+  parameter. When set, values in this dictionary are added to the environment
+  when executing the credential store process.
+
+### Bugfixes
+
+* `DockerClient.networks.prune` now properly returns the operation's result
+* Fixed a bug that caused custom Dockerfile paths in a subfolder of the build
+  context to be invalidated, preventing these builds from working
+* The `plugin_privileges` method can now be called for plugins requiring
+  authentication to access
+* Fixed a bug that caused attempts to read a data stream over an unsecured TCP
+  socket to crash on Windows clients
+* Fixed a bug where using the `read_only` parameter when creating a service using
+  the `DockerClient` was being ignored
+* Fixed an issue where `Service.scale` would not properly update the service's
+  mode, causing the operation to fail silently
+
 3.3.0
 -----
 
