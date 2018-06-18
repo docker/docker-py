@@ -149,7 +149,6 @@ class BuildApiMixin(object):
                         lambda x: x != '' and x[0] != '#',
                         [l.strip() for l in f.read().splitlines()]
                     ))
-            dockerfile = process_dockerfile(dockerfile, path)
             context = utils.tar(
                 path, exclude=exclude, dockerfile=dockerfile, gzip=gzip
             )
@@ -302,7 +301,8 @@ class BuildApiMixin(object):
                 # credentials/native_store.go#L68-L83
                 for registry in self._auth_configs.get('auths', {}).keys():
                     auth_data[registry] = auth.resolve_authconfig(
-                        self._auth_configs, registry
+                        self._auth_configs, registry,
+                        credstore_env=self.credstore_env,
                     )
             else:
                 auth_data = self._auth_configs.get('auths', {}).copy()
@@ -341,4 +341,9 @@ def process_dockerfile(dockerfile, path):
             )
 
     # Dockerfile is inside the context - return path relative to context root
-    return (os.path.relpath(abs_dockerfile, path), None)
+    if dockerfile == abs_dockerfile:
+        # Only calculate relpath if necessary to avoid errors
+        # on Windows client -> Linux Docker
+        # see https://github.com/docker/compose/issues/5969
+        dockerfile = os.path.relpath(abs_dockerfile, path)
+    return (dockerfile, None)

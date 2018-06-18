@@ -126,7 +126,7 @@ class Service(Model):
 
         service_mode = ServiceMode('replicated', replicas)
         return self.client.api.update_service(self.id, self.version,
-                                              service_mode,
+                                              mode=service_mode,
                                               fetch_current_spec=True)
 
     def force_update(self):
@@ -276,7 +276,7 @@ CONTAINER_SPEC_KWARGS = [
     'labels',
     'mounts',
     'open_stdin',
-    'privileges'
+    'privileges',
     'read_only',
     'secrets',
     'stop_grace_period',
