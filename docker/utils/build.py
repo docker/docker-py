@@ -6,8 +6,7 @@ import tarfile
 import tempfile
 
 from ..constants import IS_WINDOWS_PLATFORM
-from fnmatch import fnmatch
-from itertools import chain
+from .fnmatch import fnmatch
 
 
 _SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
@@ -44,92 +43,9 @@ def exclude_paths(root, patterns, dockerfile=None):
     if dockerfile is None:
         dockerfile = 'Dockerfile'
 
-    def split_path(p):
-        return [pt for pt in re.split(_SEP, p) if pt and pt != '.']
-
-    def normalize(p):
-        # Leading and trailing slashes are not relevant. Yes,
-        # "foo.py/" must exclude the "foo.py" regular file. "."
-        # components are not relevant either, even if the whole
-        # pattern is only ".", as the Docker reference states: "For
-        # historical reasons, the pattern . is ignored."
-        # ".." component must be cleared with the potential previous
-        # component, regardless of whether it exists: "A preprocessing
-        # step [...]  eliminates . and .. elements using Go's
-        # filepath.".
-        i = 0
-        split = split_path(p)
-        while i < len(split):
-            if split[i] == '..':
-                del split[i]
-                if i > 0:
-                    del split[i - 1]
-                    i -= 1
-            else:
-                i += 1
-        return split
-
-    patterns = (
-        (True, normalize(p[1:]))
-        if p.startswith('!') else
-        (False, normalize(p))
-        for p in patterns)
-    patterns = list(reversed(list(chain(
-        # Exclude empty patterns such as "." or the empty string.
-        filter(lambda p: p[1], patterns),
-        # Always include the Dockerfile and .dockerignore
-        [(True, split_path(dockerfile)), (True, ['.dockerignore'])]))))
-    return set(walk(root, patterns))
-
-
-def walk(root, patterns, default=True):
-    """
-    A collection of file lying below root that should be included according to
-    patterns.
-    """
-
-    def match(p):
-        if p[1][0] == '**':
-            rec = (p[0], p[1][1:])
-            return [p] + (match(rec) if rec[1] else [rec])
-        elif fnmatch(f, p[1][0]):
-            return [(p[0], p[1][1:])]
-        else:
-            return []
-
-    for f in os.listdir(root):
-        cur = os.path.join(root, f)
-        # The patterns if recursing in that directory.
-        sub = list(chain(*(match(p) for p in patterns)))
-        # Whether this file is explicitely included / excluded.
-        hit = next((p[0] for p in sub if not p[1]), None)
-        # Whether this file is implicitely included / excluded.
-        matched = default if hit is None else hit
-        sub = list(filter(lambda p: p[1], sub))
-        if os.path.isdir(cur) and not os.path.islink(cur):
-            # Entirely skip directories if there are no chance any subfile will
-            # be included.
-            if all(not p[0] for p in sub) and not matched:
-                continue
-            # I think this would greatly speed up dockerignore handling by not
-            # recursing into directories we are sure would be entirely
-            # included, and only yielding the directory itself, which will be
-            # recursively archived anyway. However the current unit test expect
-            # the full list of subfiles and I'm not 100% sure it would make no
-            # difference yet.
-            # if all(p[0] for p in sub) and matched:
-            #     yield f
-            #     continue
-            children = False
-            for r in (os.path.join(f, p) for p in walk(cur, sub, matched)):
-                yield r
-                children = True
-            # The current unit tests expect directories only under those
-            # conditions. It might be simplifiable though.
-            if (not sub or not children) and hit or hit is None and default:
-                yield f
-        elif matched:
-            yield f
+    patterns.append('!' + dockerfile)
+    pm = PatternMatcher(patterns)
+    return set(pm.walk(root))
 
 
 def build_file_list(root):
@@ -217,3 +133,110 @@ def mkbuildcontext(dockerfile):
     t.close()
     f.seek(0)
     return f
+
+
+def split_path(p):
+    return [pt for pt in re.split(_SEP, p) if pt and pt != '.']
+
+
+# Heavily based on
+# https://github.com/moby/moby/blob/master/pkg/fileutils/fileutils.go
+class PatternMatcher(object):
+    def __init__(self, patterns):
+        self.patterns = list(filter(
+            lambda p: p.dirs, [Pattern(p) for p in patterns]
+        ))
+        self.patterns.append(Pattern('!.dockerignore'))
+
+    def matches(self, filepath):
+        matched = False
+        parent_path = os.path.dirname(filepath)
+        parent_path_dirs = split_path(parent_path)
+
+        for pattern in self.patterns:
+            negative = pattern.exclusion
+            match = pattern.match(filepath)
+            if not match and parent_path != '':
+                if len(pattern.dirs) <= len(parent_path_dirs):
+                    match = pattern.match(
+                        os.path.sep.join(parent_path_dirs[:len(pattern.dirs)])
+                    )
+
+            if match:
+                matched = not negative
+
+        return matched
+
+    def walk(self, root):
+        def rec_walk(current_dir):
+            for f in os.listdir(current_dir):
+                fpath = os.path.join(
+                    os.path.relpath(current_dir, root), f
+                )
+                if fpath.startswith('.' + os.path.sep):
+                    fpath = fpath[2:]
+                match = self.matches(fpath)
+                if not match:
+                    yield fpath
+
+                cur = os.path.join(root, fpath)
+                if not os.path.isdir(cur) or os.path.islink(cur):
+                    continue
+
+                if match:
+                    # If we want to skip this file and its a directory
+                    # then we should first check to see if there's an
+                    # excludes pattern (e.g. !dir/file) that starts with this
+                    # dir. If so then we can't skip this dir.
+                    skip = True
+
+                    for pat in self.patterns:
+                        if not pat.exclusion:
+                            continue
+                        if pat.cleaned_pattern.startswith(fpath):
+                            skip = False
+                            break
+                    if skip:
+                        continue
+                for sub in rec_walk(cur):
+                    yield sub
+
+        return rec_walk(root)
+
+
+class Pattern(object):
+    def __init__(self, pattern_str):
+        self.exclusion = False
+        if pattern_str.startswith('!'):
+            self.exclusion = True
+            pattern_str = pattern_str[1:]
+
+        self.dirs = self.normalize(pattern_str)
+        self.cleaned_pattern = '/'.join(self.dirs)
+
+    @classmethod
+    def normalize(cls, p):
+
+        # Leading and trailing slashes are not relevant. Yes,
+        # "foo.py/" must exclude the "foo.py" regular file. "."
+        # components are not relevant either, even if the whole
+        # pattern is only ".", as the Docker reference states: "For
+        # historical reasons, the pattern . is ignored."
+        # ".." component must be cleared with the potential previous
+        # component, regardless of whether it exists: "A preprocessing
+        # step [...]  eliminates . and .. elements using Go's
+        # filepath.".
+        i = 0
+        split = split_path(p)
+        while i < len(split):
+            if split[i] == '..':
+                del split[i]
+                if i > 0:
+                    del split[i - 1]
+                    i -= 1
+            else:
+                i += 1
+        return split
+
+    def match(self, filepath):
+        return fnmatch(filepath, self.cleaned_pattern)
