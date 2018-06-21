@@ -887,12 +887,22 @@ class ExcludePathsTest(unittest.TestCase):
             )
         )
 
+    def test_double_wildcard_with_exception(self):
+        assert self.exclude(['**', '!bar', '!foo/bar']) == convert_paths(
+            set([
+                'foo/bar', 'foo/bar/a.py', 'bar', 'bar/a.py', 'Dockerfile',
+                '.dockerignore',
+            ])
+        )
+
     def test_include_wildcard(self):
+        # This may be surprising but it matches the CLI's behavior
+        # (tested with 18.05.0-ce on linux)
         base = make_tree(['a'], ['a/b.py'])
         assert exclude_paths(
             base,
             ['*', '!*/b.py']
-        ) == convert_paths(['a/b.py'])
+        ) == set()
 
     def test_last_line_precedence(self):
         base = make_tree(
