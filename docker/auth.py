@@ -270,7 +270,7 @@ def load_config(config_path=None, config_dict=None):
         "Couldn't find auth-related section ; attempting to interpret"
         "as auth-only file"
     )
-    return parse_auth(config_dict)
+    return {'auths': parse_auth(config_dict)}
 
 
 def _load_legacy_config(config_file):
@@ -287,14 +287,14 @@ def _load_legacy_config(config_file):
                 )
 
         username, password = decode_auth(data[0])
-        return {
+        return {'auths': {
             INDEX_NAME: {
                 'username': username,
                 'password': password,
                 'email': data[1],
                 'serveraddress': INDEX_URL,
             }
-        }
+        }}
     except Exception as e:
         log.debug(e)
         pass

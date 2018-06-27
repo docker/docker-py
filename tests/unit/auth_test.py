@@ -282,22 +282,64 @@ class LoadConfigTest(unittest.TestCase):
         cfg = auth.load_config(folder)
         assert cfg is not None
 
-    def test_load_config(self):
+    def test_load_legacy_config(self):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
-        dockercfg_path = os.path.join(folder, '.dockercfg')
-        with open(dockercfg_path, 'w') as f:
-            auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        cfg_path = os.path.join(folder, '.dockercfg')
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        with open(cfg_path, 'w') as f:
             f.write('auth = {0}\n'.format(auth_))
             f.write('email = sakuya@scarlet.net')
-        cfg = auth.load_config(dockercfg_path)
-        assert auth.INDEX_NAME in cfg
-        assert cfg[auth.INDEX_NAME] is not None
-        cfg = cfg[auth.INDEX_NAME]
+
+        cfg = auth.load_config(cfg_path)
+        assert auth.resolve_authconfig(cfg) is not None
+        assert cfg['auths'][auth.INDEX_NAME] is not None
+        cfg = cfg['auths'][auth.INDEX_NAME]
         assert cfg['username'] == 'sakuya'
         assert cfg['password'] == 'izayoi'
         assert cfg['email'] == 'sakuya@scarlet.net'
-        assert cfg.get('auth') is None
+        assert cfg.get('Auth') is None
+
+    def test_load_json_config(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        cfg_path = os.path.join(folder, '.dockercfg')
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        email = 'sakuya@scarlet.net'
+        with open(cfg_path, 'w') as f:
+            json.dump(
+                {auth.INDEX_URL: {'auth': auth_, 'email': email}}, f
+            )
+        cfg = auth.load_config(cfg_path)
+        assert auth.resolve_authconfig(cfg) is not None
+        assert cfg['auths'][auth.INDEX_URL] is not None
+        cfg = cfg['auths'][auth.INDEX_URL]
+        assert cfg['username'] == 'sakuya'
+        assert cfg['password'] == 'izayoi'
+        assert cfg['email'] == email
+        assert cfg.get('Auth') is None
+
+    def test_load_modern_json_config(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        cfg_path = os.path.join(folder, 'config.json')
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        email = 'sakuya@scarlet.net'
+        with open(cfg_path, 'w') as f:
+            json.dump({
+                'auths': {
+                    auth.INDEX_URL: {
+                        'auth': auth_, 'email': email
+                    }
+                }
+            }, f)
+        cfg = auth.load_config(cfg_path)
+        assert auth.resolve_authconfig(cfg) is not None
+        assert cfg['auths'][auth.INDEX_URL] is not None
+        cfg = cfg['auths'][auth.INDEX_URL]
+        assert cfg['username'] == 'sakuya'
+        assert cfg['password'] == 'izayoi'
+        assert cfg['email'] == email
 
     def test_load_config_with_random_name(self):
         folder = tempfile.mkdtemp()
@@ -318,7 +360,7 @@ class LoadConfigTest(unittest.TestCase):
         with open(dockercfg_path, 'w') as f:
             json.dump(config, f)
 
-        cfg = auth.load_config(dockercfg_path)
+        cfg = auth.load_config(dockercfg_path)['auths']
         assert registry in cfg
         assert cfg[registry] is not None
         cfg = cfg[registry]
@@ -345,7 +387,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
-            cfg = auth.load_config(None)
+            cfg = auth.load_config(None)['auths']
             assert registry in cfg
             assert cfg[registry] is not None
             cfg = cfg[registry]
@@ -422,7 +464,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg == {}
+        assert cfg == {'auths': {}}
 
     def test_load_config_invalid_auth_dict(self):
         folder = tempfile.mkdtemp()

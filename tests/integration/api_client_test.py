@@ -1,6 +1,3 @@
-import base64
-import os
-import tempfile
 import time
 import unittest
 import warnings
@@ -22,43 +19,6 @@ class InformationTest(BaseAPIIntegrationTest):
         assert 'Containers' in res
         assert 'Images' in res
         assert 'Debug' in res
-
-
-class LoadConfigTest(BaseAPIIntegrationTest):
-    def test_load_legacy_config(self):
-        folder = tempfile.mkdtemp()
-        self.tmp_folders.append(folder)
-        cfg_path = os.path.join(folder, '.dockercfg')
-        f = open(cfg_path, 'w')
-        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
-        f.write('auth = {0}\n'.format(auth_))
-        f.write('email = sakuya@scarlet.net')
-        f.close()
-        cfg = docker.auth.load_config(cfg_path)
-        assert cfg[docker.auth.INDEX_NAME] is not None
-        cfg = cfg[docker.auth.INDEX_NAME]
-        assert cfg['username'] == 'sakuya'
-        assert cfg['password'] == 'izayoi'
-        assert cfg['email'] == 'sakuya@scarlet.net'
-        assert cfg.get('Auth') is None
-
-    def test_load_json_config(self):
-        folder = tempfile.mkdtemp()
-        self.tmp_folders.append(folder)
-        cfg_path = os.path.join(folder, '.dockercfg')
-        f = open(os.path.join(folder, '.dockercfg'), 'w')
-        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
-        email_ = 'sakuya@scarlet.net'
-        f.write('{{"{0}": {{"auth": "{1}", "email": "{2}"}}}}\n'.format(
-            docker.auth.INDEX_URL, auth_, email_))
-        f.close()
-        cfg = docker.auth.load_config(cfg_path)
-        assert cfg[docker.auth.INDEX_URL] is not None
-        cfg = cfg[docker.auth.INDEX_URL]
-        assert cfg['username'] == 'sakuya'
-        assert cfg['password'] == 'izayoi'
-        assert cfg['email'] == 'sakuya@scarlet.net'
-        assert cfg.get('Auth') is None
 
 
 class AutoDetectVersionTest(unittest.TestCase):
