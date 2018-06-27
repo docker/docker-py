@@ -139,8 +139,9 @@ class ContainerApiMixin(object):
             'changes': changes
         }
         u = self._url("/commit")
-        return self._result(self._post_json(u, data=conf, params=params),
-                            json=True)
+        return self._result(
+            self._post_json(u, data=conf, params=params), json=True
+        )
 
     def containers(self, quiet=False, all=False, trunc=False, latest=False,
                    since=None, before=None, limit=-1, size=False,
