@@ -1,12 +1,13 @@
 import io
 import os
 import re
-import six
 import tarfile
 import tempfile
 
-from ..constants import IS_WINDOWS_PLATFORM
+import six
+
 from .fnmatch import fnmatch
+from ..constants import IS_WINDOWS_PLATFORM
 
 
 _SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
@@ -139,6 +140,12 @@ def split_path(p):
     return [pt for pt in re.split(_SEP, p) if pt and pt != '.']
 
 
+def normalize_slashes(p):
+    if IS_WINDOWS_PLATFORM:
+        return '/'.join(split_path(p))
+    return p
+
+
 # Heavily based on
 # https://github.com/moby/moby/blob/master/pkg/fileutils/fileutils.go
 class PatternMatcher(object):
@@ -184,7 +191,7 @@ class PatternMatcher(object):
                     continue
 
                 if match:
-                    # If we want to skip this file and its a directory
+                    # If we want to skip this file and it's a directory
                     # then we should first check to see if there's an
                     # excludes pattern (e.g. !dir/file) that starts with this
                     # dir. If so then we can't skip this dir.
@@ -193,7 +200,8 @@ class PatternMatcher(object):
                     for pat in self.patterns:
                         if not pat.exclusion:
                             continue
-                        if pat.cleaned_pattern.startswith(fpath):
+                        if pat.cleaned_pattern.startswith(
+                                normalize_slashes(fpath)):
                             skip = False
                             break
                     if skip:
@@ -239,4 +247,4 @@ class Pattern(object):
         return split
 
     def match(self, filepath):
-        return fnmatch(filepath, self.cleaned_pattern)
+        return fnmatch(normalize_slashes(filepath), self.cleaned_pattern)
