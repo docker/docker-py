@@ -146,6 +146,11 @@ def normalize_slashes(p):
     return p
 
 
+def walk(root, patterns, default=True):
+    pm = PatternMatcher(patterns)
+    return pm.walk(root)
+
+
 # Heavily based on
 # https://github.com/moby/moby/blob/master/pkg/fileutils/fileutils.go
 class PatternMatcher(object):
