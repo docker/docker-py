@@ -85,6 +85,12 @@ class HostConfigTest(unittest.TestCase):
         with pytest.raises(ValueError):
             create_host_config(version='1.23', userns_mode='host12')
 
+    def test_create_host_config_with_uts(self):
+        config = create_host_config(version='1.15', uts_mode='host')
+        assert config.get('UTSMode') == 'host'
+        with pytest.raises(ValueError):
+            create_host_config(version='1.15', uts_mode='host12')
+
     def test_create_host_config_with_oom_score_adj(self):
         config = create_host_config(version='1.22', oom_score_adj=100)
         assert config.get('OomScoreAdj') == 100

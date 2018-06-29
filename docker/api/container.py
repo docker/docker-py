@@ -547,6 +547,8 @@ class ContainerApiMixin(object):
             userns_mode (str): Sets the user namespace mode for the container
                 when user namespace remapping option is enabled. Supported
                 values are: ``host``
+            uts_mode (str): Sets the UTS namespace mode for the container.
+                Supported values are: ``host``
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             runtime (str): Runtime to use with this container.
