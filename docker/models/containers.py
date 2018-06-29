@@ -995,6 +995,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'tmpfs',
     'ulimits',
     'userns_mode',
+    'uts_mode',
     'version',
     'volumes_from',
     'runtime'
