@@ -1,6 +1,18 @@
 Change log
 ==========
 
+3.4.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/52?closed=1)
+
+### Bugfixes
+
+* Fixed a bug that caused auth values in config files written using one of the
+  legacy formats to be ignored
+* Fixed issues with handling of double-wildcard `**` patterns in
+  `.dockerignore` files
+
 3.4.0
 -----
 
