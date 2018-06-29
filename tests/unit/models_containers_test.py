@@ -95,6 +95,7 @@ class ContainerCollectionTest(unittest.TestCase):
             ulimits=[{"Name": "nofile", "Soft": 1024, "Hard": 2048}],
             user='bob',
             userns_mode='host',
+            uts_mode='host',
             version='1.23',
             volume_driver='some_driver',
             volumes=[
@@ -174,6 +175,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'Tmpfs': {'/blah': ''},
                 'Ulimits': [{"Name": "nofile", "Soft": 1024, "Hard": 2048}],
                 'UsernsMode': 'host',
+                'UTSMode': 'host',
                 'VolumesFrom': ['container'],
             },
             healthcheck={'test': 'true'},
