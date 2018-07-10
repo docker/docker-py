@@ -293,20 +293,28 @@ class BuildApiMixin(object):
         # Send the full auth configuration (if any exists), since the build
         # could use any (or all) of the registries.
         if self._auth_configs:
+            auth_cfgs = self._auth_configs
             auth_data = {}
-            if self._auth_configs.get('credsStore'):
+            if auth_cfgs.get('credsStore'):
                 # Using a credentials store, we need to retrieve the
                 # credentials for each registry listed in the config.json file
                 # Matches CLI behavior: https://github.com/docker/docker/blob/
                 # 67b85f9d26f1b0b2b240f2d794748fac0f45243c/cliconfig/
                 # credentials/native_store.go#L68-L83
-                for registry in self._auth_configs.get('auths', {}).keys():
+                for registry in auth_cfgs.get('auths', {}).keys():
                     auth_data[registry] = auth.resolve_authconfig(
-                        self._auth_configs, registry,
+                        auth_cfgs, registry,
                         credstore_env=self.credstore_env,
                     )
             else:
-                auth_data = self._auth_configs.get('auths', {}).copy()
+                for registry in auth_cfgs.get('credHelpers', {}).keys():
+                    auth_data[registry] = auth.resolve_authconfig(
+                        auth_cfgs, registry,
+                        credstore_env=self.credstore_env
+                    )
+                for registry, creds in auth_cfgs.get('auths', {}).items():
+                    if registry not in auth_data:
+                        auth_data[registry] = creds
                 # See https://github.com/docker/docker-py/issues/1683
                 if auth.INDEX_NAME in auth_data:
                     auth_data[auth.INDEX_URL] = auth_data[auth.INDEX_NAME]
