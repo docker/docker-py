@@ -5,6 +5,12 @@ try:
 except ImportError:
     import urllib3
 
+try:
+    import urllib3.contrib.pyopenssl as urllib3_pyopenssl
+except ImportError:
+    # pyopenssl module only available if 'tls' requirements have been installed
+    urllib3_pyopenssl = None
+
 
 class CancellableStream(object):
     """
@@ -57,7 +63,8 @@ class CancellableStream(object):
 
             else:
                 sock = sock_fp._sock
-            if isinstance(sock, urllib3.contrib.pyopenssl.WrappedSocket):
+            if (urllib3_pyopenssl and
+                    isinstance(sock, urllib3_pyopenssl.WrappedSocket)):
                 sock = sock.socket
 
             sock.shutdown(socket.SHUT_RDWR)
