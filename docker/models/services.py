@@ -321,10 +321,15 @@ def _get_create_service_kwargs(func_name, kwargs):
     if 'container_labels' in kwargs:
         container_spec_kwargs['labels'] = kwargs.pop('container_labels')
 
+    placement = {}
+
     if 'constraints' in kwargs:
-        task_template_kwargs['placement'] = {
-            'Constraints': kwargs.pop('constraints')
-        }
+        placement['Constraints'] = kwargs.pop('constraints')
+
+    if 'preferences' in kwargs:
+        placement['Preferences'] = kwargs.pop('preferences')
+
+    task_template_kwargs['placement'] = placement
 
     if 'log_driver' in kwargs:
         task_template_kwargs['log_driver'] = {
