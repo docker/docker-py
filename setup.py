@@ -10,10 +10,10 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'requests >= 2.14.2, != 2.18.0',
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
-    'docker-pycreds >= 0.3.0'
+    'docker-pycreds >= 0.3.0',
+    'requests >= 2.14.2, != 2.18.0',
 ]
 
 extras_require = {
@@ -27,7 +27,10 @@ extras_require = {
     # Python 3.6 is only compatible with v220 ; Python < 3.5 is not supported
     # on v220 ; ALL versions are broken for v222 (as of 2018-01-26)
     ':sys_platform == "win32" and python_version < "3.6"': 'pypiwin32==219',
-    ':sys_platform == "win32" and python_version >= "3.6"': 'pypiwin32==220',
+    ':sys_platform == "win32" and python_version >= "3.6"': 'pypiwin32==223',
+
+    # urllib3 drops support for Python 3.3 in 1.23
+    ':python_version == "3.3"': 'urllib3 < 1.23',
 
     # If using docker-py over TLS, highly recommend this option is
     # pip-installed or pinned.
@@ -38,6 +41,7 @@ extras_require = {
     # installing the extra dependencies, install the following instead:
     # 'requests[security] >= 2.5.2, != 2.11.0, != 2.12.2'
     'tls': ['pyOpenSSL>=0.14', 'cryptography>=1.3.4', 'idna>=2.0.0'],
+
 }
 
 version = None
@@ -81,6 +85,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],
