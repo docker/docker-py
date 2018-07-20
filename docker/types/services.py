@@ -368,7 +368,7 @@ class UpdateConfig(dict):
 
         parallelism (int): Maximum number of tasks to be updated in one
           iteration (0 means unlimited parallelism). Default: 0.
-        delay (int): Amount of time between updates.
+        delay (int): Amount of time between updates, in nanoseconds.
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
           ``continue``, ``rollback`` and ``pause``. Default: ``continue``
