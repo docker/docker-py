@@ -578,7 +578,7 @@ class ContainerConfig(dict):
             'Hostname': hostname,
             'Domainname': domainname,
             'ExposedPorts': ports,
-            'User': six.text_type(user) if user else None,
+            'User': six.text_type(user) if user is not None else None,
             'Tty': tty,
             'OpenStdin': stdin_open,
             'StdinOnce': stdin_once,
