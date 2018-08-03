@@ -1,6 +1,6 @@
 import copy
 from docker.errors import create_unexpected_kwargs_error, InvalidArgument
-from docker.types import TaskTemplate, ContainerSpec, ServiceMode
+from docker.types import TaskTemplate, ContainerSpec, Placement, ServiceMode
 from .resource import Model, Collection
 
 
@@ -153,6 +153,9 @@ class ServiceCollection(Collection):
             command (list of str or str): Command to run.
             args (list of str): Arguments to the command.
             constraints (list of str): Placement constraints.
+            preferences (list of str): Placement preferences.
+            platforms (list of tuple): A list of platforms constraints
+                expressed as ``(arch, os)`` tuples
             container_labels (dict): Labels to apply to the container.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
@@ -302,6 +305,12 @@ CREATE_SERVICE_KWARGS = [
     'endpoint_spec',
 ]
 
+PLACEMENT_KWARGS = [
+    'constraints',
+    'preferences',
+    'platforms',
+]
+
 
 def _get_create_service_kwargs(func_name, kwargs):
     # Copy over things which can be copied directly
@@ -321,10 +330,12 @@ def _get_create_service_kwargs(func_name, kwargs):
     if 'container_labels' in kwargs:
         container_spec_kwargs['labels'] = kwargs.pop('container_labels')
 
-    if 'constraints' in kwargs:
-        task_template_kwargs['placement'] = {
-            'Constraints': kwargs.pop('constraints')
-        }
+    placement = {}
+    for key in copy.copy(kwargs):
+        if key in PLACEMENT_KWARGS:
+            placement[key] = kwargs.pop(key)
+    placement = Placement(**placement)
+    task_template_kwargs['placement'] = placement
 
     if 'log_driver' in kwargs:
         task_template_kwargs['log_driver'] = {

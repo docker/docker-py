@@ -26,6 +26,8 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'mounts': [{'some': 'mounts'}],
             'stop_grace_period': 5,
             'constraints': ['foo=bar'],
+            'preferences': ['bar=baz'],
+            'platforms': [('x86_64', 'linux')],
         })
 
         task_template = kwargs.pop('task_template')
@@ -41,7 +43,11 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'ContainerSpec', 'Resources', 'RestartPolicy', 'Placement',
             'LogDriver', 'Networks'
         ])
-        assert task_template['Placement'] == {'Constraints': ['foo=bar']}
+        assert task_template['Placement'] == {
+            'Constraints': ['foo=bar'],
+            'Preferences': ['bar=baz'],
+            'Platforms': [{'Architecture': 'x86_64', 'OS': 'linux'}],
+        }
         assert task_template['LogDriver'] == {
             'Name': 'logdriver',
             'Options': {'foo': 'bar'}
