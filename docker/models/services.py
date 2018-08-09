@@ -183,6 +183,8 @@ class ServiceCollection(Collection):
                 containers to terminate before forcefully killing them.
             update_config (UpdateConfig): Specification for the update strategy
                 of the service. Default: ``None``
+            rollback_config (RollbackConfig): Specification for the rollback
+                strategy of the service. Default: ``None``
             user (str): User to run commands as.
             workdir (str): Working directory for commands to run.
             tty (boolean): Whether a pseudo-TTY should be allocated.
