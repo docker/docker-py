@@ -368,10 +368,11 @@ class UpdateConfig(dict):
 
         parallelism (int): Maximum number of tasks to be updated in one
           iteration (0 means unlimited parallelism). Default: 0.
-        delay (int): Amount of time between updates.
+        delay (int): Amount of time between updates, in nanoseconds.
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
-          ``continue`` and ``pause``. Default: ``continue``
+          ``continue``, ``pause``, as well as ``rollback`` since API v1.28.
+          Default: ``continue``
         monitor (int): Amount of time to monitor each updated task for
           failures, in nanoseconds.
         max_failure_ratio (float): The fraction of tasks that may fail during
@@ -385,9 +386,9 @@ class UpdateConfig(dict):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
-        if failure_action not in ('pause', 'continue'):
+        if failure_action not in ('pause', 'continue', 'rollback'):
             raise errors.InvalidArgument(
-                'failure_action must be either `pause` or `continue`.'
+                'failure_action must be one of `pause`, `continue`, `rollback`'
             )
         self['FailureAction'] = failure_action
 
