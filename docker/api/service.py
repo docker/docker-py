@@ -2,7 +2,8 @@ from .. import auth, errors, utils
 from ..types import ServiceMode
 
 
-def _check_api_features(version, task_template, update_config, endpoint_spec):
+def _check_api_features(version, task_template, update_config, endpoint_spec,
+                        rollback_config):
 
     def raise_version_error(param, min_version):
         raise errors.InvalidVersion(
@@ -27,6 +28,14 @@ def _check_api_features(version, task_template, update_config, endpoint_spec):
         if utils.version_lt(version, '1.29'):
             if 'Order' in update_config:
                 raise_version_error('UpdateConfig.order', '1.29')
+
+    if rollback_config is not None:
+        if utils.version_lt(version, '1.28'):
+            raise_version_error('rollback_config', '1.28')
+
+        if utils.version_lt(version, '1.29'):
+            if 'Order' in update_config:
+                raise_version_error('RollbackConfig.order', '1.29')
 
     if endpoint_spec is not None:
         if utils.version_lt(version, '1.32') and 'Ports' in endpoint_spec:
@@ -105,7 +114,7 @@ class ServiceApiMixin(object):
     def create_service(
             self, task_template, name=None, labels=None, mode=None,
             update_config=None, networks=None, endpoint_config=None,
-            endpoint_spec=None
+            endpoint_spec=None, rollback_config=None
     ):
         """
         Create a service.
@@ -120,6 +129,8 @@ class ServiceApiMixin(object):
                 or global). Defaults to replicated.
             update_config (UpdateConfig): Specification for the update strategy
                 of the service. Default: ``None``
+            rollback_config (RollbackConfig): Specification for the rollback
+                strategy of the service. Default: ``None``
             networks (:py:class:`list`): List of network names or IDs to attach
                 the service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
@@ -135,7 +146,8 @@ class ServiceApiMixin(object):
         """
 
         _check_api_features(
-            self._version, task_template, update_config, endpoint_spec
+            self._version, task_template, update_config, endpoint_spec,
+            rollback_config
         )
 
         url = self._url('/services/create')
@@ -165,6 +177,9 @@ class ServiceApiMixin(object):
 
         if update_config is not None:
             data['UpdateConfig'] = update_config
+
+        if rollback_config is not None:
+            data['RollbackConfig'] = rollback_config
 
         return self._result(
             self._post_json(url, data=data, headers=headers), True
@@ -342,7 +357,8 @@ class ServiceApiMixin(object):
     def update_service(self, service, version, task_template=None, name=None,
                        labels=None, mode=None, update_config=None,
                        networks=None, endpoint_config=None,
-                       endpoint_spec=None, fetch_current_spec=False):
+                       endpoint_spec=None, fetch_current_spec=False,
+                       rollback_config=None):
         """
         Update a service.
 
@@ -360,6 +376,8 @@ class ServiceApiMixin(object):
                 or global). Defaults to replicated.
             update_config (UpdateConfig): Specification for the update strategy
                 of the service. Default: ``None``.
+            rollback_config (RollbackConfig): Specification for the rollback
+                strategy of the service. Default: ``None``
             networks (:py:class:`list`): List of network names or IDs to attach
                 the service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
@@ -376,7 +394,8 @@ class ServiceApiMixin(object):
         """
 
         _check_api_features(
-            self._version, task_template, update_config, endpoint_spec
+            self._version, task_template, update_config, endpoint_spec,
+            rollback_config
         )
 
         if fetch_current_spec:
@@ -421,6 +440,11 @@ class ServiceApiMixin(object):
             data['UpdateConfig'] = update_config
         else:
             data['UpdateConfig'] = current.get('UpdateConfig')
+
+        if rollback_config is not None:
+            data['RollbackConfig'] = rollback_config
+        else:
+            data['RollbackConfig'] = current.get('RollbackConfig')
 
         if networks is not None:
             converted_networks = utils.convert_service_networks(networks)

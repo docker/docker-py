@@ -312,6 +312,27 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert update_config['Monitor'] == uc['Monitor']
         assert update_config['MaxFailureRatio'] == uc['MaxFailureRatio']
 
+    @requires_api_version('1.28')
+    def test_create_service_with_rollback_config(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        rollback_cfg = docker.types.RollbackConfig(
+            parallelism=10, delay=5, failure_action='pause',
+            monitor=300000000, max_failure_ratio=0.4
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, rollback_config=rollback_cfg, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'RollbackConfig' in svc_info['Spec']
+        rc = svc_info['Spec']['RollbackConfig']
+        assert rollback_cfg['Parallelism'] == rc['Parallelism']
+        assert rollback_cfg['Delay'] == rc['Delay']
+        assert rollback_cfg['FailureAction'] == rc['FailureAction']
+        assert rollback_cfg['Monitor'] == rc['Monitor']
+        assert rollback_cfg['MaxFailureRatio'] == rc['MaxFailureRatio']
+
     def test_create_service_with_restart_policy(self):
         container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
         policy = docker.types.RestartPolicy(
