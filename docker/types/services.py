@@ -371,7 +371,8 @@ class UpdateConfig(dict):
         delay (int): Amount of time between updates, in nanoseconds.
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
-          ``continue``, ``rollback`` and ``pause``. Default: ``continue``
+          ``continue``, ``pause``, as well as ``rollback`` since API v1.28.
+          Default: ``continue``
         monitor (int): Amount of time to monitor each updated task for
           failures, in nanoseconds.
         max_failure_ratio (float): The fraction of tasks that may fail during
@@ -387,7 +388,7 @@ class UpdateConfig(dict):
             self['Delay'] = delay
         if failure_action not in ('pause', 'continue', 'rollback'):
             raise errors.InvalidArgument(
-                'failure_action must be either `pause` or `continue`.'
+                'failure_action must be one of `pause`, `continue`, `rollback`'
             )
         self['FailureAction'] = failure_action
 

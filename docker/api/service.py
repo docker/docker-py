@@ -18,6 +18,12 @@ def _check_api_features(version, task_template, update_config, endpoint_spec):
             if 'Monitor' in update_config:
                 raise_version_error('UpdateConfig.monitor', '1.25')
 
+        if utils.version_lt(version, '1.28'):
+            if update_config.get('FailureAction') == 'rollback':
+                raise_version_error(
+                    'UpdateConfig.failure_action rollback', '1.28'
+                )
+
         if utils.version_lt(version, '1.29'):
             if 'Order' in update_config:
                 raise_version_error('UpdateConfig.order', '1.29')
