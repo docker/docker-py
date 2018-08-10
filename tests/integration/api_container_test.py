@@ -490,6 +490,16 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         assert rule in self.client.logs(ctnr).decode('utf-8')
 
+    def test_create_with_uts_mode(self):
+        container = self.client.create_container(
+            BUSYBOX, ['echo'], host_config=self.client.create_host_config(
+                uts_mode='host'
+            )
+        )
+        self.tmp_containers.append(container)
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['UTSMode'] == 'host'
+
 
 @pytest.mark.xfail(
     IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'

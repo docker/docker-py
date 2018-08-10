@@ -368,10 +368,11 @@ class UpdateConfig(dict):
 
         parallelism (int): Maximum number of tasks to be updated in one
           iteration (0 means unlimited parallelism). Default: 0.
-        delay (int): Amount of time between updates.
+        delay (int): Amount of time between updates, in nanoseconds.
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
-          ``continue`` and ``pause``. Default: ``continue``
+          ``continue``, ``pause``, as well as ``rollback`` since API v1.28.
+          Default: ``continue``
         monitor (int): Amount of time to monitor each updated task for
           failures, in nanoseconds.
         max_failure_ratio (float): The fraction of tasks that may fail during
@@ -385,9 +386,9 @@ class UpdateConfig(dict):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
-        if failure_action not in ('pause', 'continue'):
+        if failure_action not in ('pause', 'continue', 'rollback'):
             raise errors.InvalidArgument(
-                'failure_action must be either `pause` or `continue`.'
+                'failure_action must be one of `pause`, `continue`, `rollback`'
             )
         self['FailureAction'] = failure_action
 
@@ -411,6 +412,30 @@ class UpdateConfig(dict):
                     'order must be either `start-first` or `stop-first`'
                 )
             self['Order'] = order
+
+
+class RollbackConfig(UpdateConfig):
+    """
+    Used to specify the way containe rollbacks should be performed by a service
+
+    Args:
+        parallelism (int): Maximum number of tasks to be rolled back in one
+          iteration (0 means unlimited parallelism). Default: 0
+        delay (int): Amount of time between rollbacks, in nanoseconds.
+        failure_action (string): Action to take if a rolled back task fails to
+          run, or stops running during the rollback. Acceptable values are
+          ``continue``, ``pause`` or ``rollback``.
+          Default: ``continue``
+        monitor (int): Amount of time to monitor each rolled back task for
+          failures, in nanoseconds.
+        max_failure_ratio (float): The fraction of tasks that may fail during
+          a rollback before the failure action is invoked, specified as a
+          floating point number between 0 and 1. Default: 0
+        order (string): Specifies the order of operations when rolling out a
+          rolled back task. Either ``start_first`` or ``stop_first`` are
+          accepted.
+    """
+    pass
 
 
 class RestartConditionTypesEnum(object):

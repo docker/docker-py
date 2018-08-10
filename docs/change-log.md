@@ -1,6 +1,33 @@
 Change log
 ==========
 
+3.5.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone=53?closed=1)
+
+### Deprecation warning
+
+* Support for Python 3.3 will be dropped in the 4.0.0 release
+
+### Features
+
+* Updated dependencies to ensure support for Python 3.7 environments
+* Added support for the `uts_mode` parameter in `HostConfig`
+* The `UpdateConfig` constructor now allows `rollback` as a valid
+  value for `failure_action`
+* Added support for `rollback_config` in `APIClient.create_service`,
+  `APIClient.update_service`, `DockerClient.services.create` and
+  `Service.update`.
+
+### Bugfixes
+
+* Credential helpers are now properly leveraged by the `build` method
+* Fixed a bug that caused placement preferences to be ignored when provided
+  to `DockerClient.services.create`
+* Fixed a bug that caused a `user` value of `0` to be ignored in
+  `APIClient.create_container` and `DockerClient.containers.create`
+
 3.4.1
 -----
 

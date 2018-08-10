@@ -115,11 +115,11 @@ class HostConfig(dict):
                  device_read_iops=None, device_write_iops=None,
                  oom_kill_disable=False, shm_size=None, sysctls=None,
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                 cpuset_cpus=None, userns_mode=None, pids_limit=None,
-                 isolation=None, auto_remove=False, storage_opt=None,
-                 init=None, init_path=None, volume_driver=None,
-                 cpu_count=None, cpu_percent=None, nano_cpus=None,
-                 cpuset_mems=None, runtime=None, mounts=None,
+                 cpuset_cpus=None, userns_mode=None, uts_mode=None,
+                 pids_limit=None, isolation=None, auto_remove=False,
+                 storage_opt=None, init=None, init_path=None,
+                 volume_driver=None, cpu_count=None, cpu_percent=None,
+                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None):
 
@@ -392,6 +392,11 @@ class HostConfig(dict):
                 raise host_config_value_error("userns_mode", userns_mode)
             self['UsernsMode'] = userns_mode
 
+        if uts_mode:
+            if uts_mode != "host":
+                raise host_config_value_error("uts_mode", uts_mode)
+            self['UTSMode'] = uts_mode
+
         if pids_limit:
             if not isinstance(pids_limit, int):
                 raise host_config_type_error('pids_limit', pids_limit, 'int')
@@ -573,7 +578,7 @@ class ContainerConfig(dict):
             'Hostname': hostname,
             'Domainname': domainname,
             'ExposedPorts': ports,
-            'User': six.text_type(user) if user else None,
+            'User': six.text_type(user) if user is not None else None,
             'Tty': tty,
             'OpenStdin': stdin_open,
             'StdinOnce': stdin_once,
