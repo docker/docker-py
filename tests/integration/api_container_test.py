@@ -873,12 +873,11 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
+        threading.Timer(1, self.client.remove_container,
+                        [id], {'force': True}).start()
         logs = six.binary_type()
         for chunk in self.client.logs(id, stream=True, follow=True):
             logs += chunk
-
-        exitcode = self.client.wait(id)['StatusCode']
-        assert exitcode == 0
 
         assert logs == (snippet + '\n').encode(encoding='ascii')
 
