@@ -777,16 +777,15 @@ class ContainerCollection(Collection):
         logging_driver = container.attrs['HostConfig']['LogConfig']['Type']
 
         out = None
-        if logging_driver == 'json-file' or logging_driver == 'journald':
-            out = container.logs(
-                stdout=stdout, stderr=stderr, stream=True, follow=True
-            )
-
         exit_status = container.wait()['StatusCode']
         if exit_status != 0:
-            out = None
             if not kwargs.get('auto_remove'):
                 out = container.logs(stdout=False, stderr=True)
+        else:
+            if logging_driver == 'json-file' or logging_driver == 'journald':
+                out = container.logs(
+                    stdout=stdout, stderr=stderr, stream=True, follow=False
+                )
 
         if remove:
             container.remove()

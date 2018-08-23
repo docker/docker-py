@@ -27,7 +27,7 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.wait.assert_called_with(FAKE_CONTAINER_ID)
         client.api.logs.assert_called_with(
             FAKE_CONTAINER_ID, stderr=False, stdout=True, stream=True,
-            follow=True
+            follow=False
         )
 
     def test_create_container_args(self):
