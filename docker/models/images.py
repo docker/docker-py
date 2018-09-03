@@ -64,9 +64,9 @@ class Image(Model):
         Get a tarball of an image. Similar to the ``docker save`` command.
 
         Args:
-            chunk_size (int): The number of bytes returned by each iteration
-                of the generator. If ``None``, data will be streamed as it is
-                received. Default: 2 MB
+            chunk_size (int): The generator will return up to that much data
+                per iteration, but may return less. If ``None``, data will be
+                streamed as it is received. Default: 2 MB
 
         Returns:
             (generator): A stream of raw archive data.
