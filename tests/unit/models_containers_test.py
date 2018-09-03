@@ -232,7 +232,8 @@ class ContainerCollectionTest(unittest.TestCase):
         container = client.containers.run('alpine', 'sleep 300', detach=True)
 
         assert container.id == FAKE_CONTAINER_ID
-        client.api.pull.assert_called_with('alpine', platform=None, tag=None)
+        client.api.pull.assert_called_with('alpine', platform=None, tag=None,
+                                           stream=False)
 
     def test_run_with_error(self):
         client = make_fake_client()
