@@ -43,7 +43,8 @@ class ImageCollectionTest(unittest.TestCase):
     def test_pull(self):
         client = make_fake_client()
         image = client.images.pull('test_image:latest')
-        client.api.pull.assert_called_with('test_image', tag='latest')
+        client.api.pull.assert_called_with('test_image', tag='latest',
+                                           stream=False)
         client.api.inspect_image.assert_called_with('test_image:latest')
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
@@ -51,7 +52,8 @@ class ImageCollectionTest(unittest.TestCase):
     def test_pull_multiple(self):
         client = make_fake_client()
         images = client.images.pull('test_image')
-        client.api.pull.assert_called_with('test_image', tag=None)
+        client.api.pull.assert_called_with('test_image', tag=None,
+                                           stream=False)
         client.api.images.assert_called_with(
             all=False, name='test_image', filters=None
         )

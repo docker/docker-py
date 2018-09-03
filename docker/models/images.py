@@ -425,6 +425,7 @@ class ImageCollection(Collection):
         if not tag:
             repository, tag = parse_repository_tag(repository)
 
+        kwargs['stream'] = False
         self.client.api.pull(repository, tag=tag, **kwargs)
         if tag:
             return self.get('{0}{2}{1}'.format(
