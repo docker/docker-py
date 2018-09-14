@@ -42,7 +42,7 @@ class Service(Model):
                 ``label``, and ``desired-state``.
 
         Returns:
-            (:py:class:`list`): List of task dictionaries.
+            :py:class:`list`: List of task dictionaries.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -84,26 +84,27 @@ class Service(Model):
 
     def logs(self, **kwargs):
         """
-            Get log stream for the service.
-            Note: This method works only for services with the ``json-file``
-            or ``journald`` logging drivers.
+        Get log stream for the service.
+        Note: This method works only for services with the ``json-file``
+        or ``journald`` logging drivers.
 
-            Args:
-                details (bool): Show extra details provided to logs.
-                    Default: ``False``
-                follow (bool): Keep connection open to read logs as they are
-                    sent by the Engine. Default: ``False``
-                stdout (bool): Return logs from ``stdout``. Default: ``False``
-                stderr (bool): Return logs from ``stderr``. Default: ``False``
-                since (int): UNIX timestamp for the logs staring point.
-                    Default: 0
-                timestamps (bool): Add timestamps to every log line.
-                tail (string or int): Number of log lines to be returned,
-                    counting from the current end of the logs. Specify an
-                    integer or ``'all'`` to output all log lines.
-                    Default: ``all``
+        Args:
+            details (bool): Show extra details provided to logs.
+                Default: ``False``
+            follow (bool): Keep connection open to read logs as they are
+                sent by the Engine. Default: ``False``
+            stdout (bool): Return logs from ``stdout``. Default: ``False``
+            stderr (bool): Return logs from ``stderr``. Default: ``False``
+            since (int): UNIX timestamp for the logs staring point.
+                Default: 0
+            timestamps (bool): Add timestamps to every log line.
+            tail (string or int): Number of log lines to be returned,
+                counting from the current end of the logs. Specify an
+                integer or ``'all'`` to output all log lines.
+                Default: ``all``
 
-            Returns (generator): Logs for the service.
+        Returns:
+            generator: Logs for the service.
         """
         is_tty = self.attrs['Spec']['TaskTemplate']['ContainerSpec'].get(
             'TTY', False
@@ -118,7 +119,7 @@ class Service(Model):
             replicas (int): The number of containers that should be running.
 
         Returns:
-            ``True``if successful.
+            bool: ``True`` if successful.
         """
 
         if 'Global' in self.attrs['Spec']['Mode'].keys():
@@ -134,7 +135,7 @@ class Service(Model):
         Force update the service even if no changes require it.
 
         Returns:
-            ``True``if successful.
+            bool: ``True`` if successful.
         """
 
         return self.update(force_update=True, fetch_current_spec=True)
@@ -206,7 +207,7 @@ class ServiceCollection(Collection):
                 containers.
 
         Returns:
-            (:py:class:`Service`) The created service.
+            :py:class:`Service`: The created service.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -228,7 +229,7 @@ class ServiceCollection(Collection):
                 into the output.
 
         Returns:
-            (:py:class:`Service`): The service.
+            :py:class:`Service`: The service.
 
         Raises:
             :py:class:`docker.errors.NotFound`
@@ -253,7 +254,7 @@ class ServiceCollection(Collection):
                 Default: ``None``.
 
         Returns:
-            (list of :py:class:`Service`): The services.
+            list of :py:class:`Service`: The services.
 
         Raises:
             :py:class:`docker.errors.APIError`
