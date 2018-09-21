@@ -329,6 +329,8 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
         tls_verify = tls_verify is not None
     enable_tls = cert_path or tls_verify
 
+    docker_api_version = environment.get('DOCKER_API_VERSION')
+
     params = {}
 
     if host:
@@ -355,6 +357,8 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
         ssl_version=ssl_version,
         assert_hostname=assert_hostname,
     )
+
+    params['version'] = docker_api_version
 
     return params
 
