@@ -465,7 +465,7 @@ class ContainerApiMixin(object):
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file
             dns_search (:py:class:`list`): DNS search domains.
-            extra_hosts (dict): Addtional hostnames to resolve inside the
+            extra_hosts (dict): Additional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
