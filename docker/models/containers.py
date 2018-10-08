@@ -144,7 +144,7 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False, environment=None, workdir=None):
+                 socket=False, environment=None, workdir=None, demux=False):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -166,6 +166,7 @@ class Container(Model):
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
             workdir (str): Path to working directory for this exec session
+            demux (bool): Return stdout and stderr separately
 
         Returns:
             (ExecResult): A tuple of (exit_code, output)
@@ -180,6 +181,70 @@ class Container(Model):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+
+        Example:
+
+            Create a container that runs in the background
+
+            >>> client = docker.from_env()
+            >>> container = client.containers.run(
+            ...     'bfirsh/reticulate-splines', detach=True)
+
+            Prepare the command we are going to use. It prints "hello stdout"
+            in `stdout`, followed by "hello stderr" in `stderr`:
+
+            >>> cmd = '/bin/sh -c "echo hello stdout ; echo hello stderr >&2"'
+
+            We'll run this command with all four the combinations of ``stream``
+            and ``demux``.
+
+            With ``stream=False`` and ``demux=False``, the output is a string
+            that contains both the `stdout` and the `stderr` output:
+
+            >>> res = container.exec_run(cmd, stream=False, demux=False)
+            >>> res.output
+            b'hello stderr\nhello stdout\n'
+
+            With ``stream=True``, and ``demux=False``, the output is a
+            generator that yields strings containing the output of both
+            `stdout` and `stderr`:
+
+            >>> res = container.exec_run(cmd, stream=True, demux=False)
+            >>> next(res.output)
+            b'hello stdout\n'
+            >>> next(res.output)
+            b'hello stderr\n'
+            >>> next(res.output)
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            StopIteration
+
+            With ``stream=True`` and ``demux=True``, the generator now
+            separates the streams, and yield tuples
+            ``(stdout, stderr)``:
+
+            >>> res = container.exec_run(cmd, stream=True, demux=True)
+            >>> next(res.output)
+            (b'hello stdout\n', None)
+            >>> next(res.output)
+            (None, b'hello stderr\n')
+            >>> next(res.output)
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            StopIteration
+
+            Finally, with ``stream=False`` and ``demux=True``, the whole output
+            is returned, but the streams are still separated:
+
+            >>> res = container.exec_run(cmd, stream=True, demux=True)
+            >>> next(res.output)
+            (b'hello stdout\n', None)
+            >>> next(res.output)
+            (None, b'hello stderr\n')
+            >>> next(res.output)
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            StopIteration
         """
         resp = self.client.api.exec_create(
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
@@ -187,7 +252,8 @@ class Container(Model):
             workdir=workdir
         )
         exec_output = self.client.api.exec_start(
-            resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
+            resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket,
+            demux=demux
         )
         if socket or stream:
             return ExecResult(None, exec_output)

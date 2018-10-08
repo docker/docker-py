@@ -1,4 +1,4 @@
-from docker.utils.socket import next_frame_size
+from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
 
 from .base import BaseAPIIntegrationTest, BUSYBOX
@@ -91,7 +91,8 @@ class ExecTest(BaseAPIIntegrationTest):
         socket = self.client.exec_start(exec_id, socket=True)
         self.addCleanup(socket.close)
 
-        next_size = next_frame_size(socket)
+        (stream, next_size) = next_frame_header(socket)
+        assert stream == 1  # stdout (0 = stdin, 1 = stdout, 2 = stderr)
         assert next_size == len(line)
         data = read_exactly(socket, next_size)
         assert data.decode('utf-8') == line

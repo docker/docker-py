@@ -32,7 +32,7 @@ from ..errors import (
 from ..tls import TLSConfig
 from ..transport import SSLAdapter, UnixAdapter
 from ..utils import utils, check_resource, update_headers, config
-from ..utils.socket import frames_iter, socket_raw_iter
+from ..utils.socket import frames_iter, consume_socket_output, demux_adaptor
 from ..utils.json_stream import json_stream
 try:
     from ..transport import NpipeAdapter
@@ -381,19 +381,23 @@ class APIClient(
         for out in response.iter_content(chunk_size, decode):
             yield out
 
-    def _read_from_socket(self, response, stream, tty=False):
+    def _read_from_socket(self, response, stream, tty=True, demux=False):
         socket = self._get_raw_response_socket(response)
 
-        gen = None
-        if tty is False:
-            gen = frames_iter(socket)
+        gen = frames_iter(socket, tty)
+
+        if demux:
+            # The generator will output tuples (stdout, stderr)
+            gen = (demux_adaptor(*frame) for frame in gen)
         else:
-            gen = socket_raw_iter(socket)
+            # The generator will output strings
+            gen = (data for (_, data) in gen)
 
         if stream:
             return gen
         else:
-            return six.binary_type().join(gen)
+            # Wait for all the frames, concatenate them, and return the result
+            return consume_socket_output(gen, demux=demux)
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're

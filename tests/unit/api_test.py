@@ -83,7 +83,7 @@ def fake_delete(self, url, *args, **kwargs):
     return fake_request('DELETE', url, *args, **kwargs)
 
 
-def fake_read_from_socket(self, response, stream, tty=False):
+def fake_read_from_socket(self, response, stream, tty=False, demux=False):
     return six.binary_type()
 
 

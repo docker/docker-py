@@ -13,7 +13,7 @@ from ..types import (
 class ContainerApiMixin(object):
     @utils.check_resource('container')
     def attach(self, container, stdout=True, stderr=True,
-               stream=False, logs=False):
+               stream=False, logs=False, demux=False):
         """
         Attach to a container.
 
@@ -28,11 +28,15 @@ class ContainerApiMixin(object):
             stream (bool): Return container output progressively as an iterator
                 of strings, rather than a single string.
             logs (bool): Include the container's previous output.
+            demux (bool): Keep stdout and stderr separate.
 
         Returns:
-            By default, the container's output as a single string.
+            By default, the container's output as a single string (two if
+            ``demux=True``: one for stdout and one for stderr).
 
-            If ``stream=True``, an iterator of output strings.
+            If ``stream=True``, an iterator of output strings. If
+            ``demux=True``, two iterators are returned: one for stdout and one
+            for stderr.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -54,8 +58,7 @@ class ContainerApiMixin(object):
         response = self._post(u, headers=headers, params=params, stream=True)
 
         output = self._read_from_socket(
-            response, stream, self._check_is_tty(container)
-        )
+            response, stream, self._check_is_tty(container), demux=demux)
 
         if stream:
             return CancellableStream(output, response)

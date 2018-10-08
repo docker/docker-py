@@ -7,7 +7,7 @@ from datetime import datetime
 
 import docker
 from docker.constants import IS_WINDOWS_PLATFORM
-from docker.utils.socket import next_frame_size
+from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
 
 import pytest
@@ -1242,7 +1242,8 @@ class AttachContainerTest(BaseAPIIntegrationTest):
 
         self.client.start(container)
 
-        next_size = next_frame_size(pty_stdout)
+        (stream, next_size) = next_frame_header(pty_stdout)
+        assert stream == 1  # correspond to stdout
         assert next_size == len(line)
         data = read_exactly(pty_stdout, next_size)
         assert data.decode('utf-8') == line
