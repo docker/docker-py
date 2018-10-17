@@ -558,7 +558,7 @@ class ContainerCollection(Collection):
             environment (dict or list): Environment variables to set inside
                 the container, as a dictionary or a list of strings in the
                 format ``["SOMEVARIABLE=xxx"]``.
-            extra_hosts (dict): Addtional hostnames to resolve inside the
+            extra_hosts (dict): Additional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
