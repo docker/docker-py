@@ -465,7 +465,7 @@ class ContainerApiMixin(object):
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file
             dns_search (:py:class:`list`): DNS search domains.
-            extra_hosts (dict): Addtional hostnames to resolve inside the
+            extra_hosts (dict): Additional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
@@ -765,16 +765,16 @@ class ContainerApiMixin(object):
 
         Args:
             container (str): The container to get logs from
-            stdout (bool): Get ``STDOUT``
-            stderr (bool): Get ``STDERR``
-            stream (bool): Stream the response
-            timestamps (bool): Show timestamps
+            stdout (bool): Get ``STDOUT``. Default ``True``
+            stderr (bool): Get ``STDERR``. Default ``True``
+            stream (bool): Stream the response. Default ``False``
+            timestamps (bool): Show timestamps. Default ``False``
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
             since (datetime or int): Show logs since a given datetime or
                 integer epoch (in seconds)
-            follow (bool): Follow log output
+            follow (bool): Follow log output. Default ``False``
             until (datetime or int): Show logs that occurred before the given
                 datetime or integer epoch (in seconds)
 

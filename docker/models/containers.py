@@ -253,16 +253,16 @@ class Container(Model):
         generator you can iterate over to retrieve log output as it happens.
 
         Args:
-            stdout (bool): Get ``STDOUT``
-            stderr (bool): Get ``STDERR``
-            stream (bool): Stream the response
-            timestamps (bool): Show timestamps
+            stdout (bool): Get ``STDOUT``. Default ``True``
+            stderr (bool): Get ``STDERR``. Default ``True``
+            stream (bool): Stream the response. Default ``False``
+            timestamps (bool): Show timestamps. Default ``False``
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
             since (datetime or int): Show logs since a given datetime or
                 integer epoch (in seconds)
-            follow (bool): Follow log output
+            follow (bool): Follow log output. Default ``False``
             until (datetime or int): Show logs that occurred before the given
                 datetime or integer epoch (in seconds)
 
@@ -558,7 +558,7 @@ class ContainerCollection(Collection):
             environment (dict or list): Environment variables to set inside
                 the container, as a dictionary or a list of strings in the
                 format ``["SOMEVARIABLE=xxx"]``.
-            extra_hosts (dict): Addtional hostnames to resolve inside the
+            extra_hosts (dict): Additional hostnames to resolve inside the
                 container, as a mapping of hostname to IP address.
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.

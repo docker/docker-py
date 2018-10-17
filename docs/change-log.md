@@ -1,10 +1,22 @@
 Change log
 ==========
 
+3.5.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/54?closed=1)
+
+### Miscellaneous
+
+* Bumped version of `pyOpenSSL` in `requirements.txt` and `setup.py` to prevent
+  installation of a vulnerable version
+
+* Docs fixes
+
 3.5.0
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone=53?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/53?closed=1)
 
 ### Deprecation warning
 

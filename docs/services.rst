@@ -30,7 +30,10 @@ Service objects
     The raw representation of this object from the server.
 
 
+  .. automethod:: force_update
+  .. automethod:: logs
   .. automethod:: reload
   .. automethod:: remove
+  .. automethod:: scale
   .. automethod:: tasks
   .. automethod:: update

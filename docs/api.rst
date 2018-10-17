@@ -145,6 +145,7 @@ Configuration types
 .. autoclass:: Privileges
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
+.. autoclass:: RollbackConfig
 .. autoclass:: SecretReference
 .. autoclass:: ServiceMode
 .. autoclass:: SwarmExternalCA

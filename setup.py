@@ -40,7 +40,7 @@ extras_require = {
     # https://github.com/pypa/pip/issues/4391).  Once that's fixed, instead of
     # installing the extra dependencies, install the following instead:
     # 'requests[security] >= 2.5.2, != 2.11.0, != 2.12.2'
-    'tls': ['pyOpenSSL>=0.14', 'cryptography>=1.3.4', 'idna>=2.0.0'],
+    'tls': ['pyOpenSSL>=17.5.0', 'cryptography>=1.3.4', 'idna>=2.0.0'],
 
 }
 
