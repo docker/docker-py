@@ -250,6 +250,9 @@ def parse_host(addr, is_win32=False, tls=False):
         addr = addr[8:]
     elif addr.startswith('fd://'):
         raise errors.DockerException("fd protocol is not implemented")
+    elif addr.startswith('ssh://'):
+        proto = 'ssh'
+        addr = addr[6:]
     else:
         if "://" in addr:
             raise errors.DockerException(
@@ -257,17 +260,20 @@ def parse_host(addr, is_win32=False, tls=False):
             )
         proto = "https" if tls else "http"
 
-    if proto in ("http", "https"):
+    if proto in ("http", "https", "ssh"):
         address_parts = addr.split('/', 1)
         host = address_parts[0]
         if len(address_parts) == 2:
             path = '/' + address_parts[1]
         host, port = splitnport(host)
 
-        if port is None:
-            raise errors.DockerException(
-                "Invalid port: {0}".format(addr)
-            )
+        if port is None or port < 0:
+            if proto == 'ssh':
+                port = 22
+            else:
+                raise errors.DockerException(
+                    "Invalid port: {0}".format(addr)
+                )
 
         if not host:
             host = DEFAULT_HTTP_HOST

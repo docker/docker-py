@@ -1,3 +1,5 @@
+import pytest
+
 from docker.utils.socket import next_frame_size
 from docker.utils.socket import read_exactly
 
@@ -152,6 +154,9 @@ class ExecTest(BaseAPIIntegrationTest):
         assert exec_log == b'/var/www\n'
 
     def test_detach_with_default(self):
+        if self.client.base_url == 'http+docker://ssh':
+            pytest.skip('Test does not work with SSH transport')
+
         container = self.client.create_container(
             BUSYBOX, 'cat', detach=True, stdin_open=True
         )
@@ -170,6 +175,8 @@ class ExecTest(BaseAPIIntegrationTest):
         )
 
     def test_detach_with_config_file(self):
+        if self.client.base_url == 'http+docker://ssh':
+            pytest.skip('Test does not work with SSH transport')
         self.client._general_configs['detachKeys'] = 'ctrl-p'
         container = self.client.create_container(
             BUSYBOX, 'cat', detach=True, stdin_open=True
@@ -187,6 +194,8 @@ class ExecTest(BaseAPIIntegrationTest):
         assert_cat_socket_detached_with_keys(sock, [ctrl_with('p')])
 
     def test_detach_with_arg(self):
+        if self.client.base_url == 'http+docker://ssh':
+            pytest.skip('Test does not work with SSH transport')
         self.client._general_configs['detachKeys'] = 'ctrl-p'
         container = self.client.create_container(
             BUSYBOX, 'cat', detach=True, stdin_open=True
