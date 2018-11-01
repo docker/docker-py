@@ -1255,6 +1255,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         assert output == 'hello\n'.encode(encoding='ascii')
 
     @pytest.mark.timeout(5)
+    @pytest.mark.xfail(True, reason='Cancellable events broken over SSH')
     def test_attach_stream_and_cancel(self):
         container = self.client.create_container(
             BUSYBOX, 'sh -c "echo hello && sleep 60"',

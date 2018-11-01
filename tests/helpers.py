@@ -10,6 +10,7 @@ import six
 import socket
 
 import docker
+import paramiko
 import pytest
 
 
@@ -120,6 +121,9 @@ def assert_cat_socket_detached_with_keys(sock, inputs):
     # but will not raise an error
     if getattr(sock, 'family', -9) == getattr(socket, 'AF_UNIX', -1):
         with pytest.raises(socket.error):
+            sock.sendall(b'make sure the socket is closed\n')
+    elif isinstance(sock, paramiko.Channel):
+        with pytest.raises(OSError):
             sock.sendall(b'make sure the socket is closed\n')
     else:
         sock.sendall(b"make sure the socket is closed\n")
