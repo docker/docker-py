@@ -1,3 +1,4 @@
+import os
 import tempfile
 import threading
 
@@ -146,6 +147,8 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert logs[1] == b'world\n'
 
     @pytest.mark.timeout(5)
+    @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
+                        reason='No cancellable streams over SSH')
     def test_run_with_streamed_logs_and_cancel(self):
         client = docker.from_env(version=TEST_API_VERSION)
         out = client.containers.run(
