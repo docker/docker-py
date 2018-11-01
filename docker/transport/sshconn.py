@@ -1,9 +1,6 @@
-import urllib.parse
-
 import paramiko
 import requests.adapters
 import six
-
 
 from .. import constants
 
@@ -82,7 +79,7 @@ class SSHAdapter(requests.adapters.HTTPAdapter):
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
 
-        parsed = urllib.parse.urlparse(base_url)
+        parsed = six.moves.urllib_parse.urlparse(base_url)
         self.ssh_client.connect(
             parsed.hostname, parsed.port, parsed.username,
         )
