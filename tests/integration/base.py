@@ -29,41 +29,44 @@ class BaseIntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        for img in self.tmp_imgs:
-            try:
-                client.api.remove_image(img)
-            except docker.errors.APIError:
-                pass
-        for container in self.tmp_containers:
-            try:
-                client.api.remove_container(container, force=True, v=True)
-            except docker.errors.APIError:
-                pass
-        for network in self.tmp_networks:
-            try:
-                client.api.remove_network(network)
-            except docker.errors.APIError:
-                pass
-        for volume in self.tmp_volumes:
-            try:
-                client.api.remove_volume(volume)
-            except docker.errors.APIError:
-                pass
+        try:
+            for img in self.tmp_imgs:
+                try:
+                    client.api.remove_image(img)
+                except docker.errors.APIError:
+                    pass
+            for container in self.tmp_containers:
+                try:
+                    client.api.remove_container(container, force=True, v=True)
+                except docker.errors.APIError:
+                    pass
+            for network in self.tmp_networks:
+                try:
+                    client.api.remove_network(network)
+                except docker.errors.APIError:
+                    pass
+            for volume in self.tmp_volumes:
+                try:
+                    client.api.remove_volume(volume)
+                except docker.errors.APIError:
+                    pass
 
-        for secret in self.tmp_secrets:
-            try:
-                client.api.remove_secret(secret)
-            except docker.errors.APIError:
-                pass
+            for secret in self.tmp_secrets:
+                try:
+                    client.api.remove_secret(secret)
+                except docker.errors.APIError:
+                    pass
 
-        for config in self.tmp_configs:
-            try:
-                client.api.remove_config(config)
-            except docker.errors.APIError:
-                pass
+            for config in self.tmp_configs:
+                try:
+                    client.api.remove_config(config)
+                except docker.errors.APIError:
+                    pass
 
-        for folder in self.tmp_folders:
-            shutil.rmtree(folder)
+            for folder in self.tmp_folders:
+                shutil.rmtree(folder)
+        finally:
+            client.close()
 
 
 class BaseAPIIntegrationTest(BaseIntegrationTest):
