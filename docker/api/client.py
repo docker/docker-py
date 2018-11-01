@@ -39,6 +39,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from ..transport import SSHAdapter
+except ImportError:
+    pass
+
 
 class APIClient(
         requests.Session,
@@ -141,6 +146,18 @@ class APIClient(
                 )
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localnpipe'
+        elif base_url.startswith('ssh://'):
+            try:
+                self._custom_adapter = SSHAdapter(
+                    base_url, timeout, pool_connections=num_pools
+                )
+            except NameError:
+                raise DockerException(
+                    'Install paramiko package to enable ssh:// support'
+                )
+            self.mount('http+docker://ssh', self._custom_adapter)
+            self._unmount('http://', 'https://')
+            self.base_url = 'http+docker://ssh'
         else:
             # Use SSLAdapter for the ability to specify SSL version
             if isinstance(tls, TLSConfig):
@@ -279,6 +296,8 @@ class APIClient(
         self._raise_for_status(response)
         if self.base_url == "http+docker://localnpipe":
             sock = response.raw._fp.fp.raw.sock
+        elif self.base_url.startswith('http+docker://ssh'):
+            sock = response.raw._fp.fp.channel
         elif six.PY3:
             sock = response.raw._fp.fp.raw
             if self.base_url.startswith("https://"):
