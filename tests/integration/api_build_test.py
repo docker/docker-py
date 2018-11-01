@@ -540,6 +540,11 @@ class BuildTest(BaseAPIIntegrationTest):
         ) == sorted(lsdata)
 
     @requires_api_version('1.31')
+    @pytest.mark.xfail(
+        True,
+        reason='Currently fails on 18.09: '
+               'https://github.com/moby/moby/issues/37920'
+    )
     def test_prune_builds(self):
         prune_result = self.client.prune_builds()
         assert 'SpaceReclaimed' in prune_result
