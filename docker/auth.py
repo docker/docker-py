@@ -267,7 +267,7 @@ def load_config(config_path=None, config_dict=None):
         return res
 
     log.debug(
-        "Couldn't find auth-related section ; attempting to interpret"
+        "Couldn't find auth-related section ; attempting to interpret "
         "as auth-only file"
     )
     return {'auths': parse_auth(config_dict)}
