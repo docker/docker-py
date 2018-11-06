@@ -13,14 +13,13 @@ class SwarmTest(BaseAPIIntegrationTest):
         self._unlock_key = None
 
     def tearDown(self):
-        super(SwarmTest, self).tearDown()
         try:
             if self._unlock_key:
                 self.client.unlock_swarm(self._unlock_key)
         except docker.errors.APIError:
             pass
-
         force_leave_swarm(self.client)
+        super(SwarmTest, self).tearDown()
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):

@@ -8,8 +8,8 @@ from .base import BaseAPIIntegrationTest, BUSYBOX
 
 class TestNetworks(BaseAPIIntegrationTest):
     def tearDown(self):
-        super(TestNetworks, self).tearDown()
         self.client.leave_swarm(force=True)
+        super(TestNetworks, self).tearDown()
 
     def create_network(self, *args, **kwargs):
         net_name = random_name()
