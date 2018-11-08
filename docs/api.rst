@@ -151,4 +151,5 @@ Configuration types
 .. autoclass:: SwarmExternalCA
 .. autoclass:: SwarmSpec(*args, **kwargs)
 .. autoclass:: TaskTemplate
+.. autoclass:: Ulimit
 .. autoclass:: UpdateConfig

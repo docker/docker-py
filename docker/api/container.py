@@ -543,7 +543,7 @@ class ContainerApiMixin(object):
                     }
 
             ulimits (:py:class:`list`): Ulimits to set inside the container,
-                as a list of dicts.
+                as a list of :py:class:`docker.types.Ulimit` instances.
             userns_mode (str): Sets the user namespace mode for the container
                 when user namespace remapping option is enabled. Supported
                 values are: ``host``

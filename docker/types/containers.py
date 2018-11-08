@@ -58,6 +58,23 @@ class LogConfig(DictType):
 
 
 class Ulimit(DictType):
+    """
+    Create a ulimit declaration to be used with
+    :py:meth:`~docker.api.container.ContainerApiMixin.create_host_config`.
+
+    Args:
+
+        name (str): Which ulimit will this apply to. A list of valid names can
+            be found `here <http://tinyurl.me/ZWRkM2Ztwlykf>`_.
+        soft (int): The soft limit for this ulimit. Optional.
+        hard (int): The hard limit for this ulimit. Optional.
+
+    Example:
+
+        nproc_limit = docker.types.Ulimit(name='nproc', soft=1024)
+        hc = client.create_host_config(ulimits=[nproc_limit])
+        container = client.create_container('busybox', 'true', host_config=hc)
+    """
     def __init__(self, **kwargs):
         name = kwargs.get('name', kwargs.get('Name'))
         soft = kwargs.get('soft', kwargs.get('Soft'))
