@@ -42,8 +42,8 @@ class DaemonApiMixin(object):
 
         Example:
 
-            >>> for event in client.events()
-            ...   print event
+            >>> for event in client.events(decode=True)
+            ...   print(event)
             {u'from': u'image/with:tag',
              u'id': u'container-id',
              u'status': u'start',
@@ -54,7 +54,7 @@ class DaemonApiMixin(object):
 
             >>> events = client.events()
             >>> for event in events:
-            ...   print event
+            ...   print(event)
             >>> # and cancel from another thread
             >>> events.close()
         """

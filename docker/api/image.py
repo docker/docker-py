@@ -352,8 +352,8 @@ class ImageApiMixin(object):
 
         Example:
 
-            >>> for line in cli.pull('busybox', stream=True):
-            ...     print(json.dumps(json.loads(line), indent=4))
+            >>> for line in cli.pull('busybox', stream=True, decode=True):
+            ...     print(json.dumps(line, indent=4))
             {
                 "status": "Pulling image (latest) from busybox",
                 "progressDetail": {},
@@ -428,12 +428,12 @@ class ImageApiMixin(object):
                 If the server returns an error.
 
         Example:
-            >>> for line in cli.push('yourname/app', stream=True):
-            ...   print line
-            {"status":"Pushing repository yourname/app (1 tags)"}
-            {"status":"Pushing","progressDetail":{},"id":"511136ea3c5a"}
-            {"status":"Image already pushed, skipping","progressDetail":{},
-             "id":"511136ea3c5a"}
+            >>> for line in cli.push('yourname/app', stream=True, decode=True):
+            ...   print(line)
+            {'status': 'Pushing repository yourname/app (1 tags)'}
+            {'status': 'Pushing','progressDetail': {}, 'id': '511136ea3c5a'}
+            {'status': 'Image already pushed, skipping', 'progressDetail':{},
+             'id': '511136ea3c5a'}
             ...
 
         """
