@@ -691,8 +691,8 @@ class ContainerCollection(Collection):
                     }
 
             tty (bool): Allocate a pseudo-TTY.
-            ulimits (:py:class:`list`): Ulimits to set inside the container, as
-                a list of dicts.
+            ulimits (:py:class:`list`): Ulimits to set inside the container,
+                as a list of :py:class:`docker.types.Ulimit` instances.
             user (str or int): Username or UID to run commands as inside the
                 container.
             userns_mode (str): Sets the user namespace mode for the container
