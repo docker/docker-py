@@ -473,9 +473,11 @@ class ContainerApiMixin(object):
                 signals and reaps processes
             init_path (str): Path to the docker-init binary
             ipc_mode (str): Set the IPC mode for the container.
-            isolation (str): Isolation technology to use. Default: `None`.
-            links (dict or list of tuples): Either a dictionary mapping name
-                to alias or as a list of ``(name, alias)`` tuples.
+            isolation (str): Isolation technology to use. Default: ``None``.
+            links (dict): Mapping of links using the
+                ``{'container': 'alias'}`` format. The alias is optional.
+                Containers declared in this dict will be linked to the new
+                container using the provided alias. Default: ``None``.
             log_config (LogConfig): Logging configuration
             lxc_conf (dict): LXC config.
             mem_limit (float or str): Memory limit. Accepts float values
@@ -605,9 +607,10 @@ class ContainerApiMixin(object):
             aliases (:py:class:`list`): A list of aliases for this endpoint.
                 Names in that list can be used within the network to reach the
                 container. Defaults to ``None``.
-            links (:py:class:`list`): A list of links for this endpoint.
-                Containers declared in this list will be linked to this
-                container. Defaults to ``None``.
+            links (dict): Mapping of links for this endpoint using the
+                ``{'container': 'alias'}`` format. The alias is optional.
+                Containers declared in this dict will be linked to this
+                container using the provided alias. Defaults to ``None``.
             ipv4_address (str): The IP address of this container on the
                 network, using the IPv4 protocol. Defaults to ``None``.
             ipv6_address (str): The IP address of this container on the
@@ -622,7 +625,7 @@ class ContainerApiMixin(object):
 
             >>> endpoint_config = client.create_endpoint_config(
                 aliases=['web', 'app'],
-                links=['app_db'],
+                links={'app_db': 'db', 'another': None},
                 ipv4_address='132.65.0.123'
             )
 

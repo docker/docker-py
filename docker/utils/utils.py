@@ -441,7 +441,7 @@ def normalize_links(links):
     if isinstance(links, dict):
         links = six.iteritems(links)
 
-    return ['{0}:{1}'.format(k, v) for k, v in sorted(links)]
+    return ['{0}:{1}'.format(k, v) if v else k for k, v in sorted(links)]
 
 
 def parse_env_file(env_file):
