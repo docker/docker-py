@@ -23,6 +23,36 @@ class LogConfigTypesEnum(object):
 
 
 class LogConfig(DictType):
+    """
+    Configure logging for a container, when provided as an argument to
+    :py:meth:`~docker.api.container.ContainerApiMixin.create_host_config`.
+    You may refer to the
+    `official logging driver documentation <https://docs.docker.com/config/containers/logging/configure/>`_
+    for more information.
+
+    Args:
+        type (str): Indicate which log driver to use. A set of valid drivers
+            is provided as part of the :py:attr:`LogConfig.types`
+            enum. Other values may be accepted depending on the engine version
+            and available logging plugins.
+        config (dict): A driver-dependent configuration dictionary. Please
+            refer to the driver's documentation for a list of valid config
+            keys.
+
+    Example:
+
+        >>> from docker.types import LogConfig
+        >>> lc = LogConfig(type=LogConfig.types.JSON, config={
+        ...   'max-size': '1g',
+        ...   'labels': 'production_status,geo'
+        ... })
+        >>> hc = client.create_host_config(log_config=lc)
+        >>> container = client.create_container('busybox', 'true',
+        ...    host_config=hc)
+        >>> client.inspect_container(container)['HostConfig']['LogConfig']
+        {'Type': 'json-file', 'Config': {'labels': 'production_status,geo', 'max-size': '1g'}}
+
+    """ # flake8: noqa
     types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
@@ -50,14 +80,40 @@ class LogConfig(DictType):
         return self['Config']
 
     def set_config_value(self, key, value):
+        """ Set a the value for ``key`` to ``value`` inside the ``config``
+            dict.
+        """
         self.config[key] = value
 
     def unset_config(self, key):
+        """ Remove the ``key`` property from the ``config`` dict. """
         if key in self.config:
             del self.config[key]
 
 
 class Ulimit(DictType):
+    """
+    Create a ulimit declaration to be used with
+    :py:meth:`~docker.api.container.ContainerApiMixin.create_host_config`.
+
+    Args:
+
+        name (str): Which ulimit will this apply to. A list of valid names can
+            be found `here <http://tinyurl.me/ZWRkM2Ztwlykf>`_.
+        soft (int): The soft limit for this ulimit. Optional.
+        hard (int): The hard limit for this ulimit. Optional.
+
+    Example:
+
+        >>> nproc_limit = docker.types.Ulimit(name='nproc', soft=1024)
+        >>> hc = client.create_host_config(ulimits=[nproc_limit])
+        >>> container = client.create_container(
+                'busybox', 'true', host_config=hc
+            )
+        >>> client.inspect_container(container)['HostConfig']['Ulimits']
+        [{'Name': 'nproc', 'Hard': 0, 'Soft': 1024}]
+
+    """
     def __init__(self, **kwargs):
         name = kwargs.get('name', kwargs.get('Name'))
         soft = kwargs.get('soft', kwargs.get('Soft'))

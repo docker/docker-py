@@ -15,7 +15,12 @@ from .resource import Collection, Model
 
 
 class Container(Model):
-
+    """ Local representation of a container object. Detailed configuration may
+        be accessed through the :py:attr:`attrs` attribute. Note that local
+        attributes are cached; users may call :py:meth:`reload` to
+        query the Docker daemon for the current properties, causing
+        :py:attr:`attrs` to be refreshed.
+    """
     @property
     def name(self):
         """
@@ -228,6 +233,17 @@ class Container(Model):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+
+        Example:
+
+            >>> f = open('./sh_bin.tar', 'wb')
+            >>> bits, stat = container.get_archive('/bin/sh')
+            >>> print(stat)
+            {'name': 'sh', 'size': 1075464, 'mode': 493,
+             'mtime': '2018-10-01T15:37:48-07:00', 'linkTarget': ''}
+            >>> for chunk in bits:
+            ...    f.write(chunk)
+            >>> f.close()
         """
         return self.client.api.get_archive(self.id, path, chunk_size)
 
@@ -380,7 +396,8 @@ class Container(Model):
 
         Args:
             decode (bool): If set to true, stream will be decoded into dicts
-                on the fly. False by default.
+                on the fly. Only applicable if ``stream`` is True.
+                False by default.
             stream (bool): If set to false, only the current stats will be
                 returned instead of a stream. True by default.
 
@@ -574,15 +591,11 @@ class ContainerCollection(Collection):
                 ``{"label1": "value1", "label2": "value2"}``) or a list of
                 names of labels to set with empty values (e.g.
                 ``["label1", "label2"]``)
-            links (dict or list of tuples): Either a dictionary mapping name
-                to alias or as a list of ``(name, alias)`` tuples.
-            log_config (dict): Logging configuration, as a dictionary with
-                keys:
-
-                - ``type`` The logging driver name.
-                - ``config`` A dictionary of configuration for the logging
-                  driver.
-
+            links (dict): Mapping of links using the
+                ``{'container': 'alias'}`` format. The alias is optional.
+                Containers declared in this dict will be linked to the new
+                container using the provided alias. Default: ``None``.
+            log_config (LogConfig): Logging configuration.
             mac_address (str): MAC address to assign to the container.
             mem_limit (int or str): Memory limit. Accepts float values
                 (which represent the memory limit of the created container in
@@ -691,8 +704,8 @@ class ContainerCollection(Collection):
                     }
 
             tty (bool): Allocate a pseudo-TTY.
-            ulimits (:py:class:`list`): Ulimits to set inside the container, as
-                a list of dicts.
+            ulimits (:py:class:`list`): Ulimits to set inside the container,
+                as a list of :py:class:`docker.types.Ulimit` instances.
             user (str or int): Username or UID to run commands as inside the
                 container.
             userns_mode (str): Sets the user namespace mode for the container

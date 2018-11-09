@@ -197,7 +197,8 @@ class ServiceApiMixin(object):
                 into the service inspect output.
 
         Returns:
-            ``True`` if successful.
+            (dict): A dictionary of the server-side representation of the
+                service, including all relevant properties.
 
         Raises:
             :py:class:`docker.errors.APIError`

@@ -457,8 +457,8 @@ class UtilsTest(unittest.TestCase):
         tests = [
             ({'dangling': True}, '{"dangling": ["true"]}'),
             ({'dangling': "true"}, '{"dangling": ["true"]}'),
-            ({'exited': 0}, '{"exited": [0]}'),
-            ({'exited': [0, 1]}, '{"exited": [0, 1]}'),
+            ({'exited': 0}, '{"exited": ["0"]}'),
+            ({'exited': [0, 1]}, '{"exited": ["0", "1"]}'),
         ]
 
         for filters, expected in tests:
