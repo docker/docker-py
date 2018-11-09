@@ -32,7 +32,7 @@ class ImageApiMixin(object):
         Example:
 
             >>> image = cli.get_image("busybox:latest")
-            >>> f = open('/tmp/busybox-latest.tar', 'w')
+            >>> f = open('/tmp/busybox-latest.tar', 'wb')
             >>> for chunk in image:
             >>>   f.write(chunk)
             >>> f.close()
