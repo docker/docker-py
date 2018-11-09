@@ -233,6 +233,17 @@ class Container(Model):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+
+        Example:
+
+            >>> f = open('./sh_bin.tar', 'wb')
+            >>> bits, stat = container.get_archive('/bin/sh')
+            >>> print(stat)
+            {'name': 'sh', 'size': 1075464, 'mode': 493,
+             'mtime': '2018-10-01T15:37:48-07:00', 'linkTarget': ''}
+            >>> for chunk in bits:
+            ...    f.write(chunk)
+            >>> f.close()
         """
         return self.client.api.get_archive(self.id, path, chunk_size)
 
