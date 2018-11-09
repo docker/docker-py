@@ -476,13 +476,7 @@ class ContainerApiMixin(object):
             isolation (str): Isolation technology to use. Default: `None`.
             links (dict or list of tuples): Either a dictionary mapping name
                 to alias or as a list of ``(name, alias)`` tuples.
-            log_config (dict): Logging configuration, as a dictionary with
-                keys:
-
-                - ``type`` The logging driver name.
-                - ``config`` A dictionary of configuration for the logging
-                  driver.
-
+            log_config (LogConfig): Logging configuration
             lxc_conf (dict): LXC config.
             mem_limit (float or str): Memory limit. Accepts float values
                 (which represent the memory limit of the created container in

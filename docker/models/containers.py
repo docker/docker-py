@@ -576,13 +576,7 @@ class ContainerCollection(Collection):
                 ``["label1", "label2"]``)
             links (dict or list of tuples): Either a dictionary mapping name
                 to alias or as a list of ``(name, alias)`` tuples.
-            log_config (dict): Logging configuration, as a dictionary with
-                keys:
-
-                - ``type`` The logging driver name.
-                - ``config`` A dictionary of configuration for the logging
-                  driver.
-
+            log_config (LogConfig): Logging configuration.
             mac_address (str): MAC address to assign to the container.
             mem_limit (int or str): Memory limit. Accepts float values
                 (which represent the memory limit of the created container in
