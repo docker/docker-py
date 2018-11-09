@@ -15,7 +15,12 @@ from .resource import Collection, Model
 
 
 class Container(Model):
-
+    """ Local representation of a container object. Detailed configuration may
+        be accessed through the :py:attr:`attrs` attribute. Note that local
+        attributes are cached; users may call :py:meth:`reload` to
+        query the Docker daemon for the current properties, causing
+        :py:attr:`attrs` to be refreshed.
+    """
     @property
     def name(self):
         """
