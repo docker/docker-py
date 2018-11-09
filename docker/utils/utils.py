@@ -386,7 +386,10 @@ def convert_filters(filters):
             v = 'true' if v else 'false'
         if not isinstance(v, list):
             v = [v, ]
-        result[k] = v
+        result[k] = [
+            str(item) if not isinstance(item, six.string_types) else item
+            for item in v
+        ]
     return json.dumps(result)
 
 
