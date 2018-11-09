@@ -574,8 +574,10 @@ class ContainerCollection(Collection):
                 ``{"label1": "value1", "label2": "value2"}``) or a list of
                 names of labels to set with empty values (e.g.
                 ``["label1", "label2"]``)
-            links (dict or list of tuples): Either a dictionary mapping name
-                to alias or as a list of ``(name, alias)`` tuples.
+            links (dict): Mapping of links using the
+                ``{'container': 'alias'}`` format. The alias is optional.
+                Containers declared in this dict will be linked to the new
+                container using the provided alias. Default: ``None``.
             log_config (LogConfig): Logging configuration.
             mac_address (str): MAC address to assign to the container.
             mem_limit (int or str): Memory limit. Accepts float values
