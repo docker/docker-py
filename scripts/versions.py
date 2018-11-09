@@ -66,7 +66,7 @@ def main():
             Version.parse(
                 v.strip('"').lstrip('docker-').rstrip('.tgz').rstrip('-x86_64')
             ) for v in re.findall(
-                r'"docker-[0-9]+\.[0-9]+\.[0-9]+-.*tgz"', content
+                r'"docker-[0-9]+\.[0-9]+\.[0-9]+-?.*tgz"', content
             )
         ]
         sorted_versions = sorted(
