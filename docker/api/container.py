@@ -1071,7 +1071,8 @@ class ContainerApiMixin(object):
         Args:
             container (str): The container to stream statistics from
             decode (bool): If set to true, stream will be decoded into dicts
-                on the fly. False by default.
+                on the fly. Only applicable if ``stream`` is True.
+                False by default.
             stream (bool): If set to false, only the current stats will be
                 returned instead of a stream. True by default.
 
@@ -1085,6 +1086,10 @@ class ContainerApiMixin(object):
             return self._stream_helper(self._get(url, stream=True),
                                        decode=decode)
         else:
+            if decode:
+                raise errors.InvalidArgument(
+                    "decode is only available in conjuction with stream=True"
+                )
             return self._result(self._get(url, params={'stream': False}),
                                 json=True)
 
