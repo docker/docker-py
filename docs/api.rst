@@ -140,6 +140,7 @@ Configuration types
 .. autoclass:: Healthcheck
 .. autoclass:: IPAMConfig
 .. autoclass:: IPAMPool
+.. autoclass:: LogConfig
 .. autoclass:: Mount
 .. autoclass:: Placement
 .. autoclass:: Privileges
