@@ -165,6 +165,26 @@ class DaemonApiMixin(object):
         """
         return self._result(self._get(self._url('/_ping'))) == 'OK'
 
+    def ping2(self):
+        """
+        Checks the server is responsive and provides some additional
+        information regarding the daemon's state. An exception will be raised
+        if it isn't responding.
+
+        Returns:
+            (dict): A :py:class:`ServerInfo` structure from the response's
+                    headers
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error
+        """
+
+        resp = self._get(self._url('/_ping'))
+        self._raise_for_status(resp)
+
+        return types.ServerInfo(resp.headers)
+
     def version(self, api_version=True):
         """
         Returns version information from the server. Similar to the ``docker

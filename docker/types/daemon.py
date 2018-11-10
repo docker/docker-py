@@ -72,3 +72,12 @@ class CancellableStream(object):
 
             sock.shutdown(socket.SHUT_RDWR)
             sock.close()
+
+
+class ServerInfo(dict):
+    def __init__(self, headers):
+        self['apiVersion'] = headers.get('API-Version')
+        self['experimental'] = headers.get('Docker-Experimental') == 'true'
+        self['osType'] = headers.get('OSType')
+        if headers.get('Builder-Version'):
+            self['builderVersion'] = headers['Builder-Version']

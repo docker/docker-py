@@ -30,6 +30,12 @@ def find_config_file(config_path=None):
     return None
 
 
+def config_dir():
+    if os.environ.get('DOCKER_CONFIG'):
+        return os.environ.get('DOCKER_CONFIG')
+    return os.path.join(home_dir(), '.docker')
+
+
 def config_path_from_environment():
     config_dir = os.environ.get('DOCKER_CONFIG')
     if not config_dir:
