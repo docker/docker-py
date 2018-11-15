@@ -1,19 +1,18 @@
+import asyncio
 import binascii
-import concurrent.futures
 import hashlib
 import os
 
 import base36
-import grpc
-from grpc_health.v1 import health_pb2_grpc
+import grpclib.server
 
 from docker.utils import version_gte
 from docker.utils.config import config_dir
 
-headerSessionID = "X-Docker-Expose-Session-Uuid"
-headerSessionName = "X-Docker-Expose-Session-Name"
-headerSessionSharedKey = "X-Docker-Expose-Session-Sharedkey"
-headerSessionMethod = "X-Docker-Expose-Session-Grpc-Method"
+HEADER_SESSION_ID = "X-Docker-Expose-Session-Uuid"
+HEADER_SESSION_NAME = "X-Docker-Expose-Session-Name"
+HEADER_SESSION_SHAREDKEY = "X-Docker-Expose-Session-Sharedkey"
+HEADER_SESSION_METHOD = "X-Docker-Expose-Session-Grpc-Method"
 
 
 def is_session_supported(client, for_stream):
@@ -68,23 +67,39 @@ class Session(object):
         self.id = generate_session_id()
         self.name = name
         self.shared_key = shared_key
-        self.grpc_server = grpc.server(
-            concurrent.futures.ThreadPoolExecutor(max_workers=10)
+        self.grpc_server = grpclib.server.Server(
+            [], asyncio.get_event_loop()
         )
-
-        health_pb2_grpc.add_HealthServicer_to_server(
-            health_pb2_grpc.HealthServicer(),
-            self.grpc_server
-        )
+        self.sock = None
 
     def allow(self, attachable):
         attachable.register(self.grpc_server)
 
-    def run(self, dialer):
+    def run(self, sock):
         meta = {
-            headerSessionID: self.id,
-            headerSessionName: self.name,
-            headerSessionSharedKey: self.shared_key,
+            HEADER_SESSION_ID: self.id,
+            HEADER_SESSION_NAME: self.name,
+            HEADER_SESSION_SHAREDKEY: self.shared_key,
         }
 
-#        for name, svc
+        # FIXME: some loop for headerSessionMethod
+
+        self.sock = sock
+
+        await self.serve(meta)
+
+    async def serve(self, metadata):
+        # FIXME: Figure out what to do with metadata
+        await self.grpc_server.start(sock=self.sock)
+        print('Serving on socket {}'.format(self.sock))
+        try:
+            await self.grpc_server.wait_closed()
+        except asyncio.CancelledError:
+            self.grpc_server.close()
+            await self.grpc_server.wait_closed()
+
+    def close(self):
+        if self.sock:
+            self.sock.close()
+        self.grpc_server.close()
+        self.closed = True

@@ -185,6 +185,18 @@ class DaemonApiMixin(object):
 
         return types.ServerInfo(resp.headers)
 
+    def session(self, protocol):
+        url = self._url("/session")
+        headers = {
+            'Connection': 'Upgrade',
+            'Upgrade': protocol,
+        }
+
+        resp = self._post(url, headers=headers, stream=True)
+
+        self._raise_for_status(resp)
+        return self._get_raw_response_socket(resp)
+
     def version(self, api_version=True):
         """
         Returns version information from the server. Similar to the ``docker
