@@ -9,7 +9,7 @@ from .. import errors
 from .. import utils
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('docker-py')
 
 
 class BuildApiMixin(object):

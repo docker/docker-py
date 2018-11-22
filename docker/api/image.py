@@ -6,7 +6,7 @@ import six
 from .. import auth, errors, utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('docker-py')
 
 
 class ImageApiMixin(object):

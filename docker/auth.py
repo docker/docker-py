@@ -12,7 +12,7 @@ INDEX_NAME = 'docker.io'
 INDEX_URL = 'https://index.{0}/v1/'.format(INDEX_NAME)
 TOKEN_USERNAME = '<token>'
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('docker-py')
 
 
 def resolve_repository_name(repo_name):

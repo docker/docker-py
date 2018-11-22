@@ -5,7 +5,7 @@ from .. import errors
 from .. import types
 from .. import utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('docker-py')
 
 
 class SwarmApiMixin(object):
