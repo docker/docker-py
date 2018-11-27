@@ -4,8 +4,8 @@ import shutil
 import tempfile
 import json
 
-from py.test import ensuretemp
-from pytest import mark
+from pytest import mark, fixture
+
 from docker.utils import config
 
 try:
@@ -15,25 +15,25 @@ except ImportError:
 
 
 class FindConfigFileTest(unittest.TestCase):
-    def tmpdir(self, name):
-        tmpdir = ensuretemp(name)
-        self.addCleanup(tmpdir.remove)
-        return tmpdir
+
+    @fixture(autouse=True)
+    def tmpdir(self, tmpdir):
+        self.mkdir = tmpdir.mkdir
 
     def test_find_config_fallback(self):
-        tmpdir = self.tmpdir('test_find_config_fallback')
+        tmpdir = self.mkdir('test_find_config_fallback')
 
         with mock.patch.dict(os.environ, {'HOME': str(tmpdir)}):
             assert config.find_config_file() is None
 
     def test_find_config_from_explicit_path(self):
-        tmpdir = self.tmpdir('test_find_config_from_explicit_path')
+        tmpdir = self.mkdir('test_find_config_from_explicit_path')
         config_path = tmpdir.ensure('my-config-file.json')
 
         assert config.find_config_file(str(config_path)) == str(config_path)
 
     def test_find_config_from_environment(self):
-        tmpdir = self.tmpdir('test_find_config_from_environment')
+        tmpdir = self.mkdir('test_find_config_from_environment')
         config_path = tmpdir.ensure('config.json')
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': str(tmpdir)}):
@@ -41,7 +41,7 @@ class FindConfigFileTest(unittest.TestCase):
 
     @mark.skipif("sys.platform == 'win32'")
     def test_find_config_from_home_posix(self):
-        tmpdir = self.tmpdir('test_find_config_from_home_posix')
+        tmpdir = self.mkdir('test_find_config_from_home_posix')
         config_path = tmpdir.ensure('.docker', 'config.json')
 
         with mock.patch.dict(os.environ, {'HOME': str(tmpdir)}):
@@ -49,7 +49,7 @@ class FindConfigFileTest(unittest.TestCase):
 
     @mark.skipif("sys.platform == 'win32'")
     def test_find_config_from_home_legacy_name(self):
-        tmpdir = self.tmpdir('test_find_config_from_home_legacy_name')
+        tmpdir = self.mkdir('test_find_config_from_home_legacy_name')
         config_path = tmpdir.ensure('.dockercfg')
 
         with mock.patch.dict(os.environ, {'HOME': str(tmpdir)}):
@@ -57,7 +57,7 @@ class FindConfigFileTest(unittest.TestCase):
 
     @mark.skipif("sys.platform != 'win32'")
     def test_find_config_from_home_windows(self):
-        tmpdir = self.tmpdir('test_find_config_from_home_windows')
+        tmpdir = self.mkdir('test_find_config_from_home_windows')
         config_path = tmpdir.ensure('.docker', 'config.json')
 
         with mock.patch.dict(os.environ, {'USERPROFILE': str(tmpdir)}):
