@@ -14,6 +14,7 @@ INSECURE_REGISTRY_DEPRECATION_WARNING = \
     'is deprecated and non-functional. Please remove it.'
 
 IS_WINDOWS_PLATFORM = (sys.platform == 'win32')
+WINDOWS_LONGPATH_PREFIX = '\\\\?\\'
 
 DEFAULT_USER_AGENT = "docker-sdk-python/{0}".format(version)
 DEFAULT_NUM_POOLS = 25
