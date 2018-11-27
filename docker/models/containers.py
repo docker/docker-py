@@ -172,10 +172,10 @@ class Container(Model):
                 exit_code: (int):
                     Exit code for the executed command or ``None`` if
                     either ``stream```or ``socket`` is ``True``.
-                output: (generator or str):
+                output: (generator or bytes):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
-                    A string containing response data otherwise.
+                    A bytestring containing response data otherwise.
 
         Raises:
             :py:class:`docker.errors.APIError`
