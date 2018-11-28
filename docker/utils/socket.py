@@ -136,15 +136,17 @@ def consume_socket_output(frames, demux=False):
         # we just need to concatenate.
         return six.binary_type().join(frames)
 
-    # If the streams are demultiplexed, the generator returns tuples
-    # (stdin, stdout, stderr)
+    # If the streams are demultiplexed, the generator yields tuples
+    # (stdout, stderr)
     out = [six.binary_type(), six.binary_type()]
     for frame in frames:
-        for stream_id in [STDOUT, STDERR]:
-            # It is guaranteed that for each frame, one and only one stream
-            # is not None.
-            if frame[stream_id] is not None:
-                out[stream_id] += frame[stream_id]
+        # It is guaranteed that for each frame, one and only one stream
+        # is not None.
+        assert frame != (None, None)
+        if frame[0] is not None:
+            out[0] += frame[0]
+        else:
+            out[1] += frame[1]
     return tuple(out)
 
 
