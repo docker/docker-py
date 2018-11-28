@@ -1,5 +1,6 @@
 import itertools
 import re
+import warnings
 
 import six
 
@@ -425,7 +426,21 @@ class ImageCollection(Collection):
         if not tag:
             repository, tag = parse_repository_tag(repository)
 
-        self.client.api.pull(repository, tag=tag, **kwargs)
+        if 'stream' in kwargs:
+            warnings.warn(
+                '`stream` is not a valid parameter for this method'
+                ' and will be overridden'
+            )
+            del kwargs['stream']
+
+        pull_log = self.client.api.pull(
+            repository, tag=tag, stream=True, **kwargs
+        )
+        for _ in pull_log:
+            # We don't do anything with the logs, but we need
+            # to keep the connection alive and wait for the image
+            # to be pulled.
+            pass
         if tag:
             return self.get('{0}{2}{1}'.format(
                 repository, tag, '@' if tag.startswith('sha256:') else ':'

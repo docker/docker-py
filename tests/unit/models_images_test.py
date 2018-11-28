@@ -1,6 +1,8 @@
+import unittest
+import warnings
+
 from docker.constants import DEFAULT_DATA_CHUNK_SIZE
 from docker.models.images import Image
-import unittest
 
 from .fake_api import FAKE_IMAGE_ID
 from .fake_api_client import make_fake_client
@@ -43,7 +45,9 @@ class ImageCollectionTest(unittest.TestCase):
     def test_pull(self):
         client = make_fake_client()
         image = client.images.pull('test_image:latest')
-        client.api.pull.assert_called_with('test_image', tag='latest')
+        client.api.pull.assert_called_with(
+            'test_image', tag='latest', stream=True
+        )
         client.api.inspect_image.assert_called_with('test_image:latest')
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
@@ -51,7 +55,9 @@ class ImageCollectionTest(unittest.TestCase):
     def test_pull_multiple(self):
         client = make_fake_client()
         images = client.images.pull('test_image')
-        client.api.pull.assert_called_with('test_image', tag=None)
+        client.api.pull.assert_called_with(
+            'test_image', tag=None, stream=True
+        )
         client.api.images.assert_called_with(
             all=False, name='test_image', filters=None
         )
@@ -60,6 +66,16 @@ class ImageCollectionTest(unittest.TestCase):
         image = images[0]
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
+
+    def test_pull_with_stream_param(self):
+        client = make_fake_client()
+        with warnings.catch_warnings(record=True) as w:
+            client.images.pull('test_image', stream=True)
+
+        assert len(w) == 1
+        assert str(w[0].message).startswith(
+            '`stream` is not a valid parameter'
+        )
 
     def test_push(self):
         client = make_fake_client()
