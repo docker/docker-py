@@ -272,6 +272,11 @@ class ParseHostTest(unittest.TestCase):
             'tcp://',
             'udp://127.0.0.1',
             'udp://127.0.0.1:2375',
+            'ssh://:22/path',
+            'tcp://netloc:3333/path?q=1',
+            'unix:///sock/path#fragment',
+            'https://netloc:3333/path;params',
+            'ssh://:clearpassword@host:22',
         ]
 
         valid_hosts = {
@@ -281,7 +286,7 @@ class ParseHostTest(unittest.TestCase):
             'http://:7777': 'http://127.0.0.1:7777',
             'https://kokia.jp:2375': 'https://kokia.jp:2375',
             'unix:///var/run/docker.sock': 'http+unix:///var/run/docker.sock',
-            'unix://': 'http+unix://var/run/docker.sock',
+            'unix://': 'http+unix:///var/run/docker.sock',
             '12.234.45.127:2375/docker/engine': (
                 'http://12.234.45.127:2375/docker/engine'
             ),
@@ -294,6 +299,9 @@ class ParseHostTest(unittest.TestCase):
             '[fd12::82d1]:2375/docker/engine': (
                 'http://[fd12::82d1]:2375/docker/engine'
             ),
+            'ssh://': 'ssh://127.0.0.1:22',
+            'ssh://user@localhost:22': 'ssh://user@localhost:22',
+            'ssh://user@remote': 'ssh://user@remote:22',
         }
 
         for host in invalid_hosts:
@@ -304,7 +312,7 @@ class ParseHostTest(unittest.TestCase):
             assert parse_host(host, None) == expected
 
     def test_parse_host_empty_value(self):
-        unix_socket = 'http+unix://var/run/docker.sock'
+        unix_socket = 'http+unix:///var/run/docker.sock'
         npipe = 'npipe:////./pipe/docker_engine'
 
         for val in [None, '']:
@@ -449,8 +457,8 @@ class UtilsTest(unittest.TestCase):
         tests = [
             ({'dangling': True}, '{"dangling": ["true"]}'),
             ({'dangling': "true"}, '{"dangling": ["true"]}'),
-            ({'exited': 0}, '{"exited": [0]}'),
-            ({'exited': [0, 1]}, '{"exited": [0, 1]}'),
+            ({'exited': 0}, '{"exited": ["0"]}'),
+            ({'exited': [0, 1]}, '{"exited": ["0", "1"]}'),
         ]
 
         for filters, expected in tests:

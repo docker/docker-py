@@ -5,6 +5,7 @@ import docker
 import pytest
 
 from .base import BaseIntegrationTest, BUSYBOX, TEST_API_VERSION
+from ..helpers import random_name
 
 
 class ImageCollectionTest(BaseIntegrationTest):
@@ -107,6 +108,32 @@ class ImageCollectionTest(BaseIntegrationTest):
 
         assert len(result) == 1
         assert result[0].id == image.id
+
+    def test_save_and_load_repo_name(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.get(BUSYBOX)
+        additional_tag = random_name()
+        image.tag(additional_tag)
+        self.tmp_imgs.append(additional_tag)
+        image.reload()
+        with tempfile.TemporaryFile() as f:
+            stream = image.save(named='{}:latest'.format(additional_tag))
+            for chunk in stream:
+                f.write(chunk)
+
+            f.seek(0)
+            client.images.remove(additional_tag, force=True)
+            result = client.images.load(f.read())
+
+        assert len(result) == 1
+        assert result[0].id == image.id
+        assert '{}:latest'.format(additional_tag) in result[0].tags
+
+    def test_save_name_error(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image = client.images.get(BUSYBOX)
+        with pytest.raises(docker.errors.InvalidArgument):
+            image.save(named='sakuya/izayoi')
 
 
 class ImageTest(BaseIntegrationTest):

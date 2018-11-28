@@ -32,7 +32,7 @@ class ImageApiMixin(object):
         Example:
 
             >>> image = cli.get_image("busybox:latest")
-            >>> f = open('/tmp/busybox-latest.tar', 'w')
+            >>> f = open('/tmp/busybox-latest.tar', 'wb')
             >>> for chunk in image:
             >>>   f.write(chunk)
             >>> f.close()
@@ -334,7 +334,8 @@ class ImageApiMixin(object):
         Args:
             repository (str): The repository to pull
             tag (str): The tag to pull
-            stream (bool): Stream the output as a generator
+            stream (bool): Stream the output as a generator. Make sure to
+                consume the generator, otherwise pull might get cancelled.
             auth_config (dict): Override the credentials that
                 :py:meth:`~docker.api.daemon.DaemonApiMixin.login` has set for
                 this request. ``auth_config`` should contain the ``username``

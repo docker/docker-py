@@ -1,11 +1,15 @@
 import gzip
 import io
+import shutil
 
 import docker
 from docker import auth
+from docker.api.build import process_dockerfile
 
-from .api_test import BaseAPIClientTest, fake_request, url_prefix
 import pytest
+
+from ..helpers import make_tree
+from .api_test import BaseAPIClientTest, fake_request, url_prefix
 
 
 class BuildTest(BaseAPIClientTest):
@@ -161,3 +165,61 @@ class BuildTest(BaseAPIClientTest):
 
         self.client._set_auth_headers(headers)
         assert headers == expected_headers
+
+    @pytest.mark.skipif(
+        not docker.constants.IS_WINDOWS_PLATFORM,
+        reason='Windows-specific syntax')
+    def test_process_dockerfile_win_longpath_prefix(self):
+        dirs = [
+            'foo', 'foo/bar', 'baz',
+        ]
+
+        files = [
+            'Dockerfile', 'foo/Dockerfile.foo', 'foo/bar/Dockerfile.bar',
+            'baz/Dockerfile.baz',
+        ]
+
+        base = make_tree(dirs, files)
+        self.addCleanup(shutil.rmtree, base)
+
+        def pre(path):
+            return docker.constants.WINDOWS_LONGPATH_PREFIX + path
+
+        assert process_dockerfile(None, pre(base)) == (None, None)
+        assert process_dockerfile('Dockerfile', pre(base)) == (
+            'Dockerfile', None
+        )
+        assert process_dockerfile('foo/Dockerfile.foo', pre(base)) == (
+            'foo/Dockerfile.foo', None
+        )
+        assert process_dockerfile(
+            '../Dockerfile', pre(base + '\\foo')
+        )[1] is not None
+        assert process_dockerfile(
+            '../baz/Dockerfile.baz', pre(base + '/baz')
+        ) == ('../baz/Dockerfile.baz', None)
+
+    def test_process_dockerfile(self):
+        dirs = [
+            'foo', 'foo/bar', 'baz',
+        ]
+
+        files = [
+            'Dockerfile', 'foo/Dockerfile.foo', 'foo/bar/Dockerfile.bar',
+            'baz/Dockerfile.baz',
+        ]
+
+        base = make_tree(dirs, files)
+        self.addCleanup(shutil.rmtree, base)
+
+        assert process_dockerfile(None, base) == (None, None)
+        assert process_dockerfile('Dockerfile', base) == ('Dockerfile', None)
+        assert process_dockerfile('foo/Dockerfile.foo', base) == (
+            'foo/Dockerfile.foo', None
+        )
+        assert process_dockerfile(
+            '../Dockerfile', base + '/foo'
+        )[1] is not None
+        assert process_dockerfile('../baz/Dockerfile.baz', base + '/baz') == (
+            '../baz/Dockerfile.baz', None
+        )

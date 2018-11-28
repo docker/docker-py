@@ -883,6 +883,8 @@ Line2'''
         assert logs == (snippet + '\n').encode(encoding='ascii')
 
     @pytest.mark.timeout(5)
+    @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
+                        reason='No cancellable streams over SSH')
     def test_logs_streaming_and_follow_and_cancel(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
         container = self.client.create_container(
@@ -1255,6 +1257,8 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         assert output == 'hello\n'.encode(encoding='ascii')
 
     @pytest.mark.timeout(5)
+    @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
+                        reason='No cancellable streams over SSH')
     def test_attach_stream_and_cancel(self):
         container = self.client.create_container(
             BUSYBOX, 'sh -c "echo hello && sleep 60"',

@@ -1,5 +1,6 @@
 import itertools
 import re
+import warnings
 
 import six
 
@@ -59,7 +60,7 @@ class Image(Model):
         """
         return self.client.api.history(self.id)
 
-    def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
+    def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE, named=False):
         """
         Get a tarball of an image. Similar to the ``docker save`` command.
 
@@ -67,6 +68,12 @@ class Image(Model):
             chunk_size (int): The generator will return up to that much data
                 per iteration, but may return less. If ``None``, data will be
                 streamed as it is received. Default: 2 MB
+            named (str or bool): If ``False`` (default), the tarball will not
+                retain repository and tag information for this image. If set
+                to ``True``, the first tag in the :py:attr:`~tags` list will
+                be used to identify the image. Alternatively, any element of
+                the :py:attr:`~tags` list can be used as an argument to use
+                that specific tag as the saved identifier.
 
         Returns:
             (generator): A stream of raw archive data.
@@ -78,12 +85,22 @@ class Image(Model):
         Example:
 
             >>> image = cli.get_image("busybox:latest")
-            >>> f = open('/tmp/busybox-latest.tar', 'w')
+            >>> f = open('/tmp/busybox-latest.tar', 'wb')
             >>> for chunk in image:
             >>>   f.write(chunk)
             >>> f.close()
         """
-        return self.client.api.get_image(self.id, chunk_size)
+        img = self.id
+        if named:
+            img = self.tags[0] if self.tags else img
+            if isinstance(named, six.string_types):
+                if named not in self.tags:
+                    raise InvalidArgument(
+                        "{} is not a valid tag for this image".format(named)
+                    )
+                img = named
+
+        return self.client.api.get_image(img, chunk_size)
 
     def tag(self, repository, tag=None, **kwargs):
         """
@@ -409,7 +426,21 @@ class ImageCollection(Collection):
         if not tag:
             repository, tag = parse_repository_tag(repository)
 
-        self.client.api.pull(repository, tag=tag, **kwargs)
+        if 'stream' in kwargs:
+            warnings.warn(
+                '`stream` is not a valid parameter for this method'
+                ' and will be overridden'
+            )
+            del kwargs['stream']
+
+        pull_log = self.client.api.pull(
+            repository, tag=tag, stream=True, **kwargs
+        )
+        for _ in pull_log:
+            # We don't do anything with the logs, but we need
+            # to keep the connection alive and wait for the image
+            # to be pulled.
+            pass
         if tag:
             return self.get('{0}{2}{1}'.format(
                 repository, tag, '@' if tag.startswith('sha256:') else ':'
