@@ -138,15 +138,21 @@ def consume_socket_output(frames, demux=False):
 
     # If the streams are demultiplexed, the generator yields tuples
     # (stdout, stderr)
-    out = [six.binary_type(), six.binary_type()]
+    out = [None, None]
     for frame in frames:
         # It is guaranteed that for each frame, one and only one stream
         # is not None.
         assert frame != (None, None)
         if frame[0] is not None:
-            out[0] += frame[0]
+            if out[0] is None:
+                out[0] = frame[0]
+            else:
+                out[0] += frame[0]
         else:
-            out[1] += frame[1]
+            if out[1] is None:
+                out[1] = frame[1]
+            else:
+                out[1] += frame[1]
     return tuple(out)
 
 

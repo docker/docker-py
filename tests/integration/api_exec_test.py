@@ -134,7 +134,7 @@ class ExecTest(BaseAPIIntegrationTest):
         # tty=True, stream=False, demux=True
         res = self.client.exec_create(id, cmd, tty=True)
         exec_log = self.client.exec_start(res, demux=True)
-        assert exec_log == (b'hello out\r\nhello err\r\n', b'')
+        assert exec_log == (b'hello out\r\nhello err\r\n', None)
 
         # tty=True, stream=True, demux=True
         res = self.client.exec_create(id, cmd, tty=True)
