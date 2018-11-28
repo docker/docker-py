@@ -130,14 +130,14 @@ class ExecApiMixin(object):
             stream (bool): Stream response data. Default: False
             socket (bool): Return the connection socket to allow custom
                 read/write operations.
-            demux (bool): Separate return stdin, stdout and stderr separately
+            demux (bool): Return stdout and stderr separately
 
         Returns:
 
             (generator or str or tuple): If ``stream=True``, a generator
             yielding response chunks. If ``socket=True``, a socket object for
             the connection. A string containing response data otherwise. If
-            ``demux=True``, stdin, stdout and stderr are separated.
+            ``demux=True``, stdout and stderr are separated.
 
         Raises:
             :py:class:`docker.errors.APIError`
