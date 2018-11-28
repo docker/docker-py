@@ -1,6 +1,31 @@
 Change log
 ==========
 
+3.6.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone=55?closed=1)
+
+### Features
+
+* Added support for connecting to the Docker Engine over SSH. Additional
+  dependencies for this feature can be installed with
+  `pip install "docker[ssh]"`
+* Added support for the `named` parameter in `Image.save`, which may be
+  used to ensure the resulting tarball retains the image's name on save.
+
+### Bugfixes
+
+* Fixed a bug where builds on Windows with a context path using the `\\?\`
+  prefix would fail with some relative Dockerfile paths.
+* Fixed an issue where pulls made with the `DockerClient` would fail when
+  setting the `stream` parameter to `True`.
+
+### Miscellaneous
+
+* The minimum requirement for the `requests` dependency has been bumped
+  to 2.20.0
+
 3.5.1
 -----
 
