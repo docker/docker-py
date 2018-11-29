@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import base64
+import io
 import json
 import os
 import os.path
 import random
 import shutil
+import six
 import tempfile
 import unittest
 
@@ -504,3 +506,24 @@ class LoadConfigTest(unittest.TestCase):
         cfg = cfg['auths'][registry]
         assert 'IdentityToken' in cfg
         assert cfg['IdentityToken'] == token
+
+    def test_load_config_from_file_obj(self):
+        registry = 'https://your.private.registry.io'
+        auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
+        config = {
+            registry: {
+                'auth': '{0}'.format(auth_),
+                'email': 'sakuya@scarlet.net'
+            }
+        }
+
+        f = io.StringIO(six.text_type(json.dumps(config)))
+
+        cfg = auth.load_config(f)
+        assert registry in cfg
+        assert cfg[registry] is not None
+        cfg = cfg[registry]
+        assert cfg['username'] == 'sakuya'
+        assert cfg['password'] == 'izayoi'
+        assert cfg['email'] == 'sakuya@scarlet.net'
+        assert cfg.get('auth') is None
