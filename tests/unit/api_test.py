@@ -221,13 +221,11 @@ class DockerApiTest(BaseAPIClientTest):
             'username': 'sakuya', 'password': 'izayoi'
         }
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
-        assert self.client._auth_configs['auths'] == {
-            'docker.io': {
-                'email': None,
-                'password': 'izayoi',
-                'username': 'sakuya',
-                'serveraddress': None,
-            }
+        assert self.client._auth_configs.auths['docker.io'] == {
+            'email': None,
+            'password': 'izayoi',
+            'username': 'sakuya',
+            'serveraddress': None,
         }
 
     def test_events(self):

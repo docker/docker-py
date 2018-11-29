@@ -106,13 +106,13 @@ class ResolveAuthTest(unittest.TestCase):
     private_config = {'auth': encode_auth({'username': 'privateuser'})}
     legacy_config = {'auth': encode_auth({'username': 'legacyauth'})}
 
-    auth_config = {
+    auth_config = auth.AuthConfig({
         'auths': auth.parse_auth({
             'https://index.docker.io/v1/': index_config,
             'my.registry.net': private_config,
             'http://legacy.registry.url/v1/': legacy_config,
         })
-    }
+    })
 
     def test_resolve_authconfig_hostname_only(self):
         assert auth.resolve_authconfig(
@@ -211,13 +211,15 @@ class ResolveAuthTest(unittest.TestCase):
         ) is None
 
     def test_resolve_auth_with_empty_credstore_and_auth_dict(self):
-        auth_config = {
+        auth_config = auth.AuthConfig({
             'auths': auth.parse_auth({
                 'https://index.docker.io/v1/': self.index_config,
             }),
             'credsStore': 'blackbox'
-        }
-        with mock.patch('docker.auth._resolve_authconfig_credstore') as m:
+        })
+        with mock.patch(
+            'docker.auth.AuthConfig._resolve_authconfig_credstore'
+        ) as m:
             m.return_value = None
             assert 'indexuser' == auth.resolve_authconfig(
                 auth_config, None
@@ -226,13 +228,13 @@ class ResolveAuthTest(unittest.TestCase):
 
 class CredStoreTest(unittest.TestCase):
     def test_get_credential_store(self):
-        auth_config = {
+        auth_config = auth.AuthConfig({
             'credHelpers': {
                 'registry1.io': 'truesecret',
                 'registry2.io': 'powerlock'
             },
             'credsStore': 'blackbox',
-        }
+        })
 
         assert auth.get_credential_store(
             auth_config, 'registry1.io'
@@ -245,12 +247,12 @@ class CredStoreTest(unittest.TestCase):
         ) == 'blackbox'
 
     def test_get_credential_store_no_default(self):
-        auth_config = {
+        auth_config = auth.AuthConfig({
             'credHelpers': {
                 'registry1.io': 'truesecret',
                 'registry2.io': 'powerlock'
             },
-        }
+        })
         assert auth.get_credential_store(
             auth_config, 'registry2.io'
         ) == 'powerlock'
@@ -259,12 +261,12 @@ class CredStoreTest(unittest.TestCase):
         ) is None
 
     def test_get_credential_store_default_index(self):
-        auth_config = {
+        auth_config = auth.AuthConfig({
             'credHelpers': {
                 'https://index.docker.io/v1/': 'powerlock'
             },
             'credsStore': 'truesecret'
-        }
+        })
 
         assert auth.get_credential_store(auth_config, None) == 'powerlock'
         assert auth.get_credential_store(
@@ -293,8 +295,8 @@ class LoadConfigTest(unittest.TestCase):
 
         cfg = auth.load_config(cfg_path)
         assert auth.resolve_authconfig(cfg) is not None
-        assert cfg['auths'][auth.INDEX_NAME] is not None
-        cfg = cfg['auths'][auth.INDEX_NAME]
+        assert cfg.auths[auth.INDEX_NAME] is not None
+        cfg = cfg.auths[auth.INDEX_NAME]
         assert cfg['username'] == 'sakuya'
         assert cfg['password'] == 'izayoi'
         assert cfg['email'] == 'sakuya@scarlet.net'
@@ -312,8 +314,8 @@ class LoadConfigTest(unittest.TestCase):
             )
         cfg = auth.load_config(cfg_path)
         assert auth.resolve_authconfig(cfg) is not None
-        assert cfg['auths'][auth.INDEX_URL] is not None
-        cfg = cfg['auths'][auth.INDEX_URL]
+        assert cfg.auths[auth.INDEX_URL] is not None
+        cfg = cfg.auths[auth.INDEX_URL]
         assert cfg['username'] == 'sakuya'
         assert cfg['password'] == 'izayoi'
         assert cfg['email'] == email
@@ -335,8 +337,8 @@ class LoadConfigTest(unittest.TestCase):
             }, f)
         cfg = auth.load_config(cfg_path)
         assert auth.resolve_authconfig(cfg) is not None
-        assert cfg['auths'][auth.INDEX_URL] is not None
-        cfg = cfg['auths'][auth.INDEX_URL]
+        assert cfg.auths[auth.INDEX_URL] is not None
+        cfg = cfg.auths[auth.INDEX_URL]
         assert cfg['username'] == 'sakuya'
         assert cfg['password'] == 'izayoi'
         assert cfg['email'] == email
@@ -360,7 +362,7 @@ class LoadConfigTest(unittest.TestCase):
         with open(dockercfg_path, 'w') as f:
             json.dump(config, f)
 
-        cfg = auth.load_config(dockercfg_path)['auths']
+        cfg = auth.load_config(dockercfg_path).auths
         assert registry in cfg
         assert cfg[registry] is not None
         cfg = cfg[registry]
@@ -387,7 +389,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
-            cfg = auth.load_config(None)['auths']
+            cfg = auth.load_config(None).auths
             assert registry in cfg
             assert cfg[registry] is not None
             cfg = cfg[registry]
@@ -417,8 +419,8 @@ class LoadConfigTest(unittest.TestCase):
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
             cfg = auth.load_config(None)
-            assert registry in cfg['auths']
-            cfg = cfg['auths'][registry]
+            assert registry in cfg.auths
+            cfg = cfg.auths[registry]
             assert cfg['username'] == 'sakuya'
             assert cfg['password'] == 'izayoi'
             assert cfg['email'] == 'sakuya@scarlet.net'
@@ -446,8 +448,8 @@ class LoadConfigTest(unittest.TestCase):
 
         with mock.patch.dict(os.environ, {'DOCKER_CONFIG': folder}):
             cfg = auth.load_config(None)
-            assert registry in cfg['auths']
-            cfg = cfg['auths'][registry]
+            assert registry in cfg.auths
+            cfg = cfg.auths[registry]
             assert cfg['username'] == b'sakuya\xc3\xa6'.decode('utf8')
             assert cfg['password'] == b'izayoi\xc3\xa6'.decode('utf8')
             assert cfg['email'] == 'sakuya@scarlet.net'
@@ -464,7 +466,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg == {'auths': {}}
+        assert cfg._dct == {'auths': {}}
 
     def test_load_config_invalid_auth_dict(self):
         folder = tempfile.mkdtemp()
@@ -479,7 +481,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg == {'auths': {'scarlet.net': {}}}
+        assert cfg._dct == {'auths': {'scarlet.net': {}}}
 
     def test_load_config_identity_token(self):
         folder = tempfile.mkdtemp()
@@ -500,7 +502,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert registry in cfg['auths']
-        cfg = cfg['auths'][registry]
+        assert registry in cfg.auths
+        cfg = cfg.auths[registry]
         assert 'IdentityToken' in cfg
         assert cfg['IdentityToken'] == token
