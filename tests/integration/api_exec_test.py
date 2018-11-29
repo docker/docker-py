@@ -1,3 +1,4 @@
+import logging
 from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
 
@@ -20,6 +21,43 @@ class ExecTest(BaseAPIIntegrationTest):
 
         exec_log = self.client.exec_start(res)
         assert exec_log == b'hello\n'
+
+    # Attempt to reproduce https://github.com/docker/docker-py/issues/2042
+    def test_execute_command_a_lot(self):
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.INFO)
+        logger = logging.getLogger('DEBUG_LOGGER')
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        for i in range(0, 100):
+            res = self.client.exec_create(id, ['echo', 'hello'])
+            assert b'hello\n' == self.client.exec_start(res), \
+                'failed at iteration {}'.format(i)
+
+    # Attempt to reproduce https://github.com/docker/docker-py/issues/2042
+    # (with tty=True)
+    def test_execute_command_a_lot_tty(self):
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.INFO)
+        logger = logging.getLogger('DEBUG_LOGGER')
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        for i in range(0, 100):
+            res = self.client.exec_create(id, ['echo', 'hello'], tty=True)
+            assert b'hello\r\n' == self.client.exec_start(res), \
+                'failed at iteration {}'.format(i)
 
     def test_exec_command_string(self):
         container = self.client.create_container(BUSYBOX, 'cat',

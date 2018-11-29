@@ -3,6 +3,7 @@ import os
 import select
 import socket as pysocket
 import struct
+import logging
 
 import six
 
@@ -14,6 +15,9 @@ except ImportError:
 
 STDOUT = 1
 STDERR = 2
+
+
+DBG_LOGGER = logging.getLogger('DEBUG_LOGGER')
 
 
 class SocketError(Exception):
@@ -52,6 +56,7 @@ def read_exactly(socket, n):
         if not next_data:
             raise SocketError("Unexpected EOF")
         data += next_data
+    DBG_LOGGER.info(data)
     return data
 
 
