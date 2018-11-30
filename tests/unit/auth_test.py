@@ -10,6 +10,7 @@ import tempfile
 import unittest
 
 from docker import auth, errors
+import dockerpycreds
 import pytest
 
 try:
@@ -224,57 +225,6 @@ class ResolveAuthTest(unittest.TestCase):
             assert 'indexuser' == auth.resolve_authconfig(
                 auth_config, None
             )['username']
-
-
-class CredStoreTest(unittest.TestCase):
-    def test_get_credential_store(self):
-        auth_config = auth.AuthConfig({
-            'credHelpers': {
-                'registry1.io': 'truesecret',
-                'registry2.io': 'powerlock'
-            },
-            'credsStore': 'blackbox',
-        })
-
-        assert auth.get_credential_store(
-            auth_config, 'registry1.io'
-        ) == 'truesecret'
-        assert auth.get_credential_store(
-            auth_config, 'registry2.io'
-        ) == 'powerlock'
-        assert auth.get_credential_store(
-            auth_config, 'registry3.io'
-        ) == 'blackbox'
-
-    def test_get_credential_store_no_default(self):
-        auth_config = auth.AuthConfig({
-            'credHelpers': {
-                'registry1.io': 'truesecret',
-                'registry2.io': 'powerlock'
-            },
-        })
-        assert auth.get_credential_store(
-            auth_config, 'registry2.io'
-        ) == 'powerlock'
-        assert auth.get_credential_store(
-            auth_config, 'registry3.io'
-        ) is None
-
-    def test_get_credential_store_default_index(self):
-        auth_config = auth.AuthConfig({
-            'credHelpers': {
-                'https://index.docker.io/v1/': 'powerlock'
-            },
-            'credsStore': 'truesecret'
-        })
-
-        assert auth.get_credential_store(auth_config, None) == 'powerlock'
-        assert auth.get_credential_store(
-            auth_config, 'docker.io'
-        ) == 'powerlock'
-        assert auth.get_credential_store(
-            auth_config, 'images.io'
-        ) == 'truesecret'
 
 
 class LoadConfigTest(unittest.TestCase):
@@ -506,3 +456,232 @@ class LoadConfigTest(unittest.TestCase):
         cfg = cfg.auths[registry]
         assert 'IdentityToken' in cfg
         assert cfg['IdentityToken'] == token
+
+
+class CredstoreTest(unittest.TestCase):
+    def setUp(self):
+        self.authconfig = auth.AuthConfig({'credsStore': 'default'})
+        self.default_store = InMemoryStore('default')
+        self.authconfig._stores['default'] = self.default_store
+        self.default_store.store(
+            'https://gensokyo.jp/v2', 'sakuya', 'izayoi',
+        )
+        self.default_store.store(
+            'https://default.com/v2', 'user', 'hunter2',
+        )
+
+    def test_get_credential_store(self):
+        auth_config = auth.AuthConfig({
+            'credHelpers': {
+                'registry1.io': 'truesecret',
+                'registry2.io': 'powerlock'
+            },
+            'credsStore': 'blackbox',
+        })
+
+        assert auth_config.get_credential_store('registry1.io') == 'truesecret'
+        assert auth_config.get_credential_store('registry2.io') == 'powerlock'
+        assert auth_config.get_credential_store('registry3.io') == 'blackbox'
+
+    def test_get_credential_store_no_default(self):
+        auth_config = auth.AuthConfig({
+            'credHelpers': {
+                'registry1.io': 'truesecret',
+                'registry2.io': 'powerlock'
+            },
+        })
+        assert auth_config.get_credential_store('registry2.io') == 'powerlock'
+        assert auth_config.get_credential_store('registry3.io') is None
+
+    def test_get_credential_store_default_index(self):
+        auth_config = auth.AuthConfig({
+            'credHelpers': {
+                'https://index.docker.io/v1/': 'powerlock'
+            },
+            'credsStore': 'truesecret'
+        })
+
+        assert auth_config.get_credential_store(None) == 'powerlock'
+        assert auth_config.get_credential_store('docker.io') == 'powerlock'
+        assert auth_config.get_credential_store('images.io') == 'truesecret'
+
+    def test_get_credential_store_with_plain_dict(self):
+        auth_config = {
+            'credHelpers': {
+                'registry1.io': 'truesecret',
+                'registry2.io': 'powerlock'
+            },
+            'credsStore': 'blackbox',
+        }
+
+        assert auth.get_credential_store(
+            auth_config, 'registry1.io'
+        ) == 'truesecret'
+        assert auth.get_credential_store(
+            auth_config, 'registry2.io'
+        ) == 'powerlock'
+        assert auth.get_credential_store(
+            auth_config, 'registry3.io'
+        ) == 'blackbox'
+
+    def test_get_all_credentials_credstore_only(self):
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+        }
+
+    def test_get_all_credentials_with_empty_credhelper(self):
+        self.authconfig['credHelpers'] = {
+            'registry1.io': 'truesecret',
+        }
+        self.authconfig._stores['truesecret'] = InMemoryStore()
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'registry1.io': None,
+        }
+
+    def test_get_all_credentials_with_credhelpers_only(self):
+        del self.authconfig['credsStore']
+        assert self.authconfig.get_all_credentials() == {}
+
+        self.authconfig['credHelpers'] = {
+            'https://gensokyo.jp/v2': 'default',
+            'https://default.com/v2': 'default',
+        }
+
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+        }
+
+    def test_get_all_credentials_with_auths_entries(self):
+        self.authconfig.add_auth('registry1.io', {
+            'ServerAddress': 'registry1.io',
+            'Username': 'reimu',
+            'Password': 'hakurei',
+        })
+
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'registry1.io': {
+                'ServerAddress': 'registry1.io',
+                'Username': 'reimu',
+                'Password': 'hakurei',
+            },
+        }
+
+    def test_get_all_credentials_helpers_override_default(self):
+        self.authconfig['credHelpers'] = {
+            'https://default.com/v2': 'truesecret',
+        }
+        truesecret = InMemoryStore('truesecret')
+        truesecret.store('https://default.com/v2', 'reimu', 'hakurei')
+        self.authconfig._stores['truesecret'] = truesecret
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'reimu',
+                'Password': 'hakurei',
+                'ServerAddress': 'https://default.com/v2',
+            },
+        }
+
+    def test_get_all_credentials_3_sources(self):
+        self.authconfig['credHelpers'] = {
+            'registry1.io': 'truesecret',
+        }
+        truesecret = InMemoryStore('truesecret')
+        truesecret.store('registry1.io', 'reimu', 'hakurei')
+        self.authconfig._stores['truesecret'] = truesecret
+        self.authconfig.add_auth('registry2.io', {
+            'ServerAddress': 'registry2.io',
+            'Username': 'reimu',
+            'Password': 'hakurei',
+        })
+
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'registry1.io': {
+                'ServerAddress': 'registry1.io',
+                'Username': 'reimu',
+                'Password': 'hakurei',
+            },
+            'registry2.io': {
+                'ServerAddress': 'registry2.io',
+                'Username': 'reimu',
+                'Password': 'hakurei',
+            }
+        }
+
+
+class InMemoryStore(dockerpycreds.Store):
+    def __init__(self, *args, **kwargs):
+        self.__store = {}
+
+    def get(self, server):
+        try:
+            return self.__store[server]
+        except KeyError:
+            raise dockerpycreds.errors.CredentialsNotFound()
+
+    def store(self, server, username, secret):
+        self.__store[server] = {
+            'ServerURL': server,
+            'Username': username,
+            'Secret': secret,
+        }
+
+    def list(self):
+        return dict(
+            [(k, v['Username']) for k, v in self.__store.items()]
+        )
+
+    def erase(self, server):
+        del self.__store[server]

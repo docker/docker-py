@@ -284,7 +284,7 @@ class AuthConfig(dict):
 
     def get_credential_store(self, registry):
         if not registry or registry == INDEX_NAME:
-            registry = 'https://index.docker.io/v1/'
+            registry = INDEX_URL
 
         return self.cred_helpers.get(registry) or self.creds_store
 
