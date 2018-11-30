@@ -479,23 +479,26 @@ class TCPSocketStreamTest(unittest.TestCase):
     built on these islands for generations past? Now shall what of Him?
     '''
 
-    def setUp(self):
-        self.server = six.moves.socketserver.ThreadingTCPServer(
-            ('', 0), self.get_handler_class())
-        self.thread = threading.Thread(target=self.server.serve_forever)
-        self.thread.setDaemon(True)
-        self.thread.start()
-        self.address = 'http://{}:{}'.format(
-            socket.gethostname(), self.server.server_address[1])
+    @classmethod
+    def setup_class(cls):
+        cls.server = six.moves.socketserver.ThreadingTCPServer(
+            ('', 0), cls.get_handler_class())
+        cls.thread = threading.Thread(target=cls.server.serve_forever)
+        cls.thread.setDaemon(True)
+        cls.thread.start()
+        cls.address = 'http://{}:{}'.format(
+            socket.gethostname(), cls.server.server_address[1])
 
-    def tearDown(self):
-        self.server.shutdown()
-        self.server.server_close()
-        self.thread.join()
+    @classmethod
+    def teardown_class(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.thread.join()
 
-    def get_handler_class(self):
-        stdout_data = self.stdout_data
-        stderr_data = self.stderr_data
+    @classmethod
+    def get_handler_class(cls):
+        stdout_data = cls.stdout_data
+        stderr_data = cls.stderr_data
 
         class Handler(six.moves.BaseHTTPServer.BaseHTTPRequestHandler, object):
             def do_POST(self):
@@ -542,45 +545,45 @@ class TCPSocketStreamTest(unittest.TestCase):
             return client._read_from_socket(
                 resp, stream=stream, tty=tty, demux=demux)
 
-    def test_read_from_socket_1(self):
+    def test_read_from_socket_tty(self):
         res = self.request(stream=True, tty=True, demux=False)
         assert next(res) == self.stdout_data + self.stderr_data
         with self.assertRaises(StopIteration):
             next(res)
 
-    def test_read_from_socket_2(self):
+    def test_read_from_socket_tty_demux(self):
         res = self.request(stream=True, tty=True, demux=True)
         assert next(res) == (self.stdout_data + self.stderr_data, None)
         with self.assertRaises(StopIteration):
             next(res)
 
-    def test_read_from_socket_3(self):
+    def test_read_from_socket_no_tty(self):
         res = self.request(stream=True, tty=False, demux=False)
         assert next(res) == self.stdout_data
         assert next(res) == self.stderr_data
         with self.assertRaises(StopIteration):
             next(res)
 
-    def test_read_from_socket_4(self):
+    def test_read_from_socket_no_tty_demux(self):
         res = self.request(stream=True, tty=False, demux=True)
         assert (self.stdout_data, None) == next(res)
         assert (None, self.stderr_data) == next(res)
         with self.assertRaises(StopIteration):
             next(res)
 
-    def test_read_from_socket_5(self):
+    def test_read_from_socket_no_stream_tty(self):
         res = self.request(stream=False, tty=True, demux=False)
         assert res == self.stdout_data + self.stderr_data
 
-    def test_read_from_socket_6(self):
+    def test_read_from_socket_no_stream_tty_demux(self):
         res = self.request(stream=False, tty=True, demux=True)
         assert res == (self.stdout_data + self.stderr_data, None)
 
-    def test_read_from_socket_7(self):
+    def test_read_from_socket_no_stream_no_tty(self):
         res = self.request(stream=False, tty=False, demux=False)
         res == self.stdout_data + self.stderr_data
 
-    def test_read_from_socket_8(self):
+    def test_read_from_socket_no_stream_no_tty_demux(self):
         res = self.request(stream=False, tty=False, demux=True)
         assert res == (self.stdout_data, self.stderr_data)
 
