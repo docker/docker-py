@@ -39,7 +39,7 @@ def resolve_index_name(index_name):
 
 def get_config_header(client, registry):
     log.debug('Looking for auth config')
-    if not client._auth_configs:
+    if not client._auth_configs or client._auth_configs.is_empty:
         log.debug(
             "No auth config in memory - loading from filesystem"
         )
@@ -211,6 +211,12 @@ class AuthConfig(dict):
     @property
     def cred_helpers(self):
         return self.get('credHelpers', {})
+
+    @property
+    def is_empty(self):
+        return (
+            not self.auths and not self.creds_store and not self.cred_helpers
+        )
 
     def resolve_authconfig(self, registry=None):
         """

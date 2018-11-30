@@ -127,7 +127,7 @@ class DaemonApiMixin(object):
             self._auth_configs = auth.load_config(
                 dockercfg_path, credstore_env=self.credstore_env
             )
-        elif not self._auth_configs:
+        elif not self._auth_configs or self._auth_configs.is_empty:
             self._auth_configs = auth.load_config(
                 credstore_env=self.credstore_env
             )
