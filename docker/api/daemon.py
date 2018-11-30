@@ -124,13 +124,15 @@ class DaemonApiMixin(object):
         # If dockercfg_path is passed check to see if the config file exists,
         # if so load that config.
         if dockercfg_path and os.path.exists(dockercfg_path):
-            self._auth_configs = auth.load_config(dockercfg_path)
+            self._auth_configs = auth.load_config(
+                dockercfg_path, credstore_env=self.credstore_env
+            )
         elif not self._auth_configs:
-            self._auth_configs = auth.load_config()
+            self._auth_configs = auth.load_config(
+                credstore_env=self.credstore_env
+            )
 
-        authcfg = auth.resolve_authconfig(
-            self._auth_configs, registry, credstore_env=self.credstore_env,
-        )
+        authcfg = self._auth_configs.resolve_authconfig(registry)
         # If we found an existing auth config for this registry and username
         # combination, we can return it immediately unless reauth is requested.
         if authcfg and authcfg.get('username', None) == username \
@@ -146,9 +148,7 @@ class DaemonApiMixin(object):
 
         response = self._post_json(self._url('/auth'), data=req_data)
         if response.status_code == 200:
-            if 'auths' not in self._auth_configs:
-                self._auth_configs['auths'] = {}
-            self._auth_configs['auths'][registry or auth.INDEX_NAME] = req_data
+            self._auth_configs.add_auth(registry or auth.INDEX_NAME, req_data)
         return self._result(response, json=True)
 
     def ping(self):

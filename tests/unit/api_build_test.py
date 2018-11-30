@@ -65,7 +65,7 @@ class BuildTest(BaseAPIClientTest):
         )
 
     def test_build_remote_with_registry_auth(self):
-        self.client._auth_configs = {
+        self.client._auth_configs = auth.AuthConfig({
             'auths': {
                 'https://example.com': {
                     'user': 'example',
@@ -73,7 +73,7 @@ class BuildTest(BaseAPIClientTest):
                     'email': 'example@example.com'
                 }
             }
-        }
+        })
 
         expected_params = {'t': None, 'q': False, 'dockerfile': None,
                            'rm': False, 'nocache': False, 'pull': False,
@@ -81,7 +81,7 @@ class BuildTest(BaseAPIClientTest):
                            'remote': 'https://github.com/docker-library/mongo'}
         expected_headers = {
             'X-Registry-Config': auth.encode_header(
-                self.client._auth_configs['auths']
+                self.client._auth_configs.auths
             )
         }
 
@@ -115,7 +115,7 @@ class BuildTest(BaseAPIClientTest):
             })
 
     def test_set_auth_headers_with_empty_dict_and_auth_configs(self):
-        self.client._auth_configs = {
+        self.client._auth_configs = auth.AuthConfig({
             'auths': {
                 'https://example.com': {
                     'user': 'example',
@@ -123,12 +123,12 @@ class BuildTest(BaseAPIClientTest):
                     'email': 'example@example.com'
                 }
             }
-        }
+        })
 
         headers = {}
         expected_headers = {
             'X-Registry-Config': auth.encode_header(
-                self.client._auth_configs['auths']
+                self.client._auth_configs.auths
             )
         }
 
@@ -136,7 +136,7 @@ class BuildTest(BaseAPIClientTest):
         assert headers == expected_headers
 
     def test_set_auth_headers_with_dict_and_auth_configs(self):
-        self.client._auth_configs = {
+        self.client._auth_configs = auth.AuthConfig({
             'auths': {
                 'https://example.com': {
                     'user': 'example',
@@ -144,12 +144,12 @@ class BuildTest(BaseAPIClientTest):
                     'email': 'example@example.com'
                 }
             }
-        }
+        })
 
         headers = {'foo': 'bar'}
         expected_headers = {
             'X-Registry-Config': auth.encode_header(
-                self.client._auth_configs['auths']
+                self.client._auth_configs.auths
             ),
             'foo': 'bar'
         }

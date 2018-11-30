@@ -115,7 +115,7 @@ class APIClient(
 
         self._general_configs = config.load_general_config()
         self._auth_configs = auth.load_config(
-            config_dict=self._general_configs
+            config_dict=self._general_configs, credstore_env=credstore_env,
         )
         self.credstore_env = credstore_env
 
@@ -480,4 +480,6 @@ class APIClient(
         Returns:
             None
         """
-        self._auth_configs = auth.load_config(dockercfg_path)
+        self._auth_configs = auth.load_config(
+            dockercfg_path, credstore_env=self.credstore_env
+        )
