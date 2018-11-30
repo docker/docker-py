@@ -118,7 +118,7 @@ class ExecApiMixin(object):
 
     @utils.check_resource('exec_id')
     def exec_start(self, exec_id, detach=False, tty=False, stream=False,
-                   socket=False):
+                   socket=False, demux=False):
         """
         Start a previously set up exec instance.
 
@@ -130,11 +130,14 @@ class ExecApiMixin(object):
             stream (bool): Stream response data. Default: False
             socket (bool): Return the connection socket to allow custom
                 read/write operations.
+            demux (bool): Return stdout and stderr separately
 
         Returns:
-            (generator or str): If ``stream=True``, a generator yielding
-            response chunks. If ``socket=True``, a socket object for the
-            connection. A string containing response data otherwise.
+
+            (generator or str or tuple): If ``stream=True``, a generator
+            yielding response chunks. If ``socket=True``, a socket object for
+            the connection. A string containing response data otherwise. If
+            ``demux=True``, stdout and stderr are separated.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -162,4 +165,4 @@ class ExecApiMixin(object):
             return self._result(res)
         if socket:
             return self._get_raw_response_socket(res)
-        return self._read_from_socket(res, stream, tty)
+        return self._read_from_socket(res, stream, tty=tty, demux=demux)

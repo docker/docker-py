@@ -144,7 +144,7 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False, environment=None, workdir=None):
+                 socket=False, environment=None, workdir=None, demux=False):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -166,6 +166,7 @@ class Container(Model):
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
             workdir (str): Path to working directory for this exec session
+            demux (bool): Return stdout and stderr separately
 
         Returns:
             (ExecResult): A tuple of (exit_code, output)
@@ -187,7 +188,8 @@ class Container(Model):
             workdir=workdir
         )
         exec_output = self.client.api.exec_start(
-            resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
+            resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket,
+            demux=demux
         )
         if socket or stream:
             return ExecResult(None, exec_output)

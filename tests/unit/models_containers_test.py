@@ -419,7 +419,8 @@ class ContainerTest(unittest.TestCase):
             workdir=None
         )
         client.api.exec_start.assert_called_with(
-            FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False
+            FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False,
+            demux=False,
         )
 
     def test_exec_run_failure(self):
@@ -432,7 +433,8 @@ class ContainerTest(unittest.TestCase):
             workdir=None
         )
         client.api.exec_start.assert_called_with(
-            FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False
+            FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False,
+            demux=False,
         )
 
     def test_export(self):

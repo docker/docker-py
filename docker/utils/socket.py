@@ -12,6 +12,10 @@ except ImportError:
     NpipeSocket = type(None)
 
 
+STDOUT = 1
+STDERR = 2
+
+
 class SocketError(Exception):
     pass
 
@@ -51,28 +55,43 @@ def read_exactly(socket, n):
     return data
 
 
-def next_frame_size(socket):
+def next_frame_header(socket):
     """
-    Returns the size of the next frame of data waiting to be read from socket,
-    according to the protocol defined here:
+    Returns the stream and size of the next frame of data waiting to be read
+    from socket, according to the protocol defined here:
 
-    https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/attach-to-a-container
+    https://docs.docker.com/engine/api/v1.24/#attach-to-a-container
     """
     try:
         data = read_exactly(socket, 8)
     except SocketError:
-        return -1
+        return (-1, -1)
 
-    _, actual = struct.unpack('>BxxxL', data)
-    return actual
+    stream, actual = struct.unpack('>BxxxL', data)
+    return (stream, actual)
 
 
-def frames_iter(socket):
+def frames_iter(socket, tty):
     """
-    Returns a generator of frames read from socket
+    Return a generator of frames read from socket. A frame is a tuple where
+    the first item is the stream number and the second item is a chunk of data.
+
+    If the tty setting is enabled, the streams are multiplexed into the stdout
+    stream.
+    """
+    if tty:
+        return ((STDOUT, frame) for frame in frames_iter_tty(socket))
+    else:
+        return frames_iter_no_tty(socket)
+
+
+def frames_iter_no_tty(socket):
+    """
+    Returns a generator of data read from the socket when the tty setting is
+    not enabled.
     """
     while True:
-        n = next_frame_size(socket)
+        (stream, n) = next_frame_header(socket)
         if n < 0:
             break
         while n > 0:
@@ -84,13 +103,13 @@ def frames_iter(socket):
                 # We have reached EOF
                 return
             n -= data_length
-            yield result
+            yield (stream, result)
 
 
-def socket_raw_iter(socket):
+def frames_iter_tty(socket):
     """
-    Returns a generator of data read from the socket.
-    This is used for non-multiplexed streams.
+    Return a generator of data read from the socket when the tty setting is
+    enabled.
     """
     while True:
         result = read(socket)
@@ -98,3 +117,53 @@ def socket_raw_iter(socket):
             # We have reached EOF
             return
         yield result
+
+
+def consume_socket_output(frames, demux=False):
+    """
+    Iterate through frames read from the socket and return the result.
+
+    Args:
+
+        demux (bool):
+            If False, stdout and stderr are multiplexed, and the result is the
+            concatenation of all the frames. If True, the streams are
+            demultiplexed, and the result is a 2-tuple where each item is the
+            concatenation of frames belonging to the same stream.
+    """
+    if demux is False:
+        # If the streams are multiplexed, the generator returns strings, that
+        # we just need to concatenate.
+        return six.binary_type().join(frames)
+
+    # If the streams are demultiplexed, the generator yields tuples
+    # (stdout, stderr)
+    out = [None, None]
+    for frame in frames:
+        # It is guaranteed that for each frame, one and only one stream
+        # is not None.
+        assert frame != (None, None)
+        if frame[0] is not None:
+            if out[0] is None:
+                out[0] = frame[0]
+            else:
+                out[0] += frame[0]
+        else:
+            if out[1] is None:
+                out[1] = frame[1]
+            else:
+                out[1] += frame[1]
+    return tuple(out)
+
+
+def demux_adaptor(stream_id, data):
+    """
+    Utility to demultiplex stdout and stderr when reading frames from the
+    socket.
+    """
+    if stream_id == STDOUT:
+        return (data, None)
+    elif stream_id == STDERR:
+        return (None, data)
+    else:
+        raise ValueError('{0} is not a valid stream'.format(stream_id))
