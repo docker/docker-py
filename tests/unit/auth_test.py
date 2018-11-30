@@ -466,7 +466,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg._dct == {'auths': {}}
+        assert dict(cfg) == {'auths': {}}
 
     def test_load_config_invalid_auth_dict(self):
         folder = tempfile.mkdtemp()
@@ -481,7 +481,7 @@ class LoadConfigTest(unittest.TestCase):
             json.dump(config, f)
 
         cfg = auth.load_config(dockercfg_path)
-        assert cfg._dct == {'auths': {'scarlet.net': {}}}
+        assert dict(cfg) == {'auths': {'scarlet.net': {}}}
 
     def test_load_config_identity_token(self):
         folder = tempfile.mkdtemp()

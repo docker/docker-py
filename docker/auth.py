@@ -43,7 +43,7 @@ def get_config_header(client, registry):
         log.debug(
             "No auth config in memory - loading from filesystem"
         )
-        client._auth_configs = load_config()
+        client._auth_configs = load_config(credstore_env=client.credstore_env)
     authcfg = resolve_authconfig(
         client._auth_configs, registry, credstore_env=client.credstore_env
     )
@@ -70,14 +70,16 @@ def split_repo_name(repo_name):
 
 
 def get_credential_store(authconfig, registry):
+    if not isinstance(authconfig, AuthConfig):
+        authconfig = AuthConfig(authconfig)
     return authconfig.get_credential_store(registry)
 
 
-class AuthConfig(object):
+class AuthConfig(dict):
     def __init__(self, dct, credstore_env=None):
         if 'auths' not in dct:
             dct['auths'] = {}
-        self._dct = dct
+        self.update(dct)
         self._credstore_env = credstore_env
         self._stores = {}
 
@@ -200,15 +202,15 @@ class AuthConfig(object):
 
     @property
     def auths(self):
-        return self._dct.get('auths', {})
+        return self.get('auths', {})
 
     @property
     def creds_store(self):
-        return self._dct.get('credsStore', None)
+        return self.get('credsStore', None)
 
     @property
     def cred_helpers(self):
-        return self._dct.get('credHelpers', {})
+        return self.get('credHelpers', {})
 
     def resolve_authconfig(self, registry=None):
         """
@@ -305,10 +307,12 @@ class AuthConfig(object):
         return auth_data
 
     def add_auth(self, reg, data):
-        self._dct['auths'][reg] = data
+        self['auths'][reg] = data
 
 
 def resolve_authconfig(authconfig, registry=None, credstore_env=None):
+    if not isinstance(authconfig, AuthConfig):
+        authconfig = AuthConfig(authconfig, credstore_env)
     return authconfig.resolve_authconfig(registry)
 
 
