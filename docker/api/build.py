@@ -288,7 +288,9 @@ class BuildApiMixin(object):
         # file one more time in case anything showed up in there.
         if not self._auth_configs:
             log.debug("No auth config in memory - loading from filesystem")
-            self._auth_configs = auth.load_config()
+            self._auth_configs = auth.load_config(
+                credsore_env=self.credsore_env
+            )
 
         # Send the full auth configuration (if any exists), since the build
         # could use any (or all) of the registries.
