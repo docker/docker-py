@@ -286,10 +286,10 @@ class BuildApiMixin(object):
 
         # If we don't have any auth data so far, try reloading the config
         # file one more time in case anything showed up in there.
-        if not self._auth_configs:
+        if not self._auth_configs or self._auth_configs.is_empty:
             log.debug("No auth config in memory - loading from filesystem")
             self._auth_configs = auth.load_config(
-                credsore_env=self.credsore_env
+                credstore_env=self.credstore_env
             )
 
         # Send the full auth configuration (if any exists), since the build
