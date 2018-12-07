@@ -12,8 +12,9 @@ if [ -z $VERSION ]; then
     exit 1
 fi
 
-echo "##> Removing stale build files"
-rm -rf ./build || exit 1
+echo "##> Removing stale build files and other untracked files"
+git clean -x -d -i
+test -z "$(git clean -x -d -n)" || exit 1
 
 echo "##> Tagging the release as $VERSION"
 git tag $VERSION
