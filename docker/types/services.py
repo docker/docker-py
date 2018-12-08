@@ -648,24 +648,51 @@ class Placement(dict):
         Placement constraints to be used as part of a :py:class:`TaskTemplate`
 
         Args:
-            constraints (:py:class:`list`): A list of constraints
-            preferences (:py:class:`list`): Preferences provide a way to make
-                the scheduler aware of factors such as topology. They are
-                provided in order from highest to lowest precedence.
-            platforms (:py:class:`list`): A list of platforms expressed as
-                ``(arch, os)`` tuples
+            constraints (:py:class:`list` of str): A list of constraints
+            preferences (:py:class:`list` of tuple): Preferences provide a way
+                to make the scheduler aware of factors such as topology. They
+                are provided in order from highest to lowest precedence and
+                are expressed as ``(strategy, descriptor)`` tuples. See
+                :py:class:`PlacementPreference` for details.
+            platforms (:py:class:`list` of tuple): A list of platforms
+                expressed as ``(arch, os)`` tuples
     """
     def __init__(self, constraints=None, preferences=None, platforms=None):
         if constraints is not None:
             self['Constraints'] = constraints
         if preferences is not None:
-            self['Preferences'] = preferences
+            self['Preferences'] = []
+            for pref in preferences:
+                if isinstance(pref, tuple):
+                    pref = PlacementPreference(*pref)
+                self['Preferences'].append(pref)
         if platforms:
             self['Platforms'] = []
             for plat in platforms:
                 self['Platforms'].append({
                     'Architecture': plat[0], 'OS': plat[1]
                 })
+
+
+class PlacementPreference(dict):
+    """
+        Placement preference to be used as an element in the list of
+        preferences for :py:class:`Placement` objects.
+
+        Args:
+            strategy (string): The placement strategy to implement. Currently,
+                the only supported strategy is ``spread``.
+            descriptor (string): A label descriptor. For the spread strategy,
+                the scheduler will try to spread tasks evenly over groups of
+                nodes identified by this label.
+    """
+    def __init__(self, strategy, descriptor):
+        if strategy != 'spread':
+            raise errors.InvalidArgument(
+                'PlacementPreference strategy value is invalid ({}):'
+                ' must be "spread".'.format(strategy)
+            )
+        self['SpreadOver'] = descriptor
 
 
 class DNSConfig(dict):

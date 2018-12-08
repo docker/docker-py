@@ -143,6 +143,7 @@ Configuration types
 .. autoclass:: LogConfig
 .. autoclass:: Mount
 .. autoclass:: Placement
+.. autoclass:: PlacementPreference
 .. autoclass:: Privileges
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
