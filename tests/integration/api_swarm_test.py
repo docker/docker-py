@@ -35,6 +35,29 @@ class SwarmTest(BaseAPIIntegrationTest):
         version_2 = self.client.inspect_swarm()['Version']['Index']
         assert version_2 != version_1
 
+    @requires_api_version('1.39')
+    def test_init_swarm_custom_addr_pool(self):
+        assert self.init_swarm()
+        results_1 = self.client.inspect_swarm()
+        assert results_1['DefaultAddrPool'] is None
+        assert results_1['SubnetSize'] == 24
+
+        assert self.init_swarm(default_addr_pool=['2.0.0.0/16'],
+                               force_new_cluster=True)
+        results_2 = self.client.inspect_swarm()
+        assert set(results_2['DefaultAddrPool']) == (
+            {'2.0.0.0/16'}
+        )
+        assert results_2['SubnetSize'] == 24
+
+        assert self.init_swarm(default_addr_pool=['2.0.0.0/16', '3.0.0.0/16'],
+                               subnet_size=28, force_new_cluster=True)
+        results_3 = self.client.inspect_swarm()
+        assert set(results_3['DefaultAddrPool']) == (
+            {'2.0.0.0/16', '3.0.0.0/16'}
+        )
+        assert results_3['SubnetSize'] == 28
+
     @requires_api_version('1.24')
     def test_init_already_in_cluster(self):
         assert self.init_swarm()
