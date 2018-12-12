@@ -106,8 +106,6 @@ class BaseAPIClientTest(unittest.TestCase):
         )
         self.patcher.start()
         self.client = APIClient()
-        # Force-clear authconfig to avoid tampering with the tests
-        self.client._cfg = {'Configs': {}}
 
     def tearDown(self):
         self.client.close()
