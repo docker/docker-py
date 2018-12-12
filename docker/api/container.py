@@ -403,6 +403,10 @@ class ContainerApiMixin(object):
         if isinstance(volumes, six.string_types):
             volumes = [volumes, ]
 
+        if isinstance(environment, dict):
+            environment = utils.utils.format_environment(environment)
+        environment = self._proxy_configs.inject_proxy_environment(environment)
+
         config = self.create_container_config(
             image, command, hostname, user, detach, stdin_open, tty,
             ports, environment, volumes,
