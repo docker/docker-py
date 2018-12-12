@@ -50,6 +50,7 @@ class ExecApiMixin(object):
 
         if isinstance(environment, dict):
             environment = utils.utils.format_environment(environment)
+        environment = self._proxy_configs.inject_proxy_environment(environment)
 
         data = {
             'Container': container,
