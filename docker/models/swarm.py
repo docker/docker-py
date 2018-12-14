@@ -34,7 +34,7 @@ class Swarm(Model):
     get_unlock_key.__doc__ = APIClient.get_unlock_key.__doc__
 
     def init(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
-             default_addr_pool=[], subnet_size=24,
+             default_addr_pool=None, subnet_size=None,
              force_new_cluster=False, **kwargs):
         """
         Initialize a new swarm on this Engine.
@@ -58,9 +58,9 @@ class Swarm(Model):
             default_addr_pool (list of str): Default Address Pool specifies
                 default subnet pools for global scope networks. Each pool
                 should be specified as a CIDR block, like '10.0.0.0/16'.
-                Default: []
+                Default: None
             subnet_size (int): SubnetSize specifies the subnet size of the
-                networks created from the default subnet pool. Default: 24
+                networks created from the default subnet pool. Default: None
             force_new_cluster (bool): Force creating a new Swarm, even if
                 already part of one. Default: False
             task_history_retention_limit (int): Maximum number of tasks

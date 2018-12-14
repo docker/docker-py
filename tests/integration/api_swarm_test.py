@@ -37,26 +37,31 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.39')
     def test_init_swarm_custom_addr_pool(self):
+        # test defaults
         assert self.init_swarm()
         results_1 = self.client.inspect_swarm()
-        assert results_1['DefaultAddrPool'] is None
+        assert set(results_1['DefaultAddrPool']) == {'10.0.0.0/8'}
         assert results_1['SubnetSize'] == 24
-
+        # test addr pool alone
         assert self.init_swarm(default_addr_pool=['2.0.0.0/16'],
                                force_new_cluster=True)
         results_2 = self.client.inspect_swarm()
-        assert set(results_2['DefaultAddrPool']) == (
-            {'2.0.0.0/16'}
-        )
+        assert set(results_2['DefaultAddrPool']) == {'2.0.0.0/16'}
         assert results_2['SubnetSize'] == 24
-
+        # test subnet size alone
+        assert self.init_swarm(subnet_size=26,
+                               force_new_cluster=True)
+        results_3 = self.client.inspect_swarm()
+        assert set(results_3['DefaultAddrPool']) == {'10.0.0.0/8'}
+        assert results_3['SubnetSize'] == 26
+        # test both arguments together
         assert self.init_swarm(default_addr_pool=['2.0.0.0/16', '3.0.0.0/16'],
                                subnet_size=28, force_new_cluster=True)
-        results_3 = self.client.inspect_swarm()
-        assert set(results_3['DefaultAddrPool']) == (
+        results_4 = self.client.inspect_swarm()
+        assert set(results_4['DefaultAddrPool']) == (
             {'2.0.0.0/16', '3.0.0.0/16'}
         )
-        assert results_3['SubnetSize'] == 28
+        assert results_4['SubnetSize'] == 28
 
     @requires_api_version('1.24')
     def test_init_already_in_cluster(self):
