@@ -42,7 +42,7 @@ class ConfigApiMixin(object):
             Retrieve config metadata
 
             Args:
-                id (string): Full ID of the config to remove
+                id (string): Full ID of the config to inspect
 
             Returns (dict): A dictionary of metadata
 
