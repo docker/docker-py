@@ -51,7 +51,7 @@ class DockerClient(object):
 
             The URL to the Docker host.
 
-        .. envvar:: DOCKE   R_TLS_VERIFY
+        .. envvar:: DOCKER_TLS_VERIFY
 
             Verify the host against a CA certificate.
 
