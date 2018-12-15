@@ -20,10 +20,11 @@ class ExecTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
 
+        cmd = 'sh -c "env | grep -i proxy"'
+
         # First, just make sure the environment variables from the custom
         # config are set
-        res = self.client.exec_create(
-            id, cmd='sh -c "env | grep -i proxy"')
+        res = self.client.exec_create(id, cmd=cmd, use_config_proxy=True)
         output = self.client.exec_start(res).decode('utf-8').split('\n')
         expected = [
             'ftp_proxy=a', 'https_proxy=b', 'http_proxy=c', 'no_proxy=d',
@@ -34,7 +35,7 @@ class ExecTest(BaseAPIIntegrationTest):
         # Overwrite some variables with a custom environment
         env = {'https_proxy': 'xxx', 'HTTPS_PROXY': 'XXX'}
         res = self.client.exec_create(
-            id, cmd='sh -c "env | grep -i proxy"', environment=env)
+            id, cmd=cmd, environment=env, use_config_proxy=True)
         output = self.client.exec_start(res).decode('utf-8').split('\n')
         expected = [
             'ftp_proxy=a', 'https_proxy=xxx', 'http_proxy=c', 'no_proxy=d',

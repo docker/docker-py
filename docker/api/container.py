@@ -221,7 +221,8 @@ class ContainerApiMixin(object):
                          working_dir=None, domainname=None, host_config=None,
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
-                         stop_timeout=None, runtime=None):
+                         stop_timeout=None, runtime=None,
+                         use_config_proxy=False):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -390,6 +391,10 @@ class ContainerApiMixin(object):
             runtime (str): Runtime to use with this container.
             healthcheck (dict): Specify a test to perform to check that the
                 container is healthy.
+            use_config_proxy (bool): If ``True``, and if the docker client
+                configuration file (``~/.docker/config.json`` by default)
+                contains a proxy configuration, the corresponding environment
+                variables will be set in the container being created.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -405,7 +410,9 @@ class ContainerApiMixin(object):
 
         if isinstance(environment, dict):
             environment = utils.utils.format_environment(environment)
-        environment = self._proxy_configs.inject_proxy_environment(environment)
+        if use_config_proxy:
+            environment = \
+                self._proxy_configs.inject_proxy_environment(environment)
 
         config = self.create_container_config(
             image, command, hostname, user, detach, stdin_open, tty,
