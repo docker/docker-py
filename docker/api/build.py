@@ -168,11 +168,11 @@ class BuildApiMixin(object):
         }
         params.update(container_limits)
 
-        final_buildargs = self._proxy_configs.get_environment()
+        proxy_args = self._proxy_configs.get_environment()
+        for k, v in proxy_args.items():
+            buildargs.setdefault(k, v)
         if buildargs:
-            final_buildargs.update(buildargs)
-        if final_buildargs:
-            params.update({'buildargs': json.dumps(final_buildargs)})
+            params.update({'buildargs': json.dumps(buildargs)})
 
         if shmsize:
             if utils.version_gte(self._version, '1.22'):
