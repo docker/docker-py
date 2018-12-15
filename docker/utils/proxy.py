@@ -7,7 +7,7 @@ class ProxyConfig(dict):
     '''
     @property
     def http(self):
-        return self['http']
+        return self.get('http')
 
     @http.setter
     def http(self, value):
@@ -15,7 +15,7 @@ class ProxyConfig(dict):
 
     @property
     def https(self):
-        return self['https']
+        return self.get('https')
 
     @https.setter
     def https(self, value):
@@ -23,7 +23,7 @@ class ProxyConfig(dict):
 
     @property
     def ftp(self):
-        return self['ftp']
+        return self.get('ftp')
 
     @ftp.setter
     def ftp(self, value):
@@ -31,7 +31,7 @@ class ProxyConfig(dict):
 
     @property
     def no_proxy(self):
-        return self['no_proxy']
+        return self.get('no_proxy')
 
     @no_proxy.setter
     def no_proxy(self, value):

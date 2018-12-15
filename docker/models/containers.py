@@ -144,7 +144,8 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False, environment=None, workdir=None, demux=False):
+                 socket=False, environment=None, workdir=None, demux=False,
+                 use_config_proxy=False):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -167,6 +168,10 @@ class Container(Model):
                 ``{"PASSWORD": "xxx"}``.
             workdir (str): Path to working directory for this exec session
             demux (bool): Return stdout and stderr separately
+            use_config_proxy (bool): If ``True``, and if the docker client
+                configuration file (``~/.docker/config.json`` by default)
+                contains a proxy configuration, the corresponding environment
+                variables will be set in the command's environment.
 
         Returns:
             (ExecResult): A tuple of (exit_code, output)
@@ -185,7 +190,7 @@ class Container(Model):
         resp = self.client.api.exec_create(
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
             privileged=privileged, user=user, environment=environment,
-            workdir=workdir
+            workdir=workdir, use_config_proxy=use_config_proxy,
         )
         exec_output = self.client.api.exec_start(
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket,
