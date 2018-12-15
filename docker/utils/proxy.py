@@ -1,16 +1,41 @@
 from .utils import format_environment
 
 
-class ProxyConfig():
+class ProxyConfig(dict):
     '''
     Hold the client's proxy configuration
     '''
+    @property
+    def http(self):
+        return self['http']
 
-    def __init__(self, http=None, https=None, ftp=None, no_proxy=None):
-        self.http = http
-        self.https = https
-        self.ftp = ftp
-        self.no_proxy = no_proxy
+    @http.setter
+    def http(self, value):
+        self['http'] = value
+
+    @property
+    def https(self):
+        return self['https']
+
+    @https.setter
+    def https(self, value):
+        self['https'] = value
+
+    @property
+    def ftp(self):
+        return self['ftp']
+
+    @ftp.setter
+    def ftp(self, value):
+        self['ftp'] = value
+
+    @property
+    def no_proxy(self):
+        return self['no_proxy']
+
+    @no_proxy.setter
+    def no_proxy(self, value):
+        self['no_proxy'] = value
 
     @staticmethod
     def from_dict(config):
@@ -22,10 +47,11 @@ class ProxyConfig():
             https://docs.docker.com/network/proxy/#configure-the-docker-client
         '''
         return ProxyConfig(
-            http=config.get('httpProxy', None),
-            https=config.get('httpsProxy', None),
-            ftp=config.get('ftpProxy', None),
-            no_proxy=config.get('noProxy', None))
+            http=config.get('httpProxy'),
+            https=config.get('httpsProxy'),
+            ftp=config.get('ftpProxy'),
+            no_proxy=config.get('noProxy'),
+        )
 
     def get_environment(self):
         '''
@@ -57,12 +83,6 @@ class ProxyConfig():
         # It is important to prepend our variables, because we want the
         # variables defined in "environment" to take precedence.
         return proxy_env + environment
-
-    def __bool__(self):
-        return bool(self.http or self.https or self.ftp or self.no_proxy)
-
-    def __nonzero__(self):
-        return self.__bool__()
 
     def __str__(self):
         return 'ProxyConfig(http={}, https={}, ftp={}, no_proxy={})'.format(
