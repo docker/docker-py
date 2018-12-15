@@ -72,7 +72,7 @@ class ProxyConfig(dict):
     def inject_proxy_environment(self, environment):
         '''
         Given a list of strings representing environment variables, prepend the
-        environemt variables corresponding to the proxy settings.
+        environment variables corresponding to the proxy settings.
         '''
         if not self:
             return environment
