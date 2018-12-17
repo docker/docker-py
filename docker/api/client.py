@@ -115,10 +115,13 @@ class APIClient(
         self.headers['User-Agent'] = user_agent
 
         self._general_configs = config.load_general_config()
+
+        proxy_config = self._general_configs.get('proxies', {})
         try:
-            proxies = self._general_configs['proxies']['default']
+            proxies = proxy_config[base_url]
         except KeyError:
-            proxies = {}
+            proxies = proxy_config.get('default', {})
+
         self._proxy_configs = ProxyConfig.from_dict(proxies)
 
         self._auth_configs = auth.load_config(
