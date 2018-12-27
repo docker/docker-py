@@ -714,7 +714,7 @@ class DNSConfig(dict):
 
 
 class Privileges(dict):
-    """
+    r"""
         Security options for a service's containers.
         Part of a :py:class:`ContainerSpec` definition.
 
