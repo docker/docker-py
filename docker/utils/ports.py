@@ -3,10 +3,10 @@ import re
 PORT_SPEC = re.compile(
     "^"  # Match full string
     "("  # External part
-    "((?P<host>[a-fA-F\d.:]+):)?"  # Address
-    "(?P<ext>[\d]*)(-(?P<ext_end>[\d]+))?:"  # External range
+    r"((?P<host>[a-fA-F\d.:]+):)?"  # Address
+    r"(?P<ext>[\d]*)(-(?P<ext_end>[\d]+))?:"  # External range
     ")?"
-    "(?P<int>[\d]+)(-(?P<int_end>[\d]+))?"  # Internal range
+    r"(?P<int>[\d]+)(-(?P<int_end>[\d]+))?"  # Internal range
     "(?P<proto>/(udp|tcp))?"  # Protocol
     "$"  # Match full string
 )
