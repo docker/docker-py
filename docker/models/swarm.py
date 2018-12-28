@@ -112,6 +112,7 @@ class Swarm(Model):
         init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
         self.client.api.init_swarm(**init_kwargs)
         self.reload()
+        return True
 
     def join(self, *args, **kwargs):
         return self.client.api.join_swarm(*args, **kwargs)
