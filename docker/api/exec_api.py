@@ -8,8 +8,7 @@ class ExecApiMixin(object):
     @utils.check_resource('container')
     def exec_create(self, container, cmd, stdout=True, stderr=True,
                     stdin=False, tty=False, privileged=False, user='',
-                    environment=None, workdir=None, detach_keys=None,
-                    use_config_proxy=False):
+                    environment=None, workdir=None, detach_keys=None):
         """
         Sets up an exec instance in a running container.
 
@@ -32,10 +31,6 @@ class ExecApiMixin(object):
                 or `ctrl-<value>` where `<value>` is one of:
                 `a-z`, `@`, `^`, `[`, `,` or `_`.
                 ~/.docker/config.json is used by default.
-            use_config_proxy (bool): If ``True``, and if the docker client
-                configuration file (``~/.docker/config.json`` by default)
-                contains a proxy configuration, the corresponding environment
-                variables will be set in the container being created.
 
         Returns:
             (dict): A dictionary with an exec ``Id`` key.
@@ -55,9 +50,6 @@ class ExecApiMixin(object):
 
         if isinstance(environment, dict):
             environment = utils.utils.format_environment(environment)
-        if use_config_proxy:
-            environment = \
-                self._proxy_configs.inject_proxy_environment(environment)
 
         data = {
             'Container': container,

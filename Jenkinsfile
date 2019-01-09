@@ -91,7 +91,7 @@ def runTests = { Map settings ->
             --network ${testNetwork} \\
             --volumes-from ${dindContainerName} \\
             ${testImage} \\
-            py.test -v -rxs tests/integration
+            py.test -v -rxs --cov=docker tests/
           """
         } finally {
           sh """

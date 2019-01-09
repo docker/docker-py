@@ -163,6 +163,19 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert logs[0] == b'hello\n'
         assert logs[1] == b'world\n'
 
+    def test_run_with_proxy_config(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.api._proxy_configs = docker.utils.proxy.ProxyConfig(
+            ftp='sakuya.jp:4967'
+        )
+
+        out = client.containers.run(
+            'alpine', 'sh -c "env"', use_config_proxy=True
+        )
+
+        assert b'FTP_PROXY=sakuya.jp:4967\n' in out
+        assert b'ftp_proxy=sakuya.jp:4967\n' in out
+
     def test_get(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
