@@ -79,6 +79,27 @@ class APIErrorTest(unittest.TestCase):
         err = APIError('', response=resp)
         assert err.is_client_error() is True
 
+    def test_is_error_300(self):
+        """Report no error on 300 response."""
+        resp = requests.Response()
+        resp.status_code = 300
+        err = APIError('', response=resp)
+        assert err.is_error() is False
+
+    def test_is_error_400(self):
+        """Report error on 400 response."""
+        resp = requests.Response()
+        resp.status_code = 400
+        err = APIError('', response=resp)
+        assert err.is_error() is True
+
+    def test_is_error_500(self):
+        """Report error on 500 response."""
+        resp = requests.Response()
+        resp.status_code = 500
+        err = APIError('', response=resp)
+        assert err.is_error() is True
+
     def test_create_error_from_exception(self):
             resp = requests.Response()
             resp.status_code = 500
