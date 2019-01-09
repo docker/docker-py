@@ -14,7 +14,7 @@ from docker.types.services import convert_service_ports
 
 try:
     from unittest import mock
-except:
+except:  # noqa: E722
     import mock
 
 
