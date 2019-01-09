@@ -9,37 +9,42 @@ from ..helpers import (
 
 
 class ExecTest(BaseAPIIntegrationTest):
-    def test_execute_proxy_env(self):
+    def test_execute_command_with_proxy_env(self):
         # Set a custom proxy config on the client
         self.client._proxy_configs = ProxyConfig(
-            ftp='a', https='b', http='c', no_proxy='d')
+            ftp='a', https='b', http='c', no_proxy='d'
+        )
 
         container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True)
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
+            BUSYBOX, 'cat', detach=True, stdin_open=True,
+            use_config_proxy=True,
+        )
+        self.client.start(container)
+        self.tmp_containers.append(container)
 
         cmd = 'sh -c "env | grep -i proxy"'
 
         # First, just make sure the environment variables from the custom
         # config are set
-        res = self.client.exec_create(id, cmd=cmd, use_config_proxy=True)
+
+        res = self.client.exec_create(container, cmd=cmd)
         output = self.client.exec_start(res).decode('utf-8').split('\n')
         expected = [
             'ftp_proxy=a', 'https_proxy=b', 'http_proxy=c', 'no_proxy=d',
-            'FTP_PROXY=a', 'HTTPS_PROXY=b', 'HTTP_PROXY=c', 'NO_PROXY=d']
+            'FTP_PROXY=a', 'HTTPS_PROXY=b', 'HTTP_PROXY=c', 'NO_PROXY=d'
+        ]
         for item in expected:
             assert item in output
 
         # Overwrite some variables with a custom environment
         env = {'https_proxy': 'xxx', 'HTTPS_PROXY': 'XXX'}
-        res = self.client.exec_create(
-            id, cmd=cmd, environment=env, use_config_proxy=True)
+
+        res = self.client.exec_create(container, cmd=cmd, environment=env)
         output = self.client.exec_start(res).decode('utf-8').split('\n')
         expected = [
             'ftp_proxy=a', 'https_proxy=xxx', 'http_proxy=c', 'no_proxy=d',
-            'FTP_PROXY=a', 'HTTPS_PROXY=XXX', 'HTTP_PROXY=c', 'NO_PROXY=d']
+            'FTP_PROXY=a', 'HTTPS_PROXY=XXX', 'HTTP_PROXY=c', 'NO_PROXY=d'
+        ]
         for item in expected:
             assert item in output
 

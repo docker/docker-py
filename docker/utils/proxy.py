@@ -9,33 +9,17 @@ class ProxyConfig(dict):
     def http(self):
         return self.get('http')
 
-    @http.setter
-    def http(self, value):
-        self['http'] = value
-
     @property
     def https(self):
         return self.get('https')
-
-    @https.setter
-    def https(self, value):
-        self['https'] = value
 
     @property
     def ftp(self):
         return self.get('ftp')
 
-    @ftp.setter
-    def ftp(self, value):
-        self['ftp'] = value
-
     @property
     def no_proxy(self):
         return self.get('no_proxy')
-
-    @no_proxy.setter
-    def no_proxy(self, value):
-        self['no_proxy'] = value
 
     @staticmethod
     def from_dict(config):

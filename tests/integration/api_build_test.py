@@ -16,7 +16,8 @@ from ..helpers import random_name, requires_api_version, requires_experimental
 class BuildTest(BaseAPIIntegrationTest):
     def test_build_with_proxy(self):
         self.client._proxy_configs = ProxyConfig(
-            ftp='a', http='b', https='c', no_proxy='d')
+            ftp='a', http='b', https='c', no_proxy='d'
+        )
 
         script = io.BytesIO('\n'.join([
             'FROM busybox',
@@ -29,11 +30,13 @@ class BuildTest(BaseAPIIntegrationTest):
             'RUN env | grep "NO_PROXY=d"',
             'RUN env | grep "no_proxy=d"',
         ]).encode('ascii'))
+
         self.client.build(fileobj=script, decode=True)
 
     def test_build_with_proxy_and_buildargs(self):
         self.client._proxy_configs = ProxyConfig(
-            ftp='a', http='b', https='c', no_proxy='d')
+            ftp='a', http='b', https='c', no_proxy='d'
+        )
 
         script = io.BytesIO('\n'.join([
             'FROM busybox',
@@ -46,10 +49,12 @@ class BuildTest(BaseAPIIntegrationTest):
             'RUN env | grep "NO_PROXY=d"',
             'RUN env | grep "no_proxy=d"',
         ]).encode('ascii'))
+
         self.client.build(
             fileobj=script,
             decode=True,
-            buildargs={'FTP_PROXY': 'XXX', 'ftp_proxy': 'xxx'})
+            buildargs={'FTP_PROXY': 'XXX', 'ftp_proxy': 'xxx'}
+        )
 
     def test_build_streaming(self):
         script = io.BytesIO('\n'.join([

@@ -410,9 +410,11 @@ class ContainerApiMixin(object):
 
         if isinstance(environment, dict):
             environment = utils.utils.format_environment(environment)
+
         if use_config_proxy:
-            environment = \
-                self._proxy_configs.inject_proxy_environment(environment)
+            environment = self._proxy_configs.inject_proxy_environment(
+                environment
+            )
 
         config = self.create_container_config(
             image, command, hostname, user, detach, stdin_open, tty,
