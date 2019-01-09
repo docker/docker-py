@@ -273,7 +273,7 @@ class AuthConfig(dict):
                     'Password': data['Secret'],
                 })
             return res
-        except dockerpycreds.CredentialsNotFound as e:
+        except dockerpycreds.CredentialsNotFound:
             log.debug('No entry found')
             return None
         except dockerpycreds.StoreError as e:
