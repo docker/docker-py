@@ -416,7 +416,7 @@ class ContainerTest(unittest.TestCase):
         client.api.exec_create.assert_called_with(
             FAKE_CONTAINER_ID, "echo hello world", stdout=True, stderr=True,
             stdin=False, tty=False, privileged=True, user='', environment=None,
-            workdir=None, use_config_proxy=False,
+            workdir=None,
         )
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=True, socket=False,
@@ -430,7 +430,7 @@ class ContainerTest(unittest.TestCase):
         client.api.exec_create.assert_called_with(
             FAKE_CONTAINER_ID, "docker ps", stdout=True, stderr=True,
             stdin=False, tty=False, privileged=True, user='', environment=None,
-            workdir=None, use_config_proxy=False,
+            workdir=None,
         )
         client.api.exec_start.assert_called_with(
             FAKE_EXEC_ID, detach=False, tty=False, stream=False, socket=False,
