@@ -19,7 +19,8 @@ class BuildApiMixin(object):
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
-              squash=None, extra_hosts=None, platform=None, isolation=None):
+              squash=None, extra_hosts=None, platform=None, isolation=None,
+              use_config_proxy=False):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -103,6 +104,10 @@ class BuildApiMixin(object):
             platform (str): Platform in the format ``os[/arch[/variant]]``
             isolation (str): Isolation technology used during build.
                 Default: `None`.
+            use_config_proxy (bool): If ``True``, and if the docker client
+                configuration file (``~/.docker/config.json`` by default)
+                contains a proxy configuration, the corresponding environment
+                variables will be set in the container being built.
 
         Returns:
             A generator for the build output.
@@ -168,6 +173,10 @@ class BuildApiMixin(object):
         }
         params.update(container_limits)
 
+        if use_config_proxy:
+            proxy_args = self._proxy_configs.get_environment()
+            for k, v in proxy_args.items():
+                buildargs.setdefault(k, v)
         if buildargs:
             params.update({'buildargs': json.dumps(buildargs)})
 

@@ -34,6 +34,7 @@ from ..transport import SSLAdapter, UnixAdapter
 from ..utils import utils, check_resource, update_headers, config
 from ..utils.socket import frames_iter, consume_socket_output, demux_adaptor
 from ..utils.json_stream import json_stream
+from ..utils.proxy import ProxyConfig
 try:
     from ..transport import NpipeAdapter
 except ImportError:
@@ -114,6 +115,15 @@ class APIClient(
         self.headers['User-Agent'] = user_agent
 
         self._general_configs = config.load_general_config()
+
+        proxy_config = self._general_configs.get('proxies', {})
+        try:
+            proxies = proxy_config[base_url]
+        except KeyError:
+            proxies = proxy_config.get('default', {})
+
+        self._proxy_configs = ProxyConfig.from_dict(proxies)
+
         self._auth_configs = auth.load_config(
             config_dict=self._general_configs, credstore_env=credstore_env,
         )
