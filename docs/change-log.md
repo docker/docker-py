@@ -1,6 +1,28 @@
 Change log
 ==========
 
+3.7.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/56?closed=1)
+
+### Features
+
+* Added support for multiplexed streams (for `attach` and `exec_start`). Learn
+  more at https://docker-py.readthedocs.io/en/stable/user_guides/multiplex.html
+* Added the `use_config_proxy` parameter to the following methods:
+  `APIClient.build`, `APIClient.create_container`, `DockerClient.images.build`
+  and `DockerClient.containers.run` (`False` by default). **This parameter**
+  **will become `True` by default in the 4.0.0 release.**
+* Placement preferences for Swarm services are better validated on the client
+  and documentation has been updated accordingly
+
+### Bugfixes
+
+* Fixed a bug where credential stores weren't queried for relevant registry
+  credentials with certain variations of the `config.json` file.
+* `DockerClient.swarm.init` now returns a boolean value as advertised.
+
 3.6.0
 -----
 
