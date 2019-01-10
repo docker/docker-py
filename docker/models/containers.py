@@ -144,7 +144,7 @@ class Container(Model):
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
                  privileged=False, user='', detach=False, stream=False,
-                 socket=False, environment=None, workdir=None):
+                 socket=False, environment=None, workdir=None, demux=False):
         """
         Run a command inside this container. Similar to
         ``docker exec``.
@@ -166,16 +166,17 @@ class Container(Model):
                 the following format ``["PASSWORD=xxx"]`` or
                 ``{"PASSWORD": "xxx"}``.
             workdir (str): Path to working directory for this exec session
+            demux (bool): Return stdout and stderr separately
 
         Returns:
             (ExecResult): A tuple of (exit_code, output)
                 exit_code: (int):
                     Exit code for the executed command or ``None`` if
                     either ``stream```or ``socket`` is ``True``.
-                output: (generator or str):
+                output: (generator or bytes):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
-                    A string containing response data otherwise.
+                    A bytestring containing response data otherwise.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -184,10 +185,11 @@ class Container(Model):
         resp = self.client.api.exec_create(
             self.id, cmd, stdout=stdout, stderr=stderr, stdin=stdin, tty=tty,
             privileged=privileged, user=user, environment=environment,
-            workdir=workdir
+            workdir=workdir,
         )
         exec_output = self.client.api.exec_start(
-            resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket
+            resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket,
+            demux=demux
         )
         if socket or stream:
             return ExecResult(None, exec_output)
@@ -675,6 +677,7 @@ class ContainerCollection(Collection):
                 For example:
                 ``{"Name": "on-failure", "MaximumRetryCount": 5}``
 
+            runtime (str): Runtime to use with this container.
             security_opt (:py:class:`list`): A list of string values to
                 customize labels for MLS systems, such as SELinux.
             shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
@@ -706,6 +709,10 @@ class ContainerCollection(Collection):
             tty (bool): Allocate a pseudo-TTY.
             ulimits (:py:class:`list`): Ulimits to set inside the container,
                 as a list of :py:class:`docker.types.Ulimit` instances.
+            use_config_proxy (bool): If ``True``, and if the docker client
+                configuration file (``~/.docker/config.json`` by default)
+                contains a proxy configuration, the corresponding environment
+                variables will be set in the container being built.
             user (str or int): Username or UID to run commands as inside the
                 container.
             userns_mode (str): Sets the user namespace mode for the container
@@ -730,7 +737,6 @@ class ContainerCollection(Collection):
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.
-            runtime (str): Runtime to use with this container.
 
         Returns:
             The container logs, either ``STDOUT``, ``STDERR``, or both,
@@ -945,6 +951,7 @@ RUN_CREATE_KWARGS = [
     'stdin_open',
     'stop_signal',
     'tty',
+    'use_config_proxy',
     'user',
     'volume_driver',
     'working_dir',

@@ -14,7 +14,7 @@ class TestRegressions(BaseAPIIntegrationTest):
         with pytest.raises(docker.errors.APIError) as exc:
             for line in self.client.build(fileobj=dfile, tag="a/b/c"):
                 pass
-        assert exc.value.response.status_code == 500
+        assert exc.value.is_error()
         dfile.close()
 
     def test_542_truncate_ids_client_side(self):

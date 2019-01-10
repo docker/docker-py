@@ -1,5 +1,6 @@
-from docker.utils.socket import next_frame_size
+from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
+from docker.utils.proxy import ProxyConfig
 
 from .base import BaseAPIIntegrationTest, BUSYBOX
 from ..helpers import (
@@ -8,6 +9,45 @@ from ..helpers import (
 
 
 class ExecTest(BaseAPIIntegrationTest):
+    def test_execute_command_with_proxy_env(self):
+        # Set a custom proxy config on the client
+        self.client._proxy_configs = ProxyConfig(
+            ftp='a', https='b', http='c', no_proxy='d'
+        )
+
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True,
+            use_config_proxy=True,
+        )
+        self.client.start(container)
+        self.tmp_containers.append(container)
+
+        cmd = 'sh -c "env | grep -i proxy"'
+
+        # First, just make sure the environment variables from the custom
+        # config are set
+
+        res = self.client.exec_create(container, cmd=cmd)
+        output = self.client.exec_start(res).decode('utf-8').split('\n')
+        expected = [
+            'ftp_proxy=a', 'https_proxy=b', 'http_proxy=c', 'no_proxy=d',
+            'FTP_PROXY=a', 'HTTPS_PROXY=b', 'HTTP_PROXY=c', 'NO_PROXY=d'
+        ]
+        for item in expected:
+            assert item in output
+
+        # Overwrite some variables with a custom environment
+        env = {'https_proxy': 'xxx', 'HTTPS_PROXY': 'XXX'}
+
+        res = self.client.exec_create(container, cmd=cmd, environment=env)
+        output = self.client.exec_start(res).decode('utf-8').split('\n')
+        expected = [
+            'ftp_proxy=a', 'https_proxy=xxx', 'http_proxy=c', 'no_proxy=d',
+            'FTP_PROXY=a', 'HTTPS_PROXY=XXX', 'HTTP_PROXY=c', 'NO_PROXY=d'
+        ]
+        for item in expected:
+            assert item in output
+
     def test_execute_command(self):
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
@@ -75,6 +115,75 @@ class ExecTest(BaseAPIIntegrationTest):
             res += chunk
         assert res == b'hello\nworld\n'
 
+    def test_exec_command_demux(self):
+        container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True)
+        id = container['Id']
+        self.client.start(id)
+        self.tmp_containers.append(id)
+
+        script = ' ; '.join([
+            # Write something on stdout
+            'echo hello out',
+            # Busybox's sleep does not handle sub-second times.
+            # This loops takes ~0.3 second to execute on my machine.
+            'for i in $(seq 1 50000); do echo $i>/dev/null; done',
+            # Write something on stderr
+            'echo hello err >&2'])
+        cmd = 'sh -c "{}"'.format(script)
+
+        # tty=False, stream=False, demux=False
+        res = self.client.exec_create(id, cmd)
+        exec_log = self.client.exec_start(res)
+        assert exec_log == b'hello out\nhello err\n'
+
+        # tty=False, stream=True, demux=False
+        res = self.client.exec_create(id, cmd)
+        exec_log = self.client.exec_start(res, stream=True)
+        assert next(exec_log) == b'hello out\n'
+        assert next(exec_log) == b'hello err\n'
+        with self.assertRaises(StopIteration):
+            next(exec_log)
+
+        # tty=False, stream=False, demux=True
+        res = self.client.exec_create(id, cmd)
+        exec_log = self.client.exec_start(res, demux=True)
+        assert exec_log == (b'hello out\n', b'hello err\n')
+
+        # tty=False, stream=True, demux=True
+        res = self.client.exec_create(id, cmd)
+        exec_log = self.client.exec_start(res, demux=True, stream=True)
+        assert next(exec_log) == (b'hello out\n', None)
+        assert next(exec_log) == (None, b'hello err\n')
+        with self.assertRaises(StopIteration):
+            next(exec_log)
+
+        # tty=True, stream=False, demux=False
+        res = self.client.exec_create(id, cmd, tty=True)
+        exec_log = self.client.exec_start(res)
+        assert exec_log == b'hello out\r\nhello err\r\n'
+
+        # tty=True, stream=True, demux=False
+        res = self.client.exec_create(id, cmd, tty=True)
+        exec_log = self.client.exec_start(res, stream=True)
+        assert next(exec_log) == b'hello out\r\n'
+        assert next(exec_log) == b'hello err\r\n'
+        with self.assertRaises(StopIteration):
+            next(exec_log)
+
+        # tty=True, stream=False, demux=True
+        res = self.client.exec_create(id, cmd, tty=True)
+        exec_log = self.client.exec_start(res, demux=True)
+        assert exec_log == (b'hello out\r\nhello err\r\n', None)
+
+        # tty=True, stream=True, demux=True
+        res = self.client.exec_create(id, cmd, tty=True)
+        exec_log = self.client.exec_start(res, demux=True, stream=True)
+        assert next(exec_log) == (b'hello out\r\n', None)
+        assert next(exec_log) == (b'hello err\r\n', None)
+        with self.assertRaises(StopIteration):
+            next(exec_log)
+
     def test_exec_start_socket(self):
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
@@ -91,7 +200,8 @@ class ExecTest(BaseAPIIntegrationTest):
         socket = self.client.exec_start(exec_id, socket=True)
         self.addCleanup(socket.close)
 
-        next_size = next_frame_size(socket)
+        (stream, next_size) = next_frame_header(socket)
+        assert stream == 1  # stdout (0 = stdin, 1 = stdout, 2 = stderr)
         assert next_size == len(line)
         data = read_exactly(socket, next_size)
         assert data.decode('utf-8') == line

@@ -51,8 +51,7 @@ class LogConfig(DictType):
         ...    host_config=hc)
         >>> client.inspect_container(container)['HostConfig']['LogConfig']
         {'Type': 'json-file', 'Config': {'labels': 'production_status,geo', 'max-size': '1g'}}
-
-    """ # flake8: noqa
+    """  # noqa: E501
     types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
@@ -320,10 +319,10 @@ class HostConfig(dict):
             if not isinstance(ulimits, list):
                 raise host_config_type_error('ulimits', ulimits, 'list')
             self['Ulimits'] = []
-            for l in ulimits:
-                if not isinstance(l, Ulimit):
-                    l = Ulimit(**l)
-                self['Ulimits'].append(l)
+            for lmt in ulimits:
+                if not isinstance(lmt, Ulimit):
+                    lmt = Ulimit(**lmt)
+                self['Ulimits'].append(lmt)
 
         if log_config is not None:
             if not isinstance(log_config, LogConfig):

@@ -153,10 +153,12 @@ class ServiceCollection(Collection):
             image (str): The image name to use for the containers.
             command (list of str or str): Command to run.
             args (list of str): Arguments to the command.
-            constraints (list of str): Placement constraints.
-            preferences (list of str): Placement preferences.
-            platforms (list of tuple): A list of platforms constraints
-                expressed as ``(arch, os)`` tuples
+            constraints (list of str): :py:class:`~docker.types.Placement`
+                constraints.
+            preferences (list of tuple): :py:class:`~docker.types.Placement`
+                preferences.
+            platforms (list of tuple): A list of platform constraints
+                expressed as ``(arch, os)`` tuples.
             container_labels (dict): Labels to apply to the container.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.

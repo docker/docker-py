@@ -45,10 +45,13 @@ def getDockerVersions = { ->
 }
 
 def getAPIVersion = { engineVersion ->
-  def versionMap = ['17.06': '1.30', '17.12': '1.35', '18.02': '1.36', '18.03': '1.37']
+  def versionMap = [
+    '17.06': '1.30', '17.12': '1.35', '18.02': '1.36', '18.03': '1.37',
+    '18.06': '1.38', '18.09': '1.39'
+  ]
   def result = versionMap[engineVersion.substring(0, 5)]
   if (!result) {
-    return '1.37'
+    return '1.39'
   }
   return result
 }
@@ -88,7 +91,7 @@ def runTests = { Map settings ->
             --network ${testNetwork} \\
             --volumes-from ${dindContainerName} \\
             ${testImage} \\
-            py.test -v -rxs tests/integration
+            py.test -v -rxs --cov=docker tests/
           """
         } finally {
           sh """

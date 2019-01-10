@@ -258,6 +258,10 @@ class ImageCollection(Collection):
             platform (str): Platform in the format ``os[/arch[/variant]]``.
             isolation (str): Isolation technology used during build.
                 Default: `None`.
+            use_config_proxy (bool): If ``True``, and if the docker client
+                configuration file (``~/.docker/config.json`` by default)
+                contains a proxy configuration, the corresponding environment
+                variables will be set in the container being built.
 
         Returns:
             (tuple): The first item is the :py:class:`Image` object for the

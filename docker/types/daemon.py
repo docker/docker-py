@@ -15,7 +15,7 @@ class CancellableStream(object):
     Example:
         >>> events = client.events()
         >>> for event in events:
-        ...   print event
+        ...   print(event)
         >>> # and cancel from another thread
         >>> events.close()
     """

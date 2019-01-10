@@ -12,7 +12,7 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 requirements = [
     'six >= 1.4.0',
     'websocket-client >= 0.32.0',
-    'docker-pycreds >= 0.3.0',
+    'docker-pycreds >= 0.4.0',
     'requests >= 2.14.2, != 2.18.0',
 ]
 
@@ -55,24 +55,27 @@ with open('./test-requirements.txt') as test_reqs_txt:
 
 
 long_description = ''
-try:
-    with codecs.open('./README.rst', encoding='utf-8') as readme_rst:
-        long_description = readme_rst.read()
-except IOError:
-    # README.rst is only generated on release. Its absence should not prevent
-    # setup.py from working properly.
-    pass
+with codecs.open('./README.md', encoding='utf-8') as readme_md:
+    long_description = readme_md.read()
 
 setup(
     name="docker",
     version=version,
     description="A Python library for the Docker Engine API.",
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/docker/docker-py',
+    project_urls={
+        'Documentation': 'https://docker-py.readthedocs.io',
+        'Changelog': 'https://docker-py.readthedocs.io/en/stable/change-log.html',  # noqa: E501
+        'Source': 'https://github.com/docker/docker-py',
+        'Tracker': 'https://github.com/docker/docker-py/issues',
+    },
     packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*',
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -89,6 +92,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Topic :: Software Development',
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],

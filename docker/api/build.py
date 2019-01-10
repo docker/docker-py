@@ -19,7 +19,8 @@ class BuildApiMixin(object):
               forcerm=False, dockerfile=None, container_limits=None,
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
-              squash=None, extra_hosts=None, platform=None, isolation=None):
+              squash=None, extra_hosts=None, platform=None, isolation=None,
+              use_config_proxy=False):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -103,6 +104,10 @@ class BuildApiMixin(object):
             platform (str): Platform in the format ``os[/arch[/variant]]``
             isolation (str): Isolation technology used during build.
                 Default: `None`.
+            use_config_proxy (bool): If ``True``, and if the docker client
+                configuration file (``~/.docker/config.json`` by default)
+                contains a proxy configuration, the corresponding environment
+                variables will be set in the container being built.
 
         Returns:
             A generator for the build output.
@@ -168,6 +173,10 @@ class BuildApiMixin(object):
         }
         params.update(container_limits)
 
+        if use_config_proxy:
+            proxy_args = self._proxy_configs.get_environment()
+            for k, v in proxy_args.items():
+                buildargs.setdefault(k, v)
         if buildargs:
             params.update({'buildargs': json.dumps(buildargs)})
 
@@ -286,38 +295,20 @@ class BuildApiMixin(object):
 
         # If we don't have any auth data so far, try reloading the config
         # file one more time in case anything showed up in there.
-        if not self._auth_configs:
+        if not self._auth_configs or self._auth_configs.is_empty:
             log.debug("No auth config in memory - loading from filesystem")
-            self._auth_configs = auth.load_config()
+            self._auth_configs = auth.load_config(
+                credstore_env=self.credstore_env
+            )
 
         # Send the full auth configuration (if any exists), since the build
         # could use any (or all) of the registries.
         if self._auth_configs:
-            auth_cfgs = self._auth_configs
-            auth_data = {}
-            if auth_cfgs.get('credsStore'):
-                # Using a credentials store, we need to retrieve the
-                # credentials for each registry listed in the config.json file
-                # Matches CLI behavior: https://github.com/docker/docker/blob/
-                # 67b85f9d26f1b0b2b240f2d794748fac0f45243c/cliconfig/
-                # credentials/native_store.go#L68-L83
-                for registry in auth_cfgs.get('auths', {}).keys():
-                    auth_data[registry] = auth.resolve_authconfig(
-                        auth_cfgs, registry,
-                        credstore_env=self.credstore_env,
-                    )
-            else:
-                for registry in auth_cfgs.get('credHelpers', {}).keys():
-                    auth_data[registry] = auth.resolve_authconfig(
-                        auth_cfgs, registry,
-                        credstore_env=self.credstore_env
-                    )
-                for registry, creds in auth_cfgs.get('auths', {}).items():
-                    if registry not in auth_data:
-                        auth_data[registry] = creds
-                # See https://github.com/docker/docker-py/issues/1683
-                if auth.INDEX_NAME in auth_data:
-                    auth_data[auth.INDEX_URL] = auth_data[auth.INDEX_NAME]
+            auth_data = self._auth_configs.get_all_credentials()
+
+            # See https://github.com/docker/docker-py/issues/1683
+            if auth.INDEX_URL not in auth_data and auth.INDEX_URL in auth_data:
+                auth_data[auth.INDEX_URL] = auth_data.get(auth.INDEX_NAME, {})
 
             log.debug(
                 'Sending auth config ({0})'.format(
@@ -325,9 +316,10 @@ class BuildApiMixin(object):
                 )
             )
 
-            headers['X-Registry-Config'] = auth.encode_header(
-                auth_data
-            )
+            if auth_data:
+                headers['X-Registry-Config'] = auth.encode_header(
+                    auth_data
+                )
         else:
             log.debug('No auth config found')
 
