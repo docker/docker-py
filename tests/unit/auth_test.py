@@ -9,8 +9,7 @@ import shutil
 import tempfile
 import unittest
 
-from docker import auth, errors
-import dockerpycreds
+from docker import auth, credentials, errors
 import pytest
 
 try:
@@ -661,7 +660,7 @@ class CredstoreTest(unittest.TestCase):
         }
 
 
-class InMemoryStore(dockerpycreds.Store):
+class InMemoryStore(credentials.Store):
     def __init__(self, *args, **kwargs):
         self.__store = {}
 
@@ -669,7 +668,7 @@ class InMemoryStore(dockerpycreds.Store):
         try:
             return self.__store[server]
         except KeyError:
-            raise dockerpycreds.errors.CredentialsNotFound()
+            raise credentials.errors.CredentialsNotFound()
 
     def store(self, server, username, secret):
         self.__store[server] = {

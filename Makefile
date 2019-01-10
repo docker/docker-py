@@ -8,11 +8,11 @@ clean:
 
 .PHONY: build
 build:
-	docker build -t docker-sdk-python .
+	docker build -t docker-sdk-python -f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .
 
 .PHONY: build-py3
 build-py3:
-	docker build -t docker-sdk-python3 -f Dockerfile-py3 .
+	docker build -t docker-sdk-python3 -f tests/Dockerfile .
 
 .PHONY: build-docs
 build-docs:
@@ -39,7 +39,7 @@ integration-test: build
 
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
-	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
+	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test -v tests/integration/${file}
 
 TEST_API_VERSION ?= 1.35
 TEST_ENGINE_VERSION ?= 17.12.0-ce

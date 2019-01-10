@@ -2,9 +2,9 @@ import base64
 import json
 import logging
 
-import dockerpycreds
 import six
 
+from . import credentials
 from . import errors
 from .utils import config
 
@@ -273,17 +273,17 @@ class AuthConfig(dict):
                     'Password': data['Secret'],
                 })
             return res
-        except dockerpycreds.CredentialsNotFound:
+        except credentials.CredentialsNotFound:
             log.debug('No entry found')
             return None
-        except dockerpycreds.StoreError as e:
+        except credentials.StoreError as e:
             raise errors.DockerException(
                 'Credentials store error: {0}'.format(repr(e))
             )
 
     def _get_store_instance(self, name):
         if name not in self._stores:
-            self._stores[name] = dockerpycreds.Store(
+            self._stores[name] = credentials.Store(
                 name, environment=self._credstore_env
             )
         return self._stores[name]
