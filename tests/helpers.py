@@ -77,14 +77,6 @@ def requires_experimental(until=None):
     return req_exp
 
 
-def wait_on_condition(condition, delay=0.1, timeout=40):
-    start_time = time.time()
-    while not condition():
-        if time.time() - start_time > timeout:
-            raise AssertionError("Timeout: %s" % condition)
-        time.sleep(delay)
-
-
 def random_name():
     return u'dockerpytest_{0:x}'.format(random.getrandbits(64))
 
@@ -102,6 +94,16 @@ def force_leave_swarm(client):
                 continue
             else:
                 return
+
+
+def wait_until_truthy(f, args=[], attempts=20, interval=0.5):
+    """Runs `f` with `args` until it returns a truthy value, running it up to
+    `attempts` times and sleeping `interval` seconds between attempts."""
+    for _ in range(attempts):
+        result = f(*args)
+        if result:
+            return result
+        time.sleep(interval)
 
 
 def swarm_listen_addr():

@@ -35,11 +35,11 @@ unit-test-py3: build-py3
 
 .PHONY: integration-test
 integration-test: build
-	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python py.test -v tests/integration/${file}
+	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python py.test -v tests/integration/${file} ${pytest_options}
 
 .PHONY: integration-test-py3
 integration-test-py3: build-py3
-	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file}
+	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test tests/integration/${file} ${pytest_options}
 
 TEST_API_VERSION ?= 1.35
 TEST_ENGINE_VERSION ?= 17.12.0-ce
