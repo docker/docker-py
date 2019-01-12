@@ -315,22 +315,26 @@ class ImageCollection(Collection):
         """
         return self.prepare_model(self.client.api.inspect_image(name))
 
-    def get_registry_data(self, name):
+    def get_registry_data(self, name, auth_config=None):
         """
         Gets the registry data for an image.
 
         Args:
             name (str): The name of the image.
+            auth_config (dict): Override the credentials that are found in the
+                config for this request.  ``auth_config`` should contain the
+                ``username`` and ``password`` keys to be valid.
 
         Returns:
             (:py:class:`RegistryData`): The data object.
+
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
         return RegistryData(
             image_name=name,
-            attrs=self.client.api.inspect_distribution(name),
+            attrs=self.client.api.inspect_distribution(name, auth_config),
             client=self.client,
             collection=self,
         )
@@ -404,10 +408,9 @@ class ImageCollection(Collection):
         Args:
             repository (str): The repository to pull
             tag (str): The tag to pull
-            auth_config (dict): Override the credentials that
-                :py:meth:`~docker.client.DockerClient.login` has set for
-                this request. ``auth_config`` should contain the ``username``
-                and ``password`` keys to be valid.
+            auth_config (dict): Override the credentials that are found in the
+                config for this request.  ``auth_config`` should contain the
+                ``username`` and ``password`` keys to be valid.
             platform (str): Platform in the format ``os[/arch[/variant]]``
 
         Returns:
