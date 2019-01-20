@@ -5,7 +5,6 @@ from .. import utils
 
 
 class NetworkApiMixin(object):
-    @minimum_version('1.21')
     def networks(self, names=None, ids=None, filters=None):
         """
         List networks. Similar to the ``docker networks ls`` command.
@@ -38,7 +37,6 @@ class NetworkApiMixin(object):
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
-    @minimum_version('1.21')
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False, labels=None,
                        enable_ipv6=False, attachable=None, scope=None,
@@ -61,6 +59,8 @@ class NetworkApiMixin(object):
             attachable (bool): If enabled, and the network is in the global
                 scope,  non-service containers on worker nodes will be able to
                 connect to the network.
+            scope (str): Specify the network's scope (``local``, ``global`` or
+                ``swarm``)
             ingress (bool): If set, create an ingress network which provides
                 the routing-mesh in swarm mode.
 
@@ -140,6 +140,13 @@ class NetworkApiMixin(object):
 
             data['Ingress'] = ingress
 
+        if scope is not None:
+            if version_lt(self._version, '1.30'):
+                raise InvalidVersion(
+                    'scope is not supported in API version < 1.30'
+                )
+            data['Scope'] = scope
+
         url = self._url("/networks/create")
         res = self._post_json(url, data=data)
         return self._result(res, json=True)
@@ -166,7 +173,6 @@ class NetworkApiMixin(object):
         url = self._url('/networks/prune')
         return self._result(self._post(url, params=params), True)
 
-    @minimum_version('1.21')
     @check_resource('net_id')
     def remove_network(self, net_id):
         """
@@ -179,9 +185,8 @@ class NetworkApiMixin(object):
         res = self._delete(url)
         self._raise_for_status(res)
 
-    @minimum_version('1.21')
     @check_resource('net_id')
-    def inspect_network(self, net_id, verbose=None):
+    def inspect_network(self, net_id, verbose=None, scope=None):
         """
         Get detailed information about a network.
 
@@ -189,19 +194,24 @@ class NetworkApiMixin(object):
             net_id (str): ID of network
             verbose (bool): Show the service details across the cluster in
                 swarm mode.
+            scope (str): Filter the network by scope (``swarm``, ``global``
+                or ``local``).
         """
         params = {}
         if verbose is not None:
             if version_lt(self._version, '1.28'):
                 raise InvalidVersion('verbose was introduced in API 1.28')
             params['verbose'] = verbose
+        if scope is not None:
+            if version_lt(self._version, '1.31'):
+                raise InvalidVersion('scope was introduced in API 1.31')
+            params['scope'] = scope
 
         url = self._url("/networks/{0}", net_id)
         res = self._get(url, params=params)
         return self._result(res, json=True)
 
     @check_resource('container')
-    @minimum_version('1.21')
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
@@ -223,7 +233,7 @@ class NetworkApiMixin(object):
             ipv6_address (str): The IP address of this container on the
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local
-            (IPv4/IPv6) addresses.
+                (IPv4/IPv6) addresses.
             mac_address (str): The MAC address of this container on the
                 network. Defaults to ``None``.
         """
@@ -240,7 +250,6 @@ class NetworkApiMixin(object):
         self._raise_for_status(res)
 
     @check_resource('container')
-    @minimum_version('1.21')
     def disconnect_container_from_network(self, container, net_id,
                                           force=False):
         """

@@ -80,6 +80,7 @@ That's just a taste of what you can do with the Docker SDK for Python. For more,
   :maxdepth: 2
 
   client
+  configs
   containers
   images
   networks
@@ -91,4 +92,5 @@ That's just a taste of what you can do with the Docker SDK for Python. For more,
   volumes
   api
   tls
+  user_guides/index
   change-log

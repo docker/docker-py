@@ -3,7 +3,6 @@ from .. import utils
 
 
 class VolumeApiMixin(object):
-    @utils.minimum_version('1.21')
     def volumes(self, filters=None):
         """
         List volumes currently registered by the docker daemon. Similar to the
@@ -37,7 +36,6 @@ class VolumeApiMixin(object):
         url = self._url('/volumes')
         return self._result(self._get(url, params=params), True)
 
-    @utils.minimum_version('1.21')
     def create_volume(self, name=None, driver=None, driver_opts=None,
                       labels=None):
         """
@@ -90,7 +88,6 @@ class VolumeApiMixin(object):
 
         return self._result(self._post_json(url, data=data), True)
 
-    @utils.minimum_version('1.21')
     def inspect_volume(self, name):
         """
         Retrieve volume info by name.
@@ -138,7 +135,6 @@ class VolumeApiMixin(object):
         url = self._url('/volumes/prune')
         return self._result(self._post(url, params=params), True)
 
-    @utils.minimum_version('1.21')
     def remove_volume(self, name, force=False):
         """
         Remove a volume. Similar to the ``docker volume rm`` command.

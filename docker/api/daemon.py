@@ -1,9 +1,7 @@
 import os
-import warnings
 from datetime import datetime
 
-from .. import auth, utils
-from ..constants import INSECURE_REGISTRY_DEPRECATION_WARNING
+from .. import auth, types, utils
 
 
 class DaemonApiMixin(object):
@@ -36,8 +34,7 @@ class DaemonApiMixin(object):
                 the fly. False by default.
 
         Returns:
-            (generator): A blocking generator you can iterate over to retrieve
-                events as they happen.
+            A :py:class:`docker.types.daemon.CancellableStream` generator
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -45,13 +42,21 @@ class DaemonApiMixin(object):
 
         Example:
 
-            >>> for event in client.events()
-            ...   print event
+            >>> for event in client.events(decode=True)
+            ...   print(event)
             {u'from': u'image/with:tag',
              u'id': u'container-id',
              u'status': u'start',
              u'time': 1423339459}
             ...
+
+            or
+
+            >>> events = client.events()
+            >>> for event in events:
+            ...   print(event)
+            >>> # and cancel from another thread
+            >>> events.close()
         """
 
         if isinstance(since, datetime):
@@ -70,10 +75,10 @@ class DaemonApiMixin(object):
         }
         url = self._url('/events')
 
-        return self._stream_helper(
-            self._get(url, params=params, stream=True, timeout=None),
-            decode=decode
-        )
+        response = self._get(url, params=params, stream=True, timeout=None)
+        stream = self._stream_helper(response, decode=decode)
+
+        return types.CancellableStream(stream, response)
 
     def info(self):
         """
@@ -90,7 +95,7 @@ class DaemonApiMixin(object):
         return self._result(self._get(self._url("/info")), True)
 
     def login(self, username, password=None, email=None, registry=None,
-              reauth=False, insecure_registry=False, dockercfg_path=None):
+              reauth=False, dockercfg_path=None):
         """
         Authenticate with a registry. Similar to the ``docker login`` command.
 
@@ -113,22 +118,21 @@ class DaemonApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if insecure_registry:
-            warnings.warn(
-                INSECURE_REGISTRY_DEPRECATION_WARNING.format('login()'),
-                DeprecationWarning
-            )
 
         # If we don't have any auth data so far, try reloading the config file
         # one more time in case anything showed up in there.
         # If dockercfg_path is passed check to see if the config file exists,
         # if so load that config.
         if dockercfg_path and os.path.exists(dockercfg_path):
-            self._auth_configs = auth.load_config(dockercfg_path)
-        elif not self._auth_configs:
-            self._auth_configs = auth.load_config()
+            self._auth_configs = auth.load_config(
+                dockercfg_path, credstore_env=self.credstore_env
+            )
+        elif not self._auth_configs or self._auth_configs.is_empty:
+            self._auth_configs = auth.load_config(
+                credstore_env=self.credstore_env
+            )
 
-        authcfg = auth.resolve_authconfig(self._auth_configs, registry)
+        authcfg = self._auth_configs.resolve_authconfig(registry)
         # If we found an existing auth config for this registry and username
         # combination, we can return it immediately unless reauth is requested.
         if authcfg and authcfg.get('username', None) == username \
@@ -144,7 +148,7 @@ class DaemonApiMixin(object):
 
         response = self._post_json(self._url('/auth'), data=req_data)
         if response.status_code == 200:
-            self._auth_configs[registry or auth.INDEX_NAME] = req_data
+            self._auth_configs.add_auth(registry or auth.INDEX_NAME, req_data)
         return self._result(response, json=True)
 
     def ping(self):

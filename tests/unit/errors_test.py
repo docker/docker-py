@@ -3,7 +3,8 @@ import unittest
 import requests
 
 from docker.errors import (APIError, ContainerError, DockerException,
-                           create_unexpected_kwargs_error)
+                           create_unexpected_kwargs_error,
+                           create_api_error_from_http_exception)
 from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID
 from .fake_api_client import make_fake_client
 
@@ -77,6 +78,40 @@ class APIErrorTest(unittest.TestCase):
         resp.status_code = 400
         err = APIError('', response=resp)
         assert err.is_client_error() is True
+
+    def test_is_error_300(self):
+        """Report no error on 300 response."""
+        resp = requests.Response()
+        resp.status_code = 300
+        err = APIError('', response=resp)
+        assert err.is_error() is False
+
+    def test_is_error_400(self):
+        """Report error on 400 response."""
+        resp = requests.Response()
+        resp.status_code = 400
+        err = APIError('', response=resp)
+        assert err.is_error() is True
+
+    def test_is_error_500(self):
+        """Report error on 500 response."""
+        resp = requests.Response()
+        resp.status_code = 500
+        err = APIError('', response=resp)
+        assert err.is_error() is True
+
+    def test_create_error_from_exception(self):
+            resp = requests.Response()
+            resp.status_code = 500
+            err = APIError('')
+            try:
+                resp.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                try:
+                    create_api_error_from_http_exception(e)
+                except APIError as e:
+                    err = e
+            assert err.is_server_error() is True
 
 
 class ContainerErrorTest(unittest.TestCase):

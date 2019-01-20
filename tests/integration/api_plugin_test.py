@@ -3,7 +3,7 @@ import os
 import docker
 import pytest
 
-from .base import BaseAPIIntegrationTest, TEST_API_VERSION
+from .base import BaseAPIIntegrationTest
 from ..helpers import requires_api_version
 
 SSHFS = 'vieux/sshfs:latest'
@@ -13,26 +13,26 @@ SSHFS = 'vieux/sshfs:latest'
 class PluginTest(BaseAPIIntegrationTest):
     @classmethod
     def teardown_class(cls):
-        c = docker.APIClient(
-            version=TEST_API_VERSION, timeout=60,
-            **docker.utils.kwargs_from_env()
-        )
+        client = cls.get_client_instance()
         try:
-            c.remove_plugin(SSHFS, force=True)
+            client.remove_plugin(SSHFS, force=True)
         except docker.errors.APIError:
             pass
 
     def teardown_method(self, method):
+        client = self.get_client_instance()
         try:
-            self.client.disable_plugin(SSHFS)
+            client.disable_plugin(SSHFS)
         except docker.errors.APIError:
             pass
 
         for p in self.tmp_plugins:
             try:
-                self.client.remove_plugin(p, force=True)
+                client.remove_plugin(p, force=True)
             except docker.errors.APIError:
                 pass
+
+        client.close()
 
     def ensure_plugin_installed(self, plugin_name):
         try:
@@ -135,7 +135,7 @@ class PluginTest(BaseAPIIntegrationTest):
 
     def test_create_plugin(self):
         plugin_data_dir = os.path.join(
-            os.path.dirname(__file__), 'testdata/dummy-plugin'
+            os.path.dirname(__file__), os.path.join('testdata', 'dummy-plugin')
         )
         assert self.client.create_plugin(
             'docker-sdk-py/dummy', plugin_data_dir

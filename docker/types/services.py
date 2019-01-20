@@ -2,7 +2,10 @@ import six
 
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
-from ..utils import check_resource, format_environment, split_command
+from ..utils import (
+    check_resource, format_environment, format_extra_hosts, parse_bytes,
+    split_command, convert_service_networks,
+)
 
 
 class TaskTemplate(dict):
@@ -23,11 +26,14 @@ class TaskTemplate(dict):
         placement (Placement): Placement instructions for the scheduler.
             If a list is passed instead, it is assumed to be a list of
             constraints as part of a :py:class:`Placement` object.
+        networks (:py:class:`list`): List of network names or IDs to attach
+            the containers to.
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
     def __init__(self, container_spec, resources=None, restart_policy=None,
-                 placement=None, log_driver=None, force_update=None):
+                 placement=None, log_driver=None, networks=None,
+                 force_update=None):
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -39,6 +45,8 @@ class TaskTemplate(dict):
             self['Placement'] = placement
         if log_driver:
             self['LogDriver'] = log_driver
+        if networks:
+            self['Networks'] = convert_service_networks(networks)
 
         if force_update is not None:
             if not isinstance(force_update, int):
@@ -74,7 +82,7 @@ class ContainerSpec(dict):
         args (:py:class:`list`): Arguments to the command.
         hostname (string): The hostname to set on the container.
         env (dict): Environment variables.
-        dir (string): The working directory for commands to run in.
+        workdir (string): The working directory for commands to run in.
         user (string): The user inside the container.
         labels (dict): A map of labels to associate with the service.
         mounts (:py:class:`list`): A list of specifications for mounts to be
@@ -82,13 +90,33 @@ class ContainerSpec(dict):
             :py:class:`~docker.types.Mount` class for details.
         stop_grace_period (int): Amount of time to wait for the container to
             terminate before forcefully killing it.
-        secrets (list of py:class:`SecretReference`): List of secrets to be
+        secrets (:py:class:`list`): List of :py:class:`SecretReference` to be
             made available inside the containers.
         tty (boolean): Whether a pseudo-TTY should be allocated.
+        groups (:py:class:`list`): A list of additional groups that the
+            container process will run as.
+        open_stdin (boolean): Open ``stdin``
+        read_only (boolean): Mount the container's root filesystem as read
+            only.
+        stop_signal (string): Set signal to stop the service's containers
+        healthcheck (Healthcheck): Healthcheck
+            configuration for this service.
+        hosts (:py:class:`dict`): A set of host to IP mappings to add to
+            the container's ``hosts`` file.
+        dns_config (DNSConfig): Specification for DNS
+            related configurations in resolver configuration file.
+        configs (:py:class:`list`): List of :py:class:`ConfigReference` that
+            will be exposed to the service.
+        privileges (Privileges): Security options for the service's containers.
+        isolation (string): Isolation technology used by the service's
+            containers. Only used for Windows containers.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
-                 stop_grace_period=None, secrets=None, tty=None):
+                 stop_grace_period=None, secrets=None, tty=None, groups=None,
+                 open_stdin=None, read_only=None, stop_signal=None,
+                 healthcheck=None, hosts=None, dns_config=None, configs=None,
+                 privileges=None, isolation=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -107,8 +135,17 @@ class ContainerSpec(dict):
             self['Dir'] = workdir
         if user is not None:
             self['User'] = user
+        if groups is not None:
+            self['Groups'] = groups
+        if stop_signal is not None:
+            self['StopSignal'] = stop_signal
+        if stop_grace_period is not None:
+            self['StopGracePeriod'] = stop_grace_period
         if labels is not None:
             self['Labels'] = labels
+        if hosts is not None:
+            self['Hosts'] = format_extra_hosts(hosts, task=True)
+
         if mounts is not None:
             parsed_mounts = []
             for mount in mounts:
@@ -118,16 +155,33 @@ class ContainerSpec(dict):
                     # If mount already parsed
                     parsed_mounts.append(mount)
             self['Mounts'] = parsed_mounts
-        if stop_grace_period is not None:
-            self['StopGracePeriod'] = stop_grace_period
 
         if secrets is not None:
             if not isinstance(secrets, list):
                 raise TypeError('secrets must be a list')
             self['Secrets'] = secrets
 
+        if configs is not None:
+            if not isinstance(configs, list):
+                raise TypeError('configs must be a list')
+            self['Configs'] = configs
+
+        if dns_config is not None:
+            self['DNSConfig'] = dns_config
+        if privileges is not None:
+            self['Privileges'] = privileges
+        if healthcheck is not None:
+            self['Healthcheck'] = healthcheck
+
         if tty is not None:
             self['TTY'] = tty
+        if open_stdin is not None:
+            self['OpenStdin'] = open_stdin
+        if read_only is not None:
+            self['ReadOnly'] = read_only
+
+        if isolation is not None:
+            self['Isolation'] = isolation
 
 
 class Mount(dict):
@@ -140,9 +194,11 @@ class Mount(dict):
 
         target (string): Container path.
         source (string): Mount source (e.g. a volume name or a host path).
-        type (string): The mount type (``bind`` or ``volume``).
-          Default: ``volume``.
+        type (string): The mount type (``bind`` / ``volume`` / ``tmpfs`` /
+            ``npipe``). Default: ``volume``.
         read_only (bool): Whether the mount should be read-only.
+        consistency (string): The consistency requirement for the mount. One of
+        ``default```, ``consistent``, ``cached``, ``delegated``.
         propagation (string): A propagation mode with the value ``[r]private``,
           ``[r]shared``, or ``[r]slave``. Only valid for the ``bind`` type.
         no_copy (bool): False if the volume should be populated with the data
@@ -152,30 +208,36 @@ class Mount(dict):
           for the ``volume`` type.
         driver_config (DriverConfig): Volume driver configuration. Only valid
           for the ``volume`` type.
+        tmpfs_size (int or string): The size for the tmpfs mount in bytes.
+        tmpfs_mode (int): The permission mode for the tmpfs mount.
     """
     def __init__(self, target, source, type='volume', read_only=False,
-                 propagation=None, no_copy=False, labels=None,
-                 driver_config=None):
+                 consistency=None, propagation=None, no_copy=False,
+                 labels=None, driver_config=None, tmpfs_size=None,
+                 tmpfs_mode=None):
         self['Target'] = target
         self['Source'] = source
-        if type not in ('bind', 'volume'):
+        if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
             raise errors.InvalidArgument(
-                'Only acceptable mount types are `bind` and `volume`.'
+                'Unsupported mount type: "{}"'.format(type)
             )
         self['Type'] = type
         self['ReadOnly'] = read_only
+
+        if consistency:
+            self['Consistency'] = consistency
 
         if type == 'bind':
             if propagation is not None:
                 self['BindOptions'] = {
                     'Propagation': propagation
                 }
-            if any([labels, driver_config, no_copy]):
+            if any([labels, driver_config, no_copy, tmpfs_size, tmpfs_mode]):
                 raise errors.InvalidArgument(
-                    'Mount type is binding but volume options have been '
-                    'provided.'
+                    'Incompatible options have been provided for the bind '
+                    'type mount.'
                 )
-        else:
+        elif type == 'volume':
             volume_opts = {}
             if no_copy:
                 volume_opts['NoCopy'] = True
@@ -185,10 +247,27 @@ class Mount(dict):
                 volume_opts['DriverConfig'] = driver_config
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
-            if propagation:
+            if any([propagation, tmpfs_size, tmpfs_mode]):
                 raise errors.InvalidArgument(
-                    'Mount type is volume but `propagation` argument has been '
-                    'provided.'
+                    'Incompatible options have been provided for the volume '
+                    'type mount.'
+                )
+        elif type == 'tmpfs':
+            tmpfs_opts = {}
+            if tmpfs_mode:
+                if not isinstance(tmpfs_mode, six.integer_types):
+                    raise errors.InvalidArgument(
+                        'tmpfs_mode must be an integer'
+                    )
+                tmpfs_opts['Mode'] = tmpfs_mode
+            if tmpfs_size:
+                tmpfs_opts['SizeBytes'] = parse_bytes(tmpfs_size)
+            if tmpfs_opts:
+                self['TmpfsOptions'] = tmpfs_opts
+            if any([propagation, labels, driver_config, no_copy]):
+                raise errors.InvalidArgument(
+                    'Incompatible options have been provided for the tmpfs '
+                    'type mount.'
                 )
 
     @classmethod
@@ -227,9 +306,13 @@ class Resources(dict):
         mem_limit (int): Memory limit in Bytes.
         cpu_reservation (int): CPU reservation in units of 10^9 CPU shares.
         mem_reservation (int): Memory reservation in Bytes.
+        generic_resources (dict or :py:class:`list`): Node level generic
+          resources, for example a GPU, using the following format:
+          ``{ resource_name: resource_value }``. Alternatively, a list of
+          of resource specifications as defined by the Engine API.
     """
     def __init__(self, cpu_limit=None, mem_limit=None, cpu_reservation=None,
-                 mem_reservation=None):
+                 mem_reservation=None, generic_resources=None):
         limits = {}
         reservation = {}
         if cpu_limit is not None:
@@ -240,11 +323,40 @@ class Resources(dict):
             reservation['NanoCPUs'] = cpu_reservation
         if mem_reservation is not None:
             reservation['MemoryBytes'] = mem_reservation
-
+        if generic_resources is not None:
+            reservation['GenericResources'] = (
+                _convert_generic_resources_dict(generic_resources)
+            )
         if limits:
             self['Limits'] = limits
         if reservation:
             self['Reservations'] = reservation
+
+
+def _convert_generic_resources_dict(generic_resources):
+    if isinstance(generic_resources, list):
+        return generic_resources
+    if not isinstance(generic_resources, dict):
+        raise errors.InvalidArgument(
+            'generic_resources must be a dict or a list'
+            ' (found {})'.format(type(generic_resources))
+        )
+    resources = []
+    for kind, value in six.iteritems(generic_resources):
+        resource_type = None
+        if isinstance(value, int):
+            resource_type = 'DiscreteResourceSpec'
+        elif isinstance(value, str):
+            resource_type = 'NamedResourceSpec'
+        else:
+            raise errors.InvalidArgument(
+                'Unsupported generic resource reservation '
+                'type: {}'.format({kind: value})
+            )
+        resources.append({
+            resource_type: {'Kind': kind, 'Value': value}
+        })
+    return resources
 
 
 class UpdateConfig(dict):
@@ -256,24 +368,27 @@ class UpdateConfig(dict):
 
         parallelism (int): Maximum number of tasks to be updated in one
           iteration (0 means unlimited parallelism). Default: 0.
-        delay (int): Amount of time between updates.
+        delay (int): Amount of time between updates, in nanoseconds.
         failure_action (string): Action to take if an updated task fails to
           run, or stops running during the update. Acceptable values are
-          ``continue`` and ``pause``. Default: ``continue``
+          ``continue``, ``pause``, as well as ``rollback`` since API v1.28.
+          Default: ``continue``
         monitor (int): Amount of time to monitor each updated task for
           failures, in nanoseconds.
         max_failure_ratio (float): The fraction of tasks that may fail during
           an update before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
+        order (string): Specifies the order of operations when rolling out an
+          updated task. Either ``start_first`` or ``stop_first`` are accepted.
     """
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
-                 monitor=None, max_failure_ratio=None):
+                 monitor=None, max_failure_ratio=None, order=None):
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
-        if failure_action not in ('pause', 'continue'):
+        if failure_action not in ('pause', 'continue', 'rollback'):
             raise errors.InvalidArgument(
-                'failure_action must be either `pause` or `continue`.'
+                'failure_action must be one of `pause`, `continue`, `rollback`'
             )
         self['FailureAction'] = failure_action
 
@@ -290,6 +405,37 @@ class UpdateConfig(dict):
                     'max_failure_ratio must be a number between 0 and 1'
                 )
             self['MaxFailureRatio'] = max_failure_ratio
+
+        if order is not None:
+            if order not in ('start-first', 'stop-first'):
+                raise errors.InvalidArgument(
+                    'order must be either `start-first` or `stop-first`'
+                )
+            self['Order'] = order
+
+
+class RollbackConfig(UpdateConfig):
+    """
+    Used to specify the way containe rollbacks should be performed by a service
+
+    Args:
+        parallelism (int): Maximum number of tasks to be rolled back in one
+          iteration (0 means unlimited parallelism). Default: 0
+        delay (int): Amount of time between rollbacks, in nanoseconds.
+        failure_action (string): Action to take if a rolled back task fails to
+          run, or stops running during the rollback. Acceptable values are
+          ``continue``, ``pause`` or ``rollback``.
+          Default: ``continue``
+        monitor (int): Amount of time to monitor each rolled back task for
+          failures, in nanoseconds.
+        max_failure_ratio (float): The fraction of tasks that may fail during
+          a rollback before the failure action is invoked, specified as a
+          floating point number between 0 and 1. Default: 0
+        order (string): Specifies the order of operations when rolling out a
+          rolled back task. Either ``start_first`` or ``stop_first`` are
+          accepted.
+    """
+    pass
 
 
 class RestartConditionTypesEnum(object):
@@ -336,8 +482,9 @@ class DriverConfig(dict):
     """
     Indicates which driver to use, as well as its configuration. Can be used
     as ``log_driver`` in a :py:class:`~docker.types.ContainerSpec`,
-    and for the `driver_config` in a volume
-    :py:class:`~docker.types.Mount`.
+    for the `driver_config` in a volume :py:class:`~docker.types.Mount`, or
+    as the driver object in
+    :py:meth:`create_secret`.
 
     Args:
 
@@ -360,9 +507,10 @@ class EndpointSpec(dict):
           balancing between tasks (``'vip'`` or ``'dnsrr'``). Defaults to
           ``'vip'`` if not provided.
         ports (dict): Exposed ports that this service is accessible on from the
-          outside, in the form of ``{ target_port: published_port }`` or
-          ``{ target_port: (published_port, protocol) }``. Ports can only be
-          provided if the ``vip`` resolution mode is used.
+          outside, in the form of ``{ published_port: target_port }`` or
+          ``{ published_port: <port_config_tuple> }``. Port config tuple format
+          is ``(target_port [, protocol [, publish_mode]])``.
+          Ports can only be provided if the ``vip`` resolution mode is used.
     """
     def __init__(self, mode=None, ports=None):
         if ports:
@@ -388,8 +536,15 @@ def convert_service_ports(ports):
 
         if isinstance(v, tuple):
             port_spec['TargetPort'] = v[0]
-            if len(v) == 2:
+            if len(v) >= 2 and v[1] is not None:
                 port_spec['Protocol'] = v[1]
+            if len(v) == 3:
+                port_spec['PublishMode'] = v[2]
+            if len(v) > 3:
+                raise ValueError(
+                    'Service port configuration can have at most 3 elements: '
+                    '(target_port, protocol, mode)'
+                )
         else:
             port_spec['TargetPort'] = v
 
@@ -460,26 +615,153 @@ class SecretReference(dict):
         }
 
 
+class ConfigReference(dict):
+    """
+        Config reference to be used as part of a :py:class:`ContainerSpec`.
+        Describes how a config is made accessible inside the service's
+        containers.
+
+        Args:
+            config_id (string): Config's ID
+            config_name (string): Config's name as defined at its creation.
+            filename (string): Name of the file containing the config. Defaults
+                to the config's name if not specified.
+            uid (string): UID of the config file's owner. Default: 0
+            gid (string): GID of the config file's group. Default: 0
+            mode (int): File access mode inside the container. Default: 0o444
+    """
+    @check_resource('config_id')
+    def __init__(self, config_id, config_name, filename=None, uid=None,
+                 gid=None, mode=0o444):
+        self['ConfigName'] = config_name
+        self['ConfigID'] = config_id
+        self['File'] = {
+            'Name': filename or config_name,
+            'UID': uid or '0',
+            'GID': gid or '0',
+            'Mode': mode
+        }
+
+
 class Placement(dict):
     """
         Placement constraints to be used as part of a :py:class:`TaskTemplate`
 
         Args:
-            constraints (list): A list of constraints
-            preferences (list): Preferences provide a way to make the
-                scheduler aware of factors such as topology. They are provided
-                in order from highest to lowest precedence.
-            platforms (list): A list of platforms expressed as ``(arch, os)``
-                tuples
+            constraints (:py:class:`list` of str): A list of constraints
+            preferences (:py:class:`list` of tuple): Preferences provide a way
+                to make the scheduler aware of factors such as topology. They
+                are provided in order from highest to lowest precedence and
+                are expressed as ``(strategy, descriptor)`` tuples. See
+                :py:class:`PlacementPreference` for details.
+            platforms (:py:class:`list` of tuple): A list of platforms
+                expressed as ``(arch, os)`` tuples
     """
     def __init__(self, constraints=None, preferences=None, platforms=None):
         if constraints is not None:
             self['Constraints'] = constraints
         if preferences is not None:
-            self['Preferences'] = preferences
+            self['Preferences'] = []
+            for pref in preferences:
+                if isinstance(pref, tuple):
+                    pref = PlacementPreference(*pref)
+                self['Preferences'].append(pref)
         if platforms:
             self['Platforms'] = []
             for plat in platforms:
                 self['Platforms'].append({
                     'Architecture': plat[0], 'OS': plat[1]
                 })
+
+
+class PlacementPreference(dict):
+    """
+        Placement preference to be used as an element in the list of
+        preferences for :py:class:`Placement` objects.
+
+        Args:
+            strategy (string): The placement strategy to implement. Currently,
+                the only supported strategy is ``spread``.
+            descriptor (string): A label descriptor. For the spread strategy,
+                the scheduler will try to spread tasks evenly over groups of
+                nodes identified by this label.
+    """
+    def __init__(self, strategy, descriptor):
+        if strategy != 'spread':
+            raise errors.InvalidArgument(
+                'PlacementPreference strategy value is invalid ({}):'
+                ' must be "spread".'.format(strategy)
+            )
+        self['SpreadOver'] = descriptor
+
+
+class DNSConfig(dict):
+    """
+        Specification for DNS related configurations in resolver configuration
+        file (``resolv.conf``). Part of a :py:class:`ContainerSpec` definition.
+
+        Args:
+            nameservers (:py:class:`list`): The IP addresses of the name
+                servers.
+            search (:py:class:`list`): A search list for host-name lookup.
+            options (:py:class:`list`): A list of internal resolver variables
+                to be modified (e.g., ``debug``, ``ndots:3``, etc.).
+    """
+    def __init__(self, nameservers=None, search=None, options=None):
+        self['Nameservers'] = nameservers
+        self['Search'] = search
+        self['Options'] = options
+
+
+class Privileges(dict):
+    r"""
+        Security options for a service's containers.
+        Part of a :py:class:`ContainerSpec` definition.
+
+        Args:
+            credentialspec_file (str): Load credential spec from this file.
+                The file is read by the daemon, and must be present in the
+                CredentialSpecs subdirectory in the docker data directory,
+                which defaults to ``C:\ProgramData\Docker\`` on Windows.
+                Can not be combined with credentialspec_registry.
+
+            credentialspec_registry (str): Load credential spec from this value
+                in the Windows registry. The specified registry value must be
+                located in: ``HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+                \Virtualization\Containers\CredentialSpecs``.
+                Can not be combined with credentialspec_file.
+
+            selinux_disable (boolean): Disable SELinux
+            selinux_user (string): SELinux user label
+            selinux_role (string): SELinux role label
+            selinux_type (string): SELinux type label
+            selinux_level (string): SELinux level label
+    """
+    def __init__(self, credentialspec_file=None, credentialspec_registry=None,
+                 selinux_disable=None, selinux_user=None, selinux_role=None,
+                 selinux_type=None, selinux_level=None):
+        credential_spec = {}
+        if credentialspec_registry is not None:
+            credential_spec['Registry'] = credentialspec_registry
+        if credentialspec_file is not None:
+            credential_spec['File'] = credentialspec_file
+
+        if len(credential_spec) > 1:
+            raise errors.InvalidArgument(
+                'credentialspec_file and credentialspec_registry are mutually'
+                ' exclusive'
+            )
+
+        selinux_context = {
+            'Disable': selinux_disable,
+            'User': selinux_user,
+            'Role': selinux_role,
+            'Type': selinux_type,
+            'Level': selinux_level,
+        }
+
+        if len(credential_spec) > 0:
+            self['CredentialSpec'] = credential_spec
+
+        if len(selinux_context) > 0:
+            self['SELinuxContext'] = selinux_context

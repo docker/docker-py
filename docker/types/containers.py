@@ -1,11 +1,10 @@
 import six
-import warnings
 
 from .. import errors
 from ..utils.utils import (
     convert_port_bindings, convert_tmpfs_mounts, convert_volume_binds,
-    format_environment, normalize_links, parse_bytes, parse_devices,
-    split_command, version_gte, version_lt,
+    format_environment, format_extra_hosts, normalize_links, parse_bytes,
+    parse_devices, split_command, version_gte, version_lt,
 )
 from .base import DictType
 from .healthcheck import Healthcheck
@@ -24,6 +23,35 @@ class LogConfigTypesEnum(object):
 
 
 class LogConfig(DictType):
+    """
+    Configure logging for a container, when provided as an argument to
+    :py:meth:`~docker.api.container.ContainerApiMixin.create_host_config`.
+    You may refer to the
+    `official logging driver documentation <https://docs.docker.com/config/containers/logging/configure/>`_
+    for more information.
+
+    Args:
+        type (str): Indicate which log driver to use. A set of valid drivers
+            is provided as part of the :py:attr:`LogConfig.types`
+            enum. Other values may be accepted depending on the engine version
+            and available logging plugins.
+        config (dict): A driver-dependent configuration dictionary. Please
+            refer to the driver's documentation for a list of valid config
+            keys.
+
+    Example:
+
+        >>> from docker.types import LogConfig
+        >>> lc = LogConfig(type=LogConfig.types.JSON, config={
+        ...   'max-size': '1g',
+        ...   'labels': 'production_status,geo'
+        ... })
+        >>> hc = client.create_host_config(log_config=lc)
+        >>> container = client.create_container('busybox', 'true',
+        ...    host_config=hc)
+        >>> client.inspect_container(container)['HostConfig']['LogConfig']
+        {'Type': 'json-file', 'Config': {'labels': 'production_status,geo', 'max-size': '1g'}}
+    """  # noqa: E501
     types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
@@ -51,14 +79,40 @@ class LogConfig(DictType):
         return self['Config']
 
     def set_config_value(self, key, value):
+        """ Set a the value for ``key`` to ``value`` inside the ``config``
+            dict.
+        """
         self.config[key] = value
 
     def unset_config(self, key):
+        """ Remove the ``key`` property from the ``config`` dict. """
         if key in self.config:
             del self.config[key]
 
 
 class Ulimit(DictType):
+    """
+    Create a ulimit declaration to be used with
+    :py:meth:`~docker.api.container.ContainerApiMixin.create_host_config`.
+
+    Args:
+
+        name (str): Which ulimit will this apply to. A list of valid names can
+            be found `here <http://tinyurl.me/ZWRkM2Ztwlykf>`_.
+        soft (int): The soft limit for this ulimit. Optional.
+        hard (int): The hard limit for this ulimit. Optional.
+
+    Example:
+
+        >>> nproc_limit = docker.types.Ulimit(name='nproc', soft=1024)
+        >>> hc = client.create_host_config(ulimits=[nproc_limit])
+        >>> container = client.create_container(
+                'busybox', 'true', host_config=hc
+            )
+        >>> client.inspect_container(container)['HostConfig']['Ulimits']
+        [{'Name': 'nproc', 'Hard': 0, 'Soft': 1024}]
+
+    """
     def __init__(self, **kwargs):
         name = kwargs.get('name', kwargs.get('Name'))
         soft = kwargs.get('soft', kwargs.get('Soft'))
@@ -116,11 +170,13 @@ class HostConfig(dict):
                  device_read_iops=None, device_write_iops=None,
                  oom_kill_disable=False, shm_size=None, sysctls=None,
                  tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                 cpuset_cpus=None, userns_mode=None, pids_limit=None,
-                 isolation=None, auto_remove=False, storage_opt=None,
-                 init=None, init_path=None, volume_driver=None,
-                 cpu_count=None, cpu_percent=None, nano_cpus=None,
-                 cpuset_mems=None, runtime=None):
+                 cpuset_cpus=None, userns_mode=None, uts_mode=None,
+                 pids_limit=None, isolation=None, auto_remove=False,
+                 storage_opt=None, init=None, init_path=None,
+                 volume_driver=None, cpu_count=None, cpu_percent=None,
+                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
+                 cpu_rt_period=None, cpu_rt_runtime=None,
+                 device_cgroup_rules=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -129,20 +185,12 @@ class HostConfig(dict):
             self['MemorySwap'] = parse_bytes(memswap_limit)
 
         if mem_reservation:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('mem_reservation', '1.21')
-
             self['MemoryReservation'] = parse_bytes(mem_reservation)
 
         if kernel_memory:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('kernel_memory', '1.21')
-
             self['KernelMemory'] = parse_bytes(kernel_memory)
 
         if mem_swappiness is not None:
-            if version_lt(version, '1.20'):
-                raise host_config_version_error('mem_swappiness', '1.20')
             if not isinstance(mem_swappiness, int):
                 raise host_config_type_error(
                     'mem_swappiness', mem_swappiness, 'int'
@@ -168,9 +216,6 @@ class HostConfig(dict):
             self['Privileged'] = privileged
 
         if oom_kill_disable:
-            if version_lt(version, '1.20'):
-                raise host_config_version_error('oom_kill_disable', '1.19')
-
             self['OomKillDisable'] = oom_kill_disable
 
         if oom_score_adj:
@@ -193,7 +238,7 @@ class HostConfig(dict):
 
         if network_mode:
             self['NetworkMode'] = network_mode
-        elif network_mode is None and version_gte(version, '1.20'):
+        elif network_mode is None:
             self['NetworkMode'] = 'default'
 
         if restart_policy:
@@ -214,18 +259,12 @@ class HostConfig(dict):
             self['Devices'] = parse_devices(devices)
 
         if group_add:
-            if version_lt(version, '1.20'):
-                raise host_config_version_error('group_add', '1.20')
-
             self['GroupAdd'] = [six.text_type(grp) for grp in group_add]
 
         if dns is not None:
             self['Dns'] = dns
 
         if dns_opt is not None:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('dns_opt', '1.21')
-
             self['DnsOptions'] = dns_opt
 
         if security_opt is not None:
@@ -257,10 +296,7 @@ class HostConfig(dict):
 
         if extra_hosts is not None:
             if isinstance(extra_hosts, dict):
-                extra_hosts = [
-                    '{0}:{1}'.format(k, v)
-                    for k, v in sorted(six.iteritems(extra_hosts))
-                ]
+                extra_hosts = format_extra_hosts(extra_hosts)
 
             self['ExtraHosts'] = extra_hosts
 
@@ -283,10 +319,10 @@ class HostConfig(dict):
             if not isinstance(ulimits, list):
                 raise host_config_type_error('ulimits', ulimits, 'list')
             self['Ulimits'] = []
-            for l in ulimits:
-                if not isinstance(l, Ulimit):
-                    l = Ulimit(**l)
-                self['Ulimits'].append(l)
+            for lmt in ulimits:
+                if not isinstance(lmt, Ulimit):
+                    lmt = Ulimit(**lmt)
+                self['Ulimits'].append(lmt)
 
         if log_config is not None:
             if not isinstance(log_config, LogConfig):
@@ -301,43 +337,48 @@ class HostConfig(dict):
         if cpu_quota:
             if not isinstance(cpu_quota, int):
                 raise host_config_type_error('cpu_quota', cpu_quota, 'int')
-            if version_lt(version, '1.19'):
-                raise host_config_version_error('cpu_quota', '1.19')
-
             self['CpuQuota'] = cpu_quota
 
         if cpu_period:
             if not isinstance(cpu_period, int):
                 raise host_config_type_error('cpu_period', cpu_period, 'int')
-            if version_lt(version, '1.19'):
-                raise host_config_version_error('cpu_period', '1.19')
-
             self['CpuPeriod'] = cpu_period
 
         if cpu_shares:
-            if version_lt(version, '1.18'):
-                raise host_config_version_error('cpu_shares', '1.18')
-
             if not isinstance(cpu_shares, int):
                 raise host_config_type_error('cpu_shares', cpu_shares, 'int')
 
             self['CpuShares'] = cpu_shares
 
         if cpuset_cpus:
-            if version_lt(version, '1.18'):
-                raise host_config_version_error('cpuset_cpus', '1.18')
-
             self['CpusetCpus'] = cpuset_cpus
 
         if cpuset_mems:
-            if version_lt(version, '1.19'):
-                raise host_config_version_error('cpuset_mems', '1.19')
-
             if not isinstance(cpuset_mems, str):
                 raise host_config_type_error(
                     'cpuset_mems', cpuset_mems, 'str'
                 )
             self['CpusetMems'] = cpuset_mems
+
+        if cpu_rt_period:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_rt_period', '1.25')
+
+            if not isinstance(cpu_rt_period, int):
+                raise host_config_type_error(
+                    'cpu_rt_period', cpu_rt_period, 'int'
+                )
+            self['CPURealtimePeriod'] = cpu_rt_period
+
+        if cpu_rt_runtime:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_rt_runtime', '1.25')
+
+            if not isinstance(cpu_rt_runtime, int):
+                raise host_config_type_error(
+                    'cpu_rt_runtime', cpu_rt_runtime, 'int'
+                )
+            self['CPURealtimeRuntime'] = cpu_rt_runtime
 
         if blkio_weight:
             if not isinstance(blkio_weight, int):
@@ -406,6 +447,11 @@ class HostConfig(dict):
                 raise host_config_value_error("userns_mode", userns_mode)
             self['UsernsMode'] = userns_mode
 
+        if uts_mode:
+            if uts_mode != "host":
+                raise host_config_value_error("uts_mode", uts_mode)
+            self['UTSMode'] = uts_mode
+
         if pids_limit:
             if not isinstance(pids_limit, int):
                 raise host_config_type_error('pids_limit', pids_limit, 'int')
@@ -445,8 +491,6 @@ class HostConfig(dict):
             self['InitPath'] = init_path
 
         if volume_driver is not None:
-            if version_lt(version, '1.21'):
-                raise host_config_version_error('volume_driver', '1.21')
             self['VolumeDriver'] = volume_driver
 
         if cpu_count:
@@ -478,6 +522,20 @@ class HostConfig(dict):
                 raise host_config_version_error('runtime', '1.25')
             self['Runtime'] = runtime
 
+        if mounts is not None:
+            if version_lt(version, '1.30'):
+                raise host_config_version_error('mounts', '1.30')
+            self['Mounts'] = mounts
+
+        if device_cgroup_rules is not None:
+            if version_lt(version, '1.28'):
+                raise host_config_version_error('device_cgroup_rules', '1.28')
+            if not isinstance(device_cgroup_rules, list):
+                raise host_config_type_error(
+                    'device_cgroup_rules', device_cgroup_rules, 'list'
+                )
+            self['DeviceCgroupRules'] = device_cgroup_rules
+
 
 def host_config_type_error(param, param_value, expected):
     error_msg = 'Invalid type for {0} param: expected {1} but found {2}'
@@ -498,67 +556,12 @@ def host_config_value_error(param, param_value):
 class ContainerConfig(dict):
     def __init__(
         self, version, image, command, hostname=None, user=None, detach=False,
-        stdin_open=False, tty=False, mem_limit=None, ports=None, dns=None,
-        environment=None, volumes=None, volumes_from=None,
-        network_disabled=False, entrypoint=None, cpu_shares=None,
-        working_dir=None, domainname=None, memswap_limit=None, cpuset=None,
-        host_config=None, mac_address=None, labels=None, volume_driver=None,
-        stop_signal=None, networking_config=None, healthcheck=None,
-        stop_timeout=None, runtime=None
+        stdin_open=False, tty=False, ports=None, environment=None,
+        volumes=None, network_disabled=False, entrypoint=None,
+        working_dir=None, domainname=None, host_config=None, mac_address=None,
+        labels=None, stop_signal=None, networking_config=None,
+        healthcheck=None, stop_timeout=None, runtime=None
     ):
-        if version_gte(version, '1.10'):
-            message = ('{0!r} parameter has no effect on create_container().'
-                       ' It has been moved to host_config')
-            if dns is not None:
-                raise errors.InvalidVersion(message.format('dns'))
-            if volumes_from is not None:
-                raise errors.InvalidVersion(message.format('volumes_from'))
-
-        if version_lt(version, '1.18'):
-            if labels is not None:
-                raise errors.InvalidVersion(
-                    'labels were only introduced in API version 1.18'
-                )
-        else:
-            if cpuset is not None or cpu_shares is not None:
-                warnings.warn(
-                    'The cpuset_cpus and cpu_shares options have been moved to'
-                    ' host_config in API version 1.18, and will be removed',
-                    DeprecationWarning
-                )
-
-        if version_lt(version, '1.19'):
-            if volume_driver is not None:
-                raise errors.InvalidVersion(
-                    'Volume drivers were only introduced in API version 1.19'
-                )
-            mem_limit = mem_limit if mem_limit is not None else 0
-            memswap_limit = memswap_limit if memswap_limit is not None else 0
-        else:
-            if mem_limit is not None:
-                raise errors.InvalidVersion(
-                    'mem_limit has been moved to host_config in API version'
-                    ' 1.19'
-                )
-
-            if memswap_limit is not None:
-                raise errors.InvalidVersion(
-                    'memswap_limit has been moved to host_config in API '
-                    'version 1.19'
-                )
-
-        if version_lt(version, '1.21'):
-            if stop_signal is not None:
-                raise errors.InvalidVersion(
-                    'stop_signal was only introduced in API version 1.21'
-                )
-        else:
-            if volume_driver is not None:
-                warnings.warn(
-                    'The volume_driver option has been moved to'
-                    ' host_config in API version 1.21, and will be removed',
-                    DeprecationWarning
-                )
 
         if stop_timeout is not None and version_lt(version, '1.25'):
             raise errors.InvalidVersion(
@@ -589,12 +592,6 @@ class ContainerConfig(dict):
         if isinstance(labels, list):
             labels = dict((lbl, six.text_type('')) for lbl in labels)
 
-        if mem_limit is not None:
-            mem_limit = parse_bytes(mem_limit)
-
-        if memswap_limit is not None:
-            memswap_limit = parse_bytes(memswap_limit)
-
         if isinstance(ports, list):
             exposed_ports = {}
             for port_definition in ports:
@@ -616,13 +613,6 @@ class ContainerConfig(dict):
                 volumes_dict[vol] = {}
             volumes = volumes_dict
 
-        if volumes_from:
-            if not isinstance(volumes_from, six.string_types):
-                volumes_from = ','.join(volumes_from)
-        else:
-            # Force None, an empty list or dict causes client.start to fail
-            volumes_from = None
-
         if healthcheck and isinstance(healthcheck, dict):
             healthcheck = Healthcheck(**healthcheck)
 
@@ -643,32 +633,24 @@ class ContainerConfig(dict):
             'Hostname': hostname,
             'Domainname': domainname,
             'ExposedPorts': ports,
-            'User': six.text_type(user) if user else None,
+            'User': six.text_type(user) if user is not None else None,
             'Tty': tty,
             'OpenStdin': stdin_open,
             'StdinOnce': stdin_once,
-            'Memory': mem_limit,
             'AttachStdin': attach_stdin,
             'AttachStdout': attach_stdout,
             'AttachStderr': attach_stderr,
             'Env': environment,
             'Cmd': command,
-            'Dns': dns,
             'Image': image,
             'Volumes': volumes,
-            'VolumesFrom': volumes_from,
             'NetworkDisabled': network_disabled,
             'Entrypoint': entrypoint,
-            'CpuShares': cpu_shares,
-            'Cpuset': cpuset,
-            'CpusetCpus': cpuset,
             'WorkingDir': working_dir,
-            'MemorySwap': memswap_limit,
             'HostConfig': host_config,
             'NetworkingConfig': networking_config,
             'MacAddress': mac_address,
             'Labels': labels,
-            'VolumeDriver': volume_driver,
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
             'StopTimeout': stop_timeout,

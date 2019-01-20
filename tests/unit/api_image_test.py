@@ -65,29 +65,21 @@ class ImageTest(BaseAPIClientTest):
         self.client.pull('joffrey/test001')
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1],
-            url_prefix + 'images/create'
-        )
-        self.assertEqual(
-            args[1]['params'],
-            {'tag': None, 'fromImage': 'joffrey/test001'}
-        )
-        self.assertFalse(args[1]['stream'])
+        assert args[0][1] == url_prefix + 'images/create'
+        assert args[1]['params'] == {
+            'tag': None, 'fromImage': 'joffrey/test001'
+        }
+        assert not args[1]['stream']
 
     def test_pull_stream(self):
         self.client.pull('joffrey/test001', stream=True)
 
         args = fake_request.call_args
-        self.assertEqual(
-            args[0][1],
-            url_prefix + 'images/create'
-        )
-        self.assertEqual(
-            args[1]['params'],
-            {'tag': None, 'fromImage': 'joffrey/test001'}
-        )
-        self.assertTrue(args[1]['stream'])
+        assert args[0][1] == url_prefix + 'images/create'
+        assert args[1]['params'] == {
+            'tag': None, 'fromImage': 'joffrey/test001'
+        }
+        assert args[1]['stream']
 
     def test_commit(self):
         self.client.commit(fake_api.FAKE_CONTAINER_ID)
@@ -203,29 +195,7 @@ class ImageTest(BaseAPIClientTest):
             with pytest.raises(docker.errors.NullResource) as excinfo:
                 self.client.inspect_image(arg)
 
-            self.assertEqual(
-                excinfo.value.args[0], 'Resource ID was not provided'
-            )
-
-    def test_insert_image(self):
-        try:
-            self.client.insert(fake_api.FAKE_IMAGE_NAME,
-                               fake_api.FAKE_URL, fake_api.FAKE_PATH)
-        except docker.errors.DeprecatedMethod:
-            self.assertTrue(
-                docker.utils.compare_version('1.12', self.client._version) >= 0
-            )
-            return
-
-        fake_request.assert_called_with(
-            'POST',
-            url_prefix + 'images/test_image/insert',
-            params={
-                'url': fake_api.FAKE_URL,
-                'path': fake_api.FAKE_PATH
-            },
-            timeout=DEFAULT_TIMEOUT_SECONDS
-        )
+            assert excinfo.value.args[0] == 'Resource ID was not provided'
 
     def test_push_image(self):
         with mock.patch('docker.auth.resolve_authconfig',

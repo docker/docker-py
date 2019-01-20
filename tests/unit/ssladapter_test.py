@@ -1,5 +1,6 @@
 import unittest
 from docker.transport import ssladapter
+import pytest
 
 try:
     from backports.ssl_match_hostname import (
@@ -69,11 +70,9 @@ class MatchHostnameTest(unittest.TestCase):
         assert match_hostname(self.cert, 'touhou.gensokyo.jp') is None
 
     def test_match_ip_address_failure(self):
-        self.assertRaises(
-            CertificateError, match_hostname, self.cert, '192.168.0.25'
-        )
+        with pytest.raises(CertificateError):
+            match_hostname(self.cert, '192.168.0.25')
 
     def test_match_dns_failure(self):
-        self.assertRaises(
-            CertificateError, match_hostname, self.cert, 'foobar.co.uk'
-        )
+        with pytest.raises(CertificateError):
+            match_hostname(self.cert, 'foobar.co.uk')

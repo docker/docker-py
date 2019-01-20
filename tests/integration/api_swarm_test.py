@@ -10,10 +10,16 @@ class SwarmTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(SwarmTest, self).setUp()
         force_leave_swarm(self.client)
+        self._unlock_key = None
 
     def tearDown(self):
-        super(SwarmTest, self).tearDown()
+        try:
+            if self._unlock_key:
+                self.client.unlock_swarm(self._unlock_key)
+        except docker.errors.APIError:
+            pass
         force_leave_swarm(self.client)
+        super(SwarmTest, self).tearDown()
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):
@@ -44,6 +50,48 @@ class SwarmTest(BaseAPIIntegrationTest):
         swarm_info = self.client.inspect_swarm()
         assert swarm_info['Spec']['Raft']['SnapshotInterval'] == 5000
         assert swarm_info['Spec']['Raft']['LogEntriesForSlowFollowers'] == 1200
+
+    @requires_api_version('1.30')
+    def test_init_swarm_with_ca_config(self):
+        spec = self.client.create_swarm_spec(
+            node_cert_expiry=7776000000000000, ca_force_rotate=6000000000000
+        )
+
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+        assert swarm_info['Spec']['CAConfig']['NodeCertExpiry'] == (
+            spec['CAConfig']['NodeCertExpiry']
+        )
+        assert swarm_info['Spec']['CAConfig']['ForceRotate'] == (
+            spec['CAConfig']['ForceRotate']
+        )
+
+    @requires_api_version('1.25')
+    def test_init_swarm_with_autolock_managers(self):
+        spec = self.client.create_swarm_spec(autolock_managers=True)
+        assert self.init_swarm(swarm_spec=spec)
+        # save unlock key for tearDown
+        self._unlock_key = self.client.get_unlock_key()
+        swarm_info = self.client.inspect_swarm()
+
+        assert (
+            swarm_info['Spec']['EncryptionConfig']['AutoLockManagers'] is True
+        )
+
+        assert self._unlock_key.get('UnlockKey')
+
+    @requires_api_version('1.25')
+    @pytest.mark.xfail(
+        reason="This doesn't seem to be taken into account by the engine"
+    )
+    def test_init_swarm_with_log_driver(self):
+        spec = {'TaskDefaults': {'LogDriver': {'Name': 'syslog'}}}
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+
+        assert swarm_info['Spec']['TaskDefaults']['LogDriver']['Name'] == (
+            'syslog'
+        )
 
     @requires_api_version('1.24')
     def test_leave_swarm(self):
@@ -87,24 +135,6 @@ class SwarmTest(BaseAPIIntegrationTest):
             swarm_info_1['JoinTokens']['Worker'] !=
             swarm_info_2['JoinTokens']['Worker']
         )
-
-    @requires_api_version('1.24')
-    def test_update_swarm_name(self):
-        assert self.init_swarm()
-        swarm_info_1 = self.client.inspect_swarm()
-        spec = self.client.create_swarm_spec(
-            node_cert_expiry=7776000000000000, name='reimuhakurei'
-        )
-        assert self.client.update_swarm(
-            version=swarm_info_1['Version']['Index'], swarm_spec=spec
-        )
-        swarm_info_2 = self.client.inspect_swarm()
-
-        assert (
-            swarm_info_1['Version']['Index'] !=
-            swarm_info_2['Version']['Index']
-        )
-        assert swarm_info_2['Spec']['Name'] == 'reimuhakurei'
 
     @requires_api_version('1.24')
     def test_list_nodes(self):

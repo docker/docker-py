@@ -9,6 +9,16 @@ It's possible to use :py:class:`APIClient` directly. Some basic things (e.g. run
 
 .. autoclass:: docker.api.client.APIClient
 
+Configs
+-------
+
+.. py:module:: docker.api.config
+
+.. rst-class:: hide-signature
+.. autoclass:: ConfigApiMixin
+  :members:
+  :undoc-members:
+
 Containers
 ----------
 
@@ -122,16 +132,26 @@ Configuration types
 
 .. py:module:: docker.types
 
-.. autoclass:: IPAMConfig
-.. autoclass:: IPAMPool
+.. autoclass:: ConfigReference
 .. autoclass:: ContainerSpec
+.. autoclass:: DNSConfig
 .. autoclass:: DriverConfig
 .. autoclass:: EndpointSpec
+.. autoclass:: Healthcheck
+.. autoclass:: IPAMConfig
+.. autoclass:: IPAMPool
+.. autoclass:: LogConfig
 .. autoclass:: Mount
 .. autoclass:: Placement
+.. autoclass:: PlacementPreference
+.. autoclass:: Privileges
 .. autoclass:: Resources
 .. autoclass:: RestartPolicy
+.. autoclass:: RollbackConfig
 .. autoclass:: SecretReference
 .. autoclass:: ServiceMode
+.. autoclass:: SwarmExternalCA
+.. autoclass:: SwarmSpec(*args, **kwargs)
 .. autoclass:: TaskTemplate
+.. autoclass:: Ulimit
 .. autoclass:: UpdateConfig

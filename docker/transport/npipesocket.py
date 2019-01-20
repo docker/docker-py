@@ -87,10 +87,6 @@ class NpipeSocket(object):
     def dup(self):
         return NpipeSocket(self._handle)
 
-    @check_closed
-    def fileno(self):
-        return int(self._handle)
-
     def getpeername(self):
         return self._address
 

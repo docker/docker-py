@@ -2,12 +2,13 @@ import base64
 
 import six
 
+from .. import errors
 from .. import utils
 
 
 class SecretApiMixin(object):
     @utils.minimum_version('1.25')
-    def create_secret(self, name, data, labels=None):
+    def create_secret(self, name, data, labels=None, driver=None):
         """
             Create a secret
 
@@ -15,6 +16,8 @@ class SecretApiMixin(object):
                 name (string): Name of the secret
                 data (bytes): Secret data to be stored
                 labels (dict): A mapping of labels to assign to the secret
+                driver (DriverConfig): A custom driver configuration. If
+                    unspecified, the default ``internal`` driver will be used
 
             Returns (dict): ID of the newly created secret
         """
@@ -29,6 +32,14 @@ class SecretApiMixin(object):
             'Name': name,
             'Labels': labels
         }
+
+        if driver is not None:
+            if utils.version_lt(self._version, '1.31'):
+                raise errors.InvalidVersion(
+                    'Secret driver is only available for API version > 1.31'
+                )
+
+            body['Driver'] = driver
 
         url = self._url('/secrets/create')
         return self._result(

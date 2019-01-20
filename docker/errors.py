@@ -18,7 +18,7 @@ def create_api_error_from_http_exception(e):
     try:
         explanation = response.json()['message']
     except ValueError:
-        explanation = response.content.strip()
+        explanation = (response.content or '').strip()
     cls = APIError
     if response.status_code == 404:
         if explanation and ('No such image' in str(explanation) or
@@ -62,6 +62,9 @@ class APIError(requests.exceptions.HTTPError, DockerException):
     def status_code(self):
         if self.response is not None:
             return self.response.status_code
+
+    def is_error(self):
+        return self.is_client_error() or self.is_server_error()
 
     def is_client_error(self):
         if self.status_code is None:
@@ -140,7 +143,14 @@ class StreamParseError(RuntimeError):
         self.msg = reason
 
 
-class BuildError(Exception):
+class BuildError(DockerException):
+    def __init__(self, reason, build_log):
+        super(BuildError, self).__init__(reason)
+        self.msg = reason
+        self.build_log = build_log
+
+
+class ImageLoadError(DockerException):
     pass
 
 

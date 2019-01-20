@@ -5,9 +5,6 @@ def imageNamePy2
 def imageNamePy3
 def images = [:]
 
-
-def dockerVersions = ["1.13.1", "17.04.0-ce", "17.05.0-ce", "17.06.0-ce", "17.07.0-ce-rc3"]
-
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
   try {
@@ -28,14 +25,35 @@ def buildImages = { ->
       imageNamePy3 = "${imageNameBase}:py3-${gitCommit()}"
 
       buildImage(imageNamePy2, ".", "py2.7")
-      buildImage(imageNamePy3, "-f Dockerfile-py3 .", "py3.5")
+      buildImage(imageNamePy3, "-f Dockerfile-py3 .", "py3.6")
     }
   }
 }
 
+def getDockerVersions = { ->
+  def dockerVersions = ["17.06.2-ce"]
+  wrappedNode(label: "ubuntu && !zfs") {
+    def result = sh(script: """docker run --rm \\
+        --entrypoint=python \\
+        ${imageNamePy3} \\
+        /src/scripts/versions.py
+      """, returnStdout: true
+    )
+    dockerVersions = dockerVersions + result.trim().tokenize(' ')
+  }
+  return dockerVersions
+}
+
 def getAPIVersion = { engineVersion ->
-  def versionMap = ['1.13.': '1.26', '17.04': '1.27', '17.05': '1.29', '17.06': '1.30', '17.07': '1.31']
-  return versionMap[engineVersion.substring(0, 5)]
+  def versionMap = [
+    '17.06': '1.30', '17.12': '1.35', '18.02': '1.36', '18.03': '1.37',
+    '18.06': '1.38', '18.09': '1.39'
+  ]
+  def result = versionMap[engineVersion.substring(0, 5)]
+  if (!result) {
+    return '1.39'
+  }
+  return result
 }
 
 def runTests = { Map settings ->
@@ -60,22 +78,26 @@ def runTests = { Map settings ->
         checkout(scm)
         def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
+        def testNetwork = "dpy-testnet-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         try {
-          sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged \\
+          sh """docker network create ${testNetwork}"""
+          sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
             dockerswarm/dind:${dockerVersion} dockerd -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
-            --name ${testContainerName} --volumes-from ${dindContainerName} \\
-            -e 'DOCKER_HOST=tcp://docker:2375' \\
+            --name ${testContainerName} \\
+            -e "DOCKER_HOST=tcp://${dindContainerName}:2375" \\
             -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
-            --link=${dindContainerName}:docker \\
+            --network ${testNetwork} \\
+            --volumes-from ${dindContainerName} \\
             ${testImage} \\
-            py.test -v -rxs tests/integration
+            py.test -v -rxs --cov=docker tests/
           """
         } finally {
           sh """
             docker stop ${dindContainerName} ${testContainerName}
             docker rm -vf ${dindContainerName} ${testContainerName}
+            docker network rm ${testNetwork}
           """
         }
       }
@@ -85,6 +107,8 @@ def runTests = { Map settings ->
 
 
 buildImages()
+
+def dockerVersions = getDockerVersions()
 
 def testMatrix = [failFast: false]
 

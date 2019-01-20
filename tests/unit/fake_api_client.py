@@ -20,15 +20,18 @@ class CopyReturnMagicMock(mock.MagicMock):
         return ret
 
 
-def make_fake_api_client():
+def make_fake_api_client(overrides=None):
     """
     Returns non-complete fake APIClient.
 
     This returns most of the default cases correctly, but most arguments that
     change behaviour will not work.
     """
+
+    if overrides is None:
+        overrides = {}
     api_client = docker.APIClient()
-    mock_client = CopyReturnMagicMock(**{
+    mock_attrs = {
         'build.return_value': fake_api.FAKE_IMAGE_ID,
         'commit.return_value': fake_api.post_fake_commit()[1],
         'containers.return_value': fake_api.get_fake_containers()[1],
@@ -43,19 +46,22 @@ def make_fake_api_client():
             fake_api.get_fake_inspect_container()[1],
         'inspect_image.return_value': fake_api.get_fake_inspect_image()[1],
         'inspect_network.return_value': fake_api.get_fake_network()[1],
-        'logs.return_value': 'hello world\n',
+        'logs.return_value': [b'hello world\n'],
         'networks.return_value': fake_api.get_fake_network_list()[1],
         'start.return_value': None,
-        'wait.return_value': 0,
-    })
+        'wait.return_value': {'StatusCode': 0},
+    }
+    mock_attrs.update(overrides)
+    mock_client = CopyReturnMagicMock(**mock_attrs)
+
     mock_client._version = docker.constants.DEFAULT_DOCKER_API_VERSION
     return mock_client
 
 
-def make_fake_client():
+def make_fake_client(overrides=None):
     """
     Returns a Client with a fake APIClient.
     """
     client = docker.DockerClient()
-    client.api = make_fake_api_client()
+    client.api = make_fake_api_client(overrides)
     return client

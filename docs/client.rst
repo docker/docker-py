@@ -15,6 +15,7 @@ Client reference
 
 .. autoclass:: DockerClient()
 
+  .. autoattribute:: configs
   .. autoattribute:: containers
   .. autoattribute:: images
   .. autoattribute:: networks
@@ -25,6 +26,7 @@ Client reference
   .. autoattribute:: swarm
   .. autoattribute:: volumes
 
+  .. automethod:: close()
   .. automethod:: df()
   .. automethod:: events()
   .. automethod:: info()

@@ -6,3 +6,8 @@ try:
     from .npipesocket import NpipeSocket
 except ImportError:
     pass
+
+try:
+    from .sshconn import SSHAdapter
+except ImportError:
+    pass

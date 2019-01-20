@@ -1,29 +1,25 @@
 import base64
-import io
+import json
 import os
 import os.path
-import json
 import shlex
-import tarfile
-import tempfile
-import warnings
-from distutils.version import StrictVersion
+import string
 from datetime import datetime
+from distutils.version import StrictVersion
 
-import requests
 import six
 
-from .. import constants
 from .. import errors
 from .. import tls
 
 if six.PY2:
     from urllib import splitnport
+    from urlparse import urlparse
 else:
-    from urllib.parse import splitnport
+    from urllib.parse import splitnport, urlparse
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
-DEFAULT_UNIX_SOCKET = "http+unix://var/run/docker.sock"
+DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
 DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
 
 BYTE_UNITS = {
@@ -48,76 +44,11 @@ def create_ipam_config(*args, **kwargs):
     )
 
 
-def mkbuildcontext(dockerfile):
-    f = tempfile.NamedTemporaryFile()
-    t = tarfile.open(mode='w', fileobj=f)
-    if isinstance(dockerfile, io.StringIO):
-        dfinfo = tarfile.TarInfo('Dockerfile')
-        if six.PY3:
-            raise TypeError('Please use io.BytesIO to create in-memory '
-                            'Dockerfiles with Python 3')
-        else:
-            dfinfo.size = len(dockerfile.getvalue())
-            dockerfile.seek(0)
-    elif isinstance(dockerfile, io.BytesIO):
-        dfinfo = tarfile.TarInfo('Dockerfile')
-        dfinfo.size = len(dockerfile.getvalue())
-        dockerfile.seek(0)
-    else:
-        dfinfo = t.gettarinfo(fileobj=dockerfile, arcname='Dockerfile')
-    t.addfile(dfinfo, dockerfile)
-    t.close()
-    f.seek(0)
-    return f
-
-
 def decode_json_header(header):
     data = base64.b64decode(header)
     if six.PY3:
         data = data.decode('utf-8')
     return json.loads(data)
-
-
-def build_file_list(root):
-    files = []
-    for dirname, dirnames, fnames in os.walk(root):
-        for filename in fnames + dirnames:
-            longpath = os.path.join(dirname, filename)
-            files.append(
-                longpath.replace(root, '', 1).lstrip('/')
-            )
-
-    return files
-
-
-def create_archive(root, files=None, fileobj=None, gzip=False):
-    if not fileobj:
-        fileobj = tempfile.NamedTemporaryFile()
-    t = tarfile.open(mode='w:gz' if gzip else 'w', fileobj=fileobj)
-    if files is None:
-        files = build_file_list(root)
-    for path in files:
-        i = t.gettarinfo(os.path.join(root, path), arcname=path)
-        if i is None:
-            # This happens when we encounter a socket file. We can safely
-            # ignore it and proceed.
-            continue
-
-        if constants.IS_WINDOWS_PLATFORM:
-            # Windows doesn't keep track of the execute bit, so we make files
-            # and directories executable by default.
-            i.mode = i.mode & 0o755 | 0o111
-
-        try:
-            # We open the file object in binary mode for Windows support.
-            with open(os.path.join(root, path), 'rb') as f:
-                t.addfile(i, f)
-        except IOError:
-            # When we encounter a directory the file object is set to None.
-            t.addfile(i, None)
-    t.close()
-    fileobj.seek(0)
-    return fileobj
 
 
 def compare_version(v1, v2):
@@ -148,29 +79,6 @@ def version_lt(v1, v2):
 
 def version_gte(v1, v2):
     return not version_lt(v1, v2)
-
-
-def ping_registry(url):
-    warnings.warn(
-        'The `ping_registry` method is deprecated and will be removed.',
-        DeprecationWarning
-    )
-
-    return ping(url + '/v2/', [401]) or ping(url + '/v1/_ping')
-
-
-def ping(url, valid_4xx_statuses=None):
-    try:
-        res = requests.get(url, timeout=3)
-    except Exception:
-        return False
-    else:
-        # We don't send yet auth headers
-        # and a v2 registry will respond with status 401
-        return (
-            res.status_code < 400 or
-            (valid_4xx_statuses and res.status_code in valid_4xx_statuses)
-        )
 
 
 def _convert_port_binding(binding):
@@ -306,75 +214,93 @@ def parse_repository_tag(repo_name):
     return repo_name, None
 
 
-# Based on utils.go:ParseHost http://tinyurl.com/nkahcfh
-# fd:// protocol unsupported (for obvious reasons)
-# Added support for http and https
-# Protocol translation: tcp -> http, unix -> http+unix
 def parse_host(addr, is_win32=False, tls=False):
-    proto = "http+unix"
-    port = None
     path = ''
+    port = None
+    host = None
 
+    # Sensible defaults
     if not addr and is_win32:
-        addr = DEFAULT_NPIPE
-
+        return DEFAULT_NPIPE
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
 
     addr = addr.strip()
-    if addr.startswith('http://'):
-        addr = addr.replace('http://', 'tcp://')
-    if addr.startswith('http+unix://'):
-        addr = addr.replace('http+unix://', 'unix://')
 
-    if addr == 'tcp://':
+    parsed_url = urlparse(addr)
+    proto = parsed_url.scheme
+    if not proto or any([x not in string.ascii_letters + '+' for x in proto]):
+        # https://bugs.python.org/issue754016
+        parsed_url = urlparse('//' + addr, 'tcp')
+        proto = 'tcp'
+
+    if proto == 'fd':
+        raise errors.DockerException('fd protocol is not implemented')
+
+    # These protos are valid aliases for our library but not for the
+    # official spec
+    if proto == 'http' or proto == 'https':
+        tls = proto == 'https'
+        proto = 'tcp'
+    elif proto == 'http+unix':
+        proto = 'unix'
+
+    if proto not in ('tcp', 'unix', 'npipe', 'ssh'):
         raise errors.DockerException(
-            "Invalid bind address format: {0}".format(addr)
+            "Invalid bind address protocol: {}".format(addr)
         )
-    elif addr.startswith('unix://'):
-        addr = addr[7:]
-    elif addr.startswith('tcp://'):
-        proto = 'http{0}'.format('s' if tls else '')
-        addr = addr[6:]
-    elif addr.startswith('https://'):
-        proto = "https"
-        addr = addr[8:]
-    elif addr.startswith('npipe://'):
-        proto = 'npipe'
-        addr = addr[8:]
-    elif addr.startswith('fd://'):
-        raise errors.DockerException("fd protocol is not implemented")
+
+    if proto == 'tcp' and not parsed_url.netloc:
+        # "tcp://" is exceptionally disallowed by convention;
+        # omitting a hostname for other protocols is fine
+        raise errors.DockerException(
+            'Invalid bind address format: {}'.format(addr)
+        )
+
+    if any([
+        parsed_url.params, parsed_url.query, parsed_url.fragment,
+        parsed_url.password
+    ]):
+        raise errors.DockerException(
+            'Invalid bind address format: {}'.format(addr)
+        )
+
+    if parsed_url.path and proto == 'ssh':
+        raise errors.DockerException(
+            'Invalid bind address format: no path allowed for this protocol:'
+            ' {}'.format(addr)
+        )
     else:
-        if "://" in addr:
-            raise errors.DockerException(
-                "Invalid bind address protocol: {0}".format(addr)
-            )
-        proto = "https" if tls else "http"
+        path = parsed_url.path
+        if proto == 'unix' and parsed_url.hostname is not None:
+            # For legacy reasons, we consider unix://path
+            # to be valid and equivalent to unix:///path
+            path = '/'.join((parsed_url.hostname, path))
 
-    if proto in ("http", "https"):
-        address_parts = addr.split('/', 1)
-        host = address_parts[0]
-        if len(address_parts) == 2:
-            path = '/' + address_parts[1]
-        host, port = splitnport(host)
-
-        if port is None:
-            raise errors.DockerException(
-                "Invalid port: {0}".format(addr)
-            )
+    if proto in ('tcp', 'ssh'):
+        # parsed_url.hostname strips brackets from IPv6 addresses,
+        # which can be problematic hence our use of splitnport() instead.
+        host, port = splitnport(parsed_url.netloc)
+        if port is None or port < 0:
+            if proto != 'ssh':
+                raise errors.DockerException(
+                    'Invalid bind address format: port is required:'
+                    ' {}'.format(addr)
+                )
+            port = 22
 
         if not host:
             host = DEFAULT_HTTP_HOST
-    else:
-        host = addr
 
-    if proto in ("http", "https") and port == -1:
-        raise errors.DockerException(
-            "Bind address needs a port: {0}".format(addr))
+    # Rewrite schemes to fit library internals (requests adapters)
+    if proto == 'tcp':
+        proto = 'http{}'.format('s' if tls else '')
+    elif proto == 'unix':
+        proto = 'http+unix'
 
-    if proto == "http+unix" or proto == 'npipe':
-        return "{0}://{1}".format(proto, host).rstrip('/')
-    return "{0}://{1}:{2}{3}".format(proto, host, port, path).rstrip('/')
+    if proto in ('http+unix', 'npipe'):
+        return "{}://{}".format(proto, path).rstrip('/')
+    return '{0}://{1}:{2}{3}'.format(proto, host, port, path).rstrip('/')
 
 
 def parse_devices(devices):
@@ -460,7 +386,10 @@ def convert_filters(filters):
             v = 'true' if v else 'false'
         if not isinstance(v, list):
             v = [v, ]
-        result[k] = v
+        result[k] = [
+            str(item) if not isinstance(item, six.string_types) else item
+            for item in v
+        ]
     return json.dumps(result)
 
 
@@ -515,7 +444,7 @@ def normalize_links(links):
     if isinstance(links, dict):
         links = six.iteritems(links)
 
-    return ['{0}:{1}'.format(k, v) for k, v in sorted(links)]
+    return ['{0}:{1}'.format(k, v) if v else k for k, v in sorted(links)]
 
 
 def parse_env_file(env_file):
@@ -562,6 +491,18 @@ def format_environment(environment):
 
         return u'{key}={value}'.format(key=key, value=value)
     return [format_env(*var) for var in six.iteritems(environment)]
+
+
+def format_extra_hosts(extra_hosts, task=False):
+    # Use format dictated by Swarm API if container is part of a task
+    if task:
+        return [
+            '{} {}'.format(v, k) for k, v in sorted(six.iteritems(extra_hosts))
+        ]
+
+    return [
+        '{}:{}'.format(k, v) for k, v in sorted(six.iteritems(extra_hosts))
+    ]
 
 
 def create_host_config(self, *args, **kwargs):
