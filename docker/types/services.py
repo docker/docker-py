@@ -692,7 +692,7 @@ class PlacementPreference(dict):
                 'PlacementPreference strategy value is invalid ({}):'
                 ' must be "spread".'.format(strategy)
             )
-        self['SpreadOver'] = descriptor
+        self['Spread'] = {'SpreadDescriptor': descriptor}
 
 
 class DNSConfig(dict):

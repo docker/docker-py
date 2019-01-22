@@ -427,6 +427,21 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Placement' in svc_info['Spec']['TaskTemplate']
         assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
 
+    @requires_api_version('1.27')
+    def test_create_service_with_placement_preferences_tuple(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        placemt = docker.types.Placement(preferences=(
+            ('spread', 'com.dockerpy.test'),
+        ))
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
+
     def test_create_service_with_endpoint_spec(self):
         container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
