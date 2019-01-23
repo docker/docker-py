@@ -843,7 +843,7 @@ class ContainerApiMixin:
                 float (in fractional seconds)
 
         Returns:
-            (generator or str)
+            (generator iterator of output bytes or bytes)
 
         Raises:
             :py:class:`docker.errors.APIError`
