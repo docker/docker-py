@@ -161,9 +161,10 @@ class APIClient(
                 self._custom_adapter = SSHAdapter(
                     base_url, timeout, pool_connections=num_pools
                 )
-            except NameError:
+            except NameError as e:
+                # do not hide orrinal exception as it may contain variou
                 raise DockerException(
-                    'Install paramiko package to enable ssh:// support'
+                    "Paramiko failure while trying ssh:// protocol:\n%s" % e
                 )
             self.mount('http+docker://ssh', self._custom_adapter)
             self._unmount('http://', 'https://')
