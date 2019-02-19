@@ -162,7 +162,7 @@ class APIClient(
                     base_url, timeout, pool_connections=num_pools
                 )
             except NameError as e:
-                # do not hide orrinal exception as it may contain variou
+                # do not hide orriginal exception as it may contain important info
                 raise DockerException(
                     "Paramiko failure while trying ssh:// protocol:\n%s" % e
                 )
