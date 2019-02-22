@@ -34,8 +34,8 @@ class Swarm(Model):
     get_unlock_key.__doc__ = APIClient.get_unlock_key.__doc__
 
     def init(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
-             default_addr_pool=None, subnet_size=None,
-             force_new_cluster=False, **kwargs):
+             force_new_cluster=False, default_addr_pool=None,
+             subnet_size=None, **kwargs):
         """
         Initialize a new swarm on this Engine.
 
@@ -55,14 +55,14 @@ class Swarm(Model):
                 or an interface followed by a port number, like ``eth0:4567``.
                 If the port number is omitted, the default swarm listening port
                 is used. Default: ``0.0.0.0:2377``
+            force_new_cluster (bool): Force creating a new Swarm, even if
+                already part of one. Default: False
             default_addr_pool (list of str): Default Address Pool specifies
                 default subnet pools for global scope networks. Each pool
-                should be specified as a CIDR block, like '10.0.0.0/16'.
+                should be specified as a CIDR block, like '10.0.0.0/8'.
                 Default: None
             subnet_size (int): SubnetSize specifies the subnet size of the
                 networks created from the default subnet pool. Default: None
-            force_new_cluster (bool): Force creating a new Swarm, even if
-                already part of one. Default: False
             task_history_retention_limit (int): Maximum number of tasks
                 history stored.
             snapshot_interval (int): Number of logs entries between snapshot.
@@ -106,8 +106,8 @@ class Swarm(Model):
 
             >>> client.swarm.init(
                 advertise_addr='eth0', listen_addr='0.0.0.0:5000',
-                default_addr_pool=['10.20.0.0/16], subnet_size=24,
-                force_new_cluster=False, snapshot_interval=5000,
+                force_new_cluster=False, default_addr_pool=['10.20.0.0/16],
+                subnet_size=24, snapshot_interval=5000,
                 log_entries_for_slow_followers=1200
             )
 
@@ -115,9 +115,9 @@ class Swarm(Model):
         init_kwargs = {
             'advertise_addr': advertise_addr,
             'listen_addr': listen_addr,
+            'force_new_cluster': force_new_cluster,
             'default_addr_pool': default_addr_pool,
-            'subnet_size': subnet_size,
-            'force_new_cluster': force_new_cluster
+            'subnet_size': subnet_size
         }
         init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
         self.client.api.init_swarm(**init_kwargs)
