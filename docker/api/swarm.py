@@ -83,8 +83,8 @@ class SwarmApiMixin(object):
 
     @utils.minimum_version('1.24')
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
-                   default_addr_pool=None, subnet_size=None,
-                   force_new_cluster=False, swarm_spec=None):
+                   force_new_cluster=False, swarm_spec=None,
+                   default_addr_pool=None, subnet_size=None):
         """
         Initialize a new Swarm using the current connected engine as the first
         node.
@@ -106,7 +106,7 @@ class SwarmApiMixin(object):
                 is used. Default: '0.0.0.0:2377'
             default_addr_pool (list of strings): Default Address Pool specifies
                 default subnet pools for global scope networks. Each pool
-                should be specified as a CIDR block, like '10.0.0.0/16'.
+                should be specified as a CIDR block, like '10.0.0.0/8'.
                 Default: None
             subnet_size (int): SubnetSize specifies the subnet size of the
                 networks created from the default subnet pool. Default: None
