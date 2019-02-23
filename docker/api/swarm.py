@@ -125,7 +125,6 @@ class SwarmApiMixin(object):
         """
 
         url = self._url('/swarm/init')
-
         if swarm_spec is not None and not isinstance(swarm_spec, dict):
             raise TypeError('swarm_spec must be a dictionary')
 
