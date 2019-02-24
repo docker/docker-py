@@ -102,6 +102,13 @@ class SSHAdapter(requests.adapters.HTTPAdapter):
 
         return pool
 
+    def build_response(self, req, resp):
+        sock = resp._connection.sock
+        res = requests.adapters.HTTPAdapter.build_response(self, req, resp)
+        len(res.text)  # make sure the response is fully received
+        sock.close()
+        return res
+
     def close(self):
         self.pools.clear()
         self.ssh_client.close()
