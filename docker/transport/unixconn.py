@@ -10,7 +10,6 @@ try:
 except ImportError:
     import urllib3
 
-
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
@@ -69,8 +68,11 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         )
 
 
-class UnixAdapter(requests.adapters.HTTPAdapter):
+def unix_adapter_dispose(p):
+    p.close()
 
+
+class UnixAdapter(requests.adapters.HTTPAdapter):
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + ['pools',
                                                            'socket_path',
                                                            'timeout']
@@ -83,9 +85,20 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
         self.socket_path = socket_path
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
-            pool_connections, dispose_func=lambda p: p.close()
+            pool_connections, dispose_func=unix_adapter_dispose
         )
         super(UnixAdapter, self).__init__()
+
+    def __getstate__(self):
+        r = super(UnixAdapter, self).__getstate__()
+        r['pools'] = None
+        return r
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.pools = RecentlyUsedContainer(
+            self._pool_connections, dispose_func=unix_adapter_dispose
+        )
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:
