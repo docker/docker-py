@@ -22,8 +22,8 @@ from .volume import VolumeApiMixin
 from .. import auth
 from ..constants import (
     DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
-    DEFAULT_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS,
-    MINIMUM_DOCKER_API_VERSION
+    DEFAULT_DOCKER_API_VERSION, MINIMUM_DOCKER_API_VERSION,
+    STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS_SSH, DEFAULT_NUM_POOLS
 )
 from ..errors import (
     DockerException, InvalidVersion, TLSParameterError,
@@ -101,7 +101,7 @@ class APIClient(
 
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
-                 user_agent=DEFAULT_USER_AGENT, num_pools=DEFAULT_NUM_POOLS,
+                 user_agent=DEFAULT_USER_AGENT, num_pools=None,
                  credstore_env=None):
         super(APIClient, self).__init__()
 
@@ -132,6 +132,10 @@ class APIClient(
         base_url = utils.parse_host(
             base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)
         )
+        # SSH has a different default for num_pools to all other adapters
+        num_pools = num_pools or DEFAULT_NUM_POOLS_SSH if \
+            base_url.startswith('ssh://') else DEFAULT_NUM_POOLS
+
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixAdapter(
                 base_url, timeout, pool_connections=num_pools
