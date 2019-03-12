@@ -18,4 +18,10 @@ WINDOWS_LONGPATH_PREFIX = '\\\\?\\'
 
 DEFAULT_USER_AGENT = "docker-sdk-python/{0}".format(version)
 DEFAULT_NUM_POOLS = 25
+
+# The OpenSSH server default value for MaxSessions is 10 which means we can
+# use up to 9, leaving the final session for the underlying SSH connection.
+# For more details see: https://github.com/docker/docker-py/issues/2246
+DEFAULT_NUM_POOLS_SSH = 9
+
 DEFAULT_DATA_CHUNK_SIZE = 1024 * 2048
