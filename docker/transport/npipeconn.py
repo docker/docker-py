@@ -1,6 +1,7 @@
 import six
 import requests.adapters
 
+from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 from .npipesocket import NpipeSocket
 
@@ -68,7 +69,7 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         return conn or self._new_conn()
 
 
-class NpipeAdapter(requests.adapters.HTTPAdapter):
+class NpipeHTTPAdapter(BaseHTTPAdapter):
 
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + ['npipe_path',
                                                            'pools',
@@ -81,7 +82,7 @@ class NpipeAdapter(requests.adapters.HTTPAdapter):
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        super(NpipeAdapter, self).__init__()
+        super(NpipeHTTPAdapter, self).__init__()
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:
@@ -103,6 +104,3 @@ class NpipeAdapter(requests.adapters.HTTPAdapter):
         # anyway, we simply return the path URL directly.
         # See also: https://github.com/docker/docker-sdk-python/issues/811
         return request.path_url
-
-    def close(self):
-        self.pools.clear()
