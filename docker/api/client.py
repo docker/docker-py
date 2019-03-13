@@ -30,18 +30,18 @@ from ..errors import (
     create_api_error_from_http_exception
 )
 from ..tls import TLSConfig
-from ..transport import SSLAdapter, UnixAdapter
+from ..transport import SSLHTTPAdapter, UnixHTTPAdapter
 from ..utils import utils, check_resource, update_headers, config
 from ..utils.socket import frames_iter, consume_socket_output, demux_adaptor
 from ..utils.json_stream import json_stream
 from ..utils.proxy import ProxyConfig
 try:
-    from ..transport import NpipeAdapter
+    from ..transport import NpipeHTTPAdapter
 except ImportError:
     pass
 
 try:
-    from ..transport import SSHAdapter
+    from ..transport import SSHHTTPAdapter
 except ImportError:
     pass
 
@@ -137,7 +137,7 @@ class APIClient(
             base_url.startswith('ssh://') else DEFAULT_NUM_POOLS
 
         if base_url.startswith('http+unix://'):
-            self._custom_adapter = UnixAdapter(
+            self._custom_adapter = UnixHTTPAdapter(
                 base_url, timeout, pool_connections=num_pools
             )
             self.mount('http+docker://', self._custom_adapter)
@@ -151,7 +151,7 @@ class APIClient(
                     'The npipe:// protocol is only supported on Windows'
                 )
             try:
-                self._custom_adapter = NpipeAdapter(
+                self._custom_adapter = NpipeHTTPAdapter(
                     base_url, timeout, pool_connections=num_pools
                 )
             except NameError:
@@ -162,7 +162,7 @@ class APIClient(
             self.base_url = 'http+docker://localnpipe'
         elif base_url.startswith('ssh://'):
             try:
-                self._custom_adapter = SSHAdapter(
+                self._custom_adapter = SSHHTTPAdapter(
                     base_url, timeout, pool_connections=num_pools
                 )
             except NameError:
@@ -177,7 +177,8 @@ class APIClient(
             if isinstance(tls, TLSConfig):
                 tls.configure_client(self)
             elif tls:
-                self._custom_adapter = SSLAdapter(pool_connections=num_pools)
+                self._custom_adapter = SSLHTTPAdapter(
+                    pool_connections=num_pools)
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
 

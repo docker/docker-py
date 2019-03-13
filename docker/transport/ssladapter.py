@@ -7,6 +7,8 @@ import sys
 from distutils.version import StrictVersion
 from requests.adapters import HTTPAdapter
 
+from docker.transport.basehttpadapter import BaseHTTPAdapter
+
 try:
     import requests.packages.urllib3 as urllib3
 except ImportError:
@@ -22,7 +24,7 @@ if sys.version_info[0] < 3 or sys.version_info[1] < 5:
     urllib3.connection.match_hostname = match_hostname
 
 
-class SSLAdapter(HTTPAdapter):
+class SSLHTTPAdapter(BaseHTTPAdapter):
     '''An HTTPS Transport Adapter that uses an arbitrary SSL version.'''
 
     __attrs__ = HTTPAdapter.__attrs__ + ['assert_fingerprint',
@@ -34,7 +36,7 @@ class SSLAdapter(HTTPAdapter):
         self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
-        super(SSLAdapter, self).__init__(**kwargs)
+        super(SSLHTTPAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
         kwargs = {
@@ -57,7 +59,7 @@ class SSLAdapter(HTTPAdapter):
 
         But we still need to take care of when there is a proxy poolmanager
         """
-        conn = super(SSLAdapter, self).get_connection(*args, **kwargs)
+        conn = super(SSLHTTPAdapter, self).get_connection(*args, **kwargs)
         if conn.assert_hostname != self.assert_hostname:
             conn.assert_hostname = self.assert_hostname
         return conn
