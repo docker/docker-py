@@ -298,7 +298,7 @@ class Container(Model):
         Pauses all processes within this container.
 
         Raises:
-            :py:class:`docker.errors.APIError`
+            :py:class:`docker.errors.APIError`def get(self, container_id):
                 If the server returns an error.
         """
         return self.client.api.pause(self.id)
@@ -853,12 +853,12 @@ class ContainerCollection(Collection):
         resp = self.client.api.create_container(**create_kwargs)
         return self.get(resp['Id'])
 
-    def get(self, container_id):
+    def get(self, container_name_or_id):
         """
         Get a container by name or ID.
 
         Args:
-            container_id (str): Container name or ID.
+            container_name_or_id (str): Container name or ID.
 
         Returns:
             A :py:class:`Container` object.
@@ -869,7 +869,7 @@ class ContainerCollection(Collection):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        resp = self.client.api.inspect_container(container_id)
+        resp = self.client.api.inspect_container(container_name_or_id)
         return self.prepare_model(resp)
 
     def list(self, all=False, before=None, filters=None, limit=-1, since=None,
