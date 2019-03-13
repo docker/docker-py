@@ -3,6 +3,7 @@ import requests.adapters
 import socket
 from six.moves import http_client as httplib
 
+from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 
 try:
@@ -69,7 +70,7 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         )
 
 
-class UnixAdapter(requests.adapters.HTTPAdapter):
+class UnixHTTPAdapter(BaseHTTPAdapter):
 
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + ['pools',
                                                            'socket_path',
@@ -85,7 +86,7 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        super(UnixAdapter, self).__init__()
+        super(UnixHTTPAdapter, self).__init__()
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:
@@ -107,6 +108,3 @@ class UnixAdapter(requests.adapters.HTTPAdapter):
         # anyway, we simply return the path URL directly.
         # See also: https://github.com/docker/docker-py/issues/811
         return request.path_url
-
-    def close(self):
-        self.pools.clear()
