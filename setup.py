@@ -29,9 +29,6 @@ extras_require = {
     ':sys_platform == "win32" and python_version < "3.6"': 'pypiwin32==219',
     ':sys_platform == "win32" and python_version >= "3.6"': 'pypiwin32==223',
 
-    # urllib3 drops support for Python 3.3 in 1.23
-    ':python_version == "3.3"': 'urllib3 < 1.23',
-
     # If using docker-py over TLS, highly recommend this option is
     # pip-installed or pinned.
 
@@ -75,7 +72,7 @@ setup(
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -87,7 +84,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
