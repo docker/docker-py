@@ -387,7 +387,7 @@ class ServiceApiMixin(object):
                 current specification of the service. Default: ``False``
 
         Returns:
-            ``True`` if successful.
+            A dictionary containing a ``Warnings`` key.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -471,5 +471,4 @@ class ServiceApiMixin(object):
         resp = self._post_json(
             url, data=data, params={'version': version}, headers=headers
         )
-        self._raise_for_status(resp)
-        return True
+        return self._result(resp, json=True)
