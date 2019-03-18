@@ -3,4 +3,6 @@ import requests.adapters
 
 class BaseHTTPAdapter(requests.adapters.HTTPAdapter):
     def close(self):
-        self.pools.clear()
+        super(BaseHTTPAdapter, self).close()
+        if hasattr(self, 'pools'):
+            self.pools.clear()
