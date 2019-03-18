@@ -915,9 +915,10 @@ class ContainerApiMixin(object):
         if '/' in private_port:
             return port_settings.get(private_port)
 
-        h_ports = port_settings.get(private_port + '/tcp')
-        if h_ports is None:
-            h_ports = port_settings.get(private_port + '/udp')
+        for protocol in ['tcp', 'udp', 'sctp']:
+            h_ports = port_settings.get(private_port + '/' + protocol)
+            if h_ports:
+                break
 
         return h_ports
 

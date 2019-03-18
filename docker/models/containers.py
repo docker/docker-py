@@ -649,8 +649,8 @@ class ContainerCollection(Collection):
 
                 The keys of the dictionary are the ports to bind inside the
                 container, either as an integer or a string in the form
-                ``port/protocol``, where the protocol is either ``tcp`` or
-                ``udp``.
+                ``port/protocol``, where the protocol is either ``tcp``,
+                ``udp``, or ``sctp``.
 
                 The values of the dictionary are the corresponding ports to
                 open on the host, which can be either:
