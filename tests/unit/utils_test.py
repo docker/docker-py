@@ -491,9 +491,12 @@ class PortsTest(unittest.TestCase):
         assert external_port == [("127.0.0.1", "1000")]
 
     def test_split_port_with_protocol(self):
-        internal_port, external_port = split_port("127.0.0.1:1000:2000/udp")
-        assert internal_port == ["2000/udp"]
-        assert external_port == [("127.0.0.1", "1000")]
+        for protocol in ['tcp', 'udp', 'sctp']:
+            internal_port, external_port = split_port(
+                "127.0.0.1:1000:2000/" + protocol
+            )
+            assert internal_port == ["2000/" + protocol]
+            assert external_port == [("127.0.0.1", "1000")]
 
     def test_split_port_with_host_ip_no_port(self):
         internal_port, external_port = split_port("127.0.0.1::2000")
@@ -545,6 +548,10 @@ class PortsTest(unittest.TestCase):
     def test_split_port_invalid(self):
         with pytest.raises(ValueError):
             split_port("0.0.0.0:1000:2000:tcp")
+
+    def test_split_port_invalid_protocol(self):
+        with pytest.raises(ValueError):
+            split_port("0.0.0.0:1000:2000/ftp")
 
     def test_non_matching_length_port_ranges(self):
         with pytest.raises(ValueError):
