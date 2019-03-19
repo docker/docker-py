@@ -123,7 +123,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
     def test_run_with_auto_remove(self):
         client = docker.from_env(version=TEST_API_VERSION)
         out = client.containers.run(
-            'alpine', 'echo hello', auto_remove=True
+            # sleep(2) to allow any communication with the container
+            # before it gets removed by the host.
+            'alpine', 'sh -c "echo hello && sleep 2"', auto_remove=True
         )
         assert out == b'hello\n'
 
@@ -132,7 +134,10 @@ class ContainerCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.ContainerError) as e:
             client.containers.run(
-                'alpine', 'sh -c ">&2 echo error && exit 1"', auto_remove=True
+                # sleep(2) to allow any communication with the container
+                # before it gets removed by the host.
+                'alpine', 'sh -c ">&2 echo error && sleep 2 && exit 1"',
+                auto_remove=True
             )
         assert e.value.exit_status == 1
         assert e.value.stderr is None
