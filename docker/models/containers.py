@@ -173,9 +173,10 @@ class Container(Model):
                 exit_code: (int):
                     Exit code for the executed command or ``None`` if
                     either ``stream```or ``socket`` is ``True``.
-                output: (generator or bytes):
+                output: (generator, bytes, or tuple):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
+                    If ``demux=True``, a tuple of two bytes: stdout and stderr.
                     A bytestring containing response data otherwise.
 
         Raises:
