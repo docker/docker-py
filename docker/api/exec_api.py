@@ -137,7 +137,8 @@ class ExecApiMixin(object):
             (generator or str or tuple): If ``stream=True``, a generator
             yielding response chunks. If ``socket=True``, a socket object for
             the connection. A string containing response data otherwise. If
-            ``demux=True``, stdout and stderr are separated.
+            ``demux=True``, a tuple with two elements of type byte: stdout and
+            stderr.
 
         Raises:
             :py:class:`docker.errors.APIError`
