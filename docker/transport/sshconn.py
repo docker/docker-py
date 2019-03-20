@@ -2,6 +2,7 @@ import paramiko
 import requests.adapters
 import six
 
+from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 
 if six.PY3:
@@ -68,7 +69,7 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         return conn or self._new_conn()
 
 
-class SSHAdapter(requests.adapters.HTTPAdapter):
+class SSHHTTPAdapter(BaseHTTPAdapter):
 
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + [
         'pools', 'timeout', 'ssh_client',
@@ -79,21 +80,29 @@ class SSHAdapter(requests.adapters.HTTPAdapter):
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
 
-        parsed = six.moves.urllib_parse.urlparse(base_url)
-        self.ssh_client.connect(
-            parsed.hostname, parsed.port, parsed.username,
-        )
+        self.base_url = base_url
+        self._connect()
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        super(SSHAdapter, self).__init__()
+        super(SSHHTTPAdapter, self).__init__()
+
+    def _connect(self):
+        parsed = six.moves.urllib_parse.urlparse(self.base_url)
+        self.ssh_client.connect(
+            parsed.hostname, parsed.port, parsed.username,
+        )
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:
             pool = self.pools.get(url)
             if pool:
                 return pool
+
+            # Connection is closed try a reconnect
+            if not self.ssh_client.get_transport():
+                self._connect()
 
             pool = SSHConnectionPool(
                 self.ssh_client, self.timeout
@@ -103,5 +112,5 @@ class SSHAdapter(requests.adapters.HTTPAdapter):
         return pool
 
     def close(self):
-        self.pools.clear()
+        super(SSHHTTPAdapter, self).close()
         self.ssh_client.close()

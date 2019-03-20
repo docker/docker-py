@@ -2,7 +2,7 @@ import os
 import ssl
 
 from . import errors
-from .transport import SSLAdapter
+from .transport import SSLHTTPAdapter
 
 
 class TLSConfig(object):
@@ -105,7 +105,7 @@ class TLSConfig(object):
         if self.cert:
             client.cert = self.cert
 
-        client.mount('https://', SSLAdapter(
+        client.mount('https://', SSLHTTPAdapter(
             ssl_version=self.ssl_version,
             assert_hostname=self.assert_hostname,
             assert_fingerprint=self.assert_fingerprint,

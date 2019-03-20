@@ -1,6 +1,19 @@
 Change log
 ==========
 
+3.7.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/58?closed=1)
+
+### Bugfixes
+
+* Set a different default number (which is now 9) for SSH pools
+* Adds a BaseHTTPAdapter with a close method to ensure that the
+pools is clean on close()
+* Makes SSHHTTPAdapter reopen a closed connection when needed
+like the others
+
 3.7.0
 -----
 
