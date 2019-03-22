@@ -83,8 +83,8 @@ class SwarmApiMixin(object):
 
     @utils.minimum_version('1.24')
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
-                   default_addr_pool=None, subnet_size=None,
-                   force_new_cluster=False, swarm_spec=None):
+                   force_new_cluster=False, swarm_spec=None,
+                   default_addr_pool=None, subnet_size=None):
         """
         Initialize a new Swarm using the current connected engine as the first
         node.
@@ -104,17 +104,17 @@ class SwarmApiMixin(object):
                 or an interface followed by a port number, like ``eth0:4567``.
                 If the port number is omitted, the default swarm listening port
                 is used. Default: '0.0.0.0:2377'
-            default_addr_pool (list of strings): Default Address Pool specifies
-                default subnet pools for global scope networks. Each pool
-                should be specified as a CIDR block, like '10.0.0.0/16'.
-                Default: None
-            subnet_size (int): SubnetSize specifies the subnet size of the
-                networks created from the default subnet pool. Default: None
             force_new_cluster (bool): Force creating a new Swarm, even if
                 already part of one. Default: False
             swarm_spec (dict): Configuration settings of the new Swarm. Use
                 ``APIClient.create_swarm_spec`` to generate a valid
                 configuration. Default: None
+            default_addr_pool (list of strings): Default Address Pool specifies
+                default subnet pools for global scope networks. Each pool
+                should be specified as a CIDR block, like '10.0.0.0/8'.
+                Default: None
+            subnet_size (int): SubnetSize specifies the subnet size of the
+                networks created from the default subnet pool. Default: None
 
         Returns:
             ``True`` if successful.
@@ -125,7 +125,6 @@ class SwarmApiMixin(object):
         """
 
         url = self._url('/swarm/init')
-
         if swarm_spec is not None and not isinstance(swarm_spec, dict):
             raise TypeError('swarm_spec must be a dictionary')
 
