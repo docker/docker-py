@@ -964,7 +964,6 @@ RUN_CREATE_KWARGS = [
     'tty',
     'use_config_proxy',
     'user',
-    'volume_driver',
     'working_dir',
 ]
 
@@ -1028,6 +1027,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'userns_mode',
     'uts_mode',
     'version',
+    'volume_driver',
     'volumes_from',
     'runtime'
 ]

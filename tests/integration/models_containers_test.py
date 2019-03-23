@@ -378,3 +378,13 @@ class ContainerTest(BaseIntegrationTest):
                                           detach=True)
         self.tmp_containers.append(container.id)
         assert container.wait()['StatusCode'] == 1
+
+    def test_create_with_volume_driver(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        container = client.containers.create(
+            'alpine',
+            'sleep 300',
+            volume_driver='foo'
+        )
+        self.tmp_containers.append(container.id)
+        assert container.attrs['HostConfig']['VolumeDriver'] == 'foo'
