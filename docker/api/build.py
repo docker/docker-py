@@ -121,6 +121,7 @@ class BuildApiMixin(object):
         remote = context = None
         headers = {}
         container_limits = container_limits or {}
+        buildargs = buildargs or {}
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
         if gzip and encoding is not None:
