@@ -7,7 +7,7 @@ PORT_SPEC = re.compile(
     r"(?P<ext>[\d]*)(-(?P<ext_end>[\d]+))?:"  # External range
     ")?"
     r"(?P<int>[\d]+)(-(?P<int_end>[\d]+))?"  # Internal range
-    "(?P<proto>/(udp|tcp))?"  # Protocol
+    "(?P<proto>/(udp|tcp|sctp))?"  # Protocol
     "$"  # Match full string
 )
 
