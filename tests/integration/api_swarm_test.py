@@ -236,6 +236,19 @@ class SwarmTest(BaseAPIIntegrationTest):
 
         assert e.value.response.status_code >= 400
 
+    @requires_api_version('1.25')
+    def test_rotate_manager_unlock_key(self):
+        spec = self.client.create_swarm_spec(autolock_managers=True)
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+        key_1 = self.client.get_unlock_key()
+        assert self.client.update_swarm(
+            version=swarm_info['Version']['Index'],
+            rotate_manager_unlock_key=True
+        )
+        key_2 = self.client.get_unlock_key()
+        assert key_1['UnlockKey'] != key_2['UnlockKey']
+
     @requires_api_version('1.30')
     def test_init_swarm_data_path_addr(self):
         assert self.init_swarm(data_path_addr='eth0')
