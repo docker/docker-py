@@ -352,9 +352,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
     params = {}
 
     if host:
-        params['base_url'] = (
-            host.replace('tcp://', 'https://') if enable_tls else host
-        )
+        params['base_url'] = host
 
     if not enable_tls:
         return params

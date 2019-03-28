@@ -1,6 +1,17 @@
 Change log
 ==========
 
+3.7.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/59?closed=1)
+
+### Bugfixes
+
+* Fix base_url to keep TCP protocol on utils.py by letting the responsability of changing the
+protocol to `parse_host` afterwards, letting `base_url` with the original value.
+* XFAIL test_attach_stream_and_cancel on TLS
+
 3.7.1
 -----
 

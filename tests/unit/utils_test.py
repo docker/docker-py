@@ -11,6 +11,7 @@ import unittest
 
 
 from docker.api.client import APIClient
+from docker.constants import IS_WINDOWS_PLATFORM
 from docker.errors import DockerException
 from docker.utils import (
     convert_filters, convert_volume_binds, decode_json_header, kwargs_from_env,
@@ -83,15 +84,17 @@ class KwargsFromEnvTest(unittest.TestCase):
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
         kwargs = kwargs_from_env(assert_hostname=False)
-        assert 'https://192.168.59.103:2376' == kwargs['base_url']
+        assert 'tcp://192.168.59.103:2376' == kwargs['base_url']
         assert 'ca.pem' in kwargs['tls'].ca_cert
         assert 'cert.pem' in kwargs['tls'].cert[0]
         assert 'key.pem' in kwargs['tls'].cert[1]
         assert kwargs['tls'].assert_hostname is False
         assert kwargs['tls'].verify
+
+        parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
         try:
             client = APIClient(**kwargs)
-            assert kwargs['base_url'] == client.base_url
+            assert parsed_host == client.base_url
             assert kwargs['tls'].ca_cert == client.verify
             assert kwargs['tls'].cert == client.cert
         except TypeError as e:
@@ -102,15 +105,16 @@ class KwargsFromEnvTest(unittest.TestCase):
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='')
         kwargs = kwargs_from_env(assert_hostname=True)
-        assert 'https://192.168.59.103:2376' == kwargs['base_url']
+        assert 'tcp://192.168.59.103:2376' == kwargs['base_url']
         assert 'ca.pem' in kwargs['tls'].ca_cert
         assert 'cert.pem' in kwargs['tls'].cert[0]
         assert 'key.pem' in kwargs['tls'].cert[1]
         assert kwargs['tls'].assert_hostname is True
         assert kwargs['tls'].verify is False
+        parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
         try:
             client = APIClient(**kwargs)
-            assert kwargs['base_url'] == client.base_url
+            assert parsed_host == client.base_url
             assert kwargs['tls'].cert == client.cert
             assert not kwargs['tls'].verify
         except TypeError as e:
