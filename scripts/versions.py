@@ -62,13 +62,9 @@ def main():
     for url in [base_url.format(cat) for cat in categories]:
         res = requests.get(url)
         content = res.text
-        versions = [
-            Version.parse(
-                v.strip('"').lstrip('docker-').rstrip('.tgz').rstrip('-x86_64')
-            ) for v in re.findall(
-                r'"docker-[0-9]+\.[0-9]+\.[0-9]+-?.*tgz"', content
-            )
-        ]
+        versions = [Version.parse(v) for v in re.findall(
+                r'"docker-([0-9]+\.[0-9]+\.[0-9]+)-?.*tgz"', content
+        )]
         sorted_versions = sorted(
             versions, reverse=True, key=operator.attrgetter('order')
         )
