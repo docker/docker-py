@@ -88,6 +88,10 @@ def _check_api_features(version, task_template, update_config, endpoint_spec,
                 if container_spec.get('Isolation') is not None:
                     raise_version_error('ContainerSpec.isolation', '1.35')
 
+            if utils.version_lt(version, '1.38'):
+                if container_spec.get('Init') is not None:
+                    raise_version_error('ContainerSpec.init', '1.38')
+
         if task_template.get('Resources'):
             if utils.version_lt(version, '1.32'):
                 if task_template['Resources'].get('GenericResources'):

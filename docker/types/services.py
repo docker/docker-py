@@ -110,13 +110,15 @@ class ContainerSpec(dict):
         privileges (Privileges): Security options for the service's containers.
         isolation (string): Isolation technology used by the service's
             containers. Only used for Windows containers.
+        init (boolean): Run an init inside the container that forwards signals
+            and reaps processes.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
                  stop_grace_period=None, secrets=None, tty=None, groups=None,
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
-                 privileges=None, isolation=None):
+                 privileges=None, isolation=None, init=None):
         self['Image'] = image
 
         if isinstance(command, six.string_types):
@@ -182,6 +184,9 @@ class ContainerSpec(dict):
 
         if isolation is not None:
             self['Isolation'] = isolation
+
+        if init is not None:
+            self['Init'] = init
 
 
 class Mount(dict):
