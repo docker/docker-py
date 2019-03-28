@@ -151,7 +151,7 @@ class Swarm(Model):
     unlock.__doc__ = APIClient.unlock_swarm.__doc__
 
     def update(self, rotate_worker_token=False, rotate_manager_token=False,
-               **kwargs):
+               rotate_manager_unlock_key=False, **kwargs):
         """
         Update the swarm's configuration.
 
@@ -164,7 +164,8 @@ class Swarm(Model):
                 ``False``.
             rotate_manager_token (bool): Rotate the manager join token.
                 Default: ``False``.
-
+            rotate_manager_unlock_key (bool): Rotate the manager unlock key.
+                Default: ``False``.
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
@@ -178,5 +179,6 @@ class Swarm(Model):
             version=self.version,
             swarm_spec=self.client.api.create_swarm_spec(**kwargs),
             rotate_worker_token=rotate_worker_token,
-            rotate_manager_token=rotate_manager_token
+            rotate_manager_token=rotate_manager_token,
+            rotate_manager_unlock_key=rotate_manager_unlock_key
         )
