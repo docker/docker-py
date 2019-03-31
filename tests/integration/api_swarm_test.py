@@ -233,3 +233,7 @@ class SwarmTest(BaseAPIIntegrationTest):
             self.client.remove_node(node_id, True)
 
         assert e.value.response.status_code >= 400
+
+    @requires_api_version('1.30')
+    def test_init_swarm_data_path_addr(self):
+        assert self.init_swarm(data_path_addr='eth0')

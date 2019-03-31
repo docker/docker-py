@@ -35,7 +35,7 @@ class Swarm(Model):
 
     def init(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
              force_new_cluster=False, default_addr_pool=None,
-             subnet_size=None, **kwargs):
+             subnet_size=None, data_path_addr=None, **kwargs):
         """
         Initialize a new swarm on this Engine.
 
@@ -63,6 +63,8 @@ class Swarm(Model):
                 Default: None
             subnet_size (int): SubnetSize specifies the subnet size of the
                 networks created from the default subnet pool. Default: None
+            data_path_addr (string): Address or interface to use for data path
+                traffic. For example, 192.168.1.1, or an interface, like eth0.
             task_history_retention_limit (int): Maximum number of tasks
                 history stored.
             snapshot_interval (int): Number of logs entries between snapshot.
@@ -117,7 +119,8 @@ class Swarm(Model):
             'listen_addr': listen_addr,
             'force_new_cluster': force_new_cluster,
             'default_addr_pool': default_addr_pool,
-            'subnet_size': subnet_size
+            'subnet_size': subnet_size,
+            'data_path_addr': data_path_addr,
         }
         init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
         self.client.api.init_swarm(**init_kwargs)
