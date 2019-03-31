@@ -205,7 +205,7 @@ class SwarmApiMixin(object):
             listen_addr (string): Listen address used for inter-manager
                 communication if the node gets promoted to manager, as well as
                 determining the networking interface used for the VXLAN Tunnel
-                Endpoint (VTEP). Default: ``None``
+                Endpoint (VTEP). Default: ``'0.0.0.0:2377``
             advertise_addr (string): Externally reachable address advertised
                 to other nodes. This can either be an address/port combination
                 in the form ``192.168.1.1:4567``, or an interface followed by a
