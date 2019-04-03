@@ -346,6 +346,66 @@ class ContainerTest(BaseIntegrationTest):
                     'memory_stats', 'blkio_stats']:
             assert key in stats
 
+    def test_ports_target_none(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        ports = None
+        target_ports = {'2222/tcp': ports}
+        container = client.containers.run(
+            "alpine", "sleep 100", detach=True,
+            ports=target_ports
+        )
+        self.tmp_containers.append(container.id)
+        container.reload()  # required to get auto-assigned ports
+        actual_ports = container.ports
+        assert sorted(target_ports.keys()) == sorted(actual_ports.keys())
+        for target_client, target_host in target_ports.items():
+            for actual_port in actual_ports[target_client]:
+                actual_keys = sorted(actual_port.keys())
+                assert sorted(['HostIp', 'HostPort']) == actual_keys
+                assert target_host is ports
+                assert int(actual_port['HostPort']) > 0
+        client.close()
+
+    def test_ports_target_tuple(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        ports = ('127.0.0.1', 1111)
+        target_ports = {'2222/tcp': ports}
+        container = client.containers.run(
+            "alpine", "sleep 100", detach=True,
+            ports=target_ports
+        )
+        self.tmp_containers.append(container.id)
+        container.reload()  # required to get auto-assigned ports
+        actual_ports = container.ports
+        assert sorted(target_ports.keys()) == sorted(actual_ports.keys())
+        for target_client, target_host in target_ports.items():
+            for actual_port in actual_ports[target_client]:
+                actual_keys = sorted(actual_port.keys())
+                assert sorted(['HostIp', 'HostPort']) == actual_keys
+                assert target_host == ports
+                assert int(actual_port['HostPort']) > 0
+        client.close()
+
+    def test_ports_target_list(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        ports = [1234, 4567]
+        target_ports = {'2222/tcp': ports}
+        container = client.containers.run(
+            "alpine", "sleep 100", detach=True,
+            ports=target_ports
+        )
+        self.tmp_containers.append(container.id)
+        container.reload()  # required to get auto-assigned ports
+        actual_ports = container.ports
+        assert sorted(target_ports.keys()) == sorted(actual_ports.keys())
+        for target_client, target_host in target_ports.items():
+            for actual_port in actual_ports[target_client]:
+                actual_keys = sorted(actual_port.keys())
+                assert sorted(['HostIp', 'HostPort']) == actual_keys
+                assert target_host == ports
+                assert int(actual_port['HostPort']) > 0
+        client.close()
+
     def test_stop(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "top", detach=True)
