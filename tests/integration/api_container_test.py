@@ -1267,19 +1267,16 @@ class AttachContainerTest(BaseAPIIntegrationTest):
     @pytest.mark.timeout(5)
     @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
                         reason='No cancellable streams over SSH')
-    @pytest.mark.xfail(condition=os.environ.get('DOCKER_TLS_VERIFY') or
-                       os.environ.get('DOCKER_CERT_PATH'),
-                       reason='Flaky test on TLS')
     def test_attach_stream_and_cancel(self):
         container = self.client.create_container(
-            BUSYBOX, 'sh -c "echo hello && sleep 60"',
+            BUSYBOX, 'sh -c "sleep 2 && echo hello && sleep 60"',
             tty=True
         )
         self.tmp_containers.append(container)
         self.client.start(container)
         output = self.client.attach(container, stream=True, logs=True)
 
-        threading.Timer(1, output.close).start()
+        threading.Timer(3, output.close).start()
 
         lines = []
         for line in output:
