@@ -448,19 +448,6 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['Init'] is True
 
-    @pytest.mark.xfail(True, reason='init-path removed in 17.05.0')
-    @requires_api_version('1.25')
-    def test_create_with_init_path(self):
-        ctnr = self.client.create_container(
-            BUSYBOX, 'true',
-            host_config=self.client.create_host_config(
-                init_path="/usr/libexec/docker-init"
-            )
-        )
-        self.tmp_containers.append(ctnr['Id'])
-        config = self.client.inspect_container(ctnr)
-        assert config['HostConfig']['InitPath'] == "/usr/libexec/docker-init"
-
     @requires_api_version('1.24')
     @pytest.mark.xfail(not os.path.exists('/sys/fs/cgroup/cpu.rt_runtime_us'),
                        reason='CONFIG_RT_GROUP_SCHED isn\'t enabled')
