@@ -1,6 +1,7 @@
 import paramiko
 import requests.adapters
 import six
+import logging
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
@@ -77,6 +78,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
 
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS):
+        logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
 
