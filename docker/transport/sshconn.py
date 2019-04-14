@@ -81,6 +81,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
+        self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
 
         self.base_url = base_url
         self._connect()
