@@ -2,10 +2,7 @@ import paramiko
 import requests.adapters
 import six
 import logging
-<<<<<<< HEAD
 import os
-=======
->>>>>>> 2dc569a... set logging level of paramiko to warn
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
