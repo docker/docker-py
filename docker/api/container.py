@@ -533,7 +533,8 @@ class ContainerApiMixin(object):
             restart_policy (dict): Restart the container when it exits.
                 Configured as a dictionary with keys:
 
-                - ``Name`` One of ``on-failure``, or ``always``.
+                - ``Name`` One of ``on-failure``, ``unless-stopped`` or
+                  ``always``.
                 - ``MaximumRetryCount`` Number of times to restart the
                   container on failure.
             security_opt (:py:class:`list`): A list of string values to
