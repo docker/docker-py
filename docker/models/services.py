@@ -82,6 +82,35 @@ class Service(Model):
             **create_kwargs
         )
 
+    def rollback(self, **kwargs):
+        """
+        Rollback service to previous version. Similar to the ``docker service
+        update`` command.
+
+        Takes the same parameters as :py:meth:`~ServiceCollection.create`.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        # Image is required, so if it hasn't been set, use current image
+        if 'image' not in kwargs:
+            spec = self.attrs['Spec']['TaskTemplate']['ContainerSpec']
+            kwargs['image'] = spec['Image']
+
+        if kwargs.get('force_update') is True:
+            task_template = self.attrs['Spec']['TaskTemplate']
+            current_value = int(task_template.get('ForceUpdate', 0))
+            kwargs['force_update'] = current_value + 1
+
+        create_kwargs = _get_create_service_kwargs('update', kwargs)
+
+        return self.client.api.rollback_service(
+            self.id,
+            self.version,
+            **create_kwargs
+        )
+
     def logs(self, **kwargs):
         """
         Get log stream for the service.
