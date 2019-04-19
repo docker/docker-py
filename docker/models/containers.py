@@ -310,8 +310,7 @@ class Container(Model):
                 float (in nanoseconds)
 
         Returns:
-            (generatoran iterator of output bytes or bytes):
-                Logs from the container.
+            (generator of bytes or bytes): Logs from the container.
 
         Raises:
             :py:class:`docker.errors.APIError`
