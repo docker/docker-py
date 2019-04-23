@@ -2,16 +2,16 @@ import functools
 import os
 import os.path
 import random
+import re
+import socket
 import tarfile
 import tempfile
 import time
-import re
-import six
-import socket
 
 import docker
 import paramiko
 import pytest
+import six
 
 
 def make_tree(dirs, files):
