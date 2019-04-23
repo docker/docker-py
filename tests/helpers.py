@@ -119,13 +119,18 @@ def assert_cat_socket_detached_with_keys(sock, inputs):
     # If we're using a Unix socket, the sock.send call will fail with a
     # BrokenPipeError ; INET sockets will just stop receiving / sending data
     # but will not raise an error
-    if getattr(sock, 'family', -9) == getattr(socket, 'AF_UNIX', -1):
-        with pytest.raises(socket.error):
-            sock.sendall(b'make sure the socket is closed\n')
-    elif isinstance(sock, paramiko.Channel):
+    if isinstance(sock, paramiko.Channel):
         with pytest.raises(OSError):
             sock.sendall(b'make sure the socket is closed\n')
     else:
+        if getattr(sock, 'family', -9) == getattr(socket, 'AF_UNIX', -1):
+            # We do not want to use pytest.raises here because future versions
+            # of the daemon no longer cause this to raise an error.
+            try:
+                sock.sendall(b'make sure the socket is closed\n')
+            except socket.error:
+                return
+
         sock.sendall(b"make sure the socket is closed\n")
         data = sock.recv(128)
         # New in 18.06: error message is broadcast over the socket when reading
