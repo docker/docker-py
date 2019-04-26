@@ -2,6 +2,7 @@ import six
 
 from .. import errors
 from .. import utils
+from ..types import CancellableStream
 
 
 class ExecApiMixin(object):
@@ -127,9 +128,10 @@ class ExecApiMixin(object):
             detach (bool): If true, detach from the exec command.
                 Default: False
             tty (bool): Allocate a pseudo-TTY. Default: False
-            stream (bool): Stream response data. Default: False
+            stream (bool): Return response data progressively as an iterator
+                of strings, rather than a single string.
             socket (bool): Return the connection socket to allow custom
-                read/write operations.
+                read/write operations. Must be closed by the caller when done.
             demux (bool): Return stdout and stderr separately
 
         Returns:
@@ -163,7 +165,15 @@ class ExecApiMixin(object):
             stream=True
         )
         if detach:
-            return self._result(res)
+            try:
+                return self._result(res)
+            finally:
+                res.close()
         if socket:
             return self._get_raw_response_socket(res)
-        return self._read_from_socket(res, stream, tty=tty, demux=demux)
+
+        output = self._read_from_socket(res, stream, tty=tty, demux=demux)
+        if stream:
+            return CancellableStream(output, res)
+        else:
+            return output
