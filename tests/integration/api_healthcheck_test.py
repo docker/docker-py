@@ -8,7 +8,9 @@ def wait_on_health_status(client, container, status):
     def condition():
         res = client.inspect_container(container)
         return res['State']['Health']['Status'] == status
-    return helpers.wait_on_condition(condition)
+    if not helpers.wait_until_truthy(condition, attempts=400, interval=0.1):
+        raise AssertionError('Timed out waiting for %s to get to status %s'
+                             % (container, status))
 
 
 class HealthcheckTest(BaseAPIIntegrationTest):

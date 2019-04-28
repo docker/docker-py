@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import random
-import time
 
 import docker
 import pytest
 import six
 
 from ..helpers import (
-    force_leave_swarm, requires_api_version, requires_experimental
+    force_leave_swarm, requires_api_version,
+    requires_experimental, wait_until_truthy
 )
 from .base import BaseAPIIntegrationTest, BUSYBOX
 
@@ -26,32 +26,36 @@ class ServiceTest(BaseAPIIntegrationTest):
         force_leave_swarm(client)
 
     def tearDown(self):
-        for service in self.client.services(filters={'name': 'dockerpytest_'}):
+        services = self.client.services(filters={'name': 'dockerpytest_'})
+        service_ids = [service['ID'] for service in services]
+
+        for service_id in service_ids:
             try:
-                self.client.remove_service(service['ID'])
+                self.client.remove_service(service_id)
             except docker.errors.APIError:
+                # possible engine issues are not this repo's concern, let's
+                # ignore those
                 pass
+
+        self._wait_for_services_removal(*service_ids)
+
         super(ServiceTest, self).tearDown()
 
     def get_service_name(self):
         return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
 
-    def get_service_container(self, service_name, attempts=20, interval=0.5,
-                              include_stopped=False):
+    def get_service_container(self, service_name, include_stopped=False,
+                              **wait_options):
         # There is some delay between the service's creation and the creation
         # of the service's containers. This method deals with the uncertainty
         # when trying to retrieve the container associated with a service.
-        while True:
-            containers = self.client.containers(
+        containers = wait_until_truthy(
+            lambda: self.client.containers(
                 filters={'name': [service_name]}, quiet=True,
                 all=include_stopped
-            )
-            if len(containers) > 0:
-                return containers[0]
-            attempts -= 1
-            if attempts <= 0:
-                return None
-            time.sleep(interval)
+            ), **wait_options)
+        if containers:
+            return containers[0]
 
     def create_simple_service(self, name=None, labels=None):
         if name:
@@ -114,12 +118,14 @@ class ServiceTest(BaseAPIIntegrationTest):
     def test_remove_service_by_id(self):
         svc_name, svc_id = self.create_simple_service()
         assert self.client.remove_service(svc_id)
+        self._wait_for_services_removal(svc_id)
         test_services = self.client.services(filters={'name': 'dockerpytest_'})
         assert len(test_services) == 0
 
     def test_remove_service_by_name(self):
         svc_name, svc_id = self.create_simple_service()
         assert self.client.remove_service(svc_name)
+        self._wait_for_services_removal(svc_name)
         test_services = self.client.services(filters={'name': 'dockerpytest_'})
         assert len(test_services) == 0
 
@@ -135,20 +141,15 @@ class ServiceTest(BaseAPIIntegrationTest):
     def test_service_logs(self):
         name, svc_id = self.create_simple_service()
         assert self.get_service_container(name, include_stopped=True)
-        attempts = 20
-        while True:
-            if attempts == 0:
-                self.fail('No service logs produced by endpoint')
-                return
+
+        def fetch_service_logs():
             logs = self.client.service_logs(svc_id, stdout=True, is_tty=False)
             try:
-                log_line = next(logs)
+                return next(logs)
             except StopIteration:
-                attempts -= 1
-                time.sleep(0.1)
-                continue
-            else:
-                break
+                pass
+
+        log_line = wait_until_truthy(fetch_service_logs, interval=0.1)
 
         if six.PY3:
             log_line = log_line.decode('utf-8')
@@ -1317,3 +1318,24 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.client.update_service(*args, **kwargs)
             else:
                 raise
+
+    # service removal is async, in the sense that services only get
+    # properly deleted once all of their containers have properly shut down
+    # this function polls until the services are actually deleted
+    def _wait_for_services_removal(self, *svc_ids):
+        def service_doesnt_exist(svc_id):
+            try:
+                svc_info = self.client.inspect_service(svc_id)
+                # the service is not removed yet, but the engine should at
+                # least have marked it for removal
+                assert svc_info['PendingDelete']
+
+                return False
+            except docker.errors.NotFound:
+                return True
+            except docker.errors.APIError:
+                # engine error, retry
+                pass
+
+        for svc_id in svc_ids:
+            wait_until_truthy(service_doesnt_exist, args=[svc_id], attempts=40)
