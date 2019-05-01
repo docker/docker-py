@@ -115,69 +115,6 @@ class ExecTest(BaseAPIIntegrationTest):
             res += chunk
         assert res == b'hello\nworld\n'
 
-    def test_exec_command_demux(self):
-        container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True)
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-
-        script = ' ; '.join([
-            # Write something on stdout
-            'echo hello out',
-            # Write something on stderr
-            'echo hello err >&2'])
-        cmd = 'sh -c "{}"'.format(script)
-
-        # tty=False, stream=False, demux=False
-        res = self.client.exec_create(id, cmd)
-        exec_log = self.client.exec_start(res)
-        assert 'hello out\n' in exec_log
-        assert 'hello err\n' in exec_log
-
-        # tty=False, stream=True, demux=False
-        res = self.client.exec_create(id, cmd)
-        exec_log = list(self.client.exec_start(res, stream=True))
-        assert len(exec_log) == 2
-        assert 'hello out\n' in exec_log
-        assert 'hello err\n' in exec_log
-
-        # tty=False, stream=False, demux=True
-        res = self.client.exec_create(id, cmd)
-        exec_log = self.client.exec_start(res, demux=True)
-        assert exec_log == (b'hello out\n', b'hello err\n')
-
-        # tty=False, stream=True, demux=True
-        res = self.client.exec_create(id, cmd)
-        exec_log = list(self.client.exec_start(res, demux=True, stream=True))
-        assert len(exec_log) == 2
-        assert (b'hello out\n', None) in exec_log
-        assert (None, b'hello err\n') in exec_log
-
-        # tty=True, stream=False, demux=False
-        res = self.client.exec_create(id, cmd, tty=True)
-        exec_log = self.client.exec_start(res)
-        assert exec_log == b'hello out\r\nhello err\r\n'
-
-        # tty=True, stream=True, demux=False
-        res = self.client.exec_create(id, cmd, tty=True)
-        exec_log = list(self.client.exec_start(res, stream=True))
-        assert len(exec_log) == 2
-        assert 'hello out\r\n' in exec_log
-        assert 'hello err\r\n' in exec_log
-
-        # tty=True, stream=False, demux=True
-        res = self.client.exec_create(id, cmd, tty=True)
-        exec_log = self.client.exec_start(res, demux=True)
-        assert exec_log == (b'hello out\r\nhello err\r\n', None)
-
-        # tty=True, stream=True, demux=True
-        res = self.client.exec_create(id, cmd, tty=True)
-        exec_log = list(self.client.exec_start(res, demux=True, stream=True))
-        assert len(exec_log) == 2
-        assert (b'hello out\r\n', None) in exec_log
-        assert (b'hello err\r\n', None) in exec_log
-
     def test_exec_start_socket(self):
         container = self.client.create_container(BUSYBOX, 'cat',
                                                  detach=True, stdin_open=True)
@@ -307,3 +244,80 @@ class ExecTest(BaseAPIIntegrationTest):
         self.addCleanup(sock.close)
 
         assert_cat_socket_detached_with_keys(sock, [ctrl_with('x')])
+
+
+class ExecDemuxTest(BaseAPIIntegrationTest):
+    cmd = 'sh -c "{}"'.format(' ; '.join([
+        # Write something on stdout
+        'echo hello out',
+        # Busybox's sleep does not handle sub-second times.
+        # This loops takes ~0.3 second to execute on my machine.
+        'for i in $(seq 1 50000); do echo $i>/dev/null; done',
+        # Write something on stderr
+        'echo hello err >&2'])
+    )
+
+    def setUp(self):
+        super(ExecDemuxTest, self).setUp()
+        self.container = self.client.create_container(
+            BUSYBOX, 'cat', detach=True, stdin_open=True
+        )
+        self.client.start(self.container)
+        self.tmp_containers.append(self.container)
+
+    def test_exec_command_no_stream_no_demux(self):
+        # tty=False, stream=False, demux=False
+        res = self.client.exec_create(self.container, self.cmd)
+        exec_log = self.client.exec_start(res)
+        assert b'hello out\n' in exec_log
+        assert b'hello err\n' in exec_log
+
+    def test_exec_command_stream_no_demux(self):
+        # tty=False, stream=True, demux=False
+        res = self.client.exec_create(self.container, self.cmd)
+        exec_log = list(self.client.exec_start(res, stream=True))
+        assert len(exec_log) == 2
+        assert b'hello out\n' in exec_log
+        assert b'hello err\n' in exec_log
+
+    def test_exec_command_no_stream_demux(self):
+        # tty=False, stream=False, demux=True
+        res = self.client.exec_create(self.container, self.cmd)
+        exec_log = self.client.exec_start(res, demux=True)
+        assert exec_log == (b'hello out\n', b'hello err\n')
+
+    def test_exec_command_stream_demux(self):
+        # tty=False, stream=True, demux=True
+        res = self.client.exec_create(self.container, self.cmd)
+        exec_log = list(self.client.exec_start(res, demux=True, stream=True))
+        assert len(exec_log) == 2
+        assert (b'hello out\n', None) in exec_log
+        assert (None, b'hello err\n') in exec_log
+
+    def test_exec_command_tty_no_stream_no_demux(self):
+        # tty=True, stream=False, demux=False
+        res = self.client.exec_create(self.container, self.cmd, tty=True)
+        exec_log = self.client.exec_start(res)
+        assert exec_log == b'hello out\r\nhello err\r\n'
+
+    def test_exec_command_tty_stream_no_demux(self):
+        # tty=True, stream=True, demux=False
+        res = self.client.exec_create(self.container, self.cmd, tty=True)
+        exec_log = list(self.client.exec_start(res, stream=True))
+        assert len(exec_log) == 2
+        assert b'hello out\r\n' in exec_log
+        assert b'hello err\r\n' in exec_log
+
+    def test_exec_command_tty_no_stream_demux(self):
+        # tty=True, stream=False, demux=True
+        res = self.client.exec_create(self.container, self.cmd, tty=True)
+        exec_log = self.client.exec_start(res, demux=True)
+        assert exec_log == (b'hello out\r\nhello err\r\n', None)
+
+    def test_exec_command_tty_stream_demux(self):
+        # tty=True, stream=True, demux=True
+        res = self.client.exec_create(self.container, self.cmd, tty=True)
+        exec_log = list(self.client.exec_start(res, demux=True, stream=True))
+        assert len(exec_log) == 2
+        assert (b'hello out\r\n', None) in exec_log
+        assert (b'hello err\r\n', None) in exec_log
