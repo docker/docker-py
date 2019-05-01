@@ -24,8 +24,8 @@ def buildImages = { ->
       imageNamePy2 = "${imageNameBase}:py2-${gitCommit()}"
       imageNamePy3 = "${imageNameBase}:py3-${gitCommit()}"
 
-      buildImage(imageNamePy2, ".", "py2.7")
-      buildImage(imageNamePy3, "-f Dockerfile-py3 .", "py3.6")
+      buildImage(imageNamePy2, "-f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .", "py2.7")
+      buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.6 .", "py3.6")
     }
   }
 }
