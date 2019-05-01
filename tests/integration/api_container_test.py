@@ -5,21 +5,20 @@ import tempfile
 import threading
 from datetime import datetime
 
-import docker
-from docker.constants import IS_WINDOWS_PLATFORM
-from docker.utils.socket import next_frame_header
-from docker.utils.socket import read_exactly
-
 import pytest
-
 import requests
 import six
 
-from .base import BUSYBOX, BaseAPIIntegrationTest
+import docker
 from .. import helpers
-from ..helpers import (
-    assert_cat_socket_detached_with_keys, ctrl_with, requires_api_version,
-)
+from ..helpers import assert_cat_socket_detached_with_keys
+from ..helpers import ctrl_with
+from ..helpers import requires_api_version
+from .base import BaseAPIIntegrationTest
+from .base import BUSYBOX
+from docker.constants import IS_WINDOWS_PLATFORM
+from docker.utils.socket import next_frame_header
+from docker.utils.socket import read_exactly
 
 
 class ListContainersTest(BaseAPIIntegrationTest):
@@ -38,7 +37,7 @@ class ListContainersTest(BaseAPIIntegrationTest):
         assert 'Command' in retrieved
         assert retrieved['Command'] == six.text_type('true')
         assert 'Image' in retrieved
-        assert re.search(r'busybox:.*', retrieved['Image'])
+        assert re.search(r'alpine:.*', retrieved['Image'])
         assert 'Status' in retrieved
 
 
@@ -368,10 +367,9 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         )
         self.tmp_containers.append(container['Id'])
         config = self.client.inspect_container(container['Id'])
-        assert (
-            sorted(config['Config']['Env']) ==
-            sorted(['Foo', 'Other=one', 'Blank='])
-        )
+        assert 'Foo' in config['Config']['Env']
+        assert 'Other=one' in config['Config']['Env']
+        assert 'Blank=' in config['Config']['Env']
 
     @requires_api_version('1.22')
     def test_create_with_tmpfs(self):
