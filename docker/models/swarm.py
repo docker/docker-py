@@ -98,7 +98,7 @@ class Swarm(Model):
                 created in the orchestrator.
 
         Returns:
-            ``True`` if the request went through.
+            (str): The ID of the created node.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -123,9 +123,9 @@ class Swarm(Model):
             'data_path_addr': data_path_addr,
         }
         init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
-        self.client.api.init_swarm(**init_kwargs)
+        node_id = self.client.api.init_swarm(**init_kwargs)
         self.reload()
-        return True
+        return node_id
 
     def join(self, *args, **kwargs):
         return self.client.api.join_swarm(*args, **kwargs)

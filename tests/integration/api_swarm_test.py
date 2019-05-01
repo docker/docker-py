@@ -186,12 +186,14 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_inspect_node(self):
-        assert self.init_swarm()
+        node_id = self.init_swarm()
+        assert node_id
         nodes_list = self.client.nodes()
         assert len(nodes_list) == 1
         node = nodes_list[0]
         node_data = self.client.inspect_node(node['ID'])
         assert node['ID'] == node_data['ID']
+        assert node_id == node['ID']
         assert node['Version'] == node_data['Version']
 
     @requires_api_version('1.24')

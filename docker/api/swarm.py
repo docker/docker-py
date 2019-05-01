@@ -120,7 +120,7 @@ class SwarmApiMixin(object):
                 traffic. For example, 192.168.1.1, or an interface, like eth0.
 
         Returns:
-            ``True`` if successful.
+            (str): The ID of the created node.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -167,8 +167,7 @@ class SwarmApiMixin(object):
             data['DataPathAddr'] = data_path_addr
 
         response = self._post_json(url, data=data)
-        self._raise_for_status(response)
-        return True
+        return self._result(response, json=True)
 
     @utils.minimum_version('1.24')
     def inspect_swarm(self):
