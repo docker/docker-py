@@ -304,9 +304,13 @@ class ExecDemuxTest(BaseAPIIntegrationTest):
         # tty=True, stream=True, demux=False
         res = self.client.exec_create(self.container, self.cmd, tty=True)
         exec_log = list(self.client.exec_start(res, stream=True))
-        assert len(exec_log) == 2
         assert b'hello out\r\n' in exec_log
-        assert b'hello err\r\n' in exec_log
+        if len(exec_log) == 2:
+            assert b'hello err\r\n' in exec_log
+        else:
+            assert len(exec_log) == 3
+            assert b'hello err' in exec_log
+            assert b'\r\n' in exec_log
 
     def test_exec_command_tty_no_stream_demux(self):
         # tty=True, stream=False, demux=True
@@ -318,6 +322,10 @@ class ExecDemuxTest(BaseAPIIntegrationTest):
         # tty=True, stream=True, demux=True
         res = self.client.exec_create(self.container, self.cmd, tty=True)
         exec_log = list(self.client.exec_start(res, demux=True, stream=True))
-        assert len(exec_log) == 2
         assert (b'hello out\r\n', None) in exec_log
-        assert (b'hello err\r\n', None) in exec_log
+        if len(exec_log) == 2:
+            assert (b'hello err\r\n', None) in exec_log
+        else:
+            assert len(exec_log) == 3
+            assert (b'hello err', None) in exec_log
+            assert (b'\r\n', None) in exec_log
