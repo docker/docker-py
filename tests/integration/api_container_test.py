@@ -1251,7 +1251,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 
-    @pytest.mark.timeout(5)
+    @pytest.mark.timeout(10)
     @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
                         reason='No cancellable streams over SSH')
     def test_attach_stream_and_cancel(self):
