@@ -18,7 +18,7 @@ import six
 from .base import BUSYBOX, BaseAPIIntegrationTest
 from .. import helpers
 from ..helpers import (
-    requires_api_version, ctrl_with, assert_cat_socket_detached_with_keys
+    assert_cat_socket_detached_with_keys, ctrl_with, requires_api_version,
 )
 
 
@@ -1163,10 +1163,10 @@ class RestartContainerTest(BaseAPIIntegrationTest):
     def test_restart_with_low_timeout(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.client.start(container)
-        self.client.timeout = 1
-        self.client.restart(container, timeout=3)
+        self.client.timeout = 3
+        self.client.restart(container, timeout=1)
         self.client.timeout = None
-        self.client.restart(container, timeout=3)
+        self.client.restart(container, timeout=1)
         self.client.kill(container)
 
     def test_restart_with_dict_instead_of_id(self):
