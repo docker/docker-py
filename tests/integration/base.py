@@ -3,11 +3,10 @@ import shutil
 import unittest
 
 import docker
+from .. import helpers
 from docker.utils import kwargs_from_env
 
-from .. import helpers
-
-BUSYBOX = 'busybox:buildroot-2014.02'
+BUSYBOX = 'alpine:3.9.3'  # FIXME: this should probably be renamed
 TEST_API_VERSION = os.environ.get('DOCKER_TEST_API_VERSION')
 
 
