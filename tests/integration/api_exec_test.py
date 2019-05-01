@@ -1,10 +1,10 @@
+from docker.utils.proxy import ProxyConfig
 from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
-from docker.utils.proxy import ProxyConfig
 
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BUSYBOX, BaseAPIIntegrationTest
 from ..helpers import (
-    requires_api_version, ctrl_with, assert_cat_socket_detached_with_keys
+    assert_cat_socket_detached_with_keys, ctrl_with, requires_api_version,
 )
 
 
@@ -125,9 +125,6 @@ class ExecTest(BaseAPIIntegrationTest):
         script = ' ; '.join([
             # Write something on stdout
             'echo hello out',
-            # Busybox's sleep does not handle sub-second times.
-            # This loops takes ~0.3 second to execute on my machine.
-            'for i in $(seq 1 50000); do echo $i>/dev/null; done',
             # Write something on stderr
             'echo hello err >&2'])
         cmd = 'sh -c "{}"'.format(script)
@@ -135,15 +132,15 @@ class ExecTest(BaseAPIIntegrationTest):
         # tty=False, stream=False, demux=False
         res = self.client.exec_create(id, cmd)
         exec_log = self.client.exec_start(res)
-        assert exec_log == b'hello out\nhello err\n'
+        assert 'hello out\n' in exec_log
+        assert 'hello err\n' in exec_log
 
         # tty=False, stream=True, demux=False
         res = self.client.exec_create(id, cmd)
-        exec_log = self.client.exec_start(res, stream=True)
-        assert next(exec_log) == b'hello out\n'
-        assert next(exec_log) == b'hello err\n'
-        with self.assertRaises(StopIteration):
-            next(exec_log)
+        exec_log = list(self.client.exec_start(res, stream=True))
+        assert len(exec_log) == 2
+        assert 'hello out\n' in exec_log
+        assert 'hello err\n' in exec_log
 
         # tty=False, stream=False, demux=True
         res = self.client.exec_create(id, cmd)
@@ -152,11 +149,10 @@ class ExecTest(BaseAPIIntegrationTest):
 
         # tty=False, stream=True, demux=True
         res = self.client.exec_create(id, cmd)
-        exec_log = self.client.exec_start(res, demux=True, stream=True)
-        assert next(exec_log) == (b'hello out\n', None)
-        assert next(exec_log) == (None, b'hello err\n')
-        with self.assertRaises(StopIteration):
-            next(exec_log)
+        exec_log = list(self.client.exec_start(res, demux=True, stream=True))
+        assert len(exec_log) == 2
+        assert (b'hello out\n', None) in exec_log
+        assert (None, b'hello err\n') in exec_log
 
         # tty=True, stream=False, demux=False
         res = self.client.exec_create(id, cmd, tty=True)
@@ -165,11 +161,10 @@ class ExecTest(BaseAPIIntegrationTest):
 
         # tty=True, stream=True, demux=False
         res = self.client.exec_create(id, cmd, tty=True)
-        exec_log = self.client.exec_start(res, stream=True)
-        assert next(exec_log) == b'hello out\r\n'
-        assert next(exec_log) == b'hello err\r\n'
-        with self.assertRaises(StopIteration):
-            next(exec_log)
+        exec_log = list(self.client.exec_start(res, stream=True))
+        assert len(exec_log) == 2
+        assert 'hello out\r\n' in exec_log
+        assert 'hello err\r\n' in exec_log
 
         # tty=True, stream=False, demux=True
         res = self.client.exec_create(id, cmd, tty=True)
@@ -178,11 +173,10 @@ class ExecTest(BaseAPIIntegrationTest):
 
         # tty=True, stream=True, demux=True
         res = self.client.exec_create(id, cmd, tty=True)
-        exec_log = self.client.exec_start(res, demux=True, stream=True)
-        assert next(exec_log) == (b'hello out\r\n', None)
-        assert next(exec_log) == (b'hello err\r\n', None)
-        with self.assertRaises(StopIteration):
-            next(exec_log)
+        exec_log = list(self.client.exec_start(res, demux=True, stream=True))
+        assert len(exec_log) == 2
+        assert (b'hello out\r\n', None) in exec_log
+        assert (b'hello err\r\n', None) in exec_log
 
     def test_exec_start_socket(self):
         container = self.client.create_container(BUSYBOX, 'cat',
