@@ -1,11 +1,11 @@
+from ..helpers import assert_cat_socket_detached_with_keys
+from ..helpers import ctrl_with
+from ..helpers import requires_api_version
+from .base import BaseAPIIntegrationTest
+from .base import BUSYBOX
 from docker.utils.proxy import ProxyConfig
 from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
-
-from .base import BUSYBOX, BaseAPIIntegrationTest
-from ..helpers import (
-    assert_cat_socket_detached_with_keys, ctrl_with, requires_api_version,
-)
 
 
 class ExecTest(BaseAPIIntegrationTest):
@@ -81,11 +81,11 @@ class ExecTest(BaseAPIIntegrationTest):
         self.client.start(id)
         self.tmp_containers.append(id)
 
-        res = self.client.exec_create(id, 'whoami', user='default')
+        res = self.client.exec_create(id, 'whoami', user='postgres')
         assert 'Id' in res
 
         exec_log = self.client.exec_start(res)
-        assert exec_log == b'default\n'
+        assert exec_log == b'postgres\n'
 
     def test_exec_command_as_root(self):
         container = self.client.create_container(BUSYBOX, 'cat',
@@ -188,9 +188,9 @@ class ExecTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
 
-        res = self.client.exec_create(container, 'pwd', workdir='/var/www')
+        res = self.client.exec_create(container, 'pwd', workdir='/var/opt')
         exec_log = self.client.exec_start(res)
-        assert exec_log == b'/var/www\n'
+        assert exec_log == b'/var/opt\n'
 
     def test_detach_with_default(self):
         container = self.client.create_container(
@@ -252,7 +252,7 @@ class ExecDemuxTest(BaseAPIIntegrationTest):
         'echo hello out',
         # Busybox's sleep does not handle sub-second times.
         # This loops takes ~0.3 second to execute on my machine.
-        'for i in $(seq 1 50000); do echo $i>/dev/null; done',
+        'sleep 0.5',
         # Write something on stderr
         'echo hello err >&2'])
     )
