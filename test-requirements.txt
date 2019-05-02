@@ -1,6 +1,5 @@
 coverage==4.5.2
-flake8==3.6.0; python_version != '3.3'
-flake8==3.4.1; python_version == '3.3'
+flake8==3.6.0
 mock==1.0.1
 pytest==4.1.0
 pytest-cov==2.6.1
