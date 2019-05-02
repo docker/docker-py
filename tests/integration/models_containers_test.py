@@ -2,10 +2,13 @@ import os
 import tempfile
 import threading
 
-import docker
 import pytest
-from .base import BaseIntegrationTest, TEST_API_VERSION
-from ..helpers import random_name, requires_api_version
+
+import docker
+from ..helpers import random_name
+from ..helpers import requires_api_version
+from .base import BaseIntegrationTest
+from .base import TEST_API_VERSION
 
 
 class ContainerCollectionTest(BaseIntegrationTest):
@@ -174,9 +177,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
             ftp='sakuya.jp:4967'
         )
 
-        out = client.containers.run(
-            'alpine', 'sh -c "env"', use_config_proxy=True
-        )
+        out = client.containers.run('alpine', 'sh -c "env"')
 
         assert b'FTP_PROXY=sakuya.jp:4967\n' in out
         assert b'ftp_proxy=sakuya.jp:4967\n' in out

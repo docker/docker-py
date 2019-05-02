@@ -1,13 +1,15 @@
-import six
 from datetime import datetime
+
+import six
 
 from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..types import (
-    CancellableStream, ContainerConfig, EndpointConfig, HostConfig,
-    NetworkingConfig
-)
+from ..types import CancellableStream
+from ..types import ContainerConfig
+from ..types import EndpointConfig
+from ..types import HostConfig
+from ..types import NetworkingConfig
 
 
 class ContainerApiMixin(object):
@@ -222,7 +224,7 @@ class ContainerApiMixin(object):
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
                          stop_timeout=None, runtime=None,
-                         use_config_proxy=False):
+                         use_config_proxy=True):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).

@@ -17,7 +17,6 @@ class ExecTest(BaseAPIIntegrationTest):
 
         container = self.client.create_container(
             BUSYBOX, 'cat', detach=True, stdin_open=True,
-            use_config_proxy=True,
         )
         self.client.start(container)
         self.tmp_containers.append(container)
