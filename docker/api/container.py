@@ -416,7 +416,7 @@ class ContainerApiMixin(object):
         if use_config_proxy:
             environment = self._proxy_configs.inject_proxy_environment(
                 environment
-            )
+            ) or None
 
         config = self.create_container_config(
             image, command, hostname, user, detach, stdin_open, tty,
