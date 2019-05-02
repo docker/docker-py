@@ -20,7 +20,7 @@ class BuildApiMixin(object):
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
               squash=None, extra_hosts=None, platform=None, isolation=None,
-              use_config_proxy=False):
+              use_config_proxy=True):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
