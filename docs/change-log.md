@@ -1,6 +1,43 @@
 Change log
 ==========
 
+4.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/57?closed=1)
+
+### Breaking changes
+
+- Support for Python 3.3 and Python 3.4 has been dropped
+- `APIClient.update_service`, `APIClient.init_swarm`, and
+  `DockerClient.swarm.init` now return a `dict` from the API's response body
+- In `APIClient.build` and `DockerClient.images.build`, the `use_config_proxy`
+  parameter now defaults to True
+- `init_path` is no longer a valid parameter for `HostConfig`
+
+### Features
+
+- It is now possible to provide `SCTP` ports for port mappings
+- `ContainerSpec`s now support the `init` parameter
+- `DockerClient.swarm.init` and `APIClient.init_swarm` now support the
+  `data_path_addr` parameter
+- `APIClient.update_swarm` and `DockerClient.swarm.update` now support the
+  `rotate_manager_unlock_key` parameter
+- `APIClient.update_service` returns the API's response body as a `dict`
+- `APIClient.init_swarm`, and `DockerClient.swarm.init` now return the API's
+  response body as a `dict`
+
+### Bugfixes
+
+- Fixed `PlacementPreference` instances to produce a valid API type
+- Fixed a bug where not setting a value for `buildargs` in `build` could cause
+  the library to attempt accessing attributes of a `None` value
+- Fixed a bug where setting the `volume_driver` parameter in
+  `DockerClient.containers.create` would result in an error
+- `APIClient.inspect_distribution` now correctly sets the authentication
+  headers on the request, allowing it to be used with private repositories
+  This change also applies to `DockerClient.get_registry_data`
+
 3.7.2
 -----
 
