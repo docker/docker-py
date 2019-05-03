@@ -206,8 +206,9 @@ class ServiceCollection(Collection):
                 the container's `hosts` file.
             dns_config (DNSConfig): Specification for DNS
                 related configurations in resolver configuration file.
-            configs (:py:class:`list`): List of :py:class:`ConfigReference`
-                that will be exposed to the service.
+            configs (:py:class:`list`): List of
+                :py:class:`~docker.types.ConfigReference` that will be exposed
+                to the service.
             privileges (Privileges): Security options for the service's
                 containers.
 
