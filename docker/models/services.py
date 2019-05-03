@@ -178,8 +178,9 @@ class ServiceCollection(Collection):
                 ``source:target:options``, where options is either
                 ``ro`` or ``rw``.
             name (str): Name to give to the service.
-            networks (list of str): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             resources (Resources): Resource limits and reservations.
             restart_policy (RestartPolicy): Restart policy for containers.
             secrets (list of :py:class:`docker.types.SecretReference`): List

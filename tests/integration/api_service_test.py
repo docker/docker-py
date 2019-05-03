@@ -371,6 +371,35 @@ class ServiceTest(BaseAPIIntegrationTest):
             {'Target': net1['Id']}, {'Target': net2['Id']}
         ]
 
+    def test_create_service_with_network_attachment_config(self):
+        network = self.client.create_network(
+            'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
+        )
+        self.tmp_networks.append(network['Id'])
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        network_config = docker.types.NetworkAttachmentConfig(
+            target='dockerpytest_1',
+            aliases=['dockerpytest_1_alias'],
+            options={
+                'foo': 'bar'
+            }
+        )
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec,
+            networks=[network_config]
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Networks' in svc_info['Spec']['TaskTemplate']
+        service_networks_info = svc_info['Spec']['TaskTemplate']['Networks']
+        assert len(service_networks_info) == 1
+        assert service_networks_info[0]['Target'] == network['Id']
+        assert service_networks_info[0]['Aliases'] == ['dockerpytest_1_alias']
+        assert service_networks_info[0]['DriverOpts'] == {'foo': 'bar'}
+
     def test_create_service_with_placement(self):
         node_id = self.client.nodes()[0]['ID']
         container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
