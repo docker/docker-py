@@ -7,6 +7,6 @@ from .services import (
     ConfigReference, ContainerSpec, DNSConfig, DriverConfig, EndpointSpec,
     Mount, Placement, PlacementPreference, Privileges, Resources,
     RestartPolicy, RollbackConfig, SecretReference, ServiceMode, TaskTemplate,
-    UpdateConfig
+    UpdateConfig, NetworkAttachmentConfig
 )
 from .swarm import SwarmSpec, SwarmExternalCA
