@@ -183,7 +183,7 @@ class ServiceCollection(Collection):
                 service to. Default: ``None``.
             resources (Resources): Resource limits and reservations.
             restart_policy (RestartPolicy): Restart policy for containers.
-            secrets (list of :py:class:`docker.types.SecretReference`): List
+            secrets (list of :py:class:`~docker.types.SecretReference`): List
                 of secrets accessible to containers for this service.
             stop_grace_period (int): Amount of time to wait for
                 containers to terminate before forcefully killing them.
