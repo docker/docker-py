@@ -142,6 +142,7 @@ Configuration types
 .. autoclass:: IPAMPool
 .. autoclass:: LogConfig
 .. autoclass:: Mount
+.. autoclass:: NetworkAttachmentConfig
 .. autoclass:: Placement
 .. autoclass:: PlacementPreference
 .. autoclass:: Privileges
