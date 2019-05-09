@@ -1,6 +1,7 @@
 import gzip
 import io
 import shutil
+from pathlib import Path
 
 import docker
 from docker import auth
@@ -99,6 +100,9 @@ class BuildTest(BaseAPIClientTest):
 
     def test_build_container_with_named_dockerfile(self):
         self.client.build('.', dockerfile='nameddockerfile')
+    
+    def test_build_container_with_pathlike(self):
+        self.client.build(Path('.'))
 
     def test_build_container_with_container_limits(self):
         self.client.build('.', container_limits={

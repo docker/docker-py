@@ -124,6 +124,8 @@ class BuildApiMixin(object):
         buildargs = buildargs or {}
         if path is None and fileobj is None:
             raise TypeError("Either path or fileobj needs to be provided.")
+        if path is not None:
+            path = os.fspath(path)
         if gzip and encoding is not None:
             raise errors.DockerException(
                 'Can not use custom encoding if gzip is enabled'
