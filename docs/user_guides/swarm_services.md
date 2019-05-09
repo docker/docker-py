@@ -6,7 +6,7 @@
 
 Starting with Engine version 1.12 (API 1.24), it is possible to manage services
 using the Docker Engine API. Note that the engine needs to be part of a
-[Swarm cluster](../swarm.rst) before you can use the service-related methods.
+[Swarm cluster](../swarm.html) before you can use the service-related methods.
 
 ## Creating a service
 
