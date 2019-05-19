@@ -1,5 +1,5 @@
+import errno
 import json
-import os
 import subprocess
 
 import six
@@ -84,7 +84,7 @@ class Store(object):
                     [self.exe, subcmd], stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, env=env,
                 )
-                output, err = process.communicate(data_input)
+                output, _ = process.communicate(data_input)
                 if process.returncode != 0:
                     raise subprocess.CalledProcessError(
                         returncode=process.returncode, cmd='', output=output
@@ -92,7 +92,7 @@ class Store(object):
         except subprocess.CalledProcessError as e:
             raise errors.process_store_error(e, self.program)
         except OSError as e:
-            if e.errno == os.errno.ENOENT:
+            if e.errno == errno.ENOENT:
                 raise errors.StoreError(
                     '{} not installed or not available in PATH'.format(
                         self.program
