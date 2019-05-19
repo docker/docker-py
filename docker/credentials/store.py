@@ -1,6 +1,5 @@
 import errno
 import json
-import os
 import subprocess
 
 import six
