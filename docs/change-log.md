@@ -1,6 +1,20 @@
 Change log
 ==========
 
+4.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/60?closed=1)
+
+### Bugfixes
+
+- Fixed an obsolete import in the `credentials` subpackage that caused import errors in
+  Python 3.7
+
+### Miscellaneous
+
+- Docs building has been repaired
+
 4.0.0
 -----
 
