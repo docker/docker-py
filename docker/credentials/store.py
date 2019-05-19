@@ -1,3 +1,4 @@
+import errno
 import json
 import os
 import subprocess
@@ -92,7 +93,7 @@ class Store(object):
         except subprocess.CalledProcessError as e:
             raise errors.process_store_error(e, self.program)
         except OSError as e:
-            if e.errno == os.errno.ENOENT:
+            if e.errno == errno.ENOENT:
                 raise errors.StoreError(
                     '{} not installed or not available in PATH'.format(
                         self.program
