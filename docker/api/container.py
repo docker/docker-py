@@ -1,13 +1,15 @@
-import six
 from datetime import datetime
+
+import six
 
 from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..types import (
-    CancellableStream, ContainerConfig, EndpointConfig, HostConfig,
-    NetworkingConfig
-)
+from ..types import CancellableStream
+from ..types import ContainerConfig
+from ..types import EndpointConfig
+from ..types import HostConfig
+from ..types import NetworkingConfig
 
 
 class ContainerApiMixin(object):
@@ -222,7 +224,7 @@ class ContainerApiMixin(object):
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
                          stop_timeout=None, runtime=None,
-                         use_config_proxy=False):
+                         use_config_proxy=True):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -414,7 +416,7 @@ class ContainerApiMixin(object):
         if use_config_proxy:
             environment = self._proxy_configs.inject_proxy_environment(
                 environment
-            )
+            ) or None
 
         config = self.create_container_config(
             image, command, hostname, user, detach, stdin_open, tty,
@@ -487,7 +489,6 @@ class ContainerApiMixin(object):
                 IDs that the container process will run as.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
-            init_path (str): Path to the docker-init binary
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: ``None``.
             links (dict): Mapping of links using the
@@ -512,7 +513,7 @@ class ContainerApiMixin(object):
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
-                  on the bridge network.
+                  the bridge network.
                 - ``none`` No networking for this container.
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
@@ -915,9 +916,10 @@ class ContainerApiMixin(object):
         if '/' in private_port:
             return port_settings.get(private_port)
 
-        h_ports = port_settings.get(private_port + '/tcp')
-        if h_ports is None:
-            h_ports = port_settings.get(private_port + '/udp')
+        for protocol in ['tcp', 'udp', 'sctp']:
+            h_ports = port_settings.get(private_port + '/' + protocol)
+            if h_ports:
+                break
 
         return h_ports
 

@@ -5,21 +5,20 @@ import tempfile
 import threading
 from datetime import datetime
 
-import docker
-from docker.constants import IS_WINDOWS_PLATFORM
-from docker.utils.socket import next_frame_header
-from docker.utils.socket import read_exactly
-
 import pytest
-
 import requests
 import six
 
-from .base import BUSYBOX, BaseAPIIntegrationTest
+import docker
 from .. import helpers
-from ..helpers import (
-    requires_api_version, ctrl_with, assert_cat_socket_detached_with_keys
-)
+from ..helpers import assert_cat_socket_detached_with_keys
+from ..helpers import ctrl_with
+from ..helpers import requires_api_version
+from .base import BaseAPIIntegrationTest
+from .base import BUSYBOX
+from docker.constants import IS_WINDOWS_PLATFORM
+from docker.utils.socket import next_frame_header
+from docker.utils.socket import read_exactly
 
 
 class ListContainersTest(BaseAPIIntegrationTest):
@@ -38,7 +37,7 @@ class ListContainersTest(BaseAPIIntegrationTest):
         assert 'Command' in retrieved
         assert retrieved['Command'] == six.text_type('true')
         assert 'Image' in retrieved
-        assert re.search(r'busybox:.*', retrieved['Image'])
+        assert re.search(r'alpine:.*', retrieved['Image'])
         assert 'Status' in retrieved
 
 
@@ -368,10 +367,9 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         )
         self.tmp_containers.append(container['Id'])
         config = self.client.inspect_container(container['Id'])
-        assert (
-            sorted(config['Config']['Env']) ==
-            sorted(['Foo', 'Other=one', 'Blank='])
-        )
+        assert 'Foo' in config['Config']['Env']
+        assert 'Other=one' in config['Config']['Env']
+        assert 'Blank=' in config['Config']['Env']
 
     @requires_api_version('1.22')
     def test_create_with_tmpfs(self):
@@ -447,19 +445,6 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(ctnr['Id'])
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['Init'] is True
-
-    @pytest.mark.xfail(True, reason='init-path removed in 17.05.0')
-    @requires_api_version('1.25')
-    def test_create_with_init_path(self):
-        ctnr = self.client.create_container(
-            BUSYBOX, 'true',
-            host_config=self.client.create_host_config(
-                init_path="/usr/libexec/docker-init"
-            )
-        )
-        self.tmp_containers.append(ctnr['Id'])
-        config = self.client.inspect_container(ctnr)
-        assert config['HostConfig']['InitPath'] == "/usr/libexec/docker-init"
 
     @requires_api_version('1.24')
     @pytest.mark.xfail(not os.path.exists('/sys/fs/cgroup/cpu.rt_runtime_us'),
@@ -1082,11 +1067,17 @@ class PortTest(BaseAPIIntegrationTest):
     def test_port(self):
         port_bindings = {
             '1111': ('127.0.0.1', '4567'),
-            '2222': ('127.0.0.1', '4568')
+            '2222': ('127.0.0.1', '4568'),
+            '3333/udp': ('127.0.0.1', '4569'),
         }
+        ports = [
+            1111,
+            2222,
+            (3333, 'udp'),
+        ]
 
         container = self.client.create_container(
-            BUSYBOX, ['sleep', '60'], ports=list(port_bindings.keys()),
+            BUSYBOX, ['sleep', '60'], ports=ports,
             host_config=self.client.create_host_config(
                 port_bindings=port_bindings, network_mode='bridge'
             )
@@ -1097,13 +1088,15 @@ class PortTest(BaseAPIIntegrationTest):
 
         # Call the port function on each biding and compare expected vs actual
         for port in port_bindings:
+            port, _, protocol = port.partition('/')
             actual_bindings = self.client.port(container, port)
             port_binding = actual_bindings.pop()
 
             ip, host_port = port_binding['HostIp'], port_binding['HostPort']
 
-            assert ip == port_bindings[port][0]
-            assert host_port == port_bindings[port][1]
+            port_binding = port if not protocol else port + "/" + protocol
+            assert ip == port_bindings[port_binding][0]
+            assert host_port == port_bindings[port_binding][1]
 
         self.client.kill(id)
 
@@ -1168,10 +1161,10 @@ class RestartContainerTest(BaseAPIIntegrationTest):
     def test_restart_with_low_timeout(self):
         container = self.client.create_container(BUSYBOX, ['sleep', '9999'])
         self.client.start(container)
-        self.client.timeout = 1
-        self.client.restart(container, timeout=3)
+        self.client.timeout = 3
+        self.client.restart(container, timeout=1)
         self.client.timeout = None
-        self.client.restart(container, timeout=3)
+        self.client.restart(container, timeout=1)
         self.client.kill(container)
 
     def test_restart_with_dict_instead_of_id(self):
@@ -1256,7 +1249,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 
-    @pytest.mark.timeout(5)
+    @pytest.mark.timeout(10)
     @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
                         reason='No cancellable streams over SSH')
     @pytest.mark.xfail(condition=os.environ.get('DOCKER_TLS_VERIFY') or
@@ -1264,14 +1257,14 @@ class AttachContainerTest(BaseAPIIntegrationTest):
                        reason='Flaky test on TLS')
     def test_attach_stream_and_cancel(self):
         container = self.client.create_container(
-            BUSYBOX, 'sh -c "echo hello && sleep 60"',
+            BUSYBOX, 'sh -c "sleep 2 && echo hello && sleep 60"',
             tty=True
         )
         self.tmp_containers.append(container)
         self.client.start(container)
         output = self.client.attach(container, stream=True, logs=True)
 
-        threading.Timer(1, output.close).start()
+        threading.Timer(3, output.close).start()
 
         lines = []
         for line in output:

@@ -176,6 +176,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'Ulimits': [{"Name": "nofile", "Soft": 1024, "Hard": 2048}],
                 'UsernsMode': 'host',
                 'UTSMode': 'host',
+                'VolumeDriver': 'some_driver',
                 'VolumesFrom': ['container'],
             },
             healthcheck={'test': 'true'},
@@ -190,7 +191,6 @@ class ContainerCollectionTest(unittest.TestCase):
             stop_signal=9,
             tty=True,
             user='bob',
-            volume_driver='some_driver',
             volumes=[
                 '/mnt/vol2',
                 '/mnt/vol1',

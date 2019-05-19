@@ -2,10 +2,13 @@ import os
 import tempfile
 import threading
 
-import docker
 import pytest
-from .base import BaseIntegrationTest, TEST_API_VERSION
-from ..helpers import random_name, requires_api_version
+
+import docker
+from ..helpers import random_name
+from ..helpers import requires_api_version
+from .base import BaseIntegrationTest
+from .base import TEST_API_VERSION
 
 
 class ContainerCollectionTest(BaseIntegrationTest):
@@ -123,7 +126,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
     def test_run_with_auto_remove(self):
         client = docker.from_env(version=TEST_API_VERSION)
         out = client.containers.run(
-            'alpine', 'echo hello', auto_remove=True
+            # sleep(2) to allow any communication with the container
+            # before it gets removed by the host.
+            'alpine', 'sh -c "echo hello && sleep 2"', auto_remove=True
         )
         assert out == b'hello\n'
 
@@ -132,7 +137,10 @@ class ContainerCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.ContainerError) as e:
             client.containers.run(
-                'alpine', 'sh -c ">&2 echo error && exit 1"', auto_remove=True
+                # sleep(2) to allow any communication with the container
+                # before it gets removed by the host.
+                'alpine', 'sh -c ">&2 echo error && sleep 2 && exit 1"',
+                auto_remove=True
             )
         assert e.value.exit_status == 1
         assert e.value.stderr is None
@@ -169,9 +177,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
             ftp='sakuya.jp:4967'
         )
 
-        out = client.containers.run(
-            'alpine', 'sh -c "env"', use_config_proxy=True
-        )
+        out = client.containers.run('alpine', 'sh -c "env"')
 
         assert b'FTP_PROXY=sakuya.jp:4967\n' in out
         assert b'ftp_proxy=sakuya.jp:4967\n' in out
@@ -341,6 +347,66 @@ class ContainerTest(BaseIntegrationTest):
                     'memory_stats', 'blkio_stats']:
             assert key in stats
 
+    def test_ports_target_none(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        ports = None
+        target_ports = {'2222/tcp': ports}
+        container = client.containers.run(
+            "alpine", "sleep 100", detach=True,
+            ports=target_ports
+        )
+        self.tmp_containers.append(container.id)
+        container.reload()  # required to get auto-assigned ports
+        actual_ports = container.ports
+        assert sorted(target_ports.keys()) == sorted(actual_ports.keys())
+        for target_client, target_host in target_ports.items():
+            for actual_port in actual_ports[target_client]:
+                actual_keys = sorted(actual_port.keys())
+                assert sorted(['HostIp', 'HostPort']) == actual_keys
+                assert target_host is ports
+                assert int(actual_port['HostPort']) > 0
+        client.close()
+
+    def test_ports_target_tuple(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        ports = ('127.0.0.1', 1111)
+        target_ports = {'2222/tcp': ports}
+        container = client.containers.run(
+            "alpine", "sleep 100", detach=True,
+            ports=target_ports
+        )
+        self.tmp_containers.append(container.id)
+        container.reload()  # required to get auto-assigned ports
+        actual_ports = container.ports
+        assert sorted(target_ports.keys()) == sorted(actual_ports.keys())
+        for target_client, target_host in target_ports.items():
+            for actual_port in actual_ports[target_client]:
+                actual_keys = sorted(actual_port.keys())
+                assert sorted(['HostIp', 'HostPort']) == actual_keys
+                assert target_host == ports
+                assert int(actual_port['HostPort']) > 0
+        client.close()
+
+    def test_ports_target_list(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        ports = [1234, 4567]
+        target_ports = {'2222/tcp': ports}
+        container = client.containers.run(
+            "alpine", "sleep 100", detach=True,
+            ports=target_ports
+        )
+        self.tmp_containers.append(container.id)
+        container.reload()  # required to get auto-assigned ports
+        actual_ports = container.ports
+        assert sorted(target_ports.keys()) == sorted(actual_ports.keys())
+        for target_client, target_host in target_ports.items():
+            for actual_port in actual_ports[target_client]:
+                actual_keys = sorted(actual_port.keys())
+                assert sorted(['HostIp', 'HostPort']) == actual_keys
+                assert target_host == ports
+                assert int(actual_port['HostPort']) > 0
+        client.close()
+
     def test_stop(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "top", detach=True)
@@ -378,3 +444,13 @@ class ContainerTest(BaseIntegrationTest):
                                           detach=True)
         self.tmp_containers.append(container.id)
         assert container.wait()['StatusCode'] == 1
+
+    def test_create_with_volume_driver(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        container = client.containers.create(
+            'alpine',
+            'sleep 300',
+            volume_driver='foo'
+        )
+        self.tmp_containers.append(container.id)
+        assert container.attrs['HostConfig']['VolumeDriver'] == 'foo'

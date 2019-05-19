@@ -165,6 +165,8 @@ class ServiceCollection(Collection):
             env (list of str): Environment variables, in the form
                 ``KEY=val``.
             hostname (string): Hostname to set on the container.
+            init (boolean): Run an init inside the container that forwards
+                signals and reaps processes
             isolation (string): Isolation technology used by the service's
                 containers. Only used for Windows containers.
             labels (dict): Labels to apply to the service.
@@ -280,6 +282,7 @@ CONTAINER_SPEC_KWARGS = [
     'hostname',
     'hosts',
     'image',
+    'init',
     'isolation',
     'labels',
     'mounts',

@@ -62,6 +62,13 @@ class Container(Model):
             return self.attrs['State']['Status']
         return self.attrs['State']
 
+    @property
+    def ports(self):
+        """
+        The ports that the container exposes as a dictionary.
+        """
+        return self.attrs.get('NetworkSettings', {}).get('Ports', {})
+
     def attach(self, **kwargs):
         """
         Attach to this container.
@@ -172,10 +179,11 @@ class Container(Model):
             (ExecResult): A tuple of (exit_code, output)
                 exit_code: (int):
                     Exit code for the executed command or ``None`` if
-                    either ``stream```or ``socket`` is ``True``.
-                output: (generator or bytes):
+                    either ``stream`` or ``socket`` is ``True``.
+                output: (generator, bytes, or tuple):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
+                    If ``demux=True``, a tuple of two bytes: stdout and stderr.
                     A bytestring containing response data otherwise.
 
         Raises:
@@ -540,12 +548,15 @@ class ContainerCollection(Collection):
             cap_add (list of str): Add kernel capabilities. For example,
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
+            cgroup_parent (str): Override the default parent cgroup.
             cpu_count (int): Number of usable CPUs (Windows only).
             cpu_percent (int): Usable percentage of the available CPUs
                 (Windows only).
             cpu_period (int): The length of a CPU period in microseconds.
             cpu_quota (int): Microseconds of CPU time that the container can
                 get in a CPU period.
+            cpu_rt_period (int): Limit CPU real-time period in microseconds.
+            cpu_rt_runtime (int): Limit CPU real-time runtime in microseconds.
             cpu_shares (int): CPU shares (relative weight).
             cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
                 ``0,1``).
@@ -589,6 +600,7 @@ class ContainerCollection(Collection):
             init_path (str): Path to the docker-init binary
             ipc_mode (str): Set the IPC mode for the container.
             isolation (str): Isolation technology to use. Default: `None`.
+            kernel_memory (int or str): Kernel memory limit
             labels (dict or list): A dictionary of name-value labels (e.g.
                 ``{"label1": "value1", "label2": "value2"}``) or a list of
                 names of labels to set with empty values (e.g.
@@ -598,6 +610,7 @@ class ContainerCollection(Collection):
                 Containers declared in this dict will be linked to the new
                 container using the provided alias. Default: ``None``.
             log_config (LogConfig): Logging configuration.
+            lxc_conf (dict): LXC config.
             mac_address (str): MAC address to assign to the container.
             mem_limit (int or str): Memory limit. Accepts float values
                 (which represent the memory limit of the created container in
@@ -605,6 +618,7 @@ class ContainerCollection(Collection):
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
                 intended unit.
+            mem_reservation (int or str): Memory soft limit
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
@@ -643,8 +657,8 @@ class ContainerCollection(Collection):
 
                 The keys of the dictionary are the ports to bind inside the
                 container, either as an integer or a string in the form
-                ``port/protocol``, where the protocol is either ``tcp`` or
-                ``udp``.
+                ``port/protocol``, where the protocol is either ``tcp``,
+                ``udp``, or ``sctp``.
 
                 The values of the dictionary are the corresponding ports to
                 open on the host, which can be either:
@@ -718,6 +732,10 @@ class ContainerCollection(Collection):
             userns_mode (str): Sets the user namespace mode for the container
                 when user namespace remapping option is enabled. Supported
                 values are: ``host``
+            uts_mode (str): Sets the UTS namespace mode for the container.
+                Supported values are: ``host``
+            version (str): The version of the API to use. Set to ``auto`` to
+                automatically detect the server's version. Default: ``1.35``
             volume_driver (str): The name of a volume driver/plugin.
             volumes (dict or list): A dictionary to configure volumes mounted
                 inside the container. The key is either the host path or a
@@ -953,7 +971,6 @@ RUN_CREATE_KWARGS = [
     'tty',
     'use_config_proxy',
     'user',
-    'volume_driver',
     'working_dir',
 ]
 
@@ -1017,6 +1034,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'userns_mode',
     'uts_mode',
     'version',
+    'volume_driver',
     'volumes_from',
     'runtime'
 ]

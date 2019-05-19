@@ -427,6 +427,21 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Placement' in svc_info['Spec']['TaskTemplate']
         assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
 
+    @requires_api_version('1.27')
+    def test_create_service_with_placement_preferences_tuple(self):
+        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        placemt = docker.types.Placement(preferences=(
+            ('spread', 'com.dockerpy.test'),
+        ))
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
+
     def test_create_service_with_endpoint_spec(self):
         container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
@@ -834,6 +849,20 @@ class ServiceTest(BaseAPIIntegrationTest):
             svc_info['Spec']['TaskTemplate']['ContainerSpec']['Privileges']
         )
         assert privileges['SELinuxContext']['Disable'] is True
+
+    @requires_api_version('1.38')
+    def test_create_service_with_init(self):
+        container_spec = docker.types.ContainerSpec(
+            'busybox', ['sleep', '999'], init=True
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Init' in svc_info['Spec']['TaskTemplate']['ContainerSpec']
+        assert (
+            svc_info['Spec']['TaskTemplate']['ContainerSpec']['Init'] is True
+        )
 
     @requires_api_version('1.25')
     def test_update_service_with_defaults_name(self):

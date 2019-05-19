@@ -26,8 +26,8 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
                 edition = stage
                 stage = None
             elif '-' in stage:
-                edition, stage = stage.split('-')
-        major, minor, patch = version.split('.', 3)
+                edition, stage = stage.split('-', 1)
+        major, minor, patch = version.split('.', 2)
         return cls(major, minor, patch, stage, edition)
 
     @property
@@ -63,7 +63,7 @@ def main():
         res = requests.get(url)
         content = res.text
         versions = [Version.parse(v) for v in re.findall(
-                r'"docker-([0-9]+\.[0-9]+\.[0-9]+)-?.*tgz"', content
+            r'"docker-([0-9]+\.[0-9]+\.[0-9]+-?.*)\.tgz"', content
         )]
         sorted_versions = sorted(
             versions, reverse=True, key=operator.attrgetter('order')
@@ -71,6 +71,7 @@ def main():
         latest = sorted_versions[0]
         results.add(str(latest))
     print(' '.join(results))
+
 
 if __name__ == '__main__':
     main()
