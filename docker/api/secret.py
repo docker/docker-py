@@ -53,7 +53,7 @@ class SecretApiMixin(object):
             Retrieve secret metadata
 
             Args:
-                id (string): Full ID of the secret to remove
+                id (string): Full ID of the secret to inspect
 
             Returns (dict): A dictionary of metadata
 
