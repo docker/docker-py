@@ -70,7 +70,8 @@ class ImageApiMixin(object):
             filters (dict): Filters to be processed on the image list.
                 Available filters:
                 - ``dangling`` (bool)
-                - ``label`` (str): format either ``key`` or ``key=value``
+                - `label` (str|list): format either ``"key"``, ``"key=value"``
+                    or a list of such.
 
         Returns:
             (dict or list): A list if ``quiet=True``, otherwise a dict.

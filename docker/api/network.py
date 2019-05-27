@@ -15,7 +15,8 @@ class NetworkApiMixin(object):
             filters (dict): Filters to be processed on the network list.
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
-                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - ``label=[<key>]``, ``label=[<key>=<value>]`` or a list of
+                    such.
                 - ``type=["custom"|"builtin"]`` Filters networks by type.
 
         Returns:
