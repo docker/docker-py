@@ -121,8 +121,8 @@ class Swarm(Model):
             'default_addr_pool': default_addr_pool,
             'subnet_size': subnet_size,
             'data_path_addr': data_path_addr,
+            'swarm_spec': self.client.api.create_swarm_spec(**kwargs)
         }
-        init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
         node_id = self.client.api.init_swarm(**init_kwargs)
         self.reload()
         return node_id
