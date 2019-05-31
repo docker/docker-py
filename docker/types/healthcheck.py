@@ -53,6 +53,8 @@ class Healthcheck(DictType):
 
     @test.setter
     def test(self, value):
+        if isinstance(value, six.string_types):
+            value = ["CMD-SHELL", value]
         self['Test'] = value
 
     @property
