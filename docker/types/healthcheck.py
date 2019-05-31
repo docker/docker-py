@@ -14,7 +14,7 @@ class Healthcheck(DictType):
                 - Empty list: Inherit healthcheck from parent image
                 - ``["NONE"]``: Disable healthcheck
                 - ``["CMD", args...]``: exec arguments directly.
-                - ``["CMD-SHELL", command]``: RUn command in the system's
+                - ``["CMD-SHELL", command]``: Run command in the system's
                   default shell.
 
                 If a string is provided, it will be used as a ``CMD-SHELL``
@@ -23,9 +23,9 @@ class Healthcheck(DictType):
                 should be 0 or at least 1000000 (1 ms).
             timeout (int): The time to wait before considering the check to
                 have hung. It should be 0 or at least 1000000 (1 ms).
-            retries (integer): The number of consecutive failures needed to
+            retries (int): The number of consecutive failures needed to
                 consider a container as unhealthy.
-            start_period (integer): Start period for the container to
+            start_period (int): Start period for the container to
                 initialize before starting health-retries countdown in
                 nanoseconds. It should be 0 or at least 1000000 (1 ms).
     """
