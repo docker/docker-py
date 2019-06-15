@@ -81,8 +81,8 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         self.ssh_client.load_system_host_keys()
 
         self.base_url = base_url
-        self._connect()
         self.timeout = timeout
+        self._connect()
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
@@ -91,7 +91,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
     def _connect(self):
         parsed = six.moves.urllib_parse.urlparse(self.base_url)
         self.ssh_client.connect(
-            parsed.hostname, parsed.port, parsed.username,
+            parsed.hostname, parsed.port, parsed.username, timeout=self.timeout
         )
 
     def get_connection(self, url, proxies=None):
