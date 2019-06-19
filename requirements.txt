@@ -16,4 +16,4 @@ pypiwin32==223; sys_platform == 'win32' and python_version >= '3.6'
 requests==2.20.0
 six==1.10.0
 urllib3==1.24.3
-websocket-client==0.40.0
+websocket-client==0.56.0
