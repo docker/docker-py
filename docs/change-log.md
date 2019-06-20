@@ -1,6 +1,20 @@
 Change log
 ==========
 
+4.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/62?closed=1)
+
+### Bugfixes
+
+- Unified the way `HealthCheck` is created/configured
+
+### Miscellaneous
+
+- Bumped version of websocket-client
+
+
 4.0.1
 -----
 
