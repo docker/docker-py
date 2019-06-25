@@ -226,24 +226,6 @@ class ExecTest(BaseAPIIntegrationTest):
 
         assert_cat_socket_detached_with_keys(sock, [ctrl_with('p')])
 
-    def test_detach_with_arg(self):
-        self.client._general_configs['detachKeys'] = 'ctrl-p'
-        container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
-        )
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-
-        exec_id = self.client.exec_create(
-            id, 'cat',
-            stdin=True, tty=True, detach_keys='ctrl-x', stdout=True
-        )
-        sock = self.client.exec_start(exec_id, tty=True, socket=True)
-        self.addCleanup(sock.close)
-
-        assert_cat_socket_detached_with_keys(sock, [ctrl_with('x')])
-
 
 class ExecDemuxTest(BaseAPIIntegrationTest):
     cmd = 'sh -c "{}"'.format(' ; '.join([
