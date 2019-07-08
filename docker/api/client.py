@@ -80,7 +80,8 @@ class APIClient(
 
     Args:
         base_url (str): URL to the Docker server. For example,
-            ``unix:///var/run/docker.sock`` or ``tcp://127.0.0.1:1234``.
+            ``unix:///var/run/docker.sock``, ``tcp://127.0.0.1:1234`` or
+            ``ssh://root@127.0.0.1``.
         version (str): The version of the API to use. Set to ``auto`` to
             automatically detect the server's version. Default: ``1.35``
         timeout (int): Default timeout for API calls, in seconds.
