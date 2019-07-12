@@ -10,7 +10,10 @@ def buildImage = { name, buildargs, pyTag ->
   try {
     img.pull()
   } catch (Exception exc) {
-    img = docker.build(name, buildargs)
+    sh """
+    echo "Building ${name}"
+    docker build -t ${name} ${buildargs}
+    """
     img.push()
   }
   images[pyTag] = img.id
