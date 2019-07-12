@@ -250,5 +250,6 @@ class SwarmTest(BaseAPIIntegrationTest):
         assert key_1['UnlockKey'] != key_2['UnlockKey']
 
     @requires_api_version('1.30')
+    @pytest.mark.xfail(reason='Can fail if eth0 has multiple IP addresses')
     def test_init_swarm_data_path_addr(self):
         assert self.init_swarm(data_path_addr='eth0')
