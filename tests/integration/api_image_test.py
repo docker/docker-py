@@ -69,8 +69,10 @@ class PullImageTest(BaseAPIIntegrationTest):
         with pytest.raises(docker.errors.APIError) as excinfo:
             self.client.pull('hello-world', platform='foobar')
 
-        assert excinfo.value.status_code == 500
-        assert 'invalid platform' in excinfo.exconly()
+        # Some API versions incorrectly returns 500 status; assert 4xx or 5xx
+        assert excinfo.value.is_error()
+        assert 'unknown operating system' in excinfo.exconly() \
+               or 'invalid platform' in excinfo.exconly()
 
 
 class CommitTest(BaseAPIIntegrationTest):
