@@ -8,11 +8,11 @@ clean:
 
 .PHONY: build
 build:
-	docker build -t docker-sdk-python -f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .
+	docker build -t docker-sdk-python -f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 --build-arg APT_MIRROR .
 
 .PHONY: build-py3
 build-py3:
-	docker build -t docker-sdk-python3 -f tests/Dockerfile .
+	docker build -t docker-sdk-python3 -f tests/Dockerfile --build-arg APT_MIRROR .
 
 .PHONY: build-docs
 build-docs:
