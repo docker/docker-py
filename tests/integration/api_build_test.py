@@ -448,8 +448,10 @@ class BuildTest(BaseAPIIntegrationTest):
             for _ in stream:
                 pass
 
-        assert excinfo.value.status_code == 400
-        assert 'invalid platform' in excinfo.exconly()
+        # Some API versions incorrectly returns 500 status; assert 4xx or 5xx
+        assert excinfo.value.is_error()
+        assert 'unknown operating system' in excinfo.exconly() \
+               or 'invalid platform' in excinfo.exconly()
 
     def test_build_out_of_context_dockerfile(self):
         base_dir = tempfile.mkdtemp()
