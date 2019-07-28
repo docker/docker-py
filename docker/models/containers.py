@@ -21,6 +21,12 @@ class Container(Model):
         query the Docker daemon for the current properties, causing
         :py:attr:`attrs` to be refreshed.
     """
+
+    def __repr__(self):
+        return "<%s: '%s', '%s'" % (self.__class__.__name__,
+                                    self.image,
+                                    self.name)
+
     @property
     def name(self):
         """
