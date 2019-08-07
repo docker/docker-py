@@ -1032,7 +1032,7 @@ class ContainerApiMixin(object):
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def restart(self, container, timeout=10):
+    def restart(self, container, timeout=None):
         """
         Restart a container. Similar to the ``docker restart`` command.
 
@@ -1040,14 +1040,19 @@ class ContainerApiMixin(object):
             container (str or dict): The container to restart. If a dict, the
                 ``Id`` key is used.
             timeout (int): Number of seconds to try to stop for before killing
-                the container. Once killed it will then be restarted. Default
-                is 10 seconds.
+                the container. Once killed it will then be restarted. If None,
+                then the StopTimeout value of the container will be used.
+                Default: None
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        params = {'t': timeout}
+        if timeout is None:
+            params = {}
+            timeout = 10
+        else:
+            params = {'t': timeout}
         url = self._url("/containers/{0}/restart", container)
         conn_timeout = self.timeout
         if conn_timeout is not None:
