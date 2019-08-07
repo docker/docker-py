@@ -303,12 +303,14 @@ class AuthConfig(dict):
                 auth_data[k] = self._resolve_authconfig_credstore(
                     k, self.creds_store
                 )
+                auth_data[convert_to_hostname(k)] = auth_data[k]
 
         # credHelpers entries take priority over all others
         for reg, store_name in self.cred_helpers.items():
             auth_data[reg] = self._resolve_authconfig_credstore(
                 reg, store_name
             )
+            auth_data[convert_to_hostname(reg)] = auth_data[reg]
 
         return auth_data
 
