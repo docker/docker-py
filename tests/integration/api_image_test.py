@@ -15,7 +15,7 @@ from six.moves import socketserver
 import docker
 
 from ..helpers import requires_api_version, requires_experimental
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 
 
 class ListImagesTest(BaseAPIIntegrationTest):
@@ -77,7 +77,7 @@ class PullImageTest(BaseAPIIntegrationTest):
 
 class CommitTest(BaseAPIIntegrationTest):
     def test_commit(self):
-        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        container = self.client.create_container(TEST_IMG, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -90,13 +90,13 @@ class CommitTest(BaseAPIIntegrationTest):
         assert img['Container'].startswith(id)
         assert 'ContainerConfig' in img
         assert 'Image' in img['ContainerConfig']
-        assert BUSYBOX == img['ContainerConfig']['Image']
-        busybox_id = self.client.inspect_image(BUSYBOX)['Id']
+        assert TEST_IMG == img['ContainerConfig']['Image']
+        busybox_id = self.client.inspect_image(TEST_IMG)['Id']
         assert 'Parent' in img
         assert img['Parent'] == busybox_id
 
     def test_commit_with_changes(self):
-        cid = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        cid = self.client.create_container(TEST_IMG, ['touch', '/test'])
         self.tmp_containers.append(cid)
         self.client.start(cid)
         img_id = self.client.commit(
@@ -112,7 +112,7 @@ class CommitTest(BaseAPIIntegrationTest):
 
 class RemoveImageTest(BaseAPIIntegrationTest):
     def test_remove(self):
-        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        container = self.client.create_container(TEST_IMG, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -319,7 +319,7 @@ class PruneImagesTest(BaseAPIIntegrationTest):
             pass
 
         # Ensure busybox does not get pruned
-        ctnr = self.client.create_container(BUSYBOX, ['sleep', '9999'])
+        ctnr = self.client.create_container(TEST_IMG, ['sleep', '9999'])
         self.tmp_containers.append(ctnr)
 
         self.client.pull('hello-world', tag='latest')
@@ -343,7 +343,7 @@ class SaveLoadImagesTest(BaseAPIIntegrationTest):
     @requires_api_version('1.23')
     def test_get_image_load_image(self):
         with tempfile.TemporaryFile() as f:
-            stream = self.client.get_image(BUSYBOX)
+            stream = self.client.get_image(TEST_IMG)
             for chunk in stream:
                 f.write(chunk)
 
@@ -351,7 +351,7 @@ class SaveLoadImagesTest(BaseAPIIntegrationTest):
             result = self.client.load_image(f.read())
 
         success = False
-        result_line = 'Loaded image: {}\n'.format(BUSYBOX)
+        result_line = 'Loaded image: {}\n'.format(TEST_IMG)
         for data in result:
             print(data)
             if 'stream' in data:
