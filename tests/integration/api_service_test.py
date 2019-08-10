@@ -10,7 +10,7 @@ import six
 from ..helpers import (
     force_leave_swarm, requires_api_version, requires_experimental
 )
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 
 
 class ServiceTest(BaseAPIIntegrationTest):
@@ -60,7 +60,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             name = self.get_service_name()
 
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['echo', 'hello']
+            TEST_IMG, ['echo', 'hello']
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         return name, self.client.create_service(
@@ -156,7 +156,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def test_create_service_custom_log_driver(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['echo', 'hello']
+            TEST_IMG, ['echo', 'hello']
         )
         log_cfg = docker.types.DriverConfig('none')
         task_tmpl = docker.types.TaskTemplate(
@@ -174,7 +174,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     def test_create_service_with_volume_mount(self):
         vol_name = self.get_service_name()
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['ls'],
+            TEST_IMG, ['ls'],
             mounts=[
                 docker.types.Mount(target='/test', source=vol_name)
             ]
@@ -194,7 +194,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert mount['Type'] == 'volume'
 
     def test_create_service_with_resources_constraints(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         resources = docker.types.Resources(
             cpu_limit=4000000, mem_limit=3 * 1024 * 1024 * 1024,
             cpu_reservation=3500000, mem_reservation=2 * 1024 * 1024 * 1024
@@ -214,7 +214,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         ]
 
     def _create_service_with_generic_resources(self, generic_resources):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
 
         resources = docker.types.Resources(
             generic_resources=generic_resources
@@ -265,7 +265,7 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self._create_service_with_generic_resources(test_input)
 
     def test_create_service_with_update_config(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         update_config = docker.types.UpdateConfig(
             parallelism=10, delay=5, failure_action='pause'
@@ -283,7 +283,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.28')
     def test_create_service_with_failure_action_rollback(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         update_config = docker.types.UpdateConfig(failure_action='rollback')
         name = self.get_service_name()
@@ -314,7 +314,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.28')
     def test_create_service_with_rollback_config(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         rollback_cfg = docker.types.RollbackConfig(
             parallelism=10, delay=5, failure_action='pause',
@@ -334,7 +334,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert rollback_cfg['MaxFailureRatio'] == rc['MaxFailureRatio']
 
     def test_create_service_with_restart_policy(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         policy = docker.types.RestartPolicy(
             docker.types.RestartPolicy.condition_types.ANY,
             delay=5, max_attempts=5
@@ -357,7 +357,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             'dockerpytest_2', driver='overlay', ipam={'Driver': 'default'}
         )
         self.tmp_networks.append(net2['Id'])
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
         svc_id = self.client.create_service(
@@ -373,7 +373,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def test_create_service_with_placement(self):
         node_id = self.client.nodes()[0]['ID']
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(
             container_spec, placement=['node.id=={}'.format(node_id)]
         )
@@ -386,7 +386,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def test_create_service_with_placement_object(self):
         node_id = self.client.nodes()[0]['ID']
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         placemt = docker.types.Placement(
             constraints=['node.id=={}'.format(node_id)]
         )
@@ -401,7 +401,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.30')
     def test_create_service_with_placement_platform(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         placemt = docker.types.Placement(platforms=[('x86_64', 'linux')])
         task_tmpl = docker.types.TaskTemplate(
             container_spec, placement=placemt
@@ -414,7 +414,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.27')
     def test_create_service_with_placement_preferences(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         placemt = docker.types.Placement(preferences=[
             {'Spread': {'SpreadDescriptor': 'com.dockerpy.test'}}
         ])
@@ -429,7 +429,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.27')
     def test_create_service_with_placement_preferences_tuple(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         placemt = docker.types.Placement(preferences=(
             ('spread', 'com.dockerpy.test'),
         ))
@@ -443,7 +443,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
 
     def test_create_service_with_endpoint_spec(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
         endpoint_spec = docker.types.EndpointSpec(ports={
@@ -473,7 +473,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.32')
     def test_create_service_with_endpoint_spec_host_publish_mode(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
         endpoint_spec = docker.types.EndpointSpec(ports={
@@ -493,7 +493,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def test_create_service_with_env(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['true'], env={'DOCKER_PY_TEST': 1}
+            TEST_IMG, ['true'], env={'DOCKER_PY_TEST': 1}
         )
         task_tmpl = docker.types.TaskTemplate(
             container_spec,
@@ -509,7 +509,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.29')
     def test_create_service_with_update_order(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         update_config = docker.types.UpdateConfig(
             parallelism=10, delay=5, order='start-first'
@@ -528,7 +528,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     @requires_api_version('1.25')
     def test_create_service_with_tty(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['true'], tty=True
+            TEST_IMG, ['true'], tty=True
         )
         task_tmpl = docker.types.TaskTemplate(
             container_spec,
@@ -545,7 +545,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     @requires_api_version('1.25')
     def test_create_service_with_tty_dict(self):
         container_spec = {
-            'Image': BUSYBOX,
+            'Image': TEST_IMG,
             'Command': ['true'],
             'TTY': True
         }
@@ -561,7 +561,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def test_create_service_global_mode(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['echo', 'hello']
+            TEST_IMG, ['echo', 'hello']
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -574,7 +574,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def test_create_service_replicated_mode(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['echo', 'hello']
+            TEST_IMG, ['echo', 'hello']
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -767,7 +767,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             search=['local'], options=['debug']
         )
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], dns_config=dns_config
+            TEST_IMG, ['sleep', '999'], dns_config=dns_config
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -787,7 +787,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             start_period=3 * second, interval=int(second / 2),
         )
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], healthcheck=hc
+            TEST_IMG, ['sleep', '999'], healthcheck=hc
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -804,7 +804,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     @requires_api_version('1.28')
     def test_create_service_with_readonly(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], read_only=True
+            TEST_IMG, ['sleep', '999'], read_only=True
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -818,7 +818,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     @requires_api_version('1.28')
     def test_create_service_with_stop_signal(self):
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], stop_signal='SIGINT'
+            TEST_IMG, ['sleep', '999'], stop_signal='SIGINT'
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -836,7 +836,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     def test_create_service_with_privileges(self):
         priv = docker.types.Privileges(selinux_disable=True)
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], privileges=priv
+            TEST_IMG, ['sleep', '999'], privileges=priv
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -992,7 +992,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert labels['container.label'] == 'SampleLabel'
 
     def test_update_service_with_defaults_update_config(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         update_config = docker.types.UpdateConfig(
             parallelism=10, delay=5, failure_action='pause'
@@ -1031,7 +1031,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             'dockerpytest_2', driver='overlay', ipam={'Driver': 'default'}
         )
         self.tmp_networks.append(net2['Id'])
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
         svc_id = self.client.create_service(
@@ -1070,7 +1070,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         ]
 
     def test_update_service_with_defaults_endpoint_spec(self):
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
         endpoint_spec = docker.types.EndpointSpec(ports={
@@ -1134,7 +1134,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             start_period=3 * second, interval=int(second / 2),
         )
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], healthcheck=hc
+            TEST_IMG, ['sleep', '999'], healthcheck=hc
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
         name = self.get_service_name()
@@ -1149,7 +1149,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         )
 
         container_spec = docker.types.ContainerSpec(
-            BUSYBOX, ['sleep', '999'], healthcheck={}
+            TEST_IMG, ['sleep', '999'], healthcheck={}
         )
         task_tmpl = docker.types.TaskTemplate(container_spec)
 
