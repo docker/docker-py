@@ -9,7 +9,7 @@ from docker.utils.proxy import ProxyConfig
 import pytest
 import six
 
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 from ..helpers import random_name, requires_api_version, requires_experimental
 
 
@@ -277,7 +277,7 @@ class BuildTest(BaseAPIIntegrationTest):
         # Set up pingable endpoint on custom network
         network = self.client.create_network(random_name())['Id']
         self.tmp_networks.append(network)
-        container = self.client.create_container(BUSYBOX, 'top')
+        container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
         self.client.connect_container_to_network(

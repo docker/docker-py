@@ -4,7 +4,7 @@ import tempfile
 import docker
 import pytest
 
-from .base import BaseIntegrationTest, BUSYBOX, TEST_API_VERSION
+from .base import BaseIntegrationTest, TEST_IMG, TEST_API_VERSION
 from ..helpers import random_name
 
 
@@ -72,8 +72,8 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_pull_with_tag(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.pull('alpine', tag='3.3')
-        assert 'alpine:3.3' in image.attrs['RepoTags']
+        image = client.images.pull('alpine', tag='3.10')
+        assert 'alpine:3.10' in image.attrs['RepoTags']
 
     def test_pull_with_sha(self):
         image_ref = (
@@ -97,7 +97,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_save_and_load(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.get(BUSYBOX)
+        image = client.images.get(TEST_IMG)
         with tempfile.TemporaryFile() as f:
             stream = image.save()
             for chunk in stream:
@@ -111,7 +111,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_save_and_load_repo_name(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.get(BUSYBOX)
+        image = client.images.get(TEST_IMG)
         additional_tag = random_name()
         image.tag(additional_tag)
         self.tmp_imgs.append(additional_tag)
@@ -131,7 +131,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
     def test_save_name_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        image = client.images.get(BUSYBOX)
+        image = client.images.get(TEST_IMG)
         with pytest.raises(docker.errors.InvalidArgument):
             image.save(named='sakuya/izayoi')
 
