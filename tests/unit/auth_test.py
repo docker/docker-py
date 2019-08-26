@@ -530,7 +530,17 @@ class CredstoreTest(unittest.TestCase):
                 'Password': 'izayoi',
                 'ServerAddress': 'https://gensokyo.jp/v2',
             },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
             'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
                 'Username': 'user',
                 'Password': 'hunter2',
                 'ServerAddress': 'https://default.com/v2',
@@ -548,7 +558,17 @@ class CredstoreTest(unittest.TestCase):
                 'Password': 'izayoi',
                 'ServerAddress': 'https://gensokyo.jp/v2',
             },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
             'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
                 'Username': 'user',
                 'Password': 'hunter2',
                 'ServerAddress': 'https://default.com/v2',
@@ -571,7 +591,17 @@ class CredstoreTest(unittest.TestCase):
                 'Password': 'izayoi',
                 'ServerAddress': 'https://gensokyo.jp/v2',
             },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
             'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
                 'Username': 'user',
                 'Password': 'hunter2',
                 'ServerAddress': 'https://default.com/v2',
@@ -591,7 +621,17 @@ class CredstoreTest(unittest.TestCase):
                 'Password': 'izayoi',
                 'ServerAddress': 'https://gensokyo.jp/v2',
             },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
             'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
                 'Username': 'user',
                 'Password': 'hunter2',
                 'ServerAddress': 'https://default.com/v2',
@@ -600,6 +640,62 @@ class CredstoreTest(unittest.TestCase):
                 'ServerAddress': 'registry1.io',
                 'Username': 'reimu',
                 'Password': 'hakurei',
+            },
+        }
+
+    def test_get_all_credentials_with_empty_auths_entry(self):
+        self.authconfig.add_auth('default.com', {})
+
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+        }
+
+    def test_get_all_credentials_credstore_overrides_auth_entry(self):
+        self.authconfig.add_auth('default.com', {
+            'Username': 'shouldnotsee',
+            'Password': 'thisentry',
+            'ServerAddress': 'https://default.com/v2',
+        })
+
+        assert self.authconfig.get_all_credentials() == {
+            'https://gensokyo.jp/v2': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
+            'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
             },
         }
 
@@ -616,7 +712,17 @@ class CredstoreTest(unittest.TestCase):
                 'Password': 'izayoi',
                 'ServerAddress': 'https://gensokyo.jp/v2',
             },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
             'https://default.com/v2': {
+                'Username': 'reimu',
+                'Password': 'hakurei',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
                 'Username': 'reimu',
                 'Password': 'hakurei',
                 'ServerAddress': 'https://default.com/v2',
@@ -642,7 +748,17 @@ class CredstoreTest(unittest.TestCase):
                 'Password': 'izayoi',
                 'ServerAddress': 'https://gensokyo.jp/v2',
             },
+            'gensokyo.jp': {
+                'Username': 'sakuya',
+                'Password': 'izayoi',
+                'ServerAddress': 'https://gensokyo.jp/v2',
+            },
             'https://default.com/v2': {
+                'Username': 'user',
+                'Password': 'hunter2',
+                'ServerAddress': 'https://default.com/v2',
+            },
+            'default.com': {
                 'Username': 'user',
                 'Password': 'hunter2',
                 'ServerAddress': 'https://default.com/v2',
