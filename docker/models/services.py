@@ -178,11 +178,12 @@ class ServiceCollection(Collection):
                 ``source:target:options``, where options is either
                 ``ro`` or ``rw``.
             name (str): Name to give to the service.
-            networks (list of str): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             resources (Resources): Resource limits and reservations.
             restart_policy (RestartPolicy): Restart policy for containers.
-            secrets (list of :py:class:`docker.types.SecretReference`): List
+            secrets (list of :py:class:`~docker.types.SecretReference`): List
                 of secrets accessible to containers for this service.
             stop_grace_period (int): Amount of time to wait for
                 containers to terminate before forcefully killing them.
@@ -205,8 +206,9 @@ class ServiceCollection(Collection):
                 the container's `hosts` file.
             dns_config (DNSConfig): Specification for DNS
                 related configurations in resolver configuration file.
-            configs (:py:class:`list`): List of :py:class:`ConfigReference`
-                that will be exposed to the service.
+            configs (:py:class:`list`): List of
+                :py:class:`~docker.types.ConfigReference` that will be exposed
+                to the service.
             privileges (Privileges): Security options for the service's
                 containers.
 
