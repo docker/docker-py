@@ -1,6 +1,6 @@
 coverage==4.5.2
 flake8==3.6.0
 mock==1.0.1
-pytest==4.1.0
+pytest==4.2.1
 pytest-cov==2.6.1
 pytest-timeout==1.3.3
