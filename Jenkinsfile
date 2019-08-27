@@ -25,7 +25,7 @@ def buildImages = { ->
       imageNamePy3 = "${imageNameBase}:py3-${gitCommit()}"
 
       buildImage(imageNamePy2, "-f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .", "py2.7")
-      buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.6 .", "py3.6")
+      buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.7 .", "py3.7")
     }
   }
 }
@@ -46,12 +46,14 @@ def getDockerVersions = { ->
 
 def getAPIVersion = { engineVersion ->
   def versionMap = [
-    '17.06': '1.30', '17.12': '1.35', '18.02': '1.36', '18.03': '1.37',
-    '18.06': '1.38', '18.09': '1.39'
+    '17.06': '1.30',
+    '18.03': '1.37',
+    '18.09': '1.39',
+    '19.03': '1.40'
   ]
   def result = versionMap[engineVersion.substring(0, 5)]
   if (!result) {
-    return '1.39'
+    return '1.40'
   }
   return result
 }
