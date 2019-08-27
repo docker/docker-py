@@ -900,7 +900,8 @@ class ContainerCollection(Collection):
                 - `exited` (int): Only containers with specified exit code
                 - `status` (str): One of ``restarting``, ``running``,
                     ``paused``, ``exited``
-                - `label` (str): format either ``"key"`` or ``"key=value"``
+                - `label` (str|list): format either ``"key"``, ``"key=value"``
+                    or a list of such.
                 - `id` (str): The id of the container.
                 - `name` (str): The name of the container.
                 - `ancestor` (str): Filter by container ancestor. Format of
