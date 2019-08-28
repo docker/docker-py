@@ -1480,6 +1480,15 @@ class ContainerCPUTest(BaseAPIIntegrationTest):
         config = self.client.inspect_container(container)
         assert config['HostConfig']['Runtime'] == 'runc'
 
+    @requires_api_version('1.40')
+    def test_create_with_gpus(self):
+        container = self.client.create_container(
+            TEST_IMG, ['echo', 'test'], gpus='all'
+        )
+        self.tmp_containers.append(container['Id'])
+        config = self.client.inspect_container(container)
+        assert config['HostConfig']['Gpus'] == 'all'
+
 
 class LinkTest(BaseAPIIntegrationTest):
     def test_remove_link(self):
