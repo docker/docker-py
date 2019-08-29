@@ -376,7 +376,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
         )
         self.tmp_networks.append(network['Id'])
-        container_spec = docker.types.ContainerSpec(BUSYBOX, ['true'])
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         network_config = docker.types.NetworkAttachmentConfig(
             target='dockerpytest_1',
             aliases=['dockerpytest_1_alias'],
