@@ -26,6 +26,7 @@ Container objects
   .. autoattribute:: image
   .. autoattribute:: labels
   .. autoattribute:: name
+  .. autoattribute:: ports
   .. autoattribute:: short_id
   .. autoattribute:: status
 
