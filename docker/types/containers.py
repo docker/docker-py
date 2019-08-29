@@ -518,8 +518,8 @@ class HostConfig(dict):
             self['NanoCpus'] = nano_cpus
 
         if gpus:
-            if version_lt(version, '1.25'):
-                raise host_config_version_error('gpus', '1.25')
+            if version_lt(version, '1.40'):
+                raise host_config_version_error('gpus', '1.40')
             self['Gpus'] = gpus
 
         if runtime:
