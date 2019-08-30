@@ -1,4 +1,5 @@
 import functools
+import time
 import io
 
 import six
@@ -9,7 +10,7 @@ cERROR_PIPE_BUSY = 0xe7
 cSECURITY_SQOS_PRESENT = 0x100000
 cSECURITY_ANONYMOUS = 0
 
-RETRY_WAIT_TIMEOUT = 10000
+MAXIMUM_RETRY_COUNT = 10
 
 
 def check_closed(f):
@@ -46,8 +47,7 @@ class NpipeSocket(object):
         self._closed = True
 
     @check_closed
-    def connect(self, address):
-        win32pipe.WaitNamedPipe(address, self._timeout)
+    def connect(self, address, retry_count=0):
         try:
             handle = win32file.CreateFile(
                 address,
@@ -65,8 +65,10 @@ class NpipeSocket(object):
                 # Another program or thread has grabbed our pipe instance
                 # before we got to it. Wait for availability and attempt to
                 # connect again.
-                win32pipe.WaitNamedPipe(address, RETRY_WAIT_TIMEOUT)
-                return self.connect(address)
+                retry_count = retry_count + 1
+                if (retry_count < MAXIMUM_RETRY_COUNT):
+                    time.sleep(1)
+                    return self.connect(address, retry_count)
             raise e
 
         self.flags = win32pipe.GetNamedPipeInfo(handle)[0]
