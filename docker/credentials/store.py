@@ -75,20 +75,20 @@ class Store(object):
         output = None
         env = create_environment_dict(self.environment)
         try:
-            if six.PY3:
-                output = subprocess.check_output(
-                    [self.exe, subcmd], input=data_input, env=env,
-                )
-            else:
+            if six.PY2:
                 process = subprocess.Popen(
                     [self.exe, subcmd], stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, env=env,
                 )
-                output, _ = process.communicate(data_input)
-                if process.returncode != 0:
-                    raise subprocess.CalledProcessError(
-                        returncode=process.returncode, cmd='', output=output
-                    )
+            output, _ = process.communicate(data_input)
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(
+                    returncode=process.returncode, cmd='', output=output
+                )
+            else:
+                output = subprocess.check_output(
+                    [self.exe, subcmd], input=data_input, env=env,
+                )
         except subprocess.CalledProcessError as e:
             raise errors.process_store_error(e, self.program)
         except OSError as e:

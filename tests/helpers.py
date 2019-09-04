@@ -109,7 +109,7 @@ def swarm_listen_addr():
 
 
 def assert_cat_socket_detached_with_keys(sock, inputs):
-    if six.PY3 and hasattr(sock, '_sock'):
+    if not six.PY2 and hasattr(sock, '_sock'):
         sock = sock._sock
 
     for i in inputs:

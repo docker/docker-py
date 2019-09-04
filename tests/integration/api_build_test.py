@@ -71,7 +71,7 @@ class BuildTest(BaseAPIIntegrationTest):
         assert len(logs) > 0
 
     def test_build_from_stringio(self):
-        if six.PY3:
+        if not six.PY2:
             return
         script = io.StringIO(six.text_type('\n').join([
             'FROM busybox',
@@ -83,7 +83,7 @@ class BuildTest(BaseAPIIntegrationTest):
         stream = self.client.build(fileobj=script)
         logs = ''
         for chunk in stream:
-            if six.PY3:
+            if not six.PY2:
                 chunk = chunk.decode('utf-8')
             logs += chunk
         assert logs != ''
@@ -135,7 +135,7 @@ class BuildTest(BaseAPIIntegrationTest):
         self.client.wait(c)
         logs = self.client.logs(c)
 
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
 
         assert sorted(list(filter(None, logs.split('\n')))) == sorted([
@@ -341,7 +341,7 @@ class BuildTest(BaseAPIIntegrationTest):
         ctnr = self.run_container(img_name, 'cat /hosts-file')
         self.tmp_containers.append(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert '127.0.0.1\textrahost.local.test' in logs
         assert '127.0.0.1\thello.world.test' in logs

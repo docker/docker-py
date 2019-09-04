@@ -25,7 +25,7 @@ class SecretApiMixin(object):
             data = data.encode('utf-8')
 
         data = base64.b64encode(data)
-        if six.PY3:
+        if not six.PY2:
             data = data.decode('ascii')
         body = {
             'Data': data,

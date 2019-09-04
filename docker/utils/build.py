@@ -118,12 +118,12 @@ def mkbuildcontext(dockerfile):
     t = tarfile.open(mode='w', fileobj=f)
     if isinstance(dockerfile, io.StringIO):
         dfinfo = tarfile.TarInfo('Dockerfile')
-        if six.PY3:
-            raise TypeError('Please use io.BytesIO to create in-memory '
-                            'Dockerfiles with Python 3')
-        else:
+        if six.PY2:
             dfinfo.size = len(dockerfile.getvalue())
             dockerfile.seek(0)
+        else:
+            raise TypeError('Please use io.BytesIO to create in-memory '
+                            'Dockerfiles with Python 3')
     elif isinstance(dockerfile, io.BytesIO):
         dfinfo = tarfile.TarInfo('Dockerfile')
         dfinfo.size = len(dockerfile.getvalue())

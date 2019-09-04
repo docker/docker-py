@@ -27,13 +27,13 @@ def read(socket, n=4096):
 
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
-    if six.PY3 and not isinstance(socket, NpipeSocket):
+    if not six.PY2 and not isinstance(socket, NpipeSocket):
         select.select([socket], [], [])
 
     try:
         if hasattr(socket, 'recv'):
             return socket.recv(n)
-        if six.PY3 and isinstance(socket, getattr(pysocket, 'SocketIO')):
+        if not six.PY2 and isinstance(socket, getattr(pysocket, 'SocketIO')):
             return socket.read(n)
         return os.read(socket.fileno(), n)
     except EnvironmentError as e:

@@ -105,7 +105,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert self.client.wait(container3_id)['StatusCode'] == 0
 
         logs = self.client.logs(container3_id)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert '{0}_NAME='.format(link_env_prefix1) in logs
         assert '{0}_ENV_FOO=1'.format(link_env_prefix1) in logs
@@ -228,7 +228,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.wait(container)
 
         logs = self.client.logs(container)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         groups = logs.strip().split(' ')
         assert '1000' in groups
@@ -245,7 +245,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.wait(container)
 
         logs = self.client.logs(container)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
 
         groups = logs.strip().split(' ')
@@ -514,7 +514,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         )
         logs = self.client.logs(container)
 
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
@@ -533,7 +533,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         )
         logs = self.client.logs(container)
 
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert self.filename in logs
 
@@ -552,7 +552,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         )
         assert container
         logs = self.client.logs(container)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
@@ -571,7 +571,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         )
         assert container
         logs = self.client.logs(container)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
@@ -643,7 +643,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
                 destination.write(d)
             destination.seek(0)
             retrieved_data = helpers.untar_file(destination, 'data.txt')
-            if six.PY3:
+            if not six.PY2:
                 retrieved_data = retrieved_data.decode('utf-8')
             assert data == retrieved_data.strip()
 
@@ -680,7 +680,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
             data = data.decode('utf-8')
         assert logs.strip() == data
@@ -698,7 +698,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         results = logs.strip().split()
         assert 'a.py' in results

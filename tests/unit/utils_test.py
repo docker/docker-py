@@ -471,10 +471,10 @@ class UtilsTest(unittest.TestCase):
     def test_decode_json_header(self):
         obj = {'a': 'b', 'c': 1}
         data = None
-        if six.PY3:
-            data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
-        else:
+        if six.PY2:
             data = base64.urlsafe_b64encode(json.dumps(obj))
+        else:
+            data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
         decoded_data = decode_json_header(data)
         assert obj == decoded_data
 
@@ -483,7 +483,8 @@ class SplitCommandTest(unittest.TestCase):
     def test_split_command_with_unicode(self):
         assert split_command(u'echo μμ') == ['echo', 'μμ']
 
-    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
+    @pytest.mark.skipif(not six.PY2,
+                        reason="shlex doesn't support bytes in py3")
     def test_split_command_with_bytes(self):
         assert split_command('echo μμ') == ['echo', 'μμ']
 

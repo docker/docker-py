@@ -150,7 +150,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             else:
                 break
 
-        if six.PY3:
+        if not six.PY2:
             log_line = log_line.decode('utf-8')
         assert 'hello\n' in log_line
 

@@ -327,7 +327,7 @@ class DockerApiTest(BaseAPIClientTest):
     def test_stream_helper_decoding(self):
         status_code, content = fake_api.fake_responses[url_prefix + 'events']()
         content_str = json.dumps(content)
-        if six.PY3:
+        if not six.PY2:
             content_str = content_str.encode('utf-8')
         body = io.BytesIO(content_str)
 

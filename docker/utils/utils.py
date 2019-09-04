@@ -46,7 +46,7 @@ def create_ipam_config(*args, **kwargs):
 
 def decode_json_header(header):
     data = base64.b64decode(header)
-    if six.PY3:
+    if not six.PY2:
         data = data.decode('utf-8')
     return json.loads(data)
 

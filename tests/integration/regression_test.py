@@ -39,7 +39,7 @@ class TestRegressions(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
+        if not six.PY2:
             logs = logs.decode('utf-8')
         assert logs == '1000\n'
 

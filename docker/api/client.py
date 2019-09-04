@@ -313,7 +313,7 @@ class APIClient(
             sock = response.raw._fp.fp.raw.sock
         elif self.base_url.startswith('http+docker://ssh'):
             sock = response.raw._fp.fp.channel
-        elif six.PY3:
+        elif not six.PY2:
             sock = response.raw._fp.fp.raw
             if self.base_url.startswith("https://"):
                 sock = sock._sock
