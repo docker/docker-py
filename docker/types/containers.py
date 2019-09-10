@@ -174,7 +174,7 @@ class HostConfig(dict):
                  pids_limit=None, isolation=None, auto_remove=False,
                  storage_opt=None, init=None, init_path=None,
                  volume_driver=None, cpu_count=None, cpu_percent=None,
-                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
+                 nano_cpus=None, cpuset_mems=None, runtime=None, gpus=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None):
 
@@ -522,6 +522,12 @@ class HostConfig(dict):
                 raise host_config_version_error('runtime', '1.25')
             self['Runtime'] = runtime
 
+        if gpus:
+            if version_lt(version, '1.40'):
+                raise host_config_version_error('runtime', '1.40')
+            # This should probably be refactored to parse_gpus(gpus) and handle more options than 'all'
+            self['DeviceRequests'] = [ {'Driver': '', 'Count': -1, 'DeviceIDs': None, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+
         if mounts is not None:
             if version_lt(version, '1.30'):
                 raise host_config_version_error('mounts', '1.30')
@@ -560,7 +566,7 @@ class ContainerConfig(dict):
         volumes=None, network_disabled=False, entrypoint=None,
         working_dir=None, domainname=None, host_config=None, mac_address=None,
         labels=None, stop_signal=None, networking_config=None,
-        healthcheck=None, stop_timeout=None, runtime=None
+        healthcheck=None, stop_timeout=None, runtime=None, gpus=None
     ):
 
         if stop_timeout is not None and version_lt(version, '1.25'):
@@ -654,5 +660,6 @@ class ContainerConfig(dict):
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
             'StopTimeout': stop_timeout,
-            'Runtime': runtime
+            'Runtime': runtime,
+            'Gpus': gpus
         })

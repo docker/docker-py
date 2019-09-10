@@ -224,7 +224,7 @@ class ContainerApiMixin(object):
                          working_dir=None, domainname=None, host_config=None,
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
-                         stop_timeout=None, runtime=None,
+                         stop_timeout=None, runtime=None, gpus=None,
                          use_config_proxy=True):
         """
         Creates a container. Parameters are similar to those for the ``docker
@@ -392,6 +392,7 @@ class ContainerApiMixin(object):
             networking_config (dict): A networking configuration generated
                 by :py:meth:`create_networking_config`.
             runtime (str): Runtime to use with this container.
+            gpus (str): Set to 'all' to use all available gpus
             healthcheck (dict): Specify a test to perform to check that the
                 container is healthy.
             use_config_proxy (bool): If ``True``, and if the docker client
@@ -425,7 +426,7 @@ class ContainerApiMixin(object):
             network_disabled, entrypoint, working_dir, domainname,
             host_config, mac_address, labels,
             stop_signal, networking_config, healthcheck,
-            stop_timeout, runtime
+            stop_timeout, runtime, gpus
         )
         return self.create_container_from_config(config, name)
 
@@ -567,6 +568,7 @@ class ContainerApiMixin(object):
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             runtime (str): Runtime to use with this container.
+            gpus (str): Set to 'all' to use all available gpus
 
 
         Returns:
