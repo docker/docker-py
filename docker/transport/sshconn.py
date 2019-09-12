@@ -79,6 +79,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                  pool_connections=constants.DEFAULT_NUM_POOLS):
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         self.base_url = base_url
         self._connect()
