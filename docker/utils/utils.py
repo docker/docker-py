@@ -9,6 +9,7 @@ from distutils.version import StrictVersion
 
 import six
 
+from .config import find_config_file, home_dir
 from .. import errors
 from .. import tls
 
