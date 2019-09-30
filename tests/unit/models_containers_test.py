@@ -186,7 +186,8 @@ class ContainerCollectionTest(unittest.TestCase):
             mac_address='abc123',
             name='somename',
             network_disabled=False,
-            networking_config={'EndpointsConfig': {'foo': {'Aliases': ['bar', 'baz']}}},
+            networking_config={'EndpointsConfig': {'foo': {'Aliases':
+                                                           ['bar', 'baz']}}},
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
             stop_signal=9,
