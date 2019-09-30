@@ -8,7 +8,7 @@ from ..errors import (
     ContainerError, DockerException, ImageNotFound,
     NotFound, create_unexpected_kwargs_error
 )
-from ..types import HostConfig
+from ..types import (HostConfig, NetworkingConfig, EndpointConfig)
 from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
@@ -644,6 +644,8 @@ class ContainerCollection(Collection):
                 - ``host`` Use the host network stack.
 
                 Incompatible with ``network``.
+            network_alias (list): A list of hostnames that the container will be
+                available under.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -1066,7 +1068,14 @@ def _create_container_args(kwargs):
 
     network = kwargs.pop('network', None)
     if network:
-        create_kwargs['networking_config'] = {network: None}
+        network_alias = kwargs.pop('network_alias', None)
+        endpoint_config = None
+        if network_alias:
+            endpoint_config = EndpointConfig(
+                host_config_kwargs['version'],
+                aliases=network_alias)
+
+        create_kwargs['networking_config'] = NetworkingConfig({network: endpoint_config})
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
