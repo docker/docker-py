@@ -26,8 +26,8 @@ class TaskTemplate(dict):
         placement (Placement): Placement instructions for the scheduler.
             If a list is passed instead, it is assumed to be a list of
             constraints as part of a :py:class:`Placement` object.
-        networks (:py:class:`list`): List of network names or IDs to attach
-            the containers to.
+        networks (:py:class:`list`): List of network names or IDs or
+            :py:class:`NetworkAttachmentConfig` to attach the service to.
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
@@ -770,3 +770,21 @@ class Privileges(dict):
 
         if len(selinux_context) > 0:
             self['SELinuxContext'] = selinux_context
+
+
+class NetworkAttachmentConfig(dict):
+    """
+        Network attachment options for a service.
+
+        Args:
+            target (str): The target network for attachment.
+                Can be a network name or ID.
+            aliases (:py:class:`list`): A list of discoverable alternate names
+                for the service.
+            options (:py:class:`dict`): Driver attachment options for the
+                network target.
+    """
+    def __init__(self, target, aliases=None, options=None):
+        self['Target'] = target
+        self['Aliases'] = aliases
+        self['DriverOpts'] = options

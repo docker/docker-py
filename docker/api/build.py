@@ -308,7 +308,8 @@ class BuildApiMixin(object):
             auth_data = self._auth_configs.get_all_credentials()
 
             # See https://github.com/docker/docker-py/issues/1683
-            if auth.INDEX_URL not in auth_data and auth.INDEX_URL in auth_data:
+            if (auth.INDEX_URL not in auth_data and
+                    auth.INDEX_NAME in auth_data):
                 auth_data[auth.INDEX_URL] = auth_data.get(auth.INDEX_NAME, {})
 
             log.debug(

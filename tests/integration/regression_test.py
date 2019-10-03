@@ -4,7 +4,7 @@ import random
 import docker
 import six
 
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 import pytest
 
 
@@ -19,7 +19,7 @@ class TestRegressions(BaseAPIIntegrationTest):
 
     def test_542_truncate_ids_client_side(self):
         self.client.start(
-            self.client.create_container(BUSYBOX, ['true'])
+            self.client.create_container(TEST_IMG, ['true'])
         )
         result = self.client.containers(all=True, trunc=True)
         assert len(result[0]['Id']) == 12
@@ -30,12 +30,12 @@ class TestRegressions(BaseAPIIntegrationTest):
 
     def test_649_handle_timeout_value_none(self):
         self.client.timeout = None
-        ctnr = self.client.create_container(BUSYBOX, ['sleep', '2'])
+        ctnr = self.client.create_container(TEST_IMG, ['sleep', '2'])
         self.client.start(ctnr)
         self.client.stop(ctnr)
 
     def test_715_handle_user_param_as_int_value(self):
-        ctnr = self.client.create_container(BUSYBOX, ['id', '-u'], user=1000)
+        ctnr = self.client.create_container(TEST_IMG, ['id', '-u'], user=1000)
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
@@ -47,7 +47,7 @@ class TestRegressions(BaseAPIIntegrationTest):
 
         tcp_port, udp_port = random.sample(range(9999, 32000), 2)
         ctnr = self.client.create_container(
-            BUSYBOX, ['sleep', '9999'], ports=[2000, (2000, 'udp')],
+            TEST_IMG, ['sleep', '9999'], ports=[2000, (2000, 'udp')],
             host_config=self.client.create_host_config(
                 port_bindings={'2000/tcp': tcp_port, '2000/udp': udp_port}
             )

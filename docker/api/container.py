@@ -174,7 +174,8 @@ class ContainerApiMixin(object):
                 - `exited` (int): Only containers with specified exit code
                 - `status` (str): One of ``restarting``, ``running``,
                     ``paused``, ``exited``
-                - `label` (str): format either ``"key"`` or ``"key=value"``
+                - `label` (str|list): format either ``"key"``, ``"key=value"``
+                    or a list of such.
                 - `id` (str): The id of the container.
                 - `name` (str): The name of the container.
                 - `ancestor` (str): Filter by container ancestor. Format of
@@ -502,6 +503,7 @@ class ContainerApiMixin(object):
                 bytes) or a string with a units identification char
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
+            mem_reservation (int or str): Memory soft limit.
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a

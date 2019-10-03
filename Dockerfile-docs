@@ -1,4 +1,6 @@
-FROM python:3.5
+ARG PYTHON_VERSION=3.7
+
+FROM python:${PYTHON_VERSION}
 
 ARG uid=1000
 ARG gid=1000

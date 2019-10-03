@@ -9,7 +9,7 @@ from docker.utils.proxy import ProxyConfig
 import pytest
 import six
 
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 from ..helpers import random_name, requires_api_version, requires_experimental
 
 
@@ -277,7 +277,7 @@ class BuildTest(BaseAPIIntegrationTest):
         # Set up pingable endpoint on custom network
         network = self.client.create_network(random_name())['Id']
         self.tmp_networks.append(network)
-        container = self.client.create_container(BUSYBOX, 'top')
+        container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
         self.client.connect_container_to_network(
@@ -448,8 +448,10 @@ class BuildTest(BaseAPIIntegrationTest):
             for _ in stream:
                 pass
 
-        assert excinfo.value.status_code == 400
-        assert 'invalid platform' in excinfo.exconly()
+        # Some API versions incorrectly returns 500 status; assert 4xx or 5xx
+        assert excinfo.value.is_error()
+        assert 'unknown operating system' in excinfo.exconly() \
+               or 'invalid platform' in excinfo.exconly()
 
     def test_build_out_of_context_dockerfile(self):
         base_dir = tempfile.mkdtemp()

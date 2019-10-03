@@ -135,8 +135,9 @@ class ServiceApiMixin(object):
                 of the service. Default: ``None``
             rollback_config (RollbackConfig): Specification for the rollback
                 strategy of the service. Default: ``None``
-            networks (:py:class:`list`): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
@@ -383,8 +384,9 @@ class ServiceApiMixin(object):
                 of the service. Default: ``None``.
             rollback_config (RollbackConfig): Specification for the rollback
                 strategy of the service. Default: ``None``
-            networks (:py:class:`list`): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
             fetch_current_spec (boolean): Use the undefined settings from the

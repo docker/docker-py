@@ -3,7 +3,7 @@ from docker.types import IPAMConfig, IPAMPool
 import pytest
 
 from ..helpers import random_name, requires_api_version
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 
 
 class TestNetworks(BaseAPIIntegrationTest):
@@ -92,7 +92,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     def test_connect_and_disconnect_container(self):
         net_name, net_id = self.create_network()
 
-        container = self.client.create_container(BUSYBOX, 'top')
+        container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
 
@@ -119,7 +119,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     def test_connect_and_force_disconnect_container(self):
         net_name, net_id = self.create_network()
 
-        container = self.client.create_container(BUSYBOX, 'top')
+        container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
 
@@ -144,7 +144,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     def test_connect_with_aliases(self):
         net_name, net_id = self.create_network()
 
-        container = self.client.create_container(BUSYBOX, 'top')
+        container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
 
@@ -161,7 +161,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
 
         container = self.client.create_container(
-            image=BUSYBOX,
+            image=TEST_IMG,
             command='top',
             host_config=self.client.create_host_config(network_mode=net_name),
         )
@@ -181,7 +181,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
 
         container = self.client.create_container(
-            image=BUSYBOX,
+            image=TEST_IMG,
             command='top',
             host_config=self.client.create_host_config(
                 network_mode=net_name,
@@ -211,7 +211,7 @@ class TestNetworks(BaseAPIIntegrationTest):
             ),
         )
         container = self.client.create_container(
-            image=BUSYBOX, command='top',
+            image=TEST_IMG, command='top',
             host_config=self.client.create_host_config(network_mode=net_name),
             networking_config=self.client.create_networking_config({
                 net_name: self.client.create_endpoint_config(
@@ -237,7 +237,7 @@ class TestNetworks(BaseAPIIntegrationTest):
             ),
         )
         container = self.client.create_container(
-            image=BUSYBOX, command='top',
+            image=TEST_IMG, command='top',
             host_config=self.client.create_host_config(network_mode=net_name),
             networking_config=self.client.create_networking_config({
                 net_name: self.client.create_endpoint_config(
@@ -257,7 +257,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.24')
     def test_create_with_linklocal_ips(self):
         container = self.client.create_container(
-            BUSYBOX, 'top',
+            TEST_IMG, 'top',
             networking_config=self.client.create_networking_config(
                 {
                     'bridge': self.client.create_endpoint_config(

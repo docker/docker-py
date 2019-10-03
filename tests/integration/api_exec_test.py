@@ -2,7 +2,7 @@ from ..helpers import assert_cat_socket_detached_with_keys
 from ..helpers import ctrl_with
 from ..helpers import requires_api_version
 from .base import BaseAPIIntegrationTest
-from .base import BUSYBOX
+from .base import TEST_IMG
 from docker.utils.proxy import ProxyConfig
 from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
@@ -16,7 +16,7 @@ class ExecTest(BaseAPIIntegrationTest):
         )
 
         container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True,
+            TEST_IMG, 'cat', detach=True, stdin_open=True,
         )
         self.client.start(container)
         self.tmp_containers.append(container)
@@ -48,7 +48,7 @@ class ExecTest(BaseAPIIntegrationTest):
             assert item in output
 
     def test_execute_command(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -61,7 +61,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert exec_log == b'hello\n'
 
     def test_exec_command_string(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -74,7 +74,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert exec_log == b'hello world\n'
 
     def test_exec_command_as_user(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -87,7 +87,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert exec_log == b'postgres\n'
 
     def test_exec_command_as_root(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -100,7 +100,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert exec_log == b'root\n'
 
     def test_exec_command_streaming(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.tmp_containers.append(id)
@@ -115,7 +115,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert res == b'hello\nworld\n'
 
     def test_exec_start_socket(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         container_id = container['Id']
         self.client.start(container_id)
@@ -137,7 +137,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert data.decode('utf-8') == line
 
     def test_exec_start_detached(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         container_id = container['Id']
         self.client.start(container_id)
@@ -152,7 +152,7 @@ class ExecTest(BaseAPIIntegrationTest):
         assert response == ""
 
     def test_exec_inspect(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -167,7 +167,7 @@ class ExecTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.25')
     def test_exec_command_with_env(self):
-        container = self.client.create_container(BUSYBOX, 'cat',
+        container = self.client.create_container(TEST_IMG, 'cat',
                                                  detach=True, stdin_open=True)
         id = container['Id']
         self.client.start(id)
@@ -182,7 +182,7 @@ class ExecTest(BaseAPIIntegrationTest):
     @requires_api_version('1.35')
     def test_exec_command_with_workdir(self):
         container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
+            TEST_IMG, 'cat', detach=True, stdin_open=True
         )
         self.tmp_containers.append(container)
         self.client.start(container)
@@ -193,7 +193,7 @@ class ExecTest(BaseAPIIntegrationTest):
 
     def test_detach_with_default(self):
         container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
+            TEST_IMG, 'cat', detach=True, stdin_open=True
         )
         id = container['Id']
         self.client.start(id)
@@ -212,7 +212,7 @@ class ExecTest(BaseAPIIntegrationTest):
     def test_detach_with_config_file(self):
         self.client._general_configs['detachKeys'] = 'ctrl-p'
         container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
+            TEST_IMG, 'cat', detach=True, stdin_open=True
         )
         id = container['Id']
         self.client.start(id)
@@ -225,24 +225,6 @@ class ExecTest(BaseAPIIntegrationTest):
         self.addCleanup(sock.close)
 
         assert_cat_socket_detached_with_keys(sock, [ctrl_with('p')])
-
-    def test_detach_with_arg(self):
-        self.client._general_configs['detachKeys'] = 'ctrl-p'
-        container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
-        )
-        id = container['Id']
-        self.client.start(id)
-        self.tmp_containers.append(id)
-
-        exec_id = self.client.exec_create(
-            id, 'cat',
-            stdin=True, tty=True, detach_keys='ctrl-x', stdout=True
-        )
-        sock = self.client.exec_start(exec_id, tty=True, socket=True)
-        self.addCleanup(sock.close)
-
-        assert_cat_socket_detached_with_keys(sock, [ctrl_with('x')])
 
 
 class ExecDemuxTest(BaseAPIIntegrationTest):
@@ -259,7 +241,7 @@ class ExecDemuxTest(BaseAPIIntegrationTest):
     def setUp(self):
         super(ExecDemuxTest, self).setUp()
         self.container = self.client.create_container(
-            BUSYBOX, 'cat', detach=True, stdin_open=True
+            TEST_IMG, 'cat', detach=True, stdin_open=True
         )
         self.client.start(self.container)
         self.tmp_containers.append(self.container)

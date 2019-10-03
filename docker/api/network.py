@@ -7,7 +7,7 @@ from .. import utils
 class NetworkApiMixin(object):
     def networks(self, names=None, ids=None, filters=None):
         """
-        List networks. Similar to the ``docker networks ls`` command.
+        List networks. Similar to the ``docker network ls`` command.
 
         Args:
             names (:py:class:`list`): List of names to filter by
@@ -15,7 +15,8 @@ class NetworkApiMixin(object):
             filters (dict): Filters to be processed on the network list.
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
-                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - ``label=[<key>]``, ``label=[<key>=<value>]`` or a list of
+                    such.
                 - ``type=["custom"|"builtin"]`` Filters networks by type.
 
         Returns:

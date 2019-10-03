@@ -190,7 +190,8 @@ class NetworkCollection(Collection):
             filters (dict): Filters to be processed on the network list.
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
-                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - `label` (str|list): format either ``"key"``, ``"key=value"``
+                    or a list of such.
                 - ``type=["custom"|"builtin"]`` Filters networks by type.
             greedy (bool): Fetch more details for each network individually.
                 You might want this to get the containers attached to them.
