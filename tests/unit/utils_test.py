@@ -463,6 +463,9 @@ class UtilsTest(unittest.TestCase):
             ({'dangling': "true"}, '{"dangling": ["true"]}'),
             ({'exited': 0}, '{"exited": ["0"]}'),
             ({'exited': [0, 1]}, '{"exited": ["0", "1"]}'),
+            ({'label': ('foo=a', 'bar=b')}, '{"label": ["foo=a", "bar=b"]}'),
+            ({'label': (x for x in ('foo=a', 'bar=b'))},
+             '{"label": ["foo=a", "bar=b"]}'),
         ]
 
         for filters, expected in tests:
