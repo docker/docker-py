@@ -6,7 +6,7 @@ import six
 
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..errors import BuildError, ImageLoadError, InvalidArgument
+from ..errors import BuildError, ImageLoadError, InvalidArgument, NotFound
 from ..utils import parse_repository_tag
 from ..utils.json_stream import json_stream
 from .resource import Collection, Model
@@ -339,7 +339,7 @@ class ImageCollection(Collection):
             collection=self,
         )
 
-    def list(self, name=None, all=False, filters=None):
+    def list(self, name=None, all=False, filters=None, ignore_removed=False):
         """
         List images on the server.
 
@@ -352,6 +352,10 @@ class ImageCollection(Collection):
                 - ``dangling`` (bool)
                 - `label` (str|list): format either ``"key"``, ``"key=value"``
                     or a list of such.
+            ignore_removed (bool): Ignore failures due to missing images
+                when attempting to inspect images from the original list.
+                Set to ``True`` if race conditions are likely.
+                Default: ``False``
 
         Returns:
             (list of :py:class:`Image`): The images.
@@ -361,7 +365,15 @@ class ImageCollection(Collection):
                 If the server returns an error.
         """
         resp = self.client.api.images(name=name, all=all, filters=filters)
-        return [self.get(r["Id"]) for r in resp]
+        images = []
+        for r in resp:
+            try:
+                images.append(self.get(r['Id']))
+            # a image may have been removed while iterating
+            except NotFound:
+                if not ignore_removed:
+                    raise
+        return images
 
     def load(self, data):
         """
