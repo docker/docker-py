@@ -32,7 +32,7 @@ def buildImages = { ->
 
 def getDockerVersions = { ->
   def dockerVersions = ["17.06.2-ce"]
-  wrappedNode(label: "ubuntu && !zfs") {
+  wrappedNode(label: "ubuntu && !zfs && amd64") {
     def result = sh(script: """docker run --rm \\
         --entrypoint=python \\
         ${imageNamePy3} \\
