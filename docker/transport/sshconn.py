@@ -1,6 +1,8 @@
 import paramiko
 import requests.adapters
 import six
+import logging
+import os
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
@@ -72,15 +74,40 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 class SSHHTTPAdapter(BaseHTTPAdapter):
 
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + [
-        'pools', 'timeout', 'ssh_client',
+        'pools', 'timeout', 'ssh_client', 'ssh_params'
     ]
 
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS):
+        logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.load_system_host_keys()
+        base_url = six.moves.urllib_parse.urlparse(base_url)
+        self.ssh_params = {
+            "hostname": base_url.hostname,
+            "port": base_url.port,
+            "username": base_url.username
+            }
+        ssh_config_file = os.path.expanduser("~/.ssh/config")
+        if os.path.exists(ssh_config_file):
+            conf = paramiko.SSHConfig()
+            with open(ssh_config_file) as f:
+                conf.parse(f)
+            host_config = conf.lookup(base_url.hostname)
+            self.ssh_conf = host_config
+            if 'proxycommand' in host_config:
+                self.ssh_params["sock"] = paramiko.ProxyCommand(
+                    self.ssh_conf['proxycommand']
+                )
+            if 'hostname' in host_config:
+                self.ssh_params['hostname'] = host_config['hostname']
+            if base_url.port is None and 'port' in host_config:
+                self.ssh_params['port'] = self.ssh_conf['port']
+            if base_url.username is None and 'user' in host_config:
+                self.ssh_params['username'] = self.ssh_conf['user']
 
-        self.base_url = base_url
+        self.ssh_client.load_system_host_keys()
+        self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
+
         self._connect()
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
@@ -89,10 +116,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         super(SSHHTTPAdapter, self).__init__()
 
     def _connect(self):
-        parsed = six.moves.urllib_parse.urlparse(self.base_url)
-        self.ssh_client.connect(
-            parsed.hostname, parsed.port, parsed.username,
-        )
+        self.ssh_client.connect(**self.ssh_params)
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:
