@@ -1,3 +1,6 @@
 dl.hide-signature > dt {
   display: none;
 }
+code.literal{
+  hyphens: none;
+}
