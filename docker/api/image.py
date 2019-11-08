@@ -14,7 +14,8 @@ class ImageApiMixin(object):
     @utils.check_resource('image')
     def get_image(self, image, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
         """
-        Get a tarball of an image. Similar to the ``docker save`` command.
+        Get a tarball of an image. Similar to the
+        ``docker image save`` command.
 
         Args:
             image (str): Image name to get
@@ -38,6 +39,40 @@ class ImageApiMixin(object):
             >>> f.close()
         """
         res = self._get(self._url("/images/{0}/get", image), stream=True)
+        return self._stream_raw_result(res, chunk_size, False)
+
+    @utils.check_resource('image')
+    def get_images(self, images, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
+        """
+        Get a tarball of images. Similar to the
+        ``docker image save IMAGE...`` command.
+
+        Args:
+            images (list): Images name to get
+            chunk_size (int): The number of bytes returned by each iteration
+                of the generator. If ``None``, data will be streamed as it is
+                received. Default: 2 MB
+
+        Returns:
+            (generator): A stream of raw archive data.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        Example:
+
+            >>> names = ["busybox:latest", "alpine:latest"]
+            >>> image = cli.get_images(names)
+            >>> f = open('/tmp/busybox-and-alpine-latest.tar', 'wb')
+            >>> for chunk in image:
+            >>>   f.write(chunk)
+            >>> f.close()
+        """
+        params = {
+            'names': images
+        }
+        res = self._get(self._url("/images/get"), params=params, stream=True)
         return self._stream_raw_result(res, chunk_size, False)
 
     @utils.check_resource('image')

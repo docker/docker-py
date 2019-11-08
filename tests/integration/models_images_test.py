@@ -109,6 +109,18 @@ class ImageCollectionTest(BaseIntegrationTest):
         assert len(result) == 1
         assert result[0].id == image.id
 
+    def test_save_and_load_multiple(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        with tempfile.TemporaryFile() as f:
+            stream = client.images.save([TEST_IMG, 'hello-world:latest'])
+            for chunk in stream:
+                f.write(chunk)
+
+            f.seek(0)
+            result = client.images.load(f.read())
+
+        assert len(result) == 2
+
     def test_save_and_load_repo_name(self):
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.get(TEST_IMG)

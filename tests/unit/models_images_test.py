@@ -91,6 +91,13 @@ class ImageCollectionTest(unittest.TestCase):
         client.images.remove('test_image')
         client.api.remove_image.assert_called_with('test_image')
 
+    def test_save(self):
+        client = make_fake_client()
+        client.images.save([FAKE_IMAGE_ID])
+        client.api.get_images.assert_called_with(
+            [FAKE_IMAGE_ID], DEFAULT_DATA_CHUNK_SIZE
+        )
+
     def test_search(self):
         client = make_fake_client()
         client.images.search('test')

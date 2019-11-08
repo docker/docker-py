@@ -62,7 +62,8 @@ class Image(Model):
 
     def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE, named=False):
         """
-        Get a tarball of an image. Similar to the ``docker save`` command.
+        Get a tarball of an image. Similar to the
+        ``docker image save IMAGE`` command.
 
         Args:
             chunk_size (int): The generator will return up to that much data
@@ -84,9 +85,9 @@ class Image(Model):
 
         Example:
 
-            >>> image = cli.get_image("busybox:latest")
+            >>> image = client.images.get("busybox:latest")
             >>> f = open('/tmp/busybox-latest.tar', 'wb')
-            >>> for chunk in image:
+            >>> for chunk in image.save():
             >>>   f.write(chunk)
             >>> f.close()
         """
@@ -296,6 +297,40 @@ class ImageCollection(Collection):
         if image_id:
             return (self.get(image_id), result_stream)
         raise BuildError(last_event or 'Unknown', result_stream)
+
+    def save(self, images, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
+        """
+        Get a tarball of multiple images. Similar to the
+        ``docker images save IMAGE [IMAGES...]`` command.
+
+        Args:
+            images (list): Images to get
+            chunk_size (int): The generator will return up to that much data
+                per iteration, but may return less. If ``None``, data will be
+                streamed as it is received. Default: 2 MB
+            named (str or bool): If ``False`` (default), the tarball will not
+                retain repository and tag information for this image. If set
+                to ``True``, the first tag in the :py:attr:`~tags` list will
+                be used to identify the image. Alternatively, any element of
+                the :py:attr:`~tags` list can be used as an argument to use
+                that specific tag as the saved identifier.
+
+        Returns:
+            (generator): A stream of raw archive data.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+
+        Example:
+
+            >>> image = client.images.save(["busybox:latest", "alpine:latest"])
+            >>> f = open('/tmp/busybox-and-alpine-latest.tar', 'wb')
+            >>> for chunk in image:
+            >>>   f.write(chunk)
+            >>> f.close()
+        """
+        return self.client.api.get_images(images, chunk_size)
 
     def get(self, name):
         """
