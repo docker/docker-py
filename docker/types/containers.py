@@ -523,10 +523,31 @@ class HostConfig(dict):
             self['Runtime'] = runtime
 
         if gpus:
-            if version_lt(version, '1.40'):
-                raise host_config_version_error('runtime', '1.40')
-            # This should probably be refactored to parse_gpus(gpus) and handle more options than 'all'
-            self['DeviceRequests'] = [ {'Driver': '', 'Count': -1, 'DeviceIDs': None, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('runtime', '1.25')
+            elif version_lt(version, '1.40'):
+                # set up the nvidia runtime
+                self['Runtime'] = "nvidia"
+                # inject into environment
+
+            else:
+                # 3 possible formats
+                # all -> all
+                # int -> count
+                # device="a,...,z" -> deviceIDs
+                if gpus == "all":
+                    self['DeviceRequests'] = [ {'Driver': '', 'Count': -1, 'DeviceIDs': None, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+                else:
+                    # check if we have a count
+                    try:
+                        count = int(gpus)
+                        self['DeviceRequests'] = [ {'Driver': '', 'Count': count, 'DeviceIDs': None, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+                    except ValueError:
+                        if gpus.startswith("device="):
+                            device_ids = [x.strip() for x in gpus.replace("device=", "").split(",")]
+                            self['DeviceRequests'] = [ {'Driver': '', 'Count': 0, 'DeviceIDs': device_ids, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+                        else:
+                            raise host_config_value_error("gpus", gpus)
 
         if mounts is not None:
             if version_lt(version, '1.30'):
@@ -585,6 +606,17 @@ class ContainerConfig(dict):
                     'healthcheck start period was introduced in API '
                     'version 1.29'
                 )
+
+        if gpus is not None:
+            # check if we need to set up an environment variable for GPUs
+            if version_lt(version, '1.40'):
+                visible_devices = gpus.replace("device=","")
+                if environment is None:
+                    environment = {}
+                if isinstance(environment, dict):
+                    environment['NVIDIA_VISIBLE_DEVICES'] = visible_devices
+                else:
+                    environment.append("NVIDIA_VISIBLE_DEVICES={}".format(visible_devices))
 
         if isinstance(command, six.string_types):
             command = split_command(command)

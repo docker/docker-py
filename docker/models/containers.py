@@ -974,6 +974,7 @@ RUN_CREATE_KWARGS = [
     'use_config_proxy',
     'user',
     'working_dir',
+    'gpus'
 ]
 
 # kwargs to copy straight from run to host_config
