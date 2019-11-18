@@ -529,7 +529,6 @@ class HostConfig(dict):
                 # set up the nvidia runtime
                 self['Runtime'] = "nvidia"
                 # inject into environment
-
             else:
                 # 3 possible formats
                 # all -> all

@@ -974,7 +974,6 @@ RUN_CREATE_KWARGS = [
     'use_config_proxy',
     'user',
     'working_dir',
-    'gpus'
 ]
 
 # kwargs to copy straight from run to host_config
@@ -1040,7 +1039,6 @@ RUN_HOST_CONFIG_KWARGS = [
     'volume_driver',
     'volumes_from',
     'runtime',
-    'gpus'
 ]
 
 
@@ -1071,6 +1069,11 @@ def _create_container_args(kwargs):
     if network:
         create_kwargs['networking_config'] = {network: None}
         host_config_kwargs['network_mode'] = network
+
+    gpus = kwargs.pop('gpus', None)
+    if gpus:
+        create_kwargs['gpus'] = gpus
+        host_config_kwargs['gpus'] = gpus
 
     # All kwargs should have been consumed by this point, so raise
     # error if any are left
