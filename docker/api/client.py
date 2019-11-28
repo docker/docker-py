@@ -156,7 +156,7 @@ class APIClient(
                 )
             except NameError:
                 raise DockerException(
-                    'Install pypiwin32 package to enable npipe:// support'
+                    'Install pywin32 package to enable npipe:// support'
                 )
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localnpipe'
