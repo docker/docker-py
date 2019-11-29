@@ -767,7 +767,7 @@ class CreateContainerTest(BaseAPIClientTest):
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
-    # @requires_api_version('1.40')
+    @requires_api_version('1.40')
     def test_create_container_with_device_requests(self):
         self.client.create_container(
             'busybox', 'true', host_config=self.client.create_host_config(
