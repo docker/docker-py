@@ -509,13 +509,14 @@ class ImageApiMixin(object):
         res = self._delete(self._url("/images/{0}", image), params=params)
         return self._result(res, True)
 
-    def search(self, term):
+    def search(self, term, limit=None):
         """
         Search for images on Docker Hub. Similar to the ``docker search``
         command.
 
         Args:
             term (str): A term to search for.
+            limit (int): The maximum number of results to return.
 
         Returns:
             (list of dicts): The response of the search.
@@ -524,8 +525,12 @@ class ImageApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+        params = {'term': term}
+        if limit is not None:
+            params['limit'] = limit
+
         return self._result(
-            self._get(self._url("/images/search"), params={'term': term}),
+            self._get(self._url("/images/search"), params=params),
             True
         )
 

@@ -112,6 +112,11 @@ class ImageCollectionTest(unittest.TestCase):
         client.images.search('test')
         client.api.search.assert_called_with('test')
 
+    def test_search_limit(self):
+        client = make_fake_client()
+        client.images.search('test', limit=5)
+        client.api.search.assert_called_with('test', limit=5)
+
 
 class ImageTest(unittest.TestCase):
     def test_short_id(self):
