@@ -7,19 +7,11 @@ class Secret(Model):
     id_attribute = 'Id'
 
     def __repr__(self):
-        return "<%s: '%s'>" % (self.__class__.__name__, self.name)
+        return "<%s: '%s'>" % (self.__class__.__name__, self.id)
 
     @property
     def name(self):
-        """
-        Create secret only returns Id field, so if the name field is not
-        present, it will show id value instead.
-        Issue #2025
-        """
-        if self.attrs.get('Spec', {}).get('Name'):
-            return self.attrs['Spec']['Name']
-
-        return self.id
+        return self.attrs.get('Spec', {}).get('Name')
 
     def remove(self):
         """
