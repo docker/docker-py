@@ -34,9 +34,9 @@ class NpipeHTTPConnection(httplib.HTTPConnection, object):
 
 
 class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, npipe_path, timeout=60, maxsize=10):
+    def __init__(self, npipe_path, timeout=60, max_pool_size=10):
         super(NpipeHTTPConnectionPool, self).__init__(
-            'localhost', timeout=timeout, maxsize=maxsize
+            'localhost', timeout=timeout, maxsize=max_pool_size
         )
         self.npipe_path = npipe_path
         self.timeout = timeout
@@ -73,15 +73,18 @@ class NpipeHTTPAdapter(BaseHTTPAdapter):
 
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + ['npipe_path',
                                                            'pools',
-                                                           'timeout']
+                                                           'timeout',
+                                                           'max_pool_size']
 
     def __init__(self, base_url, timeout=60,
-                 pool_connections=constants.DEFAULT_NUM_POOLS):
+                 pool_connections=constants.DEFAULT_NUM_POOLS,
+                 max_pool_size=10):
         self.npipe_path = base_url.replace('npipe://', '')
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
+        self.max_pool_size = max_pool_size
         super(NpipeHTTPAdapter, self).__init__()
 
     def get_connection(self, url, proxies=None):
@@ -91,7 +94,8 @@ class NpipeHTTPAdapter(BaseHTTPAdapter):
                 return pool
 
             pool = NpipeHTTPConnectionPool(
-                self.npipe_path, self.timeout
+                self.npipe_path, self.timeout,
+                max_pool_size=self.max_pool_size
             )
             self.pools[url] = pool
 
