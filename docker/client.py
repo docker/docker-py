@@ -70,6 +70,7 @@ class DockerClient(object):
                 from. Default: the value of ``os.environ``
             credstore_env (dict): Override environment variables when calling
                 the credential store process.
+            max_pool_size (int): number of connections for pool
 
         Example:
 
@@ -81,8 +82,9 @@ class DockerClient(object):
         """
         timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
         version = kwargs.pop('version', None)
+        max_pool_size = kwargs.pop('max_pool_size', 10)
         return cls(
-            timeout=timeout, version=version, **kwargs_from_env(**kwargs)
+            timeout=timeout, version=version, max_pool_size=max_pool_size, **kwargs_from_env(**kwargs)
         )
 
     # Resources
