@@ -23,7 +23,8 @@ from .. import auth
 from ..constants import (
     DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
     DEFAULT_DOCKER_API_VERSION, MINIMUM_DOCKER_API_VERSION,
-    STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS_SSH, DEFAULT_NUM_POOLS
+    STREAM_HEADER_SIZE_BYTES, DEFAULT_NUM_POOLS_SSH, DEFAULT_NUM_POOLS,
+    DEFAULT_MAX_POOL_SIZE
 )
 from ..errors import (
     DockerException, InvalidVersion, TLSParameterError,
@@ -84,6 +85,8 @@ class APIClient(
         version (str): The version of the API to use. Set to ``auto`` to
             automatically detect the server's version. Default: ``1.35``
         timeout (int): Default timeout for API calls, in seconds.
+        max_pool_size (int): The maximum number of connections
+            to save in the pool.
         tls (bool or :py:class:`~docker.tls.TLSConfig`): Enable TLS. Pass
             ``True`` to enable it with default options, or pass a
             :py:class:`~docker.tls.TLSConfig` object to use custom
@@ -102,7 +105,7 @@ class APIClient(
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
-                 credstore_env=None, max_pool_size=10):
+                 credstore_env=None, max_pool_size=DEFAULT_MAX_POOL_SIZE):
         super(APIClient, self).__init__()
 
         if tls and not base_url:
@@ -139,8 +142,7 @@ class APIClient(
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixHTTPAdapter(
                 base_url, timeout, pool_connections=num_pools,
-                max_pool_size=max_pool_size
-            )
+                max_pool_size=max_pool_size)
             self.mount('http+docker://', self._custom_adapter)
             self._unmount('http://', 'https://')
             # host part of URL should be unused, but is resolved by requests
@@ -154,8 +156,7 @@ class APIClient(
             try:
                 self._custom_adapter = NpipeHTTPAdapter(
                     base_url, timeout, pool_connections=num_pools,
-                    max_pool_size=max_pool_size
-                )
+                    max_pool_size=max_pool_size)
             except NameError:
                 raise DockerException(
                     'Install pypiwin32 package to enable npipe:// support'
@@ -166,8 +167,7 @@ class APIClient(
             try:
                 self._custom_adapter = SSHHTTPAdapter(
                     base_url, timeout, pool_connections=num_pools,
-                    max_pool_size=max_pool_size
-                )
+                    max_pool_size=max_pool_size)
             except NameError:
                 raise DockerException(
                     'Install paramiko package to enable ssh:// support'
@@ -181,7 +181,8 @@ class APIClient(
                 tls.configure_client(self)
             elif tls:
                 self._custom_adapter = SSLHTTPAdapter(
-                    pool_connections=num_pools)
+                    pool_connections=num_pools,
+                    pool_maxsize=max_pool_size)
                 self.mount('https://', self._custom_adapter)
             self.base_url = base_url
 

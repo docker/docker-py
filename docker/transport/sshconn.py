@@ -79,7 +79,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
 
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
-                 max_pool_size=10):
+                 max_pool_size=constants.DEFAULT_MAX_POOL_SIZE):
         logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
         base_url = six.moves.urllib_parse.urlparse(base_url)
@@ -111,10 +111,10 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
 
         self._connect()
         self.timeout = timeout
+        self.max_pool_size = max_pool_size
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        self.max_pool_size = max_pool_size
         super(SSHHTTPAdapter, self).__init__()
 
     def _connect(self):
@@ -132,8 +132,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
 
             pool = SSHConnectionPool(
                 self.ssh_client, self.timeout,
-                max_pool_size=self.max_pool_size
-            )
+                max_pool_size=self.max_pool_size)
             self.pools[url] = pool
 
         return pool
