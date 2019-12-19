@@ -34,9 +34,9 @@ class NpipeHTTPConnection(httplib.HTTPConnection, object):
 
 
 class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, npipe_path, timeout=60, max_pool_size=10):
+    def __init__(self, npipe_path, timeout=60, maxsize=10):
         super(NpipeHTTPConnectionPool, self).__init__(
-            'localhost', timeout=timeout, maxsize=max_pool_size
+            'localhost', timeout=timeout, maxsize=maxsize
         )
         self.npipe_path = npipe_path
         self.timeout = timeout
@@ -95,7 +95,7 @@ class NpipeHTTPAdapter(BaseHTTPAdapter):
 
             pool = NpipeHTTPConnectionPool(
                 self.npipe_path, self.timeout,
-                max_pool_size=self.max_pool_size)
+                maxsize=self.max_pool_size)
             self.pools[url] = pool
 
         return pool
