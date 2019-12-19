@@ -242,7 +242,8 @@ class NetworkApiMixin(object):
             "Container": container,
             "EndpointConfig": self.create_endpoint_config(
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
-                ipv6_address=ipv6_address, link_local_ips=link_local_ips
+                ipv6_address=ipv6_address, link_local_ips=link_local_ips,
+                mac_address=mac_address
             ),
         }
 

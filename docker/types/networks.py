@@ -28,7 +28,7 @@ class EndpointConfig(dict):
                 raise errors.InvalidVersion(
                     'mac_address is not supported for API version < 1.25'
                 )
-            ipam_config['MacAddress'] = mac_address
+            self['MacAddress'] = mac_address
 
         if link_local_ips is not None:
             if version_lt(version, '1.24'):
