@@ -74,7 +74,6 @@ class DockerClient(object):
                 from. Default: the value of ``os.environ``
             credstore_env (dict): Override environment variables when calling
                 the credential store process.
-            max_pool_size (int): number of connections for pool
 
         Example:
 

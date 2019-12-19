@@ -38,9 +38,9 @@ class SSHConnection(httplib.HTTPConnection, object):
 class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     scheme = 'ssh'
 
-    def __init__(self, ssh_client, timeout=60, max_pool_size=10):
+    def __init__(self, ssh_client, timeout=60, maxsize=10):
         super(SSHConnectionPool, self).__init__(
-            'localhost', timeout=timeout, maxsize=max_pool_size
+            'localhost', timeout=timeout, maxsize=maxsize
         )
         self.ssh_transport = ssh_client.get_transport()
         self.timeout = timeout
@@ -132,7 +132,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
 
             pool = SSHConnectionPool(
                 self.ssh_client, self.timeout,
-                max_pool_size=self.max_pool_size)
+                maxsize=self.max_pool_size)
             self.pools[url] = pool
 
         return pool
