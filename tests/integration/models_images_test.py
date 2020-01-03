@@ -87,8 +87,10 @@ class ImageCollectionTest(BaseIntegrationTest):
     def test_pull_multiple(self):
         client = docker.from_env(version=TEST_API_VERSION)
         images = client.images.pull('hello-world')
-        assert len(images) == 1
-        assert 'hello-world:latest' in images[0].attrs['RepoTags']
+        assert len(images) >= 1
+        assert any([
+            'hello-world:latest' in img.attrs['RepoTags'] for img in images
+        ])
 
     def test_load_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
