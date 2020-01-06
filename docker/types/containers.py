@@ -154,6 +154,90 @@ class Ulimit(DictType):
         self['Hard'] = value
 
 
+class ResourceRequest(DictType):
+    """
+    Create a device request declaration to be used with
+    :py:meth:`~docker.api.container.ContainerApiMixin.create_host_config`.
+
+    Args:
+
+        driver (str):   Name of device driver.
+        count (int):    Number of devices to request (-1 = All).
+        device_ids (str): List of device IDs as recognizable by the device
+                       driver. Optional.
+        capabilities (str): An OR list of AND lists of capabilities
+                       (e.g. "gpu"). Optional.
+        options (str): Driver-specific options, specified as a key/value pairs.
+                       These options are passed directly to the driver.
+                       Optional.
+    """
+    def __init__(self, **kwargs):
+        driver = kwargs.get('driver', kwargs.get('Driver'))
+        count = kwargs.get('count', kwargs.get('Count'))
+        device_ids = kwargs.get('device_ids', kwargs.get('DeviceIDs'))
+        capabilities = kwargs.get('capabilities', kwargs.get('Capabilities'))
+        options = kwargs.get('options', kwargs.get('Options'))
+
+        if not isinstance(driver, six.string_types):
+            raise ValueError("ResourceRequest.driver must be a string")
+        if count and not isinstance(count, int):
+            raise ValueError("ResourceRequest.count must be an integer")
+        if device_ids and not isinstance(device_ids, int):
+            raise ValueError("ResourceRequest.device_ids must be an integer")
+        if capabilities and not isinstance(capabilities, list):
+            raise ValueError("ResourceRequest.capabilities must be an list")
+        if options and not isinstance(options, dict):
+            raise ValueError("ResourceRequest.options must be an dict")
+
+        super(ResourceRequest, self).__init__({
+            'Driver': driver,
+            'Count': count,
+            'DeviceIDs': device_ids,
+            'Capabilities': capabilities,
+            'Options': options,
+        })
+
+    @property
+    def driver(self):
+        return self['Driver']
+
+    @driver.setter
+    def driver(self, value):
+        self['Driver'] = value
+
+    @property
+    def count(self):
+        return self['Count']
+
+    @count.setter
+    def count(self, value):
+        self['Count'] = value
+
+    @property
+    def device_ids(self):
+        return self['DeviceIDs']
+
+    @device_ids.setter
+    def device_ids(self, value):
+        self['DeviceIDs'] = value
+
+    @property
+    def capabilities(self):
+        return self['Capabilities']
+
+    @capabilities.setter
+    def capabilities(self, value):
+        self['Capabilities'] = value
+
+    @property
+    def options(self):
+        return self['Options']
+
+    @options.setter
+    def options(self, value):
+        self['Options'] = value
+
+
 class HostConfig(dict):
     def __init__(self, version, binds=None, port_bindings=None,
                  lxc_conf=None, publish_all_ports=False, links=None,
@@ -176,7 +260,7 @@ class HostConfig(dict):
                  volume_driver=None, cpu_count=None, cpu_percent=None,
                  nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
-                 device_cgroup_rules=None):
+                 device_cgroup_rules=None, device_requests=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -535,6 +619,18 @@ class HostConfig(dict):
                     'device_cgroup_rules', device_cgroup_rules, 'list'
                 )
             self['DeviceCgroupRules'] = device_cgroup_rules
+
+        if device_requests is not None:
+            if version_lt(version, '1.40'):
+                raise host_config_version_error('device_requests', '1.40')
+            if not isinstance(log_config, ResourceRequest):
+                if not isinstance(device_cgroup_rules, dict):
+                    raise host_config_type_error(
+                        'device_requests', device_requests, 'ResourceRequest'
+                    )
+                device_requests = ResourceRequest(**device_requests)
+
+            self['DeviceRequests'] = device_requests
 
 
 def host_config_type_error(param, param_value, expected):
