@@ -1,6 +1,27 @@
 Change log
 ==========
 
+4.1.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/61?closed=1)
+
+### Bugfixes
+
+- Correct `INDEX_URL` logic in build.py _set_auth_headers
+- Fix for empty auth keys in config.json
+
+### Features
+
+- Add `NetworkAttachmentConfig` for service create/update
+
+### Miscellaneous
+
+- Bump pytest to 4.3.1
+- Adjust `--platform` tests for changes in docker engine
+- Update credentials-helpers to v0.6.3
+
+
 4.0.2
 -----
 
