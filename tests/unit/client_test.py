@@ -93,9 +93,9 @@ class ClientTest(unittest.TestCase):
         client.close()
 
     def test_pool_size(self):
-        client = docker.DockerClient(
-            **kwargs_from_env(), max_pool_size=POOL_SIZE
-        )
+        client = docker.DockerClient(max_pool_size=POOL_SIZE,
+                                     **kwargs_from_env()
+                                     )
         # This is needed to force the creation of a pool
         client.ping()
 
