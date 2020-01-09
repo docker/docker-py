@@ -2,7 +2,8 @@ import datetime
 import docker
 from docker.utils import kwargs_from_env
 from docker.constants import (
-    DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS
+    DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_MAX_POOL_SIZE
 )
 import os
 import unittest
@@ -17,6 +18,7 @@ except ImportError:
 
 
 TEST_CERT_DIR = os.path.join(os.path.dirname(__file__), 'testdata/certs')
+POOL_SIZE = 20
 
 
 class ClientTest(unittest.TestCase):
@@ -74,6 +76,39 @@ class ClientTest(unittest.TestCase):
         assert "'ContainerCollection' object is not callable" in s
         assert "docker.APIClient" in s
 
+    def test_default_pool_size(self):
+        client = docker.DockerClient(**kwargs_from_env())
+        # This is needed to force the creation of a pool
+        client.ping()
+
+        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
+        adapter_pools = client.api._custom_adapter.pools
+        # Iterate over each key of the Adapter Pools, this is a subclass of
+        # urllib3.connectionpool.HTTPConnectionPool
+        for k in adapter_pools.keys():
+            # Check if the size of the internal pool is equal to
+            # DEFAULT_MAX_POOL_SIZE value
+            assert adapter_pools[k].pool._qsize() == DEFAULT_MAX_POOL_SIZE
+
+        client.close()
+
+    def test_pool_size(self):
+        client = docker.DockerClient(**kwargs_from_env(),
+                                     max_pool_size=POOL_SIZE)
+        # This is needed to force the creation of a pool
+        client.ping()
+
+        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
+        adapter_pools = client.api._custom_adapter.pools
+        # Iterate over each key of the Adapter Pools, this is a subclass of
+        # urllib3.connectionpool.HTTPConnectionPool
+        for k in adapter_pools.keys():
+            # Check if the size of the internal pool is equal to
+            # POOL_SIZE value
+            assert adapter_pools[k].pool._qsize() == POOL_SIZE
+
+        client.close()
+
 
 class FromEnvTest(unittest.TestCase):
 
@@ -110,3 +145,35 @@ class FromEnvTest(unittest.TestCase):
         client = docker.from_env()
 
         assert client.api.timeout == DEFAULT_TIMEOUT_SECONDS
+
+    def test_default_pool_size_from_env(self):
+        client = docker.from_env()
+        # This is needed to force the creation of a pool
+        client.ping()
+
+        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
+        adapter_pools = client.api._custom_adapter.pools
+        # Iterate over each key of the Adapter Pools, this is a subclass of
+        # urllib3.connectionpool.HTTPConnectionPool
+        for k in adapter_pools.keys():
+            # Check if the size of the internal pool is equal to
+            # DEFAULT_MAX_POOL_SIZE value
+            assert adapter_pools[k].pool._qsize() == DEFAULT_MAX_POOL_SIZE
+
+        client.close()
+
+    def test_pool_size_from_env(self):
+        client = docker.from_env(max_pool_size=POOL_SIZE)
+        # This is needed to force the creation of a pool
+        client.ping()
+
+        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
+        adapter_pools = client.api._custom_adapter.pools
+        # Iterate over each key of the Adapter Pools, this is a subclass of
+        # urllib3.connectionpool.HTTPConnectionPool
+        for k in adapter_pools.keys():
+            # Check if the size of the internal pool is equal to
+            # POOL_SIZE value
+            assert adapter_pools[k].pool._qsize() == POOL_SIZE
+
+        client.close()
