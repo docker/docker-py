@@ -57,7 +57,11 @@ class Context:
             self, name="docker", host=None, tls_cfg=None,
             skip_tls_verify=False, def_namespace=None):
         self.endpoints[name] = {
+<<<<<<< HEAD
             "Host": get_context_host(host, not skip_tls_verify),
+=======
+            "Host": get_context_host(host),
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
             "SkipTLSVerify": skip_tls_verify
         }
         if def_namespace:
@@ -71,6 +75,7 @@ class Context:
 
     @classmethod
     def load_context(cls, name):
+<<<<<<< HEAD
         meta = Context._load_meta(name)
         if meta:
             instance = cls(
@@ -78,6 +83,11 @@ class Context:
                 orchestrator=meta["Metadata"].get("StackOrchestrator", None),
                 endpoints=meta.get("Endpoints", None))
             instance.context_type = meta["Metadata"].get("Type", None)
+=======
+        name, orchestrator, endpoints = Context._load_meta(name)
+        if name:
+            instance = cls(name, orchestrator, endpoints=endpoints)
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
             instance._load_certs()
             instance.meta_path = get_meta_dir(name)
             return instance
@@ -85,6 +95,7 @@ class Context:
 
     @classmethod
     def _load_meta(cls, name):
+<<<<<<< HEAD
         meta_file = get_meta_file(name)
         if not os.path.isfile(meta_file):
             return None
@@ -109,6 +120,27 @@ class Context:
                 v.get("SkipTLSVerify", True))
 
         return metadata
+=======
+        metadata = {}
+        meta_file = get_meta_file(name)
+        if os.path.isfile(meta_file):
+            with open(meta_file) as f:
+                try:
+                    with open(meta_file) as f:
+                        metadata = json.load(f)
+                    for k, v in metadata["Endpoints"].items():
+                        metadata["Endpoints"][k]["SkipTLSVerify"] = bool(
+                            v["SkipTLSVerify"])
+                except (IOError, KeyError, ValueError) as e:
+                    # unknown format
+                    raise Exception("""Detected corrupted meta file for
+                        context {} : {}""".format(name, e))
+
+            return (
+                metadata["Name"], metadata["Metadata"]["StackOrchestrator"],
+                metadata["Endpoints"])
+        return None, None, None
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
 
     def _load_certs(self):
         certs = {}
@@ -177,15 +209,19 @@ class Context:
         result.update(self.Storage)
         return result
 
+<<<<<<< HEAD
     def is_docker_host(self):
         return self.context_type is None
 
+=======
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
     @property
     def Name(self):
         return self.name
 
     @property
     def Host(self):
+<<<<<<< HEAD
         if not self.orchestrator or self.orchestrator == "swarm":
             endpoint = self.endpoints.get("docker", None)
             if endpoint:
@@ -193,6 +229,11 @@ class Context:
             return None
 
         return self.endpoints[self.orchestrator].get("Host", None)
+=======
+        if self.orchestrator == "swarm":
+            return self.endpoints["docker"]["Host"]
+        return self.endpoints[self.orchestrator]["Host"]
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
 
     @property
     def Orchestrator(self):
@@ -200,19 +241,31 @@ class Context:
 
     @property
     def Metadata(self):
+<<<<<<< HEAD
         meta = {}
         if self.orchestrator:
             meta = {"StackOrchestrator": self.orchestrator}
         return {
             "Name": self.name,
             "Metadata": meta,
+=======
+        return {
+            "Name": self.name,
+            "Metadata": {
+                "StackOrchestrator": self.orchestrator
+            },
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
             "Endpoints": self.endpoints
         }
 
     @property
     def TLSConfig(self):
         key = self.orchestrator
+<<<<<<< HEAD
         if not key or key == "swarm":
+=======
+        if key == "swarm":
+>>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
             key = "docker"
         if key in self.tls_cfg.keys():
             return self.tls_cfg[key]
