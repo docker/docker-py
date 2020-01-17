@@ -11,23 +11,16 @@ import six
 
 from .. import errors
 from .. import tls
+from ..constants import DEFAULT_HTTP_HOST
+from ..constants import DEFAULT_UNIX_SOCKET
+from ..constants import DEFAULT_NPIPE
+from ..constants import BYTE_UNITS
 
 if six.PY2:
     from urllib import splitnport
     from urlparse import urlparse
 else:
     from urllib.parse import splitnport, urlparse
-
-DEFAULT_HTTP_HOST = "127.0.0.1"
-DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
-DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
-
-BYTE_UNITS = {
-    'b': 1,
-    'k': 1024,
-    'm': 1024 * 1024,
-    'g': 1024 * 1024 * 1024
-}
 
 
 def create_ipam_pool(*args, **kwargs):
