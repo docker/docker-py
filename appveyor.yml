@@ -1,8 +1,9 @@
 version: '{branch}-{build}'
 
 install:
-  - "SET PATH=C:\\Python27-x64;C:\\Python27-x64\\Scripts;%PATH%"
+  - "SET PATH=C:\\Python37-x64;C:\\Python37-x64\\Scripts;%PATH%"
   - "python --version"
+  - "python -m pip install --upgrade pip"
   - "pip install tox==2.9.1"
 
 # Build the binary after tests
