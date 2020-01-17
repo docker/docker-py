@@ -9,6 +9,18 @@ CONTAINER_LIMITS_KEYS = [
     'memory', 'memswap', 'cpushares', 'cpusetcpus'
 ]
 
+DEFAULT_HTTP_HOST = "127.0.0.1"
+DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
+DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
+
+BYTE_UNITS = {
+    'b': 1,
+    'k': 1024,
+    'm': 1024 * 1024,
+    'g': 1024 * 1024 * 1024
+}
+
+
 INSECURE_REGISTRY_DEPRECATION_WARNING = \
     'The `insecure_registry` argument to {} ' \
     'is deprecated and non-functional. Please remove it.'

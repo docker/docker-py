@@ -163,3 +163,35 @@ def create_unexpected_kwargs_error(name, kwargs):
         text.append("got unexpected keyword arguments ")
     text.append(', '.join(quoted_kwargs))
     return TypeError(''.join(text))
+
+
+class MissingContextParameter(DockerException):
+    def __init__(self, param):
+        self.param = param
+
+    def __str__(self):
+        return ("missing parameter: {}".format(self.param))
+
+
+class ContextAlreadyExists(DockerException):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return ("context {} already exists".format(self.name))
+
+
+class ContextException(DockerException):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return (self.msg)
+
+
+class ContextNotFound(DockerException):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return ("context '{}' not found".format(self.name))
