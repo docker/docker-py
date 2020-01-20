@@ -8,7 +8,8 @@ from .. import utils
 
 class SecretApiMixin(object):
     @utils.minimum_version('1.25')
-    def create_secret(self, name, data, labels=None, driver=None):
+    def create_secret(self, name, data, labels=None, driver=None,
+                      templating=None):
         """
             Create a secret
 
@@ -18,6 +19,7 @@ class SecretApiMixin(object):
                 labels (dict): A mapping of labels to assign to the secret
                 driver (DriverConfig): A custom driver configuration. If
                     unspecified, the default ``internal`` driver will be used
+                templating (DriverConfig): Templating configuration
 
             Returns (dict): ID of the newly created secret
         """
@@ -40,6 +42,15 @@ class SecretApiMixin(object):
                 )
 
             body['Driver'] = driver
+
+        if templating is not None:
+            if utils.version_lt(self._version, '1.37'):
+                raise errors.InvalidVersion(
+                    'Secret template driver is only available for API version '
+                    '> 1.37 '
+                )
+
+            body['Templating'] = templating
 
         url = self._url('/secrets/create')
         return self._result(
