@@ -1,15 +1,16 @@
 import datetime
-import docker
-from docker.utils import kwargs_from_env
-from docker.constants import (
-    DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS,
-    DEFAULT_MAX_POOL_SIZE
-)
 import os
 import unittest
 
-from . import fake_api
 import pytest
+
+import docker
+from docker.constants import (
+    DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_MAX_POOL_SIZE, IS_WINDOWS_PLATFORM
+)
+from docker.utils import kwargs_from_env
+from . import fake_api
 
 try:
     from unittest import mock
@@ -76,39 +77,67 @@ class ClientTest(unittest.TestCase):
         assert "'ContainerCollection' object is not callable" in s
         assert "docker.APIClient" in s
 
-    def test_default_pool_size(self):
-        client = docker.DockerClient(**kwargs_from_env())
-        # This is needed to force the creation of a pool
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_default_pool_size_unix(self, mock_obj):
+        client = docker.DockerClient()
         client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
 
-        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
-        adapter_pools = client.api._custom_adapter.pools
-        # Iterate over each key of the Adapter Pools, this is a subclass of
-        # urllib3.connectionpool.HTTPConnectionPool
-        for k in adapter_pools.keys():
-            # Check if the size of the internal pool is equal to
-            # DEFAULT_MAX_POOL_SIZE value
-            assert adapter_pools[k].pool._qsize() == DEFAULT_MAX_POOL_SIZE
-
-        client.close()
-
-    def test_pool_size(self):
-        client = docker.DockerClient(max_pool_size=POOL_SIZE,
-                                     **kwargs_from_env()
-                                     )
-        # This is needed to force the creation of a pool
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_default_pool_size_win(self, mock_obj):
+        client = docker.DockerClient()
         client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
 
-        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
-        adapter_pools = client.api._custom_adapter.pools
-        # Iterate over each key of the Adapter Pools, this is a subclass of
-        # urllib3.connectionpool.HTTPConnectionPool
-        for k in adapter_pools.keys():
-            # Check if the size of the internal pool is equal to
-            # POOL_SIZE value
-            assert adapter_pools[k].pool._qsize() == POOL_SIZE
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_pool_size_unix(self, mock_obj):
+        client = docker.DockerClient(POOL_SIZE)
+        client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=POOL_SIZE
+                                         )
 
-        client.close()
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_pool_size_win(self, mock_obj):
+        client = docker.DockerClient(POOL_SIZE)
+        client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=POOL_SIZE
+                                         )
 
 
 class FromEnvTest(unittest.TestCase):
@@ -147,34 +176,64 @@ class FromEnvTest(unittest.TestCase):
 
         assert client.api.timeout == DEFAULT_TIMEOUT_SECONDS
 
-    def test_default_pool_size_from_env(self):
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_default_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env()
-        # This is needed to force the creation of a pool
         client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
 
-        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
-        adapter_pools = client.api._custom_adapter.pools
-        # Iterate over each key of the Adapter Pools, this is a subclass of
-        # urllib3.connectionpool.HTTPConnectionPool
-        for k in adapter_pools.keys():
-            # Check if the size of the internal pool is equal to
-            # DEFAULT_MAX_POOL_SIZE value
-            assert adapter_pools[k].pool._qsize() == DEFAULT_MAX_POOL_SIZE
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_default_pool_size_from_env_win(self, mock_obj):
+        client = docker.from_env()
+        client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
 
-        client.close()
-
-    def test_pool_size_from_env(self):
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env(max_pool_size=POOL_SIZE)
-        # This is needed to force the creation of a pool
         client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=POOL_SIZE
+                                         )
 
-        # Takes the Adapter Pools (which is a RecentlyUsedContainer)
-        adapter_pools = client.api._custom_adapter.pools
-        # Iterate over each key of the Adapter Pools, this is a subclass of
-        # urllib3.connectionpool.HTTPConnectionPool
-        for k in adapter_pools.keys():
-            # Check if the size of the internal pool is equal to
-            # POOL_SIZE value
-            assert adapter_pools[k].pool._qsize() == POOL_SIZE
-
-        client.close()
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_pool_size_from_env_win(self, mock_obj):
+        client = docker.from_env(max_pool_size=POOL_SIZE)
+        client.ping()
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+        mock_obj.assert_called_once_with(base_url,
+                                         docker_sock="/var/run/docker.sock",
+                                         timeout=60,
+                                         maxsize=POOL_SIZE
+                                         )
