@@ -106,13 +106,7 @@ class ClientTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
-
-        mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
                                          60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
@@ -146,13 +140,7 @@ class ClientTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
-
-        mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
                                          60,
                                          maxsize=POOL_SIZE
                                          )
@@ -223,13 +211,7 @@ class FromEnvTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
-
-        mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
                                          60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
@@ -263,13 +245,7 @@ class FromEnvTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
-
-        mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
                                          60,
                                          maxsize=POOL_SIZE
                                          )
