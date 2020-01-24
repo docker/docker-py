@@ -80,14 +80,17 @@ class ClientTest(unittest.TestCase):
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_unix(self, mock_obj):
         client = docker.DockerClient()
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
 
@@ -97,28 +100,34 @@ class ClientTest(unittest.TestCase):
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_default_pool_size_win(self, mock_obj):
         client = docker.DockerClient()
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
 
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_unix(self, mock_obj):
-        client = docker.DockerClient(POOL_SIZE)
+        client = docker.DockerClient(max_pool_size=POOL_SIZE)
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=POOL_SIZE
                                          )
 
@@ -127,15 +136,18 @@ class ClientTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_pool_size_win(self, mock_obj):
-        client = docker.DockerClient(POOL_SIZE)
+        client = docker.DockerClient(max_pool_size=POOL_SIZE)
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=POOL_SIZE
                                          )
 
@@ -179,14 +191,17 @@ class FromEnvTest(unittest.TestCase):
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env()
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
 
@@ -196,28 +211,34 @@ class FromEnvTest(unittest.TestCase):
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_default_pool_size_from_env_win(self, mock_obj):
         client = docker.from_env()
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
 
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env(max_pool_size=POOL_SIZE)
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=POOL_SIZE
                                          )
 
@@ -227,13 +248,16 @@ class FromEnvTest(unittest.TestCase):
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_pool_size_from_env_win(self, mock_obj):
         client = docker.from_env(max_pool_size=POOL_SIZE)
+        mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
+
         base_url = "{base_url}/v{version}/_ping".format(
             base_url=client.api.base_url,
             version=client.api._version
         )
+
         mock_obj.assert_called_once_with(base_url,
-                                         docker_sock="/var/run/docker.sock",
-                                         timeout=60,
+                                         "/var/run/docker.sock",
+                                         60,
                                          maxsize=POOL_SIZE
                                          )
