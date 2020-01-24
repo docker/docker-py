@@ -77,6 +77,9 @@ class ClientTest(unittest.TestCase):
         assert "'ContainerCollection' object is not callable" in s
         assert "docker.APIClient" in s
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_unix(self, mock_obj):
         client = docker.DockerClient()
@@ -95,7 +98,7 @@ class ClientTest(unittest.TestCase):
                                          )
 
     @pytest.mark.skipif(
-        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_default_pool_size_win(self, mock_obj):
@@ -114,6 +117,9 @@ class ClientTest(unittest.TestCase):
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_unix(self, mock_obj):
         client = docker.DockerClient(max_pool_size=POOL_SIZE)
@@ -132,7 +138,7 @@ class ClientTest(unittest.TestCase):
                                          )
 
     @pytest.mark.skipif(
-        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_pool_size_win(self, mock_obj):
@@ -188,6 +194,9 @@ class FromEnvTest(unittest.TestCase):
 
         assert client.api.timeout == DEFAULT_TIMEOUT_SECONDS
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env()
@@ -206,7 +215,7 @@ class FromEnvTest(unittest.TestCase):
                                          )
 
     @pytest.mark.skipif(
-        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_default_pool_size_from_env_win(self, mock_obj):
@@ -225,6 +234,9 @@ class FromEnvTest(unittest.TestCase):
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env(max_pool_size=POOL_SIZE)
@@ -243,7 +255,7 @@ class FromEnvTest(unittest.TestCase):
                                          )
 
     @pytest.mark.skipif(
-        not IS_WINDOWS_PLATFORM, reason='NPipe only on Windows'
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_pool_size_from_env_win(self, mock_obj):
