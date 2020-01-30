@@ -12,7 +12,10 @@ class InitializationError(StoreError):
 
 def process_store_error(cpe, program):
     message = cpe.output.decode('utf-8')
-    if 'credentials not found in native keychain' in message:
+    if (
+        'credentials not found in native keychain' in message
+        or 'No stored credential for' in message
+    ):
         return CredentialsNotFound(
             'No matching credentials in {}'.format(
                 program
