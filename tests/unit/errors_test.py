@@ -101,17 +101,17 @@ class APIErrorTest(unittest.TestCase):
         assert err.is_error() is True
 
     def test_create_error_from_exception(self):
-            resp = requests.Response()
-            resp.status_code = 500
-            err = APIError('')
+        resp = requests.Response()
+        resp.status_code = 500
+        err = APIError('')
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError as e:
             try:
-                resp.raise_for_status()
-            except requests.exceptions.HTTPError as e:
-                try:
-                    create_api_error_from_http_exception(e)
-                except APIError as e:
-                    err = e
-            assert err.is_server_error() is True
+                create_api_error_from_http_exception(e)
+            except APIError as e:
+                err = e
+        assert err.is_server_error() is True
 
 
 class ContainerErrorTest(unittest.TestCase):
