@@ -334,6 +334,11 @@ class HostConfig(dict):
         if dns_search:
             self['DnsSearch'] = dns_search
 
+        if network_mode is 'host' and port_bindings is not None:
+            raise host_config_incompatible_error(
+                'network_mode', 'host', 'port_bindings'
+            )
+
         if network_mode:
             self['NetworkMode'] = network_mode
         elif network_mode is None:
@@ -662,6 +667,13 @@ def host_config_version_error(param, version, less_than=True):
 def host_config_value_error(param, param_value):
     error_msg = 'Invalid value for {0} param: {1}'
     return ValueError(error_msg.format(param, param_value))
+
+
+def host_config_incompatible_error(param, param_value, incompatible_param):
+    error_msg = 'Incompatible {1} in {0} is not compatible with {2}'
+    return errors.InvalidArgument(
+        error_msg.format(param, param_value, incompatible_param)
+    )
 
 
 class ContainerConfig(dict):

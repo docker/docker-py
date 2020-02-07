@@ -523,6 +523,10 @@ class ContainerApiMixin(object):
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
                 - ``host`` Use the host network stack.
+                  This mode is incompatible with ``port_bindings``.
+                  If ``host`` is used as network_mode, all of listed up to
+                  ``port_bindings``` are ignored in running container.
+
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -531,7 +535,8 @@ class ContainerApiMixin(object):
             pids_limit (int): Tune a container's pids limit. Set ``-1`` for
                 unlimited.
             port_bindings (dict): See :py:meth:`create_container`
-                    for more information.
+                for more information. The binding ports are ignored in
+                ``host`` as network mode.
             privileged (bool): Give extended privileges to this container.
             publish_all_ports (bool): Publish all ports to the host.
             read_only (bool): Mount the container's root filesystem as read
