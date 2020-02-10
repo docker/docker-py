@@ -17,7 +17,6 @@ Change log
 
 - Add support for docker contexts through `docker.ContextAPI`
 
-
 4.1.0
 -----
 
