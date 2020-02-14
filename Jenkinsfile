@@ -84,7 +84,7 @@ def runTests = { Map settings ->
         try {
           sh """docker network create ${testNetwork}"""
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
-            dockerswarm/dind:${dockerVersion} dockerd -H tcp://0.0.0.0:2375
+            docker:${dockerVersion}-dind dockerd -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
             --name ${testContainerName} \\
