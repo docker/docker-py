@@ -31,7 +31,7 @@ def buildImages = { ->
 }
 
 def getDockerVersions = { ->
-  def dockerVersions = ["17.06.2-ce"]
+  def dockerVersions = ["19.03.5"]
   wrappedNode(label: "ubuntu && !zfs && amd64") {
     def result = sh(script: """docker run --rm \\
         --entrypoint=python \\
@@ -46,8 +46,6 @@ def getDockerVersions = { ->
 
 def getAPIVersion = { engineVersion ->
   def versionMap = [
-    '17.06': '1.30',
-    '18.03': '1.37',
     '18.09': '1.39',
     '19.03': '1.40'
   ]
