@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -150,7 +151,7 @@ class BuildApiMixin(object):
             dockerignore = os.path.join(path, '.dockerignore')
             exclude = None
             if os.path.exists(dockerignore):
-                with open(dockerignore, 'r') as f:
+                with io.open(dockerignore, 'r', encoding='utf-8') as f:
                     exclude = list(filter(
                         lambda x: x != '' and x[0] != '#',
                         [l.strip() for l in f.read().splitlines()]
