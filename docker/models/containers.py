@@ -225,7 +225,8 @@ class Container(Model):
         """
         return self.client.api.export(self.id, chunk_size)
 
-    def get_archive(self, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
+    def get_archive(self, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE,
+                    encode_stream=False):
         """
         Retrieve a file or folder from the container in the form of a tar
         archive.
@@ -235,6 +236,8 @@ class Container(Model):
             chunk_size (int): The number of bytes returned by each iteration
                 of the generator. If ``None``, data will be streamed as it is
                 received. Default: 2 MB
+            encode_stream (bool): Determines if data should be encoded
+                (gzip-compressed) during transmission. Default: False
 
         Returns:
             (tuple): First element is a raw tar data stream. Second element is
@@ -255,7 +258,8 @@ class Container(Model):
             ...    f.write(chunk)
             >>> f.close()
         """
-        return self.client.api.get_archive(self.id, path, chunk_size)
+        return self.client.api.get_archive(self.id, path,
+                                           chunk_size, encode_stream)
 
     def kill(self, signal=None):
         """
