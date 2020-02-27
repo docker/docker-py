@@ -515,7 +515,7 @@ def post_fake_network_disconnect():
 
 def post_fake_secret():
     status_code = 200
-    response = {'Id': FAKE_SECRET_ID}
+    response = {'ID': FAKE_SECRET_ID}
     return status_code, response
 
 

@@ -4,7 +4,7 @@ from .resource import Model, Collection
 
 class Secret(Model):
     """A secret."""
-    id_attribute = 'Id'
+    id_attribute = 'ID'
 
     def __repr__(self):
         return "<%s: '%s'>" % (self.__class__.__name__, self.id)
