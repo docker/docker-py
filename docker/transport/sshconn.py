@@ -100,6 +100,8 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                 )
             if 'hostname' in host_config:
                 self.ssh_params['hostname'] = host_config['hostname']
+            if 'identityfile' in host_config:
+                self.ssh_params['key_filename'] = host_config['identityfile']
             if base_url.port is None and 'port' in host_config:
                 self.ssh_params['port'] = self.ssh_conf['port']
             if base_url.username is None and 'user' in host_config:
