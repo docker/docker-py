@@ -273,11 +273,14 @@ class CreateContainerTest(BaseAPIIntegrationTest):
 
     def test_invalid_log_driver_raises_exception(self):
         log_config = docker.types.LogConfig(
-            type='asdf-nope',
+            type='asdf',
             config={}
         )
 
-        expected_msg = "logger: no log driver named 'asdf-nope' is registered"
+        expected_msgs = [
+            "logger: no log driver named 'asdf' is registered",
+            "looking up logging plugin asdf: plugin \"asdf\" not found",
+        ]
         with pytest.raises(docker.errors.APIError) as excinfo:
             # raises an internal server error 500
             container = self.client.create_container(
@@ -287,7 +290,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
             )
             self.client.start(container)
 
-        assert excinfo.value.explanation == expected_msg
+        assert excinfo.value.explanation in expected_msgs
 
     def test_valid_no_log_driver_specified(self):
         log_config = docker.types.LogConfig(
