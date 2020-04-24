@@ -4,7 +4,7 @@ from ..utils import normalize_links, version_lt
 
 class EndpointConfig(dict):
     def __init__(self, version, aliases=None, links=None, ipv4_address=None,
-                 ipv6_address=None, link_local_ips=None):
+                 ipv6_address=None, link_local_ips=None, driver_opt=None):
         if version_lt(version, '1.22'):
             raise errors.InvalidVersion(
                 'Endpoint config is not supported for API version < 1.22'
@@ -32,6 +32,15 @@ class EndpointConfig(dict):
 
         if ipam_config:
             self['IPAMConfig'] = ipam_config
+
+        if driver_opt:
+            if version_lt(version, '1.32'):
+                raise errors.InvalidVersion(
+                    'DriverOpts is not supported for API version < 1.32'
+                )
+            if not isinstance(driver_opt, dict):
+                raise TypeError('driver_opt must be a dictionary')
+            self['DriverOpts'] = driver_opt
 
 
 class NetworkingConfig(dict):
