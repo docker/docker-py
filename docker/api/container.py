@@ -636,6 +636,8 @@ class ContainerApiMixin(object):
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local (IPv4/IPv6)
                 addresses.
+            driver_opt (dict): A dictionary of options to provide to the
+                network driver. Defaults to ``None``.
 
         Returns:
             (dict) An endpoint config.
