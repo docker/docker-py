@@ -105,8 +105,9 @@ def create_archive(root, files=None, fileobj=None, gzip=False,
 
     for name, contents in extra_files:
         info = tarfile.TarInfo(name)
-        info.size = len(contents)
-        t.addfile(info, io.BytesIO(contents.encode('utf-8')))
+        contents_encoded = contents.encode('utf-8')
+        info.size = len(contents_encoded)
+        t.addfile(info, io.BytesIO(contents_encoded))
 
     t.close()
     fileobj.seek(0)
