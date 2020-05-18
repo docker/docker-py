@@ -8,6 +8,7 @@ from datetime import datetime
 from distutils.version import StrictVersion
 
 import six
+from six.moves.urllib.parse import urlparse
 
 from .. import errors
 from .. import tls
@@ -15,12 +16,6 @@ from ..constants import DEFAULT_HTTP_HOST
 from ..constants import DEFAULT_UNIX_SOCKET
 from ..constants import DEFAULT_NPIPE
 from ..constants import BYTE_UNITS
-
-if six.PY2:
-    from urllib import splitnport
-    from urlparse import urlparse
-else:
-    from urllib.parse import splitnport, urlparse
 
 
 def create_ipam_pool(*args, **kwargs):
@@ -207,6 +202,27 @@ def parse_repository_tag(repo_name):
     return repo_name, None
 
 
+def _splitnport(host, defport=-1):
+    """
+    Split host and port, returning numeric port.
+    Return given default port if no ':' found; defaults to -1.
+    Return numerical port if a valid number are found after ':'.
+    Return None if ':' but not a valid number.
+
+    From https://github.com/python/cpython/blob/3.8/Lib/urllib/parse.py
+    """
+    host, delim, port = host.rpartition(':')
+    if not delim:
+        host = port
+    elif port:
+        try:
+            nport = int(port)
+        except ValueError:
+            nport = None
+        return host, nport
+    return host, defport
+
+
 def parse_host(addr, is_win32=False, tls=False):
     path = ''
     port = None
@@ -272,8 +288,8 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if proto in ('tcp', 'ssh'):
         # parsed_url.hostname strips brackets from IPv6 addresses,
-        # which can be problematic hence our use of splitnport() instead.
-        host, port = splitnport(parsed_url.netloc)
+        # which can be problematic hence our use of _splitnport() instead.
+        host, port = _splitnport(parsed_url.netloc)
         if port is None or port < 0:
             if proto != 'ssh':
                 raise errors.DockerException(
