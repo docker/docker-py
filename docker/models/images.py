@@ -86,7 +86,7 @@ class Image(Model):
 
             >>> image = cli.get_image("busybox:latest")
             >>> f = open('/tmp/busybox-latest.tar', 'wb')
-            >>> for chunk in image:
+            >>> for chunk in image.save():
             >>>   f.write(chunk)
             >>> f.close()
         """
