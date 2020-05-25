@@ -15,7 +15,7 @@ For example, to check the server against a specific CA certificate:
 
 .. code-block:: python
 
-  tls_config = docker.tls.TLSConfig(ca_cert='/path/to/ca.pem')
+  tls_config = docker.tls.TLSConfig(ca_cert='/path/to/ca.pem', verify=True)
   client = docker.DockerClient(base_url='<https_url>', tls=tls_config)
 
 This is the equivalent of ``docker --tlsverify --tlscacert /path/to/ca.pem ...``.
