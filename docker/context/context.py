@@ -58,10 +58,14 @@ class Context:
             skip_tls_verify=False, def_namespace=None):
         self.endpoints[name] = {
 <<<<<<< HEAD
+<<<<<<< HEAD
             "Host": get_context_host(host, not skip_tls_verify),
 =======
             "Host": get_context_host(host),
 >>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
+=======
+            "Host": get_context_host(host, not skip_tls_verify),
+>>>>>>> 3ce2d89... Specify when to use `tls` on Context constructor
             "SkipTLSVerify": skip_tls_verify
         }
         if def_namespace:
