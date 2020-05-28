@@ -73,8 +73,8 @@ def get_tls_dir(name=None, endpoint=""):
     return os.path.join(context_dir, "tls")
 
 
-def get_context_host(path=None):
-    host = utils.parse_host(path, IS_WINDOWS_PLATFORM)
+def get_context_host(path=None, tls=False):
+    host = utils.parse_host(path, IS_WINDOWS_PLATFORM, tls)
     if host == DEFAULT_UNIX_SOCKET:
         # remove http+ from default docker socket url
         return host.strip("http+")

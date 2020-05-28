@@ -11,7 +11,8 @@ from docker.context.config import get_context_host
 
 class Context:
     """A context."""
-    def __init__(self, name, orchestrator="swarm", host=None, endpoints=None):
+    def __init__(self, name, orchestrator="swarm", host=None, endpoints=None,
+                 tls=False):
         if not name:
             raise Exception("Name not provided")
         self.name = name
@@ -22,8 +23,8 @@ class Context:
                 ) else orchestrator
             self.endpoints = {
                 default_endpoint: {
-                    "Host": get_context_host(host),
-                    "SkipTLSVerify": False
+                    "Host": get_context_host(host, tls),
+                    "SkipTLSVerify": not tls
                 }
             }
         else:
@@ -44,7 +45,7 @@ class Context:
             self, name="docker", host=None, tls_cfg=None,
             skip_tls_verify=False, def_namespace=None):
         self.endpoints[name] = {
-            "Host": get_context_host(host),
+            "Host": get_context_host(host, not skip_tls_verify),
             "SkipTLSVerify": skip_tls_verify
         }
         if def_namespace:
