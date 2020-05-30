@@ -38,13 +38,7 @@ class ContextAPI(object):
         >>> print(ctx.Metadata)
         {
             "Name": "test",
-<<<<<<< HEAD
             "Metadata": {},
-=======
-            "Metadata": {
-                "StackOrchestrator": "swarm"
-            },
->>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
             "Endpoints": {
                 "docker": {
                     "Host": "unix:///var/run/docker.sock",
@@ -61,13 +55,9 @@ class ContextAPI(object):
         ctx = Context.load_context(name)
         if ctx:
             raise errors.ContextAlreadyExists(name)
-<<<<<<< HEAD
         endpoint = "docker"
         if orchestrator and orchestrator != "swarm":
             endpoint = orchestrator
-=======
-        endpoint = "docker" if orchestrator == "swarm" else orchestrator
->>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
         ctx = Context(name, orchestrator)
         ctx.set_endpoint(
             endpoint, host, tls_cfg,
@@ -89,13 +79,7 @@ class ContextAPI(object):
         >>> print(ctx.Metadata)
         {
             "Name": "test",
-<<<<<<< HEAD
             "Metadata": {},
-=======
-            "Metadata": {
-                "StackOrchestrator": "swarm"
-            },
->>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
             "Endpoints": {
                 "docker": {
                 "Host": "unix:///var/run/docker.sock",
