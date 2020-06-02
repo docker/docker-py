@@ -50,3 +50,10 @@ class ContextLifecycleTest(BaseAPIIntegrationTest):
         ContextAPI.remove_context("test")
         with pytest.raises(errors.ContextNotFound):
             ContextAPI.inspect_context("test")
+
+    def test_load_context_without_orchestrator(self):
+        ContextAPI.create_context("test")
+        ctx = ContextAPI.get_context("test")
+        assert ctx
+        assert ctx.Name == "test"
+        assert ctx.Orchestrator is None
