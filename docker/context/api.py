@@ -14,11 +14,11 @@ class ContextAPI(object):
     Contains methods for context management:
     create, list, remove, get, inspect.
     """
-    DEFAULT_CONTEXT = Context("default")
+    DEFAULT_CONTEXT = Context("default", "swarm")
 
     @classmethod
     def create_context(
-            cls, name, orchestrator="swarm", host=None, tls_cfg=None,
+            cls, name, orchestrator=None, host=None, tls_cfg=None,
             default_namespace=None, skip_tls_verify=False):
         """Creates a new context.
         Returns:
@@ -38,9 +38,7 @@ class ContextAPI(object):
         >>> print(ctx.Metadata)
         {
             "Name": "test",
-            "Metadata": {
-                "StackOrchestrator": "swarm"
-            },
+            "Metadata": {},
             "Endpoints": {
                 "docker": {
                     "Host": "unix:///var/run/docker.sock",
@@ -57,7 +55,9 @@ class ContextAPI(object):
         ctx = Context.load_context(name)
         if ctx:
             raise errors.ContextAlreadyExists(name)
-        endpoint = "docker" if orchestrator == "swarm" else orchestrator
+        endpoint = "docker"
+        if orchestrator and orchestrator != "swarm":
+            endpoint = orchestrator
         ctx = Context(name, orchestrator)
         ctx.set_endpoint(
             endpoint, host, tls_cfg,
@@ -79,9 +79,7 @@ class ContextAPI(object):
         >>> print(ctx.Metadata)
         {
             "Name": "test",
-            "Metadata": {
-                "StackOrchestrator": "swarm"
-            },
+            "Metadata": {},
             "Endpoints": {
                 "docker": {
                 "Host": "unix:///var/run/docker.sock",

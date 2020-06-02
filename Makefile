@@ -42,7 +42,7 @@ integration-test-py3: build-py3
 	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test -v tests/integration/${file}
 
 TEST_API_VERSION ?= 1.35
-TEST_ENGINE_VERSION ?= 18.09.5
+TEST_ENGINE_VERSION ?= 19.03.5
 
 .PHONY: setup-network
 setup-network:
@@ -55,7 +55,7 @@ integration-dind: integration-dind-py2 integration-dind-py3
 integration-dind-py2: build setup-network
 	docker rm -vf dpy-dind-py2 || :
 	docker run -d --network dpy-tests --name dpy-dind-py2 --privileged\
-		dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd -H tcp://0.0.0.0:2375 --experimental
+		docker:${TEST_ENGINE_VERSION}-dind dockerd -H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://dpy-dind-py2:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--network dpy-tests docker-sdk-python py.test tests/integration
 	docker rm -vf dpy-dind-py2
@@ -64,7 +64,7 @@ integration-dind-py2: build setup-network
 integration-dind-py3: build-py3 setup-network
 	docker rm -vf dpy-dind-py3 || :
 	docker run -d --network dpy-tests --name dpy-dind-py3 --privileged\
-		dockerswarm/dind:${TEST_ENGINE_VERSION} dockerd -H tcp://0.0.0.0:2375 --experimental
+		docker:${TEST_ENGINE_VERSION}-dind dockerd -H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://dpy-dind-py3:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--network dpy-tests docker-sdk-python3 py.test tests/integration
 	docker rm -vf dpy-dind-py3
@@ -76,7 +76,7 @@ integration-dind-ssl: build-dind-certs build build-py3
 	docker run -d --env="DOCKER_HOST=tcp://localhost:2375" --env="DOCKER_TLS_VERIFY=1"\
 		--env="DOCKER_CERT_PATH=/certs" --volumes-from dpy-dind-certs --name dpy-dind-ssl\
 		--network dpy-tests --network-alias docker -v /tmp --privileged\
-		dockerswarm/dind:${TEST_ENGINE_VERSION}\
+		docker:${TEST_ENGINE_VERSION}-dind\
 		dockerd --tlsverify --tlscacert=/certs/ca.pem --tlscert=/certs/server-cert.pem\
 		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\

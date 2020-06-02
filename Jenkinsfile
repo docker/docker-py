@@ -31,7 +31,7 @@ def buildImages = { ->
 }
 
 def getDockerVersions = { ->
-  def dockerVersions = ["17.06.2-ce"]
+  def dockerVersions = ["19.03.5"]
   wrappedNode(label: "ubuntu && !zfs && amd64") {
     def result = sh(script: """docker run --rm \\
         --entrypoint=python \\
@@ -46,8 +46,6 @@ def getDockerVersions = { ->
 
 def getAPIVersion = { engineVersion ->
   def versionMap = [
-    '17.06': '1.30',
-    '18.03': '1.37',
     '18.09': '1.39',
     '19.03': '1.40'
   ]
@@ -84,7 +82,7 @@ def runTests = { Map settings ->
         try {
           sh """docker network create ${testNetwork}"""
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
-            dockerswarm/dind:${dockerVersion} dockerd -H tcp://0.0.0.0:2375
+            docker:${dockerVersion}-dind dockerd -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
             --name ${testContainerName} \\

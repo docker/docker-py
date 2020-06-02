@@ -273,11 +273,14 @@ class CreateContainerTest(BaseAPIIntegrationTest):
 
     def test_invalid_log_driver_raises_exception(self):
         log_config = docker.types.LogConfig(
-            type='asdf-nope',
+            type='asdf',
             config={}
         )
 
-        expected_msg = "logger: no log driver named 'asdf-nope' is registered"
+        expected_msgs = [
+            "logger: no log driver named 'asdf' is registered",
+            "looking up logging plugin asdf: plugin \"asdf\" not found",
+        ]
         with pytest.raises(docker.errors.APIError) as excinfo:
             # raises an internal server error 500
             container = self.client.create_container(
@@ -287,7 +290,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
             )
             self.client.start(container)
 
-        assert excinfo.value.explanation == expected_msg
+        assert excinfo.value.explanation in expected_msgs
 
     def test_valid_no_log_driver_specified(self):
         log_config = docker.types.LogConfig(
@@ -1102,6 +1105,8 @@ class PortTest(BaseAPIIntegrationTest):
 
 
 class ContainerTopTest(BaseAPIIntegrationTest):
+    @pytest.mark.xfail(reason='Output of docker top depends on host distro, '
+                              'and is not formalized.')
     def test_top(self):
         container = self.client.create_container(
             TEST_IMG, ['sleep', '60']
@@ -1112,9 +1117,7 @@ class ContainerTopTest(BaseAPIIntegrationTest):
         self.client.start(container)
         res = self.client.top(container)
         if not IS_WINDOWS_PLATFORM:
-            assert res['Titles'] == [
-                'UID', 'PID', 'PPID', 'C', 'STIME', 'TTY', 'TIME', 'CMD'
-            ]
+            assert res['Titles'] == [u'PID', u'USER', u'TIME', u'COMMAND']
         assert len(res['Processes']) == 1
         assert res['Processes'][0][-1] == 'sleep 60'
         self.client.kill(container)
@@ -1122,6 +1125,8 @@ class ContainerTopTest(BaseAPIIntegrationTest):
     @pytest.mark.skipif(
         IS_WINDOWS_PLATFORM, reason='No psargs support on windows'
     )
+    @pytest.mark.xfail(reason='Output of docker top depends on host distro, '
+                              'and is not formalized.')
     def test_top_with_psargs(self):
         container = self.client.create_container(
             TEST_IMG, ['sleep', '60'])
@@ -1129,11 +1134,8 @@ class ContainerTopTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
 
         self.client.start(container)
-        res = self.client.top(container, 'waux')
-        assert res['Titles'] == [
-            'USER', 'PID', '%CPU', '%MEM', 'VSZ', 'RSS',
-            'TTY', 'STAT', 'START', 'TIME', 'COMMAND'
-        ]
+        res = self.client.top(container, '-eopid,user')
+        assert res['Titles'] == [u'PID', u'USER']
         assert len(res['Processes']) == 1
         assert res['Processes'][0][10] == 'sleep 60'
 

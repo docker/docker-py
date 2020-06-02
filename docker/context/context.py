@@ -11,19 +11,20 @@ from docker.context.config import get_context_host
 
 class Context:
     """A context."""
-    def __init__(self, name, orchestrator="swarm", host=None, endpoints=None):
+    def __init__(self, name, orchestrator=None, host=None, endpoints=None,
+                 tls=False):
         if not name:
             raise Exception("Name not provided")
         self.name = name
         self.orchestrator = orchestrator
         if not endpoints:
             default_endpoint = "docker" if (
-                orchestrator == "swarm"
+                not orchestrator or orchestrator == "swarm"
                 ) else orchestrator
             self.endpoints = {
                 default_endpoint: {
-                    "Host": get_context_host(host),
-                    "SkipTLSVerify": False
+                    "Host": get_context_host(host, tls),
+                    "SkipTLSVerify": not tls
                 }
             }
         else:
@@ -44,7 +45,7 @@ class Context:
             self, name="docker", host=None, tls_cfg=None,
             skip_tls_verify=False, def_namespace=None):
         self.endpoints[name] = {
-            "Host": get_context_host(host),
+            "Host": get_context_host(host, not skip_tls_verify),
             "SkipTLSVerify": skip_tls_verify
         }
         if def_namespace:
@@ -84,7 +85,8 @@ class Context:
                         context {} : {}""".format(name, e))
 
             return (
-                metadata["Name"], metadata["Metadata"]["StackOrchestrator"],
+                metadata["Name"],
+                metadata["Metadata"].get("StackOrchestrator", None),
                 metadata["Endpoints"])
         return None, None, None
 
@@ -161,7 +163,7 @@ class Context:
 
     @property
     def Host(self):
-        if self.orchestrator == "swarm":
+        if not self.orchestrator or self.orchestrator == "swarm":
             return self.endpoints["docker"]["Host"]
         return self.endpoints[self.orchestrator]["Host"]
 
@@ -171,18 +173,19 @@ class Context:
 
     @property
     def Metadata(self):
+        meta = {}
+        if self.orchestrator:
+            meta = {"StackOrchestrator": self.orchestrator}
         return {
             "Name": self.name,
-            "Metadata": {
-                "StackOrchestrator": self.orchestrator
-            },
+            "Metadata": meta,
             "Endpoints": self.endpoints
         }
 
     @property
     def TLSConfig(self):
         key = self.orchestrator
-        if key == "swarm":
+        if not key or key == "swarm":
             key = "docker"
         if key in self.tls_cfg.keys():
             return self.tls_cfg[key]

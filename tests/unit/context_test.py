@@ -37,6 +37,10 @@ class BaseContextTest(unittest.TestCase):
     def test_get_current_context(self):
         assert ContextAPI.get_current_context().Name == "default"
 
+    def test_https_host(self):
+        c = Context("test", host="tcp://testdomain:8080", tls=True)
+        assert c.Host == "https://testdomain:8080"
+
     def test_context_inspect_without_params(self):
         ctx = ContextAPI.inspect_context()
         assert ctx["Name"] == "default"
