@@ -1,6 +1,16 @@
 Change log
 ==========
 
+4.2.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/65?closed=1)
+
+### Features
+
+- Add option on when to use `tls` on Context constructor
+- Make context orchestrator field optional
+
 4.2.0
 -----
 
