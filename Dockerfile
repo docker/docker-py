@@ -1,6 +1,6 @@
 ARG PYTHON_VERSION=2.7-slim
 
-FROM python:${PYTHON_VERSION}
+FROM python:${PYTHON_VERSION}-slim
 
 RUN mkdir /src
 WORKDIR /src
