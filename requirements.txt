@@ -11,8 +11,7 @@ paramiko==2.4.2
 pycparser==2.17
 pyOpenSSL==18.0.0
 pyparsing==2.2.0
-pypiwin32==219; sys_platform == 'win32' and python_version < '3.6'
-pypiwin32==223; sys_platform == 'win32' and python_version >= '3.6'
+pywin32==227; sys_platform == 'win32'
 requests==2.20.0
 six==1.10.0
 urllib3==1.24.3
