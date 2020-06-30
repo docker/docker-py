@@ -1,6 +1,15 @@
 Change log
 ==========
 
+4.2.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/66?closed=1)
+
+### Bugfixes
+
+- Fix context load for non-docker endpoints
+
 4.2.1
 -----
 
