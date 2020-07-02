@@ -275,6 +275,27 @@ class TestNetworks(BaseAPIIntegrationTest):
         assert 'LinkLocalIPs' in net_cfg['IPAMConfig']
         assert net_cfg['IPAMConfig']['LinkLocalIPs'] == ['169.254.8.8']
 
+    @requires_api_version('1.32')
+    def test_create_with_driveropt(self):
+        container = self.client.create_container(
+            TEST_IMG, 'top',
+            networking_config=self.client.create_networking_config(
+                {
+                    'bridge': self.client.create_endpoint_config(
+                        driver_opt={'com.docker-py.setting': 'on'}
+                    )
+                }
+            ),
+            host_config=self.client.create_host_config(network_mode='bridge')
+        )
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        container_data = self.client.inspect_container(container)
+        net_cfg = container_data['NetworkSettings']['Networks']['bridge']
+        assert 'DriverOpts' in net_cfg
+        assert 'com.docker-py.setting' in net_cfg['DriverOpts']
+        assert net_cfg['DriverOpts']['com.docker-py.setting'] == 'on'
+
     @requires_api_version('1.22')
     def test_create_with_links(self):
         net_name, net_id = self.create_network()

@@ -216,7 +216,7 @@ class NetworkApiMixin(object):
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
-                                     link_local_ips=None):
+                                     link_local_ips=None, driver_opt=None):
         """
         Connect a container to a network.
 
@@ -240,7 +240,8 @@ class NetworkApiMixin(object):
             "Container": container,
             "EndpointConfig": self.create_endpoint_config(
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
-                ipv6_address=ipv6_address, link_local_ips=link_local_ips
+                ipv6_address=ipv6_address, link_local_ips=link_local_ips,
+                driver_opt=driver_opt
             ),
         }
 
