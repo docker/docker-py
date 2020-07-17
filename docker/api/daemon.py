@@ -135,7 +135,9 @@ class DaemonApiMixin(object):
         authcfg = self._auth_configs.resolve_authconfig(registry)
         # If we found an existing auth config for this registry and username
         # combination, we can return it immediately unless reauth is requested.
-        if authcfg and (authcfg.get('username', None) == username or username is None) \
+        if authcfg \
+                and (authcfg.get('username', None) == username \
+                     or username is None) \
                 and not reauth:
             return authcfg
 
