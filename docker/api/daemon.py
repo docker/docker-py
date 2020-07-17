@@ -94,7 +94,7 @@ class DaemonApiMixin(object):
         """
         return self._result(self._get(self._url("/info")), True)
 
-    def login(self, username, password=None, email=None, registry=None,
+    def login(self, username=None, password=None, email=None, registry=None,
               reauth=False, dockercfg_path=None):
         """
         Authenticate with a registry. Similar to the ``docker login`` command.
@@ -135,7 +135,7 @@ class DaemonApiMixin(object):
         authcfg = self._auth_configs.resolve_authconfig(registry)
         # If we found an existing auth config for this registry and username
         # combination, we can return it immediately unless reauth is requested.
-        if authcfg and authcfg.get('username', None) == username \
+        if authcfg and (authcfg.get('username', None) == username or username is None) \
                 and not reauth:
             return authcfg
 
