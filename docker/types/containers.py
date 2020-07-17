@@ -174,8 +174,8 @@ class HostConfig(dict):
                  pids_limit=None, isolation=None, auto_remove=False,
                  storage_opt=None, init=None, init_path=None,
                  volume_driver=None, cpu_count=None, cpu_percent=None,
-                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
-                 cpu_rt_period=None, cpu_rt_runtime=None,
+                 nano_cpus=None, cpuset_mems=None, gpus=None, runtime=None,
+                 mounts=None, cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None):
 
         if mem_limit is not None:
@@ -517,6 +517,11 @@ class HostConfig(dict):
 
             self['NanoCpus'] = nano_cpus
 
+        if gpus:
+            if version_lt(version, '1.40'):
+                raise host_config_version_error('gpus', '1.40')
+            self['Gpus'] = gpus
+
         if runtime:
             if version_lt(version, '1.25'):
                 raise host_config_version_error('runtime', '1.25')
@@ -560,7 +565,7 @@ class ContainerConfig(dict):
         volumes=None, network_disabled=False, entrypoint=None,
         working_dir=None, domainname=None, host_config=None, mac_address=None,
         labels=None, stop_signal=None, networking_config=None,
-        healthcheck=None, stop_timeout=None, runtime=None
+        healthcheck=None, stop_timeout=None, gpus=None, runtime=None
     ):
 
         if stop_timeout is not None and version_lt(version, '1.25'):
@@ -654,5 +659,6 @@ class ContainerConfig(dict):
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
             'StopTimeout': stop_timeout,
+            'Gpus': gpus,
             'Runtime': runtime
         })

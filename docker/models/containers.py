@@ -691,6 +691,8 @@ class ContainerCollection(Collection):
                 For example:
                 ``{"Name": "on-failure", "MaximumRetryCount": 5}``
 
+            gpus (int or str): Number of gpus container can use.
+                'all' will allow use of all gpus.
             runtime (str): Runtime to use with this container.
             security_opt (:py:class:`list`): A list of string values to
                 customize labels for MLS systems, such as SELinux.
@@ -1002,6 +1004,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'dns_search',
     'dns',
     'extra_hosts',
+    'gpus',
     'group_add',
     'init',
     'init_path',
