@@ -279,7 +279,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
 
         expected_msgs = [
             "logger: no log driver named 'asdf' is registered",
-            "looking up logging plugin asdf: plugin \"asdf\" not found",
+            "error looking up logging plugin asdf: plugin \"asdf\" not found",
         ]
         with pytest.raises(docker.errors.APIError) as excinfo:
             # raises an internal server error 500
