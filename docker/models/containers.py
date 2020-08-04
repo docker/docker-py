@@ -28,6 +28,8 @@ class Container(Model):
         """
         if self.attrs.get('Name') is not None:
             return self.attrs['Name'].lstrip('/')
+        if self.attrs.get('Names') is not None:
+            return self.attrs['Names'][0].lstrip('/')
 
     @property
     def image(self):
