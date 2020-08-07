@@ -1125,7 +1125,7 @@ class ContainerApiMixin(object):
         else:
             if decode:
                 raise errors.InvalidArgument(
-                    "decode is only available in conjuction with stream=True"
+                    "decode is only available in conjunction with stream=True"
                 )
             return self._result(self._get(url, params={'stream': False}),
                                 json=True)

@@ -129,7 +129,7 @@ Change log
 
 ### Bugfixes
 
-* Fix base_url to keep TCP protocol on utils.py by letting the responsability of changing the
+* Fix base_url to keep TCP protocol on utils.py by letting the responsibility of changing the
 protocol to `parse_host` afterwards, letting `base_url` with the original value.
 * XFAIL test_attach_stream_and_cancel on TLS
 
@@ -1233,7 +1233,7 @@ like the others
   (`Client.volumes`, `Client.create_volume`, `Client.inspect_volume`,
   `Client.remove_volume`).
 * Added support for the `group_add` parameter in `create_host_config`.
-* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameteres
+* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameters
   in `create_host_config`.
 * Added support for the archive API endpoint (`Client.get_archive`,
   `Client.put_archive`).
