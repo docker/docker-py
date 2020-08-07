@@ -579,6 +579,9 @@ class ContainerCollection(Collection):
                 For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
+            device_requests (:py:class:`list`): Expose host resources such as
+                GPUs to the container, as a list of
+                :py:class:`docker.types.DeviceRequest` instances.
             dns (:py:class:`list`): Set custom DNS servers.
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file.
@@ -998,6 +1001,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'device_write_bps',
     'device_write_iops',
     'devices',
+    'device_requests',
     'dns_opt',
     'dns_search',
     'dns',
