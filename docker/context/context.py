@@ -186,8 +186,6 @@ class Context:
 
     @property
     def Host(self):
-<<<<<<< HEAD
-<<<<<<< HEAD
         if not self.orchestrator or self.orchestrator == "swarm":
             endpoint = self.endpoints.get("docker", None)
             if endpoint:
@@ -195,14 +193,6 @@ class Context:
             return None
 
         return self.endpoints[self.orchestrator].get("Host", None)
-=======
-        if self.orchestrator == "swarm":
-=======
-        if not self.orchestrator or self.orchestrator == "swarm":
->>>>>>> 1e11ece... Make orchestrator field optional
-            return self.endpoints["docker"]["Host"]
-        return self.endpoints[self.orchestrator]["Host"]
->>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
 
     @property
     def Orchestrator(self):
@@ -210,44 +200,19 @@ class Context:
 
     @property
     def Metadata(self):
-<<<<<<< HEAD
-<<<<<<< HEAD
         meta = {}
         if self.orchestrator:
             meta = {"StackOrchestrator": self.orchestrator}
         return {
             "Name": self.name,
             "Metadata": meta,
-=======
-        return {
-            "Name": self.name,
-            "Metadata": {
-                "StackOrchestrator": self.orchestrator
-            },
->>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
-=======
-        meta = {}
-        if self.orchestrator:
-            meta = {"StackOrchestrator": self.orchestrator}
-        return {
-            "Name": self.name,
-            "Metadata": meta,
->>>>>>> 1e11ece... Make orchestrator field optional
             "Endpoints": self.endpoints
         }
 
     @property
     def TLSConfig(self):
         key = self.orchestrator
-<<<<<<< HEAD
-<<<<<<< HEAD
         if not key or key == "swarm":
-=======
-        if key == "swarm":
->>>>>>> 64fdb32... Implement context management, lifecycle and unittests.
-=======
-        if not key or key == "swarm":
->>>>>>> 1e11ece... Make orchestrator field optional
             key = "docker"
         if key in self.tls_cfg.keys():
             return self.tls_cfg[key]
