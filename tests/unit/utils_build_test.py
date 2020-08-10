@@ -335,7 +335,7 @@ class ExcludePathsTest(unittest.TestCase):
         # Dockerignore reference stipulates that absolute paths are
         # equivalent to relative paths, hence /../foo should be
         # equivalent to ../foo. It also stipulates that paths are run
-        # through Go's filepath.Clean, which explicitely "replace
+        # through Go's filepath.Clean, which explicitly "replace
         # "/.."  by "/" at the beginning of a path".
         assert exclude_paths(
             base,

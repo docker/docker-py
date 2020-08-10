@@ -450,7 +450,7 @@ class ContainerTest(unittest.TestCase):
         container = client.containers.get(FAKE_CONTAINER_ID)
         container.get_archive('foo')
         client.api.get_archive.assert_called_with(
-            FAKE_CONTAINER_ID, 'foo', DEFAULT_DATA_CHUNK_SIZE
+            FAKE_CONTAINER_ID, 'foo', DEFAULT_DATA_CHUNK_SIZE, False
         )
 
     def test_image(self):

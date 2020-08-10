@@ -32,7 +32,7 @@ class TLSConfig(object):
         # https://docs.docker.com/engine/articles/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
         # here, but also disable any public/default CA pool verification by
-        # leaving tls_verify=False
+        # leaving verify=False
 
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
@@ -62,7 +62,7 @@ class TLSConfig(object):
                 # https://github.com/docker/docker-py/issues/963
                 self.ssl_version = ssl.PROTOCOL_TLSv1
 
-        # "tls" and "tls_verify" must have both or neither cert/key files In
+        # "client_cert" must have both or neither cert/key files. In
         # either case, Alert the user when both are expected, but any are
         # missing.
 
@@ -71,7 +71,7 @@ class TLSConfig(object):
                 tls_cert, tls_key = client_cert
             except ValueError:
                 raise errors.TLSParameterError(
-                    'client_config must be a tuple of'
+                    'client_cert must be a tuple of'
                     ' (client certificate, key file)'
                 )
 
@@ -79,7 +79,7 @@ class TLSConfig(object):
                                               not os.path.isfile(tls_key)):
                 raise errors.TLSParameterError(
                     'Path to a certificate and key files must be provided'
-                    ' through the client_config param'
+                    ' through the client_cert param'
                 )
             self.cert = (tls_cert, tls_key)
 
@@ -88,7 +88,7 @@ class TLSConfig(object):
         self.ca_cert = ca_cert
         if self.verify and self.ca_cert and not os.path.isfile(self.ca_cert):
             raise errors.TLSParameterError(
-                'Invalid CA certificate provided for `tls_ca_cert`.'
+                'Invalid CA certificate provided for `ca_cert`.'
             )
 
     def configure_client(self, client):

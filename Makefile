@@ -41,8 +41,8 @@ integration-test: build
 integration-test-py3: build-py3
 	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test -v tests/integration/${file}
 
-TEST_API_VERSION ?= 1.35
-TEST_ENGINE_VERSION ?= 19.03.5
+TEST_API_VERSION ?= 1.39
+TEST_ENGINE_VERSION ?= 19.03.12
 
 .PHONY: setup-network
 setup-network:

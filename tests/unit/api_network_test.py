@@ -136,7 +136,8 @@ class NetworkTest(BaseAPIClientTest):
                 container={'Id': container_id},
                 net_id=network_id,
                 aliases=['foo', 'bar'],
-                links=[('baz', 'quux')]
+                links=[('baz', 'quux')],
+                driver_opt={'com.docker-py.setting': 'yes'},
             )
 
         assert post.call_args[0][0] == (
@@ -148,6 +149,7 @@ class NetworkTest(BaseAPIClientTest):
             'EndpointConfig': {
                 'Aliases': ['foo', 'bar'],
                 'Links': ['baz:quux'],
+                'DriverOpts': {'com.docker-py.setting': 'yes'},
             },
         }
 
