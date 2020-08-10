@@ -1,6 +1,21 @@
 Change log
 ==========
 
+4.3.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/66?closed=1)
+
+### Features
+- Add `DeviceRequest` type to expose host resources such as GPUs
+- Add support for `DriverOpts` in EndpointConfig
+- Disable compression by default when using container.get_archive method
+
+### Miscellaneous
+- Update default API version to v1.39
+- Update test engine version to 19.03.12
+
+
 4.2.2
 -----
 
