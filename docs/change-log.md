@@ -4,7 +4,7 @@ Change log
 4.3.0
 -----
 
-[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/66?closed=1)
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/64?closed=1)
 
 ### Features
 - Add `DeviceRequest` type to expose host resources such as GPUs
@@ -51,10 +51,6 @@ Change log
 
 - Add support for docker contexts through `docker.ContextAPI`
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 7c4194c... Post release 4.2.0 update:
 4.1.0
 -----
 
