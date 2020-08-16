@@ -57,7 +57,7 @@ integration-dind-py2: build setup-network
 	docker run -d --network dpy-tests --name dpy-dind-py2 --privileged\
 		docker:${TEST_ENGINE_VERSION}-dind dockerd -H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://dpy-dind-py2:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python py.test tests/integration
+		--network dpy-tests docker-sdk-python py.test tests/integration/${file}
 	docker rm -vf dpy-dind-py2
 
 .PHONY: integration-dind-py3
@@ -66,7 +66,7 @@ integration-dind-py3: build-py3 setup-network
 	docker run -d --network dpy-tests --name dpy-dind-py3 --privileged\
 		docker:${TEST_ENGINE_VERSION}-dind dockerd -H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --env="DOCKER_HOST=tcp://dpy-dind-py3:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python3 py.test tests/integration
+		--network dpy-tests docker-sdk-python3 py.test tests/integration/${file}
 	docker rm -vf dpy-dind-py3
 
 .PHONY: integration-dind-ssl
@@ -81,10 +81,10 @@ integration-dind-ssl: build-dind-certs build build-py3
 		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375 --experimental
 	docker run -t --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
 		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python py.test tests/integration
+		--network dpy-tests docker-sdk-python py.test tests/integration/${file}
 	docker run -t --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
 		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python3 py.test tests/integration
+		--network dpy-tests docker-sdk-python3 py.test tests/integration/${file}
 	docker rm -vf dpy-dind-ssl dpy-dind-certs
 
 .PHONY: flake8
