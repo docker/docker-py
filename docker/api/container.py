@@ -506,7 +506,7 @@ class ContainerApiMixin(object):
                 bytes) or a string with a units identification char
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
-            mem_reservation (int or str): Memory soft limit.
+            mem_reservation (float or str): Memory soft limit.
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
@@ -1219,8 +1219,8 @@ class ContainerApiMixin(object):
             cpu_shares (int): CPU shares (relative weight)
             cpuset_cpus (str): CPUs in which to allow execution
             cpuset_mems (str): MEMs in which to allow execution
-            mem_limit (int or str): Memory limit
-            mem_reservation (int or str): Memory soft limit
+            mem_limit (float or str): Memory limit
+            mem_reservation (float or str): Memory soft limit
             memswap_limit (int or str): Total memory (memory + swap), -1 to
                 disable swap
             kernel_memory (int or str): Kernel memory limit
