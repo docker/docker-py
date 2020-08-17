@@ -412,7 +412,7 @@ def parse_bytes(s):
 
     if suffix in units.keys() or suffix.isdigit():
         try:
-            digits = int(digits_part)
+            digits = float(digits_part)
         except ValueError:
             raise errors.DockerException(
                 'Failed converting the string value for memory ({0}) to'
