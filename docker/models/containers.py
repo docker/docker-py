@@ -742,7 +742,7 @@ class ContainerCollection(Collection):
             uts_mode (str): Sets the UTS namespace mode for the container.
                 Supported values are: ``host``
             version (str): The version of the API to use. Set to ``auto`` to
-                automatically detect the server's version. Default: ``1.35``
+                automatically detect the server's version. Default: ``1.39``
             volume_driver (str): The name of a volume driver/plugin.
             volumes (dict or list): A dictionary to configure volumes mounted
                 inside the container. The key is either the host path or a
