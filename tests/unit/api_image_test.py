@@ -187,6 +187,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/test_image/json',
+            headers={},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
