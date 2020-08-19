@@ -17,6 +17,14 @@ class ImageCollectionTest(unittest.TestCase):
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
 
+    def test_build_with_auth_config(self):
+        client = make_fake_client()
+        image = client.images.build(auth_config={"auth":1})
+        client.api.build.assert_called_with()
+        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID, {"auth":1})
+        assert isinstance(image, Image)
+        assert image.id == FAKE_IMAGE_ID        
+        
     def test_get(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
