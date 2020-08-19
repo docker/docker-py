@@ -13,14 +13,14 @@ class ImageCollectionTest(unittest.TestCase):
         client = make_fake_client()
         image = client.images.build()
         client.api.build.assert_called_with()
-        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID)
+        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID, None)
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
 
     def test_get(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
-        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID)
+        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID, None)
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
 
@@ -48,7 +48,7 @@ class ImageCollectionTest(unittest.TestCase):
         client.api.pull.assert_called_with(
             'test_image', tag='latest', stream=True
         )
-        client.api.inspect_image.assert_called_with('test_image:latest')
+        client.api.inspect_image.assert_called_with('test_image:latest', None)
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
 
@@ -61,7 +61,7 @@ class ImageCollectionTest(unittest.TestCase):
         client.api.images.assert_called_with(
             all=False, name='test_image', filters=None
         )
-        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID)
+        client.api.inspect_image.assert_called_with(FAKE_IMAGE_ID, None)
         assert len(images) == 1
         image = images[0]
         assert isinstance(image, Image)
