@@ -12,7 +12,13 @@ try:
     from unittest import mock
 except ImportError:
     import mock
-
+    
+class MockAnyArg(object):
+    def __eq__(a, b):
+        if  'X-Registry-Auth' in b.keys():
+            return True
+        else:
+            return False
 
 class ImageTest(BaseAPIClientTest):
     def test_image_viz(self):
@@ -207,7 +213,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/test_image/json',
-            headers={'X-Registry-Auth': 'eyJIdHRwSGVhZGVycyI6IHsiVXNlci1BZ2VudCI6ICJMaW51eCJ9LCAiYXV0aHMiOiB7InJlZ2lzdHJ5IjogeyJhdXRoIjogMX19fQ=='},
+            headers=MockAnyArg(),
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
         
