@@ -207,7 +207,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/test_image/json',
-            headers=auth_config,
+            headers=headers={'X-Registry-Auth': 'eyJIdHRwSGVhZGVycyI6IHsiVXNlci1BZ2VudCI6ICJMaW51eCJ9LCAiYXV0aHMiOiB7InJlZ2lzdHJ5IjogeyJhdXRoIjogMX19fQ=='},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
         
