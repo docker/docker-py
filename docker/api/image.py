@@ -224,9 +224,20 @@ class ImageApiMixin(object):
         return self.import_image(
             image=image, repository=repository, tag=tag, changes=changes
         )
-
+    
+    def set_auth_headers(self, registry, auth_config=None):
+        headers = {}
+        if auth_config is None:
+            header = auth.get_config_header(self, registry)
+            if header:
+                headers['X-Registry-Auth'] = header
+        else:
+            log.debug('Sending supplied auth config')
+            headers['X-Registry-Auth'] = auth.encode_header(auth_config)     
+        return headers
+    
     @utils.check_resource('image')
-    def inspect_image(self, image):
+    def inspect_image(self, image, auth_config=None):
         """
         Get detailed information about an image. Similar to the ``docker
         inspect`` command, but only for images.
@@ -242,8 +253,14 @@ class ImageApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+        registry, _ = auth.resolve_repository_name(image)
+
+        headers = self.set_auth_headers(registry, auth_config)
+        
+        url = self._url("/images/{0}/json", image)
+        
         return self._result(
-            self._get(self._url("/images/{0}/json", image)), True
+            self._get(url, headers=headers), True
         )
 
     @utils.minimum_version('1.30')
@@ -266,15 +283,8 @@ class ImageApiMixin(object):
                 If the server returns an error.
         """
         registry, _ = auth.resolve_repository_name(image)
-
-        headers = {}
-        if auth_config is None:
-            header = auth.get_config_header(self, registry)
-            if header:
-                headers['X-Registry-Auth'] = header
-        else:
-            log.debug('Sending supplied auth config')
-            headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+        
+        headers = self.set_auth_headers(registry, auth_config)    
 
         url = self._url("/distribution/{0}/json", image)
 
