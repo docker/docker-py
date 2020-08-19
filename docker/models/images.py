@@ -200,7 +200,7 @@ class RegistryData(Model):
 class ImageCollection(Collection):
     model = Image
 
-    def build(self, **kwargs):
+    def build(self, auth_config=None, **kwargs):
         """
         Build an image and return it. Similar to the ``docker build``
         command. Either ``path`` or ``fileobj`` must be set.
@@ -262,6 +262,9 @@ class ImageCollection(Collection):
                 configuration file (``~/.docker/config.json`` by default)
                 contains a proxy configuration, the corresponding environment
                 variables will be set in the container being built.
+            auth_config (dict): Override the credentials that are found in the
+                config for this request.  ``auth_config`` should contain the
+                ``username`` and ``password`` keys to be valid.
 
         Returns:
             (tuple): The first item is the :py:class:`Image` object for the
@@ -269,7 +272,7 @@ class ImageCollection(Collection):
                 build logs as JSON-decoded objects.
 
         Raises:
-            :py:class:`docker.errors.BuildError`
+            :py:class:`docker.errors.Bu_urlildError`
                 If there is an error during the build.
             :py:class:`docker.errors.APIError`
                 If the server returns any other error.
@@ -294,15 +297,18 @@ class ImageCollection(Collection):
                     image_id = match.group(2)
             last_event = chunk
         if image_id:
-            return (self.get(image_id), result_stream)
+            return (self.get(image_id, auth_config), result_stream)
         raise BuildError(last_event or 'Unknown', result_stream)
 
-    def get(self, name):
+    def get(self, name, auth_config=None):
         """
         Gets an image.
 
         Args:
             name (str): The name of the image.
+            auth_config (dict): Override the credentials that are found in the
+                config for this request.  ``auth_config`` should contain the
+                ``username`` and ``password`` keys to be valid.
 
         Returns:
             (:py:class:`Image`): The image.
@@ -313,7 +319,7 @@ class ImageCollection(Collection):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.prepare_model(self.client.api.inspect_image(name))
+        return self.prepare_model(self.client.api.inspect_image(name, auth_config))
 
     def get_registry_data(self, name, auth_config=None):
         """
@@ -327,7 +333,7 @@ class ImageCollection(Collection):
 
         Returns:
             (:py:class:`RegistryData`): The data object.
-
+_url
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
