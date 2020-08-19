@@ -190,7 +190,27 @@ class ImageTest(BaseAPIClientTest):
             headers={},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
-
+        
+    def test_inspect_image_with_auth_config(self):
+        auth_config = {
+	                   "auths": {
+		                  "registry": {
+			                          "auth": 1
+		                              }
+	                      },
+	                   "HttpHeaders": {
+		                  "User-Agent": "Linux"
+	                      }
+                        }
+        self.client.inspect_image(fake_api.FAKE_IMAGE_NAME,auth_config)
+        
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'images/test_image/json',
+            headers=auth_config,
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+        
     def test_inspect_image_undefined_id(self):
         for arg in None, '', {True: True}:
             with pytest.raises(docker.errors.NullResource) as excinfo:
