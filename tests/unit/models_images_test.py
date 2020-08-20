@@ -17,8 +17,8 @@ class ImageCollectionTest(unittest.TestCase):
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
 
-    # Due to mocking on fake_api_client the result 
-    # is not behaiving as expected, 
+    # Due to mocking on fake_api_client the result
+    # is not behaiving as expected,
     # depending of feedback it will be refactored
     # def test_build_with_auth_config(self):
     #     client = make_fake_client()
@@ -29,7 +29,7 @@ class ImageCollectionTest(unittest.TestCase):
     #          )
     #     assert isinstance(image, Image)
     #     assert image.id == FAKE_IMAGE_ID
-    
+
     def test_get(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)

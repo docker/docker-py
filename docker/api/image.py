@@ -224,7 +224,7 @@ class ImageApiMixin(object):
         return self.import_image(
             image=image, repository=repository, tag=tag, changes=changes
         )
-    
+
     def set_auth_headers(self, registry, auth_config=None):
         headers = {}
         if auth_config is None:
@@ -233,9 +233,9 @@ class ImageApiMixin(object):
                 headers['X-Registry-Auth'] = header
         else:
             log.debug('Sending supplied auth config')
-            headers['X-Registry-Auth'] = auth.encode_header(auth_config)     
+            headers['X-Registry-Auth'] = auth.encode_header(auth_config)
         return headers
-    
+
     @utils.check_resource('image')
     def inspect_image(self, image, auth_config=None):
         """
@@ -256,9 +256,9 @@ class ImageApiMixin(object):
         registry, _ = auth.resolve_repository_name(image)
 
         headers = self.set_auth_headers(registry, auth_config)
-        
+
         url = self._url("/images/{0}/json", image)
-        
+
         return self._result(
             self._get(url, headers=headers), True
         )
@@ -283,8 +283,8 @@ class ImageApiMixin(object):
                 If the server returns an error.
         """
         registry, _ = auth.resolve_repository_name(image)
-        
-        headers = self.set_auth_headers(registry, auth_config)    
+
+        headers = self.set_auth_headers(registry, auth_config)
 
         url = self._url("/distribution/{0}/json", image)
 

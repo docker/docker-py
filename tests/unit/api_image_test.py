@@ -12,8 +12,8 @@ try:
     from unittest import mock
 except ImportError:
     import mock
-    
-    
+
+
 class MockAnyArg(object):
     def __eq__(a, b):
         if 'X-Registry-Auth' in b.keys():
@@ -21,7 +21,7 @@ class MockAnyArg(object):
         else:
             return False
 
-        
+
 class ImageTest(BaseAPIClientTest):
     def test_image_viz(self):
         with pytest.raises(Exception):
@@ -198,7 +198,7 @@ class ImageTest(BaseAPIClientTest):
             headers={},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
-        
+
     def test_inspect_image_with_auth_config(self):
         auth_config = {
             "auths": {
@@ -209,7 +209,7 @@ class ImageTest(BaseAPIClientTest):
             "HttpHeaders": {
                 "User-Agent": "Linux"
             }}
-        
+
         self.client.inspect_image(fake_api.FAKE_IMAGE_NAME, auth_config)
         fake_request.assert_called_with(
             'GET',
@@ -217,7 +217,7 @@ class ImageTest(BaseAPIClientTest):
             headers=MockAnyArg(),
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
-        
+
     def test_inspect_image_undefined_id(self):
         for arg in None, '', {True: True}:
             with pytest.raises(docker.errors.NullResource) as excinfo:
