@@ -199,17 +199,16 @@ class ImageTest(BaseAPIClientTest):
         
     def test_inspect_image_with_auth_config(self):
         auth_config = {
-	                   "auths": {
-		                  "registry": {
-			                          "auth": 1
-		                              }
-	                      },
-	                   "HttpHeaders": {
-		                  "User-Agent": "Linux"
-	                      }
-                        }
-        self.client.inspect_image(fake_api.FAKE_IMAGE_NAME,auth_config)
-        
+                       "auths": {
+                           "registry": {
+                                       "auth": 1
+                                       }
+                                },
+                        "HttpHeaders": {
+                                       "User-Agent": "Linux"
+                                }
+                       }
+        self.client.inspect_image(fake_api.FAKE_IMAGE_NAME, auth_config)
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/test_image/json',
