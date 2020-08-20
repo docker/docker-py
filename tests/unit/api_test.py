@@ -1,25 +1,25 @@
 import datetime
-import json
 import io
+import json
 import os
 import re
 import shutil
 import socket
+import struct
 import tempfile
 import threading
 import time
 import unittest
 
 import docker
-from docker.api import APIClient
+import pytest
 import requests
-from requests.packages import urllib3
 import six
-import struct
+from docker.api import APIClient
+from docker.constants import DEFAULT_DOCKER_API_VERSION
+from requests.packages import urllib3
 
 from . import fake_api
-
-import pytest
 
 try:
     from unittest import mock
@@ -105,7 +105,7 @@ class BaseAPIClientTest(unittest.TestCase):
             _read_from_socket=fake_read_from_socket
         )
         self.patcher.start()
-        self.client = APIClient()
+        self.client = APIClient(version=DEFAULT_DOCKER_API_VERSION)
 
     def tearDown(self):
         self.client.close()
@@ -282,27 +282,37 @@ class DockerApiTest(BaseAPIClientTest):
         return socket_adapter.socket_path
 
     def test_url_compatibility_unix(self):
-        c = APIClient(base_url="unix://socket")
+        c = APIClient(
+            base_url="unix://socket",
+            version=DEFAULT_DOCKER_API_VERSION)
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_unix_triple_slash(self):
-        c = APIClient(base_url="unix:///socket")
+        c = APIClient(
+            base_url="unix:///socket",
+            version=DEFAULT_DOCKER_API_VERSION)
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http_unix_triple_slash(self):
-        c = APIClient(base_url="http+unix:///socket")
+        c = APIClient(
+            base_url="http+unix:///socket",
+            version=DEFAULT_DOCKER_API_VERSION)
 
         assert self._socket_path_for_client_session(c) == '/socket'
 
     def test_url_compatibility_http(self):
-        c = APIClient(base_url="http://hostname:1234")
+        c = APIClient(
+            base_url="http://hostname:1234",
+            version=DEFAULT_DOCKER_API_VERSION)
 
         assert c.base_url == "http://hostname:1234"
 
     def test_url_compatibility_tcp(self):
-        c = APIClient(base_url="tcp://hostname:1234")
+        c = APIClient(
+            base_url="tcp://hostname:1234",
+            version=DEFAULT_DOCKER_API_VERSION)
 
         assert c.base_url == "http://hostname:1234"
 
@@ -447,7 +457,9 @@ class UnixSocketStreamTest(unittest.TestCase):
             b'\r\n'
         ) + b'\r\n'.join(lines)
 
-        with APIClient(base_url="http+unix://" + self.socket_file) as client:
+        with APIClient(
+                base_url="http+unix://" + self.socket_file,
+                version=DEFAULT_DOCKER_API_VERSION) as client:
             for i in range(5):
                 try:
                     stream = client.build(
@@ -532,7 +544,10 @@ class TCPSocketStreamTest(unittest.TestCase):
 
     def request(self, stream=None, tty=None, demux=None):
         assert stream is not None and tty is not None and demux is not None
-        with APIClient(base_url=self.address) as client:
+        with APIClient(
+                base_url=self.address,
+                version=DEFAULT_DOCKER_API_VERSION
+                ) as client:
             if tty:
                 url = client._url('/tty')
             else:
@@ -597,7 +612,7 @@ class UserAgentTest(unittest.TestCase):
         self.patcher.stop()
 
     def test_default_user_agent(self):
-        client = APIClient()
+        client = APIClient(version=DEFAULT_DOCKER_API_VERSION)
         client.version()
 
         assert self.mock_send.call_count == 1
@@ -606,7 +621,9 @@ class UserAgentTest(unittest.TestCase):
         assert headers['User-Agent'] == expected
 
     def test_custom_user_agent(self):
-        client = APIClient(user_agent='foo/bar')
+        client = APIClient(
+            user_agent='foo/bar',
+            version=DEFAULT_DOCKER_API_VERSION)
         client.version()
 
         assert self.mock_send.call_count == 1
@@ -626,7 +643,7 @@ class DisableSocketTest(unittest.TestCase):
             return self.timeout
 
     def setUp(self):
-        self.client = APIClient()
+        self.client = APIClient(version=DEFAULT_DOCKER_API_VERSION)
 
     def test_disable_socket_timeout(self):
         """Test that the timeout is disabled on a generic socket object."""

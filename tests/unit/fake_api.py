@@ -1,5 +1,6 @@
-from . import fake_stat
 from docker import constants
+
+from . import fake_stat
 
 CURRENT_VERSION = 'v{0}'.format(constants.DEFAULT_DOCKER_API_VERSION)
 

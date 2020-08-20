@@ -8,10 +8,10 @@ import six
 import websocket
 
 from .. import auth
-from ..constants import (DEFAULT_DOCKER_API_VERSION, DEFAULT_NUM_POOLS,
-                         DEFAULT_NUM_POOLS_SSH, DEFAULT_TIMEOUT_SECONDS,
-                         DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
-                         MINIMUM_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES)
+from ..constants import (DEFAULT_NUM_POOLS, DEFAULT_NUM_POOLS_SSH,
+                         DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
+                         IS_WINDOWS_PLATFORM, MINIMUM_DOCKER_API_VERSION,
+                         STREAM_HEADER_SIZE_BYTES)
 from ..errors import (DockerException, InvalidVersion, TLSParameterError,
                       create_api_error_from_http_exception)
 from ..tls import TLSConfig
@@ -181,13 +181,13 @@ class APIClient(
             self.base_url = base_url
 
         # version detection needs to be after unix adapter mounting
-        if version is None or (
-            isinstance(version, six.string_types) and 
-            version.lower()) == 'auto':
+        if version is None or (isinstance(
+                                version,
+                                six.string_types
+                                ) and version.lower() == 'auto'):
             self._version = self._retrieve_server_version()
         else:
             self._version = version
-        
         if not isinstance(self._version, six.string_types):
             raise DockerException(
                 'Version parameter must be a string or None. Found {0}'.format(
