@@ -16,7 +16,7 @@ except ImportError:
     
 class MockAnyArg(object):
     def __eq__(a, b):
-        if  'X-Registry-Auth' in b.keys():
+        if 'X-Registry-Auth' in b.keys():
             return True
         else:
             return False
@@ -201,15 +201,15 @@ class ImageTest(BaseAPIClientTest):
         
     def test_inspect_image_with_auth_config(self):
         auth_config = {
-                       "auths": {
-                           "registry": {
-                                       "auth": 1
-                                       }
-                                },
-                        "HttpHeaders": {
-                                       "User-Agent": "Linux"
-                                }
-                       }
+            "auths": {
+                "registry": {
+                    "auth": 1
+                    }
+            },
+            "HttpHeaders": {
+                "User-Agent": "Linux"
+            }}
+        
         self.client.inspect_image(fake_api.FAKE_IMAGE_NAME, auth_config)
         fake_request.assert_called_with(
             'GET',
