@@ -1,6 +1,7 @@
 import copy
-import docker
 
+import docker
+from docker.constants import DEFAULT_DOCKER_API_VERSION
 from . import fake_api
 
 try:
@@ -30,7 +31,7 @@ def make_fake_api_client(overrides=None):
 
     if overrides is None:
         overrides = {}
-    api_client = docker.APIClient()
+    api_client = docker.APIClient(version=DEFAULT_DOCKER_API_VERSION)
     mock_attrs = {
         'build.return_value': fake_api.FAKE_IMAGE_ID,
         'commit.return_value': fake_api.post_fake_commit()[1],
@@ -50,6 +51,7 @@ def make_fake_api_client(overrides=None):
         'networks.return_value': fake_api.get_fake_network_list()[1],
         'start.return_value': None,
         'wait.return_value': {'StatusCode': 0},
+        'version.return_value': fake_api.get_fake_version()
     }
     mock_attrs.update(overrides)
     mock_client = CopyReturnMagicMock(**mock_attrs)
@@ -62,6 +64,6 @@ def make_fake_client(overrides=None):
     """
     Returns a Client with a fake APIClient.
     """
-    client = docker.DockerClient()
+    client = docker.DockerClient(version=DEFAULT_DOCKER_API_VERSION)
     client.api = make_fake_api_client(overrides)
     return client

@@ -11,7 +11,7 @@ import unittest
 import pytest
 import six
 from docker.api.client import APIClient
-from docker.constants import IS_WINDOWS_PLATFORM
+from docker.constants import IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException
 from docker.utils import (convert_filters, convert_volume_binds,
                           decode_json_header, kwargs_from_env, parse_bytes,
@@ -35,7 +35,7 @@ class DecoratorsTest(unittest.TestCase):
         def f(self, headers=None):
             return headers
 
-        client = APIClient()
+        client = APIClient(version=DEFAULT_DOCKER_API_VERSION)
         client._general_configs = {}
 
         g = update_headers(f)
@@ -86,6 +86,7 @@ class KwargsFromEnvTest(unittest.TestCase):
         assert kwargs['tls'].verify
 
         parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
+        kwargs['version'] = DEFAULT_DOCKER_API_VERSION
         try:
             client = APIClient(**kwargs)
             assert parsed_host == client.base_url
@@ -106,6 +107,7 @@ class KwargsFromEnvTest(unittest.TestCase):
         assert kwargs['tls'].assert_hostname is True
         assert kwargs['tls'].verify is False
         parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
+        kwargs['version'] = DEFAULT_DOCKER_API_VERSION
         try:
             client = APIClient(**kwargs)
             assert parsed_host == client.base_url
