@@ -13,6 +13,7 @@ try:
 except ImportError:
     import mock
     
+    
 class MockAnyArg(object):
     def __eq__(a, b):
         if  'X-Registry-Auth' in b.keys():
@@ -20,6 +21,7 @@ class MockAnyArg(object):
         else:
             return False
 
+        
 class ImageTest(BaseAPIClientTest):
     def test_image_viz(self):
         with pytest.raises(Exception):
