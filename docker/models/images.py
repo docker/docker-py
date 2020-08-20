@@ -319,7 +319,9 @@ class ImageCollection(Collection):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.prepare_model(self.client.api.inspect_image(name, auth_config))
+        return self.prepare_model(
+            self.client.api.inspect_image(name, auth_config)
+        )
 
     def get_registry_data(self, name, auth_config=None):
         """
