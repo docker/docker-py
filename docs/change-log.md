@@ -1,6 +1,16 @@
 Change log
 ==========
 
+4.3.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/68?closed=1)
+
+### Miscellaneous
+- Set default API version to `auto`
+- Fix conversion to bytes for `float`
+- Support OpenSSH `identityfile` option
+
 4.3.0
 -----
 
