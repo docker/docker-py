@@ -23,7 +23,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
-        assert container.attrs['Config']['Image'] == "alpine"
+        assert container.attrs['Config']['Image'] == "alpine:latest"
         assert container.attrs['Config']['Cmd'] == ['sleep', '300']
 
     def test_run_with_error(self):
@@ -187,7 +187,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
         assert client.containers.get(container.id).attrs[
-            'Config']['Image'] == "alpine"
+            'Config']['Image'] == "alpine:latest"
 
     def test_list(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -199,7 +199,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert len(containers) == 1
 
         container = containers[0]
-        assert container.attrs['Config']['Image'] == 'alpine'
+        assert container.attrs['Config']['Image'] == 'alpine:latest'
         assert container.status == 'running'
         assert container.image == client.images.get('alpine')
 
@@ -217,7 +217,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert len(containers) == 1
 
         container = containers[0]
-        assert container.attrs['Image'] == 'alpine'
+        assert container.attrs['Image'] == 'alpine:latest'
         assert container.status == 'running'
         assert container.image == client.images.get('alpine')
         with pytest.raises(docker.errors.DockerException):

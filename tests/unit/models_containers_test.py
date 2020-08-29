@@ -17,7 +17,7 @@ class ContainerCollectionTest(unittest.TestCase):
         assert out == b'hello world\n'
 
         client.api.create_container.assert_called_with(
-            image="alpine",
+            image="alpine:latest",
             command="echo hello world",
             detach=False,
             host_config={'NetworkMode': 'default'}
@@ -210,7 +210,7 @@ class ContainerCollectionTest(unittest.TestCase):
         assert isinstance(container, Container)
         assert container.id == FAKE_CONTAINER_ID
         client.api.create_container.assert_called_with(
-            image='alpine',
+            image='alpine:latest',
             command='sleep 300',
             detach=True,
             host_config={
@@ -233,7 +233,27 @@ class ContainerCollectionTest(unittest.TestCase):
 
         assert container.id == FAKE_CONTAINER_ID
         client.api.pull.assert_called_with(
-            'alpine', platform=None, tag=None, stream=True
+            'alpine', platform=None, tag="latest", stream=True
+        )
+
+    def test_run_pull_tag(self):
+        client = make_fake_client()
+
+        # raise exception on first call, then return normal value
+        client.api.create_container.side_effect = [
+            docker.errors.ImageNotFound(""),
+            client.api.create_container.return_value
+        ]
+
+        container = client.containers.run(
+            'alpine:1.0',
+            'sleep 300',
+            detach=True
+        )
+
+        assert container.id == FAKE_CONTAINER_ID
+        client.api.pull.assert_called_with(
+            'alpine', platform=None, tag="1.0", stream=True
         )
 
     def test_run_with_error(self):
@@ -296,7 +316,7 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_not_called()
         client.api.create_container.assert_called_with(
             command=None,
-            image='alpine',
+            image='alpine:latest',
             detach=True,
             host_config={'AutoRemove': True,
                          'NetworkMode': 'default'}
@@ -308,7 +328,7 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.remove_container.assert_not_called()
         client.api.create_container.assert_called_with(
             command=None,
-            image='alpine',
+            image='alpine:latest',
             detach=True,
             host_config={'AutoRemove': True,
                          'NetworkMode': 'default'}

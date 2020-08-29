@@ -9,7 +9,7 @@ from ..errors import (
     NotFound, create_unexpected_kwargs_error
 )
 from ..types import HostConfig
-from ..utils import version_gte
+from ..utils import parse_repository_tag, version_gte
 from .images import Image
 from .resource import Collection, Model
 
@@ -541,7 +541,8 @@ class ContainerCollection(Collection):
             'Reticulating spline 1...\\nReticulating spline 2...\\n'
 
         Args:
-            image (str): The image to run.
+            image (str): The image to run. If the tag is not specified, it will
+                be set to "latest".
             command (str or list): The command to run in the container.
             auto_remove (bool): enable auto-removal of the container on daemon
                 side when the container's process exits.
@@ -788,6 +789,11 @@ class ContainerCollection(Collection):
         """
         if isinstance(image, Image):
             image = image.id
+        else:
+            _, tag = parse_repository_tag(image)
+            if tag is None:
+                image += ":latest"
+
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
         platform = kwargs.pop('platform', None)
