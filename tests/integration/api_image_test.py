@@ -42,7 +42,7 @@ class PullImageTest(BaseAPIIntegrationTest):
             self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        res = self.client.pull('hello-world', tag='latest')
+        res = self.client.pull('hello-world')
         self.tmp_imgs.append('hello-world')
         assert type(res) == six.text_type
         assert len(self.client.images('hello-world')) >= 1
@@ -55,7 +55,7 @@ class PullImageTest(BaseAPIIntegrationTest):
         except docker.errors.APIError:
             pass
         stream = self.client.pull(
-            'hello-world', tag='latest', stream=True, decode=True)
+            'hello-world', stream=True, decode=True)
         self.tmp_imgs.append('hello-world')
         for chunk in stream:
             assert isinstance(chunk, dict)

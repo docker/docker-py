@@ -44,9 +44,25 @@ class ImageCollectionTest(unittest.TestCase):
 
     def test_pull(self):
         client = make_fake_client()
-        image = client.images.pull('test_image:latest')
+        image = client.images.pull('test_image:test')
         client.api.pull.assert_called_with(
-            'test_image', tag='latest', stream=True
+            'test_image', tag='test', all_tags=False, stream=True
+        )
+        client.api.inspect_image.assert_called_with('test_image:test')
+        assert isinstance(image, Image)
+        assert image.id == FAKE_IMAGE_ID
+
+    def test_pull_tag_precedence(self):
+        client = make_fake_client()
+        image = client.images.pull('test_image:latest', tag='test')
+        client.api.pull.assert_called_with(
+            'test_image', tag='test', all_tags=False, stream=True
+        )
+        client.api.inspect_image.assert_called_with('test_image:test')
+
+        image = client.images.pull('test_image')
+        client.api.pull.assert_called_with(
+            'test_image', tag='latest', all_tags=False, stream=True
         )
         client.api.inspect_image.assert_called_with('test_image:latest')
         assert isinstance(image, Image)
@@ -54,9 +70,9 @@ class ImageCollectionTest(unittest.TestCase):
 
     def test_pull_multiple(self):
         client = make_fake_client()
-        images = client.images.pull('test_image')
+        images = client.images.pull('test_image', all_tags=True)
         client.api.pull.assert_called_with(
-            'test_image', tag=None, stream=True
+            'test_image', tag='latest', all_tags=True, stream=True
         )
         client.api.images.assert_called_with(
             all=False, name='test_image', filters=None

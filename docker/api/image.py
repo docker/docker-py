@@ -343,7 +343,7 @@ class ImageApiMixin(object):
         return self._result(self._post(url, params=params), True)
 
     def pull(self, repository, tag=None, stream=False, auth_config=None,
-             decode=False, platform=None):
+             decode=False, platform=None, all_tags=False):
         """
         Pulls an image. Similar to the ``docker pull`` command.
 
@@ -358,6 +358,7 @@ class ImageApiMixin(object):
             decode (bool): Decode the JSON data from the server into dicts.
                 Only applies with ``stream=True``
             platform (str): Platform in the format ``os[/arch[/variant]]``
+            all_tags (bool): Pull all image tags.
 
         Returns:
             (generator or str): The output
@@ -382,8 +383,12 @@ class ImageApiMixin(object):
             }
 
         """
-        if not tag:
-            repository, tag = utils.parse_repository_tag(repository)
+        repository, image_tag = utils.parse_repository_tag(repository)
+        tag = tag or image_tag or 'latest'
+
+        if all_tags:
+            tag = None
+
         registry, repo_name = auth.resolve_repository_name(repository)
 
         params = {
