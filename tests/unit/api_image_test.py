@@ -16,10 +16,7 @@ except ImportError:
 
 class MockAnyArg(object):
     def __eq__(a, b):
-        if 'X-Registry-Auth' in b.keys():
-            return True
-        else:
-            return False
+        return 'X-Registry-Auth' in b.keys():
 
 
 class ImageTest(BaseAPIClientTest):
