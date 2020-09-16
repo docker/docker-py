@@ -272,7 +272,7 @@ class ImageCollection(Collection):
                 build logs as JSON-decoded objects.
 
         Raises:
-            :py:class:`docker.errors.Bu_urlildError`
+            :py:class:`docker.errors.BuildError`
                 If there is an error during the build.
             :py:class:`docker.errors.APIError`
                 If the server returns any other error.
@@ -335,7 +335,7 @@ class ImageCollection(Collection):
 
         Returns:
             (:py:class:`RegistryData`): The data object.
-_url
+
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
