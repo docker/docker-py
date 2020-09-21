@@ -349,7 +349,8 @@ class ImageApiMixin(object):
 
         Args:
             repository (str): The repository to pull
-            tag (str): The tag to pull
+            tag (str): The tag to pull. If ``tag`` is ``None`` or empty, it
+                is set to ``latest``.
             stream (bool): Stream the output as a generator. Make sure to
                 consume the generator, otherwise pull might get cancelled.
             auth_config (dict): Override the credentials that are found in the
@@ -358,7 +359,8 @@ class ImageApiMixin(object):
             decode (bool): Decode the JSON data from the server into dicts.
                 Only applies with ``stream=True``
             platform (str): Platform in the format ``os[/arch[/variant]]``
-            all_tags (bool): Pull all image tags.
+            all_tags (bool): Pull all image tags, the ``tag`` parameter is
+                ignored.
 
         Returns:
             (generator or str): The output

@@ -399,6 +399,7 @@ class ImageCollection(Collection):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
+        If ``tag`` is ``None`` or empty, it is set to ``latest``.
         If ``all_tags`` is set, the ``tag`` parameter is ignored and all image
         tags will be pulled.
 
@@ -417,7 +418,7 @@ class ImageCollection(Collection):
 
         Returns:
             (:py:class:`Image` or list): The image that has been pulled.
-                If ``tag`` is None, the method will return a list
+                If ``all_tags`` is True, the method will return a list
                 of :py:class:`Image` objects belonging to this repository.
 
         Raises:
