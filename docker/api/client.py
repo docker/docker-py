@@ -11,7 +11,7 @@ from .. import auth
 from ..constants import (DEFAULT_NUM_POOLS, DEFAULT_NUM_POOLS_SSH,
                          DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
                          IS_WINDOWS_PLATFORM, MINIMUM_DOCKER_API_VERSION,
-                         STREAM_HEADER_SIZE_BYTES)
+                         STREAM_HEADER_SIZE_BYTES, DEFAULT_SSH_CLIENT)
 from ..errors import (DockerException, InvalidVersion, TLSParameterError,
                       create_api_error_from_http_exception)
 from ..tls import TLSConfig
@@ -161,7 +161,8 @@ class APIClient(
         elif base_url.startswith('ssh://'):
             try:
                 self._custom_adapter = SSHHTTPAdapter(
-                    base_url, timeout, pool_connections=num_pools
+                    base_url, timeout, pool_connections=num_pools,
+                    shell_out=DEFAULT_SSH_CLIENT
                 )
             except NameError:
                 raise DockerException(
