@@ -35,6 +35,9 @@ class DockerClient(object):
         user_agent (str): Set a custom user agent for requests to the server.
         credstore_env (dict): Override environment variables when calling the
             credential store process.
+        use_ssh_client (bool): If set to `True`, an ssh connection is made
+            via shelling out to the ssh client. Ensure the ssh client is
+            installed and configured on the host.
     """
     def __init__(self, *args, **kwargs):
         self.api = APIClient(*args, **kwargs)
@@ -70,6 +73,9 @@ class DockerClient(object):
                 from. Default: the value of ``os.environ``
             credstore_env (dict): Override environment variables when calling
                 the credential store process.
+            use_ssh_client (bool): If set to `True`, an ssh connection is
+                made via shelling out to the ssh client. Ensure the ssh
+                client is installed and configured on the host.
 
         Example:
 
@@ -81,8 +87,12 @@ class DockerClient(object):
         """
         timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
         version = kwargs.pop('version', None)
+        use_ssh_client = kwargs.pop('use_ssh_client', False)
         return cls(
-            timeout=timeout, version=version, **kwargs_from_env(**kwargs)
+            timeout=timeout,
+            version=version,
+            use_ssh_client=use_ssh_client,
+            **kwargs_from_env(**kwargs)
         )
 
     # Resources

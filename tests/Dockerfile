@@ -6,10 +6,13 @@ ARG APT_MIRROR
 RUN sed -ri "s/(httpredir|deb).debian.org/${APT_MIRROR:-deb.debian.org}/g" /etc/apt/sources.list \
     && sed -ri "s/(security).debian.org/${APT_MIRROR:-security.debian.org}/g" /etc/apt/sources.list
 
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get -y install --no-install-recommends \
     gnupg2 \
-    pass \
-    curl
+    pass
+
+# Add SSH keys and set permissions
+COPY tests/ssh-keys /root/.ssh
+RUN chmod -R 600 /root/.ssh
 
 COPY ./tests/gpg-keys /gpg-keys
 RUN gpg2 --import gpg-keys/secret
