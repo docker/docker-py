@@ -1,3 +1,4 @@
+import io
 import paramiko
 import requests.adapters
 import six
@@ -53,7 +54,7 @@ def create_paramiko_client(base_url):
 
     ssh_client.load_system_host_keys()
     ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
-    return ssh_client
+    return ssh_client, ssh_params
 
 
 class SSHSocket(socket.socket):
@@ -61,12 +62,18 @@ class SSHSocket(socket.socket):
         super(SSHSocket, self).__init__(
             socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
+        self.port = None
+        if ':' in host:
+            self.host, self.port = host.split(':')
         self.proc = None
 
     def connect(self, **kwargs):
+        port = '' if not self.port else '-p {}'.format(self.port)
         args = [
             'ssh',
+            '-q',
             self.host,
+            port,
             'docker system dial-stdio'
         ]
         self.proc = subprocess.Popen(
@@ -82,22 +89,35 @@ class SSHSocket(socket.socket):
         self.proc.stdin.write(msg)
         self.proc.stdin.flush()
 
+    def send(self, msg):
+        if not self.proc or self.proc.stdin.closed:
+            raise Exception('SSH subprocess not initiated.'
+                            'connect() must be called first.')
+        self.proc.stdin.write(msg)
+        self.proc.stdin.flush()
+        return len(msg)
+
+
     def recv(self):
         if not self.proc:
             raise Exception('SSH subprocess not initiated.'
                             'connect() must be called first.')
-        return self.proc.stdout.read()
-
+        response = self.proc.stdout.read()
+        return response
+        
     def makefile(self, mode):
+        if not self.proc or self.proc.stdout.closed:
+            buf = io.BytesIO()
+            buf.write(b'\n\n')
+            return buf
         return self.proc.stdout
 
     def close(self):
-        if not self.proc:
+        if not self.proc or self.proc.stdin.closed:
             return
         self.proc.stdin.write(b'\n\n')
         self.proc.stdin.flush()
         self.proc.terminate()
-
 
 class SSHConnection(httplib.HTTPConnection, object):
     def __init__(self, ssh_transport=None, timeout=60, host=None):
@@ -133,9 +153,14 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
             self.ssh_transport = ssh_client.get_transport()
         self.timeout = timeout
         self.host = host
+        
+        # self.base_url = six.moves.urllib_parse.urlparse(host)
+        self.port = None
+        if ':' in host:
+            self.host, self.port = host.split(':')
 
     def _new_conn(self):
-        return SSHConnection(self.ssh_transport, self.timeout)
+        return SSHConnection(self.ssh_transport, self.timeout, self.host)
 
     # When re-using connections, urllib3 calls fileno() on our
     # SSH channel instance, quickly overloading our fd limit. To avoid this,
@@ -171,9 +196,9 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                  shell_out=True):
         self.ssh_client = None
         if not shell_out:
-            self.ssh_client = create_paramiko_client(base_url)
+            self.ssh_client, self.ssh_params = create_paramiko_client(base_url)
             self._connect()
-
+        base_url = base_url.lstrip('ssh://')
         self.host = base_url
         self.timeout = timeout
         self.pools = RecentlyUsedContainer(

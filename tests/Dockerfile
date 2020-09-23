@@ -32,3 +32,11 @@ RUN pip install -r test-requirements.txt
 
 COPY . /src
 RUN pip install .
+
+# install SSHD
+RUN apt-get install -y openssh-client
+
+# Add the keys and set permissions
+COPY tests/ssh-keys /root/.ssh
+RUN chmod 600 /root/.ssh/id_rsa && \
+    chmod 600 /root/.ssh/id_rsa.pub
