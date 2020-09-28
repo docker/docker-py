@@ -97,8 +97,8 @@ class Ulimit(DictType):
 
     Args:
 
-        name (str): Which ulimit will this apply to. A list of valid names can
-            be found `here <http://tinyurl.me/ZWRkM2Ztwlykf>`_.
+        name (str): Which ulimit will this apply to. The valid names can be
+            found in '/etc/security/limits.conf' on a gnu/linux system.
         soft (int): The soft limit for this ulimit. Optional.
         hard (int): The hard limit for this ulimit. Optional.
 
