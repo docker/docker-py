@@ -14,6 +14,11 @@ except ImportError:
     import mock
 
 
+class MockAnyArg(object):
+    def __eq__(a, b):
+        return 'X-Registry-Auth' in b.keys()
+
+
 class ImageTest(BaseAPIClientTest):
     def test_image_viz(self):
         with pytest.raises(Exception):
@@ -187,6 +192,26 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/test_image/json',
+            headers={},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_inspect_image_with_auth_config(self):
+        auth_config = {
+            "auths": {
+                "registry": {
+                    "auth": 1
+                    }
+            },
+            "HttpHeaders": {
+                "User-Agent": "Linux"
+            }}
+
+        self.client.inspect_image(fake_api.FAKE_IMAGE_NAME, auth_config)
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'images/test_image/json',
+            headers=MockAnyArg(),
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
