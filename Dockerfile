@@ -1,4 +1,6 @@
 ARG PYTHON_VERSION=2.7
+ARG SSH_DIND="ssh-dind:latest"
+FROM ${SSH_DIND} as sshdind
 
 FROM python:${PYTHON_VERSION}
 
@@ -18,6 +20,6 @@ RUN pip install .
 RUN apt-get install -y openssh-client
 
 # Add the keys and set permissions
-COPY ./tests/ssh-keys /root/.ssh
+COPY --from=sshdind /root/.ssh /root/.ssh
 RUN chmod 600 /root/.ssh/id_rsa && \
     chmod 600 /root/.ssh/id_rsa.pub

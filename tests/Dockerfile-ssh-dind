@@ -11,7 +11,8 @@ RUN ssh-keygen -A
 
 # copy the test SSH config
 # Add the keys and set permissions
-COPY ./tests/ssh-keys/authorized_keys /root/.ssh/authorized_keys
+RUN ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
+RUN cat /root/ssh/id_rsa.pub > /root/.ssh/authorized_keys
 RUN chmod 600 /root/.ssh/authorized_keys
 
 RUN echo "IgnoreUserKnownHosts yes" >> /etc/ssh/sshd_config && \
@@ -21,6 +22,3 @@ RUN echo "IgnoreUserKnownHosts yes" >> /etc/ssh/sshd_config && \
 RUN echo "root:root" | chpasswd
 RUN ln -s /usr/local/bin/docker /usr/bin/docker
 EXPOSE 22
-
-# CMD /usr/sbin/sshd -D -o ListenAddress=0.0.0.0 & && \
-#  dockerd --experimental

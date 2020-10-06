@@ -3,6 +3,7 @@
 def imageNameBase = "dockerbuildbot/docker-py"
 def imageNamePy2
 def imageNamePy3
+def imageDindSSH
 def images = [:]
 
 def buildImage = { name, buildargs, pyTag ->
@@ -23,9 +24,12 @@ def buildImages = { ->
 
       imageNamePy2 = "${imageNameBase}:py2-${gitCommit()}"
       imageNamePy3 = "${imageNameBase}:py3-${gitCommit()}"
+      imageDindSSH = "ssh-dind:${gitCommit()}"
 
-      buildImage(imageNamePy2, "-f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .", "py2.7")
-      buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.7 .", "py3.7")
+      buildImage(imageDindSSH, "-f tests/Dockerfile-ssh-dind .", "ssh-dind")
+      buildImage(imageNamePy2, "-f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 --build-arg SSH_DIND=${imageDindSSH} .", "py2.7")
+      buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.7 --build-arg SSH_DIND=${imageDindSSH} .", "py3.7")
+      
     }
   }
 }
@@ -82,7 +86,7 @@ def runTests = { Map settings ->
         try {
           sh """docker network create ${testNetwork}"""
           sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
-            docker:${dockerVersion}-dind dockerd -H tcp://0.0.0.0:2375
+            ${imageDindSSH} dockerd -H tcp://0.0.0.0:2375
           """
           sh """docker run \\
             --name ${testContainerName} \\
@@ -91,7 +95,22 @@ def runTests = { Map settings ->
             --network ${testNetwork} \\
             --volumes-from ${dindContainerName} \\
             ${testImage} \\
-            py.test -v -rxs --cov=docker tests/
+            py.test -v -rxs --cov=docker --ignore=tests/ssh tests/
+          """
+          // start DIND container with SSH
+          sh """docker stop ${dindContainerName}"""
+          sh """docker run -d --name  ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
+            ${imageDindSSH} dockerd  --experimental"""
+          sh """docker exec ${dindContainerName} sh -c "/usr/sbin/sshd -D -o ListenAddress=0.0.0.0 &"""
+          // run SSH tests only
+          sh """docker run \\
+            --name ${testContainerName} \\
+            -e "DOCKER_HOST=ssh://${dindContainerName}:22" \\
+            -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
+            --network ${testNetwork} \\
+            --volumes-from ${dindContainerName} \\
+            ${testImage} \\
+            py.test -v -rxs --cov=docker tests/ssh
           """
         } finally {
           sh """
