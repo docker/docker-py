@@ -97,14 +97,13 @@ class SSHSocket(socket.socket):
         self.proc.stdin.flush()
         return len(msg)
 
-
     def recv(self):
         if not self.proc:
             raise Exception('SSH subprocess not initiated.'
                             'connect() must be called first.')
         response = self.proc.stdout.read()
         return response
-        
+
     def makefile(self, mode):
         if not self.proc or self.proc.stdout.closed:
             buf = io.BytesIO()
@@ -118,6 +117,7 @@ class SSHSocket(socket.socket):
         self.proc.stdin.write(b'\n\n')
         self.proc.stdin.flush()
         self.proc.terminate()
+
 
 class SSHConnection(httplib.HTTPConnection, object):
     def __init__(self, ssh_transport=None, timeout=60, host=None):
@@ -153,7 +153,7 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
             self.ssh_transport = ssh_client.get_transport()
         self.timeout = timeout
         self.host = host
-        
+
         # self.base_url = six.moves.urllib_parse.urlparse(host)
         self.port = None
         if ':' in host:

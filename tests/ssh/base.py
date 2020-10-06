@@ -85,7 +85,10 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
     @staticmethod
     def get_client_instance():
         return docker.APIClient(
-            version=TEST_API_VERSION, timeout=60, use_ssh_client=True, **kwargs_from_env()
+            version=TEST_API_VERSION,
+            timeout=60,
+            use_ssh_client=True,
+            **kwargs_from_env()
         )
 
     @staticmethod
