@@ -395,12 +395,13 @@ class ImageCollection(Collection):
 
         return [self.get(i) for i in images]
 
-    def pull(self, repository, tag=None, **kwargs):
+    def pull(self, repository, tag=None, all_tags=False, **kwargs):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
-        If no tag is specified, all tags from that repository will be
-        pulled.
+        If ``tag`` is ``None`` or empty, it is set to ``latest``.
+        If ``all_tags`` is set, the ``tag`` parameter is ignored and all image
+        tags will be pulled.
 
         If you want to get the raw pull output, use the
         :py:meth:`~docker.api.image.ImageApiMixin.pull` method in the
@@ -413,10 +414,11 @@ class ImageCollection(Collection):
                 config for this request.  ``auth_config`` should contain the
                 ``username`` and ``password`` keys to be valid.
             platform (str): Platform in the format ``os[/arch[/variant]]``
+            all_tags (bool): Pull all image tags
 
         Returns:
             (:py:class:`Image` or list): The image that has been pulled.
-                If no ``tag`` was specified, the method will return a list
+                If ``all_tags`` is True, the method will return a list
                 of :py:class:`Image` objects belonging to this repository.
 
         Raises:
@@ -426,13 +428,13 @@ class ImageCollection(Collection):
         Example:
 
             >>> # Pull the image tagged `latest` in the busybox repo
-            >>> image = client.images.pull('busybox:latest')
+            >>> image = client.images.pull('busybox')
 
             >>> # Pull all tags in the busybox repo
-            >>> images = client.images.pull('busybox')
+            >>> images = client.images.pull('busybox', all_tags=True)
         """
-        if not tag:
-            repository, tag = parse_repository_tag(repository)
+        repository, image_tag = parse_repository_tag(repository)
+        tag = tag or image_tag or 'latest'
 
         if 'stream' in kwargs:
             warnings.warn(
@@ -442,14 +444,14 @@ class ImageCollection(Collection):
             del kwargs['stream']
 
         pull_log = self.client.api.pull(
-            repository, tag=tag, stream=True, **kwargs
+            repository, tag=tag, stream=True, all_tags=all_tags, **kwargs
         )
         for _ in pull_log:
             # We don't do anything with the logs, but we need
             # to keep the connection alive and wait for the image
             # to be pulled.
             pass
-        if tag:
+        if not all_tags:
             return self.get('{0}{2}{1}'.format(
                 repository, tag, '@' if tag.startswith('sha256:') else ':'
             ))

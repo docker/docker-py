@@ -67,7 +67,7 @@ class ImageTest(BaseAPIClientTest):
         args = fake_request.call_args
         assert args[0][1] == url_prefix + 'images/create'
         assert args[1]['params'] == {
-            'tag': None, 'fromImage': 'joffrey/test001'
+            'tag': 'latest', 'fromImage': 'joffrey/test001'
         }
         assert not args[1]['stream']
 
@@ -77,7 +77,7 @@ class ImageTest(BaseAPIClientTest):
         args = fake_request.call_args
         assert args[0][1] == url_prefix + 'images/create'
         assert args[1]['params'] == {
-            'tag': None, 'fromImage': 'joffrey/test001'
+            'tag': 'latest', 'fromImage': 'joffrey/test001'
         }
         assert args[1]['stream']
 
