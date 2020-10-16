@@ -1,3 +1,6 @@
+TEST_API_VERSION ?= 1.39
+TEST_ENGINE_VERSION ?= 19.03.13
+
 .PHONY: all
 all: test
 
@@ -9,6 +12,10 @@ clean:
 .PHONY: build
 build:
 	docker build -t docker-sdk-python -f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 --build-arg APT_MIRROR .
+
+.PHONY: build-dind-ssh
+build-dind-ssh:
+	docker build -t docker-dind-ssh -f tests/Dockerfile-ssh-dind --build-arg ENGINE_VERSION=${TEST_ENGINE_VERSION} --build-arg API_VERSION=${TEST_API_VERSION} --build-arg APT_MIRROR .
 
 .PHONY: build-py3
 build-py3:
@@ -41,9 +48,6 @@ integration-test: build
 integration-test-py3: build-py3
 	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test -v tests/integration/${file}
 
-TEST_API_VERSION ?= 1.39
-TEST_ENGINE_VERSION ?= 19.03.12
-
 .PHONY: setup-network
 setup-network:
 	docker network inspect dpy-tests || docker network create dpy-tests
@@ -68,6 +72,29 @@ integration-dind-py3: build-py3 setup-network
 	docker run -t --rm --env="DOCKER_HOST=tcp://dpy-dind-py3:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
 		--network dpy-tests docker-sdk-python3 py.test tests/integration/${file}
 	docker rm -vf dpy-dind-py3
+
+.PHONY: integration-ssh-py2
+integration-ssh-py2: build-dind-ssh build setup-network
+	docker rm -vf dpy-dind-py2 || :
+	docker run -d --network dpy-tests --name dpy-dind-py2 --privileged\
+		docker-dind-ssh dockerd --experimental
+	# start SSH daemon
+	docker exec dpy-dind-py2 sh -c "/usr/sbin/sshd"
+	docker run -t --rm --env="DOCKER_HOST=ssh://dpy-dind-py2" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
+		--network dpy-tests docker-sdk-python py.test tests/ssh/${file}
+	docker rm -vf dpy-dind-py2
+
+.PHONY: integration-ssh-py3
+integration-ssh-py3: build-dind-ssh build-py3 setup-network
+	docker rm -vf dpy-dind-py3 || :
+	docker run -d --network dpy-tests --name dpy-dind-py3 --privileged\
+		docker-dind-ssh dockerd --experimental
+	# start SSH daemon
+	docker exec dpy-dind-py3 sh -c "/usr/sbin/sshd"
+	docker run -t --rm --env="DOCKER_HOST=ssh://dpy-dind-py3" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
+		--network dpy-tests docker-sdk-python3 py.test tests/ssh/${file}
+	docker rm -vf dpy-dind-py3
+
 
 .PHONY: integration-dind-ssl
 integration-dind-ssl: build-dind-certs build build-py3

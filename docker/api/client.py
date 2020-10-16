@@ -89,6 +89,9 @@ class APIClient(
         user_agent (str): Set a custom user agent for requests to the server.
         credstore_env (dict): Override environment variables when calling the
             credential store process.
+        use_ssh_client (bool): If set to `True`, an ssh connection is made
+            via shelling out to the ssh client. Ensure the ssh client is
+            installed and configured on the host.
     """
 
     __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
@@ -100,7 +103,7 @@ class APIClient(
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
-                 credstore_env=None):
+                 credstore_env=None, use_ssh_client=False):
         super(APIClient, self).__init__()
 
         if tls and not base_url:
@@ -161,7 +164,8 @@ class APIClient(
         elif base_url.startswith('ssh://'):
             try:
                 self._custom_adapter = SSHHTTPAdapter(
-                    base_url, timeout, pool_connections=num_pools
+                    base_url, timeout, pool_connections=num_pools,
+                    shell_out=use_ssh_client
                 )
             except NameError:
                 raise DockerException(
