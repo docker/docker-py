@@ -119,7 +119,7 @@ class Plugin(Model):
         privileges = self.client.api.plugin_privileges(remote)
         for d in self.client.api.upgrade_plugin(self.name, remote, privileges):
             yield d
-        self._reload()
+        self.reload()
 
 
 class PluginCollection(Collection):
