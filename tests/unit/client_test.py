@@ -83,7 +83,9 @@ class ClientTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_unix(self, mock_obj):
-        client = docker.DockerClient()
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -103,7 +105,9 @@ class ClientTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_default_pool_size_win(self, mock_obj):
-        client = docker.DockerClient()
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -117,7 +121,10 @@ class ClientTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_unix(self, mock_obj):
-        client = docker.DockerClient(max_pool_size=POOL_SIZE)
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -137,7 +144,10 @@ class ClientTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_pool_size_win(self, mock_obj):
-        client = docker.DockerClient(max_pool_size=POOL_SIZE)
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -188,7 +198,7 @@ class FromEnvTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_from_env_unix(self, mock_obj):
-        client = docker.from_env()
+        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -208,7 +218,7 @@ class FromEnvTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_default_pool_size_from_env_win(self, mock_obj):
-        client = docker.from_env()
+        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -222,7 +232,10 @@ class FromEnvTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_from_env_unix(self, mock_obj):
-        client = docker.from_env(max_pool_size=POOL_SIZE)
+        client = docker.from_env(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -242,7 +255,10 @@ class FromEnvTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
     def test_pool_size_from_env_win(self, mock_obj):
-        client = docker.from_env(max_pool_size=POOL_SIZE)
+        client = docker.from_env(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
