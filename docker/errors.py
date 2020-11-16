@@ -46,12 +46,14 @@ class APIError(requests.exceptions.HTTPError, DockerException):
         message = super(APIError, self).__str__()
 
         if self.is_client_error():
-            message = '{0} Client Error: {1}'.format(
-                self.response.status_code, self.response.reason)
+            message = '{0} Client Error for {1}: {2}'.format(
+                self.response.status_code, self.response.url,
+                self.response.reason)
 
         elif self.is_server_error():
-            message = '{0} Server Error: {1}'.format(
-                self.response.status_code, self.response.reason)
+            message = '{0} Server Error for {1}: {2}'.format(
+                self.response.status_code, self.response.url,
+                self.response.reason)
 
         if self.explanation:
             message = '{0} ("{1}")'.format(message, self.explanation)
