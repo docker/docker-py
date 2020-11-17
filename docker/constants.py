@@ -36,6 +36,8 @@ DEFAULT_NUM_POOLS = 25
 # For more details see: https://github.com/docker/docker-py/issues/2246
 DEFAULT_NUM_POOLS_SSH = 9
 
+DEFAULT_MAX_POOL_SIZE = 10
+
 DEFAULT_DATA_CHUNK_SIZE = 1024 * 2048
 
 DEFAULT_SWARM_ADDR_POOL = ['10.0.0.0/8']
