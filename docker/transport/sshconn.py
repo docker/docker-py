@@ -184,11 +184,12 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
 class SSHHTTPAdapter(BaseHTTPAdapter):
 
     __attrs__ = requests.adapters.HTTPAdapter.__attrs__ + [
-        'pools', 'timeout', 'ssh_client', 'ssh_params'
+        'pools', 'timeout', 'ssh_client', 'ssh_params', 'max_pool_size'
     ]
 
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
+                 max_pool_size=constants.DEFAULT_MAX_POOL_SIZE,
                  shell_out=True):
         self.ssh_client = None
         if not shell_out:
@@ -197,6 +198,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         base_url = base_url.lstrip('ssh://')
         self.host = base_url
         self.timeout = timeout
+        self.max_pool_size = max_pool_size
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
@@ -219,6 +221,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             pool = SSHConnectionPool(
                 ssh_client=self.ssh_client,
                 timeout=self.timeout,
+                maxsize=self.max_pool_size,
                 host=self.host
             )
             self.pools[url] = pool

@@ -9,9 +9,9 @@ import websocket
 
 from .. import auth
 from ..constants import (DEFAULT_NUM_POOLS, DEFAULT_NUM_POOLS_SSH,
-                         DEFAULT_TIMEOUT_SECONDS, DEFAULT_USER_AGENT,
-                         IS_WINDOWS_PLATFORM, MINIMUM_DOCKER_API_VERSION,
-                         STREAM_HEADER_SIZE_BYTES)
+                         DEFAULT_MAX_POOL_SIZE, DEFAULT_TIMEOUT_SECONDS,
+                         DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
+                         MINIMUM_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES)
 from ..errors import (DockerException, InvalidVersion, TLSParameterError,
                       create_api_error_from_http_exception)
 from ..tls import TLSConfig
@@ -92,6 +92,8 @@ class APIClient(
         use_ssh_client (bool): If set to `True`, an ssh connection is made
             via shelling out to the ssh client. Ensure the ssh client is
             installed and configured on the host.
+        max_pool_size (int): The maximum number of connections
+            to save in the pool.
     """
 
     __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
@@ -103,7 +105,8 @@ class APIClient(
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
-                 credstore_env=None, use_ssh_client=False):
+                 credstore_env=None, use_ssh_client=False,
+                 max_pool_size=DEFAULT_MAX_POOL_SIZE):
         super(APIClient, self).__init__()
 
         if tls and not base_url:
@@ -139,7 +142,8 @@ class APIClient(
 
         if base_url.startswith('http+unix://'):
             self._custom_adapter = UnixHTTPAdapter(
-                base_url, timeout, pool_connections=num_pools
+                base_url, timeout, pool_connections=num_pools,
+                max_pool_size=max_pool_size
             )
             self.mount('http+docker://', self._custom_adapter)
             self._unmount('http://', 'https://')
@@ -153,7 +157,8 @@ class APIClient(
                 )
             try:
                 self._custom_adapter = NpipeHTTPAdapter(
-                    base_url, timeout, pool_connections=num_pools
+                    base_url, timeout, pool_connections=num_pools,
+                    max_pool_size=max_pool_size
                 )
             except NameError:
                 raise DockerException(
@@ -165,7 +170,7 @@ class APIClient(
             try:
                 self._custom_adapter = SSHHTTPAdapter(
                     base_url, timeout, pool_connections=num_pools,
-                    shell_out=use_ssh_client
+                    max_pool_size=max_pool_size, shell_out=use_ssh_client
                 )
             except NameError:
                 raise DockerException(

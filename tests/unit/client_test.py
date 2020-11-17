@@ -5,7 +5,9 @@ import unittest
 import docker
 import pytest
 from docker.constants import (
-        DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS)
+    DEFAULT_DOCKER_API_VERSION, DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_MAX_POOL_SIZE, IS_WINDOWS_PLATFORM
+)
 from docker.utils import kwargs_from_env
 
 from . import fake_api
@@ -15,8 +17,8 @@ try:
 except ImportError:
     import mock
 
-
 TEST_CERT_DIR = os.path.join(os.path.dirname(__file__), 'testdata/certs')
+POOL_SIZE = 20
 
 
 class ClientTest(unittest.TestCase):
@@ -76,6 +78,84 @@ class ClientTest(unittest.TestCase):
         assert "'ContainerCollection' object is not callable" in s
         assert "docker.APIClient" in s
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_default_pool_size_unix(self, mock_obj):
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION
+        )
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+
+        mock_obj.assert_called_once_with(base_url,
+                                         "/var/run/docker.sock",
+                                         60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
+
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_default_pool_size_win(self, mock_obj):
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION
+        )
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
+                                         60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
+
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_pool_size_unix(self, mock_obj):
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+
+        mock_obj.assert_called_once_with(base_url,
+                                         "/var/run/docker.sock",
+                                         60,
+                                         maxsize=POOL_SIZE
+                                         )
+
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_pool_size_win(self, mock_obj):
+        client = docker.DockerClient(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
+                                         60,
+                                         maxsize=POOL_SIZE
+                                         )
+
 
 class FromEnvTest(unittest.TestCase):
 
@@ -112,3 +192,77 @@ class FromEnvTest(unittest.TestCase):
         client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
 
         assert client.api.timeout == DEFAULT_TIMEOUT_SECONDS
+
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_default_pool_size_from_env_unix(self, mock_obj):
+        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+
+        mock_obj.assert_called_once_with(base_url,
+                                         "/var/run/docker.sock",
+                                         60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
+
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_default_pool_size_from_env_win(self, mock_obj):
+        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
+                                         60,
+                                         maxsize=DEFAULT_MAX_POOL_SIZE
+                                         )
+
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+    )
+    @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
+    def test_pool_size_from_env_unix(self, mock_obj):
+        client = docker.from_env(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        base_url = "{base_url}/v{version}/_ping".format(
+            base_url=client.api.base_url,
+            version=client.api._version
+        )
+
+        mock_obj.assert_called_once_with(base_url,
+                                         "/var/run/docker.sock",
+                                         60,
+                                         maxsize=POOL_SIZE
+                                         )
+
+    @pytest.mark.skipif(
+        not IS_WINDOWS_PLATFORM, reason='Npipe Connection Pool only on Windows'
+    )
+    @mock.patch("docker.transport.npipeconn.NpipeHTTPConnectionPool")
+    def test_pool_size_from_env_win(self, mock_obj):
+        client = docker.from_env(
+            version=DEFAULT_DOCKER_API_VERSION,
+            max_pool_size=POOL_SIZE
+        )
+        mock_obj.return_value.urlopen.return_value.status = 200
+        client.ping()
+
+        mock_obj.assert_called_once_with("//./pipe/docker_engine",
+                                         60,
+                                         maxsize=POOL_SIZE
+                                         )
