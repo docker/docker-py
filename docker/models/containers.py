@@ -649,9 +649,7 @@ class ContainerCollection(Collection):
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
                 - ``host`` Use the host network stack.
-                  This mode is incompatible with ``ports``. If ``host`` is
-                  used as network_mode, all of listed up to ``ports``` are
-                  ignored in running container.
+                  This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
             oom_kill_disable (bool): Whether to disable OOM killer.
@@ -670,8 +668,6 @@ class ContainerCollection(Collection):
                 ``port/protocol``, where the protocol is either ``tcp``,
                 ``udp``, or ``sctp``.
 
-                Ports are ignored to bind with ``host`` as network mode.
-
                 The values of the dictionary are the corresponding ports to
                 open on the host, which can be either:
 
@@ -687,6 +683,7 @@ class ContainerCollection(Collection):
                   to a single container port. For example,
                   ``{'1111/tcp': [1234, 4567]}``.
 
+                Imcompatible with ``host`` in ``network_mode``.
             privileged (bool): Give extended privileges to this container.
             publish_all_ports (bool): Publish all ports to the host.
             read_only (bool): Mount the container's root filesystem as read
