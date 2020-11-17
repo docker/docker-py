@@ -92,6 +92,8 @@ class APIClient(
         use_ssh_client (bool): If set to `True`, an ssh connection is made
             via shelling out to the ssh client. Ensure the ssh client is
             installed and configured on the host.
+        max_pool_size (int): The maximum number of connections
+            to save in the pool.
     """
 
     __attrs__ = requests.Session.__attrs__ + ['_auth_configs',
@@ -103,8 +105,8 @@ class APIClient(
     def __init__(self, base_url=None, version=None,
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
-                 max_pool_size=DEFAULT_MAX_POOL_SIZE, credstore_env=None,
-                 use_ssh_client=False):
+                 credstore_env=None, use_ssh_client=False,
+                 max_pool_size=DEFAULT_MAX_POOL_SIZE):
         super(APIClient, self).__init__()
 
         if tls and not base_url:
