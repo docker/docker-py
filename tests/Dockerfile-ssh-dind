@@ -10,7 +10,7 @@ RUN apk add --no-cache \
 RUN ssh-keygen -A
 
 # copy the test SSH config
-RUN echo "IgnoreUserKnownHosts yes" >> /etc/ssh/sshd_config && \
+RUN echo "IgnoreUserKnownHosts yes" > /etc/ssh/sshd_config && \
   echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config && \
   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 
