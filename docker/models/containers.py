@@ -683,7 +683,7 @@ class ContainerCollection(Collection):
                   to a single container port. For example,
                   ``{'1111/tcp': [1234, 4567]}``.
 
-                Imcompatible with ``host`` in ``network_mode``.
+                Incompatible with ``host`` network mode.
             privileged (bool): Give extended privileges to this container.
             publish_all_ports (bool): Publish all ports to the host.
             read_only (bool): Mount the container's root filesystem as read
