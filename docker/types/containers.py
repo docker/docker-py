@@ -334,7 +334,7 @@ class HostConfig(dict):
         if dns_search:
             self['DnsSearch'] = dns_search
 
-        if network_mode is 'host' and port_bindings is not None:
+        if network_mode is 'host' and port_bindings:
             raise host_config_incompatible_error(
                 'network_mode', 'host', 'port_bindings'
             )
@@ -670,7 +670,7 @@ def host_config_value_error(param, param_value):
 
 
 def host_config_incompatible_error(param, param_value, incompatible_param):
-    error_msg = 'Incompatible {1} in {0} is not compatible with {2}'
+    error_msg = '\"{1}\" {0} is incompatible with {2}'
     return errors.InvalidArgument(
         error_msg.format(param, param_value, incompatible_param)
     )
