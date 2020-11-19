@@ -83,41 +83,44 @@ def runTests = { Map settings ->
         def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         def testContainerName = "dpy-tests-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
         def testNetwork = "dpy-testnet-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
-        try {
-          sh """docker network create ${testNetwork}"""
-          sh """docker run --rm -d --name ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
-            ${imageDindSSH} dockerd -H tcp://0.0.0.0:2375
-          """
-          sh """docker run --rm \\
-            --name ${testContainerName} \\
-            -e "DOCKER_HOST=tcp://${dindContainerName}:2375" \\
-            -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
-            --network ${testNetwork} \\
-            --volumes-from ${dindContainerName} \\
-            ${testImage} \\
-            py.test -v -rxs --cov=docker --ignore=tests/ssh tests/
-          """
-          sh """docker stop ${dindContainerName}"""
-          
-          // start DIND container with SSH
-          sh """docker run --rm -d --name ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
-            ${imageDindSSH} dockerd --experimental"""
-          sh """docker exec ${dindContainerName} sh -c /usr/sbin/sshd """
-          // run SSH tests only
-          sh """docker run --rm \\
-            --name ${testContainerName} \\
-            -e "DOCKER_HOST=ssh://${dindContainerName}:22" \\
-            -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
-            --network ${testNetwork} \\
-            --volumes-from ${dindContainerName} \\
-            ${testImage} \\
-            py.test -v -rxs --cov=docker tests/ssh
-          """
-        } finally {
-          sh """
-            docker stop ${dindContainerName}
-            docker network rm ${testNetwork}
-          """
+        withDockerRegistry(credentialsId:'dockerbuildbot-index.docker.io') {
+          try {
+            sh """docker network create ${testNetwork}"""
+            sh """docker run --rm -d --name ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
+              ${imageDindSSH} dockerd -H tcp://0.0.0.0:2375
+            """
+            sh """docker run --rm \\
+              --name ${testContainerName} \\
+              -e "DOCKER_HOST=tcp://${dindContainerName}:2375" \\
+              -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
+              --network ${testNetwork} \\
+              --volumes-from ${dindContainerName} \\
+              -v ~/.docker/config.json:/root/.docker/config.json \\
+              ${testImage} \\
+              py.test -v -rxs --cov=docker --ignore=tests/ssh tests/
+            """
+            sh """docker stop ${dindContainerName}"""
+            // start DIND container with SSH
+            sh """docker run --rm -d --name ${dindContainerName} -v /tmp --privileged --network ${testNetwork} \\
+              ${imageDindSSH} dockerd --experimental"""
+            sh """docker exec ${dindContainerName} sh -c /usr/sbin/sshd """
+            // run SSH tests only
+            sh """docker run --rm \\
+              --name ${testContainerName} \\
+              -e "DOCKER_HOST=ssh://${dindContainerName}:22" \\
+              -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
+              --network ${testNetwork} \\
+              --volumes-from ${dindContainerName} \\
+              -v ~/.docker/config.json:/root/.docker/config.json \\
+              ${testImage} \\
+              py.test -v -rxs --cov=docker tests/ssh
+            """
+          } finally {
+            sh """
+              docker stop ${dindContainerName}
+              docker network rm ${testNetwork}
+            """
+          }
         }
       }
     }
