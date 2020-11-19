@@ -25,10 +25,11 @@ def buildImages = { ->
       imageNamePy2 = "${imageNameBase}:py2-${gitCommit()}"
       imageNamePy3 = "${imageNameBase}:py3-${gitCommit()}"
       imageDindSSH = "${imageNameBase}:sshdind-${gitCommit()}"
-
-      buildImage(imageDindSSH, "-f tests/Dockerfile-ssh-dind .", "")
-      buildImage(imageNamePy2, "-f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .", "py2.7")
-      buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.7 .", "py3.7")
+      withDockerRegistry(credentialsId:'dockerbuildbot-index.docker.io') {
+        buildImage(imageDindSSH, "-f tests/Dockerfile-ssh-dind .", "")
+        buildImage(imageNamePy2, "-f tests/Dockerfile --build-arg PYTHON_VERSION=2.7 .", "py2.7")
+        buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.7 .", "py3.7")
+      }
     }
   }
 }
