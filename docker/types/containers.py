@@ -334,15 +334,11 @@ class HostConfig(dict):
         if dns_search:
             self['DnsSearch'] = dns_search
 
-        if network_mode is 'host' and port_bindings:
+        if network_mode == 'host' and port_bindings:
             raise host_config_incompatible_error(
                 'network_mode', 'host', 'port_bindings'
             )
-
-        if network_mode:
-            self['NetworkMode'] = network_mode
-        elif network_mode is None:
-            self['NetworkMode'] = 'default'
+        self['NetworkMode'] = network_mode or 'default'
 
         if restart_policy:
             if not isinstance(restart_policy, dict):
