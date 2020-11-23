@@ -1,6 +1,24 @@
 Change log
 ==========
 
+4.4.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/67?closed=1)
+
+### Features
+- Add an alternative SSH connection to the paramiko one, based on shelling out to the SSh client. Similar to the behaviour of Docker cli
+- Default image tag to `latest` on `pull`
+
+### Bugfixes
+- Fix plugin model upgrade
+- Fix examples URL in ulimits
+
+### Miscellaneous
+- Improve exception messages for server and client errors
+- Bump cryptography from 2.3 to 3.2
+
+
 4.3.1
 -----
 
