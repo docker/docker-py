@@ -81,10 +81,18 @@ class ImageApiMixin(object):
                 If the server returns an error.
         """
         params = {
-            'filter': name,
             'only_ids': 1 if quiet else 0,
             'all': 1 if all else 0,
         }
+        if name:
+            if utils.version_lt(self._version, '1.25'):
+                # only use "filter" on API 1.24 and under, as it is deprecated
+                params['filter'] = name
+            else:
+                if filters:
+                    filters['reference'] = name
+                else:
+                    filters = {'reference': name}
         if filters:
             params['filters'] = utils.convert_filters(filters)
         res = self._result(self._get(self._url("/images/json"), params=params),

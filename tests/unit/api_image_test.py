@@ -26,7 +26,18 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 0, 'all': 1},
+            params={'only_ids': 0, 'all': 1},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_images_name(self):
+        self.client.images('foo:bar')
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'images/json',
+            params={'only_ids': 0, 'all': 0,
+                    'filters': '{"reference": ["foo:bar"]}'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -36,7 +47,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 1, 'all': 1},
+            params={'only_ids': 1, 'all': 1},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -46,7 +57,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 1, 'all': 0},
+            params={'only_ids': 1, 'all': 0},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -56,7 +67,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 0, 'all': 0,
+            params={'only_ids': 0, 'all': 0,
                     'filters': '{"dangling": ["true"]}'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
