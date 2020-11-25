@@ -593,3 +593,20 @@ class BuildTest(BaseAPIIntegrationTest):
         prune_result = self.client.prune_builds()
         assert 'SpaceReclaimed' in prune_result
         assert isinstance(prune_result['SpaceReclaimed'], int)
+
+    @requires_api_version('1.31')
+    @pytest.mark.xfail(
+        True,
+        reason='Currently fails on 18.09: '
+               'https://github.com/moby/moby/issues/37920'
+    )
+    def test_prune_builds_all(self):
+        prune_result = self.client.prune_builds(prune_all=True)
+        assert 'SpaceReclaimed' in prune_result
+        assert isinstance(prune_result['SpaceReclaimed'], int)
+
+    @requires_api_version('1.31')
+    def test_prune_builds_keep_storage(self):
+        prune_result = self.client.prune_builds(keep_storage=1)
+        assert 'SpaceReclaimed' in prune_result
+        assert isinstance(prune_result['SpaceReclaimed'], int)

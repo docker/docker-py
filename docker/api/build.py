@@ -275,9 +275,15 @@ class BuildApiMixin(object):
         return self._stream_helper(response, decode=decode)
 
     @utils.minimum_version('1.31')
-    def prune_builds(self):
+    def prune_builds(self, prune_all=False, keep_storage=None, filters=None):
         """
         Delete the builder cache
+
+        Args:
+            prune_all (bool): Remove all unused build cache, not just dangling
+                ones.
+            keep_storage (int): Amount of disk space to keep for cache.
+            filters (dict): Filters to process on the prune list.
 
         Returns:
             (dict): A dictionary containing information about the operation's
@@ -288,8 +294,13 @@ class BuildApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+        params = {'all': prune_all}
+        if keep_storage is not None:
+            params['keep-storage'] = keep_storage
+        if filters is not None:
+            params['filters'] = utils.convert_filters(filters)
         url = self._url("/build/prune")
-        return self._result(self._post(url), True)
+        return self._result(self._post(url, params=params), True)
 
     def _set_auth_headers(self, headers):
         log.debug('Looking for auth config')
