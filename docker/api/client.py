@@ -497,7 +497,7 @@ class APIClient(
         Args:
             dockercfg_path (str): Use a custom path for the Docker config file
                 (default ``$HOME/.docker/config.json`` if present,
-                otherwise``$HOME/.dockercfg``)
+                otherwise ``$HOME/.dockercfg``)
 
         Returns:
             None
