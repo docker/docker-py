@@ -13,6 +13,26 @@ matrix:
       dist: xenial
       sudo: true
     - env: TOXENV=flake8
+    - python: 2.7
+      dist: bionic
+      env: TOXENV=py27
+      arch : ppc64le
+    - python: 3.5
+      env: TOXENV=py35
+      dist: bionic
+      arch : ppc64le
+    - python: 3.6
+      dist: bionic
+      env: TOXENV=py36
+      arch : ppc64le
+    - python: 3.7
+      env: TOXENV=py37
+      sudo: true
+      arch : ppc64le
+      dist: bionic
+    - env: TOXENV=flake8
+      arch : ppc64le
+      dist: bionic
 
 install:
     - pip install tox==2.9.1
