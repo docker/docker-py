@@ -42,12 +42,17 @@ class SSHSocket(socket.socket):
             port,
             'docker system dial-stdio'
         ]
+
+        preexec_func = None
+        if not constants.IS_WINDOWS_PLATFORM:
+            preexec_func = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN))
+
         self.proc = subprocess.Popen(
             ' '.join(args),
             shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
-            preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN))
+            preexec_fn=preexec_func)
 
     def _write(self, data):
         if not self.proc or self.proc.stdin.closed:
