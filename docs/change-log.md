@@ -1,6 +1,16 @@
 Change log
 ==========
 
+4.4.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/69?closed=1)
+
+### Bugfixes
+- Avoid setting unsuported parameter for subprocess.Popen on Windows
+- Replace use of deprecated "filter" argument on ""docker/api/image"
+
+
 4.4.0
 -----
 
