@@ -105,7 +105,7 @@ class BuildTest(BaseAPIIntegrationTest):
                 '.dockerignore',
                 ' ignored-with-spaces ',  # check that spaces are trimmed
                 '!ignored/subdir/excepted-file',
-                '! ignored/subdir/excepted-with-spaces '
+                '! ignored/subdir/excepted-with-spaces  '
                 '',  # empty line,
                 '#*',  # comment line
             ]))
