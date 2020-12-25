@@ -157,6 +157,8 @@ class ServiceCollection(Collection):
                 constraints.
             preferences (list of tuple): :py:class:`~docker.types.Placement`
                 preferences.
+            maxreplicas (int): :py:class:`~docker.types.Placement` maxreplicas
+                or (int) representing maximum number of replicas per node.
             platforms (list of tuple): A list of platform constraints
                 expressed as ``(arch, os)`` tuples.
             container_labels (dict): Labels to apply to the container.
@@ -319,6 +321,7 @@ PLACEMENT_KWARGS = [
     'constraints',
     'preferences',
     'platforms',
+    'maxreplicas',
 ]
 
 
