@@ -1,6 +1,6 @@
 #!groovy
 
-def imageNameBase = "dockerbuildbot/docker-py"
+def imageNameBase = "dockerpinata/docker-py"
 def imageNamePy2
 def imageNamePy3
 def imageDindSSH
