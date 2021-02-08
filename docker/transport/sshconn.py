@@ -29,26 +29,33 @@ class SSHSocket(socket.socket):
             socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = None
+        self.user = None
         if ':' in host:
             self.host, self.port = host.split(':')
+        if '@' in self.host:
+            self.user, self.host = host.split('@')
+
         self.proc = None
 
     def connect(self, **kwargs):
-        port = '' if not self.port else '-p {}'.format(self.port)
-        args = [
-            'ssh',
-            '-q',
-            self.host,
-            port,
-            'docker system dial-stdio'
-        ]
+        args = ['ssh']
+        if self.user:
+            args = args + ['-l', self.user]
+
+        if self.port:
+            args = args + ['-p', self.port]
+
+        args = args + ['--', self.host, 'docker system dial-stdio']
 
         preexec_func = None
         if not constants.IS_WINDOWS_PLATFORM:
-            preexec_func = lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
+            def f():
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
+            preexec_func = f
 
         self.proc = subprocess.Popen(
             ' '.join(args),
+            env=os.environ,
             shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
@@ -124,9 +131,6 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         if ssh_client:
             self.ssh_transport = ssh_client.get_transport()
         self.ssh_host = host
-        self.ssh_port = None
-        if ':' in host:
-            self.ssh_host, self.ssh_port = host.split(':')
 
     def _new_conn(self):
         return SSHConnection(self.ssh_transport, self.timeout, self.ssh_host)
@@ -169,7 +173,10 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             self._create_paramiko_client(base_url)
             self._connect()
 
-        self.ssh_host = base_url.lstrip('ssh://')
+        self.ssh_host = base_url
+        if base_url.startswith('ssh://'):
+            self.ssh_host = base_url[len('ssh://'):]
+
         self.timeout = timeout
         self.max_pool_size = max_pool_size
         self.pools = RecentlyUsedContainer(
