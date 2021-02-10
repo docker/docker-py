@@ -18,7 +18,7 @@ def buildImage = { name, buildargs, pyTag ->
 }
 
 def buildImages = { ->
-  wrappedNode(label: "amd64 && ubuntu-2004 && overlay2", cleanWorkspace: true) {
+  node("amd64 && ubuntu-2004 && overlay2") {
     stage("build image") {
       checkout(scm)
 
@@ -36,7 +36,7 @@ def buildImages = { ->
 
 def getDockerVersions = { ->
   def dockerVersions = ["19.03.12"]
-  wrappedNode(label: "amd64 && ubuntu-2004 && overlay2") {
+  node("amd64 && ubuntu-2004 && overlay2") {
     def result = sh(script: """docker run --rm \\
         --entrypoint=python \\
         ${imageNamePy3} \\
@@ -77,7 +77,7 @@ def runTests = { Map settings ->
   }
 
   { ->
-    wrappedNode(label: "amd64 && ubuntu-2004 && overlay2", cleanWorkspace: true) {
+    node("amd64 && ubuntu-2004 && overlay2") {
       stage("test python=${pythonVersion} / docker=${dockerVersion}") {
         checkout(scm)
         def dindContainerName = "dpy-dind-\$BUILD_NUMBER-\$EXECUTOR_NUMBER-${pythonVersion}-${dockerVersion}"
