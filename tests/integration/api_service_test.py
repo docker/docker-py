@@ -471,6 +471,19 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Placement' in svc_info['Spec']['TaskTemplate']
         assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
 
+    @requires_api_version('1.40')
+    def test_create_service_with_placement_maxreplicas(self):
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
+        placemt = docker.types.Placement(maxreplicas=1)
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
+
     def test_create_service_with_endpoint_spec(self):
         container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
