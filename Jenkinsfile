@@ -95,7 +95,7 @@ def runTests = { Map settings ->
               -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
               --network ${testNetwork} \\
               --volumes-from ${dindContainerName} \\
-              -v ~/.docker/config.json:/root/.docker/config.json \\
+              -v $DOCKER_CONFIG/config.json:/root/.docker/config.json \\
               ${testImage} \\
               py.test -v -rxs --cov=docker --ignore=tests/ssh tests/
             """
@@ -111,7 +111,7 @@ def runTests = { Map settings ->
               -e 'DOCKER_TEST_API_VERSION=${apiVersion}' \\
               --network ${testNetwork} \\
               --volumes-from ${dindContainerName} \\
-              -v ~/.docker/config.json:/root/.docker/config.json \\
+              -v $DOCKER_CONFIG/config.json:/root/.docker/config.json \\
               ${testImage} \\
               py.test -v -rxs --cov=docker tests/ssh
             """
