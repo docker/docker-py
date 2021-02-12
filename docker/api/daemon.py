@@ -109,7 +109,7 @@ class DaemonApiMixin(object):
                 the Docker server.
             dockercfg_path (str): Use a custom path for the Docker config file
                 (default ``$HOME/.docker/config.json`` if present,
-                otherwise``$HOME/.dockercfg``)
+                otherwise ``$HOME/.dockercfg``)
 
         Returns:
             (dict): The response from the login request
