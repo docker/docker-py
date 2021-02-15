@@ -663,8 +663,8 @@ class Placement(dict):
             platforms (:py:class:`list` of tuple): A list of platforms
                 expressed as ``(arch, os)`` tuples
     """
-    def __init__(self, constraints=None, preferences=None, platforms=None,
-                 maxreplicas=None):
+    def __init__(self, constraints=None, preferences=None, maxreplicas=None,
+                 platforms=None):
         if constraints is not None:
             self['Constraints'] = constraints
         if preferences is not None:
