@@ -28,7 +28,6 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'constraints': ['foo=bar'],
             'preferences': ['bar=baz'],
             'platforms': [('x86_64', 'linux')],
-            'maxreplicas': 1
         })
 
         task_template = kwargs.pop('task_template')
@@ -48,7 +47,6 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'Constraints': ['foo=bar'],
             'Preferences': ['bar=baz'],
             'Platforms': [{'Architecture': 'x86_64', 'OS': 'linux'}],
-            'MaxReplicas': 1,
         }
         assert task_template['LogDriver'] == {
             'Name': 'logdriver',
