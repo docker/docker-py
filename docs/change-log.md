@@ -1,6 +1,19 @@
 Change log
 ==========
 
+4.4.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/71?closed=1)
+
+### Bugfixes
+- Fix SSH connection bug where the hostname was incorrectly trimmed and the error was hidden
+- Fix docs example
+
+### Miscellaneous
+- Add Python3.8 and 3.9 in setup.py classifier list
+
+
 4.4.1
 -----
 
