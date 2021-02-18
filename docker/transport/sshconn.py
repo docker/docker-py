@@ -30,10 +30,10 @@ class SSHSocket(socket.socket):
         self.host = host
         self.port = None
         self.user = None
-        if ':' in host:
-            self.host, self.port = host.split(':')
+        if ':' in self.host:
+            self.host, self.port = self.host.split(':')
         if '@' in self.host:
-            self.user, self.host = host.split('@')
+            self.user, self.host = self.host.split('@')
 
         self.proc = None
 
@@ -167,7 +167,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
                  max_pool_size=constants.DEFAULT_MAX_POOL_SIZE,
-                 shell_out=True):
+                 shell_out=False):
         self.ssh_client = None
         if not shell_out:
             self._create_paramiko_client(base_url)
