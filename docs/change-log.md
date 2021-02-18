@@ -1,6 +1,18 @@
 Change log
 ==========
 
+4.4.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/71?closed=1)
+
+### Bugfixes
+- Fix SSH connection bug where the hostname was incorrectly trimmed and the error was hidden
+- Fix docs example
+
+### Miscellaneous
+- Add Python3.8 and 3.9 in setup.py classifier list
+
 4.4.1
 -----
 
@@ -9,7 +21,6 @@ Change log
 ### Bugfixes
 - Avoid setting unsuported parameter for subprocess.Popen on Windows
 - Replace use of deprecated "filter" argument on ""docker/api/image"
-
 
 4.4.0
 -----
@@ -27,7 +38,6 @@ Change log
 ### Miscellaneous
 - Improve exception messages for server and client errors
 - Bump cryptography from 2.3 to 3.2
-
 
 4.3.1
 -----
@@ -52,7 +62,6 @@ Change log
 ### Miscellaneous
 - Update default API version to v1.39
 - Update test engine version to 19.03.12
-
 
 4.2.2
 -----
@@ -109,7 +118,6 @@ Change log
 - Adjust `--platform` tests for changes in docker engine
 - Update credentials-helpers to v0.6.3
 
-
 4.0.2
 -----
 
@@ -122,7 +130,6 @@ Change log
 ### Miscellaneous
 
 - Bumped version of websocket-client
-
 
 4.0.1
 -----
