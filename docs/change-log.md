@@ -1,6 +1,14 @@
 Change log
 ==========
 
+4.4.4
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/73?closed=1)
+
+### Bugfixes
+- Remove `LD_LIBRARY_PATH` and `SSL_CERT_FILE` environment variables when shelling out to the ssh client
+
 4.4.3
 -----
 
