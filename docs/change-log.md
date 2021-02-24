@@ -1,6 +1,17 @@
 Change log
 ==========
 
+4.4.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/72?closed=1)
+
+### Features
+- Add support for docker.types.Placement.MaxReplicas
+
+### Bugfixes
+- Fix SSH port parsing when shelling out to the ssh client
+
 4.4.2
 -----
 
