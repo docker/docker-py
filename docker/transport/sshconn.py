@@ -53,9 +53,15 @@ class SSHSocket(socket.socket):
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
             preexec_func = f
 
+        env = dict(os.environ) 
+
+        # drop LD_LIBRARY_PATH and SSL_CERT_FILE
+        env.pop('LD_LIBRARY_PATH', None)
+        env.pop('SSL_CERT_FILE', None)
+
         self.proc = subprocess.Popen(
             ' '.join(args),
-            env=os.environ,
+            env=env,
             shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
