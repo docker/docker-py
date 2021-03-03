@@ -127,8 +127,12 @@ class Context:
                 elif filename.startswith("key"):
                     key = os.path.join(tls_dir, endpoint, filename)
             if all([ca_cert, cert, key]):
+                verify = None
+                if endpoint == "docker":
+                    if not self.endpoints["docker"].get("SkipTLSVerify", False):
+                        verify = True
                 certs[endpoint] = TLSConfig(
-                    client_cert=(cert, key), ca_cert=ca_cert)
+                    client_cert=(cert, key), ca_cert=ca_cert, verify=verify)
         self.tls_cfg = certs
         self.tls_path = tls_dir
 
