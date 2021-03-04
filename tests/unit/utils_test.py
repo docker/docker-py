@@ -541,6 +541,12 @@ class PortsTest(unittest.TestCase):
         assert internal_port == ["2000"]
         assert external_port == [("2001:abcd:ef00::2", "1000")]
 
+    def test_split_port_with_ipv6_square_brackets_address(self):
+        internal_port, external_port = split_port(
+            "[2001:abcd:ef00::2]:1000:2000")
+        assert internal_port == ["2000"]
+        assert external_port == [("2001:abcd:ef00::2", "1000")]
+
     def test_split_port_invalid(self):
         with pytest.raises(ValueError):
             split_port("0.0.0.0:1000:2000:tcp")
