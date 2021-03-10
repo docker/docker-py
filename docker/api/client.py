@@ -1,10 +1,10 @@
 import json
 import struct
+import urllib
 from functools import partial
 
 import requests
 import requests.exceptions
-import six
 import websocket
 
 from .. import auth
@@ -192,12 +192,12 @@ class APIClient(
         # version detection needs to be after unix adapter mounting
         if version is None or (isinstance(
                                 version,
-                                six.string_types
+                                str
                                 ) and version.lower() == 'auto'):
             self._version = self._retrieve_server_version()
         else:
             self._version = version
-        if not isinstance(self._version, six.string_types):
+        if not isinstance(self._version, str):
             raise DockerException(
                 'Version parameter must be a string or None. Found {0}'.format(
                     type(version).__name__
@@ -246,13 +246,13 @@ class APIClient(
 
     def _url(self, pathfmt, *args, **kwargs):
         for arg in args:
-            if not isinstance(arg, six.string_types):
+            if not isinstance(arg, str):
                 raise ValueError(
                     'Expected a string but found {0} ({1}) '
                     'instead'.format(arg, type(arg))
                 )
 
-        quote_f = partial(six.moves.urllib.parse.quote, safe="/:")
+        quote_f = partial(urllib.parse.quote, safe="/:")
         args = map(quote_f, args)
 
         if kwargs.get('versioned_api', True):
@@ -284,7 +284,7 @@ class APIClient(
         # so we do this disgusting thing here.
         data2 = {}
         if data is not None and isinstance(data, dict):
-            for k, v in six.iteritems(data):
+            for k, v in iter(data.items()):
                 if v is not None:
                     data2[k] = v
         elif data is not None:
@@ -320,12 +320,10 @@ class APIClient(
             sock = response.raw._fp.fp.raw.sock
         elif self.base_url.startswith('http+docker://ssh'):
             sock = response.raw._fp.fp.channel
-        elif six.PY3:
+        else:
             sock = response.raw._fp.fp.raw
             if self.base_url.startswith("https://"):
                 sock = sock._sock
-        else:
-            sock = response.raw._fp.fp._sock
         try:
             # Keep a reference to the response to stop it being garbage
             # collected. If the response is garbage collected, it will
@@ -465,7 +463,7 @@ class APIClient(
                 self._result(res, binary=True)
 
         self._raise_for_status(res)
-        sep = six.binary_type()
+        sep = b''
         if stream:
             return self._multiplexed_response_stream_helper(res)
         else:

@@ -7,7 +7,6 @@ from datetime import datetime
 
 import pytest
 import requests
-import six
 
 import docker
 from .. import helpers
@@ -35,7 +34,7 @@ class ListContainersTest(BaseAPIIntegrationTest):
         assert len(retrieved) == 1
         retrieved = retrieved[0]
         assert 'Command' in retrieved
-        assert retrieved['Command'] == six.text_type('true')
+        assert retrieved['Command'] == str('true')
         assert 'Image' in retrieved
         assert re.search(r'alpine:.*', retrieved['Image'])
         assert 'Status' in retrieved
@@ -104,9 +103,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.start(container3_id)
         assert self.client.wait(container3_id)['StatusCode'] == 0
 
-        logs = self.client.logs(container3_id)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(container3_id).decode('utf-8')
         assert '{0}_NAME='.format(link_env_prefix1) in logs
         assert '{0}_ENV_FOO=1'.format(link_env_prefix1) in logs
         assert '{0}_NAME='.format(link_env_prefix2) in logs
@@ -227,9 +224,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
         self.client.wait(container)
 
-        logs = self.client.logs(container)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(container).decode('utf-8')
         groups = logs.strip().split(' ')
         assert '1000' in groups
         assert '1001' in groups
@@ -244,9 +239,7 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
         self.client.wait(container)
 
-        logs = self.client.logs(container)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(container).decode('utf-8')
 
         groups = logs.strip().split(' ')
         assert '1000' in groups
@@ -515,10 +508,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             TEST_IMG,
             ['ls', self.mount_dest],
         )
-        logs = self.client.logs(container)
-
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(container).decode('utf-8')
         assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, True)
@@ -534,10 +524,8 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             TEST_IMG,
             ['ls', self.mount_dest],
         )
-        logs = self.client.logs(container)
+        logs = self.client.logs(container).decode('utf-8')
 
-        if six.PY3:
-            logs = logs.decode('utf-8')
         assert self.filename in logs
 
         inspect_data = self.client.inspect_container(container)
@@ -554,9 +542,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             host_config=host_config
         )
         assert container
-        logs = self.client.logs(container)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(container).decode('utf-8')
         assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, True)
@@ -573,9 +559,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             host_config=host_config
         )
         assert container
-        logs = self.client.logs(container)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(container).decode('utf-8')
         assert self.filename in logs
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
@@ -645,9 +629,8 @@ class ArchiveTest(BaseAPIIntegrationTest):
             for d in strm:
                 destination.write(d)
             destination.seek(0)
-            retrieved_data = helpers.untar_file(destination, 'data.txt')
-            if six.PY3:
-                retrieved_data = retrieved_data.decode('utf-8')
+            retrieved_data = helpers.untar_file(destination, 'data.txt')\
+                .decode('utf-8')
             assert data == retrieved_data.strip()
 
     def test_get_file_stat_from_container(self):
@@ -683,9 +666,6 @@ class ArchiveTest(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
-            logs = logs.decode('utf-8')
-            data = data.decode('utf-8')
         assert logs.strip() == data
 
     def test_copy_directory_to_container(self):
@@ -700,9 +680,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
             self.client.put_archive(ctnr, '/vol1', test_tar)
         self.client.start(ctnr)
         self.client.wait(ctnr)
-        logs = self.client.logs(ctnr)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = self.client.logs(ctnr).decode('utf-8')
         results = logs.strip().split()
         assert 'a.py' in results
         assert 'b.py' in results
@@ -861,7 +839,7 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        logs = six.binary_type()
+        logs = b''
         for chunk in self.client.logs(id, stream=True, follow=True):
             logs += chunk
 
@@ -881,7 +859,7 @@ Line2'''
         id = container['Id']
         self.tmp_containers.append(id)
         self.client.start(id)
-        logs = six.binary_type()
+        logs = b''
 
         generator = self.client.logs(id, stream=True, follow=True)
         threading.Timer(1, generator.close).start()
