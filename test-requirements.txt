@@ -1,4 +1,4 @@
-setuptools==44.0.0 # last version with python 2.7 support
+setuptools==54.1.1
 coverage==4.5.2
 flake8==3.6.0
 mock==1.0.1
