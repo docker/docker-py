@@ -17,9 +17,11 @@ from ..constants import DEFAULT_NPIPE
 from ..constants import BYTE_UNITS
 
 if six.PY2:
+    from collections import Iterable
     from urllib import splitnport
     from urlparse import urlparse
 else:
+    from collections.abc import Iterable
     from urllib.parse import splitnport, urlparse
 
 
@@ -373,14 +375,14 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
 def convert_filters(filters):
     result = {}
     for k, v in six.iteritems(filters):
-        if isinstance(v, bool):
-            v = 'true' if v else 'false'
-        if not isinstance(v, list):
-            v = [v, ]
-        result[k] = [
-            str(item) if not isinstance(item, six.string_types) else item
-            for item in v
-        ]
+        if isinstance(v, six.string_types):
+            result[k] = (v,)
+        elif isinstance(v, bool):
+            result[k] = ('true',) if v else ('false',)
+        elif isinstance(v, Iterable):
+            result[k] = tuple(str(x) for x in v)
+        else:
+            result[k] = (str(v),)
     return json.dumps(result)
 
 

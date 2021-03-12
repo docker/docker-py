@@ -349,9 +349,9 @@ class ImageCollection(Collection):
                 filtered out.
             filters (dict): Filters to be processed on the image list.
                 Available filters:
-                - ``dangling`` (bool)
-                - `label` (str|list): format either ``"key"``, ``"key=value"``
-                    or a list of such.
+                - `dangling` (bool)
+                - `label` (str|iterable): format either ``"key"``,
+                  ``"key=value"`` or an iterable of such.
 
         Returns:
             (list of :py:class:`Image`): The images.

@@ -174,8 +174,8 @@ class ContainerApiMixin(object):
                 - `exited` (int): Only containers with specified exit code
                 - `status` (str): One of ``restarting``, ``running``,
                     ``paused``, ``exited``
-                - `label` (str|list): format either ``"key"``, ``"key=value"``
-                    or a list of such.
+                - `label` (str|iterable): format either ``"key"``,
+                  ``"key=value"`` or an iterable of such.
                 - `id` (str): The id of the container.
                 - `name` (str): The name of the container.
                 - `ancestor` (str): Filter by container ancestor. Format of

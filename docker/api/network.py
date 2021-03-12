@@ -14,10 +14,10 @@ class NetworkApiMixin(object):
             ids (:py:class:`list`): List of ids to filter by
             filters (dict): Filters to be processed on the network list.
                 Available filters:
-                - ``driver=[<driver-name>]`` Matches a network's driver.
-                - ``label=[<key>]``, ``label=[<key>=<value>]`` or a list of
-                    such.
-                - ``type=["custom"|"builtin"]`` Filters networks by type.
+                - `driver` (str): The network driver name.
+                - `label` (str|iterable): format either ``"key"``,
+                  ``"key=value"`` or an iterable of such.
+                - `type` (str): One of ``builtin`` or ``custom``.
 
         Returns:
             (dict): List of network objects.
