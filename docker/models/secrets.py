@@ -30,6 +30,7 @@ class SecretCollection(Collection):
 
     def create(self, **kwargs):
         obj = self.client.api.create_secret(**kwargs)
+        obj.setdefault("Spec", {})["Name"] = kwargs.get("name")
         return self.prepare_model(obj)
     create.__doc__ = APIClient.create_secret.__doc__
 
