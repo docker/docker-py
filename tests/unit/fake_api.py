@@ -17,6 +17,8 @@ FAKE_URL = 'myurl'
 FAKE_PATH = '/path'
 FAKE_VOLUME_NAME = 'perfectcherryblossom'
 FAKE_NODE_ID = '24ifsmvkjbyhk'
+FAKE_SECRET_ID = 'epdyrw4tsi03xy3deu8g8ly6o'
+FAKE_SECRET_NAME = 'super_secret'
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
@@ -512,6 +514,12 @@ def post_fake_network_disconnect():
     return 200, None
 
 
+def post_fake_secret():
+    status_code = 200
+    response = {'ID': FAKE_SECRET_ID}
+    return status_code, response
+
+
 # Maps real api url to fake response callback
 prefix = 'http+docker://localhost'
 if constants.IS_WINDOWS_PLATFORM:
@@ -643,4 +651,6 @@ fake_responses = {
         CURRENT_VERSION, prefix, FAKE_NETWORK_ID
     ), 'POST'):
     post_fake_network_disconnect,
+    '{1}/{0}/secrets/create'.format(CURRENT_VERSION, prefix):
+    post_fake_secret,
 }
