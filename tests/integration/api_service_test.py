@@ -5,7 +5,6 @@ import time
 
 import docker
 import pytest
-import six
 
 from ..helpers import (
     force_leave_swarm, requires_api_version, requires_experimental
@@ -150,7 +149,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             else:
                 break
 
-        if six.PY3:
+        if log_line is not None:
             log_line = log_line.decode('utf-8')
         assert 'hello\n' in log_line
 

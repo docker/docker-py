@@ -11,18 +11,11 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'six >= 1.4.0',
     'websocket-client >= 0.32.0',
     'requests >= 2.14.2, != 2.18.0',
 ]
 
 extras_require = {
-    ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
-    # While not imported explicitly, the ipaddress module is required for
-    # ssl_match_hostname to verify hosts match with certificates via
-    # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
-    ':python_version < "3.3"': 'ipaddress >= 1.0.16',
-
     # win32 APIs if on Windows (required for npipe support)
     ':sys_platform == "win32"': 'pywin32==227',
 
@@ -69,7 +62,7 @@ setup(
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='>=3.6',
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -78,10 +71,7 @@ setup(
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',

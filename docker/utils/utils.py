@@ -7,8 +7,6 @@ import string
 from datetime import datetime
 from distutils.version import StrictVersion
 
-import six
-
 from .. import errors
 from .. import tls
 from ..constants import DEFAULT_HTTP_HOST
@@ -16,11 +14,7 @@ from ..constants import DEFAULT_UNIX_SOCKET
 from ..constants import DEFAULT_NPIPE
 from ..constants import BYTE_UNITS
 
-if six.PY2:
-    from urllib import splitnport
-    from urlparse import urlparse
-else:
-    from urllib.parse import splitnport, urlparse
+from urllib.parse import splitnport, urlparse
 
 
 def create_ipam_pool(*args, **kwargs):
@@ -39,8 +33,7 @@ def create_ipam_config(*args, **kwargs):
 
 def decode_json_header(header):
     data = base64.b64decode(header)
-    if six.PY3:
-        data = data.decode('utf-8')
+    data = data.decode('utf-8')
     return json.loads(data)
 
 
@@ -80,7 +73,7 @@ def _convert_port_binding(binding):
         if len(binding) == 2:
             result['HostPort'] = binding[1]
             result['HostIp'] = binding[0]
-        elif isinstance(binding[0], six.string_types):
+        elif isinstance(binding[0], str):
             result['HostIp'] = binding[0]
         else:
             result['HostPort'] = binding[0]
@@ -104,7 +97,7 @@ def _convert_port_binding(binding):
 
 def convert_port_bindings(port_bindings):
     result = {}
-    for k, v in six.iteritems(port_bindings):
+    for k, v in iter(port_bindings.items()):
         key = str(k)
         if '/' not in key:
             key += '/tcp'
@@ -121,7 +114,7 @@ def convert_volume_binds(binds):
 
     result = []
     for k, v in binds.items():
-        if isinstance(k, six.binary_type):
+        if isinstance(k, bytes):
             k = k.decode('utf-8')
 
         if isinstance(v, dict):
@@ -132,7 +125,7 @@ def convert_volume_binds(binds):
                 )
 
             bind = v['bind']
-            if isinstance(bind, six.binary_type):
+            if isinstance(bind, bytes):
                 bind = bind.decode('utf-8')
 
             if 'ro' in v:
@@ -143,13 +136,13 @@ def convert_volume_binds(binds):
                 mode = 'rw'
 
             result.append(
-                six.text_type('{0}:{1}:{2}').format(k, bind, mode)
+                str('{0}:{1}:{2}').format(k, bind, mode)
             )
         else:
-            if isinstance(v, six.binary_type):
+            if isinstance(v, bytes):
                 v = v.decode('utf-8')
             result.append(
-                six.text_type('{0}:{1}:rw').format(k, v)
+                str('{0}:{1}:rw').format(k, v)
             )
     return result
 
@@ -166,7 +159,7 @@ def convert_tmpfs_mounts(tmpfs):
 
     result = {}
     for mount in tmpfs:
-        if isinstance(mount, six.string_types):
+        if isinstance(mount, str):
             if ":" in mount:
                 name, options = mount.split(":", 1)
             else:
@@ -191,7 +184,7 @@ def convert_service_networks(networks):
 
     result = []
     for n in networks:
-        if isinstance(n, six.string_types):
+        if isinstance(n, str):
             n = {'Target': n}
         result.append(n)
     return result
@@ -302,7 +295,7 @@ def parse_devices(devices):
         if isinstance(device, dict):
             device_list.append(device)
             continue
-        if not isinstance(device, six.string_types):
+        if not isinstance(device, str):
             raise errors.DockerException(
                 'Invalid device type {0}'.format(type(device))
             )
@@ -372,13 +365,13 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
 
 def convert_filters(filters):
     result = {}
-    for k, v in six.iteritems(filters):
+    for k, v in iter(filters.items()):
         if isinstance(v, bool):
             v = 'true' if v else 'false'
         if not isinstance(v, list):
             v = [v, ]
         result[k] = [
-            str(item) if not isinstance(item, six.string_types) else item
+            str(item) if not isinstance(item, str) else item
             for item in v
         ]
     return json.dumps(result)
@@ -391,7 +384,7 @@ def datetime_to_timestamp(dt):
 
 
 def parse_bytes(s):
-    if isinstance(s, six.integer_types + (float,)):
+    if isinstance(s, (int, float,)):
         return s
     if len(s) == 0:
         return 0
@@ -433,7 +426,7 @@ def parse_bytes(s):
 
 def normalize_links(links):
     if isinstance(links, dict):
-        links = six.iteritems(links)
+        links = iter(links.items())
 
     return ['{0}:{1}'.format(k, v) if v else k for k, v in sorted(links)]
 
@@ -468,8 +461,6 @@ def parse_env_file(env_file):
 
 
 def split_command(command):
-    if six.PY2 and not isinstance(command, six.binary_type):
-        command = command.encode('utf-8')
     return shlex.split(command)
 
 
@@ -477,22 +468,22 @@ def format_environment(environment):
     def format_env(key, value):
         if value is None:
             return key
-        if isinstance(value, six.binary_type):
+        if isinstance(value, bytes):
             value = value.decode('utf-8')
 
         return u'{key}={value}'.format(key=key, value=value)
-    return [format_env(*var) for var in six.iteritems(environment)]
+    return [format_env(*var) for var in iter(environment.items())]
 
 
 def format_extra_hosts(extra_hosts, task=False):
     # Use format dictated by Swarm API if container is part of a task
     if task:
         return [
-            '{} {}'.format(v, k) for k, v in sorted(six.iteritems(extra_hosts))
+            '{} {}'.format(v, k) for k, v in sorted(iter(extra_hosts.items()))
         ]
 
     return [
-        '{}:{}'.format(k, v) for k, v in sorted(six.iteritems(extra_hosts))
+        '{}:{}'.format(k, v) for k, v in sorted(iter(extra_hosts.items()))
     ]
 
 

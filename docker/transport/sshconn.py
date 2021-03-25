@@ -53,7 +53,7 @@ class SSHSocket(socket.socket):
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
             preexec_func = f
 
-        env = dict(os.environ) 
+        env = dict(os.environ)
 
         # drop LD_LIBRARY_PATH and SSL_CERT_FILE
         env.pop('LD_LIBRARY_PATH', None)
@@ -65,7 +65,7 @@ class SSHSocket(socket.socket):
             shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
-            preexec_fn=preexec_func)
+            preexec_fn=None if constants.IS_WINDOWS_PLATFORM else preexec_func)
 
     def _write(self, data):
         if not self.proc or self.proc.stdin.closed:
