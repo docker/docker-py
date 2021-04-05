@@ -31,7 +31,7 @@ class ImageApiMixin(object):
 
         Example:
 
-            >>> image = cli.get_image("busybox:latest")
+            >>> image = client.api.get_image("busybox:latest")
             >>> f = open('/tmp/busybox-latest.tar', 'wb')
             >>> for chunk in image:
             >>>   f.write(chunk)
@@ -379,7 +379,7 @@ class ImageApiMixin(object):
 
         Example:
 
-            >>> for line in cli.pull('busybox', stream=True, decode=True):
+            >>> for line in client.api.pull('busybox', stream=True, decode=True):
             ...     print(json.dumps(line, indent=4))
             {
                 "status": "Pulling image (latest) from busybox",
@@ -458,7 +458,7 @@ class ImageApiMixin(object):
                 If the server returns an error.
 
         Example:
-            >>> for line in cli.push('yourname/app', stream=True, decode=True):
+            >>> for line in client.api.push('yourname/app', stream=True, decode=True):
             ...   print(line)
             {'status': 'Pushing repository yourname/app (1 tags)'}
             {'status': 'Pushing','progressDetail': {}, 'id': '511136ea3c5a'}
@@ -549,7 +549,7 @@ class ImageApiMixin(object):
 
         Example:
 
-            >>> client.tag('ubuntu', 'localhost:5000/ubuntu', 'latest',
+            >>> client.api.tag('ubuntu', 'localhost:5000/ubuntu', 'latest',
                            force=True)
         """
         params = {
