@@ -434,6 +434,20 @@ class ContainerTest(BaseIntegrationTest):
         container.reload()
         assert container.attrs['HostConfig']['CpuShares'] == 3
 
+    def test_update_device_cgroup_rules(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        container = client.containers.run("alpine", "sleep 60", detach=True,
+                                          device_cgroup_rules=["c 13:* rwm"])
+        self.tmp_containers.append(container.id)
+        device_cgrp_rules = container.attrs['HostConfig']['DeviceCgroupRules']
+        assert len(device_cgrp_rules) == 1
+        assert device_cgrp_rules[0] == "c 13:* rwm"
+        container.update(device_cgroup_rules=["c 13:* rw"])
+        container.reload()
+        device_cgrp_rules_new = container.attrs['HostConfig']['DeviceCgroupRules']
+        assert len(device_cgrp_rules_new) == 1
+        assert device_cgrp_rules_new[0] == "c 13:* rw"
+
     def test_wait(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run("alpine", "sh -c 'exit 0'",

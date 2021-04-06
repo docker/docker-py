@@ -8,6 +8,7 @@ from ..types import ContainerConfig
 from ..types import EndpointConfig
 from ..types import HostConfig
 from ..types import NetworkingConfig
+from ..types import HostResources
 
 
 class ContainerApiMixin:
@@ -606,6 +607,92 @@ class ContainerApiMixin:
             )
         kwargs['version'] = self._version
         return HostConfig(*args, **kwargs)
+
+    def create_resources(self, *args, **kwargs):
+        """
+        Create a dictionary for the ``resources`` argument to
+        :py:meth:`update_container`.
+
+        Args:
+            blkio_weight_device: Block IO weight (relative device weight) in
+                the form of: ``[{"Path": "device_path", "Weight": weight}]``.
+            blkio_weight: Block IO weight (relative weight), accepts a weight
+                value between 10 and 1000.
+            cgroup_parent (string): Path to `cgroups` under which the
+                container's `cgroup` is created. If the path is not absolute,
+                the path is considered to be relative to the `cgroups` path of
+                the init process. Cgroups are created if they do not already
+                exist.
+            cpu_period (int): The length of a CPU period in microseconds.
+            cpu_quota (int): Microseconds of CPU time that the container can
+                get in a CPU period.
+            cpu_rt_period (int): The length of a CPU real-time period in
+                microseconds. Set to 0 to allocate no time allocated to
+                real-time tasks.
+            cpu_rt_runtime (int): The length of a CPU real-time runtime in
+                microseconds. Set to 0 to allocate no time allocated to
+                real-time tasks.
+            cpu_shares (int): CPU shares (relative weight).
+            cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
+                ``0,1``).
+            cpuset_mems (str): Memory nodes (MEMs) in which to allow execution
+                (``0-3``, ``0,1``). Only effective on NUMA systems.
+            device_cgroup_rules (:py:class:`list`): A list of cgroup rules to
+                apply to the container.
+            device_read_bps: Limit read rate (bytes per second) from a device
+                in the form of: `[{"Path": "device_path", "Rate": rate}]`
+            device_read_iops: Limit read rate (IO per second) from a device.
+            device_write_bps: Limit write rate (bytes per second) from a
+                device.
+            device_write_iops: Limit write rate (IO per second) from a device.
+            devices (:py:class:`list`): Expose host devices to the container,
+                as a list of strings in the form
+                ``<path_on_host>:<path_in_container>:<cgroup_permissions>``.
+
+                For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
+                to have read-write access to the host's ``/dev/sda`` via a
+                node named ``/dev/xvda`` inside the container.
+            device_requests (:py:class:`list`): Expose host resources such as
+                GPUs to the container, as a list of
+                :py:class:`docker.types.DeviceRequest` instances.
+            kernel_memory (int or str): Kernel memory limit
+            mem_limit (float or str): Memory limit. Accepts float values
+                (which represent the memory limit of the created container in
+                bytes) or a string with a units identification char
+                (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
+                specified without a units character, bytes are assumed as an
+            mem_reservation (float or str): Memory soft limit.
+            mem_swappiness (int): Tune a container's memory swappiness
+                behavior. Accepts number between 0 and 100.
+            memswap_limit (str or int): Maximum amount of memory + swap a
+                container is allowed to consume.
+            nano_cpus (int): CPU quota in units of 10<sup>-9</sup> CPUs.
+            oom_kill_disable (bool): Whether to disable OOM killer.
+            pids_limit (int): Tune a container's pids limit. Set ``-1`` for
+                unlimited.
+            ulimits (:py:class:`list`): Ulimits to set inside the container,
+                as a list of :py:class:`docker.types.Ulimit` instances.
+
+
+        Returns:
+            (dict) A dictionary which can be passed to the ``resources``
+            argument to :py:meth:`update_container`.
+
+        Example:
+
+            >>> cli.create_resources(mem_limit='1g', cpuset_cpus='0-3')
+            {'MemLimit': '1g', 'CpusetCpus': '0-3'}
+"""
+        if not kwargs:
+            kwargs = {}
+        if 'version' in kwargs:
+            raise TypeError(
+                "create_resources() got an unexpected "
+                "keyword argument 'version'"
+            )
+        kwargs['version'] = self._version
+        hres = HostResources(*args, **kwargs)
+        return hres
 
     def create_networking_config(self, *args, **kwargs):
         """
@@ -1246,28 +1333,25 @@ class ContainerApiMixin:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        url = self._url('/containers/{0}/update', container)
-        data = {}
-        if blkio_weight:
-            data['BlkioWeight'] = blkio_weight
-        if cpu_period:
-            data['CpuPeriod'] = cpu_period
-        if cpu_shares:
-            data['CpuShares'] = cpu_shares
-        if cpu_quota:
-            data['CpuQuota'] = cpu_quota
-        if cpuset_cpus:
-            data['CpusetCpus'] = cpuset_cpus
-        if cpuset_mems:
-            data['CpusetMems'] = cpuset_mems
-        if mem_limit:
-            data['Memory'] = utils.parse_bytes(mem_limit)
-        if mem_reservation:
-            data['MemoryReservation'] = utils.parse_bytes(mem_reservation)
-        if memswap_limit:
-            data['MemorySwap'] = utils.parse_bytes(memswap_limit)
-        if kernel_memory:
-            data['KernelMemory'] = utils.parse_bytes(kernel_memory)
+        resources = self.create_resources(
+            blkio_weight=blkio_weight, cpu_period=cpu_period,
+            cpu_shares=cpu_shares, cpu_quota=cpu_quota,
+            cpuset_cpus=cpuset_cpus, cpuset_mems=cpuset_mems,
+            mem_limit=mem_limit, mem_reservation=mem_reservation,
+            memswap_limit=memswap_limit, kernel_memory=kernel_memory
+        )
+
+        return self.update_container_from_resources(
+            container, resources, restart_policy
+        )
+
+    @utils.minimum_version('1.22')
+    @utils.check_resource('container')
+    def update_container_from_resources(self, container, resources,
+                                        restart_policy):
+        u = self._url('/containers/{0}/update', container)
+
+        data = resources.copy()
         if restart_policy:
             if utils.version_lt(self._version, '1.23'):
                 raise errors.InvalidVersion(
@@ -1275,8 +1359,8 @@ class ContainerApiMixin:
                     'for API version < 1.23'
                 )
             data['RestartPolicy'] = restart_policy
-
-        res = self._post_json(url, data=data)
+        print(data)
+        res = self._post_json(u, data=data)
         return self._result(res, True)
 
     @utils.check_resource('container')
