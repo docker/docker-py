@@ -11,7 +11,8 @@
 [Org]
 	[Org."Core maintainers"]
 		people = [
-			"shin-",
+			"aiordache",
+			"ulyssessouza",
 		]
 	[Org.Alumni]
 		people = [
@@ -20,6 +21,7 @@
 			"dnephin",
 			"mnowster",
 			"mpetazzoni",
+			"shin-",
 		]
 
 [people]
@@ -34,6 +36,11 @@
 	Name = "Aanand Prasad"
 	Email = "aanand@docker.com"
 	GitHub = "aanand"
+
+	[people.aiordache]
+	Name = "Anca Iordache"
+	Email = "anca.iordache@docker.com"
+	GitHub = "aiordache"
 
 	[people.bfirsh]
 	Name = "Ben Firshman"
@@ -59,3 +66,8 @@
 	Name = "Joffrey F"
 	Email = "joffrey@docker.com"
 	GitHub = "shin-"
+
+	[people.ulyssessouza]
+	Name = "Ulysses Domiciano Souza"
+	Email = "ulysses.souza@docker.com"
+	GitHub = "ulyssessouza"
