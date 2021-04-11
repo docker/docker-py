@@ -87,7 +87,7 @@ class DockerClient(object):
             >>> client = docker.from_env()
 
         .. _`SSL version`:
-            https://docs.python.org/3.5/library/ssl.html#ssl.PROTOCOL_TLSv1
+            https://docs.python.org/3/library/ssl.html#ssl.PROTOCOL_TLS
         """
         timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
         max_pool_size = kwargs.pop('max_pool_size', DEFAULT_MAX_POOL_SIZE)
