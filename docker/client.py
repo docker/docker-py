@@ -213,11 +213,13 @@ class DockerClient(object):
     close.__doc__ = APIClient.close.__doc__
 
     def __enter__(self):
-        return self.api.__enter__()
+        self.api.__enter__()
+        return self
+
     __enter__.__doc__ = APIClient.__enter__.__doc__
 
     def __exit__(self, *args, **kwargs):
-        return self.api.__exit__(self, *args, **kwargs)
+        return self.api.__exit__(*args, **kwargs)
     __exit__.__doc__ = APIClient.__exit__.__doc__
 
     def __getattr__(self, name):
