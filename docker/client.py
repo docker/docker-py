@@ -20,7 +20,8 @@ class DockerClient(object):
     Example:
 
         >>> import docker
-        >>> client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+        >>> with docker.DockerClient(base_url='unix://var/run/docker.sock') as client:
+        ...
 
     Args:
         base_url (str): URL to the Docker server. For example,
@@ -210,6 +211,14 @@ class DockerClient(object):
     def close(self):
         return self.api.close()
     close.__doc__ = APIClient.close.__doc__
+
+    def __enter__(self):
+        return self.api.__enter__()
+    __enter__.__doc__ = APIClient.__enter__.__doc__
+
+    def __exit__(self, *args, **kwargs):
+        return self.api.__exit__(self, *args, **kwargs)
+    __exit__.__doc__ = APIClient.__exit__.__doc__
 
     def __getattr__(self, name):
         s = ["'DockerClient' object has no attribute '{}'".format(name)]
