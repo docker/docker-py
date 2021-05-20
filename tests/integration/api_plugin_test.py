@@ -22,13 +22,13 @@ class PluginTest(BaseAPIIntegrationTest):
     def teardown_method(self, method):
         client = self.get_client_instance()
         try:
-            client.disable_plugin(SSHFS)
+            client.disable_plugin(SSHFS, True)
         except docker.errors.APIError:
             pass
 
         for p in self.tmp_plugins:
             try:
-                client.remove_plugin(p, force=True)
+                client.remove_plugin(p)
             except docker.errors.APIError:
                 pass
 
