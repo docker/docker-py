@@ -17,9 +17,10 @@ class LogConfigTypesEnum(object):
         'journald',
         'gelf',
         'fluentd',
-        'none'
+        'none',
+        'awslogs'
     )
-    JSON, SYSLOG, JOURNALD, GELF, FLUENTD, NONE = _values
+    JSON, SYSLOG, JOURNALD, GELF, FLUENTD, NONE, AWSLOGS = _values
 
 
 class LogConfig(DictType):
