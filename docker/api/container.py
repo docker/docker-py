@@ -258,7 +258,9 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            client.api.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+            client.api.create_host_config(
+                port_bindings={1111: ('127.0.0.1', 4567)}
+            )
 
         Or without host port assignment:
 
@@ -581,8 +583,11 @@ class ContainerApiMixin(object):
 
         Example:
 
-            >>> client.api.create_host_config(privileged=True, cap_drop=['MKNOD'],
-                                       volumes_from=['nostalgic_newton'])
+            >>> client.api.create_host_config(
+                privileged=True,
+                cap_drop=['MKNOD'],
+                volumes_from=['nostalgic_newton']
+            )
             {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True,
              'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 
