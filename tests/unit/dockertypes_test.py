@@ -268,9 +268,13 @@ class UlimitTest(unittest.TestCase):
             Ulimit(name='hello', hard='456')
 
 
-class LogConfigTest(unittest.TestCase):
-    def test_create_host_config_dict_logconfig(self):
-        dct = {'type': LogConfig.types.SYSLOG, 'config': {'key1': 'val1'}}
+class LogConfigTest():
+    @pytest.mark.parametrize(
+        "log_config_type",
+        [LogConfig.types.SYSLOG, LogConfig.types.AWSLOGS]
+    )
+    def test_create_host_config_dict_logconfig(self, log_config_type):
+        dct = {'type': log_config_type, 'config': {'key1': 'val1'}}
         config = create_host_config(
             version=DEFAULT_DOCKER_API_VERSION, log_config=dct
         )
@@ -278,8 +282,12 @@ class LogConfigTest(unittest.TestCase):
         assert isinstance(config['LogConfig'], LogConfig)
         assert dct['type'] == config['LogConfig'].type
 
-    def test_create_host_config_obj_logconfig(self):
-        obj = LogConfig(type=LogConfig.types.SYSLOG, config={'key1': 'val1'})
+    @pytest.mark.parametrize(
+        "log_config_type",
+        [LogConfig.types.SYSLOG, LogConfig.types.AWSLOGS]
+    )
+    def test_create_host_config_obj_logconfig(self, log_config_type):
+        obj = LogConfig(type=log_config_type, config={'key1': 'val1'})
         config = create_host_config(
             version=DEFAULT_DOCKER_API_VERSION, log_config=obj
         )
@@ -287,9 +295,13 @@ class LogConfigTest(unittest.TestCase):
         assert isinstance(config['LogConfig'], LogConfig)
         assert obj == config['LogConfig']
 
-    def test_logconfig_invalid_config_type(self):
+    @pytest.mark.parametrize(
+        "log_config_type",
+        [LogConfig.types.JSON, LogConfig.types.AWSLOGS]
+    )
+    def test_logconfig_invalid_config_type(self, log_config_type):
         with pytest.raises(ValueError):
-            LogConfig(type=LogConfig.types.JSON, config='helloworld')
+            LogConfig(type=log_config_type, config='helloworld')
 
 
 class EndpointConfigTest(unittest.TestCase):
