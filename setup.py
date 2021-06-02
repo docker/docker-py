@@ -13,6 +13,7 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 requirements = [
     'websocket-client >= 0.32.0',
     'requests >= 2.14.2, != 2.18.0',
+    'six >= 1.4.0'
 ]
 
 extras_require = {
