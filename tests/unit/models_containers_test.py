@@ -377,6 +377,11 @@ class ContainerCollectionTest(unittest.TestCase):
 
 
 class ContainerTest(unittest.TestCase):
+    def test_short_id(self):
+        container = Container(attrs={'Id': '8497fe9244dd45cac543eb3c37d8605077'
+                                           '6800eebef1f3ec2ee111e8ccf12db6'})
+        assert container.short_id == '8497fe9244dd'
+
     def test_name(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)

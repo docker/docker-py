@@ -30,12 +30,12 @@ class Image(Model):
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        The ID of the image truncated to 12 characters, plus the ``sha256:``
         prefix.
         """
         if self.id.startswith('sha256:'):
-            return self.id[:17]
-        return self.id[:10]
+            return self.id[:19]
+        return self.id[:12]
 
     @property
     def tags(self):
@@ -140,10 +140,10 @@ class RegistryData(Model):
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        The ID of the image truncated to 12 characters, plus the ``sha256:``
         prefix.
         """
-        return self.id[:17]
+        return self.id[:19]
 
     def pull(self, platform=None):
         """

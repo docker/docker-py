@@ -4,10 +4,10 @@ from . import fake_stat
 
 CURRENT_VERSION = 'v{0}'.format(constants.DEFAULT_DOCKER_API_VERSION)
 
-FAKE_CONTAINER_ID = '3cc2351ab11b'
-FAKE_IMAGE_ID = 'e9aa60c60128'
-FAKE_EXEC_ID = 'd5d177f121dc'
-FAKE_NETWORK_ID = '33fb6a3462b8'
+FAKE_CONTAINER_ID = '81cf499cc928ce3fedc250a080d2b9b978df20e4517304c45211e8a68b33e254'
+FAKE_IMAGE_ID = 'sha256:fe7a8fc91d3f17835cbb3b86a1c60287500ab01a53bc79c4497d09f07a3f0688'
+FAKE_EXEC_ID = 'b098ec855f10434b5c7c973c78484208223a83f663ddaefb0f02a242840cb1c7'
+FAKE_NETWORK_ID = '1999cfb42e414483841a125ade3c276c3cb80cb3269b14e339354ac63a31b02c'
 FAKE_IMAGE_NAME = 'test_image'
 FAKE_TARBALL_PATH = '/path/to/tarball'
 FAKE_REPO_NAME = 'repo'
@@ -546,56 +546,56 @@ fake_responses = {
     post_fake_import_image,
     '{1}/{0}/containers/json'.format(CURRENT_VERSION, prefix):
     get_fake_containers,
-    '{1}/{0}/containers/3cc2351ab11b/start'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/start'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_start_container,
-    '{1}/{0}/containers/3cc2351ab11b/resize'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/resize'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_resize_container,
-    '{1}/{0}/containers/3cc2351ab11b/json'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/json'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_inspect_container,
-    '{1}/{0}/containers/3cc2351ab11b/rename'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/rename'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_rename_container,
-    '{1}/{0}/images/e9aa60c60128/tag'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/images/{2}/tag'.format(CURRENT_VERSION, prefix, FAKE_IMAGE_ID):
     post_fake_tag_image,
-    '{1}/{0}/containers/3cc2351ab11b/wait'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/wait'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_wait,
-    '{1}/{0}/containers/3cc2351ab11b/logs'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/logs'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_logs,
-    '{1}/{0}/containers/3cc2351ab11b/changes'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/changes'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_diff,
-    '{1}/{0}/containers/3cc2351ab11b/export'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/export'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_export,
-    '{1}/{0}/containers/3cc2351ab11b/update'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/update'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_update_container,
-    '{1}/{0}/containers/3cc2351ab11b/exec'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/exec'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_exec_create,
-    '{1}/{0}/exec/d5d177f121dc/start'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/exec/{2}/start'.format(CURRENT_VERSION, prefix, FAKE_EXEC_ID):
     post_fake_exec_start,
-    '{1}/{0}/exec/d5d177f121dc/json'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/exec/{2}/json'.format(CURRENT_VERSION, prefix, FAKE_EXEC_ID):
     get_fake_exec_inspect,
-    '{1}/{0}/exec/d5d177f121dc/resize'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/exec/{2}/resize'.format(CURRENT_VERSION, prefix, FAKE_EXEC_ID):
     post_fake_exec_resize,
 
-    '{1}/{0}/containers/3cc2351ab11b/stats'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/stats'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_stats,
-    '{1}/{0}/containers/3cc2351ab11b/top'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/top'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     get_fake_top,
-    '{1}/{0}/containers/3cc2351ab11b/stop'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/stop'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_stop_container,
-    '{1}/{0}/containers/3cc2351ab11b/kill'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/kill'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_kill_container,
-    '{1}/{0}/containers/3cc2351ab11b/pause'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/pause'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_pause_container,
-    '{1}/{0}/containers/3cc2351ab11b/unpause'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/unpause'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_unpause_container,
-    '{1}/{0}/containers/3cc2351ab11b/restart'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}/restart'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     post_fake_restart_container,
-    '{1}/{0}/containers/3cc2351ab11b'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/containers/{2}'.format(CURRENT_VERSION, prefix, FAKE_CONTAINER_ID):
     delete_fake_remove_container,
     '{1}/{0}/images/create'.format(CURRENT_VERSION, prefix):
     post_fake_image_create,
-    '{1}/{0}/images/e9aa60c60128'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/images/{2}'.format(CURRENT_VERSION, prefix, FAKE_IMAGE_ID):
     delete_fake_remove_image,
-    '{1}/{0}/images/e9aa60c60128/get'.format(CURRENT_VERSION, prefix):
+    '{1}/{0}/images/{2}/get'.format(CURRENT_VERSION, prefix, FAKE_IMAGE_ID):
     get_fake_get_image,
     '{1}/{0}/images/load'.format(CURRENT_VERSION, prefix):
     post_fake_load_image,
