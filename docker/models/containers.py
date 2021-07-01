@@ -701,6 +701,7 @@ class ContainerCollection(Collection):
                 ``{"Name": "on-failure", "MaximumRetryCount": 5}``
 
             runtime (str): Runtime to use with this container.
+            gpus (str): Set to 'all' to use all available gpus
             security_opt (:py:class:`list`): A list of string values to
                 customize labels for MLS systems, such as SELinux.
             shm_size (str or int): Size of /dev/shm (e.g. ``1G``).
@@ -1047,7 +1048,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'version',
     'volume_driver',
     'volumes_from',
-    'runtime'
+    'runtime',
 ]
 
 
@@ -1078,6 +1079,11 @@ def _create_container_args(kwargs):
     if network:
         create_kwargs['networking_config'] = {network: None}
         host_config_kwargs['network_mode'] = network
+
+    gpus = kwargs.pop('gpus', None)
+    if gpus:
+        create_kwargs['gpus'] = gpus
+        host_config_kwargs['gpus'] = gpus
 
     # All kwargs should have been consumed by this point, so raise
     # error if any are left

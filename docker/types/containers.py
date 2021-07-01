@@ -272,7 +272,7 @@ class HostConfig(dict):
                  pids_limit=None, isolation=None, auto_remove=False,
                  storage_opt=None, init=None, init_path=None,
                  volume_driver=None, cpu_count=None, cpu_percent=None,
-                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
+                 nano_cpus=None, cpuset_mems=None, runtime=None, gpus=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None, device_requests=None):
 
@@ -621,6 +621,32 @@ class HostConfig(dict):
                 raise host_config_version_error('runtime', '1.25')
             self['Runtime'] = runtime
 
+        if gpus:
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('runtime', '1.25')
+            elif version_lt(version, '1.40'):
+                # set up the nvidia runtime
+                self['Runtime'] = "nvidia"
+                # inject into environment
+            else:
+                # 3 possible formats
+                # all -> all
+                # int -> count
+                # device="a,...,z" -> deviceIDs
+                if gpus == "all":
+                    self['DeviceRequests'] = [ {'Driver': '', 'Count': -1, 'DeviceIDs': None, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+                else:
+                    # check if we have a count
+                    try:
+                        count = int(gpus)
+                        self['DeviceRequests'] = [ {'Driver': '', 'Count': count, 'DeviceIDs': None, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+                    except ValueError:
+                        if gpus.startswith("device="):
+                            device_ids = [x.strip() for x in gpus.replace("device=", "").split(",")]
+                            self['DeviceRequests'] = [ {'Driver': '', 'Count': 0, 'DeviceIDs': device_ids, 'Capabilities': [ ['gpu'] ], 'Options': {} } ]
+                        else:
+                            raise host_config_value_error("gpus", gpus)
+
         if mounts is not None:
             if version_lt(version, '1.30'):
                 raise host_config_version_error('mounts', '1.30')
@@ -679,7 +705,7 @@ class ContainerConfig(dict):
         volumes=None, network_disabled=False, entrypoint=None,
         working_dir=None, domainname=None, host_config=None, mac_address=None,
         labels=None, stop_signal=None, networking_config=None,
-        healthcheck=None, stop_timeout=None, runtime=None
+        healthcheck=None, stop_timeout=None, runtime=None, gpus=None
     ):
 
         if stop_timeout is not None and version_lt(version, '1.25'):
@@ -698,6 +724,17 @@ class ContainerConfig(dict):
                     'healthcheck start period was introduced in API '
                     'version 1.29'
                 )
+
+        if gpus is not None:
+            # check if we need to set up an environment variable for GPUs
+            if version_lt(version, '1.40'):
+                visible_devices = gpus.replace("device=","")
+                if environment is None:
+                    environment = {}
+                if isinstance(environment, dict):
+                    environment['NVIDIA_VISIBLE_DEVICES'] = visible_devices
+                else:
+                    environment.append("NVIDIA_VISIBLE_DEVICES={}".format(visible_devices))
 
         if isinstance(command, six.string_types):
             command = split_command(command)
@@ -773,5 +810,6 @@ class ContainerConfig(dict):
             'StopSignal': stop_signal,
             'Healthcheck': healthcheck,
             'StopTimeout': stop_timeout,
-            'Runtime': runtime
+            'Runtime': runtime,
+            'Gpus': gpus
         })
