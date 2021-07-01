@@ -1,7 +1,6 @@
 import paramiko
 import requests.adapters
 import six
-import logging
 import os
 import signal
 import socket
@@ -191,7 +190,6 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         super(SSHHTTPAdapter, self).__init__()
 
     def _create_paramiko_client(self, base_url):
-        logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
         base_url = six.moves.urllib_parse.urlparse(base_url)
         self.ssh_params = {
