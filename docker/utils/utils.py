@@ -136,13 +136,13 @@ def convert_volume_binds(binds):
                 mode = 'rw'
 
             result.append(
-                str('{0}:{1}:{2}').format(k, bind, mode)
+                f'{k}:{bind}:{mode}'
             )
         else:
             if isinstance(v, bytes):
                 v = v.decode('utf-8')
             result.append(
-                str('{0}:{1}:rw').format(k, v)
+                f'{k}:{v}:rw'
             )
     return result
 
@@ -233,14 +233,14 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if proto not in ('tcp', 'unix', 'npipe', 'ssh'):
         raise errors.DockerException(
-            "Invalid bind address protocol: {}".format(addr)
+            f"Invalid bind address protocol: {addr}"
         )
 
     if proto == 'tcp' and not parsed_url.netloc:
         # "tcp://" is exceptionally disallowed by convention;
         # omitting a hostname for other protocols is fine
         raise errors.DockerException(
-            'Invalid bind address format: {}'.format(addr)
+            f'Invalid bind address format: {addr}'
         )
 
     if any([
@@ -248,7 +248,7 @@ def parse_host(addr, is_win32=False, tls=False):
         parsed_url.password
     ]):
         raise errors.DockerException(
-            'Invalid bind address format: {}'.format(addr)
+            f'Invalid bind address format: {addr}'
         )
 
     if parsed_url.path and proto == 'ssh':
@@ -285,8 +285,8 @@ def parse_host(addr, is_win32=False, tls=False):
         proto = 'http+unix'
 
     if proto in ('http+unix', 'npipe'):
-        return "{}://{}".format(proto, path).rstrip('/')
-    return '{0}://{1}:{2}{3}'.format(proto, host, port, path).rstrip('/')
+        return f"{proto}://{path}".rstrip('/')
+    return f'{proto}://{host}:{port}{path}'.rstrip('/')
 
 
 def parse_devices(devices):
@@ -297,7 +297,7 @@ def parse_devices(devices):
             continue
         if not isinstance(device, str):
             raise errors.DockerException(
-                'Invalid device type {0}'.format(type(device))
+                f'Invalid device type {type(device)}'
             )
         device_mapping = device.split(':')
         if device_mapping:
@@ -408,7 +408,7 @@ def parse_bytes(s):
             digits = float(digits_part)
         except ValueError:
             raise errors.DockerException(
-                'Failed converting the string value for memory ({0}) to'
+                'Failed converting the string value for memory ({}) to'
                 ' an integer.'.format(digits_part)
             )
 
@@ -416,7 +416,7 @@ def parse_bytes(s):
         s = int(digits * units[suffix])
     else:
         raise errors.DockerException(
-            'The specified value for memory ({0}) should specify the'
+            'The specified value for memory ({}) should specify the'
             ' units. The postfix should be one of the `b` `k` `m` `g`'
             ' characters'.format(s)
         )
@@ -428,7 +428,7 @@ def normalize_links(links):
     if isinstance(links, dict):
         links = iter(links.items())
 
-    return ['{0}:{1}'.format(k, v) if v else k for k, v in sorted(links)]
+    return [f'{k}:{v}' if v else k for k, v in sorted(links)]
 
 
 def parse_env_file(env_file):
@@ -438,7 +438,7 @@ def parse_env_file(env_file):
     """
     environment = {}
 
-    with open(env_file, 'r') as f:
+    with open(env_file) as f:
         for line in f:
 
             if line[0] == '#':
@@ -454,7 +454,7 @@ def parse_env_file(env_file):
                 environment[k] = v
             else:
                 raise errors.DockerException(
-                    'Invalid line in environment file {0}:\n{1}'.format(
+                    'Invalid line in environment file {}:\n{}'.format(
                         env_file, line))
 
     return environment
@@ -471,7 +471,7 @@ def format_environment(environment):
         if isinstance(value, bytes):
             value = value.decode('utf-8')
 
-        return u'{key}={value}'.format(key=key, value=value)
+        return f'{key}={value}'
     return [format_env(*var) for var in iter(environment.items())]
 
 
@@ -479,11 +479,11 @@ def format_extra_hosts(extra_hosts, task=False):
     # Use format dictated by Swarm API if container is part of a task
     if task:
         return [
-            '{} {}'.format(v, k) for k, v in sorted(iter(extra_hosts.items()))
+            f'{v} {k}' for k, v in sorted(iter(extra_hosts.items()))
         ]
 
     return [
-        '{}:{}'.format(k, v) for k, v in sorted(iter(extra_hosts.items()))
+        f'{k}:{v}' for k, v in sorted(iter(extra_hosts.items()))
     ]
 
 

@@ -45,7 +45,7 @@ def _check_api_features(version, task_template, update_config, endpoint_spec,
     if task_template is not None:
         if 'ForceUpdate' in task_template and utils.version_lt(
                 version, '1.25'):
-                raise_version_error('force_update', '1.25')
+            raise_version_error('force_update', '1.25')
 
         if task_template.get('Placement'):
             if utils.version_lt(version, '1.30'):
@@ -113,7 +113,7 @@ def _merge_task_template(current, override):
     return merged
 
 
-class ServiceApiMixin(object):
+class ServiceApiMixin:
     @utils.minimum_version('1.24')
     def create_service(
             self, task_template, name=None, labels=None, mode=None,

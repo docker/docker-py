@@ -10,11 +10,12 @@ import tempfile
 import threading
 import time
 import unittest
+import socketserver
+import http.server
 
 import docker
 import pytest
 import requests
-import six
 from docker.api import APIClient
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from requests.packages import urllib3
@@ -24,7 +25,7 @@ from . import fake_api
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 
 DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS
@@ -34,7 +35,7 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None, raw=None):
     res = requests.Response()
     res.status_code = status_code
-    if not isinstance(content, six.binary_type):
+    if not isinstance(content, bytes):
         content = json.dumps(content).encode('ascii')
     res._content = content
     res.headers = requests.structures.CaseInsensitiveDict(headers or {})
@@ -60,7 +61,7 @@ def fake_resp(method, url, *args, **kwargs):
     elif (url, method) in fake_api.fake_responses:
         key = (url, method)
     if not key:
-        raise Exception('{0} {1}'.format(method, url))
+        raise Exception(f'{method} {url}')
     status_code, content = fake_api.fake_responses[key]()
     return response(status_code=status_code, content=content)
 
@@ -85,11 +86,11 @@ def fake_delete(self, url, *args, **kwargs):
 
 
 def fake_read_from_socket(self, response, stream, tty=False, demux=False):
-    return six.binary_type()
+    return bytes()
 
 
-url_base = '{0}/'.format(fake_api.prefix)
-url_prefix = '{0}v{1}/'.format(
+url_base = f'{fake_api.prefix}/'
+url_prefix = '{}v{}/'.format(
     url_base,
     docker.constants.DEFAULT_DOCKER_API_VERSION)
 
@@ -133,20 +134,20 @@ class DockerApiTest(BaseAPIClientTest):
 
     def test_url_valid_resource(self):
         url = self.client._url('/hello/{0}/world', 'somename')
-        assert url == '{0}{1}'.format(url_prefix, 'hello/somename/world')
+        assert url == '{}{}'.format(url_prefix, 'hello/somename/world')
 
         url = self.client._url(
             '/hello/{0}/world/{1}', 'somename', 'someothername'
         )
-        assert url == '{0}{1}'.format(
+        assert url == '{}{}'.format(
             url_prefix, 'hello/somename/world/someothername'
         )
 
         url = self.client._url('/hello/{0}/world', 'some?name')
-        assert url == '{0}{1}'.format(url_prefix, 'hello/some%3Fname/world')
+        assert url == '{}{}'.format(url_prefix, 'hello/some%3Fname/world')
 
         url = self.client._url("/images/{0}/push", "localhost:5000/image")
-        assert url == '{0}{1}'.format(
+        assert url == '{}{}'.format(
             url_prefix, 'images/localhost:5000/image/push'
         )
 
@@ -156,13 +157,13 @@ class DockerApiTest(BaseAPIClientTest):
 
     def test_url_no_resource(self):
         url = self.client._url('/simple')
-        assert url == '{0}{1}'.format(url_prefix, 'simple')
+        assert url == '{}{}'.format(url_prefix, 'simple')
 
     def test_url_unversioned_api(self):
         url = self.client._url(
             '/hello/{0}/world', 'somename', versioned_api=False
         )
-        assert url == '{0}{1}'.format(url_base, 'hello/somename/world')
+        assert url == '{}{}'.format(url_base, 'hello/somename/world')
 
     def test_version(self):
         self.client.version()
@@ -184,13 +185,13 @@ class DockerApiTest(BaseAPIClientTest):
 
     def test_retrieve_server_version(self):
         client = APIClient(version="auto")
-        assert isinstance(client._version, six.string_types)
+        assert isinstance(client._version, str)
         assert not (client._version == "auto")
         client.close()
 
     def test_auto_retrieve_server_version(self):
         version = self.client._retrieve_server_version()
-        assert isinstance(version, six.string_types)
+        assert isinstance(version, str)
 
     def test_info(self):
         self.client.info()
@@ -337,8 +338,7 @@ class DockerApiTest(BaseAPIClientTest):
     def test_stream_helper_decoding(self):
         status_code, content = fake_api.fake_responses[url_prefix + 'events']()
         content_str = json.dumps(content)
-        if six.PY3:
-            content_str = content_str.encode('utf-8')
+        content_str = content_str.encode('utf-8')
         body = io.BytesIO(content_str)
 
         # mock a stream interface
@@ -405,7 +405,7 @@ class UnixSocketStreamTest(unittest.TestCase):
             while not self.stop_server:
                 try:
                     connection, client_address = self.server_socket.accept()
-                except socket.error:
+                except OSError:
                     # Probably no connection to accept yet
                     time.sleep(0.01)
                     continue
@@ -489,7 +489,7 @@ class TCPSocketStreamTest(unittest.TestCase):
 
     @classmethod
     def setup_class(cls):
-        cls.server = six.moves.socketserver.ThreadingTCPServer(
+        cls.server = socketserver.ThreadingTCPServer(
             ('', 0), cls.get_handler_class())
         cls.thread = threading.Thread(target=cls.server.serve_forever)
         cls.thread.setDaemon(True)
@@ -508,7 +508,7 @@ class TCPSocketStreamTest(unittest.TestCase):
         stdout_data = cls.stdout_data
         stderr_data = cls.stderr_data
 
-        class Handler(six.moves.BaseHTTPServer.BaseHTTPRequestHandler, object):
+        class Handler(http.server.BaseHTTPRequestHandler):
             def do_POST(self):
                 resp_data = self.get_resp_data()
                 self.send_response(101)
@@ -534,7 +534,7 @@ class TCPSocketStreamTest(unittest.TestCase):
                     data += stderr_data
                     return data
                 else:
-                    raise Exception('Unknown path {0}'.format(path))
+                    raise Exception(f'Unknown path {path}')
 
             @staticmethod
             def frame_header(stream, data):
@@ -632,7 +632,7 @@ class UserAgentTest(unittest.TestCase):
 
 
 class DisableSocketTest(unittest.TestCase):
-    class DummySocket(object):
+    class DummySocket:
         def __init__(self, timeout=60):
             self.timeout = timeout
 

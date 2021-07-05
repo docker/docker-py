@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
 import unittest
-import six
 
 from docker.utils.proxy import ProxyConfig
 
@@ -65,7 +62,7 @@ class ProxyConfigTest(unittest.TestCase):
         # Proxy config is non null, env is None.
         self.assertSetEqual(
             set(CONFIG.inject_proxy_environment(None)),
-            set(['{}={}'.format(k, v) for k, v in six.iteritems(ENV)]))
+            {f'{k}={v}' for k, v in ENV.items()})
 
         # Proxy config is null, env is None.
         self.assertIsNone(ProxyConfig().inject_proxy_environment(None), None)
@@ -74,7 +71,7 @@ class ProxyConfigTest(unittest.TestCase):
 
         # Proxy config is non null, env is non null
         actual = CONFIG.inject_proxy_environment(env)
-        expected = ['{}={}'.format(k, v) for k, v in six.iteritems(ENV)] + env
+        expected = [f'{k}={v}' for k, v in ENV.items()] + env
         # It's important that the first 8 variables are the ones from the proxy
         # config, and the last 2 are the ones from the input environment
         self.assertSetEqual(set(actual[:8]), set(expected[:8]))

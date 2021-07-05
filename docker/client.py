@@ -13,7 +13,7 @@ from .models.volumes import VolumeCollection
 from .utils import kwargs_from_env
 
 
-class DockerClient(object):
+class DockerClient:
     """
     A client for communicating with a Docker server.
 
@@ -212,7 +212,7 @@ class DockerClient(object):
     close.__doc__ = APIClient.close.__doc__
 
     def __getattr__(self, name):
-        s = ["'DockerClient' object has no attribute '{}'".format(name)]
+        s = [f"'DockerClient' object has no attribute '{name}'"]
         # If a user calls a method on APIClient, they
         if hasattr(APIClient, name):
             s.append("In Docker SDK for Python 2.0, this method is now on the "

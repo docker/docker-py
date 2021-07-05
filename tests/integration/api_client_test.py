@@ -72,6 +72,6 @@ class UnixconnTest(unittest.TestCase):
             client.close()
             del client
 
-            assert len(w) == 0, "No warnings produced: {0}".format(
+            assert len(w) == 0, "No warnings produced: {}".format(
                 w[0].message
             )

@@ -2,14 +2,12 @@ import base64
 import json
 import logging
 
-import six
-
 from . import credentials
 from . import errors
 from .utils import config
 
 INDEX_NAME = 'docker.io'
-INDEX_URL = 'https://index.{0}/v1/'.format(INDEX_NAME)
+INDEX_URL = f'https://index.{INDEX_NAME}/v1/'
 TOKEN_USERNAME = '<token>'
 
 log = logging.getLogger(__name__)
@@ -18,13 +16,13 @@ log = logging.getLogger(__name__)
 def resolve_repository_name(repo_name):
     if '://' in repo_name:
         raise errors.InvalidRepository(
-            'Repository name cannot contain a scheme ({0})'.format(repo_name)
+            f'Repository name cannot contain a scheme ({repo_name})'
         )
 
     index_name, remote_name = split_repo_name(repo_name)
     if index_name[0] == '-' or index_name[-1] == '-':
         raise errors.InvalidRepository(
-            'Invalid index name ({0}). Cannot begin or end with a'
+            'Invalid index name ({}). Cannot begin or end with a'
             ' hyphen.'.format(index_name)
         )
     return resolve_index_name(index_name), remote_name
@@ -98,10 +96,10 @@ class AuthConfig(dict):
         """
 
         conf = {}
-        for registry, entry in six.iteritems(entries):
+        for registry, entry in entries.items():
             if not isinstance(entry, dict):
                 log.debug(
-                    'Config entry for key {0} is not auth config'.format(
+                    'Config entry for key {} is not auth config'.format(
                         registry
                     )
                 )
@@ -111,14 +109,14 @@ class AuthConfig(dict):
                 # keys is not formatted properly.
                 if raise_on_error:
                     raise errors.InvalidConfigFile(
-                        'Invalid configuration for registry {0}'.format(
+                        'Invalid configuration for registry {}'.format(
                             registry
                         )
                     )
                 return {}
             if 'identitytoken' in entry:
                 log.debug(
-                    'Found an IdentityToken entry for registry {0}'.format(
+                    'Found an IdentityToken entry for registry {}'.format(
                         registry
                     )
                 )
@@ -132,7 +130,7 @@ class AuthConfig(dict):
                 # a valid value in the auths config.
                 # https://github.com/docker/compose/issues/3265
                 log.debug(
-                    'Auth data for {0} is absent. Client might be using a '
+                    'Auth data for {} is absent. Client might be using a '
                     'credentials store instead.'.format(registry)
                 )
                 conf[registry] = {}
@@ -140,7 +138,7 @@ class AuthConfig(dict):
 
             username, password = decode_auth(entry['auth'])
             log.debug(
-                'Found entry (registry={0}, username={1})'
+                'Found entry (registry={}, username={})'
                 .format(repr(registry), repr(username))
             )
 
@@ -170,7 +168,7 @@ class AuthConfig(dict):
             try:
                 with open(config_file) as f:
                     config_dict = json.load(f)
-            except (IOError, KeyError, ValueError) as e:
+            except (OSError, KeyError, ValueError) as e:
                 # Likely missing new Docker config file or it's in an
                 # unknown format, continue to attempt to read old location
                 # and format.
@@ -230,7 +228,7 @@ class AuthConfig(dict):
             store_name = self.get_credential_store(registry)
             if store_name is not None:
                 log.debug(
-                    'Using credentials store "{0}"'.format(store_name)
+                    f'Using credentials store "{store_name}"'
                 )
                 cfg = self._resolve_authconfig_credstore(registry, store_name)
                 if cfg is not None:
@@ -239,15 +237,15 @@ class AuthConfig(dict):
 
         # Default to the public index server
         registry = resolve_index_name(registry) if registry else INDEX_NAME
-        log.debug("Looking for auth entry for {0}".format(repr(registry)))
+        log.debug(f"Looking for auth entry for {repr(registry)}")
 
         if registry in self.auths:
-            log.debug("Found {0}".format(repr(registry)))
+            log.debug(f"Found {repr(registry)}")
             return self.auths[registry]
 
-        for key, conf in six.iteritems(self.auths):
+        for key, conf in self.auths.items():
             if resolve_index_name(key) == registry:
-                log.debug("Found {0}".format(repr(key)))
+                log.debug(f"Found {repr(key)}")
                 return conf
 
         log.debug("No entry found")
@@ -258,7 +256,7 @@ class AuthConfig(dict):
             # The ecosystem is a little schizophrenic with index.docker.io VS
             # docker.io - in that case, it seems the full URL is necessary.
             registry = INDEX_URL
-        log.debug("Looking for auth entry for {0}".format(repr(registry)))
+        log.debug(f"Looking for auth entry for {repr(registry)}")
         store = self._get_store_instance(credstore_name)
         try:
             data = store.get(registry)
@@ -278,7 +276,7 @@ class AuthConfig(dict):
             return None
         except credentials.StoreError as e:
             raise errors.DockerException(
-                'Credentials store error: {0}'.format(repr(e))
+                f'Credentials store error: {repr(e)}'
             )
 
     def _get_store_instance(self, name):
@@ -329,7 +327,7 @@ def convert_to_hostname(url):
 
 
 def decode_auth(auth):
-    if isinstance(auth, six.string_types):
+    if isinstance(auth, str):
         auth = auth.encode('ascii')
     s = base64.b64decode(auth)
     login, pwd = s.split(b':', 1)

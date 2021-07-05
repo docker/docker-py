@@ -15,7 +15,7 @@ from . import fake_api
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 TEST_CERT_DIR = os.path.join(os.path.dirname(__file__), 'testdata/certs')
 POOL_SIZE = 20

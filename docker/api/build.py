@@ -12,7 +12,7 @@ from .. import utils
 log = logging.getLogger(__name__)
 
 
-class BuildApiMixin(object):
+class BuildApiMixin:
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
@@ -132,7 +132,7 @@ class BuildApiMixin(object):
         for key in container_limits.keys():
             if key not in constants.CONTAINER_LIMITS_KEYS:
                 raise errors.DockerException(
-                    'Invalid container_limits key {0}'.format(key)
+                    f'Invalid container_limits key {key}'
                 )
 
         if custom_context:
@@ -150,7 +150,7 @@ class BuildApiMixin(object):
             dockerignore = os.path.join(path, '.dockerignore')
             exclude = None
             if os.path.exists(dockerignore):
-                with open(dockerignore, 'r') as f:
+                with open(dockerignore) as f:
                     exclude = list(filter(
                         lambda x: x != '' and x[0] != '#',
                         [l.strip() for l in f.read().splitlines()]
@@ -313,7 +313,7 @@ class BuildApiMixin(object):
                 auth_data[auth.INDEX_URL] = auth_data.get(auth.INDEX_NAME, {})
 
             log.debug(
-                'Sending auth config ({0})'.format(
+                'Sending auth config ({})'.format(
                     ', '.join(repr(k) for k in auth_data.keys())
                 )
             )
@@ -344,9 +344,9 @@ def process_dockerfile(dockerfile, path):
     if (os.path.splitdrive(path)[0] != os.path.splitdrive(abs_dockerfile)[0] or
             os.path.relpath(abs_dockerfile, path).startswith('..')):
         # Dockerfile not in context - read data to insert into tar later
-        with open(abs_dockerfile, 'r') as df:
+        with open(abs_dockerfile) as df:
             return (
-                '.dockerfile.{0:x}'.format(random.getrandbits(160)),
+                f'.dockerfile.{random.getrandbits(160):x}',
                 df.read()
             )
 
