@@ -13,8 +13,8 @@ class ImageCollectionTest(BaseIntegrationTest):
     def test_build(self):
         client = docker.from_env(version=TEST_API_VERSION)
         image, _ = client.images.build(fileobj=io.BytesIO(
-            "FROM alpine\n"
-            "CMD echo hello world".encode('ascii')
+            b"FROM alpine\n"
+            b"CMD echo hello world"
         ))
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
@@ -24,8 +24,8 @@ class ImageCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.BuildError) as cm:
             client.images.build(fileobj=io.BytesIO(
-                "FROM alpine\n"
-                "RUN exit 1".encode('ascii')
+                b"FROM alpine\n"
+                b"RUN exit 1"
             ))
         assert (
             "The command '/bin/sh -c exit 1' returned a non-zero code: 1"
@@ -36,8 +36,8 @@ class ImageCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image, _ = client.images.build(
             tag='some-tag', fileobj=io.BytesIO(
-                "FROM alpine\n"
-                "CMD echo hello world".encode('ascii')
+                b"FROM alpine\n"
+                b"CMD echo hello world"
             )
         )
         self.tmp_imgs.append(image.id)
@@ -47,8 +47,8 @@ class ImageCollectionTest(BaseIntegrationTest):
         client = docker.from_env(version=TEST_API_VERSION)
         image, _ = client.images.build(
             tag='dup-txt-tag', fileobj=io.BytesIO(
-                "FROM alpine\n"
-                "CMD echo Successfully built abcd1234".encode('ascii')
+                b"FROM alpine\n"
+                b"CMD echo Successfully built abcd1234"
             )
         )
         self.tmp_imgs.append(image.id)
@@ -119,7 +119,7 @@ class ImageCollectionTest(BaseIntegrationTest):
         self.tmp_imgs.append(additional_tag)
         image.reload()
         with tempfile.TemporaryFile() as f:
-            stream = image.save(named='{}:latest'.format(additional_tag))
+            stream = image.save(named=f'{additional_tag}:latest')
             for chunk in stream:
                 f.write(chunk)
 
@@ -129,7 +129,7 @@ class ImageCollectionTest(BaseIntegrationTest):
 
         assert len(result) == 1
         assert result[0].id == image.id
-        assert '{}:latest'.format(additional_tag) in result[0].tags
+        assert f'{additional_tag}:latest' in result[0].tags
 
     def test_save_name_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -143,7 +143,7 @@ class ImageTest(BaseIntegrationTest):
     def test_tag_and_remove(self):
         repo = 'dockersdk.tests.images.test_tag'
         tag = 'some-tag'
-        identifier = '{}:{}'.format(repo, tag)
+        identifier = f'{repo}:{tag}'
 
         client = docker.from_env(version=TEST_API_VERSION)
         image = client.images.pull('alpine:latest')

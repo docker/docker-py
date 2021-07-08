@@ -1,7 +1,6 @@
-import six
 import requests.adapters
 import socket
-from six.moves import http_client as httplib
+import http.client as httplib
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
@@ -15,21 +14,10 @@ except ImportError:
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
-class UnixHTTPResponse(httplib.HTTPResponse, object):
-    def __init__(self, sock, *args, **kwargs):
-        disable_buffering = kwargs.pop('disable_buffering', False)
-        if six.PY2:
-            # FIXME: We may need to disable buffering on Py3 as well,
-            # but there's no clear way to do it at the moment. See:
-            # https://github.com/docker/docker-py/issues/1799
-            kwargs['buffering'] = not disable_buffering
-        super(UnixHTTPResponse, self).__init__(sock, *args, **kwargs)
-
-
-class UnixHTTPConnection(httplib.HTTPConnection, object):
+class UnixHTTPConnection(httplib.HTTPConnection):
 
     def __init__(self, base_url, unix_socket, timeout=60):
-        super(UnixHTTPConnection, self).__init__(
+        super().__init__(
             'localhost', timeout=timeout
         )
         self.base_url = base_url
@@ -44,7 +32,7 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
         self.sock = sock
 
     def putheader(self, header, *values):
-        super(UnixHTTPConnection, self).putheader(header, *values)
+        super().putheader(header, *values)
         if header == 'Connection' and 'Upgrade' in values:
             self.disable_buffering = True
 
@@ -52,12 +40,12 @@ class UnixHTTPConnection(httplib.HTTPConnection, object):
         if self.disable_buffering:
             kwargs['disable_buffering'] = True
 
-        return UnixHTTPResponse(sock, *args, **kwargs)
+        return httplib.HTTPResponse(sock, *args, **kwargs)
 
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     def __init__(self, base_url, socket_path, timeout=60, maxsize=10):
-        super(UnixHTTPConnectionPool, self).__init__(
+        super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
         self.base_url = base_url
@@ -89,7 +77,7 @@ class UnixHTTPAdapter(BaseHTTPAdapter):
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        super(UnixHTTPAdapter, self).__init__()
+        super().__init__()
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:

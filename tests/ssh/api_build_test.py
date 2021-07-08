@@ -7,7 +7,6 @@ from docker import errors
 from docker.utils.proxy import ProxyConfig
 
 import pytest
-import six
 
 from .base import BaseAPIIntegrationTest, TEST_IMG
 from ..helpers import random_name, requires_api_version, requires_experimental
@@ -71,9 +70,8 @@ class BuildTest(BaseAPIIntegrationTest):
         assert len(logs) > 0
 
     def test_build_from_stringio(self):
-        if six.PY3:
-            return
-        script = io.StringIO(six.text_type('\n').join([
+        return
+        script = io.StringIO('\n'.join([
             'FROM busybox',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
@@ -83,8 +81,7 @@ class BuildTest(BaseAPIIntegrationTest):
         stream = self.client.build(fileobj=script)
         logs = ''
         for chunk in stream:
-            if six.PY3:
-                chunk = chunk.decode('utf-8')
+            chunk = chunk.decode('utf-8')
             logs += chunk
         assert logs != ''
 
@@ -135,8 +132,7 @@ class BuildTest(BaseAPIIntegrationTest):
         self.client.wait(c)
         logs = self.client.logs(c)
 
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = logs.decode('utf-8')
 
         assert sorted(list(filter(None, logs.split('\n')))) == sorted([
             '/test/#file.txt',
@@ -340,8 +336,7 @@ class BuildTest(BaseAPIIntegrationTest):
         assert self.client.inspect_image(img_name)
         ctnr = self.run_container(img_name, 'cat /hosts-file')
         logs = self.client.logs(ctnr)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = logs.decode('utf-8')
         assert '127.0.0.1\textrahost.local.test' in logs
         assert '127.0.0.1\thello.world.test' in logs
 
@@ -376,7 +371,7 @@ class BuildTest(BaseAPIIntegrationTest):
         snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'
         script = io.BytesIO(b'\n'.join([
             b'FROM busybox',
-            'RUN sh -c ">&2 echo \'{0}\'"'.format(snippet).encode('utf-8')
+            f'RUN sh -c ">&2 echo \'{snippet}\'"'.encode('utf-8')
         ]))
 
         stream = self.client.build(
@@ -440,7 +435,7 @@ class BuildTest(BaseAPIIntegrationTest):
     @requires_api_version('1.32')
     @requires_experimental(until=None)
     def test_build_invalid_platform(self):
-        script = io.BytesIO('FROM busybox\n'.encode('ascii'))
+        script = io.BytesIO(b'FROM busybox\n')
 
         with pytest.raises(errors.APIError) as excinfo:
             stream = self.client.build(fileobj=script, platform='foobar')

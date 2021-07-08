@@ -40,10 +40,10 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'update_config': {'update': 'config'},
             'endpoint_spec': {'blah': 'blah'},
         }
-        assert set(task_template.keys()) == set([
+        assert set(task_template.keys()) == {
             'ContainerSpec', 'Resources', 'RestartPolicy', 'Placement',
             'LogDriver', 'Networks'
-        ])
+        }
         assert task_template['Placement'] == {
             'Constraints': ['foo=bar'],
             'Preferences': ['bar=baz'],
@@ -55,7 +55,7 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'Options': {'foo': 'bar'}
         }
         assert task_template['Networks'] == [{'Target': 'somenet'}]
-        assert set(task_template['ContainerSpec'].keys()) == set([
+        assert set(task_template['ContainerSpec'].keys()) == {
             'Image', 'Command', 'Args', 'Hostname', 'Env', 'Dir', 'User',
             'Labels', 'Mounts', 'StopGracePeriod'
-        ])
+        }

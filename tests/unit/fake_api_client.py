@@ -7,7 +7,7 @@ from . import fake_api
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 
 class CopyReturnMagicMock(mock.MagicMock):
@@ -15,7 +15,7 @@ class CopyReturnMagicMock(mock.MagicMock):
     A MagicMock which deep copies every return value.
     """
     def _mock_call(self, *args, **kwargs):
-        ret = super(CopyReturnMagicMock, self)._mock_call(*args, **kwargs)
+        ret = super()._mock_call(*args, **kwargs)
         if isinstance(ret, (dict, list)):
             ret = copy.deepcopy(ret)
         return ret
