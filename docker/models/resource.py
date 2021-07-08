@@ -1,5 +1,4 @@
-
-class Model(object):
+class Model:
     """
     A base class for representing a single object on the server.
     """
@@ -18,13 +17,13 @@ class Model(object):
             self.attrs = {}
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self.short_id)
+        return f"<{self.__class__.__name__}: {self.short_id}>"
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.id == other.id
 
     def __hash__(self):
-        return hash("%s:%s" % (self.__class__.__name__, self.id))
+        return hash(f"{self.__class__.__name__}:{self.id}")
 
     @property
     def id(self):
@@ -49,7 +48,7 @@ class Model(object):
         self.attrs = new_model.attrs
 
 
-class Collection(object):
+class Collection:
     """
     A base class for representing all objects of a particular type on the
     server.

@@ -7,7 +7,7 @@ class Plugin(Model):
     A plugin on the server.
     """
     def __repr__(self):
-        return "<%s: '%s'>" % (self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__}: '{self.name}'>"
 
     @property
     def name(self):
@@ -117,8 +117,7 @@ class Plugin(Model):
         if remote is None:
             remote = self.name
         privileges = self.client.api.plugin_privileges(remote)
-        for d in self.client.api.upgrade_plugin(self.name, remote, privileges):
-            yield d
+        yield from self.client.api.upgrade_plugin(self.name, remote, privileges)
         self.reload()
 
 

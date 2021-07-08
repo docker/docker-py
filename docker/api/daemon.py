@@ -4,7 +4,7 @@ from datetime import datetime
 from .. import auth, types, utils
 
 
-class DaemonApiMixin(object):
+class DaemonApiMixin:
     @utils.minimum_version('1.25')
     def df(self):
         """

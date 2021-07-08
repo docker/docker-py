@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import json
 import signal
@@ -7,7 +5,6 @@ import signal
 import docker
 from docker.api import APIClient
 import pytest
-import six
 
 from . import fake_api
 from ..helpers import requires_api_version
@@ -19,7 +16,7 @@ from .api_test import (
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 
 def fake_inspect_container_tty(self, container):
@@ -771,7 +768,7 @@ class CreateContainerTest(BaseAPIClientTest):
     def test_create_container_with_device_requests(self):
         client = APIClient(version='1.40')
         fake_api.fake_responses.setdefault(
-            '{0}/v1.40/containers/create'.format(fake_api.prefix),
+            f'{fake_api.prefix}/v1.40/containers/create',
             fake_api.post_fake_create_container,
         )
         client.create_container(
@@ -831,8 +828,8 @@ class CreateContainerTest(BaseAPIClientTest):
 
     def test_create_container_with_labels_dict(self):
         labels_dict = {
-            six.text_type('foo'): six.text_type('1'),
-            six.text_type('bar'): six.text_type('2'),
+            'foo': '1',
+            'bar': '2',
         }
 
         self.client.create_container(
@@ -848,12 +845,12 @@ class CreateContainerTest(BaseAPIClientTest):
 
     def test_create_container_with_labels_list(self):
         labels_list = [
-            six.text_type('foo'),
-            six.text_type('bar'),
+            'foo',
+            'bar',
         ]
         labels_dict = {
-            six.text_type('foo'): six.text_type(),
-            six.text_type('bar'): six.text_type(),
+            'foo': '',
+            'bar': '',
         }
 
         self.client.create_container(
@@ -1013,11 +1010,11 @@ class CreateContainerTest(BaseAPIClientTest):
 
     def test_create_container_with_unicode_envvars(self):
         envvars_dict = {
-            'foo': u'☃',
+            'foo': '☃',
         }
 
         expected = [
-            u'foo=☃'
+            'foo=☃'
         ]
 
         self.client.create_container(
@@ -1138,7 +1135,7 @@ class ContainerTest(BaseAPIClientTest):
             stream=False
         )
 
-        assert logs == 'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        assert logs == b'Flowering Nights\n(Sakuya Iyazoi)\n'
 
     def test_logs_with_dict_instead_of_id(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',
@@ -1154,7 +1151,7 @@ class ContainerTest(BaseAPIClientTest):
             stream=False
         )
 
-        assert logs == 'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        assert logs == b'Flowering Nights\n(Sakuya Iyazoi)\n'
 
     def test_log_streaming(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',

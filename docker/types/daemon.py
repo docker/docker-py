@@ -8,7 +8,7 @@ except ImportError:
 from ..errors import DockerException
 
 
-class CancellableStream(object):
+class CancellableStream:
     """
     Stream wrapper for real-time events, logs, etc. from the server.
 
@@ -32,7 +32,7 @@ class CancellableStream(object):
             return next(self._stream)
         except urllib3.exceptions.ProtocolError:
             raise StopIteration
-        except socket.error:
+        except OSError:
             raise StopIteration
 
     next = __next__

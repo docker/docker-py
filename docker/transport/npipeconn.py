@@ -1,14 +1,11 @@
-import six
+import queue
 import requests.adapters
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 from .npipesocket import NpipeSocket
 
-if six.PY3:
-    import http.client as httplib
-else:
-    import httplib
+import http.client as httplib
 
 try:
     import requests.packages.urllib3 as urllib3
@@ -18,9 +15,9 @@ except ImportError:
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
-class NpipeHTTPConnection(httplib.HTTPConnection, object):
+class NpipeHTTPConnection(httplib.HTTPConnection):
     def __init__(self, npipe_path, timeout=60):
-        super(NpipeHTTPConnection, self).__init__(
+        super().__init__(
             'localhost', timeout=timeout
         )
         self.npipe_path = npipe_path
@@ -35,7 +32,7 @@ class NpipeHTTPConnection(httplib.HTTPConnection, object):
 
 class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     def __init__(self, npipe_path, timeout=60, maxsize=10):
-        super(NpipeHTTPConnectionPool, self).__init__(
+        super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
         self.npipe_path = npipe_path
@@ -57,7 +54,7 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         except AttributeError:  # self.pool is None
             raise urllib3.exceptions.ClosedPoolError(self, "Pool is closed.")
 
-        except six.moves.queue.Empty:
+        except queue.Empty:
             if self.block:
                 raise urllib3.exceptions.EmptyPoolError(
                     self,
@@ -85,7 +82,7 @@ class NpipeHTTPAdapter(BaseHTTPAdapter):
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        super(NpipeHTTPAdapter, self).__init__()
+        super().__init__()
 
     def get_connection(self, url, proxies=None):
         with self.pools.lock:

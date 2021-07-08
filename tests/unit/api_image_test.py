@@ -11,7 +11,7 @@ from .api_test import (
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 
 class ImageTest(BaseAPIClientTest):

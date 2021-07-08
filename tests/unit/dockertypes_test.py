@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import unittest
 
 import pytest
@@ -15,7 +13,7 @@ from docker.types.services import convert_service_ports
 try:
     from unittest import mock
 except:  # noqa: E722
-    import mock
+    from unittest import mock
 
 
 def create_host_config(*args, **kwargs):

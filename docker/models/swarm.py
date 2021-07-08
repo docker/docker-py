@@ -11,7 +11,7 @@ class Swarm(Model):
     id_attribute = 'ID'
 
     def __init__(self, *args, **kwargs):
-        super(Swarm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.client:
             try:
                 self.reload()

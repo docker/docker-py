@@ -1,11 +1,9 @@
 import base64
 
-import six
-
 from .. import utils
 
 
-class ConfigApiMixin(object):
+class ConfigApiMixin:
     @utils.minimum_version('1.30')
     def create_config(self, name, data, labels=None):
         """
@@ -22,8 +20,7 @@ class ConfigApiMixin(object):
             data = data.encode('utf-8')
 
         data = base64.b64encode(data)
-        if six.PY3:
-            data = data.decode('ascii')
+        data = data.decode('ascii')
         body = {
             'Data': data,
             'Name': name,

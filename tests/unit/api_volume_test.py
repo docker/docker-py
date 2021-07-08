@@ -104,7 +104,7 @@ class VolumeTest(BaseAPIClientTest):
         args = fake_request.call_args
 
         assert args[0][0] == 'GET'
-        assert args[0][1] == '{0}volumes/{1}'.format(url_prefix, name)
+        assert args[0][1] == f'{url_prefix}volumes/{name}'
 
     def test_remove_volume(self):
         name = 'perfectcherryblossom'
@@ -112,4 +112,4 @@ class VolumeTest(BaseAPIClientTest):
         args = fake_request.call_args
 
         assert args[0][0] == 'DELETE'
-        assert args[0][1] == '{0}volumes/{1}'.format(url_prefix, name)
+        assert args[0][1] == f'{url_prefix}volumes/{name}'

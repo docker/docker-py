@@ -5,7 +5,7 @@ from . import errors
 from .transport import SSLHTTPAdapter
 
 
-class TLSConfig(object):
+class TLSConfig:
     """
     TLS configuration.
 

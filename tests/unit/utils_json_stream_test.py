@@ -1,11 +1,7 @@
-# encoding: utf-8
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from docker.utils.json_stream import json_splitter, stream_as_text, json_stream
 
 
-class TestJsonSplitter(object):
+class TestJsonSplitter:
 
     def test_json_splitter_no_object(self):
         data = '{"foo": "bar'
@@ -20,7 +16,7 @@ class TestJsonSplitter(object):
         assert json_splitter(data) == ({'foo': 'bar'}, '{"next": "obj"}')
 
 
-class TestStreamAsText(object):
+class TestStreamAsText:
 
     def test_stream_with_non_utf_unicode_character(self):
         stream = [b'\xed\xf3\xf3']
@@ -28,12 +24,12 @@ class TestStreamAsText(object):
         assert output == '���'
 
     def test_stream_with_utf_character(self):
-        stream = ['ěĝ'.encode('utf-8')]
+        stream = ['ěĝ'.encode()]
         output, = stream_as_text(stream)
         assert output == 'ěĝ'
 
 
-class TestJsonStream(object):
+class TestJsonStream:
 
     def test_with_falsy_entries(self):
         stream = [

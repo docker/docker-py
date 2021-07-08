@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import base64
 import json
 import os
@@ -9,7 +7,6 @@ import tempfile
 import unittest
 
 import pytest
-import six
 from docker.api.client import APIClient
 from docker.constants import IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException
@@ -195,22 +192,22 @@ class ConverVolumeBindsTest(unittest.TestCase):
         assert convert_volume_binds(data) == ['/mnt/vol1:/data:rw']
 
     def test_convert_volume_binds_unicode_bytes_input(self):
-        expected = [u'/mnt/지연:/unicode/박:rw']
+        expected = ['/mnt/지연:/unicode/박:rw']
 
         data = {
-            u'/mnt/지연'.encode('utf-8'): {
-                'bind': u'/unicode/박'.encode('utf-8'),
+            '/mnt/지연'.encode(): {
+                'bind': '/unicode/박'.encode(),
                 'mode': 'rw'
             }
         }
         assert convert_volume_binds(data) == expected
 
     def test_convert_volume_binds_unicode_unicode_input(self):
-        expected = [u'/mnt/지연:/unicode/박:rw']
+        expected = ['/mnt/지연:/unicode/박:rw']
 
         data = {
-            u'/mnt/지연': {
-                'bind': u'/unicode/박',
+            '/mnt/지연': {
+                'bind': '/unicode/박',
                 'mode': 'rw'
             }
         }
@@ -359,14 +356,14 @@ class ParseRepositoryTagTest(unittest.TestCase):
         )
 
     def test_index_image_sha(self):
-        assert parse_repository_tag("root@sha256:{0}".format(self.sha)) == (
-            "root", "sha256:{0}".format(self.sha)
+        assert parse_repository_tag(f"root@sha256:{self.sha}") == (
+            "root", f"sha256:{self.sha}"
         )
 
     def test_private_reg_image_sha(self):
         assert parse_repository_tag(
-            "url:5000/repo@sha256:{0}".format(self.sha)
-        ) == ("url:5000/repo", "sha256:{0}".format(self.sha))
+            f"url:5000/repo@sha256:{self.sha}"
+        ) == ("url:5000/repo", f"sha256:{self.sha}")
 
 
 class ParseDeviceTest(unittest.TestCase):
@@ -463,20 +460,13 @@ class UtilsTest(unittest.TestCase):
     def test_decode_json_header(self):
         obj = {'a': 'b', 'c': 1}
         data = None
-        if six.PY3:
-            data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
-        else:
-            data = base64.urlsafe_b64encode(json.dumps(obj))
+        data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
         decoded_data = decode_json_header(data)
         assert obj == decoded_data
 
 
 class SplitCommandTest(unittest.TestCase):
     def test_split_command_with_unicode(self):
-        assert split_command(u'echo μμ') == ['echo', 'μμ']
-
-    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
-    def test_split_command_with_bytes(self):
         assert split_command('echo μμ') == ['echo', 'μμ']
 
 
@@ -626,7 +616,7 @@ class FormatEnvironmentTest(unittest.TestCase):
         env_dict = {
             'ARTIST_NAME': b'\xec\x86\xa1\xec\xa7\x80\xec\x9d\x80'
         }
-        assert format_environment(env_dict) == [u'ARTIST_NAME=송지은']
+        assert format_environment(env_dict) == ['ARTIST_NAME=송지은']
 
     def test_format_env_no_value(self):
         env_dict = {

@@ -11,7 +11,6 @@ import time
 import docker
 import paramiko
 import pytest
-import six
 
 
 def make_tree(dirs, files):
@@ -54,7 +53,7 @@ def requires_api_version(version):
 
     return pytest.mark.skipif(
         docker.utils.version_lt(test_version, version),
-        reason="API version is too low (< {0})".format(version)
+        reason=f"API version is too low (< {version})"
     )
 
 
@@ -86,7 +85,7 @@ def wait_on_condition(condition, delay=0.1, timeout=40):
 
 
 def random_name():
-    return u'dockerpytest_{0:x}'.format(random.getrandbits(64))
+    return f'dockerpytest_{random.getrandbits(64):x}'
 
 
 def force_leave_swarm(client):
@@ -105,11 +104,11 @@ def force_leave_swarm(client):
 
 
 def swarm_listen_addr():
-    return '0.0.0.0:{0}'.format(random.randrange(10000, 25000))
+    return f'0.0.0.0:{random.randrange(10000, 25000)}'
 
 
 def assert_cat_socket_detached_with_keys(sock, inputs):
-    if six.PY3 and hasattr(sock, '_sock'):
+    if hasattr(sock, '_sock'):
         sock = sock._sock
 
     for i in inputs:
@@ -128,7 +127,7 @@ def assert_cat_socket_detached_with_keys(sock, inputs):
             # of the daemon no longer cause this to raise an error.
             try:
                 sock.sendall(b'make sure the socket is closed\n')
-            except socket.error:
+            except OSError:
                 return
 
         sock.sendall(b"make sure the socket is closed\n")

@@ -32,30 +32,30 @@ class SSLAdapterTest(unittest.TestCase):
 class MatchHostnameTest(unittest.TestCase):
     cert = {
         'issuer': (
-            (('countryName', u'US'),),
-            (('stateOrProvinceName', u'California'),),
-            (('localityName', u'San Francisco'),),
-            (('organizationName', u'Docker Inc'),),
-            (('organizationalUnitName', u'Docker-Python'),),
-            (('commonName', u'localhost'),),
-            (('emailAddress', u'info@docker.com'),)
+            (('countryName', 'US'),),
+            (('stateOrProvinceName', 'California'),),
+            (('localityName', 'San Francisco'),),
+            (('organizationName', 'Docker Inc'),),
+            (('organizationalUnitName', 'Docker-Python'),),
+            (('commonName', 'localhost'),),
+            (('emailAddress', 'info@docker.com'),)
         ),
         'notAfter': 'Mar 25 23:08:23 2030 GMT',
-        'notBefore': u'Mar 25 23:08:23 2016 GMT',
-        'serialNumber': u'BD5F894C839C548F',
+        'notBefore': 'Mar 25 23:08:23 2016 GMT',
+        'serialNumber': 'BD5F894C839C548F',
         'subject': (
-            (('countryName', u'US'),),
-            (('stateOrProvinceName', u'California'),),
-            (('localityName', u'San Francisco'),),
-            (('organizationName', u'Docker Inc'),),
-            (('organizationalUnitName', u'Docker-Python'),),
-            (('commonName', u'localhost'),),
-            (('emailAddress', u'info@docker.com'),)
+            (('countryName', 'US'),),
+            (('stateOrProvinceName', 'California'),),
+            (('localityName', 'San Francisco'),),
+            (('organizationName', 'Docker Inc'),),
+            (('organizationalUnitName', 'Docker-Python'),),
+            (('commonName', 'localhost'),),
+            (('emailAddress', 'info@docker.com'),)
         ),
         'subjectAltName': (
-            ('DNS', u'localhost'),
-            ('DNS', u'*.gensokyo.jp'),
-            ('IP Address', u'127.0.0.1'),
+            ('DNS', 'localhost'),
+            ('DNS', '*.gensokyo.jp'),
+            ('IP Address', '127.0.0.1'),
         ),
         'version': 3
     }
