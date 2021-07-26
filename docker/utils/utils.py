@@ -88,7 +88,7 @@ def _convert_port_binding(binding):
         result['HostPort'] = binding
 
     if result['HostPort'] is None:
-        result['HostPort'] = ''
+        result['HostPort'] = '0'
     else:
         result['HostPort'] = str(result['HostPort'])
 
