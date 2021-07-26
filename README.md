@@ -6,9 +6,9 @@ A Python library for the Docker Engine API. It lets you do anything the `docker`
 
 ## Installation
 
-The latest stable version [is available on PyPI](https://pypi.python.org/pypi/docker/). Either add `docker` to your `requirements.txt` file or install with pip:
+The latest stable version [is available on PyPI](https://pypi.python.org/pypi/docker/). Either add `docker` and `six` to your `requirements.txt` file or install with pip:
 
-    pip install docker
+    pip install docker six
 
 If you are intending to connect to a docker host via TLS, add `docker[tls]` to your requirements instead, or install with pip:
 
