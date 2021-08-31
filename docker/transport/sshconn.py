@@ -202,7 +202,6 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             with open(ssh_config_file) as f:
                 conf.parse(f)
             host_config = conf.lookup(base_url.hostname)
-            self.ssh_conf = host_config
             if 'proxycommand' in host_config:
                 self.ssh_params["sock"] = paramiko.ProxyCommand(
                     self.ssh_conf['proxycommand']
@@ -210,9 +209,11 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             if 'hostname' in host_config:
                 self.ssh_params['hostname'] = host_config['hostname']
             if base_url.port is None and 'port' in host_config:
-                self.ssh_params['port'] = self.ssh_conf['port']
+                self.ssh_params['port'] = host_config['port']
             if base_url.username is None and 'user' in host_config:
-                self.ssh_params['username'] = self.ssh_conf['user']
+                self.ssh_params['username'] = host_config['user']
+            if 'identityfile' in host_config:
+                self.ssh_params['key_filename'] = host_config['identityfile']
 
         self.ssh_client.load_system_host_keys()
         self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
