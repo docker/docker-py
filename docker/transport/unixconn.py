@@ -23,7 +23,6 @@ class UnixHTTPConnection(httplib.HTTPConnection):
         self.base_url = base_url
         self.unix_socket = unix_socket
         self.timeout = timeout
-        self.disable_buffering = False
 
     def connect(self):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -33,13 +32,8 @@ class UnixHTTPConnection(httplib.HTTPConnection):
 
     def putheader(self, header, *values):
         super().putheader(header, *values)
-        if header == 'Connection' and 'Upgrade' in values:
-            self.disable_buffering = True
 
     def response_class(self, sock, *args, **kwargs):
-        if self.disable_buffering:
-            kwargs['disable_buffering'] = True
-
         return httplib.HTTPResponse(sock, *args, **kwargs)
 
 
