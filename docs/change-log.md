@@ -1,6 +1,24 @@
 Change log
 ==========
 
+5.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/70?closed=1)
+
+### Breaking changes
+- Remove support for Python 2.7
+- Make Python 3.6 the minimum version supported
+
+### Features
+- Add `limit` parameter to image search endpoint
+
+### Bugfixes
+- Fix `KeyError` exception on secret create
+- Verify TLS keys loaded from docker contexts
+- Update PORT_SPEC regex to allow square brackets for IPv6 addresses
+- Fix containers and images documentation examples
+
 4.4.4
 -----
 
