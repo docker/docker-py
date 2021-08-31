@@ -1,6 +1,20 @@
 Change log
 ==========
 
+5.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/74?closed=1)
+
+### Bugfixes
+- Bring back support for ssh identity file
+- Cleanup remaining python-2 dependencies
+- Fix image save example in docs
+
+### Miscellaneous
+- Bump urllib3 to 1.26.5
+- Bump requests to 2.26.0
+
 5.0.0
 -----
 
