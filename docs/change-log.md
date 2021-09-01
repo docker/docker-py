@@ -1,6 +1,14 @@
 Change log
 ==========
 
+5.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/75?closed=1)
+
+### Bugfixes
+- Fix `disable_buffering` regression
+
 5.0.1
 -----
 
