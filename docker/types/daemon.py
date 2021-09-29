@@ -42,33 +42,35 @@ class CancellableStream:
         Closes the event streaming.
         """
 
-        if not self._response.raw.closed:
-            # find the underlying socket object
-            # based on api.client._get_raw_response_socket
+        if self._response.raw.closed:
+            return
 
-            sock_fp = self._response.raw._fp.fp
+        # find the underlying socket object
+        # based on api.client._get_raw_response_socket
 
-            if hasattr(sock_fp, 'raw'):
-                sock_raw = sock_fp.raw
+        sock_fp = self._response.raw._fp.fp
 
-                if hasattr(sock_raw, 'sock'):
-                    sock = sock_raw.sock
+        if hasattr(sock_fp, 'raw'):
+            sock_raw = sock_fp.raw
 
-                elif hasattr(sock_raw, '_sock'):
-                    sock = sock_raw._sock
+            if hasattr(sock_raw, 'sock'):
+                sock = sock_raw.sock
 
-            elif hasattr(sock_fp, 'channel'):
-                # We're working with a paramiko (SSH) channel, which doesn't
-                # support cancelable streams with the current implementation
-                raise DockerException(
-                    'Cancellable streams not supported for the SSH protocol'
-                )
-            else:
-                sock = sock_fp._sock
+            elif hasattr(sock_raw, '_sock'):
+                sock = sock_raw._sock
 
-            if hasattr(urllib3.contrib, 'pyopenssl') and isinstance(
-                    sock, urllib3.contrib.pyopenssl.WrappedSocket):
-                sock = sock.socket
+        elif hasattr(sock_fp, 'channel'):
+            # We're working with a paramiko (SSH) channel, which doesn't
+            # support cancelable streams with the current implementation
+            raise DockerException(
+                'Cancellable streams not supported for the SSH protocol'
+            )
+        else:
+            sock = sock_fp._sock
 
-            sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
+        if hasattr(urllib3.contrib, 'pyopenssl') and isinstance(
+                sock, urllib3.contrib.pyopenssl.WrappedSocket):
+            sock = sock.socket
+
+        sock.shutdown(socket.SHUT_RDWR)
+        sock.close()

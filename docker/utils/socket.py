@@ -146,11 +146,10 @@ def consume_socket_output(frames, demux=False):
                 out[0] = frame[0]
             else:
                 out[0] += frame[0]
+        elif out[1] is None:
+            out[1] = frame[1]
         else:
-            if out[1] is None:
-                out[1] = frame[1]
-            else:
-                out[1] += frame[1]
+            out[1] += frame[1]
     return tuple(out)
 
 

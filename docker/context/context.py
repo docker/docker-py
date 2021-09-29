@@ -205,9 +205,7 @@ class Context:
 
     @property
     def Metadata(self):
-        meta = {}
-        if self.orchestrator:
-            meta = {"StackOrchestrator": self.orchestrator}
+        meta = {"StackOrchestrator": self.orchestrator} if self.orchestrator else {}
         return {
             "Name": self.name,
             "Metadata": meta,
