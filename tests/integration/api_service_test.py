@@ -1356,3 +1356,33 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.client.update_service(*args, **kwargs)
             else:
                 raise
+
+    @requires_api_version('1.41')
+    def test_create_service_cap_add(self):
+        name = self.get_service_name()
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], cap_add=['CAP_SYSLOG']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'CAP_SYSLOG' in spec['CapabilityAdd']
+
+    @requires_api_version('1.41')
+    def test_create_service_cap_drop(self):
+        name = self.get_service_name()
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], cap_drop=['CAP_SYSLOG']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'CAP_SYSLOG' in spec['CapabilityDrop']

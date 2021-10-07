@@ -110,13 +110,18 @@ class ContainerSpec(dict):
             containers. Only used for Windows containers.
         init (boolean): Run an init inside the container that forwards signals
             and reaps processes.
+        cap_add (:py:class:`list`): A list of kernel capabilities to add to the
+            default set for the container.
+        cap_drop (:py:class:`list`): A list of kernel capabilities to drop from
+            the default set for the container.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
                  stop_grace_period=None, secrets=None, tty=None, groups=None,
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
-                 privileges=None, isolation=None, init=None):
+                 privileges=None, isolation=None, init=None, cap_add=None,
+                 cap_drop=None):
         self['Image'] = image
 
         if isinstance(command, str):
@@ -185,6 +190,18 @@ class ContainerSpec(dict):
 
         if init is not None:
             self['Init'] = init
+
+        if cap_add is not None:
+            if not isinstance(cap_add, list):
+                raise TypeError('cap_add must be a list')
+
+            self['CapabilityAdd'] = cap_add
+
+        if cap_drop is not None:
+            if not isinstance(cap_drop, list):
+                raise TypeError('cap_drop must be a list')
+
+            self['CapabilityDrop'] = cap_drop
 
 
 class Mount(dict):
