@@ -1,6 +1,21 @@
 Change log
 ==========
 
+5.0.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/76?closed=1)
+
+### Features
+- Add `cap_add` and `cap_drop` parameters to service create and ContainerSpec
+- Add `templating` parameter to config create
+
+### Bugfixes
+- Fix getting a read timeout for logs/attach with a tty and slow output
+
+### Miscellaneous
+- Fix documentation examples
+
 5.0.2
 -----
 
