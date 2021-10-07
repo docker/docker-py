@@ -94,7 +94,7 @@ class Context:
         try:
             with open(meta_file) as f:
                 metadata = json.load(f)
-        except (IOError, KeyError, ValueError) as e:
+        except (OSError, KeyError, ValueError) as e:
             # unknown format
             raise Exception("""Detected corrupted meta file for
                 context {} : {}""".format(name, e))
@@ -171,7 +171,7 @@ class Context:
             rmtree(self.tls_path)
 
     def __repr__(self):
-        return "<%s: '%s'>" % (self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__}: '{self.name}'>"
 
     def __str__(self):
         return json.dumps(self.__call__(), indent=2)

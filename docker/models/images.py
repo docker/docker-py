@@ -2,8 +2,6 @@ import itertools
 import re
 import warnings
 
-import six
-
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import BuildError, ImageLoadError, InvalidArgument
@@ -17,7 +15,7 @@ class Image(Model):
     An image on the server.
     """
     def __repr__(self):
-        return "<%s: '%s'>" % (self.__class__.__name__, "', '".join(self.tags))
+        return "<{}: '{}'>".format(self.__class__.__name__, "', '".join(self.tags))
 
     @property
     def labels(self):
@@ -84,19 +82,19 @@ class Image(Model):
 
         Example:
 
-            >>> image = cli.get_image("busybox:latest")
+            >>> image = cli.images.get("busybox:latest")
             >>> f = open('/tmp/busybox-latest.tar', 'wb')
-            >>> for chunk in image:
+            >>> for chunk in image.save():
             >>>   f.write(chunk)
             >>> f.close()
         """
         img = self.id
         if named:
             img = self.tags[0] if self.tags else img
-            if isinstance(named, six.string_types):
+            if isinstance(named, str):
                 if named not in self.tags:
                     raise InvalidArgument(
-                        "{} is not a valid tag for this image".format(named)
+                        f"{named} is not a valid tag for this image"
                     )
                 img = named
 
@@ -127,7 +125,7 @@ class RegistryData(Model):
     Image metadata stored on the registry, including available platforms.
     """
     def __init__(self, image_name, *args, **kwargs):
-        super(RegistryData, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.image_name = image_name
 
     @property
@@ -180,7 +178,7 @@ class RegistryData(Model):
             parts = platform.split('/')
             if len(parts) > 3 or len(parts) < 1:
                 raise InvalidArgument(
-                    '"{0}" is not a valid platform descriptor'.format(platform)
+                    f'"{platform}" is not a valid platform descriptor'
                 )
             platform = {'os': parts[0]}
             if len(parts) > 2:
@@ -277,7 +275,7 @@ class ImageCollection(Collection):
                 If neither ``path`` nor ``fileobj`` is specified.
         """
         resp = self.client.api.build(**kwargs)
-        if isinstance(resp, six.string_types):
+        if isinstance(resp, str):
             return self.get(resp)
         last_event = None
         image_id = None

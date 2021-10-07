@@ -1,6 +1,7 @@
 import paramiko
+import queue
+import urllib.parse
 import requests.adapters
-import six
 import logging
 import os
 import signal
@@ -10,10 +11,7 @@ import subprocess
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 
-if six.PY3:
-    import http.client as httplib
-else:
-    import httplib
+import http.client as httplib
 
 try:
     import requests.packages.urllib3 as urllib3
@@ -25,7 +23,7 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 class SSHSocket(socket.socket):
     def __init__(self, host):
-        super(SSHSocket, self).__init__(
+        super().__init__(
             socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = None
@@ -90,8 +88,7 @@ class SSHSocket(socket.socket):
     def makefile(self, mode):
         if not self.proc:
             self.connect()
-        if six.PY3:
-            self.proc.stdout.channel = self
+        self.proc.stdout.channel = self
 
         return self.proc.stdout
 
@@ -103,9 +100,9 @@ class SSHSocket(socket.socket):
         self.proc.terminate()
 
 
-class SSHConnection(httplib.HTTPConnection, object):
+class SSHConnection(httplib.HTTPConnection):
     def __init__(self, ssh_transport=None, timeout=60, host=None):
-        super(SSHConnection, self).__init__(
+        super().__init__(
             'localhost', timeout=timeout
         )
         self.ssh_transport = ssh_transport
@@ -129,7 +126,7 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     scheme = 'ssh'
 
     def __init__(self, ssh_client=None, timeout=60, maxsize=10, host=None):
-        super(SSHConnectionPool, self).__init__(
+        super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
         self.ssh_transport = None
@@ -152,7 +149,7 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         except AttributeError:  # self.pool is None
             raise urllib3.exceptions.ClosedPoolError(self, "Pool is closed.")
 
-        except six.moves.queue.Empty:
+        except queue.Empty:
             if self.block:
                 raise urllib3.exceptions.EmptyPoolError(
                     self,
@@ -188,12 +185,12 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
-        super(SSHHTTPAdapter, self).__init__()
+        super().__init__()
 
     def _create_paramiko_client(self, base_url):
         logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
-        base_url = six.moves.urllib_parse.urlparse(base_url)
+        base_url = urllib.parse.urlparse(base_url)
         self.ssh_params = {
             "hostname": base_url.hostname,
             "port": base_url.port,
@@ -205,7 +202,6 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             with open(ssh_config_file) as f:
                 conf.parse(f)
             host_config = conf.lookup(base_url.hostname)
-            self.ssh_conf = host_config
             if 'proxycommand' in host_config:
                 self.ssh_params["sock"] = paramiko.ProxyCommand(
                     self.ssh_conf['proxycommand']
@@ -213,9 +209,11 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             if 'hostname' in host_config:
                 self.ssh_params['hostname'] = host_config['hostname']
             if base_url.port is None and 'port' in host_config:
-                self.ssh_params['port'] = self.ssh_conf['port']
+                self.ssh_params['port'] = host_config['port']
             if base_url.username is None and 'user' in host_config:
-                self.ssh_params['username'] = self.ssh_conf['user']
+                self.ssh_params['username'] = host_config['user']
+            if 'identityfile' in host_config:
+                self.ssh_params['key_filename'] = host_config['identityfile']
 
         self.ssh_client.load_system_host_keys()
         self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
@@ -252,6 +250,6 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         return pool
 
     def close(self):
-        super(SSHHTTPAdapter, self).close()
+        super().close()
         if self.ssh_client:
             self.ssh_client.close()

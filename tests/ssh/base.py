@@ -79,7 +79,7 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
         cls.client.pull(TEST_IMG)
 
     def tearDown(self):
-        super(BaseAPIIntegrationTest, self).tearDown()
+        super().tearDown()
         self.client.close()
 
     @staticmethod

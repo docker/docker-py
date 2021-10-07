@@ -2,7 +2,6 @@ import io
 import random
 
 import docker
-import six
 
 from .base import BaseAPIIntegrationTest, TEST_IMG
 import pytest
@@ -39,8 +38,7 @@ class TestRegressions(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         self.client.wait(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = logs.decode('utf-8')
         assert logs == '1000\n'
 
     def test_792_explicit_port_protocol(self):
@@ -56,10 +54,10 @@ class TestRegressions(BaseAPIIntegrationTest):
         self.client.start(ctnr)
         assert self.client.port(
             ctnr, 2000
-        )[0]['HostPort'] == six.text_type(tcp_port)
+        )[0]['HostPort'] == str(tcp_port)
         assert self.client.port(
             ctnr, '2000/tcp'
-        )[0]['HostPort'] == six.text_type(tcp_port)
+        )[0]['HostPort'] == str(tcp_port)
         assert self.client.port(
             ctnr, '2000/udp'
-        )[0]['HostPort'] == six.text_type(udp_port)
+        )[0]['HostPort'] == str(udp_port)

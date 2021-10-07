@@ -2,7 +2,7 @@ from .. import errors
 from .. import utils
 
 
-class VolumeApiMixin(object):
+class VolumeApiMixin:
     def volumes(self, filters=None):
         """
         List volumes currently registered by the docker daemon. Similar to the

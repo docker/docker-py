@@ -1,5 +1,5 @@
 import logging
-from six.moves import http_client
+import http.client as http_client
 from ..constants import DEFAULT_SWARM_ADDR_POOL, DEFAULT_SWARM_SUBNET_SIZE
 from .. import errors
 from .. import types
@@ -8,7 +8,7 @@ from .. import utils
 log = logging.getLogger(__name__)
 
 
-class SwarmApiMixin(object):
+class SwarmApiMixin:
 
     def create_swarm_spec(self, *args, **kwargs):
         """

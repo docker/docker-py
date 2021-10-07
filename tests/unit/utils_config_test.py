@@ -11,7 +11,7 @@ from docker.utils import config
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 
 class FindConfigFileTest(unittest.TestCase):

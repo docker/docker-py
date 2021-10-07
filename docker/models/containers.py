@@ -761,6 +761,14 @@ class ContainerCollection(Collection):
                     {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
                      '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
 
+                Or a list of strings which each one of its elements specifies a mount volume.
+
+                For example:
+
+                .. code-block:: python
+
+                    ['/home/user1/:/mnt/vol2','/var/www:/mnt/vol1']
+
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.

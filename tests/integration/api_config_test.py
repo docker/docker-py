@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import docker
 import pytest
 
@@ -31,7 +29,7 @@ class ConfigAPITest(BaseAPIIntegrationTest):
 
     def test_create_config_unicode_data(self):
         config_id = self.client.create_config(
-            'favorite_character', u'いざよいさくや'
+            'favorite_character', 'いざよいさくや'
         )
         self.tmp_configs.append(config_id)
         assert 'ID' in config_id

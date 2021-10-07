@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import base64
 import json
 import os
@@ -15,7 +13,7 @@ import pytest
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 
 
 class RegressionTest(unittest.TestCase):
@@ -239,7 +237,7 @@ class LoadConfigTest(unittest.TestCase):
         cfg_path = os.path.join(folder, '.dockercfg')
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         with open(cfg_path, 'w') as f:
-            f.write('auth = {0}\n'.format(auth_))
+            f.write(f'auth = {auth_}\n')
             f.write('email = sakuya@scarlet.net')
 
         cfg = auth.load_config(cfg_path)
@@ -297,13 +295,13 @@ class LoadConfigTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, folder)
 
         dockercfg_path = os.path.join(folder,
-                                      '.{0}.dockercfg'.format(
+                                      '.{}.dockercfg'.format(
                                           random.randrange(100000)))
         registry = 'https://your.private.registry.io'
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         config = {
             registry: {
-                'auth': '{0}'.format(auth_),
+                'auth': f'{auth_}',
                 'email': 'sakuya@scarlet.net'
             }
         }
@@ -329,7 +327,7 @@ class LoadConfigTest(unittest.TestCase):
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         config = {
             registry: {
-                'auth': '{0}'.format(auth_),
+                'auth': f'{auth_}',
                 'email': 'sakuya@scarlet.net'
             }
         }
@@ -357,7 +355,7 @@ class LoadConfigTest(unittest.TestCase):
         config = {
             'auths': {
                 registry: {
-                    'auth': '{0}'.format(auth_),
+                    'auth': f'{auth_}',
                     'email': 'sakuya@scarlet.net'
                 }
             }
@@ -386,7 +384,7 @@ class LoadConfigTest(unittest.TestCase):
         config = {
             'auths': {
                 registry: {
-                    'auth': '{0}'.format(auth_),
+                    'auth': f'{auth_}',
                     'email': 'sakuya@scarlet.net'
                 }
             }
@@ -794,9 +792,9 @@ class InMemoryStore(credentials.Store):
         }
 
     def list(self):
-        return dict(
-            [(k, v['Username']) for k, v in self.__store.items()]
-        )
+        return {
+            k: v['Username'] for k, v in self.__store.items()
+        }
 
     def erase(self, server):
         del self.__store[server]

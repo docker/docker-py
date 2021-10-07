@@ -4,7 +4,7 @@ from ..utils import version_lt
 from .. import utils
 
 
-class NetworkApiMixin(object):
+class NetworkApiMixin:
     def networks(self, names=None, ids=None, filters=None):
         """
         List networks. Similar to the ``docker network ls`` command.
