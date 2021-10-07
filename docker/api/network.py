@@ -75,7 +75,7 @@ class NetworkApiMixin:
         Example:
             A network using the bridge driver:
 
-                >>> client.create_network("network1", driver="bridge")
+                >>> client.api.create_network("network1", driver="bridge")
 
             You can also create more advanced networks with custom IPAM
             configurations. For example, setting the subnet to
@@ -90,7 +90,7 @@ class NetworkApiMixin:
                 >>> ipam_config = docker.types.IPAMConfig(
                     pool_configs=[ipam_pool]
                 )
-                >>> docker_client.create_network("network1", driver="bridge",
+                >>> client.api.create_network("network1", driver="bridge",
                                                  ipam=ipam_config)
         """
         if options is not None and not isinstance(options, dict):
