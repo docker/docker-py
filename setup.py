@@ -29,7 +29,7 @@ extras_require = {
     'tls': ['pyOpenSSL>=17.5.0', 'cryptography>=3.4.7', 'idna>=2.0.0'],
 
     # Only required when connecting using the ssh:// protocol
-    'ssh': ['paramiko>=2.4.2'],
+    'ssh': ['paramiko>=2.4.3'],
 
 }
 
