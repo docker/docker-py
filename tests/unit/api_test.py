@@ -19,13 +19,9 @@ import requests
 from docker.api import APIClient
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from requests.packages import urllib3
+from unittest import mock
 
 from . import fake_api
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
 
 
 DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS

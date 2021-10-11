@@ -3,15 +3,11 @@ import pytest
 
 from . import fake_api
 from docker import auth
+from unittest import mock
 from .api_test import (
     BaseAPIClientTest, fake_request, DEFAULT_TIMEOUT_SECONDS, url_prefix,
     fake_resolve_authconfig
 )
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
 
 
 class ImageTest(BaseAPIClientTest):

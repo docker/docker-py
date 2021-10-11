@@ -5,13 +5,9 @@ import tempfile
 import json
 
 from pytest import mark, fixture
+from unittest import mock
 
 from docker.utils import config
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
 
 
 class FindConfigFileTest(unittest.TestCase):

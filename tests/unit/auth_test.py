@@ -8,13 +8,8 @@ import tempfile
 import unittest
 
 from docker import auth, credentials, errors
+from unittest import mock
 import pytest
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
-
 
 class RegressionTest(unittest.TestCase):
     def test_803_urlsafe_encode(self):
