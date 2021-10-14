@@ -2,12 +2,8 @@ import copy
 
 import docker
 from docker.constants import DEFAULT_DOCKER_API_VERSION
+from unittest import mock
 from . import fake_api
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
 
 
 class CopyReturnMagicMock(mock.MagicMock):

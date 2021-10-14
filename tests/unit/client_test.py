@@ -9,13 +9,9 @@ from docker.constants import (
     DEFAULT_MAX_POOL_SIZE, IS_WINDOWS_PLATFORM
 )
 from docker.utils import kwargs_from_env
+from unittest import mock
 
 from . import fake_api
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
 
 TEST_CERT_DIR = os.path.join(os.path.dirname(__file__), 'testdata/certs')
 POOL_SIZE = 20
