@@ -986,6 +986,7 @@ RUN_CREATE_KWARGS = [
     'network_disabled',
     'stdin_open',
     'stop_signal',
+    'stop_timeout',
     'tty',
     'use_config_proxy',
     'user',
