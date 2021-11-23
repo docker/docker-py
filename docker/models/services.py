@@ -320,6 +320,7 @@ CREATE_SERVICE_KWARGS = [
     'labels',
     'mode',
     'update_config',
+    'rollback_config',
     'endpoint_spec',
 ]
 
