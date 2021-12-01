@@ -63,7 +63,7 @@ class SSHSocket(socket.socket):
             shell=True,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
-            preexec_fn=None if constants.IS_WINDOWS_PLATFORM else preexec_func)
+            preexec_fn=preexec_func)
 
     def _write(self, data):
         if not self.proc or self.proc.stdin.closed:
