@@ -223,7 +223,7 @@ class ContainerApiMixin:
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
                          stop_timeout=None, runtime=None,
-                         use_config_proxy=True):
+                         use_config_proxy=True, platform=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -396,6 +396,7 @@ class ContainerApiMixin:
                 configuration file (``~/.docker/config.json`` by default)
                 contains a proxy configuration, the corresponding environment
                 variables will be set in the container being created.
+            platform (str): Platform in the format ``os[/arch[/variant]]``.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -425,16 +426,22 @@ class ContainerApiMixin:
             stop_signal, networking_config, healthcheck,
             stop_timeout, runtime
         )
-        return self.create_container_from_config(config, name)
+        return self.create_container_from_config(config, name, platform)
 
     def create_container_config(self, *args, **kwargs):
         return ContainerConfig(self._version, *args, **kwargs)
 
-    def create_container_from_config(self, config, name=None):
+    def create_container_from_config(self, config, name=None, platform=None):
         u = self._url("/containers/create")
         params = {
             'name': name
         }
+        if platform:
+            if utils.version_lt(self._version, '1.41'):
+                raise errors.InvalidVersion(
+                    'platform is not supported for API version < 1.41'
+                )
+            params['platform'] = platform
         res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
 
