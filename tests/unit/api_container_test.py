@@ -360,7 +360,7 @@ class CreateContainerTest(BaseAPIClientTest):
              "OpenStdin": false, "NetworkDisabled": false}
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
-        assert args[1]['params'] == {'platform': 'linux'}
+        assert args[1]['params'] == {'name': None, 'platform': 'linux'}
 
     def test_create_container_with_mem_limit_as_int(self):
         self.client.create_container(
