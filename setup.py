@@ -10,6 +10,7 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
+    'packaging',
     'websocket-client >= 0.32.0',
     'requests >= 2.14.2, != 2.18.0',
 ]

@@ -5,7 +5,7 @@ import os.path
 import shlex
 import string
 from datetime import datetime
-from distutils.version import StrictVersion
+from packaging.version import Version
 
 from .. import errors
 from .. import tls
@@ -49,8 +49,8 @@ def compare_version(v1, v2):
     >>> compare_version(v2, v2)
     0
     """
-    s1 = StrictVersion(v1)
-    s2 = StrictVersion(v2)
+    s1 = Version(v1)
+    s2 = Version(v2)
     if s1 == s2:
         return 0
     elif s1 > s2:
