@@ -284,9 +284,8 @@ class APIClient(
         # so we do this disgusting thing here.
         data2 = {}
         if data is not None and isinstance(data, dict):
-            for k, v in iter(data.items()):
-                if v is not None:
-                    data2[k] = v
+            data2 = {k: v 
+                     for (k, v) in iter(data.items()) if v is not None}
         elif data is not None:
             data2 = data
 
