@@ -14,7 +14,7 @@ from ..constants import DEFAULT_UNIX_SOCKET
 from ..constants import DEFAULT_NPIPE
 from ..constants import BYTE_UNITS
 
-from urllib.parse import splitnport, urlparse
+from urllib.parse import urlparse
 
 
 def create_ipam_pool(*args, **kwargs):
@@ -265,8 +265,8 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if proto in ('tcp', 'ssh'):
         # parsed_url.hostname strips brackets from IPv6 addresses,
-        # which can be problematic hence our use of splitnport() instead.
-        host, port = splitnport(parsed_url.netloc)
+        # which can be problematic.
+        port = parsed_url.port
         if port is None or port < 0:
             if proto != 'ssh':
                 raise errors.DockerException(
@@ -274,6 +274,9 @@ def parse_host(addr, is_win32=False, tls=False):
                     ' {}'.format(addr)
                 )
             port = 22
+            host = parsed_url.netloc
+        else:
+            host, *_ = parsed_url.netloc.rpartition(':')
 
         if not host:
             host = DEFAULT_HTTP_HOST
