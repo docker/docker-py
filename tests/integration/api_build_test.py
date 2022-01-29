@@ -253,7 +253,7 @@ class BuildTest(BaseAPIIntegrationTest):
             'RUN mkdir -p /tmp/test',
             'RUN touch /tmp/silence.tar.gz',
             'FROM alpine:latest',
-            'WORKDIR /root/'
+            'WORKDIR /root/',
             'COPY --from=first /tmp/silence.tar.gz .',
             'ONBUILD RUN echo "This should not be in the final image"'
         ]).encode('ascii'))
