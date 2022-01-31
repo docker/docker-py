@@ -56,7 +56,8 @@ class VolumeApiMixin:
 
         Example:
 
-            >>> volume = client.api.create_volume(name='foobar', driver='local',
+            >>> volume = client.api.create_volume(name='foobar',
+                    driver='local',
                     driver_opts={'foo': 'bar', 'baz': 'false'},
                     labels={"key": "value"})
             >>> print(volume)
