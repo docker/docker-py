@@ -20,8 +20,14 @@ jobs:
               run: |
                   python3 -m pip install --upgrade pip
                   pip3 install -r test-requirements.txt -r requirements.txt
-            - name: Test with pytest
+            - name: Run unit tests
               run: |
                   docker logout
                   rm -rf ~/.docker
                   py.test -v --cov=docker tests/unit
+            - name: Run full test suite
+              if: matrix.python-version == '3.10'
+              run: |
+                  docker logout
+                  rm -rf ~/.docker
+                  make test
