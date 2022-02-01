@@ -46,10 +46,32 @@ integration-dind: integration-dind-py3
 .PHONY: integration-dind-py3
 integration-dind-py3: build-py3 setup-network
 	docker rm -vf dpy-dind-py3 || :
-	docker run -d --network dpy-tests --name dpy-dind-py3 --privileged\
-		docker:${TEST_ENGINE_VERSION}-dind dockerd -H tcp://0.0.0.0:2375 --experimental
-	docker run -t --rm --env="DOCKER_HOST=tcp://dpy-dind-py3:2375" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python3 py.test tests/integration/${file}
+
+	docker run \
+		--detach \
+		--name dpy-dind-py3 \
+		--network dpy-tests \
+		--privileged \
+		docker:${TEST_ENGINE_VERSION}-dind \
+		dockerd -H tcp://0.0.0.0:2375 --experimental
+
+	# Wait for Docker-in-Docker to come to life
+	docker run \
+		--network dpy-tests \
+		--rm \
+		--tty \
+		busybox \
+		sh -c 'while ! nc -z dpy-dind-py3 2375; do sleep 1; done'
+
+	docker run \
+		--env="DOCKER_HOST=tcp://dpy-dind-py3:2375" \
+		--env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}" \
+		--network dpy-tests \
+		--rm \
+		--tty \
+		docker-sdk-python3 \
+		py.test tests/integration/${file}
+
 	docker rm -vf dpy-dind-py3
 
 
@@ -69,15 +91,47 @@ integration-ssh-py3: build-dind-ssh build-py3 setup-network
 integration-dind-ssl: build-dind-certs build-py3
 	docker rm -vf dpy-dind-certs dpy-dind-ssl || :
 	docker run -d --name dpy-dind-certs dpy-dind-certs
-	docker run -d --env="DOCKER_HOST=tcp://localhost:2375" --env="DOCKER_TLS_VERIFY=1"\
-		--env="DOCKER_CERT_PATH=/certs" --volumes-from dpy-dind-certs --name dpy-dind-ssl\
-		--network dpy-tests --network-alias docker -v /tmp --privileged\
-		docker:${TEST_ENGINE_VERSION}-dind\
-		dockerd --tlsverify --tlscacert=/certs/ca.pem --tlscert=/certs/server-cert.pem\
-		--tlskey=/certs/server-key.pem -H tcp://0.0.0.0:2375 --experimental
-	docker run -t --rm --volumes-from dpy-dind-ssl --env="DOCKER_HOST=tcp://docker:2375"\
-		--env="DOCKER_TLS_VERIFY=1" --env="DOCKER_CERT_PATH=/certs" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python3 py.test tests/integration/${file}
+
+	docker run \
+		--detach \
+		--env="DOCKER_CERT_PATH=/certs" \
+		--env="DOCKER_HOST=tcp://localhost:2375" \
+		--env="DOCKER_TLS_VERIFY=1" \
+		--name dpy-dind-ssl \
+		--network dpy-tests \
+		--network-alias docker \
+		--privileged \
+		--volume /tmp \
+		--volumes-from dpy-dind-certs \
+		docker:${TEST_ENGINE_VERSION}-dind \
+		dockerd \
+			--tlsverify \
+			--tlscacert=/certs/ca.pem \
+			--tlscert=/certs/server-cert.pem \
+			--tlskey=/certs/server-key.pem \
+			-H tcp://0.0.0.0:2375 \
+			--experimental
+
+	# Wait for Docker-in-Docker to come to life
+	docker run \
+		--network dpy-tests \
+		--rm \
+		--tty \
+		busybox \
+		sh -c 'while ! nc -z dpy-dind-ssl 2375; do sleep 1; done'
+
+	docker run \
+		--env="DOCKER_CERT_PATH=/certs" \
+		--env="DOCKER_HOST=tcp://docker:2375" \
+		--env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}" \
+		--env="DOCKER_TLS_VERIFY=1" \
+		--network dpy-tests \
+		--rm \
+		--volumes-from dpy-dind-ssl \
+		--tty \
+		docker-sdk-python3 \
+		py.test tests/integration/${file}
+
 	docker rm -vf dpy-dind-ssl dpy-dind-certs
 
 .PHONY: flake8
