@@ -987,7 +987,7 @@ class ContainerApiMixin:
         return self._result(self._post(url, params=params), True)
 
     @utils.check_resource('container')
-    def remove_container(self, container, v=False, link=False, force=False):
+    def remove_container(self, container, v=False, link=False, force=False, timeout=None):
         """
         Remove a container. Similar to the ``docker rm`` command.
 
@@ -998,14 +998,29 @@ class ContainerApiMixin:
                 container
             force (bool): Force the removal of a running container (uses
                 ``SIGKILL``)
+            timeout (int): Timeout in seconds to wait for the container to
+                be removed before sending a ``SIGKILL``. If None, then the
+                StopTimeout value of the container will be used.
+                Default: None
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+
+        if timeout is None:
+            params = {}
+            timeout = 10
+        else:
+            params = {'t': timeout}
+
+        conn_timeout = self.timeout
+        if conn_timeout is not None:
+            conn_timeout += timeout
+
         params = {'v': v, 'link': link, 'force': force}
         res = self._delete(
-            self._url("/containers/{0}", container), params=params
+            self._url("/containers/{0}", container), params=params, timeout=conn_timeout
         )
         self._raise_for_status(res)
 
