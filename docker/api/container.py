@@ -1008,17 +1008,17 @@ class ContainerApiMixin:
                 If the server returns an error.
         """
 
+        params = {'v': v, 'link': link, 'force': force}
+
         if timeout is None:
-            params = {}
             timeout = 10
         else:
-            params = {'t': timeout}
+            params['t'] = timeout
 
         conn_timeout = self.timeout
         if conn_timeout is not None:
             conn_timeout += timeout
 
-        params = {'v': v, 'link': link, 'force': force}
         res = self._delete(
             self._url("/containers/{0}", container), params=params, timeout=conn_timeout
         )

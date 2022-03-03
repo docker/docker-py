@@ -320,7 +320,7 @@ class DockerApiTest(BaseAPIClientTest):
             'DELETE',
             url_prefix + 'containers/3cc2351ab11b',
             params={'v': False, 'link': True, 'force': False},
-            timeout=DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS + 10
         )
 
     def test_create_host_config_secopt(self):

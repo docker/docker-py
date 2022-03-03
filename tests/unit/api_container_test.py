@@ -1404,23 +1404,27 @@ class ContainerTest(BaseAPIClientTest):
         )
 
     def test_remove_container(self):
-        self.client.remove_container(fake_api.FAKE_CONTAINER_ID)
+
+        timeout = 2
+        self.client.remove_container(fake_api.FAKE_CONTAINER_ID, timeout=timeout)
 
         fake_request.assert_called_with(
             'DELETE',
             url_prefix + 'containers/3cc2351ab11b',
-            params={'v': False, 'link': False, 'force': False},
-            timeout=DEFAULT_TIMEOUT_SECONDS
+            params={'v': False, 'link': False, 'force': False, 't': timeout},
+            timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
     def test_remove_container_with_dict_instead_of_id(self):
-        self.client.remove_container({'Id': fake_api.FAKE_CONTAINER_ID})
+
+        timeout = 2
+        self.client.remove_container({'Id': fake_api.FAKE_CONTAINER_ID}, timeout=timeout)
 
         fake_request.assert_called_with(
             'DELETE',
             url_prefix + 'containers/3cc2351ab11b',
-            params={'v': False, 'link': False, 'force': False},
-            timeout=DEFAULT_TIMEOUT_SECONDS
+            params={'v': False, 'link': False, 'force': False, 't': timeout},
+            timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
         )
 
     def test_export(self):
