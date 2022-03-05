@@ -177,9 +177,9 @@ class Container(Model):
 
         Returns:
             (ExecResult): A tuple of (exit_code, output)
-                exit_code: (int):
-                    Exit code for the executed command or ``None`` if
-                    either ``stream`` or ``socket`` is ``True``.
+                exit_code: (int or function->int):
+                    Exit code for the executed command or ``Callable[[], int]``
+                    if either ``stream`` or ``socket`` is ``True``.
                 output: (generator, bytes, or tuple):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
@@ -200,7 +200,8 @@ class Container(Model):
             demux=demux
         )
         if socket or stream:
-            return ExecResult(None, exec_output)
+            return ExecResult(lambda: self.client.api.exec_inspect(
+                resp['Id'])['ExitCode'], exec_output)
 
         return ExecResult(
             self.client.api.exec_inspect(resp['Id'])['ExitCode'],
