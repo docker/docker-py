@@ -170,10 +170,10 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
                  max_pool_size=constants.DEFAULT_MAX_POOL_SIZE,
-                 shell_out=False):
+                 shell_out=False, ssh_key_params=None):
         self.ssh_client = None
         if not shell_out:
-            self._create_paramiko_client(base_url)
+            self._create_paramiko_client(base_url, ssh_key_params=ssh_key_params)
             self._connect()
 
         self.ssh_host = base_url
@@ -187,15 +187,19 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         )
         super().__init__()
 
-    def _create_paramiko_client(self, base_url):
+    def _create_paramiko_client(self, base_url, ssh_key_params=None):
         logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
         base_url = urllib.parse.urlparse(base_url)
         self.ssh_params = {
             "hostname": base_url.hostname,
             "port": base_url.port,
-            "username": base_url.username
-            }
+            "username": base_url.username,
+            "password": base_url.password
+        }
+        if ssh_key_params:
+            self.ssh_params['key_filename'] = ssh_key_params.get('key_filename', None)
+            self.ssh_params['passphrase'] = ssh_key_params.get('passphrase', None)
         ssh_config_file = os.path.expanduser("~/.ssh/config")
         if os.path.exists(ssh_config_file):
             conf = paramiko.SSHConfig()
@@ -216,7 +220,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                 self.ssh_params['key_filename'] = host_config['identityfile']
 
         self.ssh_client.load_system_host_keys()
-        self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
+        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def _connect(self):
         if self.ssh_client:

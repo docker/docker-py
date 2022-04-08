@@ -244,8 +244,7 @@ def parse_host(addr, is_win32=False, tls=False):
         )
 
     if any([
-        parsed_url.params, parsed_url.query, parsed_url.fragment,
-        parsed_url.password
+        parsed_url.params, parsed_url.query, parsed_url.fragment
     ]):
         raise errors.DockerException(
             f'Invalid bind address format: {addr}'
