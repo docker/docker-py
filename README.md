@@ -1,3 +1,5 @@
+:warning: **This project is no longer maintained** :warning:
+
 # Docker SDK for Python
 
 [![Build Status](https://github.com/docker/docker-py/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/docker/docker-py/actions/workflows/ci.yml/)
