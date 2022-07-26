@@ -272,8 +272,8 @@ class ExcludePathsTest(unittest.TestCase):
         assert self.exclude(['**/target/*/*']) == convert_paths(
             self.all_paths - {
                 'target/subdir/file.txt',
-                 'subdir/target/subdir/file.txt',
-                 'subdir/subdir2/target/subdir/file.txt'
+                'subdir/target/subdir/file.txt',
+                'subdir/subdir2/target/subdir/file.txt'
             }
         )
 
@@ -281,16 +281,16 @@ class ExcludePathsTest(unittest.TestCase):
         assert self.exclude(['subdir/**']) == convert_paths(
             self.all_paths - {
                 'subdir/file.txt',
-                 'subdir/target/file.txt',
-                 'subdir/target/subdir/file.txt',
-                 'subdir/subdir2/file.txt',
-                 'subdir/subdir2/target/file.txt',
-                 'subdir/subdir2/target/subdir/file.txt',
-                 'subdir/target',
-                 'subdir/target/subdir',
-                 'subdir/subdir2',
-                 'subdir/subdir2/target',
-                 'subdir/subdir2/target/subdir'
+                'subdir/target/file.txt',
+                'subdir/target/subdir/file.txt',
+                'subdir/subdir2/file.txt',
+                'subdir/subdir2/target/file.txt',
+                'subdir/subdir2/target/subdir/file.txt',
+                'subdir/target',
+                'subdir/target/subdir',
+                'subdir/subdir2',
+                'subdir/subdir2/target',
+                'subdir/subdir2/target/subdir'
             }
         )
 
