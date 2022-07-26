@@ -11,6 +11,7 @@ from docker import auth, credentials, errors
 from unittest import mock
 import pytest
 
+
 class RegressionTest(unittest.TestCase):
     def test_803_urlsafe_encode(self):
         auth_data = {

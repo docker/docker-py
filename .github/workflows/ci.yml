@@ -3,6 +3,17 @@ name: Python package
 on: [push, pull_request]
 
 jobs:
+    flake8:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-python@v4
+              with:
+                  python-version: '3.x'
+            - run: pip install -U flake8
+            - name: Run flake8
+              run: flake8 docker/ tests/
+
     build:
         runs-on: ubuntu-latest
         strategy:

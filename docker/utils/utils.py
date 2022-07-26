@@ -23,6 +23,7 @@ URLComponents = collections.namedtuple(
     'scheme netloc url params query fragment',
 )
 
+
 def create_ipam_pool(*args, **kwargs):
     raise errors.DeprecatedMethod(
         'utils.create_ipam_pool has been removed. Please use a '
