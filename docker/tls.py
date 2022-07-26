@@ -37,30 +37,11 @@ class TLSConfig:
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
 
-        # TODO(dperny): according to the python docs, PROTOCOL_TLSvWhatever is
-        # depcreated, and it's recommended to use OPT_NO_TLSvWhatever instead
-        # to exclude versions. But I think that might require a bigger
-        # architectural change, so I've opted not to pursue it at this time
-
         # If the user provides an SSL version, we should use their preference
         if ssl_version:
             self.ssl_version = ssl_version
         else:
-            # If the user provides no ssl version, we should default to
-            # TLSv1_2.  This option is the most secure, and will work for the
-            # majority of users with reasonably up-to-date software. However,
-            # before doing so, detect openssl version to ensure we can support
-            # it.
-            if ssl.OPENSSL_VERSION_INFO[:3] >= (1, 0, 1) and hasattr(
-                    ssl, 'PROTOCOL_TLSv1_2'):
-                # If the OpenSSL version is high enough to support TLSv1_2,
-                # then we should use it.
-                self.ssl_version = getattr(ssl, 'PROTOCOL_TLSv1_2')
-            else:
-                # Otherwise, TLS v1.0 seems to be the safest default;
-                # SSLv23 fails in mysterious ways:
-                # https://github.com/docker/docker-py/issues/963
-                self.ssl_version = ssl.PROTOCOL_TLSv1
+            self.ssl_version = ssl.PROTOCOL_TLS_CLIENT
 
         # "client_cert" must have both or neither cert/key files. In
         # either case, Alert the user when both are expected, but any are
