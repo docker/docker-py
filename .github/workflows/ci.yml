@@ -14,10 +14,9 @@ jobs:
             - name: Run flake8
               run: flake8 docker/ tests/
 
-    build:
+    unit-tests:
         runs-on: ubuntu-latest
         strategy:
-            max-parallel: 1
             matrix:
                 python-version: ["3.7", "3.8", "3.9", "3.10", "3.11.0-alpha - 3.11.0"]
 
@@ -26,7 +25,7 @@ jobs:
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v4
               with:
-                  python-version: ${{ matrix.python-version }}
+                python-version: ${{ matrix.python-version }}
             - name: Install dependencies
               run: |
                   python3 -m pip install --upgrade pip
@@ -36,9 +35,24 @@ jobs:
                   docker logout
                   rm -rf ~/.docker
                   py.test -v --cov=docker tests/unit
-            - name: Run full test suite
-              if: matrix.python-version == '3.10'
+
+    integration-tests:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                variant: [ "integration-dind", "integration-dind-ssl" ]
+
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-python@v4
+              with:
+                python-version: '3.x'
+            - name: Install dependencies
+              run: |
+                  python3 -m pip install --upgrade pip
+                  pip3 install -r test-requirements.txt -r requirements.txt
+            - name: Run integration tests
               run: |
                   docker logout
                   rm -rf ~/.docker
-                  make test
+                  make ${{ matrix.variant }}
