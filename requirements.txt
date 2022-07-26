@@ -11,7 +11,7 @@ paramiko==2.10.1
 pycparser==2.17
 pyOpenSSL==18.0.0
 pyparsing==2.2.0
-pywin32==301; sys_platform == 'win32'
+pywin32==304; sys_platform == 'win32'
 requests==2.26.0
 urllib3==1.26.5
 websocket-client==0.56.0
