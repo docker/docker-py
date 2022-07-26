@@ -44,14 +44,7 @@ jobs:
 
         steps:
             - uses: actions/checkout@v3
-            - uses: actions/setup-python@v4
-              with:
-                python-version: '3.x'
-            - name: Install dependencies
-              run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install -r test-requirements.txt -r requirements.txt
-            - name: Run integration tests
+            - name: make ${{ matrix.variant }}
               run: |
                   docker logout
                   rm -rf ~/.docker

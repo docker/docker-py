@@ -88,7 +88,7 @@ integration-ssh-py3: build-dind-ssh build-py3 setup-network
 
 
 .PHONY: integration-dind-ssl
-integration-dind-ssl: build-dind-certs build-py3
+integration-dind-ssl: build-dind-certs build-py3 setup-network
 	docker rm -vf dpy-dind-certs dpy-dind-ssl || :
 	docker run -d --name dpy-dind-certs dpy-dind-certs
 
