@@ -4,7 +4,7 @@
 """
 import sys
 
-from distutils.version import StrictVersion
+from packaging.version import Version
 from requests.adapters import HTTPAdapter
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
@@ -70,4 +70,4 @@ class SSLHTTPAdapter(BaseHTTPAdapter):
             return False
         if urllib_ver == 'dev':
             return True
-        return StrictVersion(urllib_ver) > StrictVersion('1.5')
+        return Version(urllib_ver) > Version('1.5')
