@@ -204,7 +204,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             host_config = conf.lookup(base_url.hostname)
             if 'proxycommand' in host_config:
                 self.ssh_params["sock"] = paramiko.ProxyCommand(
-                    self.ssh_conf['proxycommand']
+                    host_config['proxycommand']
                 )
             if 'hostname' in host_config:
                 self.ssh_params['hostname'] = host_config['hostname']

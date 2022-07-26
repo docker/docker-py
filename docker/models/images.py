@@ -14,11 +14,10 @@ class Image(Model):
     """
     An image on the server.
     """
-
     def __repr__(self):
         return "<{}: '{}'>".format(
             self.__class__.__name__,
-            "', '".join(self.tags)
+            "', '".join(self.tags),
         )
 
     @property
@@ -128,7 +127,6 @@ class RegistryData(Model):
     """
     Image metadata stored on the registry, including available platforms.
     """
-
     def __init__(self, image_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.image_name = image_name

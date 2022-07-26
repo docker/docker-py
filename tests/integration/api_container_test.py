@@ -460,16 +460,13 @@ class CreateContainerTest(BaseAPIIntegrationTest):
     def test_create_with_device_cgroup_rules(self):
         rule = 'c 7:128 rwm'
         ctnr = self.client.create_container(
-            TEST_IMG, 'cat /sys/fs/cgroup/devices/devices.list',
-            host_config=self.client.create_host_config(
+            TEST_IMG, 'true', host_config=self.client.create_host_config(
                 device_cgroup_rules=[rule]
             )
         )
         self.tmp_containers.append(ctnr)
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['DeviceCgroupRules'] == [rule]
-        self.client.start(ctnr)
-        assert rule in self.client.logs(ctnr).decode('utf-8')
 
     def test_create_with_uts_mode(self):
         container = self.client.create_container(
@@ -1220,12 +1217,14 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         data = read_exactly(pty_stdout, next_size)
         assert data.decode('utf-8') == line
 
+    @pytest.mark.timeout(10)
     def test_attach_no_stream(self):
         container = self.client.create_container(
             TEST_IMG, 'echo hello'
         )
         self.tmp_containers.append(container)
         self.client.start(container)
+        self.client.wait(container, condition='not-running')
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 

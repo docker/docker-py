@@ -1,20 +1,27 @@
 import base64
+import collections
 import json
 import os
 import os.path
 import shlex
 import string
 from datetime import datetime
-from distutils.version import StrictVersion
+from packaging.version import Version
 
 from .. import errors
-from .. import tls
 from ..constants import DEFAULT_HTTP_HOST
 from ..constants import DEFAULT_UNIX_SOCKET
 from ..constants import DEFAULT_NPIPE
 from ..constants import BYTE_UNITS
+from ..tls import TLSConfig
 
-from urllib.parse import splitnport, urlparse
+from urllib.parse import urlparse, urlunparse
+
+
+URLComponents = collections.namedtuple(
+    'URLComponents',
+    'scheme netloc url params query fragment',
+)
 
 
 def create_ipam_pool(*args, **kwargs):
@@ -49,8 +56,8 @@ def compare_version(v1, v2):
     >>> compare_version(v2, v2)
     0
     """
-    s1 = StrictVersion(v1)
-    s2 = StrictVersion(v2)
+    s1 = Version(v1)
+    s2 = Version(v2)
     if s1 == s2:
         return 0
     elif s1 > s2:
@@ -201,10 +208,6 @@ def parse_repository_tag(repo_name):
 
 
 def parse_host(addr, is_win32=False, tls=False):
-    path = ''
-    port = None
-    host = None
-
     # Sensible defaults
     if not addr and is_win32:
         return DEFAULT_NPIPE
@@ -263,20 +266,20 @@ def parse_host(addr, is_win32=False, tls=False):
             # to be valid and equivalent to unix:///path
             path = '/'.join((parsed_url.hostname, path))
 
+    netloc = parsed_url.netloc
     if proto in ('tcp', 'ssh'):
-        # parsed_url.hostname strips brackets from IPv6 addresses,
-        # which can be problematic hence our use of splitnport() instead.
-        host, port = splitnport(parsed_url.netloc)
-        if port is None or port < 0:
+        port = parsed_url.port or 0
+        if port <= 0:
             if proto != 'ssh':
                 raise errors.DockerException(
                     'Invalid bind address format: port is required:'
                     ' {}'.format(addr)
                 )
             port = 22
+            netloc = f'{parsed_url.netloc}:{port}'
 
-        if not host:
-            host = DEFAULT_HTTP_HOST
+        if not parsed_url.hostname:
+            netloc = f'{DEFAULT_HTTP_HOST}:{port}'
 
     # Rewrite schemes to fit library internals (requests adapters)
     if proto == 'tcp':
@@ -286,7 +289,15 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if proto in ('http+unix', 'npipe'):
         return f"{proto}://{path}".rstrip('/')
-    return f'{proto}://{host}:{port}{path}'.rstrip('/')
+
+    return urlunparse(URLComponents(
+        scheme=proto,
+        netloc=netloc,
+        url=path,
+        params='',
+        query='',
+        fragment='',
+    )).rstrip('/')
 
 
 def parse_devices(devices):
@@ -351,7 +362,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
         # so if it's not set already then set it to false.
         assert_hostname = False
 
-    params['tls'] = tls.TLSConfig(
+    params['tls'] = TLSConfig(
         client_cert=(os.path.join(cert_path, 'cert.pem'),
                      os.path.join(cert_path, 'key.pem')),
         ca_cert=os.path.join(cert_path, 'ca.pem'),

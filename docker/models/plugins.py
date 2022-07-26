@@ -6,7 +6,6 @@ class Plugin(Model):
     """
     A plugin on the server.
     """
-
     def __repr__(self):
         return f"<{self.__class__.__name__}: '{self.name}'>"
 
@@ -121,7 +120,7 @@ class Plugin(Model):
         yield from self.client.api.upgrade_plugin(
             self.name,
             remote,
-            privileges
+            privileges,
         )
         self.reload()
 

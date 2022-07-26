@@ -10,13 +10,14 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
+    'packaging',
     'websocket-client >= 0.32.0',
     'requests >= 2.14.2, != 2.18.0',
 ]
 
 extras_require = {
     # win32 APIs if on Windows (required for npipe support)
-    ':sys_platform == "win32"': 'pywin32==227',
+    ':sys_platform == "win32"': 'pywin32>=304',
 
     # If using docker-py over TLS, highly recommend this option is
     # pip-installed or pinned.
