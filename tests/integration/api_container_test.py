@@ -1217,12 +1217,14 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         data = read_exactly(pty_stdout, next_size)
         assert data.decode('utf-8') == line
 
+    @pytest.mark.timeout(10)
     def test_attach_no_stream(self):
         container = self.client.create_container(
             TEST_IMG, 'echo hello'
         )
         self.tmp_containers.append(container)
         self.client.start(container)
+        self.client.wait(container, condition='not-running')
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 
