@@ -29,7 +29,7 @@ build-py3:
 
 .PHONY: build-docs
 build-docs:
-	docker build -t docker-sdk-python-docs -f Dockerfile-docs $(build_args) .
+	docker build -t docker-sdk-python-docs -f Dockerfile-docs $(uid_args) .
 
 .PHONY: build-dind-certs
 build-dind-certs:
