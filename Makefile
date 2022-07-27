@@ -21,11 +21,21 @@ clean:
 
 .PHONY: build-dind-ssh
 build-dind-ssh:
-	docker build -t docker-dind-ssh -f tests/Dockerfile-ssh-dind --build-arg ENGINE_VERSION=${TEST_ENGINE_VERSION} --build-arg API_VERSION=${TEST_API_VERSION} --build-arg APT_MIRROR .
+	docker build \
+		--pull \
+		-t docker-dind-ssh \
+		-f tests/Dockerfile-ssh-dind \
+		--build-arg ENGINE_VERSION=${TEST_ENGINE_VERSION} \
+		--build-arg API_VERSION=${TEST_API_VERSION} \
+		--build-arg APT_MIRROR .
 
 .PHONY: build-py3
 build-py3:
-	docker build -t docker-sdk-python3 -f tests/Dockerfile --build-arg APT_MIRROR .
+	docker build \
+		--pull \
+		-t docker-sdk-python3 \
+		-f tests/Dockerfile \
+		--build-arg APT_MIRROR .
 
 .PHONY: build-docs
 build-docs:
@@ -61,6 +71,7 @@ integration-dind-py3: build-py3 setup-network
 		--detach \
 		--name dpy-dind-py3 \
 		--network dpy-tests \
+		--pull=always \
 		--privileged \
 		docker:${TEST_ENGINE_VERSION}-dind \
 		dockerd -H tcp://0.0.0.0:2375 --experimental
@@ -85,16 +96,23 @@ integration-dind-py3: build-py3 setup-network
 	docker rm -vf dpy-dind-py3
 
 
-.PHONY: integration-ssh-py3
-integration-ssh-py3: build-dind-ssh build-py3 setup-network
-	docker rm -vf dpy-dind-py3 || :
-	docker run -d --network dpy-tests --name dpy-dind-py3 --privileged\
+.PHONY: integration-dind-ssh
+integration-dind-ssh: build-dind-ssh build-py3 setup-network
+	docker rm -vf dpy-dind-ssh || :
+	docker run -d --network dpy-tests --name dpy-dind-ssh --privileged \
 		docker-dind-ssh dockerd --experimental
-	# start SSH daemon
-	docker exec dpy-dind-py3 sh -c "/usr/sbin/sshd"
-	docker run -t --rm --env="DOCKER_HOST=ssh://dpy-dind-py3" --env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}"\
-		--network dpy-tests docker-sdk-python3 py.test tests/ssh/${file}
-	docker rm -vf dpy-dind-py3
+	# start SSH daemon for known key
+	docker exec dpy-dind-ssh sh -c "/usr/sbin/sshd -h /etc/ssh/known_ed25519 -p 22"
+	docker exec dpy-dind-ssh sh -c "/usr/sbin/sshd -h /etc/ssh/unknown_ed25519 -p 2222"
+	docker run \
+		--tty \
+		--rm \
+		--env="DOCKER_HOST=ssh://dpy-dind-ssh" \
+		--env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}" \
+		--env="UNKNOWN_DOCKER_SSH_HOST=ssh://dpy-dind-ssh:2222" \
+		--network dpy-tests \
+		docker-sdk-python3 py.test tests/ssh/${file}
+	docker rm -vf dpy-dind-ssh
 
 
 .PHONY: integration-dind-ssl
@@ -110,6 +128,7 @@ integration-dind-ssl: build-dind-certs build-py3 setup-network
 		--name dpy-dind-ssl \
 		--network dpy-tests \
 		--network-alias docker \
+		--pull=always \
 		--privileged \
 		--volume /tmp \
 		--volumes-from dpy-dind-certs \

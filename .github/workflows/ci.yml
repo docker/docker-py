@@ -40,7 +40,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                variant: [ "integration-dind", "integration-dind-ssl" ]
+                variant: [ "integration-dind", "integration-dind-ssl", "integration-dind-ssh" ]
 
         steps:
             - uses: actions/checkout@v3
