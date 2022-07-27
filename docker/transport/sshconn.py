@@ -215,7 +215,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                 self.ssh_params['key_filename'] = host_config['identityfile']
 
         self.ssh_client.load_system_host_keys()
-        self.ssh_client.set_missing_host_key_policy(paramiko.WarningPolicy())
+        self.ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
     def _connect(self):
         if self.ssh_client:
