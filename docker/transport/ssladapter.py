@@ -2,8 +2,6 @@
       https://lukasa.co.uk/2013/01/Choosing_SSL_Version_In_Requests/
       https://github.com/kennethreitz/requests/pull/799
 """
-import sys
-
 from packaging.version import Version
 from requests.adapters import HTTPAdapter
 
@@ -16,12 +14,6 @@ except ImportError:
 
 
 PoolManager = urllib3.poolmanager.PoolManager
-
-# Monkey-patching match_hostname with a version that supports
-# IP-address checking. Not necessary for Python 3.5 and above
-if sys.version_info[0] < 3 or sys.version_info[1] < 5:
-    from backports.ssl_match_hostname import match_hostname
-    urllib3.connection.match_hostname = match_hostname
 
 
 class SSLHTTPAdapter(BaseHTTPAdapter):
