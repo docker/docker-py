@@ -1,6 +1,5 @@
 appdirs==1.4.3
 asn1crypto==0.22.0
-backports.ssl-match-hostname==3.5.0.1
 cffi==1.14.4
 cryptography==3.4.7
 enum34==1.1.6
