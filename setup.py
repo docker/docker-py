@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 
 import codecs
 import os
@@ -11,13 +10,14 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
+    'packaging',
     'websocket-client >= 0.32.0',
     'requests >= 2.14.2, != 2.18.0',
 ]
 
 extras_require = {
     # win32 APIs if on Windows (required for npipe support)
-    ':sys_platform == "win32"': 'pywin32==227',
+    ':sys_platform == "win32"': 'pywin32>=304',
 
     # If using docker-py over TLS, highly recommend this option is
     # pip-installed or pinned.
@@ -30,7 +30,7 @@ extras_require = {
     'tls': ['pyOpenSSL>=17.5.0', 'cryptography>=3.4.7', 'idna>=2.0.0'],
 
     # Only required when connecting using the ssh:// protocol
-    'ssh': ['paramiko>=2.4.2'],
+    'ssh': ['paramiko>=2.4.3'],
 
 }
 
@@ -62,7 +62,7 @@ setup(
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -72,10 +72,10 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Software Development',
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',

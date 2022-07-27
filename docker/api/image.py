@@ -1,15 +1,13 @@
 import logging
 import os
 
-import six
-
 from .. import auth, errors, utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 
 log = logging.getLogger(__name__)
 
 
-class ImageApiMixin(object):
+class ImageApiMixin:
 
     @utils.check_resource('image')
     def get_image(self, image, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
@@ -130,7 +128,7 @@ class ImageApiMixin(object):
 
         params = _import_image_params(
             repository, tag, image,
-            src=(src if isinstance(src, six.string_types) else None),
+            src=(src if isinstance(src, str) else None),
             changes=changes
         )
         headers = {'Content-Type': 'application/tar'}
@@ -139,7 +137,7 @@ class ImageApiMixin(object):
             return self._result(
                 self._post(u, data=None, params=params)
             )
-        elif isinstance(src, six.string_types):  # from file path
+        elif isinstance(src, str):  # from file path
             with open(src, 'rb') as f:
                 return self._result(
                     self._post(
@@ -379,7 +377,8 @@ class ImageApiMixin(object):
 
         Example:
 
-            >>> for line in client.api.pull('busybox', stream=True, decode=True):
+            >>> resp = client.api.pull('busybox', stream=True, decode=True)
+            ... for line in resp:
             ...     print(json.dumps(line, indent=4))
             {
                 "status": "Pulling image (latest) from busybox",
@@ -458,7 +457,12 @@ class ImageApiMixin(object):
                 If the server returns an error.
 
         Example:
-            >>> for line in client.api.push('yourname/app', stream=True, decode=True):
+            >>> resp = client.api.push(
+            ...     'yourname/app',
+            ...     stream=True,
+            ...     decode=True,
+            ... )
+            ... for line in resp:
             ...   print(line)
             {'status': 'Pushing repository yourname/app (1 tags)'}
             {'status': 'Pushing','progressDetail': {}, 'id': '511136ea3c5a'}
@@ -571,7 +575,7 @@ class ImageApiMixin(object):
 def is_file(src):
     try:
         return (
-            isinstance(src, six.string_types) and
+            isinstance(src, str) and
             os.path.isfile(src)
         )
     except TypeError:  # a data string will make isfile() raise a TypeError

@@ -265,7 +265,7 @@ class ImportImageTest(BaseAPIIntegrationTest):
         output = self.client.load_image(data)
         assert any([
             line for line in output
-            if 'Loaded image: {}'.format(test_img) in line.get('stream', '')
+            if f'Loaded image: {test_img}' in line.get('stream', '')
         ])
 
     @contextlib.contextmanager
@@ -284,7 +284,7 @@ class ImportImageTest(BaseAPIIntegrationTest):
         thread.daemon = True
         thread.start()
 
-        yield 'http://%s:%s' % (socket.gethostname(), server.server_address[1])
+        yield f'http://{socket.gethostname()}:{server.server_address[1]}'
 
         server.shutdown()
 
@@ -350,7 +350,7 @@ class SaveLoadImagesTest(BaseAPIIntegrationTest):
             result = self.client.load_image(f.read())
 
         success = False
-        result_line = 'Loaded image: {}\n'.format(TEST_IMG)
+        result_line = f'Loaded image: {TEST_IMG}\n'
         for data in result:
             print(data)
             if 'stream' in data:

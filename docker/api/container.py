@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import six
-
 from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
@@ -12,7 +10,7 @@ from ..types import HostConfig
 from ..types import NetworkingConfig
 
 
-class ContainerApiMixin(object):
+class ContainerApiMixin:
     @utils.check_resource('container')
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False, demux=False):
@@ -258,7 +256,9 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            client.api.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+            client.api.create_host_config(
+                port_bindings={1111: ('127.0.0.1', 4567)}
+            )
 
         Or without host port assignment:
 
@@ -408,7 +408,7 @@ class ContainerApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if isinstance(volumes, six.string_types):
+        if isinstance(volumes, str):
             volumes = [volumes, ]
 
         if isinstance(environment, dict):
@@ -581,10 +581,13 @@ class ContainerApiMixin(object):
 
         Example:
 
-            >>> client.api.create_host_config(privileged=True, cap_drop=['MKNOD'],
-                                       volumes_from=['nostalgic_newton'])
+            >>> client.api.create_host_config(
+            ...     privileged=True,
+            ...     cap_drop=['MKNOD'],
+            ...     volumes_from=['nostalgic_newton'],
+            ... )
             {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True,
-             'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
+            'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 
 """
         if not kwargs:
@@ -790,7 +793,7 @@ class ContainerApiMixin(object):
         url = self._url("/containers/{0}/kill", container)
         params = {}
         if signal is not None:
-            if not isinstance(signal, six.string_types):
+            if not isinstance(signal, str):
                 signal = int(signal)
             params['signal'] = signal
         res = self._post(url, params=params)

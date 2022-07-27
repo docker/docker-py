@@ -1,20 +1,27 @@
 import base64
+import collections
 import json
 import os
 import os.path
 import shlex
 import string
 from datetime import datetime
-from distutils.version import StrictVersion
+from packaging.version import Version
 
 from .. import errors
-from .. import tls
 from ..constants import DEFAULT_HTTP_HOST
 from ..constants import DEFAULT_UNIX_SOCKET
 from ..constants import DEFAULT_NPIPE
 from ..constants import BYTE_UNITS
+from ..tls import TLSConfig
 
-from urllib.parse import splitnport, urlparse
+from urllib.parse import urlparse, urlunparse
+
+
+URLComponents = collections.namedtuple(
+    'URLComponents',
+    'scheme netloc url params query fragment',
+)
 
 
 def create_ipam_pool(*args, **kwargs):
@@ -49,8 +56,8 @@ def compare_version(v1, v2):
     >>> compare_version(v2, v2)
     0
     """
-    s1 = StrictVersion(v1)
-    s2 = StrictVersion(v2)
+    s1 = Version(v1)
+    s2 = Version(v2)
     if s1 == s2:
         return 0
     elif s1 > s2:
@@ -136,13 +143,13 @@ def convert_volume_binds(binds):
                 mode = 'rw'
 
             result.append(
-                str('{0}:{1}:{2}').format(k, bind, mode)
+                f'{k}:{bind}:{mode}'
             )
         else:
             if isinstance(v, bytes):
                 v = v.decode('utf-8')
             result.append(
-                str('{0}:{1}:rw').format(k, v)
+                f'{k}:{v}:rw'
             )
     return result
 
@@ -201,10 +208,6 @@ def parse_repository_tag(repo_name):
 
 
 def parse_host(addr, is_win32=False, tls=False):
-    path = ''
-    port = None
-    host = None
-
     # Sensible defaults
     if not addr and is_win32:
         return DEFAULT_NPIPE
@@ -233,14 +236,14 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if proto not in ('tcp', 'unix', 'npipe', 'ssh'):
         raise errors.DockerException(
-            "Invalid bind address protocol: {}".format(addr)
+            f"Invalid bind address protocol: {addr}"
         )
 
     if proto == 'tcp' and not parsed_url.netloc:
         # "tcp://" is exceptionally disallowed by convention;
         # omitting a hostname for other protocols is fine
         raise errors.DockerException(
-            'Invalid bind address format: {}'.format(addr)
+            f'Invalid bind address format: {addr}'
         )
 
     if any([
@@ -248,7 +251,7 @@ def parse_host(addr, is_win32=False, tls=False):
         parsed_url.password
     ]):
         raise errors.DockerException(
-            'Invalid bind address format: {}'.format(addr)
+            f'Invalid bind address format: {addr}'
         )
 
     if parsed_url.path and proto == 'ssh':
@@ -263,20 +266,20 @@ def parse_host(addr, is_win32=False, tls=False):
             # to be valid and equivalent to unix:///path
             path = '/'.join((parsed_url.hostname, path))
 
+    netloc = parsed_url.netloc
     if proto in ('tcp', 'ssh'):
-        # parsed_url.hostname strips brackets from IPv6 addresses,
-        # which can be problematic hence our use of splitnport() instead.
-        host, port = splitnport(parsed_url.netloc)
-        if port is None or port < 0:
+        port = parsed_url.port or 0
+        if port <= 0:
             if proto != 'ssh':
                 raise errors.DockerException(
                     'Invalid bind address format: port is required:'
                     ' {}'.format(addr)
                 )
             port = 22
+            netloc = f'{parsed_url.netloc}:{port}'
 
-        if not host:
-            host = DEFAULT_HTTP_HOST
+        if not parsed_url.hostname:
+            netloc = f'{DEFAULT_HTTP_HOST}:{port}'
 
     # Rewrite schemes to fit library internals (requests adapters)
     if proto == 'tcp':
@@ -285,8 +288,16 @@ def parse_host(addr, is_win32=False, tls=False):
         proto = 'http+unix'
 
     if proto in ('http+unix', 'npipe'):
-        return "{}://{}".format(proto, path).rstrip('/')
-    return '{0}://{1}:{2}{3}'.format(proto, host, port, path).rstrip('/')
+        return f"{proto}://{path}".rstrip('/')
+
+    return urlunparse(URLComponents(
+        scheme=proto,
+        netloc=netloc,
+        url=path,
+        params='',
+        query='',
+        fragment='',
+    )).rstrip('/')
 
 
 def parse_devices(devices):
@@ -297,7 +308,7 @@ def parse_devices(devices):
             continue
         if not isinstance(device, str):
             raise errors.DockerException(
-                'Invalid device type {0}'.format(type(device))
+                f'Invalid device type {type(device)}'
             )
         device_mapping = device.split(':')
         if device_mapping:
@@ -351,7 +362,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
         # so if it's not set already then set it to false.
         assert_hostname = False
 
-    params['tls'] = tls.TLSConfig(
+    params['tls'] = TLSConfig(
         client_cert=(os.path.join(cert_path, 'cert.pem'),
                      os.path.join(cert_path, 'key.pem')),
         ca_cert=os.path.join(cert_path, 'ca.pem'),
@@ -408,7 +419,7 @@ def parse_bytes(s):
             digits = float(digits_part)
         except ValueError:
             raise errors.DockerException(
-                'Failed converting the string value for memory ({0}) to'
+                'Failed converting the string value for memory ({}) to'
                 ' an integer.'.format(digits_part)
             )
 
@@ -416,7 +427,7 @@ def parse_bytes(s):
         s = int(digits * units[suffix])
     else:
         raise errors.DockerException(
-            'The specified value for memory ({0}) should specify the'
+            'The specified value for memory ({}) should specify the'
             ' units. The postfix should be one of the `b` `k` `m` `g`'
             ' characters'.format(s)
         )
@@ -428,7 +439,7 @@ def normalize_links(links):
     if isinstance(links, dict):
         links = iter(links.items())
 
-    return ['{0}:{1}'.format(k, v) if v else k for k, v in sorted(links)]
+    return [f'{k}:{v}' if v else k for k, v in sorted(links)]
 
 
 def parse_env_file(env_file):
@@ -438,7 +449,7 @@ def parse_env_file(env_file):
     """
     environment = {}
 
-    with open(env_file, 'r') as f:
+    with open(env_file) as f:
         for line in f:
 
             if line[0] == '#':
@@ -454,7 +465,7 @@ def parse_env_file(env_file):
                 environment[k] = v
             else:
                 raise errors.DockerException(
-                    'Invalid line in environment file {0}:\n{1}'.format(
+                    'Invalid line in environment file {}:\n{}'.format(
                         env_file, line))
 
     return environment
@@ -471,7 +482,7 @@ def format_environment(environment):
         if isinstance(value, bytes):
             value = value.decode('utf-8')
 
-        return u'{key}={value}'.format(key=key, value=value)
+        return f'{key}={value}'
     return [format_env(*var) for var in iter(environment.items())]
 
 
@@ -479,11 +490,11 @@ def format_extra_hosts(extra_hosts, task=False):
     # Use format dictated by Swarm API if container is part of a task
     if task:
         return [
-            '{} {}'.format(v, k) for k, v in sorted(iter(extra_hosts.items()))
+            f'{v} {k}' for k, v in sorted(iter(extra_hosts.items()))
         ]
 
     return [
-        '{}:{}'.format(k, v) for k, v in sorted(iter(extra_hosts.items()))
+        f'{k}:{v}' for k, v in sorted(iter(extra_hosts.items()))
     ]
 
 

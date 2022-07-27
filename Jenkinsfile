@@ -25,7 +25,7 @@ def buildImages = { ->
       imageDindSSH = "${imageNameBase}:sshdind-${gitCommit()}"
       withDockerRegistry(credentialsId:'dockerbuildbot-index.docker.io') {
         buildImage(imageDindSSH, "-f tests/Dockerfile-ssh-dind .", "")
-        buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.7 .", "py3.7")
+        buildImage(imageNamePy3, "-f tests/Dockerfile --build-arg PYTHON_VERSION=3.10 .", "py3.10")
       }
     }
   }
@@ -70,7 +70,7 @@ def runTests = { Map settings ->
     throw new Exception("Need Docker version to test, e.g.: `runTests(dockerVersion: '19.03.12')`")
   }
   if (!pythonVersion) {
-    throw new Exception("Need Python version being tested, e.g.: `runTests(pythonVersion: 'py3.7')`")
+    throw new Exception("Need Python version being tested, e.g.: `runTests(pythonVersion: 'py3.x')`")
   }
 
   { ->

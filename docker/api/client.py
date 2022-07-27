@@ -107,7 +107,7 @@ class APIClient(
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
                  credstore_env=None, use_ssh_client=False,
                  max_pool_size=DEFAULT_MAX_POOL_SIZE):
-        super(APIClient, self).__init__()
+        super().__init__()
 
         if tls and not base_url:
             raise TLSParameterError(
@@ -199,7 +199,7 @@ class APIClient(
             self._version = version
         if not isinstance(self._version, str):
             raise DockerException(
-                'Version parameter must be a string or None. Found {0}'.format(
+                'Version parameter must be a string or None. Found {}'.format(
                     type(version).__name__
                 )
             )
@@ -219,7 +219,7 @@ class APIClient(
             )
         except Exception as e:
             raise DockerException(
-                'Error while fetching server API version: {0}'.format(e)
+                f'Error while fetching server API version: {e}'
             )
 
     def _set_request_timeout(self, kwargs):
@@ -248,7 +248,7 @@ class APIClient(
         for arg in args:
             if not isinstance(arg, str):
                 raise ValueError(
-                    'Expected a string but found {0} ({1}) '
+                    'Expected a string but found {} ({}) '
                     'instead'.format(arg, type(arg))
                 )
 
@@ -256,18 +256,18 @@ class APIClient(
         args = map(quote_f, args)
 
         if kwargs.get('versioned_api', True):
-            return '{0}/v{1}{2}'.format(
+            return '{}/v{}{}'.format(
                 self.base_url, self._version, pathfmt.format(*args)
             )
         else:
-            return '{0}{1}'.format(self.base_url, pathfmt.format(*args))
+            return f'{self.base_url}{pathfmt.format(*args)}'
 
     def _raise_for_status(self, response):
         """Raises stored :class:`APIError`, if one occurred."""
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise create_api_error_from_http_exception(e)
+            raise create_api_error_from_http_exception(e) from e
 
     def _result(self, response, json=False, binary=False):
         assert not (json and binary)
@@ -341,8 +341,7 @@ class APIClient(
 
         if response.raw._fp.chunked:
             if decode:
-                for chunk in json_stream(self._stream_helper(response, False)):
-                    yield chunk
+                yield from json_stream(self._stream_helper(response, False))
             else:
                 reader = response.raw
                 while not reader.closed:
@@ -398,8 +397,13 @@ class APIClient(
     def _stream_raw_result(self, response, chunk_size=1, decode=True):
         ''' Stream result for TTY-enabled container and raw binary data'''
         self._raise_for_status(response)
-        for out in response.iter_content(chunk_size, decode):
-            yield out
+
+        # Disable timeout on the underlying socket to prevent
+        # Read timed out(s) for long running processes
+        socket = self._get_raw_response_socket(response)
+        self._disable_socket_timeout(socket)
+
+        yield from response.iter_content(chunk_size, decode)
 
     def _read_from_socket(self, response, stream, tty=True, demux=False):
         socket = self._get_raw_response_socket(response)
@@ -477,7 +481,7 @@ class APIClient(
 
     def get_adapter(self, url):
         try:
-            return super(APIClient, self).get_adapter(url)
+            return super().get_adapter(url)
         except requests.exceptions.InvalidSchema as e:
             if self._custom_adapter:
                 return self._custom_adapter

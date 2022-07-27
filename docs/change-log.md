@@ -1,6 +1,61 @@
 Change log
 ==========
 
+5.0.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/76?closed=1)
+
+### Features
+- Add `cap_add` and `cap_drop` parameters to service create and ContainerSpec
+- Add `templating` parameter to config create
+
+### Bugfixes
+- Fix getting a read timeout for logs/attach with a tty and slow output
+
+### Miscellaneous
+- Fix documentation examples
+
+5.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/75?closed=1)
+
+### Bugfixes
+- Fix `disable_buffering` regression
+
+5.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/74?closed=1)
+
+### Bugfixes
+- Bring back support for ssh identity file
+- Cleanup remaining python-2 dependencies
+- Fix image save example in docs
+
+### Miscellaneous
+- Bump urllib3 to 1.26.5
+- Bump requests to 2.26.0
+
+5.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/70?closed=1)
+
+### Breaking changes
+- Remove support for Python 2.7
+- Make Python 3.6 the minimum version supported
+
+### Features
+- Add `limit` parameter to image search endpoint
+
+### Bugfixes
+- Fix `KeyError` exception on secret create
+- Verify TLS keys loaded from docker contexts
+- Update PORT_SPEC regex to allow square brackets for IPv6 addresses
+- Fix containers and images documentation examples
+
 4.4.4
 -----
 

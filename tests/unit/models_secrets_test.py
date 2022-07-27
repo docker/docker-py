@@ -8,4 +8,4 @@ class CreateServiceTest(unittest.TestCase):
     def test_secrets_repr(self):
         client = make_fake_client()
         secret = client.secrets.create(name="super_secret", data="secret")
-        assert secret.__repr__() == "<Secret: '{}'>".format(FAKE_SECRET_NAME)
+        assert secret.__repr__() == f"<Secret: '{FAKE_SECRET_NAME}'>"

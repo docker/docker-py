@@ -9,7 +9,7 @@ from .base import BaseAPIIntegrationTest, TEST_IMG
 class TestNetworks(BaseAPIIntegrationTest):
     def tearDown(self):
         self.client.leave_swarm(force=True)
-        super(TestNetworks, self).tearDown()
+        super().tearDown()
 
     def create_network(self, *args, **kwargs):
         net_name = random_name()

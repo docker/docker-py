@@ -239,7 +239,7 @@ class ExecDemuxTest(BaseAPIIntegrationTest):
     )
 
     def setUp(self):
-        super(ExecDemuxTest, self).setUp()
+        super().setUp()
         self.container = self.client.create_container(
             TEST_IMG, 'cat', detach=True, stdin_open=True
         )

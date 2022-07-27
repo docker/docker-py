@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import docker
 import pytest
 
@@ -31,7 +29,7 @@ class ConfigAPITest(BaseAPIIntegrationTest):
 
     def test_create_config_unicode_data(self):
         config_id = self.client.create_config(
-            'favorite_character', u'いざよいさくや'
+            'favorite_character', 'いざよいさくや'
         )
         self.tmp_configs.append(config_id)
         assert 'ID' in config_id
@@ -70,3 +68,16 @@ class ConfigAPITest(BaseAPIIntegrationTest):
         data = self.client.configs(filters={'name': ['favorite_character']})
         assert len(data) == 1
         assert data[0]['ID'] == config_id['ID']
+
+    @requires_api_version('1.37')
+    def test_create_config_with_templating(self):
+        config_id = self.client.create_config(
+            'favorite_character', 'sakuya izayoi',
+            templating={'name': 'golang'}
+        )
+        self.tmp_configs.append(config_id)
+        assert 'ID' in config_id
+        data = self.client.inspect_config(config_id)
+        assert data['Spec']['Name'] == 'favorite_character'
+        assert 'Templating' in data['Spec']
+        assert data['Spec']['Templating']['Name'] == 'golang'

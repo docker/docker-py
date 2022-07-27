@@ -52,8 +52,8 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
         return (int(self.major), int(self.minor), int(self.patch)) + stage
 
     def __str__(self):
-        stage = '-{}'.format(self.stage) if self.stage else ''
-        edition = '-{}'.format(self.edition) if self.edition else ''
+        stage = f'-{self.stage}' if self.stage else ''
+        edition = f'-{self.edition}' if self.edition else ''
         return '.'.join(map(str, self[:3])) + edition + stage
 
 
