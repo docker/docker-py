@@ -1,6 +1,16 @@
 TEST_API_VERSION ?= 1.41
 TEST_ENGINE_VERSION ?= 20.10
 
+ifeq ($(OS),Windows_NT)
+    PLATFORM := Windows
+else
+    PLATFORM := $(shell sh -c 'uname -s 2>/dev/null || echo Unknown')
+endif
+
+ifeq ($(PLATFORM),Linux)
+	uid_args := "--build-arg uid=$(shell id -u) --build-arg gid=$(shell id -g)"
+endif
+
 .PHONY: all
 all: test
 
@@ -19,7 +29,7 @@ build-py3:
 
 .PHONY: build-docs
 build-docs:
-	docker build -t docker-sdk-python-docs -f Dockerfile-docs --build-arg uid=$(shell id -u) --build-arg gid=$(shell id -g) .
+	docker build -t docker-sdk-python-docs -f Dockerfile-docs $(build_args) .
 
 .PHONY: build-dind-certs
 build-dind-certs:
