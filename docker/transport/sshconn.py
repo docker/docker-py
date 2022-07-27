@@ -155,7 +155,7 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
                     "Pool reached maximum size and no more "
                     "connections are allowed."
                 )
-            pass  # Oh well, we'll create a new connection then
+            # Oh well, we'll create a new connection then
 
         return conn or self._new_conn()
 
