@@ -1,2 +1,2 @@
-recommonmark==0.7.1
+myst-parser==0.18.0
 Sphinx==5.1.1
