@@ -10,9 +10,8 @@ The latest stable version [is available on PyPI](https://pypi.python.org/pypi/do
 
     pip install docker
 
-If you are intending to connect to a docker host via TLS, add `docker[tls]` to your requirements instead, or install with pip:
-
-    pip install docker[tls]
+> Older versions (< 6.0) required installing `docker[tls]` for SSL/TLS support.
+> This is no longer necessary and is a no-op, but is supported for backwards compatibility.
 
 ## Usage
 
