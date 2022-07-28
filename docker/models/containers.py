@@ -9,7 +9,9 @@ from ..errors import (
     NotFound, create_unexpected_kwargs_error
 )
 from ..types import HostConfig
-from ..utils import version_gte
+from ..utils import (
+    version_gte, normalize_links
+)
 from .images import Image
 from .resource import Collection, Model
 
@@ -1027,7 +1029,6 @@ RUN_HOST_CONFIG_KWARGS = [
     'ipc_mode',
     'isolation',
     'kernel_memory',
-    'links',
     'log_config',
     'lxc_conf',
     'mem_limit',
@@ -1083,10 +1084,13 @@ def _create_container_args(kwargs):
     if volumes:
         host_config_kwargs['binds'] = volumes
 
+    create_kwargs['networking_config'] = {}
     network = kwargs.pop('network', None)
     if network:
-        create_kwargs['networking_config'] = {network: None}
+        create_kwargs['networking_config'][network] = None
         host_config_kwargs['network_mode'] = network
+
+    links = kwargs.pop('links', {})
 
     # All kwargs should have been consumed by this point, so raise
     # error if any are left
@@ -1101,6 +1105,13 @@ def _create_container_args(kwargs):
         # sort to make consistent for tests
         create_kwargs['ports'] = [tuple(p.split('/', 1))
                                   for p in sorted(port_bindings.keys())]
+
+    if links:
+        network_mode = create_kwargs['host_config'].get('NetworkMode')
+        create_kwargs['networking_config']['EndpointsConfig'] = {
+            network_mode: {'Links': normalize_links(links)}
+        }
+
     if volumes:
         if isinstance(volumes, dict):
             create_kwargs['volumes'] = [
@@ -1110,6 +1121,10 @@ def _create_container_args(kwargs):
             create_kwargs['volumes'] = [
                 _host_volume_from_bind(v) for v in volumes
             ]
+
+    if not create_kwargs['networking_config']:
+        del create_kwargs['networking_config']
+
     return create_kwargs
 
 

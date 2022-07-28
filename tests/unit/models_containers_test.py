@@ -149,7 +149,6 @@ class ContainerCollectionTest(unittest.TestCase):
                 'GroupAdd': ['blah'],
                 'IpcMode': 'foo',
                 'KernelMemory': 123,
-                'Links': ['foo:bar'],
                 'LogConfig': {'Type': 'json-file', 'Config': {}},
                 'LxcConf': [{'Key': 'foo', 'Value': 'bar'}],
                 'Memory': 123,
@@ -185,7 +184,12 @@ class ContainerCollectionTest(unittest.TestCase):
             mac_address='abc123',
             name='somename',
             network_disabled=False,
-            networking_config={'foo': None},
+            networking_config={
+                'EndpointsConfig': {
+                    'foo': {'Links': ['foo:bar']}
+                },
+                'foo': None
+            },
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
             stop_signal=9,
