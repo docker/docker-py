@@ -4,6 +4,7 @@ import signal
 
 import docker
 from docker.api import APIClient
+from unittest import mock
 import pytest
 
 from . import fake_api
@@ -12,11 +13,6 @@ from .api_test import (
     BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
     fake_inspect_container, url_base
 )
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
 
 
 def fake_inspect_container_tty(self, container):

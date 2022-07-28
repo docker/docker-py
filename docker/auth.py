@@ -383,7 +383,6 @@ def _load_legacy_config(config_file):
         }}
     except Exception as e:
         log.debug(e)
-        pass
 
     log.debug("All parsing attempts failed - returning empty config")
     return {}

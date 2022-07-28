@@ -117,7 +117,11 @@ class Plugin(Model):
         if remote is None:
             remote = self.name
         privileges = self.client.api.plugin_privileges(remote)
-        yield from self.client.api.upgrade_plugin(self.name, remote, privileges)
+        yield from self.client.api.upgrade_plugin(
+            self.name,
+            remote,
+            privileges,
+        )
         self.reload()
 
 

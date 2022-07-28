@@ -15,7 +15,10 @@ class Image(Model):
     An image on the server.
     """
     def __repr__(self):
-        return "<{}: '{}'>".format(self.__class__.__name__, "', '".join(self.tags))
+        return "<{}: '{}'>".format(
+            self.__class__.__name__,
+            "', '".join(self.tags),
+        )
 
     @property
     def labels(self):

@@ -58,10 +58,10 @@ class SwarmApiMixin:
 
         Example:
 
-            >>> spec = client.create_swarm_spec(
+            >>> spec = client.api.create_swarm_spec(
               snapshot_interval=5000, log_entries_for_slow_followers=1200
             )
-            >>> client.init_swarm(
+            >>> client.api.init_swarm(
               advertise_addr='eth0', listen_addr='0.0.0.0:5000',
               force_new_cluster=False, swarm_spec=spec
             )
@@ -354,8 +354,8 @@ class SwarmApiMixin:
 
             Example:
 
-                >>> key = client.get_unlock_key()
-                >>> client.unlock_node(key)
+                >>> key = client.api.get_unlock_key()
+                >>> client.unlock_swarm(key)
 
         """
         if isinstance(key, dict):
@@ -396,7 +396,7 @@ class SwarmApiMixin:
                          'Role': 'manager',
                          'Labels': {'foo': 'bar'}
                         }
-            >>> client.update_node(node_id='24ifsmvkjbyhk', version=8,
+            >>> client.api.update_node(node_id='24ifsmvkjbyhk', version=8,
                 node_spec=node_spec)
 
         """

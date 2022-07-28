@@ -213,6 +213,10 @@ class ServiceCollection(Collection):
                 to the service.
             privileges (Privileges): Security options for the service's
                 containers.
+            cap_add (:py:class:`list`): A list of kernel capabilities to add to
+                the default set for the container.
+            cap_drop (:py:class:`list`): A list of kernel capabilities to drop
+                from the default set for the container.
 
         Returns:
             :py:class:`Service`: The created service.
@@ -277,6 +281,8 @@ class ServiceCollection(Collection):
 # kwargs to copy straight over to ContainerSpec
 CONTAINER_SPEC_KWARGS = [
     'args',
+    'cap_add',
+    'cap_drop',
     'command',
     'configs',
     'dns_config',
