@@ -1217,6 +1217,8 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         data = read_exactly(pty_stdout, next_size)
         assert data.decode('utf-8') == line
 
+    @pytest.mark.xfail(condition=bool(os.environ.get('DOCKER_CERT_PATH', '')),
+                       reason='DOCKER_CERT_PATH not respected for websockets')
     def test_run_container_reading_socket_ws(self):
         line = 'hi there and stuff and things, words!'
         # `echo` appends CRLF, `printf` doesn't
