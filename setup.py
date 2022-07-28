@@ -29,9 +29,6 @@ extras_require = {
     'ssh': ['paramiko>=2.4.3'],
 }
 
-version = None
-exec(open('docker/version.py').read())
-
 with open('./test-requirements.txt') as test_reqs_txt:
     test_requirements = [line for line in test_reqs_txt]
 
@@ -42,7 +39,9 @@ with codecs.open('./README.md', encoding='utf-8') as readme_md:
 
 setup(
     name="docker",
-    version=version,
+    use_scm_version={
+        'write_to': 'docker/_version.py'
+    },
     description="A Python library for the Docker Engine API.",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -54,6 +53,7 @@ setup(
         'Tracker': 'https://github.com/docker/docker-py/issues',
     },
     packages=find_packages(exclude=["tests.*", "tests"]),
+    setup_requires=['setuptools_scm'],
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,

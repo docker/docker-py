@@ -1,5 +1,5 @@
 import sys
-from .version import version
+from .version import __version__
 
 DEFAULT_DOCKER_API_VERSION = '1.41'
 MINIMUM_DOCKER_API_VERSION = '1.21'
@@ -28,7 +28,7 @@ INSECURE_REGISTRY_DEPRECATION_WARNING = \
 IS_WINDOWS_PLATFORM = (sys.platform == 'win32')
 WINDOWS_LONGPATH_PREFIX = '\\\\?\\'
 
-DEFAULT_USER_AGENT = f"docker-sdk-python/{version}"
+DEFAULT_USER_AGENT = f"docker-sdk-python/{__version__}"
 DEFAULT_NUM_POOLS = 25
 
 # The OpenSSH server default value for MaxSessions is 10 which means we can
