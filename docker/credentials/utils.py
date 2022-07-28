@@ -1,15 +1,15 @@
-import distutils.spawn
 import os
+import shutil
 import sys
 
 
 def find_executable(executable, path=None):
     """
-    As distutils.spawn.find_executable, but on Windows, look up
+    As shutil.which, but on Windows, look up
     every extension declared in PATHEXT instead of just `.exe`
     """
     if sys.platform != 'win32':
-        return distutils.spawn.find_executable(executable, path)
+        return shutil.which(executable, path=path)
 
     if path is None:
         path = os.environ['PATH']
