@@ -94,6 +94,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
         container = client.containers.run(
             'alpine', 'echo hello world', network=net_name,
+            network_alias=['alias1', 'alias2'],
             detach=True
         )
         self.tmp_containers.append(container.id)
@@ -103,6 +104,10 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'NetworkSettings' in attrs
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
+        assert 'alias1' in attrs['NetworkSettings']['Networks'][
+            net_name]['Aliases']
+        assert 'alias2' in attrs['NetworkSettings']['Networks'][
+            net_name]['Aliases']
 
     def test_run_with_none_driver(self):
         client = docker.from_env(version=TEST_API_VERSION)

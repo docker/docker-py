@@ -73,6 +73,7 @@ class ContainerCollectionTest(unittest.TestCase):
             name='somename',
             network_disabled=False,
             network='foo',
+            network_alias=['bar', 'baz'],
             oom_kill_disable=True,
             oom_score_adj=5,
             pid_mode='host',
@@ -185,7 +186,8 @@ class ContainerCollectionTest(unittest.TestCase):
             mac_address='abc123',
             name='somename',
             network_disabled=False,
-            networking_config={'foo': None},
+            networking_config={'EndpointsConfig': {'foo': {'Aliases':
+                                                           ['bar', 'baz']}}},
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
             stop_signal=9,
