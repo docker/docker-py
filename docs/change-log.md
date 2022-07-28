@@ -1,5 +1,35 @@
-Change log
+Changelog
 ==========
+
+6.0.0
+-----
+
+### Upgrade Notes
+- Minimum supported Python version is 3.7+
+- The `docker[tls]` extra is deprecated and a no-op, use `docker` for same
+  functionality (TLS support is always available now)
+- Native Python SSH client (used by default / `use_ssh_client=False`) will now
+  reject unknown host keys with `paramiko.ssh_exception.SSHException`
+
+### Features
+- Python 3.10 support
+- Automatically negotiate most secure TLS version
+
+### Bugfixes
+- Fix `ProxyCommand` option for SSH connections
+- Fix install issues related to `pywin32` version pinning
+- Fix IPv6 host parsing when explicit port specified
+- Do not accept unknown SSH host keys in native Python SSH mode
+- Do not spawn extra subshell when launching external SSH client
+- Improve exception semantics in `_raise_for_status`
+
+### Miscellaneous
+- Upgrade dependencies in `requirements.txt` to latest versions
+- Remove extraneous transitive dependencies
+- Eliminate many usages of deprecated functions/methods
+- Test reliability improvements
+- GitHub Actions workflows for linting, unit tests, integration tests, and
+  publishing releases
 
 5.0.3
 -----
