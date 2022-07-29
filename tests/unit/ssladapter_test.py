@@ -1,15 +1,8 @@
 import unittest
-from docker.transport import ssladapter
-import pytest
+from ssl import match_hostname, CertificateError
 
-try:
-    from backports.ssl_match_hostname import (
-        match_hostname, CertificateError
-    )
-except ImportError:
-    from ssl import (
-        match_hostname, CertificateError
-    )
+import pytest
+from docker.transport import ssladapter
 
 try:
     from ssl import OP_NO_SSLv3, OP_NO_SSLv2, OP_NO_TLSv1

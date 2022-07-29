@@ -1,5 +1,14 @@
 import requests
 
+_image_not_found_explanation_fragments = frozenset(
+    fragment.lower() for fragment in [
+        'no such image',
+        'not found: does not exist or no pull access',
+        'repository does not exist',
+        'was found but does not match the specified platform',
+    ]
+)
+
 
 class DockerException(Exception):
     """
@@ -21,14 +30,13 @@ def create_api_error_from_http_exception(e):
         explanation = (response.content or '').strip()
     cls = APIError
     if response.status_code == 404:
-        if explanation and ('No such image' in str(explanation) or
-                            'not found: does not exist or no pull access'
-                            in str(explanation) or
-                            'repository does not exist' in str(explanation)):
+        explanation_msg = (explanation or '').lower()
+        if any(fragment in explanation_msg
+               for fragment in _image_not_found_explanation_fragments):
             cls = ImageNotFound
         else:
             cls = NotFound
-    raise cls(e, response=response, explanation=explanation)
+    raise cls(e, response=response, explanation=explanation) from e
 
 
 class APIError(requests.exceptions.HTTPError, DockerException):
