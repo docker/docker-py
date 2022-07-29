@@ -399,7 +399,7 @@ class UpdateConfig(dict):
           an update before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
         order (string): Specifies the order of operations when rolling out an
-          updated task. Either ``start_first`` or ``stop_first`` are accepted.
+          updated task. Either ``start-first`` or ``stop-first`` are accepted.
     """
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
                  monitor=None, max_failure_ratio=None, order=None):
@@ -453,7 +453,7 @@ class RollbackConfig(UpdateConfig):
           a rollback before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
         order (string): Specifies the order of operations when rolling out a
-          rolled back task. Either ``start_first`` or ``stop_first`` are
+          rolled back task. Either ``start-first`` or ``stop-first`` are
           accepted.
     """
     pass
