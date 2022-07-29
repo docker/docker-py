@@ -11,6 +11,7 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'labels': {'key': 'value'},
             'hostname': 'test_host',
             'mode': 'global',
+            'rollback_config': {'rollback': 'config'},
             'update_config': {'update': 'config'},
             'networks': ['somenet'],
             'endpoint_spec': {'blah': 'blah'},
@@ -37,6 +38,7 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'name': 'somename',
             'labels': {'key': 'value'},
             'mode': 'global',
+            'rollback_config': {'rollback': 'config'},
             'update_config': {'update': 'config'},
             'endpoint_spec': {'blah': 'blah'},
         }
