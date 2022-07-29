@@ -1,6 +1,6 @@
-setuptools==58.2.0
-coverage==6.0.1
+setuptools==63.2.0
+coverage==6.4.2
 flake8==4.0.1
-pytest==6.2.5
+pytest==7.1.2
 pytest-cov==3.0.0
-pytest-timeout==2.0.1
+pytest-timeout==2.1.0

@@ -761,7 +761,8 @@ class ContainerCollection(Collection):
                     {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
                      '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
 
-                Or a list of strings which each one of its elements specifies a mount volume.
+                Or a list of strings which each one of its elements specifies a
+                mount volume.
 
                 For example:
 

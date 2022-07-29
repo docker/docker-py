@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.7
+ARG PYTHON_VERSION=3.10
 
 FROM python:${PYTHON_VERSION}
 
@@ -11,7 +11,9 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     pass
 
 # Add SSH keys and set permissions
-COPY tests/ssh-keys /root/.ssh
+COPY tests/ssh/config/client /root/.ssh
+COPY tests/ssh/config/server/known_ed25519.pub /root/.ssh/known_hosts
+RUN sed -i '1s;^;dpy-dind-ssh ;' /root/.ssh/known_hosts
 RUN chmod -R 600 /root/.ssh
 
 COPY ./tests/gpg-keys /gpg-keys

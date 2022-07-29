@@ -28,7 +28,7 @@ def create_api_error_from_http_exception(e):
             cls = ImageNotFound
         else:
             cls = NotFound
-    raise cls(e, response=response, explanation=explanation)
+    raise cls(e, response=response, explanation=explanation) from e
 
 
 class APIError(requests.exceptions.HTTPError, DockerException):

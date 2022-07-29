@@ -8,6 +8,7 @@ import pytest
 
 
 class TestRegressions(BaseAPIIntegrationTest):
+    @pytest.mark.xfail(True, reason='Docker API always returns chunked resp')
     def test_443_handle_nonchunked_response_in_stream(self):
         dfile = io.BytesIO()
         with pytest.raises(docker.errors.APIError) as exc:
