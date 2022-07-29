@@ -39,6 +39,7 @@ class ContainerCollectionTest(unittest.TestCase):
             cap_add=['foo'],
             cap_drop=['bar'],
             cgroup_parent='foobar',
+            cgroupns='host',
             cpu_period=1,
             cpu_quota=2,
             cpu_shares=5,
@@ -77,6 +78,7 @@ class ContainerCollectionTest(unittest.TestCase):
             oom_score_adj=5,
             pid_mode='host',
             pids_limit=500,
+            platform='linux',
             ports={
                 1111: 4567,
                 2222: None
@@ -134,6 +136,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'BlkioWeight': 2,
                 'CapAdd': ['foo'],
                 'CapDrop': ['bar'],
+                'CgroupnsMode': 'host',
                 'CgroupParent': 'foobar',
                 'CpuPeriod': 1,
                 'CpuQuota': 2,
@@ -186,6 +189,7 @@ class ContainerCollectionTest(unittest.TestCase):
             name='somename',
             network_disabled=False,
             networking_config={'foo': None},
+            platform='linux',
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
             stop_signal=9,
@@ -314,6 +318,33 @@ class ContainerCollectionTest(unittest.TestCase):
                          'NetworkMode': 'default'}
         )
 
+    def test_run_platform(self):
+        client = make_fake_client()
+
+        # raise exception on first call, then return normal value
+        client.api.create_container.side_effect = [
+            docker.errors.ImageNotFound(""),
+            client.api.create_container.return_value
+        ]
+
+        client.containers.run(image='alpine', platform='linux/arm64')
+
+        client.api.pull.assert_called_with(
+            'alpine',
+            tag='latest',
+            all_tags=False,
+            stream=True,
+            platform='linux/arm64',
+        )
+
+        client.api.create_container.assert_called_with(
+            detach=False,
+            platform='linux/arm64',
+            image='alpine',
+            command=None,
+            host_config={'NetworkMode': 'default'},
+        )
+
     def test_create(self):
         client = make_fake_client()
         container = client.containers.create(
@@ -377,6 +408,11 @@ class ContainerCollectionTest(unittest.TestCase):
 
 
 class ContainerTest(unittest.TestCase):
+    def test_short_id(self):
+        container = Container(attrs={'Id': '8497fe9244dd45cac543eb3c37d8605077'
+                                           '6800eebef1f3ec2ee111e8ccf12db6'})
+        assert container.short_id == '8497fe9244dd'
+
     def test_name(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)

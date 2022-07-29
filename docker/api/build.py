@@ -153,7 +153,7 @@ class BuildApiMixin:
                 with open(dockerignore) as f:
                     exclude = list(filter(
                         lambda x: x != '' and x[0] != '#',
-                        [l.strip() for l in f.read().splitlines()]
+                        [line.strip() for line in f.read().splitlines()]
                     ))
             dockerfile = process_dockerfile(dockerfile, path)
             context = utils.tar(

@@ -460,16 +460,13 @@ class CreateContainerTest(BaseAPIIntegrationTest):
     def test_create_with_device_cgroup_rules(self):
         rule = 'c 7:128 rwm'
         ctnr = self.client.create_container(
-            TEST_IMG, 'cat /sys/fs/cgroup/devices/devices.list',
-            host_config=self.client.create_host_config(
+            TEST_IMG, 'true', host_config=self.client.create_host_config(
                 device_cgroup_rules=[rule]
             )
         )
         self.tmp_containers.append(ctnr)
         config = self.client.inspect_container(ctnr)
         assert config['HostConfig']['DeviceCgroupRules'] == [rule]
-        self.client.start(ctnr)
-        assert rule in self.client.logs(ctnr).decode('utf-8')
 
     def test_create_with_uts_mode(self):
         container = self.client.create_container(
@@ -1200,7 +1197,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         sock = self.client.attach_socket(container, ws=False)
         assert sock.fileno() > -1
 
-    def test_run_container_reading_socket(self):
+    def test_run_container_reading_socket_http(self):
         line = 'hi there and stuff and things, words!'
         # `echo` appends CRLF, `printf` doesn't
         command = f"printf '{line}'"
@@ -1220,12 +1217,33 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         data = read_exactly(pty_stdout, next_size)
         assert data.decode('utf-8') == line
 
+    @pytest.mark.xfail(condition=bool(os.environ.get('DOCKER_CERT_PATH', '')),
+                       reason='DOCKER_CERT_PATH not respected for websockets')
+    def test_run_container_reading_socket_ws(self):
+        line = 'hi there and stuff and things, words!'
+        # `echo` appends CRLF, `printf` doesn't
+        command = f"printf '{line}'"
+        container = self.client.create_container(TEST_IMG, command,
+                                                 detach=True, tty=False)
+        self.tmp_containers.append(container)
+
+        opts = {"stdout": 1, "stream": 1, "logs": 1}
+        pty_stdout = self.client.attach_socket(container, opts, ws=True)
+        self.addCleanup(pty_stdout.close)
+
+        self.client.start(container)
+
+        data = pty_stdout.recv()
+        assert data.decode('utf-8') == line
+
+    @pytest.mark.timeout(10)
     def test_attach_no_stream(self):
         container = self.client.create_container(
             TEST_IMG, 'echo hello'
         )
         self.tmp_containers.append(container)
         self.client.start(container)
+        self.client.wait(container, condition='not-running')
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 

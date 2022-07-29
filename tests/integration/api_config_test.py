@@ -73,7 +73,7 @@ class ConfigAPITest(BaseAPIIntegrationTest):
     def test_create_config_with_templating(self):
         config_id = self.client.create_config(
             'favorite_character', 'sakuya izayoi',
-            templating={ 'name': 'golang'}
+            templating={'name': 'golang'}
         )
         self.tmp_configs.append(config_id)
         assert 'ID' in config_id

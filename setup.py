@@ -10,27 +10,23 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
+    'packaging >= 14.0',
+    'requests >= 2.26.0',
+    'urllib3 >= 1.26.0',
     'websocket-client >= 0.32.0',
-    'requests >= 2.14.2, != 2.18.0',
 ]
 
 extras_require = {
     # win32 APIs if on Windows (required for npipe support)
-    ':sys_platform == "win32"': 'pywin32==227',
+    ':sys_platform == "win32"': 'pywin32>=304',
 
-    # If using docker-py over TLS, highly recommend this option is
-    # pip-installed or pinned.
-
-    # TODO: if pip installing both "requests" and "requests[security]", the
-    # extra package from the "security" option are not installed (see
-    # https://github.com/pypa/pip/issues/4391).  Once that's fixed, instead of
-    # installing the extra dependencies, install the following instead:
-    # 'requests[security] >= 2.5.2, != 2.11.0, != 2.12.2'
-    'tls': ['pyOpenSSL>=17.5.0', 'cryptography>=3.4.7', 'idna>=2.0.0'],
+    # This is now a no-op, as similarly the requests[security] extra is
+    # a no-op as of requests 2.26.0, this is always available/by default now
+    # see https://github.com/psf/requests/pull/5867
+    'tls': [],
 
     # Only required when connecting using the ssh:// protocol
     'ssh': ['paramiko>=2.4.3'],
-
 }
 
 version = None
@@ -61,7 +57,7 @@ setup(
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -71,7 +67,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
