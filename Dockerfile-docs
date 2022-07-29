@@ -10,6 +10,6 @@ RUN addgroup --gid $gid sphinx \
 
 WORKDIR /src
 COPY requirements.txt docs-requirements.txt ./
-RUN pip install -r requirements.txt -r docs-requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -r docs-requirements.txt
 
 USER sphinx

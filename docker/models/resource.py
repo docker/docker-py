@@ -35,9 +35,9 @@ class Model:
     @property
     def short_id(self):
         """
-        The ID of the object, truncated to 10 characters.
+        The ID of the object, truncated to 12 characters.
         """
-        return self.id[:10]
+        return self.id[:12]
 
     def reload(self):
         """

@@ -5,11 +5,11 @@ FROM python:${PYTHON_VERSION}
 WORKDIR /src
 
 COPY requirements.txt /src/requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY test-requirements.txt /src/test-requirements.txt
-RUN pip install -r test-requirements.txt
+RUN pip install --no-cache-dir -r test-requirements.txt
 
 COPY . .
 ARG SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER
-RUN pip install .
+RUN pip install --no-cache-dir .
