@@ -553,6 +553,11 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cgroup_parent (str): Override the default parent cgroup.
+            cgroupns (str): Override the default cgroup namespace mode for the
+                container. One of:
+                - ``private`` the container runs in its own private cgroup
+                  namespace.
+                - ``host`` use the host system's cgroup namespace.
             cpu_count (int): Number of usable CPUs (Windows only).
             cpu_percent (int): Usable percentage of the available CPUs
                 (Windows only).
@@ -1002,6 +1007,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cgroupns',
     'cpu_count',
     'cpu_percent',
     'cpu_period',
