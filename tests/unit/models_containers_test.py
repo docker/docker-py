@@ -77,6 +77,7 @@ class ContainerCollectionTest(unittest.TestCase):
             oom_score_adj=5,
             pid_mode='host',
             pids_limit=500,
+            platform='linux',
             ports={
                 1111: 4567,
                 2222: None
@@ -186,6 +187,7 @@ class ContainerCollectionTest(unittest.TestCase):
             name='somename',
             network_disabled=False,
             networking_config={'foo': None},
+            platform='linux',
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
             stop_signal=9,
@@ -312,6 +314,33 @@ class ContainerCollectionTest(unittest.TestCase):
             detach=True,
             host_config={'AutoRemove': True,
                          'NetworkMode': 'default'}
+        )
+
+    def test_run_platform(self):
+        client = make_fake_client()
+
+        # raise exception on first call, then return normal value
+        client.api.create_container.side_effect = [
+            docker.errors.ImageNotFound(""),
+            client.api.create_container.return_value
+        ]
+
+        client.containers.run(image='alpine', platform='linux/arm64')
+
+        client.api.pull.assert_called_with(
+            'alpine',
+            tag='latest',
+            all_tags=False,
+            stream=True,
+            platform='linux/arm64',
+        )
+
+        client.api.create_container.assert_called_with(
+            detach=False,
+            platform='linux/arm64',
+            image='alpine',
+            command=None,
+            host_config={'NetworkMode': 'default'},
         )
 
     def test_create(self):
