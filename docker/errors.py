@@ -1,5 +1,14 @@
 import requests
 
+_image_not_found_explanation_fragments = frozenset(
+    fragment.lower() for fragment in [
+        'no such image',
+        'not found: does not exist or no pull access',
+        'repository does not exist',
+        'was found but does not match the specified platform',
+    ]
+)
+
 
 class DockerException(Exception):
     """
@@ -21,14 +30,13 @@ def create_api_error_from_http_exception(e):
         explanation = (response.content or '').strip()
     cls = APIError
     if response.status_code == 404:
-        if explanation and ('No such image' in str(explanation) or
-                            'not found: does not exist or no pull access'
-                            in str(explanation) or
-                            'repository does not exist' in str(explanation)):
+        explanation_msg = (explanation or '').lower()
+        if any(fragment in explanation_msg
+               for fragment in _image_not_found_explanation_fragments):
             cls = ImageNotFound
         else:
             cls = NotFound
-    raise cls(e, response=response, explanation=explanation)
+    raise cls(e, response=response, explanation=explanation) from e
 
 
 class APIError(requests.exceptions.HTTPError, DockerException):
@@ -38,23 +46,25 @@ class APIError(requests.exceptions.HTTPError, DockerException):
     def __init__(self, message, response=None, explanation=None):
         # requests 1.2 supports response as a keyword argument, but
         # requests 1.1 doesn't
-        super(APIError, self).__init__(message)
+        super().__init__(message)
         self.response = response
         self.explanation = explanation
 
     def __str__(self):
-        message = super(APIError, self).__str__()
+        message = super().__str__()
 
         if self.is_client_error():
-            message = '{0} Client Error: {1}'.format(
-                self.response.status_code, self.response.reason)
+            message = '{} Client Error for {}: {}'.format(
+                self.response.status_code, self.response.url,
+                self.response.reason)
 
         elif self.is_server_error():
-            message = '{0} Server Error: {1}'.format(
-                self.response.status_code, self.response.reason)
+            message = '{} Server Error for {}: {}'.format(
+                self.response.status_code, self.response.url,
+                self.response.reason)
 
         if self.explanation:
-            message = '{0} ("{1}")'.format(message, self.explanation)
+            message = f'{message} ("{self.explanation}")'
 
         return message
 
@@ -131,11 +141,11 @@ class ContainerError(DockerException):
         self.image = image
         self.stderr = stderr
 
-        err = ": {}".format(stderr) if stderr is not None else ""
+        err = f": {stderr}" if stderr is not None else ""
         msg = ("Command '{}' in image '{}' returned non-zero exit "
                "status {}{}").format(command, image, exit_status, err)
 
-        super(ContainerError, self).__init__(msg)
+        super().__init__(msg)
 
 
 class StreamParseError(RuntimeError):
@@ -145,7 +155,7 @@ class StreamParseError(RuntimeError):
 
 class BuildError(DockerException):
     def __init__(self, reason, build_log):
-        super(BuildError, self).__init__(reason)
+        super().__init__(reason)
         self.msg = reason
         self.build_log = build_log
 
@@ -155,8 +165,8 @@ class ImageLoadError(DockerException):
 
 
 def create_unexpected_kwargs_error(name, kwargs):
-    quoted_kwargs = ["'{}'".format(k) for k in sorted(kwargs)]
-    text = ["{}() ".format(name)]
+    quoted_kwargs = [f"'{k}'" for k in sorted(kwargs)]
+    text = [f"{name}() "]
     if len(quoted_kwargs) == 1:
         text.append("got an unexpected keyword argument ")
     else:
@@ -170,7 +180,7 @@ class MissingContextParameter(DockerException):
         self.param = param
 
     def __str__(self):
-        return ("missing parameter: {}".format(self.param))
+        return (f"missing parameter: {self.param}")
 
 
 class ContextAlreadyExists(DockerException):
@@ -178,7 +188,7 @@ class ContextAlreadyExists(DockerException):
         self.name = name
 
     def __str__(self):
-        return ("context {} already exists".format(self.name))
+        return (f"context {self.name} already exists")
 
 
 class ContextException(DockerException):
@@ -194,4 +204,4 @@ class ContextNotFound(DockerException):
         self.name = name
 
     def __str__(self):
-        return ("context '{}' not found".format(self.name))
+        return (f"context '{self.name}' not found")

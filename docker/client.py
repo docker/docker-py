@@ -1,5 +1,5 @@
 from .api.client import APIClient
-from .constants import DEFAULT_TIMEOUT_SECONDS
+from .constants import (DEFAULT_TIMEOUT_SECONDS, DEFAULT_MAX_POOL_SIZE)
 from .models.configs import ConfigCollection
 from .models.containers import ContainerCollection
 from .models.images import ImageCollection
@@ -13,7 +13,7 @@ from .models.volumes import VolumeCollection
 from .utils import kwargs_from_env
 
 
-class DockerClient(object):
+class DockerClient:
     """
     A client for communicating with a Docker server.
 
@@ -35,6 +35,11 @@ class DockerClient(object):
         user_agent (str): Set a custom user agent for requests to the server.
         credstore_env (dict): Override environment variables when calling the
             credential store process.
+        use_ssh_client (bool): If set to `True`, an ssh connection is made
+            via shelling out to the ssh client. Ensure the ssh client is
+            installed and configured on the host.
+        max_pool_size (int): The maximum number of connections
+            to save in the pool.
     """
     def __init__(self, *args, **kwargs):
         self.api = APIClient(*args, **kwargs)
@@ -62,14 +67,19 @@ class DockerClient(object):
 
         Args:
             version (str): The version of the API to use. Set to ``auto`` to
-                automatically detect the server's version. Default: ``1.35``
+                automatically detect the server's version. Default: ``auto``
             timeout (int): Default timeout for API calls, in seconds.
+            max_pool_size (int): The maximum number of connections
+                to save in the pool.
             ssl_version (int): A valid `SSL version`_.
             assert_hostname (bool): Verify the hostname of the server.
             environment (dict): The environment to read environment variables
                 from. Default: the value of ``os.environ``
             credstore_env (dict): Override environment variables when calling
                 the credential store process.
+            use_ssh_client (bool): If set to `True`, an ssh connection is
+                made via shelling out to the ssh client. Ensure the ssh
+                client is installed and configured on the host.
 
         Example:
 
@@ -80,9 +90,15 @@ class DockerClient(object):
             https://docs.python.org/3.5/library/ssl.html#ssl.PROTOCOL_TLSv1
         """
         timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
+        max_pool_size = kwargs.pop('max_pool_size', DEFAULT_MAX_POOL_SIZE)
         version = kwargs.pop('version', None)
+        use_ssh_client = kwargs.pop('use_ssh_client', False)
         return cls(
-            timeout=timeout, version=version, **kwargs_from_env(**kwargs)
+            timeout=timeout,
+            max_pool_size=max_pool_size,
+            version=version,
+            use_ssh_client=use_ssh_client,
+            **kwargs_from_env(**kwargs)
         )
 
     # Resources
@@ -196,7 +212,7 @@ class DockerClient(object):
     close.__doc__ = APIClient.close.__doc__
 
     def __getattr__(self, name):
-        s = ["'DockerClient' object has no attribute '{}'".format(name)]
+        s = [f"'DockerClient' object has no attribute '{name}'"]
         # If a user calls a method on APIClient, they
         if hasattr(APIClient, name):
             s.append("In Docker SDK for Python 2.0, this method is now on the "

@@ -27,7 +27,7 @@ def minimum_version(version):
         def wrapper(self, *args, **kwargs):
             if utils.version_lt(self._version, version):
                 raise errors.InvalidVersion(
-                    '{0} is not available for version < {1}'.format(
+                    '{} is not available for version < {}'.format(
                         f.__name__, version
                     )
                 )

@@ -8,7 +8,7 @@ from .base import BaseAPIIntegrationTest
 
 class SwarmTest(BaseAPIIntegrationTest):
     def setUp(self):
-        super(SwarmTest, self).setUp()
+        super().setUp()
         force_leave_swarm(self.client)
         self._unlock_key = None
 
@@ -19,7 +19,7 @@ class SwarmTest(BaseAPIIntegrationTest):
         except docker.errors.APIError:
             pass
         force_leave_swarm(self.client)
-        super(SwarmTest, self).tearDown()
+        super().tearDown()
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):

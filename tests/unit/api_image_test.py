@@ -3,15 +3,11 @@ import pytest
 
 from . import fake_api
 from docker import auth
+from unittest import mock
 from .api_test import (
     BaseAPIClientTest, fake_request, DEFAULT_TIMEOUT_SECONDS, url_prefix,
     fake_resolve_authconfig
 )
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 
 class ImageTest(BaseAPIClientTest):
@@ -26,7 +22,18 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 0, 'all': 1},
+            params={'only_ids': 0, 'all': 1},
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    def test_images_name(self):
+        self.client.images('foo:bar')
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'images/json',
+            params={'only_ids': 0, 'all': 0,
+                    'filters': '{"reference": ["foo:bar"]}'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -36,7 +43,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 1, 'all': 1},
+            params={'only_ids': 1, 'all': 1},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -46,7 +53,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 1, 'all': 0},
+            params={'only_ids': 1, 'all': 0},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -56,7 +63,7 @@ class ImageTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'images/json',
-            params={'filter': None, 'only_ids': 0, 'all': 0,
+            params={'only_ids': 0, 'all': 0,
                     'filters': '{"dangling": ["true"]}'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -67,7 +74,7 @@ class ImageTest(BaseAPIClientTest):
         args = fake_request.call_args
         assert args[0][1] == url_prefix + 'images/create'
         assert args[1]['params'] == {
-            'tag': None, 'fromImage': 'joffrey/test001'
+            'tag': 'latest', 'fromImage': 'joffrey/test001'
         }
         assert not args[1]['stream']
 
@@ -77,7 +84,7 @@ class ImageTest(BaseAPIClientTest):
         args = fake_request.call_args
         assert args[0][1] == url_prefix + 'images/create'
         assert args[1]['params'] == {
-            'tag': None, 'fromImage': 'joffrey/test001'
+            'tag': 'latest', 'fromImage': 'joffrey/test001'
         }
         assert args[1]['stream']
 
@@ -93,7 +100,7 @@ class ImageTest(BaseAPIClientTest):
                 'repo': None,
                 'comment': None,
                 'tag': None,
-                'container': '3cc2351ab11b',
+                'container': fake_api.FAKE_CONTAINER_ID,
                 'author': None,
                 'changes': None
             },
@@ -105,7 +112,7 @@ class ImageTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'DELETE',
-            url_prefix + 'images/e9aa60c60128',
+            url_prefix + 'images/' + fake_api.FAKE_IMAGE_ID,
             params={'force': False, 'noprune': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -280,7 +287,7 @@ class ImageTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'images/e9aa60c60128/tag',
+            url_prefix + 'images/' + fake_api.FAKE_IMAGE_ID + '/tag',
             params={
                 'tag': None,
                 'repo': 'repo',
@@ -298,7 +305,7 @@ class ImageTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'images/e9aa60c60128/tag',
+            url_prefix + 'images/' + fake_api.FAKE_IMAGE_ID + '/tag',
             params={
                 'tag': 'tag',
                 'repo': 'repo',
@@ -313,7 +320,7 @@ class ImageTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'images/e9aa60c60128/tag',
+            url_prefix + 'images/' + fake_api.FAKE_IMAGE_ID + '/tag',
             params={
                 'tag': None,
                 'repo': 'repo',
@@ -327,7 +334,7 @@ class ImageTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'images/e9aa60c60128/get',
+            url_prefix + 'images/' + fake_api.FAKE_IMAGE_ID + '/get',
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

@@ -9,7 +9,7 @@ from docker.context.config import write_context_name_to_docker_config
 from docker.context import Context
 
 
-class ContextAPI(object):
+class ContextAPI:
     """Context API.
     Contains methods for context management:
     create, list, remove, get, inspect.
@@ -109,7 +109,7 @@ class ContextAPI(object):
                 if filename == METAFILE:
                     try:
                         data = json.load(
-                            open(os.path.join(dirname, filename), "r"))
+                            open(os.path.join(dirname, filename)))
                         names.append(data["Name"])
                     except Exception as e:
                         raise errors.ContextException(
@@ -138,7 +138,7 @@ class ContextAPI(object):
         err = write_context_name_to_docker_config(name)
         if err:
             raise errors.ContextException(
-                'Failed to set current context: {}'.format(err))
+                f'Failed to set current context: {err}')
 
     @classmethod
     def remove_context(cls, name):

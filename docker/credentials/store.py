@@ -2,15 +2,13 @@ import errno
 import json
 import subprocess
 
-import six
-
 from . import constants
 from . import errors
 from .utils import create_environment_dict
 from .utils import find_executable
 
 
-class Store(object):
+class Store:
     def __init__(self, program, environment=None):
         """ Create a store object that acts as an interface to
             perform the basic operations for storing, retrieving
@@ -30,7 +28,7 @@ class Store(object):
         """ Retrieve credentials for `server`. If no credentials are found,
             a `StoreError` will be raised.
         """
-        if not isinstance(server, six.binary_type):
+        if not isinstance(server, bytes):
             server = server.encode('utf-8')
         data = self._execute('get', server)
         result = json.loads(data.decode('utf-8'))
@@ -41,7 +39,7 @@ class Store(object):
         # raise CredentialsNotFound
         if result['Username'] == '' and result['Secret'] == '':
             raise errors.CredentialsNotFound(
-                'No matching credentials in {}'.format(self.program)
+                f'No matching credentials in {self.program}'
             )
 
         return result
@@ -61,7 +59,7 @@ class Store(object):
         """ Erase credentials for `server`. Raises a `StoreError` if an error
             occurs.
         """
-        if not isinstance(server, six.binary_type):
+        if not isinstance(server, bytes):
             server = server.encode('utf-8')
         self._execute('erase', server)
 
@@ -75,20 +73,9 @@ class Store(object):
         output = None
         env = create_environment_dict(self.environment)
         try:
-            if six.PY3:
-                output = subprocess.check_output(
-                    [self.exe, subcmd], input=data_input, env=env,
-                )
-            else:
-                process = subprocess.Popen(
-                    [self.exe, subcmd], stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE, env=env,
-                )
-                output, _ = process.communicate(data_input)
-                if process.returncode != 0:
-                    raise subprocess.CalledProcessError(
-                        returncode=process.returncode, cmd='', output=output
-                    )
+            output = subprocess.check_output(
+                [self.exe, subcmd], input=data_input, env=env,
+            )
         except subprocess.CalledProcessError as e:
             raise errors.process_store_error(e, self.program)
         except OSError as e:

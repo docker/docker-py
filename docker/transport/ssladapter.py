@@ -2,9 +2,7 @@
       https://lukasa.co.uk/2013/01/Choosing_SSL_Version_In_Requests/
       https://github.com/kennethreitz/requests/pull/799
 """
-import sys
-
-from distutils.version import StrictVersion
+from packaging.version import Version
 from requests.adapters import HTTPAdapter
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
@@ -16,12 +14,6 @@ except ImportError:
 
 
 PoolManager = urllib3.poolmanager.PoolManager
-
-# Monkey-patching match_hostname with a version that supports
-# IP-address checking. Not necessary for Python 3.5 and above
-if sys.version_info[0] < 3 or sys.version_info[1] < 5:
-    from backports.ssl_match_hostname import match_hostname
-    urllib3.connection.match_hostname = match_hostname
 
 
 class SSLHTTPAdapter(BaseHTTPAdapter):
@@ -36,7 +28,7 @@ class SSLHTTPAdapter(BaseHTTPAdapter):
         self.ssl_version = ssl_version
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
-        super(SSLHTTPAdapter, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
         kwargs = {
@@ -59,7 +51,7 @@ class SSLHTTPAdapter(BaseHTTPAdapter):
 
         But we still need to take care of when there is a proxy poolmanager
         """
-        conn = super(SSLHTTPAdapter, self).get_connection(*args, **kwargs)
+        conn = super().get_connection(*args, **kwargs)
         if conn.assert_hostname != self.assert_hostname:
             conn.assert_hostname = self.assert_hostname
         return conn
@@ -70,4 +62,4 @@ class SSLHTTPAdapter(BaseHTTPAdapter):
             return False
         if urllib_ver == 'dev':
             return True
-        return StrictVersion(urllib_ver) > StrictVersion('1.5')
+        return Version(urllib_ver) > Version('1.5')

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 
 import codecs
 import os
@@ -11,37 +10,23 @@ ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
 requirements = [
-    'six >= 1.4.0',
+    'packaging >= 14.0',
+    'requests >= 2.26.0',
+    'urllib3 >= 1.26.0',
     'websocket-client >= 0.32.0',
-    'requests >= 2.14.2, != 2.18.0',
 ]
 
 extras_require = {
-    ':python_version < "3.5"': 'backports.ssl_match_hostname >= 3.5',
-    # While not imported explicitly, the ipaddress module is required for
-    # ssl_match_hostname to verify hosts match with certificates via
-    # ServerAltname: https://pypi.python.org/pypi/backports.ssl_match_hostname
-    ':python_version < "3.3"': 'ipaddress >= 1.0.16',
-
     # win32 APIs if on Windows (required for npipe support)
-    # Python 3.6 is only compatible with v220 ; Python < 3.5 is not supported
-    # on v220 ; ALL versions are broken for v222 (as of 2018-01-26)
-    ':sys_platform == "win32" and python_version < "3.6"': 'pypiwin32==219',
-    ':sys_platform == "win32" and python_version >= "3.6"': 'pypiwin32==223',
+    ':sys_platform == "win32"': 'pywin32>=304',
 
-    # If using docker-py over TLS, highly recommend this option is
-    # pip-installed or pinned.
-
-    # TODO: if pip installing both "requests" and "requests[security]", the
-    # extra package from the "security" option are not installed (see
-    # https://github.com/pypa/pip/issues/4391).  Once that's fixed, instead of
-    # installing the extra dependencies, install the following instead:
-    # 'requests[security] >= 2.5.2, != 2.11.0, != 2.12.2'
-    'tls': ['pyOpenSSL>=17.5.0', 'cryptography>=1.3.4', 'idna>=2.0.0'],
+    # This is now a no-op, as similarly the requests[security] extra is
+    # a no-op as of requests 2.26.0, this is always available/by default now
+    # see https://github.com/psf/requests/pull/5867
+    'tls': [],
 
     # Only required when connecting using the ssh:// protocol
-    'ssh': ['paramiko>=2.4.2'],
-
+    'ssh': ['paramiko>=2.4.3'],
 }
 
 version = None
@@ -72,7 +57,7 @@ setup(
     install_requires=requirements,
     tests_require=test_requirements,
     extras_require=extras_require,
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='>=3.7',
     zip_safe=False,
     test_suite='tests',
     classifiers=[
@@ -81,16 +66,15 @@ setup(
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Software Development',
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],
-    maintainer='Joffrey F',
-    maintainer_email='joffrey@docker.com',
+    maintainer='Ulysses Souza',
+    maintainer_email='ulysses.souza@docker.com',
 )

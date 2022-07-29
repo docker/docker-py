@@ -1,6 +1,151 @@
 Change log
 ==========
 
+5.0.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/76?closed=1)
+
+### Features
+- Add `cap_add` and `cap_drop` parameters to service create and ContainerSpec
+- Add `templating` parameter to config create
+
+### Bugfixes
+- Fix getting a read timeout for logs/attach with a tty and slow output
+
+### Miscellaneous
+- Fix documentation examples
+
+5.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/75?closed=1)
+
+### Bugfixes
+- Fix `disable_buffering` regression
+
+5.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/74?closed=1)
+
+### Bugfixes
+- Bring back support for ssh identity file
+- Cleanup remaining python-2 dependencies
+- Fix image save example in docs
+
+### Miscellaneous
+- Bump urllib3 to 1.26.5
+- Bump requests to 2.26.0
+
+5.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/70?closed=1)
+
+### Breaking changes
+- Remove support for Python 2.7
+- Make Python 3.6 the minimum version supported
+
+### Features
+- Add `limit` parameter to image search endpoint
+
+### Bugfixes
+- Fix `KeyError` exception on secret create
+- Verify TLS keys loaded from docker contexts
+- Update PORT_SPEC regex to allow square brackets for IPv6 addresses
+- Fix containers and images documentation examples
+
+4.4.4
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/73?closed=1)
+
+### Bugfixes
+- Remove `LD_LIBRARY_PATH` and `SSL_CERT_FILE` environment variables when shelling out to the ssh client
+
+4.4.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/72?closed=1)
+
+### Features
+- Add support for docker.types.Placement.MaxReplicas
+
+### Bugfixes
+- Fix SSH port parsing when shelling out to the ssh client
+
+4.4.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/71?closed=1)
+
+### Bugfixes
+- Fix SSH connection bug where the hostname was incorrectly trimmed and the error was hidden
+- Fix docs example
+
+### Miscellaneous
+- Add Python3.8 and 3.9 in setup.py classifier list
+
+4.4.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/69?closed=1)
+
+### Bugfixes
+- Avoid setting unsuported parameter for subprocess.Popen on Windows
+- Replace use of deprecated "filter" argument on ""docker/api/image"
+
+4.4.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/67?closed=1)
+
+### Features
+- Add an alternative SSH connection to the paramiko one, based on shelling out to the SSh client. Similar to the behaviour of Docker cli
+- Default image tag to `latest` on `pull`
+
+### Bugfixes
+- Fix plugin model upgrade
+- Fix examples URL in ulimits
+
+### Miscellaneous
+- Improve exception messages for server and client errors
+- Bump cryptography from 2.3 to 3.2
+
+4.3.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/68?closed=1)
+
+### Miscellaneous
+- Set default API version to `auto`
+- Fix conversion to bytes for `float`
+- Support OpenSSH `identityfile` option
+
+4.3.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/64?closed=1)
+
+### Features
+- Add `DeviceRequest` type to expose host resources such as GPUs
+- Add support for `DriverOpts` in EndpointConfig
+- Disable compression by default when using container.get_archive method
+
+### Miscellaneous
+- Update default API version to v1.39
+- Update test engine version to 19.03.12
+
+4.2.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/66?closed=1)
+
+### Bugfixes
+
+- Fix context load for non-docker endpoints
+
 4.2.1
 -----
 
@@ -47,7 +192,6 @@ Change log
 - Adjust `--platform` tests for changes in docker engine
 - Update credentials-helpers to v0.6.3
 
-
 4.0.2
 -----
 
@@ -60,7 +204,6 @@ Change log
 ### Miscellaneous
 
 - Bumped version of websocket-client
-
 
 4.0.1
 -----
@@ -120,7 +263,7 @@ Change log
 
 ### Bugfixes
 
-* Fix base_url to keep TCP protocol on utils.py by letting the responsability of changing the
+* Fix base_url to keep TCP protocol on utils.py by letting the responsibility of changing the
 protocol to `parse_host` afterwards, letting `base_url` with the original value.
 * XFAIL test_attach_stream_and_cancel on TLS
 
@@ -1224,7 +1367,7 @@ like the others
   (`Client.volumes`, `Client.create_volume`, `Client.inspect_volume`,
   `Client.remove_volume`).
 * Added support for the `group_add` parameter in `create_host_config`.
-* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameteres
+* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameters
   in `create_host_config`.
 * Added support for the archive API endpoint (`Client.get_archive`,
   `Client.put_archive`).

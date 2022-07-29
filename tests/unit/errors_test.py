@@ -126,7 +126,7 @@ class ContainerErrorTest(unittest.TestCase):
 
         err = ContainerError(container, exit_status, command, image, stderr)
         msg = ("Command '{}' in image '{}' returned non-zero exit status {}"
-               ).format(command, image, exit_status, stderr)
+               ).format(command, image, exit_status)
         assert str(err) == msg
 
     def test_container_with_stderr(self):

@@ -1,5 +1,3 @@
-import six
-
 from .. import errors
 from ..constants import IS_WINDOWS_PLATFORM
 from ..utils import (
@@ -112,16 +110,21 @@ class ContainerSpec(dict):
             containers. Only used for Windows containers.
         init (boolean): Run an init inside the container that forwards signals
             and reaps processes.
+        cap_add (:py:class:`list`): A list of kernel capabilities to add to the
+            default set for the container.
+        cap_drop (:py:class:`list`): A list of kernel capabilities to drop from
+            the default set for the container.
     """
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
                  stop_grace_period=None, secrets=None, tty=None, groups=None,
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
-                 privileges=None, isolation=None, init=None):
+                 privileges=None, isolation=None, init=None, cap_add=None,
+                 cap_drop=None):
         self['Image'] = image
 
-        if isinstance(command, six.string_types):
+        if isinstance(command, str):
             command = split_command(command)
         self['Command'] = command
         self['Args'] = args
@@ -151,7 +154,7 @@ class ContainerSpec(dict):
         if mounts is not None:
             parsed_mounts = []
             for mount in mounts:
-                if isinstance(mount, six.string_types):
+                if isinstance(mount, str):
                     parsed_mounts.append(Mount.parse_mount_string(mount))
                 else:
                     # If mount already parsed
@@ -187,6 +190,18 @@ class ContainerSpec(dict):
 
         if init is not None:
             self['Init'] = init
+
+        if cap_add is not None:
+            if not isinstance(cap_add, list):
+                raise TypeError('cap_add must be a list')
+
+            self['CapabilityAdd'] = cap_add
+
+        if cap_drop is not None:
+            if not isinstance(cap_drop, list):
+                raise TypeError('cap_drop must be a list')
+
+            self['CapabilityDrop'] = cap_drop
 
 
 class Mount(dict):
@@ -224,7 +239,7 @@ class Mount(dict):
         self['Source'] = source
         if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
             raise errors.InvalidArgument(
-                'Unsupported mount type: "{}"'.format(type)
+                f'Unsupported mount type: "{type}"'
             )
         self['Type'] = type
         self['ReadOnly'] = read_only
@@ -260,7 +275,7 @@ class Mount(dict):
         elif type == 'tmpfs':
             tmpfs_opts = {}
             if tmpfs_mode:
-                if not isinstance(tmpfs_mode, six.integer_types):
+                if not isinstance(tmpfs_mode, int):
                     raise errors.InvalidArgument(
                         'tmpfs_mode must be an integer'
                     )
@@ -280,7 +295,7 @@ class Mount(dict):
         parts = string.split(':')
         if len(parts) > 3:
             raise errors.InvalidArgument(
-                'Invalid mount format "{0}"'.format(string)
+                f'Invalid mount format "{string}"'
             )
         if len(parts) == 1:
             return cls(target=parts[0], source=None)
@@ -347,7 +362,7 @@ def _convert_generic_resources_dict(generic_resources):
             ' (found {})'.format(type(generic_resources))
         )
     resources = []
-    for kind, value in six.iteritems(generic_resources):
+    for kind, value in generic_resources.items():
         resource_type = None
         if isinstance(value, int):
             resource_type = 'DiscreteResourceSpec'
@@ -421,7 +436,8 @@ class UpdateConfig(dict):
 
 class RollbackConfig(UpdateConfig):
     """
-    Used to specify the way containe rollbacks should be performed by a service
+    Used to specify the way container rollbacks should be performed by a
+    service
 
     Args:
         parallelism (int): Maximum number of tasks to be rolled back in one
@@ -443,7 +459,7 @@ class RollbackConfig(UpdateConfig):
     pass
 
 
-class RestartConditionTypesEnum(object):
+class RestartConditionTypesEnum:
     _values = (
         'none',
         'on-failure',
@@ -474,7 +490,7 @@ class RestartPolicy(dict):
                  max_attempts=0, window=0):
         if condition not in self.condition_types._values:
             raise TypeError(
-                'Invalid RestartPolicy condition {0}'.format(condition)
+                f'Invalid RestartPolicy condition {condition}'
             )
 
         self['Condition'] = condition
@@ -533,7 +549,7 @@ def convert_service_ports(ports):
         )
 
     result = []
-    for k, v in six.iteritems(ports):
+    for k, v in ports.items():
         port_spec = {
             'Protocol': 'tcp',
             'PublishedPort': k
@@ -659,10 +675,12 @@ class Placement(dict):
                 are provided in order from highest to lowest precedence and
                 are expressed as ``(strategy, descriptor)`` tuples. See
                 :py:class:`PlacementPreference` for details.
+            maxreplicas (int): Maximum number of replicas per node
             platforms (:py:class:`list` of tuple): A list of platforms
                 expressed as ``(arch, os)`` tuples
     """
-    def __init__(self, constraints=None, preferences=None, platforms=None):
+    def __init__(self, constraints=None, preferences=None, platforms=None,
+                 maxreplicas=None):
         if constraints is not None:
             self['Constraints'] = constraints
         if preferences is not None:
@@ -671,6 +689,8 @@ class Placement(dict):
                 if isinstance(pref, tuple):
                     pref = PlacementPreference(*pref)
                 self['Preferences'].append(pref)
+        if maxreplicas is not None:
+            self['MaxReplicas'] = maxreplicas
         if platforms:
             self['Platforms'] = []
             for plat in platforms:

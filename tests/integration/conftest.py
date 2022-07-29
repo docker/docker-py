@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 import warnings
 
@@ -17,11 +15,11 @@ def setup_test_session():
     try:
         c.inspect_image(TEST_IMG)
     except docker.errors.NotFound:
-        print("\npulling {0}".format(TEST_IMG), file=sys.stderr)
+        print(f"\npulling {TEST_IMG}", file=sys.stderr)
         for data in c.pull(TEST_IMG, stream=True, decode=True):
             status = data.get("status")
             progress = data.get("progress")
-            detail = "{0} - {1}".format(status, progress)
+            detail = f"{status} - {progress}"
             print(detail, file=sys.stderr)
 
         # Double make sure we now have busybox
