@@ -605,7 +605,28 @@ class ContainerCollection(Collection):
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
             healthcheck (dict): Specify a test to perform to check that the
-                container is healthy.
+                container is healthy. The dict takes the following keys:
+
+                - test (:py:class:`list` or str): Test to perform to determine
+                    container health. Possible values:
+
+                    - Empty list: Inherit healthcheck from parent image
+                    - ``["NONE"]``: Disable healthcheck
+                    - ``["CMD", args...]``: exec arguments directly.
+                    - ``["CMD-SHELL", command]``: Run command in the system's
+                      default shell.
+
+                    If a string is provided, it will be used as a ``CMD-SHELL``
+                    command.
+                - interval (int): The time to wait between checks in
+                  nanoseconds. It should be 0 or at least 1000000 (1 ms).
+                - timeout (int): The time to wait before considering the check
+                  to have hung. It should be 0 or at least 1000000 (1 ms).
+                - retries (int): The number of consecutive failures needed to
+                    consider a container as unhealthy.
+                - start_period (int): Start period for the container to
+                    initialize before starting health-retries countdown in
+                    nanoseconds. It should be 0 or at least 1000000 (1 ms).
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
