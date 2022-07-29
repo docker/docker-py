@@ -801,7 +801,7 @@ class ContainerCollection(Collection):
             image = image.id
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
-        platform = kwargs.pop('platform', None)
+        platform = kwargs.get('platform', None)
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -985,6 +985,7 @@ RUN_CREATE_KWARGS = [
     'mac_address',
     'name',
     'network_disabled',
+    'platform',
     'stdin_open',
     'stop_signal',
     'tty',
