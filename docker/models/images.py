@@ -73,7 +73,11 @@ class Image(Model):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.remove_image(self.id, force=force, noprune=noprune)
+        return self.client.api.remove_image(
+            self.id,
+            force=force,
+            noprune=noprune,
+        )
 
     def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE, named=False):
         """
