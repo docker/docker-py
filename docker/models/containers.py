@@ -606,6 +606,7 @@ class ContainerCollection(Collection):
                 IDs that the container process will run as.
             healthcheck (dict): Specify a test to perform to check that the
                 container is healthy. The dict takes the following keys:
+
                 - test (:py:class:`list` or str): Test to perform to determine
                     container health. Possible values:
 
