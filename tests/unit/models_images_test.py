@@ -150,6 +150,16 @@ class ImageTest(unittest.TestCase):
         image.history()
         client.api.history.assert_called_with(FAKE_IMAGE_ID)
 
+    def test_remove(self):
+        client = make_fake_client()
+        image = client.images.get(FAKE_IMAGE_ID)
+        image.remove()
+        client.api.remove_image.assert_called_with(
+            FAKE_IMAGE_ID,
+            force=False,
+            noprune=False,
+        )
+
     def test_save(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
