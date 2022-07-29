@@ -215,6 +215,20 @@ class CreateContainerTest(BaseAPIIntegrationTest):
 
         self.client.kill(id)
 
+    @requires_api_version('1.41')
+    def test_create_with_cgroupns(self):
+        host_config = self.client.create_host_config(cgroupns='private')
+
+        container = self.client.create_container(
+            image=TEST_IMG,
+            command=['sleep', '60'],
+            host_config=host_config,
+        )
+        self.tmp_containers.append(container)
+
+        res = self.client.inspect_container(container)
+        assert 'private' == res['HostConfig']['CgroupnsMode']
+
     def test_group_id_ints(self):
         container = self.client.create_container(
             TEST_IMG, 'id -G',
