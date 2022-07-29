@@ -318,7 +318,7 @@ class DockerApiTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'DELETE',
-            url_prefix + 'containers/3cc2351ab11b',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID,
             params={'v': False, 'link': True, 'force': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
