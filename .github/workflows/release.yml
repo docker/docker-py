@@ -28,13 +28,13 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: ! inputs.dry-run
+        if: '! inputs.dry-run'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
-        if: ! inputs.dry-run
+        if: '! inputs.dry-run'
         with:
           artifacts: "dist/*"
           generateReleaseNotes: true
