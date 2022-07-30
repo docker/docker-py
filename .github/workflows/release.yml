@@ -22,7 +22,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - run: python setup.py sdist bdist_wheel
+      - name: Generate Pacakge
+        run: |
+          pip3 install wheel
+          python setup.py sdist bdist_wheel
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DOCKER: ${{ inputs.tag }}
 
