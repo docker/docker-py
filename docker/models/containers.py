@@ -670,7 +670,7 @@ class ContainerCollection(Collection):
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
-                  on the bridge network.
+                  the bridge network.
                 - ``none`` No networking for this container.
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
