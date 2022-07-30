@@ -1,5 +1,5 @@
+# syntax = docker/dockerfile:1.4
 ARG PYTHON_VERSION=3.10
-
 FROM python:${PYTHON_VERSION}
 
 ARG APT_MIRROR
@@ -29,11 +29,16 @@ RUN curl -sSL -o /opt/docker-credential-pass.tar.gz \
     chmod +x /usr/local/bin/docker-credential-pass
 
 WORKDIR /src
+
 COPY requirements.txt /src/requirements.txt
-RUN pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 COPY test-requirements.txt /src/test-requirements.txt
-RUN pip install -r test-requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r test-requirements.txt
 
 COPY . /src
-RUN pip install .
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=99.0.0-docker
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -e .

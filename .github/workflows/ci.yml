@@ -2,6 +2,9 @@ name: Python package
 
 on: [push, pull_request]
 
+env:
+  DOCKER_BUILDKIT: '1'
+
 jobs:
     flake8:
         runs-on: ubuntu-latest
