@@ -1,11 +1,11 @@
 import errno
 import json
+import shutil
 import subprocess
 
 from . import constants
 from . import errors
 from .utils import create_environment_dict
-from .utils import find_executable
 
 
 class Store:
@@ -15,7 +15,7 @@ class Store:
             and erasing credentials using `program`.
         """
         self.program = constants.PROGRAM_PREFIX + program
-        self.exe = find_executable(self.program)
+        self.exe = shutil.which(self.program)
         self.environment = environment
         if self.exe is None:
             raise errors.InitializationError(
