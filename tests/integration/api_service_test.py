@@ -1419,3 +1419,23 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert services[0]['ID'] == svc_id['ID']
         spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
         assert 'CAP_SYSLOG' in spec['CapabilityDrop']
+
+    @requires_api_version('1.40')
+    def test_create_service_with_sysctl(self):
+        name = self.get_service_name()
+        sysctls={
+            'net.core.somaxconn': '1024',
+            'net.ipv4.tcp_syncookies': '0',
+        }
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], sysctls=sysctls
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec['Sysctls']['net.core.somaxconn'] == '1024'
+        assert spec['Sysctls']['net.ipv4.tcp_syncookies'] == '0'

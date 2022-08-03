@@ -115,6 +115,7 @@ class ContainerSpec(dict):
             default set for the container.
         cap_drop (:py:class:`list`): A list of kernel capabilities to drop from
             the default set for the container.
+        sysctls (:py:class:`dict`): A dict of sysctl values to add to the container
     """
 
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
@@ -123,7 +124,7 @@ class ContainerSpec(dict):
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
                  privileges=None, isolation=None, init=None, cap_add=None,
-                 cap_drop=None):
+                 cap_drop=None, sysctls=None):
         self['Image'] = image
 
         if isinstance(command, str):
@@ -204,6 +205,12 @@ class ContainerSpec(dict):
                 raise TypeError('cap_drop must be a list')
 
             self['CapabilityDrop'] = cap_drop
+
+        if sysctls is not None:
+            if not isinstance(sysctls, dict):
+                raise TypeError('sysctls must be a dict')
+
+            self['Sysctls'] = sysctls
 
 
 class Mount(dict):
