@@ -1359,7 +1359,6 @@ class ContainerApiMixin:
                     'for API version < 1.23'
                 )
             data['RestartPolicy'] = restart_policy
-        print(data)
         res = self._post_json(u, data=data)
         return self._result(res, True)
 
