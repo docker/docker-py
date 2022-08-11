@@ -325,9 +325,25 @@ class ServiceModeTest(unittest.TestCase):
         assert mode.mode == 'global'
         assert mode.replicas is None
 
+    def test_replicated_job_simple(self):
+        mode = ServiceMode('replicated-job')
+        assert mode == {'ReplicatedJob': {}}
+        assert mode.mode == 'ReplicatedJob'
+        assert mode.replicas is None
+
+    def test_global_job_simple(self):
+        mode = ServiceMode('global-job')
+        assert mode == {'GlobalJob': {}}
+        assert mode.mode == 'GlobalJob'
+        assert mode.replicas is None
+
     def test_global_replicas_error(self):
         with pytest.raises(InvalidArgument):
             ServiceMode('global', 21)
+
+    def test_global_job_replicas_simple(self):
+        with pytest.raises(InvalidArgument):
+            ServiceMode('global-job', 21)
 
     def test_replicated_replicas(self):
         mode = ServiceMode('replicated', 21)

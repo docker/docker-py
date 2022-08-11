@@ -224,10 +224,10 @@ class ImageCollection(Collection):
         Build an image and return it. Similar to the ``docker build``
         command. Either ``path`` or ``fileobj`` must be set.
 
-        If you already have a tar file for the Docker build context (including a
-        Dockerfile), pass a readable file-like object to ``fileobj``
-        and also pass ``custom_context=True``. If the stream is also compressed,
-        set ``encoding`` to the correct value (e.g ``gzip``).
+        If you already have a tar file for the Docker build context (including
+        a Dockerfile), pass a readable file-like object to ``fileobj``
+        and also pass ``custom_context=True``. If the stream is also
+        compressed, set ``encoding`` to the correct value (e.g ``gzip``).
 
         If you want to get the raw output of the build, use the
         :py:meth:`~docker.api.build.BuildApiMixin.build` method in the
