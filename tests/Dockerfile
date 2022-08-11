@@ -39,6 +39,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r test-requirements.txt
 
 COPY . /src
-ARG SETUPTOOLS_SCM_PRETEND_VERSION=99.0.0-docker
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=99.0.0+docker
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -e .
