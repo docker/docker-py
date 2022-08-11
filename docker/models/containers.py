@@ -553,6 +553,11 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cgroup_parent (str): Override the default parent cgroup.
+            cgroupns (str): Override the default cgroup namespace mode for the
+                container. One of:
+                - ``private`` the container runs in its own private cgroup
+                  namespace.
+                - ``host`` use the host system's cgroup namespace.
             cpu_count (int): Number of usable CPUs (Windows only).
             cpu_percent (int): Usable percentage of the available CPUs
                 (Windows only).
@@ -600,7 +605,28 @@ class ContainerCollection(Collection):
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
             healthcheck (dict): Specify a test to perform to check that the
-                container is healthy.
+                container is healthy. The dict takes the following keys:
+
+                - test (:py:class:`list` or str): Test to perform to determine
+                    container health. Possible values:
+
+                    - Empty list: Inherit healthcheck from parent image
+                    - ``["NONE"]``: Disable healthcheck
+                    - ``["CMD", args...]``: exec arguments directly.
+                    - ``["CMD-SHELL", command]``: Run command in the system's
+                      default shell.
+
+                    If a string is provided, it will be used as a ``CMD-SHELL``
+                    command.
+                - interval (int): The time to wait between checks in
+                  nanoseconds. It should be 0 or at least 1000000 (1 ms).
+                - timeout (int): The time to wait before considering the check
+                  to have hung. It should be 0 or at least 1000000 (1 ms).
+                - retries (int): The number of consecutive failures needed to
+                    consider a container as unhealthy.
+                - start_period (int): Start period for the container to
+                    initialize before starting health-retries countdown in
+                    nanoseconds. It should be 0 or at least 1000000 (1 ms).
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
@@ -644,7 +670,7 @@ class ContainerCollection(Collection):
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
-                  on the bridge network.
+                  the bridge network.
                 - ``none`` No networking for this container.
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
@@ -801,7 +827,7 @@ class ContainerCollection(Collection):
             image = image.id
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
-        platform = kwargs.pop('platform', None)
+        platform = kwargs.get('platform', None)
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -985,6 +1011,7 @@ RUN_CREATE_KWARGS = [
     'mac_address',
     'name',
     'network_disabled',
+    'platform',
     'stdin_open',
     'stop_signal',
     'tty',
@@ -1001,6 +1028,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cgroupns',
     'cpu_count',
     'cpu_percent',
     'cpu_period',

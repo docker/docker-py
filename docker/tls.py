@@ -12,8 +12,9 @@ class TLSConfig:
     Args:
         client_cert (tuple of str): Path to client cert, path to client key.
         ca_cert (str): Path to CA cert file.
-        verify (bool or str): This can be ``False`` or a path to a CA cert
-            file.
+        verify (bool or str): This can be a bool or a path to a CA cert
+            file to verify against. If ``True``, verify using ca_cert;
+            if ``False`` or not specified, do not verify.
         ssl_version (int): A valid `SSL version`_.
         assert_hostname (bool): Verify the hostname of the server.
 

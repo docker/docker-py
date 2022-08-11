@@ -1197,7 +1197,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         sock = self.client.attach_socket(container, ws=False)
         assert sock.fileno() > -1
 
-    def test_run_container_reading_socket(self):
+    def test_run_container_reading_socket_http(self):
         line = 'hi there and stuff and things, words!'
         # `echo` appends CRLF, `printf` doesn't
         command = f"printf '{line}'"
@@ -1215,6 +1215,25 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         assert stream == 1  # correspond to stdout
         assert next_size == len(line)
         data = read_exactly(pty_stdout, next_size)
+        assert data.decode('utf-8') == line
+
+    @pytest.mark.xfail(condition=bool(os.environ.get('DOCKER_CERT_PATH', '')),
+                       reason='DOCKER_CERT_PATH not respected for websockets')
+    def test_run_container_reading_socket_ws(self):
+        line = 'hi there and stuff and things, words!'
+        # `echo` appends CRLF, `printf` doesn't
+        command = f"printf '{line}'"
+        container = self.client.create_container(TEST_IMG, command,
+                                                 detach=True, tty=False)
+        self.tmp_containers.append(container)
+
+        opts = {"stdout": 1, "stream": 1, "logs": 1}
+        pty_stdout = self.client.attach_socket(container, opts, ws=True)
+        self.addCleanup(pty_stdout.close)
+
+        self.client.start(container)
+
+        data = pty_stdout.recv()
         assert data.decode('utf-8') == line
 
     @pytest.mark.timeout(10)

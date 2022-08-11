@@ -272,7 +272,8 @@ class HostConfig(dict):
                  volume_driver=None, cpu_count=None, cpu_percent=None,
                  nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
-                 device_cgroup_rules=None, device_requests=None):
+                 device_cgroup_rules=None, device_requests=None,
+                 cgroupns=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -645,6 +646,9 @@ class HostConfig(dict):
                 if not isinstance(req, DeviceRequest):
                     req = DeviceRequest(**req)
                 self['DeviceRequests'].append(req)
+
+        if cgroupns:
+            self['CgroupnsMode'] = cgroupns
 
 
 def host_config_type_error(param, param_value, expected):
