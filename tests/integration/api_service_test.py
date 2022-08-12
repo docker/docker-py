@@ -1423,7 +1423,7 @@ class ServiceTest(BaseAPIIntegrationTest):
     @requires_api_version('1.40')
     def test_create_service_with_sysctl(self):
         name = self.get_service_name()
-        sysctls={
+        sysctls = {
             'net.core.somaxconn': '1024',
             'net.ipv4.tcp_syncookies': '0',
         }

@@ -115,7 +115,8 @@ class ContainerSpec(dict):
             default set for the container.
         cap_drop (:py:class:`list`): A list of kernel capabilities to drop from
             the default set for the container.
-        sysctls (:py:class:`dict`): A dict of sysctl values to add to the container
+        sysctls (:py:class:`dict`): A dict of sysctl values to add to
+            the container
     """
 
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
