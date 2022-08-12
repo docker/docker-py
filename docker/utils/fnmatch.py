@@ -108,7 +108,7 @@ def translate(pat):
                     stuff = '^' + stuff[1:]
                 elif stuff[0] == '^':
                     stuff = '\\' + stuff
-                res = '%s[%s]' % (res, stuff)
+                res = f'{res}[{stuff}]'
         else:
             res = res + re.escape(c)
 

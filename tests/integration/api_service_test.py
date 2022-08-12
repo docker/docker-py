@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import random
 import time
 
 import docker
 import pytest
-import six
 
 from ..helpers import (
     force_leave_swarm, requires_api_version, requires_experimental
@@ -31,10 +28,10 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.client.remove_service(service['ID'])
             except docker.errors.APIError:
                 pass
-        super(ServiceTest, self).tearDown()
+        super().tearDown()
 
     def get_service_name(self):
-        return 'dockerpytest_{0:x}'.format(random.getrandbits(64))
+        return f'dockerpytest_{random.getrandbits(64):x}'
 
     def get_service_container(self, service_name, attempts=20, interval=0.5,
                               include_stopped=False):
@@ -55,7 +52,7 @@ class ServiceTest(BaseAPIIntegrationTest):
 
     def create_simple_service(self, name=None, labels=None):
         if name:
-            name = 'dockerpytest_{0}'.format(name)
+            name = f'dockerpytest_{name}'
         else:
             name = self.get_service_name()
 
@@ -150,7 +147,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             else:
                 break
 
-        if six.PY3:
+        if log_line is not None:
             log_line = log_line.decode('utf-8')
         assert 'hello\n' in log_line
 
@@ -404,20 +401,20 @@ class ServiceTest(BaseAPIIntegrationTest):
         node_id = self.client.nodes()[0]['ID']
         container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(
-            container_spec, placement=['node.id=={}'.format(node_id)]
+            container_spec, placement=[f'node.id=={node_id}']
         )
         name = self.get_service_name()
         svc_id = self.client.create_service(task_tmpl, name=name)
         svc_info = self.client.inspect_service(svc_id)
         assert 'Placement' in svc_info['Spec']['TaskTemplate']
         assert (svc_info['Spec']['TaskTemplate']['Placement'] ==
-                {'Constraints': ['node.id=={}'.format(node_id)]})
+                {'Constraints': [f'node.id=={node_id}']})
 
     def test_create_service_with_placement_object(self):
         node_id = self.client.nodes()[0]['ID']
         container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         placemt = docker.types.Placement(
-            constraints=['node.id=={}'.format(node_id)]
+            constraints=[f'node.id=={node_id}']
         )
         task_tmpl = docker.types.TaskTemplate(
             container_spec, placement=placemt
@@ -471,6 +468,19 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Placement' in svc_info['Spec']['TaskTemplate']
         assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
 
+    @requires_api_version('1.40')
+    def test_create_service_with_placement_maxreplicas(self):
+        container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
+        placemt = docker.types.Placement(maxreplicas=1)
+        task_tmpl = docker.types.TaskTemplate(
+            container_spec, placement=placemt
+        )
+        name = self.get_service_name()
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Placement' in svc_info['Spec']['TaskTemplate']
+        assert svc_info['Spec']['TaskTemplate']['Placement'] == placemt
+
     def test_create_service_with_endpoint_spec(self):
         container_spec = docker.types.ContainerSpec(TEST_IMG, ['true'])
         task_tmpl = docker.types.TaskTemplate(container_spec)
@@ -496,7 +506,7 @@ class ServiceTest(BaseAPIIntegrationTest):
                 assert port['TargetPort'] == 1990
                 assert port['Protocol'] == 'udp'
             else:
-                self.fail('Invalid port specification: {0}'.format(port))
+                self.fail(f'Invalid port specification: {port}')
 
         assert len(ports) == 3
 
@@ -616,6 +626,39 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Replicated' in svc_info['Spec']['Mode']
         assert svc_info['Spec']['Mode']['Replicated'] == {'Replicas': 5}
 
+    @requires_api_version('1.41')
+    def test_create_service_global_job_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, mode='global-job'
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'GlobalJob' in svc_info['Spec']['Mode']
+
+    @requires_api_version('1.41')
+    def test_create_service_replicated_job_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name,
+            mode=docker.types.ServiceMode('replicated-job', 5)
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'ReplicatedJob' in svc_info['Spec']['Mode']
+        assert svc_info['Spec']['Mode']['ReplicatedJob'] == {
+            'MaxConcurrent': 1,
+            'TotalCompletions': 5
+        }
+
     @requires_api_version('1.25')
     def test_update_service_force_update(self):
         container_spec = docker.types.ContainerSpec(
@@ -658,14 +701,14 @@ class ServiceTest(BaseAPIIntegrationTest):
         container = self.get_service_container(name)
         assert container is not None
         exec_id = self.client.exec_create(
-            container, 'cat /run/secrets/{0}'.format(secret_name)
+            container, f'cat /run/secrets/{secret_name}'
         )
         assert self.client.exec_start(exec_id) == secret_data
 
     @requires_api_version('1.25')
     def test_create_service_with_unicode_secret(self):
         secret_name = 'favorite_touhou'
-        secret_data = u'東方花映塚'
+        secret_data = '東方花映塚'
         secret_id = self.client.create_secret(secret_name, secret_data)
         self.tmp_secrets.append(secret_id)
         secret_ref = docker.types.SecretReference(secret_id, secret_name)
@@ -683,7 +726,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         container = self.get_service_container(name)
         assert container is not None
         exec_id = self.client.exec_create(
-            container, 'cat /run/secrets/{0}'.format(secret_name)
+            container, f'cat /run/secrets/{secret_name}'
         )
         container_secret = self.client.exec_start(exec_id)
         container_secret = container_secret.decode('utf-8')
@@ -710,14 +753,14 @@ class ServiceTest(BaseAPIIntegrationTest):
         container = self.get_service_container(name)
         assert container is not None
         exec_id = self.client.exec_create(
-            container, 'cat /{0}'.format(config_name)
+            container, f'cat /{config_name}'
         )
         assert self.client.exec_start(exec_id) == config_data
 
     @requires_api_version('1.30')
     def test_create_service_with_unicode_config(self):
         config_name = 'favorite_touhou'
-        config_data = u'東方花映塚'
+        config_data = '東方花映塚'
         config_id = self.client.create_config(config_name, config_data)
         self.tmp_configs.append(config_id)
         config_ref = docker.types.ConfigReference(config_id, config_name)
@@ -735,7 +778,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         container = self.get_service_container(name)
         assert container is not None
         exec_id = self.client.exec_create(
-            container, 'cat /{0}'.format(config_name)
+            container, f'cat /{config_name}'
         )
         container_config = self.client.exec_start(exec_id)
         container_config = container_config.decode('utf-8')
@@ -1124,7 +1167,7 @@ class ServiceTest(BaseAPIIntegrationTest):
                 assert port['TargetPort'] == 1990
                 assert port['Protocol'] == 'udp'
             else:
-                self.fail('Invalid port specification: {0}'.format(port))
+                self.fail(f'Invalid port specification: {port}')
 
         assert len(ports) == 3
 
@@ -1151,7 +1194,7 @@ class ServiceTest(BaseAPIIntegrationTest):
                 assert port['TargetPort'] == 1990
                 assert port['Protocol'] == 'udp'
             else:
-                self.fail('Invalid port specification: {0}'.format(port))
+                self.fail(f'Invalid port specification: {port}')
 
         assert len(ports) == 3
 
@@ -1346,3 +1389,53 @@ class ServiceTest(BaseAPIIntegrationTest):
                 self.client.update_service(*args, **kwargs)
             else:
                 raise
+
+    @requires_api_version('1.41')
+    def test_create_service_cap_add(self):
+        name = self.get_service_name()
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], cap_add=['CAP_SYSLOG']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'CAP_SYSLOG' in spec['CapabilityAdd']
+
+    @requires_api_version('1.41')
+    def test_create_service_cap_drop(self):
+        name = self.get_service_name()
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], cap_drop=['CAP_SYSLOG']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert 'CAP_SYSLOG' in spec['CapabilityDrop']
+
+    @requires_api_version('1.40')
+    def test_create_service_with_sysctl(self):
+        name = self.get_service_name()
+        sysctls = {
+            'net.core.somaxconn': '1024',
+            'net.ipv4.tcp_syncookies': '0',
+        }
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], sysctls=sysctls
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec['Sysctls']['net.core.somaxconn'] == '1024'
+        assert spec['Sysctls']['net.ipv4.tcp_syncookies'] == '0'

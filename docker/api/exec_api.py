@@ -1,10 +1,8 @@
-import six
-
 from .. import errors
 from .. import utils
 
 
-class ExecApiMixin(object):
+class ExecApiMixin:
     @utils.check_resource('container')
     def exec_create(self, container, cmd, stdout=True, stderr=True,
                     stdin=False, tty=False, privileged=False, user='',
@@ -45,7 +43,7 @@ class ExecApiMixin(object):
                 'Setting environment for exec is not supported in API < 1.25'
             )
 
-        if isinstance(cmd, six.string_types):
+        if isinstance(cmd, str):
             cmd = utils.split_command(cmd)
 
         if isinstance(environment, dict):

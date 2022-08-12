@@ -4,7 +4,7 @@ from ..utils import version_lt
 from .. import utils
 
 
-class NetworkApiMixin(object):
+class NetworkApiMixin:
     def networks(self, names=None, ids=None, filters=None):
         """
         List networks. Similar to the ``docker network ls`` command.
@@ -75,7 +75,7 @@ class NetworkApiMixin(object):
         Example:
             A network using the bridge driver:
 
-                >>> client.create_network("network1", driver="bridge")
+                >>> client.api.create_network("network1", driver="bridge")
 
             You can also create more advanced networks with custom IPAM
             configurations. For example, setting the subnet to
@@ -90,7 +90,7 @@ class NetworkApiMixin(object):
                 >>> ipam_config = docker.types.IPAMConfig(
                     pool_configs=[ipam_pool]
                 )
-                >>> docker_client.create_network("network1", driver="bridge",
+                >>> client.api.create_network("network1", driver="bridge",
                                                  ipam=ipam_config)
         """
         if options is not None and not isinstance(options, dict):
@@ -216,7 +216,8 @@ class NetworkApiMixin(object):
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
-                                     link_local_ips=None, mac_address=None):
+                                     link_local_ips=None, driver_opt=None,
+                                     mac_address=None):
         """
         Connect a container to a network.
 
@@ -243,6 +244,7 @@ class NetworkApiMixin(object):
             "EndpointConfig": self.create_endpoint_config(
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
                 ipv6_address=ipv6_address, link_local_ips=link_local_ips,
+                driver_opt=driver_opt,
                 mac_address=mac_address
             ),
         }

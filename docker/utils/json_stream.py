@@ -1,10 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import json.decoder
-
-import six
 
 from ..errors import StreamParseError
 
@@ -20,7 +15,7 @@ def stream_as_text(stream):
     instead of byte streams.
     """
     for data in stream:
-        if not isinstance(data, six.text_type):
+        if not isinstance(data, str):
             data = data.decode('utf-8', 'replace')
         yield data
 
@@ -46,8 +41,8 @@ def json_stream(stream):
     return split_buffer(stream, json_splitter, json_decoder.decode)
 
 
-def line_splitter(buffer, separator=u'\n'):
-    index = buffer.find(six.text_type(separator))
+def line_splitter(buffer, separator='\n'):
+    index = buffer.find(str(separator))
     if index == -1:
         return None
     return buffer[:index + 1], buffer[index + 1:]
@@ -61,7 +56,7 @@ def split_buffer(stream, splitter=None, decoder=lambda a: a):
     of the input.
     """
     splitter = splitter or line_splitter
-    buffered = six.text_type('')
+    buffered = ''
 
     for data in stream_as_text(stream):
         buffered += data

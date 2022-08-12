@@ -2,8 +2,6 @@ import itertools
 import re
 import warnings
 
-import six
-
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import BuildError, ImageLoadError, InvalidArgument
@@ -17,7 +15,10 @@ class Image(Model):
     An image on the server.
     """
     def __repr__(self):
-        return "<%s: '%s'>" % (self.__class__.__name__, "', '".join(self.tags))
+        return "<{}: '{}'>".format(
+            self.__class__.__name__,
+            "', '".join(self.tags),
+        )
 
     @property
     def labels(self):
@@ -30,12 +31,12 @@ class Image(Model):
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        The ID of the image truncated to 12 characters, plus the ``sha256:``
         prefix.
         """
         if self.id.startswith('sha256:'):
-            return self.id[:17]
-        return self.id[:10]
+            return self.id[:19]
+        return self.id[:12]
 
     @property
     def tags(self):
@@ -59,6 +60,24 @@ class Image(Model):
                 If the server returns an error.
         """
         return self.client.api.history(self.id)
+
+    def remove(self, force=False, noprune=False):
+        """
+        Remove this image.
+
+        Args:
+            force (bool): Force removal of the image
+            noprune (bool): Do not delete untagged parents
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        return self.client.api.remove_image(
+            self.id,
+            force=force,
+            noprune=noprune,
+        )
 
     def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE, named=False):
         """
@@ -84,19 +103,19 @@ class Image(Model):
 
         Example:
 
-            >>> image = cli.get_image("busybox:latest")
+            >>> image = cli.images.get("busybox:latest")
             >>> f = open('/tmp/busybox-latest.tar', 'wb')
-            >>> for chunk in image:
+            >>> for chunk in image.save():
             >>>   f.write(chunk)
             >>> f.close()
         """
         img = self.id
         if named:
             img = self.tags[0] if self.tags else img
-            if isinstance(named, six.string_types):
+            if isinstance(named, str):
                 if named not in self.tags:
                     raise InvalidArgument(
-                        "{} is not a valid tag for this image".format(named)
+                        f"{named} is not a valid tag for this image"
                     )
                 img = named
 
@@ -127,7 +146,7 @@ class RegistryData(Model):
     Image metadata stored on the registry, including available platforms.
     """
     def __init__(self, image_name, *args, **kwargs):
-        super(RegistryData, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.image_name = image_name
 
     @property
@@ -140,10 +159,10 @@ class RegistryData(Model):
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        The ID of the image truncated to 12 characters, plus the ``sha256:``
         prefix.
         """
-        return self.id[:17]
+        return self.id[:19]
 
     def pull(self, platform=None):
         """
@@ -180,7 +199,7 @@ class RegistryData(Model):
             parts = platform.split('/')
             if len(parts) > 3 or len(parts) < 1:
                 raise InvalidArgument(
-                    '"{0}" is not a valid platform descriptor'.format(platform)
+                    f'"{platform}" is not a valid platform descriptor'
                 )
             platform = {'os': parts[0]}
             if len(parts) > 2:
@@ -205,10 +224,10 @@ class ImageCollection(Collection):
         Build an image and return it. Similar to the ``docker build``
         command. Either ``path`` or ``fileobj`` must be set.
 
-        If you have a tar file for the Docker build context (including a
-        Dockerfile) already, pass a readable file-like object to ``fileobj``
-        and also pass ``custom_context=True``. If the stream is compressed
-        also, set ``encoding`` to the correct value (e.g ``gzip``).
+        If you already have a tar file for the Docker build context (including
+        a Dockerfile), pass a readable file-like object to ``fileobj``
+        and also pass ``custom_context=True``. If the stream is also
+        compressed, set ``encoding`` to the correct value (e.g ``gzip``).
 
         If you want to get the raw output of the build, use the
         :py:meth:`~docker.api.build.BuildApiMixin.build` method in the
@@ -265,7 +284,7 @@ class ImageCollection(Collection):
 
         Returns:
             (tuple): The first item is the :py:class:`Image` object for the
-                image that was build. The second item is a generator of the
+                image that was built. The second item is a generator of the
                 build logs as JSON-decoded objects.
 
         Raises:
@@ -277,7 +296,7 @@ class ImageCollection(Collection):
                 If neither ``path`` nor ``fileobj`` is specified.
         """
         resp = self.client.api.build(**kwargs)
-        if isinstance(resp, six.string_types):
+        if isinstance(resp, str):
             return self.get(resp)
         last_event = None
         image_id = None
@@ -395,12 +414,13 @@ class ImageCollection(Collection):
 
         return [self.get(i) for i in images]
 
-    def pull(self, repository, tag=None, **kwargs):
+    def pull(self, repository, tag=None, all_tags=False, **kwargs):
         """
         Pull an image of the given name and return it. Similar to the
         ``docker pull`` command.
-        If no tag is specified, all tags from that repository will be
-        pulled.
+        If ``tag`` is ``None`` or empty, it is set to ``latest``.
+        If ``all_tags`` is set, the ``tag`` parameter is ignored and all image
+        tags will be pulled.
 
         If you want to get the raw pull output, use the
         :py:meth:`~docker.api.image.ImageApiMixin.pull` method in the
@@ -413,10 +433,11 @@ class ImageCollection(Collection):
                 config for this request.  ``auth_config`` should contain the
                 ``username`` and ``password`` keys to be valid.
             platform (str): Platform in the format ``os[/arch[/variant]]``
+            all_tags (bool): Pull all image tags
 
         Returns:
             (:py:class:`Image` or list): The image that has been pulled.
-                If no ``tag`` was specified, the method will return a list
+                If ``all_tags`` is True, the method will return a list
                 of :py:class:`Image` objects belonging to this repository.
 
         Raises:
@@ -426,13 +447,13 @@ class ImageCollection(Collection):
         Example:
 
             >>> # Pull the image tagged `latest` in the busybox repo
-            >>> image = client.images.pull('busybox:latest')
+            >>> image = client.images.pull('busybox')
 
             >>> # Pull all tags in the busybox repo
-            >>> images = client.images.pull('busybox')
+            >>> images = client.images.pull('busybox', all_tags=True)
         """
-        if not tag:
-            repository, tag = parse_repository_tag(repository)
+        repository, image_tag = parse_repository_tag(repository)
+        tag = tag or image_tag or 'latest'
 
         if 'stream' in kwargs:
             warnings.warn(
@@ -442,14 +463,14 @@ class ImageCollection(Collection):
             del kwargs['stream']
 
         pull_log = self.client.api.pull(
-            repository, tag=tag, stream=True, **kwargs
+            repository, tag=tag, stream=True, all_tags=all_tags, **kwargs
         )
         for _ in pull_log:
             # We don't do anything with the logs, but we need
             # to keep the connection alive and wait for the image
             # to be pulled.
             pass
-        if tag:
+        if not all_tags:
             return self.get('{0}{2}{1}'.format(
                 repository, tag, '@' if tag.startswith('sha256:') else ':'
             ))

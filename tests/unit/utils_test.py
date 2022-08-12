@@ -1,30 +1,21 @@
-# -*- coding: utf-8 -*-
-
 import base64
 import json
 import os
 import os.path
 import shutil
-import sys
 import tempfile
 import unittest
 
-
+import pytest
 from docker.api.client import APIClient
-from docker.constants import IS_WINDOWS_PLATFORM
+from docker.constants import IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException
-from docker.utils import (
-    convert_filters, convert_volume_binds, decode_json_header, kwargs_from_env,
-    parse_bytes, parse_devices, parse_env_file, parse_host,
-    parse_repository_tag, split_command, update_headers,
-)
-
+from docker.utils import (convert_filters, convert_volume_binds,
+                          decode_json_header, kwargs_from_env, parse_bytes,
+                          parse_devices, parse_env_file, parse_host,
+                          parse_repository_tag, split_command, update_headers)
 from docker.utils.ports import build_port_bindings, split_port
 from docker.utils.utils import format_environment
-
-import pytest
-
-import six
 
 TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -41,7 +32,7 @@ class DecoratorsTest(unittest.TestCase):
         def f(self, headers=None):
             return headers
 
-        client = APIClient()
+        client = APIClient(version=DEFAULT_DOCKER_API_VERSION)
         client._general_configs = {}
 
         g = update_headers(f)
@@ -92,6 +83,7 @@ class KwargsFromEnvTest(unittest.TestCase):
         assert kwargs['tls'].verify
 
         parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
+        kwargs['version'] = DEFAULT_DOCKER_API_VERSION
         try:
             client = APIClient(**kwargs)
             assert parsed_host == client.base_url
@@ -112,6 +104,7 @@ class KwargsFromEnvTest(unittest.TestCase):
         assert kwargs['tls'].assert_hostname is True
         assert kwargs['tls'].verify is False
         parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
+        kwargs['version'] = DEFAULT_DOCKER_API_VERSION
         try:
             client = APIClient(**kwargs)
             assert parsed_host == client.base_url
@@ -199,22 +192,22 @@ class ConverVolumeBindsTest(unittest.TestCase):
         assert convert_volume_binds(data) == ['/mnt/vol1:/data:rw']
 
     def test_convert_volume_binds_unicode_bytes_input(self):
-        expected = [u'/mnt/지연:/unicode/박:rw']
+        expected = ['/mnt/지연:/unicode/박:rw']
 
         data = {
-            u'/mnt/지연'.encode('utf-8'): {
-                'bind': u'/unicode/박'.encode('utf-8'),
+            '/mnt/지연'.encode(): {
+                'bind': '/unicode/박'.encode(),
                 'mode': 'rw'
             }
         }
         assert convert_volume_binds(data) == expected
 
     def test_convert_volume_binds_unicode_unicode_input(self):
-        expected = [u'/mnt/지연:/unicode/박:rw']
+        expected = ['/mnt/지연:/unicode/박:rw']
 
         data = {
-            u'/mnt/지연': {
-                'bind': u'/unicode/박',
+            '/mnt/지연': {
+                'bind': '/unicode/박',
                 'mode': 'rw'
             }
         }
@@ -303,17 +296,24 @@ class ParseHostTest(unittest.TestCase):
             '[fd12::82d1]:2375/docker/engine': (
                 'http://[fd12::82d1]:2375/docker/engine'
             ),
+            'ssh://[fd12::82d1]': 'ssh://[fd12::82d1]:22',
+            'ssh://user@[fd12::82d1]:8765': 'ssh://user@[fd12::82d1]:8765',
             'ssh://': 'ssh://127.0.0.1:22',
             'ssh://user@localhost:22': 'ssh://user@localhost:22',
             'ssh://user@remote': 'ssh://user@remote:22',
         }
 
         for host in invalid_hosts:
-            with pytest.raises(DockerException):
+            msg = f'Should have failed to parse invalid host: {host}'
+            with self.assertRaises(DockerException, msg=msg):
                 parse_host(host, None)
 
         for host, expected in valid_hosts.items():
-            assert parse_host(host, None) == expected
+            self.assertEqual(
+                parse_host(host, None),
+                expected,
+                msg=f'Failed to parse valid host: {host}',
+            )
 
     def test_parse_host_empty_value(self):
         unix_socket = 'http+unix:///var/run/docker.sock'
@@ -363,14 +363,14 @@ class ParseRepositoryTagTest(unittest.TestCase):
         )
 
     def test_index_image_sha(self):
-        assert parse_repository_tag("root@sha256:{0}".format(self.sha)) == (
-            "root", "sha256:{0}".format(self.sha)
+        assert parse_repository_tag(f"root@sha256:{self.sha}") == (
+            "root", f"sha256:{self.sha}"
         )
 
     def test_private_reg_image_sha(self):
         assert parse_repository_tag(
-            "url:5000/repo@sha256:{0}".format(self.sha)
-        ) == ("url:5000/repo", "sha256:{0}".format(self.sha))
+            f"url:5000/repo@sha256:{self.sha}"
+        ) == ("url:5000/repo", f"sha256:{self.sha}")
 
 
 class ParseDeviceTest(unittest.TestCase):
@@ -447,11 +447,7 @@ class ParseBytesTest(unittest.TestCase):
             parse_bytes("127.0.0.1K")
 
     def test_parse_bytes_float(self):
-        with pytest.raises(DockerException):
-            parse_bytes("1.5k")
-
-    def test_parse_bytes_maxint(self):
-        assert parse_bytes("{0}k".format(sys.maxsize)) == sys.maxsize * 1024
+        assert parse_bytes("1.5k") == 1536
 
 
 class UtilsTest(unittest.TestCase):
@@ -471,20 +467,13 @@ class UtilsTest(unittest.TestCase):
     def test_decode_json_header(self):
         obj = {'a': 'b', 'c': 1}
         data = None
-        if six.PY3:
-            data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
-        else:
-            data = base64.urlsafe_b64encode(json.dumps(obj))
+        data = base64.urlsafe_b64encode(bytes(json.dumps(obj), 'utf-8'))
         decoded_data = decode_json_header(data)
         assert obj == decoded_data
 
 
 class SplitCommandTest(unittest.TestCase):
     def test_split_command_with_unicode(self):
-        assert split_command(u'echo μμ') == ['echo', 'μμ']
-
-    @pytest.mark.skipif(six.PY3, reason="shlex doesn't support bytes in py3")
-    def test_split_command_with_bytes(self):
         assert split_command('echo μμ') == ['echo', 'μμ']
 
 
@@ -546,6 +535,12 @@ class PortsTest(unittest.TestCase):
     def test_split_port_with_ipv6_address(self):
         internal_port, external_port = split_port(
             "2001:abcd:ef00::2:1000:2000")
+        assert internal_port == ["2000"]
+        assert external_port == [("2001:abcd:ef00::2", "1000")]
+
+    def test_split_port_with_ipv6_square_brackets_address(self):
+        internal_port, external_port = split_port(
+            "[2001:abcd:ef00::2]:1000:2000")
         assert internal_port == ["2000"]
         assert external_port == [("2001:abcd:ef00::2", "1000")]
 
@@ -628,7 +623,7 @@ class FormatEnvironmentTest(unittest.TestCase):
         env_dict = {
             'ARTIST_NAME': b'\xec\x86\xa1\xec\xa7\x80\xec\x9d\x80'
         }
-        assert format_environment(env_dict) == [u'ARTIST_NAME=송지은']
+        assert format_environment(env_dict) == ['ARTIST_NAME=송지은']
 
     def test_format_env_no_value(self):
         env_dict = {

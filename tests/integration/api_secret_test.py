@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import docker
 import pytest
 
@@ -31,7 +29,7 @@ class SecretAPITest(BaseAPIIntegrationTest):
 
     def test_create_secret_unicode_data(self):
         secret_id = self.client.create_secret(
-            'favorite_character', u'いざよいさくや'
+            'favorite_character', 'いざよいさくや'
         )
         self.tmp_secrets.append(secret_id)
         assert 'ID' in secret_id

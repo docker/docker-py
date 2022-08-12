@@ -7,7 +7,7 @@ class Config(Model):
     id_attribute = 'ID'
 
     def __repr__(self):
-        return "<%s: '%s'>" % (self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__}: '{self.name}'>"
 
     @property
     def name(self):

@@ -16,7 +16,7 @@ class ModelTest(unittest.TestCase):
     def test_hash(self):
         client = make_fake_client()
         container1 = client.containers.get(FAKE_CONTAINER_ID)
-        my_set = set([container1])
+        my_set = {container1}
         assert len(my_set) == 1
 
         container2 = client.containers.get(FAKE_CONTAINER_ID)
