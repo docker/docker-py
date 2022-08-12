@@ -1069,6 +1069,25 @@ class CreateContainerTest(BaseAPIClientTest):
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
+    @requires_api_version('1.41')
+    def test_create_container_with_cgroupns(self):
+        self.client.create_container(
+            image='busybox',
+            command='true',
+            host_config=self.client.create_host_config(
+                cgroupns='private',
+            ),
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == url_prefix + 'containers/create'
+
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['CgroupnsMode'] = 'private'
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+
 
 class ContainerTest(BaseAPIClientTest):
     def test_list_containers(self):
