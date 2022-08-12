@@ -1,13 +1,11 @@
 import base64
 
-import six
-
 from .. import utils
 
 
-class ConfigApiMixin(object):
+class ConfigApiMixin:
     @utils.minimum_version('1.30')
-    def create_config(self, name, data, labels=None):
+    def create_config(self, name, data, labels=None, templating=None):
         """
             Create a config
 
@@ -15,6 +13,9 @@ class ConfigApiMixin(object):
                 name (string): Name of the config
                 data (bytes): Config data to be stored
                 labels (dict): A mapping of labels to assign to the config
+                templating (dict): dictionary containing the name of the
+                                   templating driver to be used expressed as
+                                   { name: <templating_driver_name>}
 
             Returns (dict): ID of the newly created config
         """
@@ -22,12 +23,12 @@ class ConfigApiMixin(object):
             data = data.encode('utf-8')
 
         data = base64.b64encode(data)
-        if six.PY3:
-            data = data.decode('ascii')
+        data = data.decode('ascii')
         body = {
             'Data': data,
             'Name': name,
-            'Labels': labels
+            'Labels': labels,
+            'Templating': templating
         }
 
         url = self._url('/configs/create')

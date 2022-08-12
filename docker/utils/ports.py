@@ -3,7 +3,7 @@ import re
 PORT_SPEC = re.compile(
     "^"  # Match full string
     "("  # External part
-    r"((?P<host>[a-fA-F\d.:]+):)?"  # Address
+    r"(\[?(?P<host>[a-fA-F\d.:]+)\]?:)?"  # Address
     r"(?P<ext>[\d]*)(-(?P<ext_end>[\d]+))?:"  # External range
     ")?"
     r"(?P<int>[\d]+)(-(?P<int_end>[\d]+))?"  # Internal range
@@ -49,7 +49,7 @@ def port_range(start, end, proto, randomly_available_port=False):
     if not end:
         return [start + proto]
     if randomly_available_port:
-        return ['{}-{}'.format(start, end) + proto]
+        return [f'{start}-{end}' + proto]
     return [str(port) + proto for port in range(int(start), int(end) + 1)]
 
 

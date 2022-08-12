@@ -4,7 +4,7 @@ from datetime import datetime
 from .. import auth, types, utils
 
 
-class DaemonApiMixin(object):
+class DaemonApiMixin:
     @utils.minimum_version('1.25')
     def df(self):
         """
@@ -109,7 +109,7 @@ class DaemonApiMixin(object):
                 the Docker server.
             dockercfg_path (str): Use a custom path for the Docker config file
                 (default ``$HOME/.docker/config.json`` if present,
-                otherwise``$HOME/.dockercfg``)
+                otherwise ``$HOME/.dockercfg``)
 
         Returns:
             (dict): The response from the login request

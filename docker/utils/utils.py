@@ -1,33 +1,27 @@
 import base64
+import collections
 import json
 import os
 import os.path
 import shlex
 import string
 from datetime import datetime
-from distutils.version import StrictVersion
-
-import six
+from packaging.version import Version
 
 from .. import errors
-from .. import tls
+from ..constants import DEFAULT_HTTP_HOST
+from ..constants import DEFAULT_UNIX_SOCKET
+from ..constants import DEFAULT_NPIPE
+from ..constants import BYTE_UNITS
+from ..tls import TLSConfig
 
-if six.PY2:
-    from urllib import splitnport
-    from urlparse import urlparse
-else:
-    from urllib.parse import splitnport, urlparse
+from urllib.parse import urlparse, urlunparse
 
-DEFAULT_HTTP_HOST = "127.0.0.1"
-DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
-DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
 
-BYTE_UNITS = {
-    'b': 1,
-    'k': 1024,
-    'm': 1024 * 1024,
-    'g': 1024 * 1024 * 1024
-}
+URLComponents = collections.namedtuple(
+    'URLComponents',
+    'scheme netloc url params query fragment',
+)
 
 
 def create_ipam_pool(*args, **kwargs):
@@ -46,8 +40,7 @@ def create_ipam_config(*args, **kwargs):
 
 def decode_json_header(header):
     data = base64.b64decode(header)
-    if six.PY3:
-        data = data.decode('utf-8')
+    data = data.decode('utf-8')
     return json.loads(data)
 
 
@@ -63,8 +56,8 @@ def compare_version(v1, v2):
     >>> compare_version(v2, v2)
     0
     """
-    s1 = StrictVersion(v1)
-    s2 = StrictVersion(v2)
+    s1 = Version(v1)
+    s2 = Version(v2)
     if s1 == s2:
         return 0
     elif s1 > s2:
@@ -87,7 +80,7 @@ def _convert_port_binding(binding):
         if len(binding) == 2:
             result['HostPort'] = binding[1]
             result['HostIp'] = binding[0]
-        elif isinstance(binding[0], six.string_types):
+        elif isinstance(binding[0], str):
             result['HostIp'] = binding[0]
         else:
             result['HostPort'] = binding[0]
@@ -111,7 +104,7 @@ def _convert_port_binding(binding):
 
 def convert_port_bindings(port_bindings):
     result = {}
-    for k, v in six.iteritems(port_bindings):
+    for k, v in iter(port_bindings.items()):
         key = str(k)
         if '/' not in key:
             key += '/tcp'
@@ -128,7 +121,7 @@ def convert_volume_binds(binds):
 
     result = []
     for k, v in binds.items():
-        if isinstance(k, six.binary_type):
+        if isinstance(k, bytes):
             k = k.decode('utf-8')
 
         if isinstance(v, dict):
@@ -139,7 +132,7 @@ def convert_volume_binds(binds):
                 )
 
             bind = v['bind']
-            if isinstance(bind, six.binary_type):
+            if isinstance(bind, bytes):
                 bind = bind.decode('utf-8')
 
             if 'ro' in v:
@@ -150,13 +143,13 @@ def convert_volume_binds(binds):
                 mode = 'rw'
 
             result.append(
-                six.text_type('{0}:{1}:{2}').format(k, bind, mode)
+                f'{k}:{bind}:{mode}'
             )
         else:
-            if isinstance(v, six.binary_type):
+            if isinstance(v, bytes):
                 v = v.decode('utf-8')
             result.append(
-                six.text_type('{0}:{1}:rw').format(k, v)
+                f'{k}:{v}:rw'
             )
     return result
 
@@ -173,7 +166,7 @@ def convert_tmpfs_mounts(tmpfs):
 
     result = {}
     for mount in tmpfs:
-        if isinstance(mount, six.string_types):
+        if isinstance(mount, str):
             if ":" in mount:
                 name, options = mount.split(":", 1)
             else:
@@ -198,7 +191,7 @@ def convert_service_networks(networks):
 
     result = []
     for n in networks:
-        if isinstance(n, six.string_types):
+        if isinstance(n, str):
             n = {'Target': n}
         result.append(n)
     return result
@@ -215,10 +208,6 @@ def parse_repository_tag(repo_name):
 
 
 def parse_host(addr, is_win32=False, tls=False):
-    path = ''
-    port = None
-    host = None
-
     # Sensible defaults
     if not addr and is_win32:
         return DEFAULT_NPIPE
@@ -247,14 +236,14 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if proto not in ('tcp', 'unix', 'npipe', 'ssh'):
         raise errors.DockerException(
-            "Invalid bind address protocol: {}".format(addr)
+            f"Invalid bind address protocol: {addr}"
         )
 
     if proto == 'tcp' and not parsed_url.netloc:
         # "tcp://" is exceptionally disallowed by convention;
         # omitting a hostname for other protocols is fine
         raise errors.DockerException(
-            'Invalid bind address format: {}'.format(addr)
+            f'Invalid bind address format: {addr}'
         )
 
     if any([
@@ -262,7 +251,7 @@ def parse_host(addr, is_win32=False, tls=False):
         parsed_url.password
     ]):
         raise errors.DockerException(
-            'Invalid bind address format: {}'.format(addr)
+            f'Invalid bind address format: {addr}'
         )
 
     if parsed_url.path and proto == 'ssh':
@@ -277,20 +266,20 @@ def parse_host(addr, is_win32=False, tls=False):
             # to be valid and equivalent to unix:///path
             path = '/'.join((parsed_url.hostname, path))
 
+    netloc = parsed_url.netloc
     if proto in ('tcp', 'ssh'):
-        # parsed_url.hostname strips brackets from IPv6 addresses,
-        # which can be problematic hence our use of splitnport() instead.
-        host, port = splitnport(parsed_url.netloc)
-        if port is None or port < 0:
+        port = parsed_url.port or 0
+        if port <= 0:
             if proto != 'ssh':
                 raise errors.DockerException(
                     'Invalid bind address format: port is required:'
                     ' {}'.format(addr)
                 )
             port = 22
+            netloc = f'{parsed_url.netloc}:{port}'
 
-        if not host:
-            host = DEFAULT_HTTP_HOST
+        if not parsed_url.hostname:
+            netloc = f'{DEFAULT_HTTP_HOST}:{port}'
 
     # Rewrite schemes to fit library internals (requests adapters)
     if proto == 'tcp':
@@ -299,8 +288,16 @@ def parse_host(addr, is_win32=False, tls=False):
         proto = 'http+unix'
 
     if proto in ('http+unix', 'npipe'):
-        return "{}://{}".format(proto, path).rstrip('/')
-    return '{0}://{1}:{2}{3}'.format(proto, host, port, path).rstrip('/')
+        return f"{proto}://{path}".rstrip('/')
+
+    return urlunparse(URLComponents(
+        scheme=proto,
+        netloc=netloc,
+        url=path,
+        params='',
+        query='',
+        fragment='',
+    )).rstrip('/')
 
 
 def parse_devices(devices):
@@ -309,9 +306,9 @@ def parse_devices(devices):
         if isinstance(device, dict):
             device_list.append(device)
             continue
-        if not isinstance(device, six.string_types):
+        if not isinstance(device, str):
             raise errors.DockerException(
-                'Invalid device type {0}'.format(type(device))
+                f'Invalid device type {type(device)}'
             )
         device_mapping = device.split(':')
         if device_mapping:
@@ -365,7 +362,7 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
         # so if it's not set already then set it to false.
         assert_hostname = False
 
-    params['tls'] = tls.TLSConfig(
+    params['tls'] = TLSConfig(
         client_cert=(os.path.join(cert_path, 'cert.pem'),
                      os.path.join(cert_path, 'key.pem')),
         ca_cert=os.path.join(cert_path, 'ca.pem'),
@@ -379,13 +376,13 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
 
 def convert_filters(filters):
     result = {}
-    for k, v in six.iteritems(filters):
+    for k, v in iter(filters.items()):
         if isinstance(v, bool):
             v = 'true' if v else 'false'
         if not isinstance(v, list):
             v = [v, ]
         result[k] = [
-            str(item) if not isinstance(item, six.string_types) else item
+            str(item) if not isinstance(item, str) else item
             for item in v
         ]
     return json.dumps(result)
@@ -398,7 +395,7 @@ def datetime_to_timestamp(dt):
 
 
 def parse_bytes(s):
-    if isinstance(s, six.integer_types + (float,)):
+    if isinstance(s, (int, float,)):
         return s
     if len(s) == 0:
         return 0
@@ -419,10 +416,10 @@ def parse_bytes(s):
 
     if suffix in units.keys() or suffix.isdigit():
         try:
-            digits = int(digits_part)
+            digits = float(digits_part)
         except ValueError:
             raise errors.DockerException(
-                'Failed converting the string value for memory ({0}) to'
+                'Failed converting the string value for memory ({}) to'
                 ' an integer.'.format(digits_part)
             )
 
@@ -430,7 +427,7 @@ def parse_bytes(s):
         s = int(digits * units[suffix])
     else:
         raise errors.DockerException(
-            'The specified value for memory ({0}) should specify the'
+            'The specified value for memory ({}) should specify the'
             ' units. The postfix should be one of the `b` `k` `m` `g`'
             ' characters'.format(s)
         )
@@ -440,9 +437,9 @@ def parse_bytes(s):
 
 def normalize_links(links):
     if isinstance(links, dict):
-        links = six.iteritems(links)
+        links = iter(links.items())
 
-    return ['{0}:{1}'.format(k, v) if v else k for k, v in sorted(links)]
+    return [f'{k}:{v}' if v else k for k, v in sorted(links)]
 
 
 def parse_env_file(env_file):
@@ -452,7 +449,7 @@ def parse_env_file(env_file):
     """
     environment = {}
 
-    with open(env_file, 'r') as f:
+    with open(env_file) as f:
         for line in f:
 
             if line[0] == '#':
@@ -468,15 +465,13 @@ def parse_env_file(env_file):
                 environment[k] = v
             else:
                 raise errors.DockerException(
-                    'Invalid line in environment file {0}:\n{1}'.format(
+                    'Invalid line in environment file {}:\n{}'.format(
                         env_file, line))
 
     return environment
 
 
 def split_command(command):
-    if six.PY2 and not isinstance(command, six.binary_type):
-        command = command.encode('utf-8')
     return shlex.split(command)
 
 
@@ -484,22 +479,22 @@ def format_environment(environment):
     def format_env(key, value):
         if value is None:
             return key
-        if isinstance(value, six.binary_type):
+        if isinstance(value, bytes):
             value = value.decode('utf-8')
 
-        return u'{key}={value}'.format(key=key, value=value)
-    return [format_env(*var) for var in six.iteritems(environment)]
+        return f'{key}={value}'
+    return [format_env(*var) for var in iter(environment.items())]
 
 
 def format_extra_hosts(extra_hosts, task=False):
     # Use format dictated by Swarm API if container is part of a task
     if task:
         return [
-            '{} {}'.format(v, k) for k, v in sorted(six.iteritems(extra_hosts))
+            f'{v} {k}' for k, v in sorted(iter(extra_hosts.items()))
         ]
 
     return [
-        '{}:{}'.format(k, v) for k, v in sorted(six.iteritems(extra_hosts))
+        f'{k}:{v}' for k, v in sorted(iter(extra_hosts.items()))
     ]
 
 

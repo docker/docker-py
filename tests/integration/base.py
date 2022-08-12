@@ -75,11 +75,11 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
     """
 
     def setUp(self):
-        super(BaseAPIIntegrationTest, self).setUp()
+        super().setUp()
         self.client = self.get_client_instance()
 
     def tearDown(self):
-        super(BaseAPIIntegrationTest, self).tearDown()
+        super().tearDown()
         self.client.close()
 
     @staticmethod

@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import six
-
 from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
@@ -12,7 +10,7 @@ from ..types import HostConfig
 from ..types import NetworkingConfig
 
 
-class ContainerApiMixin(object):
+class ContainerApiMixin:
     @utils.check_resource('container')
     def attach(self, container, stdout=True, stderr=True,
                stream=False, logs=False, demux=False):
@@ -225,7 +223,7 @@ class ContainerApiMixin(object):
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
                          stop_timeout=None, runtime=None,
-                         use_config_proxy=True):
+                         use_config_proxy=True, platform=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -244,9 +242,9 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            container_id = cli.create_container(
+            container_id = client.api.create_container(
                 'busybox', 'ls', ports=[1111, 2222],
-                host_config=cli.create_host_config(port_bindings={
+                host_config=client.api.create_host_config(port_bindings={
                     1111: 4567,
                     2222: None
                 })
@@ -258,22 +256,24 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            cli.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+            client.api.create_host_config(
+                port_bindings={1111: ('127.0.0.1', 4567)}
+            )
 
         Or without host port assignment:
 
         .. code-block:: python
 
-            cli.create_host_config(port_bindings={1111: ('127.0.0.1',)})
+            client.api.create_host_config(port_bindings={1111: ('127.0.0.1',)})
 
         If you wish to use UDP instead of TCP (default), you need to declare
         ports as such in both the config and host config:
 
         .. code-block:: python
 
-            container_id = cli.create_container(
+            container_id = client.api.create_container(
                 'busybox', 'ls', ports=[(1111, 'udp'), 2222],
-                host_config=cli.create_host_config(port_bindings={
+                host_config=client.api.create_host_config(port_bindings={
                     '1111/udp': 4567, 2222: None
                 })
             )
@@ -283,7 +283,7 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            cli.create_host_config(port_bindings={
+            client.api.create_host_config(port_bindings={
                 1111: [1234, 4567]
             })
 
@@ -291,7 +291,7 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            cli.create_host_config(port_bindings={
+            client.api.create_host_config(port_bindings={
                 1111: [
                     ('192.168.0.100', 1234),
                     ('192.168.0.101', 1234)
@@ -307,9 +307,9 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            container_id = cli.create_container(
+            container_id = client.api.create_container(
                 'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
-                host_config=cli.create_host_config(binds={
+                host_config=client.api.create_host_config(binds={
                     '/home/user1/': {
                         'bind': '/mnt/vol2',
                         'mode': 'rw',
@@ -326,9 +326,9 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            container_id = cli.create_container(
+            container_id = client.api.create_container(
                 'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
-                host_config=cli.create_host_config(binds=[
+                host_config=client.api.create_host_config(binds=[
                     '/home/user1/:/mnt/vol2',
                     '/var/www:/mnt/vol1:ro',
                 ])
@@ -346,15 +346,15 @@ class ContainerApiMixin(object):
 
         .. code-block:: python
 
-            networking_config = docker_client.create_networking_config({
-                'network1': docker_client.create_endpoint_config(
+            networking_config = client.api.create_networking_config({
+                'network1': client.api.create_endpoint_config(
                     ipv4_address='172.28.0.124',
                     aliases=['foo', 'bar'],
                     links=['container2']
                 )
             })
 
-            ctnr = docker_client.create_container(
+            ctnr = client.api.create_container(
                 img, command, networking_config=networking_config
             )
 
@@ -398,6 +398,7 @@ class ContainerApiMixin(object):
                 configuration file (``~/.docker/config.json`` by default)
                 contains a proxy configuration, the corresponding environment
                 variables will be set in the container being created.
+            platform (str): Platform in the format ``os[/arch[/variant]]``.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -408,7 +409,7 @@ class ContainerApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        if isinstance(volumes, six.string_types):
+        if isinstance(volumes, str):
             volumes = [volumes, ]
 
         if isinstance(environment, dict):
@@ -427,16 +428,22 @@ class ContainerApiMixin(object):
             stop_signal, networking_config, healthcheck,
             stop_timeout, runtime
         )
-        return self.create_container_from_config(config, name)
+        return self.create_container_from_config(config, name, platform)
 
     def create_container_config(self, *args, **kwargs):
         return ContainerConfig(self._version, *args, **kwargs)
 
-    def create_container_from_config(self, config, name=None):
+    def create_container_from_config(self, config, name=None, platform=None):
         u = self._url("/containers/create")
         params = {
             'name': name
         }
+        if platform:
+            if utils.version_lt(self._version, '1.41'):
+                raise errors.InvalidVersion(
+                    'platform is not supported for API version < 1.41'
+                )
+            params['platform'] = platform
         res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
 
@@ -480,6 +487,9 @@ class ContainerApiMixin(object):
                 For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
+            device_requests (:py:class:`list`): Expose host resources such as
+                GPUs to the container, as a list of
+                :py:class:`docker.types.DeviceRequest` instances.
             dns (:py:class:`list`): Set custom DNS servers.
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file
@@ -503,7 +513,7 @@ class ContainerApiMixin(object):
                 bytes) or a string with a units identification char
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
-            mem_reservation (int or str): Memory soft limit.
+            mem_reservation (float or str): Memory soft limit.
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
@@ -520,6 +530,8 @@ class ContainerApiMixin(object):
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
                 - ``host`` Use the host network stack.
+                  This mode is incompatible with ``port_bindings``.
+
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -528,7 +540,8 @@ class ContainerApiMixin(object):
             pids_limit (int): Tune a container's pids limit. Set ``-1`` for
                 unlimited.
             port_bindings (dict): See :py:meth:`create_container`
-                    for more information.
+                for more information.
+                Imcompatible with ``host`` in ``network_mode``.
             privileged (bool): Give extended privileges to this container.
             publish_all_ports (bool): Publish all ports to the host.
             read_only (bool): Mount the container's root filesystem as read
@@ -575,10 +588,13 @@ class ContainerApiMixin(object):
 
         Example:
 
-            >>> cli.create_host_config(privileged=True, cap_drop=['MKNOD'],
-                                       volumes_from=['nostalgic_newton'])
+            >>> client.api.create_host_config(
+            ...     privileged=True,
+            ...     cap_drop=['MKNOD'],
+            ...     volumes_from=['nostalgic_newton'],
+            ... )
             {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True,
-             'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
+            'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 
 """
         if not kwargs:
@@ -606,11 +622,11 @@ class ContainerApiMixin(object):
 
         Example:
 
-            >>> docker_client.create_network('network1')
-            >>> networking_config = docker_client.create_networking_config({
-                'network1': docker_client.create_endpoint_config()
+            >>> client.api.create_network('network1')
+            >>> networking_config = client.api.create_networking_config({
+                'network1': client.api.create_endpoint_config()
             })
-            >>> container = docker_client.create_container(
+            >>> container = client.api.create_container(
                 img, command, networking_config=networking_config
             )
 
@@ -636,13 +652,15 @@ class ContainerApiMixin(object):
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local (IPv4/IPv6)
                 addresses.
+            driver_opt (dict): A dictionary of options to provide to the
+                network driver. Defaults to ``None``.
 
         Returns:
             (dict) An endpoint config.
 
         Example:
 
-            >>> endpoint_config = client.create_endpoint_config(
+            >>> endpoint_config = client.api.create_endpoint_config(
                 aliases=['web', 'app'],
                 links={'app_db': 'db', 'another': None},
                 ipv4_address='132.65.0.123'
@@ -694,7 +712,8 @@ class ContainerApiMixin(object):
         return self._stream_raw_result(res, chunk_size, False)
 
     @utils.check_resource('container')
-    def get_archive(self, container, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
+    def get_archive(self, container, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE,
+                    encode_stream=False):
         """
         Retrieve a file or folder from a container in the form of a tar
         archive.
@@ -705,6 +724,8 @@ class ContainerApiMixin(object):
             chunk_size (int): The number of bytes returned by each iteration
                 of the generator. If ``None``, data will be streamed as it is
                 received. Default: 2 MB
+            encode_stream (bool): Determines if data should be encoded
+                (gzip-compressed) during transmission. Default: False
 
         Returns:
             (tuple): First element is a raw tar data stream. Second element is
@@ -718,7 +739,7 @@ class ContainerApiMixin(object):
 
             >>> c = docker.APIClient()
             >>> f = open('./sh_bin.tar', 'wb')
-            >>> bits, stat = c.get_archive(container, '/bin/sh')
+            >>> bits, stat = c.api.get_archive(container, '/bin/sh')
             >>> print(stat)
             {'name': 'sh', 'size': 1075464, 'mode': 493,
              'mtime': '2018-10-01T15:37:48-07:00', 'linkTarget': ''}
@@ -729,8 +750,13 @@ class ContainerApiMixin(object):
         params = {
             'path': path
         }
+        headers = {
+            "Accept-Encoding": "gzip, deflate"
+        } if encode_stream else {
+            "Accept-Encoding": "identity"
+        }
         url = self._url('/containers/{0}/archive', container)
-        res = self._get(url, params=params, stream=True)
+        res = self._get(url, params=params, stream=True, headers=headers)
         self._raise_for_status(res)
         encoded_stat = res.headers.get('x-docker-container-path-stat')
         return (
@@ -774,7 +800,7 @@ class ContainerApiMixin(object):
         url = self._url("/containers/{0}/kill", container)
         params = {}
         if signal is not None:
-            if not isinstance(signal, six.string_types):
+            if not isinstance(signal, str):
                 signal = int(signal)
             params['signal'] = signal
         res = self._post(url, params=params)
@@ -900,7 +926,7 @@ class ContainerApiMixin(object):
 
             .. code-block:: python
 
-                >>> cli.port('7174d6347063', 80)
+                >>> client.api.port('7174d6347063', 80)
                 [{'HostIp': '0.0.0.0', 'HostPort': '80'}]
         """
         res = self._get(self._url("/containers/{0}/json", container))
@@ -1079,10 +1105,10 @@ class ContainerApiMixin(object):
 
         Example:
 
-            >>> container = cli.create_container(
+            >>> container = client.api.create_container(
             ...     image='busybox:latest',
             ...     command='/bin/sleep 30')
-            >>> cli.start(container=container.get('Id'))
+            >>> client.api.start(container=container.get('Id'))
         """
         if args or kwargs:
             raise errors.DeprecatedMethod(
@@ -1120,7 +1146,7 @@ class ContainerApiMixin(object):
         else:
             if decode:
                 raise errors.InvalidArgument(
-                    "decode is only available in conjuction with stream=True"
+                    "decode is only available in conjunction with stream=True"
                 )
             return self._result(self._get(url, params={'stream': False}),
                                 json=True)
@@ -1206,8 +1232,8 @@ class ContainerApiMixin(object):
             cpu_shares (int): CPU shares (relative weight)
             cpuset_cpus (str): CPUs in which to allow execution
             cpuset_mems (str): MEMs in which to allow execution
-            mem_limit (int or str): Memory limit
-            mem_reservation (int or str): Memory soft limit
+            mem_limit (float or str): Memory limit
+            mem_reservation (float or str): Memory soft limit
             memswap_limit (int or str): Total memory (memory + swap), -1 to
                 disable swap
             kernel_memory (int or str): Kernel memory limit

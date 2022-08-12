@@ -18,11 +18,11 @@ def find_config_file(config_path=None):
         os.path.join(home_dir(), LEGACY_DOCKER_CONFIG_FILENAME),  # 4
     ]))
 
-    log.debug("Trying paths: {0}".format(repr(paths)))
+    log.debug(f"Trying paths: {repr(paths)}")
 
     for path in paths:
         if os.path.exists(path):
-            log.debug("Found file at path: {0}".format(path))
+            log.debug(f"Found file at path: {path}")
             return path
 
     log.debug("No config file found")
@@ -57,7 +57,7 @@ def load_general_config(config_path=None):
     try:
         with open(config_file) as f:
             return json.load(f)
-    except (IOError, ValueError) as e:
+    except (OSError, ValueError) as e:
         # In the case of a legacy `.dockercfg` file, we won't
         # be able to load any JSON data.
         log.debug(e)

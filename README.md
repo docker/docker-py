@@ -1,6 +1,6 @@
 # Docker SDK for Python
 
-[![Build Status](https://travis-ci.org/docker/docker-py.svg?branch=master)](https://travis-ci.org/docker/docker-py)
+[![Build Status](https://github.com/docker/docker-py/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/docker/docker-py/actions/workflows/ci.yml/)
 
 A Python library for the Docker Engine API. It lets you do anything the `docker` command does, but from within Python apps – run containers, manage containers, manage Swarms, etc.
 
@@ -10,9 +10,8 @@ The latest stable version [is available on PyPI](https://pypi.python.org/pypi/do
 
     pip install docker
 
-If you are intending to connect to a docker host via TLS, add `docker[tls]` to your requirements instead, or install with pip:
-
-    pip install docker[tls]
+> Older versions (< 6.0) required installing `docker[tls]` for SSL/TLS support.
+> This is no longer necessary and is a no-op, but is supported for backwards compatibility.
 
 ## Usage
 
@@ -58,7 +57,7 @@ You can stream logs:
 
 ```python
 >>> for line in container.logs(stream=True):
-...   print line.strip()
+...   print(line.strip())
 Reticulating spline 2...
 Reticulating spline 3...
 ...
