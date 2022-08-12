@@ -29,7 +29,8 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'constraints': ['foo=bar'],
             'preferences': ['bar=baz'],
             'platforms': [('x86_64', 'linux')],
-            'maxreplicas': 1
+            'maxreplicas': 1,
+            'sysctls': {'foo': 'bar'}
         })
 
         task_template = kwargs.pop('task_template')
@@ -59,5 +60,5 @@ class CreateServiceKwargsTest(unittest.TestCase):
         assert task_template['Networks'] == [{'Target': 'somenet'}]
         assert set(task_template['ContainerSpec'].keys()) == {
             'Image', 'Command', 'Args', 'Hostname', 'Env', 'Dir', 'User',
-            'Labels', 'Mounts', 'StopGracePeriod'
+            'Labels', 'Mounts', 'StopGracePeriod', 'Sysctls'
         }

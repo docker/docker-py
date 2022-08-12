@@ -217,6 +217,8 @@ class ServiceCollection(Collection):
                 the default set for the container.
             cap_drop (:py:class:`list`): A list of kernel capabilities to drop
                 from the default set for the container.
+            sysctls (:py:class:`dict`): A dict of sysctl values to add to the
+                container
 
         Returns:
             :py:class:`Service`: The created service.
@@ -305,6 +307,7 @@ CONTAINER_SPEC_KWARGS = [
     'tty',
     'user',
     'workdir',
+    'sysctls',
 ]
 
 # kwargs to copy straight over to TaskTemplate
