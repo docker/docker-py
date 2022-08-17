@@ -826,11 +826,12 @@ class ContainerApiMixin:
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in nanoseconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in nanoseconds)
 
         Returns:
             (generator or str)
@@ -855,6 +856,8 @@ class ContainerApiMixin:
                 params['since'] = utils.datetime_to_timestamp(since)
             elif (isinstance(since, int) and since > 0):
                 params['since'] = since
+            elif (isinstance(since, float) and since > 0.0):
+                params['since'] = since
             else:
                 raise errors.InvalidArgument(
                     'since value should be datetime or positive int, '
@@ -869,6 +872,8 @@ class ContainerApiMixin:
             if isinstance(until, datetime):
                 params['until'] = utils.datetime_to_timestamp(until)
             elif (isinstance(until, int) and until > 0):
+                params['until'] = until
+            elif (isinstance(until, float) and until > 0.0):
                 params['until'] = until
             else:
                 raise errors.InvalidArgument(

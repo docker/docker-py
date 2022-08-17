@@ -290,11 +290,12 @@ class Container(Model):
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in nanoseconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in nanoseconds)
 
         Returns:
             (generator or str): Logs from the container.
