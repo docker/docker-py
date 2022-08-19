@@ -860,7 +860,7 @@ class ContainerApiMixin:
                 params['since'] = since
             else:
                 raise errors.InvalidArgument(
-                    'since value should be datetime or positive int, '
+                    'since value should be datetime or positive int/float, '
                     'not {}'.format(type(since))
                 )
 
