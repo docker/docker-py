@@ -1279,6 +1279,22 @@ class ContainerTest(BaseAPIClientTest):
             stream=False
         )
 
+    def test_log_since_with_float(self):
+        ts = 809222400.000000
+        with mock.patch('docker.api.client.APIClient.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                             follow=False, since=ts)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all', 'since': ts},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
     def test_log_since_with_datetime(self):
         ts = 809222400
         time = datetime.datetime.utcfromtimestamp(ts)
@@ -1301,7 +1317,7 @@ class ContainerTest(BaseAPIClientTest):
                         fake_inspect_container):
             with pytest.raises(docker.errors.InvalidArgument):
                 self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
-                                 follow=False, since=42.42)
+                                 follow=False, since="42.42")
 
     def test_log_tty(self):
         m = mock.Mock()
