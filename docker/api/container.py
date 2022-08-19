@@ -827,7 +827,7 @@ class ContainerApiMixin:
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
             since (datetime, int, or float): Show logs since a given datetime,
-                integer epoch (in seconds) or float (in nanoseconds)
+                integer epoch (in seconds) or float (in fractional seconds)
             follow (bool): Follow log output. Default ``False``
             until (datetime, int, or float): Show logs that occurred before
                 the given datetime, integer epoch (in seconds), or
