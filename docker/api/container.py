@@ -877,7 +877,7 @@ class ContainerApiMixin:
                 params['until'] = until
             else:
                 raise errors.InvalidArgument(
-                    'until value should be datetime or positive int, '
+                    'until value should be datetime or positive int/float, '
                     'not {}'.format(type(until))
                 )
 
