@@ -1,5 +1,7 @@
-# syntax = docker/dockerfile:1.4
+# syntax=docker/dockerfile:1
+
 ARG PYTHON_VERSION=3.10
+
 FROM python:${PYTHON_VERSION}
 
 ARG APT_MIRROR
