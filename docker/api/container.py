@@ -831,7 +831,7 @@ class ContainerApiMixin:
             follow (bool): Follow log output. Default ``False``
             until (datetime, int, or float): Show logs that occurred before
                 the given datetime, integer epoch (in seconds), or
-                float (in nanoseconds)
+                float (in fractional seconds)
 
         Returns:
             (generator or str)
