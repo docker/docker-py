@@ -58,10 +58,10 @@ class SwarmApiMixin:
 
         Example:
 
-            >>> spec = client.create_swarm_spec(
+            >>> spec = client.api.create_swarm_spec(
               snapshot_interval=5000, log_entries_for_slow_followers=1200
             )
-            >>> client.init_swarm(
+            >>> client.api.init_swarm(
               advertise_addr='eth0', listen_addr='0.0.0.0:5000',
               force_new_cluster=False, swarm_spec=spec
             )
@@ -85,7 +85,7 @@ class SwarmApiMixin:
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
                    force_new_cluster=False, swarm_spec=None,
                    default_addr_pool=None, subnet_size=None,
-                   data_path_addr=None):
+                   data_path_addr=None, data_path_port=None):
         """
         Initialize a new Swarm using the current connected engine as the first
         node.
@@ -118,6 +118,9 @@ class SwarmApiMixin:
                 networks created from the default subnet pool. Default: None
             data_path_addr (string): Address or interface to use for data path
                 traffic. For example, 192.168.1.1, or an interface, like eth0.
+            data_path_port (int): Port number to use for data path traffic.
+                Acceptable port range is 1024 to 49151. If set to ``None`` or
+                0, the default port 4789 will be used. Default: None
 
         Returns:
             (str): The ID of the created node.
@@ -165,6 +168,14 @@ class SwarmApiMixin:
                     'API version >= 1.30'
                 )
             data['DataPathAddr'] = data_path_addr
+
+        if data_path_port is not None:
+            if utils.version_lt(self._version, '1.40'):
+                raise errors.InvalidVersion(
+                    'Data path port is only available for '
+                    'API version >= 1.40'
+                )
+            data['DataPathPort'] = data_path_port
 
         response = self._post_json(url, data=data)
         return self._result(response, json=True)
@@ -354,8 +365,8 @@ class SwarmApiMixin:
 
             Example:
 
-                >>> key = client.get_unlock_key()
-                >>> client.unlock_node(key)
+                >>> key = client.api.get_unlock_key()
+                >>> client.unlock_swarm(key)
 
         """
         if isinstance(key, dict):
@@ -396,7 +407,7 @@ class SwarmApiMixin:
                          'Role': 'manager',
                          'Labels': {'foo': 'bar'}
                         }
-            >>> client.update_node(node_id='24ifsmvkjbyhk', version=8,
+            >>> client.api.update_node(node_id='24ifsmvkjbyhk', version=8,
                 node_spec=node_spec)
 
         """

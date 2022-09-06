@@ -44,16 +44,19 @@ class Plugin(Model):
         self.client.api.configure_plugin(self.name, options)
         self.reload()
 
-    def disable(self):
+    def disable(self, force=False):
         """
             Disable the plugin.
+
+            Args:
+                force (bool): Force disable. Default: False
 
             Raises:
                 :py:class:`docker.errors.APIError`
                     If the server returns an error.
         """
 
-        self.client.api.disable_plugin(self.name)
+        self.client.api.disable_plugin(self.name, force)
         self.reload()
 
     def enable(self, timeout=0):
@@ -117,7 +120,11 @@ class Plugin(Model):
         if remote is None:
             remote = self.name
         privileges = self.client.api.plugin_privileges(remote)
-        yield from self.client.api.upgrade_plugin(self.name, remote, privileges)
+        yield from self.client.api.upgrade_plugin(
+            self.name,
+            remote,
+            privileges,
+        )
         self.reload()
 
 

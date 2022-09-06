@@ -15,7 +15,10 @@ class Image(Model):
     An image on the server.
     """
     def __repr__(self):
-        return "<{}: '{}'>".format(self.__class__.__name__, "', '".join(self.tags))
+        return "<{}: '{}'>".format(
+            self.__class__.__name__,
+            "', '".join(self.tags),
+        )
 
     @property
     def labels(self):
@@ -28,12 +31,12 @@ class Image(Model):
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        The ID of the image truncated to 12 characters, plus the ``sha256:``
         prefix.
         """
         if self.id.startswith('sha256:'):
-            return self.id[:17]
-        return self.id[:10]
+            return self.id[:19]
+        return self.id[:12]
 
     @property
     def tags(self):
@@ -57,6 +60,24 @@ class Image(Model):
                 If the server returns an error.
         """
         return self.client.api.history(self.id)
+
+    def remove(self, force=False, noprune=False):
+        """
+        Remove this image.
+
+        Args:
+            force (bool): Force removal of the image
+            noprune (bool): Do not delete untagged parents
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        return self.client.api.remove_image(
+            self.id,
+            force=force,
+            noprune=noprune,
+        )
 
     def save(self, chunk_size=DEFAULT_DATA_CHUNK_SIZE, named=False):
         """
@@ -138,10 +159,10 @@ class RegistryData(Model):
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 10 characters, plus the ``sha256:``
+        The ID of the image truncated to 12 characters, plus the ``sha256:``
         prefix.
         """
-        return self.id[:17]
+        return self.id[:19]
 
     def pull(self, platform=None):
         """
@@ -203,10 +224,10 @@ class ImageCollection(Collection):
         Build an image and return it. Similar to the ``docker build``
         command. Either ``path`` or ``fileobj`` must be set.
 
-        If you have a tar file for the Docker build context (including a
-        Dockerfile) already, pass a readable file-like object to ``fileobj``
-        and also pass ``custom_context=True``. If the stream is compressed
-        also, set ``encoding`` to the correct value (e.g ``gzip``).
+        If you already have a tar file for the Docker build context (including
+        a Dockerfile), pass a readable file-like object to ``fileobj``
+        and also pass ``custom_context=True``. If the stream is also
+        compressed, set ``encoding`` to the correct value (e.g ``gzip``).
 
         If you want to get the raw output of the build, use the
         :py:meth:`~docker.api.build.BuildApiMixin.build` method in the
@@ -263,7 +284,7 @@ class ImageCollection(Collection):
 
         Returns:
             (tuple): The first item is the :py:class:`Image` object for the
-                image that was build. The second item is a generator of the
+                image that was built. The second item is a generator of the
                 build logs as JSON-decoded objects.
 
         Raises:

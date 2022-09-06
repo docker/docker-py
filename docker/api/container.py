@@ -223,7 +223,7 @@ class ContainerApiMixin:
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
                          stop_timeout=None, runtime=None,
-                         use_config_proxy=True):
+                         use_config_proxy=True, platform=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -256,7 +256,9 @@ class ContainerApiMixin:
 
         .. code-block:: python
 
-            client.api.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+            client.api.create_host_config(
+                port_bindings={1111: ('127.0.0.1', 4567)}
+            )
 
         Or without host port assignment:
 
@@ -396,6 +398,7 @@ class ContainerApiMixin:
                 configuration file (``~/.docker/config.json`` by default)
                 contains a proxy configuration, the corresponding environment
                 variables will be set in the container being created.
+            platform (str): Platform in the format ``os[/arch[/variant]]``.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -425,16 +428,22 @@ class ContainerApiMixin:
             stop_signal, networking_config, healthcheck,
             stop_timeout, runtime
         )
-        return self.create_container_from_config(config, name)
+        return self.create_container_from_config(config, name, platform)
 
     def create_container_config(self, *args, **kwargs):
         return ContainerConfig(self._version, *args, **kwargs)
 
-    def create_container_from_config(self, config, name=None):
+    def create_container_from_config(self, config, name=None, platform=None):
         u = self._url("/containers/create")
         params = {
             'name': name
         }
+        if platform:
+            if utils.version_lt(self._version, '1.41'):
+                raise errors.InvalidVersion(
+                    'platform is not supported for API version < 1.41'
+                )
+            params['platform'] = platform
         res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
 
@@ -579,10 +588,13 @@ class ContainerApiMixin:
 
         Example:
 
-            >>> client.api.create_host_config(privileged=True, cap_drop=['MKNOD'],
-                                       volumes_from=['nostalgic_newton'])
+            >>> client.api.create_host_config(
+            ...     privileged=True,
+            ...     cap_drop=['MKNOD'],
+            ...     volumes_from=['nostalgic_newton'],
+            ... )
             {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True,
-             'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
+            'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 
 """
         if not kwargs:
@@ -814,11 +826,12 @@ class ContainerApiMixin:
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in fractional seconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in fractional seconds)
 
         Returns:
             (generator or str)
@@ -843,9 +856,11 @@ class ContainerApiMixin:
                 params['since'] = utils.datetime_to_timestamp(since)
             elif (isinstance(since, int) and since > 0):
                 params['since'] = since
+            elif (isinstance(since, float) and since > 0.0):
+                params['since'] = since
             else:
                 raise errors.InvalidArgument(
-                    'since value should be datetime or positive int, '
+                    'since value should be datetime or positive int/float, '
                     'not {}'.format(type(since))
                 )
 
@@ -858,9 +873,11 @@ class ContainerApiMixin:
                 params['until'] = utils.datetime_to_timestamp(until)
             elif (isinstance(until, int) and until > 0):
                 params['until'] = until
+            elif (isinstance(until, float) and until > 0.0):
+                params['until'] = until
             else:
                 raise errors.InvalidArgument(
-                    'until value should be datetime or positive int, '
+                    'until value should be datetime or positive int/float, '
                     'not {}'.format(type(until))
                 )
 

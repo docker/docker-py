@@ -408,6 +408,22 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_data = container_data['NetworkSettings']['Networks'][net_name]
         assert net_data['IPAMConfig']['IPv6Address'] == '2001:389::f00d'
 
+    @requires_api_version('1.25')
+    def test_connect_with_mac_address(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container(TEST_IMG, 'top')
+        self.tmp_containers.append(container)
+
+        self.client.connect_container_to_network(
+            container, net_name, mac_address='02:42:ac:11:00:02'
+        )
+
+        container_data = self.client.inspect_container(container)
+
+        net_data = container_data['NetworkSettings']['Networks'][net_name]
+        assert net_data['MacAddress'] == '02:42:ac:11:00:02'
+
     @requires_api_version('1.23')
     def test_create_internal_networks(self):
         _, net_id = self.create_network(internal=True)

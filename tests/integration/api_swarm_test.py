@@ -253,3 +253,8 @@ class SwarmTest(BaseAPIIntegrationTest):
     @pytest.mark.xfail(reason='Can fail if eth0 has multiple IP addresses')
     def test_init_swarm_data_path_addr(self):
         assert self.init_swarm(data_path_addr='eth0')
+
+    @requires_api_version('1.40')
+    def test_init_swarm_data_path_port(self):
+        assert self.init_swarm(data_path_port=4242)
+        assert self.client.inspect_swarm()['DataPathPort'] == 4242

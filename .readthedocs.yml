@@ -3,8 +3,15 @@ version: 2
 sphinx:
   configuration: docs/conf.py
 
+build:
+  os: ubuntu-20.04
+  tools:
+    python: '3.10'
+
 python:
-  version: 3.6
   install:
     - requirements: docs-requirements.txt
-    - requirements: requirements.txt
+    - method: pip
+      path: .
+      extra_requirements:
+        - ssh

@@ -1,11 +1,7 @@
 import os
 
 from docker.credentials.utils import create_environment_dict
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
+from unittest import mock
 
 
 @mock.patch.dict(os.environ)

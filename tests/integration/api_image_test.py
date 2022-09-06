@@ -281,7 +281,7 @@ class ImportImageTest(BaseAPIIntegrationTest):
 
         server = socketserver.TCPServer(('', 0), Handler)
         thread = threading.Thread(target=server.serve_forever)
-        thread.setDaemon(True)
+        thread.daemon = True
         thread.start()
 
         yield f'http://{socket.gethostname()}:{server.server_address[1]}'
