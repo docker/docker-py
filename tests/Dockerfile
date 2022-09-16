@@ -1,4 +1,6 @@
-ARG PYTHON_VERSION=3.7
+# syntax=docker/dockerfile:1
+
+ARG PYTHON_VERSION=3.10
 
 FROM python:${PYTHON_VERSION}
 
@@ -11,7 +13,9 @@ RUN apt-get update && apt-get -y install --no-install-recommends \
     pass
 
 # Add SSH keys and set permissions
-COPY tests/ssh-keys /root/.ssh
+COPY tests/ssh/config/client /root/.ssh
+COPY tests/ssh/config/server/known_ed25519.pub /root/.ssh/known_hosts
+RUN sed -i '1s;^;dpy-dind-ssh ;' /root/.ssh/known_hosts
 RUN chmod -R 600 /root/.ssh
 
 COPY ./tests/gpg-keys /gpg-keys
@@ -27,11 +31,16 @@ RUN curl -sSL -o /opt/docker-credential-pass.tar.gz \
     chmod +x /usr/local/bin/docker-credential-pass
 
 WORKDIR /src
+
 COPY requirements.txt /src/requirements.txt
-RUN pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 COPY test-requirements.txt /src/test-requirements.txt
-RUN pip install -r test-requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r test-requirements.txt
 
 COPY . /src
-RUN pip install .
+ARG SETUPTOOLS_SCM_PRETEND_VERSION=99.0.0+docker
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -e .

@@ -4,10 +4,10 @@ from . import fake_stat
 
 CURRENT_VERSION = f'v{constants.DEFAULT_DOCKER_API_VERSION}'
 
-FAKE_CONTAINER_ID = '3cc2351ab11b'
-FAKE_IMAGE_ID = 'e9aa60c60128'
-FAKE_EXEC_ID = 'd5d177f121dc'
-FAKE_NETWORK_ID = '33fb6a3462b8'
+FAKE_CONTAINER_ID = '81cf499cc928ce3fedc250a080d2b9b978df20e4517304c45211e8a68b33e254'  # noqa: E501
+FAKE_IMAGE_ID = 'sha256:fe7a8fc91d3f17835cbb3b86a1c60287500ab01a53bc79c4497d09f07a3f0688'  # noqa: E501
+FAKE_EXEC_ID = 'b098ec855f10434b5c7c973c78484208223a83f663ddaefb0f02a242840cb1c7'  # noqa: E501
+FAKE_NETWORK_ID = '1999cfb42e414483841a125ade3c276c3cb80cb3269b14e339354ac63a31b02c'  # noqa: E501
 FAKE_IMAGE_NAME = 'test_image'
 FAKE_TARBALL_PATH = '/path/to/tarball'
 FAKE_REPO_NAME = 'repo'
@@ -546,56 +546,56 @@ fake_responses = {
     post_fake_import_image,
     f'{prefix}/{CURRENT_VERSION}/containers/json':
     get_fake_containers,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/start':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/start':
     post_fake_start_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/resize':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/resize':
     post_fake_resize_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/json':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/json':
     get_fake_inspect_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/rename':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/rename':
     post_fake_rename_container,
-    f'{prefix}/{CURRENT_VERSION}/images/e9aa60c60128/tag':
+    f'{prefix}/{CURRENT_VERSION}/images/{FAKE_IMAGE_ID}/tag':
     post_fake_tag_image,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/wait':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/wait':
     get_fake_wait,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/logs':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/logs':
     get_fake_logs,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/changes':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/changes':
     get_fake_diff,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/export':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/export':
     get_fake_export,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/update':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/update':
     post_fake_update_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/exec':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/exec':
     post_fake_exec_create,
-    f'{prefix}/{CURRENT_VERSION}/exec/d5d177f121dc/start':
+    f'{prefix}/{CURRENT_VERSION}/exec/{FAKE_EXEC_ID}/start':
     post_fake_exec_start,
-    f'{prefix}/{CURRENT_VERSION}/exec/d5d177f121dc/json':
+    f'{prefix}/{CURRENT_VERSION}/exec/{FAKE_EXEC_ID}/json':
     get_fake_exec_inspect,
-    f'{prefix}/{CURRENT_VERSION}/exec/d5d177f121dc/resize':
+    f'{prefix}/{CURRENT_VERSION}/exec/{FAKE_EXEC_ID}/resize':
     post_fake_exec_resize,
 
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/stats':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/stats':
     get_fake_stats,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/top':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/top':
     get_fake_top,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/stop':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/stop':
     post_fake_stop_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/kill':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/kill':
     post_fake_kill_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/pause':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/pause':
     post_fake_pause_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/unpause':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/unpause':
     post_fake_unpause_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b/restart':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/restart':
     post_fake_restart_container,
-    f'{prefix}/{CURRENT_VERSION}/containers/3cc2351ab11b':
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}':
     delete_fake_remove_container,
     f'{prefix}/{CURRENT_VERSION}/images/create':
     post_fake_image_create,
-    f'{prefix}/{CURRENT_VERSION}/images/e9aa60c60128':
+    f'{prefix}/{CURRENT_VERSION}/images/{FAKE_IMAGE_ID}':
     delete_fake_remove_image,
-    f'{prefix}/{CURRENT_VERSION}/images/e9aa60c60128/get':
+    f'{prefix}/{CURRENT_VERSION}/images/{FAKE_IMAGE_ID}/get':
     get_fake_get_image,
     f'{prefix}/{CURRENT_VERSION}/images/load':
     post_fake_load_image,

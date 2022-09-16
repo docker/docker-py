@@ -626,6 +626,39 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert 'Replicated' in svc_info['Spec']['Mode']
         assert svc_info['Spec']['Mode']['Replicated'] == {'Replicas': 5}
 
+    @requires_api_version('1.41')
+    def test_create_service_global_job_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name, mode='global-job'
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'GlobalJob' in svc_info['Spec']['Mode']
+
+    @requires_api_version('1.41')
+    def test_create_service_replicated_job_mode(self):
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello']
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        name = self.get_service_name()
+        svc_id = self.client.create_service(
+            task_tmpl, name=name,
+            mode=docker.types.ServiceMode('replicated-job', 5)
+        )
+        svc_info = self.client.inspect_service(svc_id)
+        assert 'Mode' in svc_info['Spec']
+        assert 'ReplicatedJob' in svc_info['Spec']['Mode']
+        assert svc_info['Spec']['Mode']['ReplicatedJob'] == {
+            'MaxConcurrent': 1,
+            'TotalCompletions': 5
+        }
+
     @requires_api_version('1.25')
     def test_update_service_force_update(self):
         container_spec = docker.types.ContainerSpec(
@@ -1386,3 +1419,23 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert services[0]['ID'] == svc_id['ID']
         spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
         assert 'CAP_SYSLOG' in spec['CapabilityDrop']
+
+    @requires_api_version('1.40')
+    def test_create_service_with_sysctl(self):
+        name = self.get_service_name()
+        sysctls = {
+            'net.core.somaxconn': '1024',
+            'net.ipv4.tcp_syncookies': '0',
+        }
+        container_spec = docker.types.ContainerSpec(
+            TEST_IMG, ['echo', 'hello'], sysctls=sysctls
+        )
+        task_tmpl = docker.types.TaskTemplate(container_spec)
+        svc_id = self.client.create_service(task_tmpl, name=name)
+        assert self.client.inspect_service(svc_id)
+        services = self.client.services(filters={'name': name})
+        assert len(services) == 1
+        assert services[0]['ID'] == svc_id['ID']
+        spec = services[0]['Spec']['TaskTemplate']['ContainerSpec']
+        assert spec['Sysctls']['net.core.somaxconn'] == '1024'
+        assert spec['Sysctls']['net.ipv4.tcp_syncookies'] == '0'

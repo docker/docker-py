@@ -1,5 +1,43 @@
-Change log
+Changelog
 ==========
+
+6.0.0
+-----
+
+### Upgrade Notes
+- Minimum supported Python version is 3.7+
+- When installing with pip, the `docker[tls]` extra is deprecated and a no-op,
+  use `docker` for same functionality (TLS support is always available now)
+- Native Python SSH client (used by default / `use_ssh_client=False`) will now
+  reject unknown host keys with `paramiko.ssh_exception.SSHException`
+- Short IDs are now 12 characters instead of 10 characters (same as Docker CLI)
+
+### Features
+- Python 3.10 support
+- Automatically negotiate most secure TLS version
+- Add `platform` (e.g. `linux/amd64`, `darwin/arm64`) to container create & run
+- Add support for `GlobalJob` and `ReplicatedJobs` for Swarm
+- Add `remove()` method on `Image`
+- Add `force` param to `disable()` on `Plugin`
+
+### Bugfixes
+- Fix install issues on Windows related to `pywin32`
+- Do not accept unknown SSH host keys in native Python SSH mode
+- Use 12 character short IDs for consistency with Docker CLI
+- Ignore trailing whitespace in `.dockerignore` files
+- Fix IPv6 host parsing when explicit port specified
+- Fix `ProxyCommand` option for SSH connections
+- Do not spawn extra subshell when launching external SSH client
+- Improve exception semantics to preserve context
+- Documentation improvements (formatting, examples, typos, missing params)
+
+### Miscellaneous
+- Upgrade dependencies in `requirements.txt` to latest versions
+- Remove extraneous transitive dependencies
+- Eliminate usages of deprecated functions/methods
+- Test suite reliability improvements
+- GitHub Actions workflows for linting, unit tests, integration tests, and
+  publishing releases
 
 5.0.3
 -----

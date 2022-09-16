@@ -29,6 +29,7 @@ class TaskTemplate(dict):
         force_update (int): A counter that triggers an update even if no
             relevant parameters have been changed.
     """
+
     def __init__(self, container_spec, resources=None, restart_policy=None,
                  placement=None, log_driver=None, networks=None,
                  force_update=None):
@@ -114,14 +115,17 @@ class ContainerSpec(dict):
             default set for the container.
         cap_drop (:py:class:`list`): A list of kernel capabilities to drop from
             the default set for the container.
+        sysctls (:py:class:`dict`): A dict of sysctl values to add to
+            the container
     """
+
     def __init__(self, image, command=None, args=None, hostname=None, env=None,
                  workdir=None, user=None, labels=None, mounts=None,
                  stop_grace_period=None, secrets=None, tty=None, groups=None,
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
                  privileges=None, isolation=None, init=None, cap_add=None,
-                 cap_drop=None):
+                 cap_drop=None, sysctls=None):
         self['Image'] = image
 
         if isinstance(command, str):
@@ -203,6 +207,12 @@ class ContainerSpec(dict):
 
             self['CapabilityDrop'] = cap_drop
 
+        if sysctls is not None:
+            if not isinstance(sysctls, dict):
+                raise TypeError('sysctls must be a dict')
+
+            self['Sysctls'] = sysctls
+
 
 class Mount(dict):
     """
@@ -231,6 +241,7 @@ class Mount(dict):
         tmpfs_size (int or string): The size for the tmpfs mount in bytes.
         tmpfs_mode (int): The permission mode for the tmpfs mount.
     """
+
     def __init__(self, target, source, type='volume', read_only=False,
                  consistency=None, propagation=None, no_copy=False,
                  labels=None, driver_config=None, tmpfs_size=None,
@@ -331,6 +342,7 @@ class Resources(dict):
           ``{ resource_name: resource_value }``. Alternatively, a list of
           of resource specifications as defined by the Engine API.
     """
+
     def __init__(self, cpu_limit=None, mem_limit=None, cpu_reservation=None,
                  mem_reservation=None, generic_resources=None):
         limits = {}
@@ -399,8 +411,9 @@ class UpdateConfig(dict):
           an update before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
         order (string): Specifies the order of operations when rolling out an
-          updated task. Either ``start_first`` or ``stop_first`` are accepted.
+          updated task. Either ``start-first`` or ``stop-first`` are accepted.
     """
+
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
                  monitor=None, max_failure_ratio=None, order=None):
         self['Parallelism'] = parallelism
@@ -436,7 +449,8 @@ class UpdateConfig(dict):
 
 class RollbackConfig(UpdateConfig):
     """
-    Used to specify the way containe rollbacks should be performed by a service
+    Used to specify the way container rollbacks should be performed by a
+    service
 
     Args:
         parallelism (int): Maximum number of tasks to be rolled back in one
@@ -452,7 +466,7 @@ class RollbackConfig(UpdateConfig):
           a rollback before the failure action is invoked, specified as a
           floating point number between 0 and 1. Default: 0
         order (string): Specifies the order of operations when rolling out a
-          rolled back task. Either ``start_first`` or ``stop_first`` are
+          rolled back task. Either ``start-first`` or ``stop-first`` are
           accepted.
     """
     pass
@@ -511,6 +525,7 @@ class DriverConfig(dict):
         name (string): Name of the driver to use.
         options (dict): Driver-specific options. Default: ``None``.
     """
+
     def __init__(self, name, options=None):
         self['Name'] = name
         if options:
@@ -532,6 +547,7 @@ class EndpointSpec(dict):
           is ``(target_port [, protocol [, publish_mode]])``.
           Ports can only be provided if the ``vip`` resolution mode is used.
     """
+
     def __init__(self, mode=None, ports=None):
         if ports:
             self['Ports'] = convert_service_ports(ports)
@@ -574,37 +590,70 @@ def convert_service_ports(ports):
 
 class ServiceMode(dict):
     """
-        Indicate whether a service should be deployed as a replicated or global
-        service, and associated parameters
+        Indicate whether a service or a job should be deployed as a replicated
+        or global service, and associated parameters
 
         Args:
-            mode (string): Can be either ``replicated`` or ``global``
+            mode (string): Can be either ``replicated``, ``global``,
+              ``replicated-job`` or ``global-job``
             replicas (int): Number of replicas. For replicated services only.
+            concurrency (int): Number of concurrent jobs. For replicated job
+              services only.
     """
-    def __init__(self, mode, replicas=None):
-        if mode not in ('replicated', 'global'):
-            raise errors.InvalidArgument(
-                'mode must be either "replicated" or "global"'
-            )
-        if mode != 'replicated' and replicas is not None:
-            raise errors.InvalidArgument(
-                'replicas can only be used for replicated mode'
-            )
-        self[mode] = {}
-        if replicas is not None:
-            self[mode]['Replicas'] = replicas
 
-    @property
-    def mode(self):
-        if 'global' in self:
-            return 'global'
-        return 'replicated'
+    def __init__(self, mode, replicas=None, concurrency=None):
+        replicated_modes = ('replicated', 'replicated-job')
+        supported_modes = replicated_modes + ('global', 'global-job')
+
+        if mode not in supported_modes:
+            raise errors.InvalidArgument(
+                'mode must be either "replicated", "global", "replicated-job"'
+                ' or "global-job"'
+            )
+
+        if mode not in replicated_modes:
+            if replicas is not None:
+                raise errors.InvalidArgument(
+                    'replicas can only be used for "replicated" or'
+                    ' "replicated-job" mode'
+                )
+
+            if concurrency is not None:
+                raise errors.InvalidArgument(
+                    'concurrency can only be used for "replicated-job" mode'
+                )
+
+        service_mode = self._convert_mode(mode)
+        self.mode = service_mode
+        self[service_mode] = {}
+
+        if replicas is not None:
+            if mode == 'replicated':
+                self[service_mode]['Replicas'] = replicas
+
+            if mode == 'replicated-job':
+                self[service_mode]['MaxConcurrent'] = concurrency or 1
+                self[service_mode]['TotalCompletions'] = replicas
+
+    @staticmethod
+    def _convert_mode(original_mode):
+        if original_mode == 'global-job':
+            return 'GlobalJob'
+
+        if original_mode == 'replicated-job':
+            return 'ReplicatedJob'
+
+        return original_mode
 
     @property
     def replicas(self):
-        if self.mode != 'replicated':
-            return None
-        return self['replicated'].get('Replicas')
+        if 'replicated' in self:
+            return self['replicated'].get('Replicas')
+
+        if 'ReplicatedJob' in self:
+            return self['ReplicatedJob'].get('TotalCompletions')
+
+        return None
 
 
 class SecretReference(dict):
@@ -678,6 +727,7 @@ class Placement(dict):
             platforms (:py:class:`list` of tuple): A list of platforms
                 expressed as ``(arch, os)`` tuples
     """
+
     def __init__(self, constraints=None, preferences=None, platforms=None,
                  maxreplicas=None):
         if constraints is not None:
@@ -710,6 +760,7 @@ class PlacementPreference(dict):
                 the scheduler will try to spread tasks evenly over groups of
                 nodes identified by this label.
     """
+
     def __init__(self, strategy, descriptor):
         if strategy != 'spread':
             raise errors.InvalidArgument(
@@ -731,6 +782,7 @@ class DNSConfig(dict):
             options (:py:class:`list`): A list of internal resolver variables
                 to be modified (e.g., ``debug``, ``ndots:3``, etc.).
     """
+
     def __init__(self, nameservers=None, search=None, options=None):
         self['Nameservers'] = nameservers
         self['Search'] = search
@@ -761,6 +813,7 @@ class Privileges(dict):
             selinux_type (string): SELinux type label
             selinux_level (string): SELinux level label
     """
+
     def __init__(self, credentialspec_file=None, credentialspec_registry=None,
                  selinux_disable=None, selinux_user=None, selinux_role=None,
                  selinux_type=None, selinux_level=None):
@@ -803,6 +856,7 @@ class NetworkAttachmentConfig(dict):
             options (:py:class:`dict`): Driver attachment options for the
                 network target.
     """
+
     def __init__(self, target, aliases=None, options=None):
         self['Target'] = target
         self['Aliases'] = aliases

@@ -13,6 +13,10 @@ html/*
 _build/
 README.rst
 
+# setuptools_scm
+_version.py
+
 env/
 venv/
 .idea/
+*.iml

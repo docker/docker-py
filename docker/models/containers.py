@@ -290,11 +290,12 @@ class Container(Model):
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in nanoseconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in nanoseconds)
 
         Returns:
             (generator or str): Logs from the container.
@@ -553,6 +554,11 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cgroup_parent (str): Override the default parent cgroup.
+            cgroupns (str): Override the default cgroup namespace mode for the
+                container. One of:
+                - ``private`` the container runs in its own private cgroup
+                  namespace.
+                - ``host`` use the host system's cgroup namespace.
             cpu_count (int): Number of usable CPUs (Windows only).
             cpu_percent (int): Usable percentage of the available CPUs
                 (Windows only).
@@ -600,7 +606,28 @@ class ContainerCollection(Collection):
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
             healthcheck (dict): Specify a test to perform to check that the
-                container is healthy.
+                container is healthy. The dict takes the following keys:
+
+                - test (:py:class:`list` or str): Test to perform to determine
+                    container health. Possible values:
+
+                    - Empty list: Inherit healthcheck from parent image
+                    - ``["NONE"]``: Disable healthcheck
+                    - ``["CMD", args...]``: exec arguments directly.
+                    - ``["CMD-SHELL", command]``: Run command in the system's
+                      default shell.
+
+                    If a string is provided, it will be used as a ``CMD-SHELL``
+                    command.
+                - interval (int): The time to wait between checks in
+                  nanoseconds. It should be 0 or at least 1000000 (1 ms).
+                - timeout (int): The time to wait before considering the check
+                  to have hung. It should be 0 or at least 1000000 (1 ms).
+                - retries (int): The number of consecutive failures needed to
+                    consider a container as unhealthy.
+                - start_period (int): Start period for the container to
+                    initialize before starting health-retries countdown in
+                    nanoseconds. It should be 0 or at least 1000000 (1 ms).
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
@@ -644,7 +671,7 @@ class ContainerCollection(Collection):
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
-                  on the bridge network.
+                  the bridge network.
                 - ``none`` No networking for this container.
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
@@ -761,7 +788,8 @@ class ContainerCollection(Collection):
                     {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
                      '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
 
-                Or a list of strings which each one of its elements specifies a mount volume.
+                Or a list of strings which each one of its elements specifies a
+                mount volume.
 
                 For example:
 
@@ -800,7 +828,7 @@ class ContainerCollection(Collection):
             image = image.id
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
-        platform = kwargs.pop('platform', None)
+        platform = kwargs.get('platform', None)
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -984,6 +1012,7 @@ RUN_CREATE_KWARGS = [
     'mac_address',
     'name',
     'network_disabled',
+    'platform',
     'stdin_open',
     'stop_signal',
     'stop_timeout',
@@ -1001,6 +1030,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cgroupns',
     'cpu_count',
     'cpu_percent',
     'cpu_period',

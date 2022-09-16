@@ -56,15 +56,18 @@ class VolumeApiMixin:
 
         Example:
 
-            >>> volume = client.api.create_volume(name='foobar', driver='local',
-                    driver_opts={'foo': 'bar', 'baz': 'false'},
-                    labels={"key": "value"})
-            >>> print(volume)
+            >>> volume = client.api.create_volume(
+            ...     name='foobar',
+            ...     driver='local',
+            ...     driver_opts={'foo': 'bar', 'baz': 'false'},
+            ...     labels={"key": "value"},
+            ... )
+            ... print(volume)
             {u'Driver': u'local',
-             u'Labels': {u'key': u'value'},
-             u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
-             u'Name': u'foobar',
-             u'Scope': u'local'}
+            u'Labels': {u'key': u'value'},
+            u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
+            u'Name': u'foobar',
+            u'Scope': u'local'}
 
         """
         url = self._url('/volumes/create')

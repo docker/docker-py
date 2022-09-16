@@ -122,11 +122,11 @@ class ImageTest(unittest.TestCase):
     def test_short_id(self):
         image = Image(attrs={'Id': 'sha256:b6846070672ce4e8f1f91564ea6782bd675'
                                    'f69d65a6f73ef6262057ad0a15dcd'})
-        assert image.short_id == 'sha256:b684607067'
+        assert image.short_id == 'sha256:b6846070672c'
 
         image = Image(attrs={'Id': 'b6846070672ce4e8f1f91564ea6782bd675'
                                    'f69d65a6f73ef6262057ad0a15dcd'})
-        assert image.short_id == 'b684607067'
+        assert image.short_id == 'b6846070672c'
 
     def test_tags(self):
         image = Image(attrs={
@@ -149,6 +149,16 @@ class ImageTest(unittest.TestCase):
         image = client.images.get(FAKE_IMAGE_ID)
         image.history()
         client.api.history.assert_called_with(FAKE_IMAGE_ID)
+
+    def test_remove(self):
+        client = make_fake_client()
+        image = client.images.get(FAKE_IMAGE_ID)
+        image.remove()
+        client.api.remove_image.assert_called_with(
+            FAKE_IMAGE_ID,
+            force=False,
+            noprune=False,
+        )
 
     def test_save(self):
         client = make_fake_client()

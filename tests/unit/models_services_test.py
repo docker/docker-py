@@ -11,6 +11,7 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'labels': {'key': 'value'},
             'hostname': 'test_host',
             'mode': 'global',
+            'rollback_config': {'rollback': 'config'},
             'update_config': {'update': 'config'},
             'networks': ['somenet'],
             'endpoint_spec': {'blah': 'blah'},
@@ -28,7 +29,8 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'constraints': ['foo=bar'],
             'preferences': ['bar=baz'],
             'platforms': [('x86_64', 'linux')],
-            'maxreplicas': 1
+            'maxreplicas': 1,
+            'sysctls': {'foo': 'bar'}
         })
 
         task_template = kwargs.pop('task_template')
@@ -37,6 +39,7 @@ class CreateServiceKwargsTest(unittest.TestCase):
             'name': 'somename',
             'labels': {'key': 'value'},
             'mode': 'global',
+            'rollback_config': {'rollback': 'config'},
             'update_config': {'update': 'config'},
             'endpoint_spec': {'blah': 'blah'},
         }
@@ -57,5 +60,5 @@ class CreateServiceKwargsTest(unittest.TestCase):
         assert task_template['Networks'] == [{'Target': 'somenet'}]
         assert set(task_template['ContainerSpec'].keys()) == {
             'Image', 'Command', 'Args', 'Hostname', 'Env', 'Dir', 'User',
-            'Labels', 'Mounts', 'StopGracePeriod'
+            'Labels', 'Mounts', 'StopGracePeriod', 'Sysctls'
         }
