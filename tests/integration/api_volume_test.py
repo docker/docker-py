@@ -57,11 +57,10 @@ class TestVolumes(BaseAPIIntegrationTest):
 
     @requires_api_version('1.25')
     def test_prune_volumes(self):
-        name = 'hopelessmasquerade'
-        self.client.create_volume(name)
-        self.tmp_volumes.append(name)
+        v = self.client.create_volume()
+        self.tmp_volumes.append(v["Name"])
         result = self.client.prune_volumes()
-        assert name in result['VolumesDeleted']
+        assert v["Name"] in result['VolumesDeleted']
 
     def test_remove_nonexistent_volume(self):
         name = 'shootthebullet'
