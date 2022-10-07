@@ -331,6 +331,12 @@ def process_dockerfile(dockerfile, path):
     if not dockerfile:
         return (None, None)
 
+    if '\n' in dockerfile:
+        return (
+            '.dockerfile.{0:x}'.format(random.getrandbits(160)),
+            dockerfile
+        )
+
     abs_dockerfile = dockerfile
     if not os.path.isabs(dockerfile):
         abs_dockerfile = os.path.join(path, dockerfile)
