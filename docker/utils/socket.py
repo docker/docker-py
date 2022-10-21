@@ -18,6 +18,11 @@ class SocketError(Exception):
     pass
 
 
+# NpipeSockets have their own error types
+# pywintypes.error: (109, 'ReadFile', 'The pipe has been ended.')
+NPIPE_ENDED = 109
+
+
 def read(socket, n=4096):
     """
     Reads at most n bytes from socket
@@ -37,6 +42,15 @@ def read(socket, n=4096):
     except OSError as e:
         if e.errno not in recoverable_errors:
             raise
+    except Exception as e:
+        is_pipe_ended = (isinstance(socket, NpipeSocket) and
+                         len(e.args) > 0 and
+                         e.args[0] == NPIPE_ENDED)
+        if is_pipe_ended:
+            # npipes don't support duplex sockets, so we interpret
+            # a PIPE_ENDED error as a close operation (0-length read).
+            return 0
+        raise
 
 
 def read_exactly(socket, n):
