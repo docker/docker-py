@@ -1147,8 +1147,10 @@ def _host_volume_from_bind(bind):
     bits = rest.split(':', 1)
     if len(bits) == 1 or bits[1] in ('ro', 'rw'):
         return drive + bits[0]
+    elif bits[1].endswith(':ro') or bits[1].endswith(':rw'):
+        return bits[1][:-3]
     else:
-        return bits[1].rstrip(':ro').rstrip(':rw')
+        return bits[1]
 
 
 ExecResult = namedtuple('ExecResult', 'exit_code,output')
