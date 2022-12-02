@@ -103,7 +103,7 @@ class ContainerCollectionTest(unittest.TestCase):
             volumes=[
                 '/home/user1/:/mnt/vol2',
                 '/var/www:/mnt/vol1:ro',
-                'volumename:/mnt/vol3',
+                'volumename:/mnt/vol3r',
                 '/volumewithnohostpath',
                 '/anothervolumewithnohostpath:ro',
                 'C:\\windows\\path:D:\\hello\\world:rw'
@@ -123,7 +123,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'Binds': [
                     '/home/user1/:/mnt/vol2',
                     '/var/www:/mnt/vol1:ro',
-                    'volumename:/mnt/vol3',
+                    'volumename:/mnt/vol3r',
                     '/volumewithnohostpath',
                     '/anothervolumewithnohostpath:ro',
                     'C:\\windows\\path:D:\\hello\\world:rw'
@@ -198,7 +198,7 @@ class ContainerCollectionTest(unittest.TestCase):
             volumes=[
                 '/mnt/vol2',
                 '/mnt/vol1',
-                '/mnt/vol3',
+                '/mnt/vol3r',
                 '/volumewithnohostpath',
                 '/anothervolumewithnohostpath',
                 'D:\\hello\\world'
