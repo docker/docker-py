@@ -2,6 +2,7 @@ import errno
 import json
 import shutil
 import subprocess
+import warnings
 
 from . import constants
 from . import errors
@@ -18,7 +19,7 @@ class Store:
         self.exe = shutil.which(self.program)
         self.environment = environment
         if self.exe is None:
-            raise errors.InitializationError(
+            warnings.warn(
                 '{} not installed or not available in PATH'.format(
                     self.program
                 )
@@ -70,6 +71,12 @@ class Store:
         return json.loads(data.decode('utf-8'))
 
     def _execute(self, subcmd, data_input):
+        if self.exe is None:
+            raise errors.StoreError(
+                    '{} not installed or not available in PATH'.format(
+                        self.program
+                    )
+                )
         output = None
         env = create_environment_dict(self.environment)
         try:

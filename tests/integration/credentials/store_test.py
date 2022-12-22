@@ -84,3 +84,10 @@ class TestStore:
         data = self.store._execute('--null', '')
         assert b'\0FOO=bar\0' in data
         assert 'FOO' not in os.environ
+
+    def test_unavailable_store(self):
+        some_unavailable_store = None
+        with pytest.warns(UserWarning):
+            some_unavailable_store = Store('that-does-not-exist')
+        with pytest.raises(StoreError):
+            some_unavailable_store.get('anything-this-does-not-matter')
