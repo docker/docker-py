@@ -678,9 +678,10 @@ class ContainerCollection(Collection):
                   This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
-            network_driver_opt (dict): A dictionary of options to provide to the
-                network driver. Defaults to ``None``. Used in conjuction
-                with ``network``. Incompatible with ``network_mode``.
+            network_driver_opt (dict): A dictionary of options to provide
+                to the network driver. Defaults to ``None``. Used in
+                conjuction with ``network``. Incompatible
+                with ``network_mode``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
