@@ -1,7 +1,9 @@
 import os
 import ssl
+from typing import Tuple, Optional, Union
 
 from . import errors
+from .api.client import APIClient
 from .transport import SSLHTTPAdapter
 
 
@@ -26,9 +28,9 @@ class TLSConfig:
     verify = None
     ssl_version = None
 
-    def __init__(self, client_cert=None, ca_cert=None, verify=None,
-                 ssl_version=None, assert_hostname=None,
-                 assert_fingerprint=None):
+    def __init__(self, client_cert: Optional[Tuple[str, str]] = None, ca_cert: Optional[str] = None, verify: Optional[Union[bool, str]] = None,
+                 ssl_version: Optional[int] = None, assert_hostname: Optional[bool] = None,
+                 assert_fingerprint: Optional[bool] = None) -> None:
         # Argument compatibility/mapping with
         # https://docs.docker.com/engine/articles/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
@@ -73,7 +75,7 @@ class TLSConfig:
                 'Invalid CA certificate provided for `ca_cert`.'
             )
 
-    def configure_client(self, client):
+    def configure_client(self, client: APIClient) -> None:
         """
         Configure a client with these TLS options.
         """
