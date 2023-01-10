@@ -184,7 +184,7 @@ class NetworkCollection(Collection):
 
     def list(self, *args, **kwargs):
         """
-        List networks. Similar to the ``docker networks ls`` command.
+        List networks. Similar to the ``docker network ls`` command.
 
         Args:
             names (:py:class:`list`): List of names to filter by.
