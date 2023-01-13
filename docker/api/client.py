@@ -406,6 +406,10 @@ class APIClient(
         yield from response.iter_content(chunk_size, decode)
 
     def _read_from_socket(self, response, stream, tty=True, demux=False):
+        """Consume all data from the socket, close the response and return the
+        data. If stream=True, then a generator is returned instead and the
+        caller is responsible for closing the response.
+        """
         socket = self._get_raw_response_socket(response)
 
         gen = frames_iter(socket, tty)
@@ -420,8 +424,11 @@ class APIClient(
         if stream:
             return gen
         else:
-            # Wait for all the frames, concatenate them, and return the result
-            return consume_socket_output(gen, demux=demux)
+            try:
+                # Wait for all frames, concatenate them, and return the result
+                return consume_socket_output(gen, demux=demux)
+            finally:
+                response.close()
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're
