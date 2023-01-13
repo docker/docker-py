@@ -1,4 +1,4 @@
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 from .. import helpers
 
 SECOND = 1000000000
@@ -16,7 +16,7 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.24')
     def test_healthcheck_shell_command(self):
         container = self.client.create_container(
-            BUSYBOX, 'top', healthcheck=dict(test='echo "hello world"'))
+            TEST_IMG, 'top', healthcheck=dict(test='echo "hello world"'))
         self.tmp_containers.append(container)
 
         res = self.client.inspect_container(container)
@@ -27,7 +27,7 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.24')
     def test_healthcheck_passes(self):
         container = self.client.create_container(
-            BUSYBOX, 'top', healthcheck=dict(
+            TEST_IMG, 'top', healthcheck=dict(
                 test="true",
                 interval=1 * SECOND,
                 timeout=1 * SECOND,
@@ -40,7 +40,7 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.24')
     def test_healthcheck_fails(self):
         container = self.client.create_container(
-            BUSYBOX, 'top', healthcheck=dict(
+            TEST_IMG, 'top', healthcheck=dict(
                 test="false",
                 interval=1 * SECOND,
                 timeout=1 * SECOND,
@@ -53,7 +53,7 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.29')
     def test_healthcheck_start_period(self):
         container = self.client.create_container(
-            BUSYBOX, 'top', healthcheck=dict(
+            TEST_IMG, 'top', healthcheck=dict(
                 test="echo 'x' >> /counter.txt && "
                      "test `cat /counter.txt | wc -l` -ge 3",
                 interval=1 * SECOND,

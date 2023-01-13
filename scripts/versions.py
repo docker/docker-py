@@ -26,8 +26,8 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
                 edition = stage
                 stage = None
             elif '-' in stage:
-                edition, stage = stage.split('-')
-        major, minor, patch = version.split('.', 3)
+                edition, stage = stage.split('-', 1)
+        major, minor, patch = version.split('.', 2)
         return cls(major, minor, patch, stage, edition)
 
     @property
@@ -52,8 +52,8 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
         return (int(self.major), int(self.minor), int(self.patch)) + stage
 
     def __str__(self):
-        stage = '-{}'.format(self.stage) if self.stage else ''
-        edition = '-{}'.format(self.edition) if self.edition else ''
+        stage = f'-{self.stage}' if self.stage else ''
+        edition = f'-{self.edition}' if self.edition else ''
         return '.'.join(map(str, self[:3])) + edition + stage
 
 
@@ -63,7 +63,7 @@ def main():
         res = requests.get(url)
         content = res.text
         versions = [Version.parse(v) for v in re.findall(
-                r'"docker-([0-9]+\.[0-9]+\.[0-9]+)-?.*tgz"', content
+            r'"docker-([0-9]+\.[0-9]+\.[0-9]+-?.*)\.tgz"', content
         )]
         sorted_versions = sorted(
             versions, reverse=True, key=operator.attrgetter('order')

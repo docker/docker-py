@@ -7,9 +7,8 @@ from docker import errors
 from docker.utils.proxy import ProxyConfig
 
 import pytest
-import six
 
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 from ..helpers import random_name, requires_api_version, requires_experimental
 
 
@@ -71,9 +70,8 @@ class BuildTest(BaseAPIIntegrationTest):
         assert len(logs) > 0
 
     def test_build_from_stringio(self):
-        if six.PY3:
-            return
-        script = io.StringIO(six.text_type('\n').join([
+        return
+        script = io.StringIO('\n'.join([
             'FROM busybox',
             'RUN mkdir -p /tmp/test',
             'EXPOSE 8080',
@@ -83,8 +81,7 @@ class BuildTest(BaseAPIIntegrationTest):
         stream = self.client.build(fileobj=script)
         logs = ''
         for chunk in stream:
-            if six.PY3:
-                chunk = chunk.decode('utf-8')
+            chunk = chunk.decode('utf-8')
             logs += chunk
         assert logs != ''
 
@@ -103,7 +100,9 @@ class BuildTest(BaseAPIIntegrationTest):
                 'ignored',
                 'Dockerfile',
                 '.dockerignore',
+                ' ignored-with-spaces ',  # check that spaces are trimmed
                 '!ignored/subdir/excepted-file',
+                '! ignored/subdir/excepted-with-spaces  '
                 '',  # empty line,
                 '#*',  # comment line
             ]))
@@ -114,12 +113,18 @@ class BuildTest(BaseAPIIntegrationTest):
         with open(os.path.join(base_dir, '#file.txt'), 'w') as f:
             f.write('this file should not be ignored')
 
+        with open(os.path.join(base_dir, 'ignored-with-spaces'), 'w') as f:
+            f.write("this file should be ignored")
+
         subdir = os.path.join(base_dir, 'ignored', 'subdir')
         os.makedirs(subdir)
         with open(os.path.join(subdir, 'file'), 'w') as f:
             f.write("this file should be ignored")
 
         with open(os.path.join(subdir, 'excepted-file'), 'w') as f:
+            f.write("this file should not be ignored")
+
+        with open(os.path.join(subdir, 'excepted-with-spaces'), 'w') as f:
             f.write("this file should not be ignored")
 
         tag = 'docker-py-test-build-with-dockerignore'
@@ -135,11 +140,11 @@ class BuildTest(BaseAPIIntegrationTest):
         self.client.wait(c)
         logs = self.client.logs(c)
 
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = logs.decode('utf-8')
 
         assert sorted(list(filter(None, logs.split('\n')))) == sorted([
             '/test/#file.txt',
+            '/test/ignored/subdir/excepted-with-spaces',
             '/test/ignored/subdir/excepted-file',
             '/test/not-ignored'
         ])
@@ -277,7 +282,7 @@ class BuildTest(BaseAPIIntegrationTest):
         # Set up pingable endpoint on custom network
         network = self.client.create_network(random_name())['Id']
         self.tmp_networks.append(network)
-        container = self.client.create_container(BUSYBOX, 'top')
+        container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
         self.client.start(container)
         self.client.connect_container_to_network(
@@ -339,10 +344,8 @@ class BuildTest(BaseAPIIntegrationTest):
 
         assert self.client.inspect_image(img_name)
         ctnr = self.run_container(img_name, 'cat /hosts-file')
-        self.tmp_containers.append(ctnr)
         logs = self.client.logs(ctnr)
-        if six.PY3:
-            logs = logs.decode('utf-8')
+        logs = logs.decode('utf-8')
         assert '127.0.0.1\textrahost.local.test' in logs
         assert '127.0.0.1\thello.world.test' in logs
 
@@ -377,7 +380,7 @@ class BuildTest(BaseAPIIntegrationTest):
         snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'
         script = io.BytesIO(b'\n'.join([
             b'FROM busybox',
-            'RUN sh -c ">&2 echo \'{0}\'"'.format(snippet).encode('utf-8')
+            f'RUN sh -c ">&2 echo \'{snippet}\'"'.encode('utf-8')
         ]))
 
         stream = self.client.build(
@@ -441,15 +444,17 @@ class BuildTest(BaseAPIIntegrationTest):
     @requires_api_version('1.32')
     @requires_experimental(until=None)
     def test_build_invalid_platform(self):
-        script = io.BytesIO('FROM busybox\n'.encode('ascii'))
+        script = io.BytesIO(b'FROM busybox\n')
 
         with pytest.raises(errors.APIError) as excinfo:
             stream = self.client.build(fileobj=script, platform='foobar')
             for _ in stream:
                 pass
 
-        assert excinfo.value.status_code == 400
-        assert 'invalid platform' in excinfo.exconly()
+        # Some API versions incorrectly returns 500 status; assert 4xx or 5xx
+        assert excinfo.value.is_error()
+        assert 'unknown operating system' in excinfo.exconly() \
+               or 'invalid platform' in excinfo.exconly()
 
     def test_build_out_of_context_dockerfile(self):
         base_dir = tempfile.mkdtemp()

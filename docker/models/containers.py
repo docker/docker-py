@@ -179,7 +179,7 @@ class Container(Model):
             (ExecResult): A tuple of (exit_code, output)
                 exit_code: (int):
                     Exit code for the executed command or ``None`` if
-                    either ``stream```or ``socket`` is ``True``.
+                    either ``stream`` or ``socket`` is ``True``.
                 output: (generator, bytes, or tuple):
                     If ``stream=True``, a generator yielding response chunks.
                     If ``socket=True``, a socket object for the connection.
@@ -225,7 +225,8 @@ class Container(Model):
         """
         return self.client.api.export(self.id, chunk_size)
 
-    def get_archive(self, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE):
+    def get_archive(self, path, chunk_size=DEFAULT_DATA_CHUNK_SIZE,
+                    encode_stream=False):
         """
         Retrieve a file or folder from the container in the form of a tar
         archive.
@@ -235,6 +236,8 @@ class Container(Model):
             chunk_size (int): The number of bytes returned by each iteration
                 of the generator. If ``None``, data will be streamed as it is
                 received. Default: 2 MB
+            encode_stream (bool): Determines if data should be encoded
+                (gzip-compressed) during transmission. Default: False
 
         Returns:
             (tuple): First element is a raw tar data stream. Second element is
@@ -255,7 +258,8 @@ class Container(Model):
             ...    f.write(chunk)
             >>> f.close()
         """
-        return self.client.api.get_archive(self.id, path, chunk_size)
+        return self.client.api.get_archive(self.id, path,
+                                           chunk_size, encode_stream)
 
     def kill(self, signal=None):
         """
@@ -286,11 +290,12 @@ class Container(Model):
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in nanoseconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in nanoseconds)
 
         Returns:
             (generator or str): Logs from the container.
@@ -549,6 +554,11 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cgroup_parent (str): Override the default parent cgroup.
+            cgroupns (str): Override the default cgroup namespace mode for the
+                container. One of:
+                - ``private`` the container runs in its own private cgroup
+                  namespace.
+                - ``host`` use the host system's cgroup namespace.
             cpu_count (int): Number of usable CPUs (Windows only).
             cpu_percent (int): Usable percentage of the available CPUs
                 (Windows only).
@@ -579,6 +589,9 @@ class ContainerCollection(Collection):
                 For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
                 to have read-write access to the host's ``/dev/sda`` via a
                 node named ``/dev/xvda`` inside the container.
+            device_requests (:py:class:`list`): Expose host resources such as
+                GPUs to the container, as a list of
+                :py:class:`docker.types.DeviceRequest` instances.
             dns (:py:class:`list`): Set custom DNS servers.
             dns_opt (:py:class:`list`): Additional options to be added to the
                 container's ``resolv.conf`` file.
@@ -593,7 +606,28 @@ class ContainerCollection(Collection):
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
             healthcheck (dict): Specify a test to perform to check that the
-                container is healthy.
+                container is healthy. The dict takes the following keys:
+
+                - test (:py:class:`list` or str): Test to perform to determine
+                    container health. Possible values:
+
+                    - Empty list: Inherit healthcheck from parent image
+                    - ``["NONE"]``: Disable healthcheck
+                    - ``["CMD", args...]``: exec arguments directly.
+                    - ``["CMD-SHELL", command]``: Run command in the system's
+                      default shell.
+
+                    If a string is provided, it will be used as a ``CMD-SHELL``
+                    command.
+                - interval (int): The time to wait between checks in
+                  nanoseconds. It should be 0 or at least 1000000 (1 ms).
+                - timeout (int): The time to wait before considering the check
+                  to have hung. It should be 0 or at least 1000000 (1 ms).
+                - retries (int): The number of consecutive failures needed to
+                    consider a container as unhealthy.
+                - start_period (int): Start period for the container to
+                    initialize before starting health-retries countdown in
+                    nanoseconds. It should be 0 or at least 1000000 (1 ms).
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
@@ -618,7 +652,7 @@ class ContainerCollection(Collection):
                 (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
                 specified without a units character, bytes are assumed as an
                 intended unit.
-            mem_reservation (int or str): Memory soft limit
+            mem_reservation (int or str): Memory soft limit.
             mem_swappiness (int): Tune a container's memory swappiness
                 behavior. Accepts number between 0 and 100.
             memswap_limit (str or int): Maximum amount of memory + swap a
@@ -637,11 +671,12 @@ class ContainerCollection(Collection):
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
-                  on the bridge network.
+                  the bridge network.
                 - ``none`` No networking for this container.
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
                 - ``host`` Use the host network stack.
+                  This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
             oom_kill_disable (bool): Whether to disable OOM killer.
@@ -675,6 +710,7 @@ class ContainerCollection(Collection):
                   to a single container port. For example,
                   ``{'1111/tcp': [1234, 4567]}``.
 
+                Incompatible with ``host`` network mode.
             privileged (bool): Give extended privileges to this container.
             publish_all_ports (bool): Publish all ports to the host.
             read_only (bool): Mount the container's root filesystem as read
@@ -752,6 +788,15 @@ class ContainerCollection(Collection):
                     {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
                      '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
 
+                Or a list of strings which each one of its elements specifies a
+                mount volume.
+
+                For example:
+
+                .. code-block:: python
+
+                    ['/home/user1/:/mnt/vol2','/var/www:/mnt/vol1']
+
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.
@@ -783,7 +828,7 @@ class ContainerCollection(Collection):
             image = image.id
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
-        platform = kwargs.pop('platform', None)
+        platform = kwargs.get('platform', None)
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -900,7 +945,8 @@ class ContainerCollection(Collection):
                 - `exited` (int): Only containers with specified exit code
                 - `status` (str): One of ``restarting``, ``running``,
                     ``paused``, ``exited``
-                - `label` (str): format either ``"key"`` or ``"key=value"``
+                - `label` (str|list): format either ``"key"``, ``"key=value"``
+                    or a list of such.
                 - `id` (str): The id of the container.
                 - `name` (str): The name of the container.
                 - `ancestor` (str): Filter by container ancestor. Format of
@@ -966,6 +1012,7 @@ RUN_CREATE_KWARGS = [
     'mac_address',
     'name',
     'network_disabled',
+    'platform',
     'stdin_open',
     'stop_signal',
     'tty',
@@ -982,6 +1029,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cgroupns',
     'cpu_count',
     'cpu_percent',
     'cpu_period',
@@ -997,6 +1045,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'device_write_bps',
     'device_write_iops',
     'devices',
+    'device_requests',
     'dns_opt',
     'dns_search',
     'dns',
@@ -1098,8 +1147,10 @@ def _host_volume_from_bind(bind):
     bits = rest.split(':', 1)
     if len(bits) == 1 or bits[1] in ('ro', 'rw'):
         return drive + bits[0]
+    elif bits[1].endswith(':ro') or bits[1].endswith(':rw'):
+        return bits[1][:-3]
     else:
-        return bits[1].rstrip(':ro').rstrip(':rw')
+        return bits[1]
 
 
 ExecResult = namedtuple('ExecResult', 'exit_code,output')

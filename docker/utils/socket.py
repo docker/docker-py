@@ -4,8 +4,6 @@ import select
 import socket as pysocket
 import struct
 
-import six
-
 try:
     from ..transport import NpipeSocket
 except ImportError:
@@ -20,6 +18,11 @@ class SocketError(Exception):
     pass
 
 
+# NpipeSockets have their own error types
+# pywintypes.error: (109, 'ReadFile', 'The pipe has been ended.')
+NPIPE_ENDED = 109
+
+
 def read(socket, n=4096):
     """
     Reads at most n bytes from socket
@@ -27,18 +30,27 @@ def read(socket, n=4096):
 
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
-    if six.PY3 and not isinstance(socket, NpipeSocket):
+    if not isinstance(socket, NpipeSocket):
         select.select([socket], [], [])
 
     try:
         if hasattr(socket, 'recv'):
             return socket.recv(n)
-        if six.PY3 and isinstance(socket, getattr(pysocket, 'SocketIO')):
+        if isinstance(socket, getattr(pysocket, 'SocketIO')):
             return socket.read(n)
         return os.read(socket.fileno(), n)
-    except EnvironmentError as e:
+    except OSError as e:
         if e.errno not in recoverable_errors:
             raise
+    except Exception as e:
+        is_pipe_ended = (isinstance(socket, NpipeSocket) and
+                         len(e.args) > 0 and
+                         e.args[0] == NPIPE_ENDED)
+        if is_pipe_ended:
+            # npipes don't support duplex sockets, so we interpret
+            # a PIPE_ENDED error as a close operation (0-length read).
+            return 0
+        raise
 
 
 def read_exactly(socket, n):
@@ -46,7 +58,7 @@ def read_exactly(socket, n):
     Reads exactly n bytes from socket
     Raises SocketError if there isn't enough data
     """
-    data = six.binary_type()
+    data = bytes()
     while len(data) < n:
         next_data = read(socket, n - len(data))
         if not next_data:
@@ -134,7 +146,7 @@ def consume_socket_output(frames, demux=False):
     if demux is False:
         # If the streams are multiplexed, the generator returns strings, that
         # we just need to concatenate.
-        return six.binary_type().join(frames)
+        return bytes().join(frames)
 
     # If the streams are demultiplexed, the generator yields tuples
     # (stdout, stderr)
@@ -166,4 +178,4 @@ def demux_adaptor(stream_id, data):
     elif stream_id == STDERR:
         return (None, data)
     else:
-        raise ValueError('{0} is not a valid stream'.format(stream_id))
+        raise ValueError(f'{stream_id} is not a valid stream')

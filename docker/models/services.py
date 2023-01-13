@@ -157,6 +157,8 @@ class ServiceCollection(Collection):
                 constraints.
             preferences (list of tuple): :py:class:`~docker.types.Placement`
                 preferences.
+            maxreplicas (int): :py:class:`~docker.types.Placement` maxreplicas
+                or (int) representing maximum number of replicas per node.
             platforms (list of tuple): A list of platform constraints
                 expressed as ``(arch, os)`` tuples.
             container_labels (dict): Labels to apply to the container.
@@ -178,11 +180,12 @@ class ServiceCollection(Collection):
                 ``source:target:options``, where options is either
                 ``ro`` or ``rw``.
             name (str): Name to give to the service.
-            networks (list of str): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             resources (Resources): Resource limits and reservations.
             restart_policy (RestartPolicy): Restart policy for containers.
-            secrets (list of :py:class:`docker.types.SecretReference`): List
+            secrets (list of :py:class:`~docker.types.SecretReference`): List
                 of secrets accessible to containers for this service.
             stop_grace_period (int): Amount of time to wait for
                 containers to terminate before forcefully killing them.
@@ -205,10 +208,17 @@ class ServiceCollection(Collection):
                 the container's `hosts` file.
             dns_config (DNSConfig): Specification for DNS
                 related configurations in resolver configuration file.
-            configs (:py:class:`list`): List of :py:class:`ConfigReference`
-                that will be exposed to the service.
+            configs (:py:class:`list`): List of
+                :py:class:`~docker.types.ConfigReference` that will be exposed
+                to the service.
             privileges (Privileges): Security options for the service's
                 containers.
+            cap_add (:py:class:`list`): A list of kernel capabilities to add to
+                the default set for the container.
+            cap_drop (:py:class:`list`): A list of kernel capabilities to drop
+                from the default set for the container.
+            sysctls (:py:class:`dict`): A dict of sysctl values to add to the
+                container
 
         Returns:
             :py:class:`Service`: The created service.
@@ -273,6 +283,8 @@ class ServiceCollection(Collection):
 # kwargs to copy straight over to ContainerSpec
 CONTAINER_SPEC_KWARGS = [
     'args',
+    'cap_add',
+    'cap_drop',
     'command',
     'configs',
     'dns_config',
@@ -295,6 +307,7 @@ CONTAINER_SPEC_KWARGS = [
     'tty',
     'user',
     'workdir',
+    'sysctls',
 ]
 
 # kwargs to copy straight over to TaskTemplate
@@ -310,6 +323,7 @@ CREATE_SERVICE_KWARGS = [
     'labels',
     'mode',
     'update_config',
+    'rollback_config',
     'endpoint_spec',
 ]
 
@@ -317,6 +331,7 @@ PLACEMENT_KWARGS = [
     'constraints',
     'preferences',
     'platforms',
+    'maxreplicas',
 ]
 
 

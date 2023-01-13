@@ -1,5 +1,5 @@
 import logging
-from six.moves import http_client
+import http.client as http_client
 from ..constants import DEFAULT_SWARM_ADDR_POOL, DEFAULT_SWARM_SUBNET_SIZE
 from .. import errors
 from .. import types
@@ -8,7 +8,7 @@ from .. import utils
 log = logging.getLogger(__name__)
 
 
-class SwarmApiMixin(object):
+class SwarmApiMixin:
 
     def create_swarm_spec(self, *args, **kwargs):
         """
@@ -58,10 +58,10 @@ class SwarmApiMixin(object):
 
         Example:
 
-            >>> spec = client.create_swarm_spec(
+            >>> spec = client.api.create_swarm_spec(
               snapshot_interval=5000, log_entries_for_slow_followers=1200
             )
-            >>> client.init_swarm(
+            >>> client.api.init_swarm(
               advertise_addr='eth0', listen_addr='0.0.0.0:5000',
               force_new_cluster=False, swarm_spec=spec
             )
@@ -84,7 +84,8 @@ class SwarmApiMixin(object):
     @utils.minimum_version('1.24')
     def init_swarm(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
                    force_new_cluster=False, swarm_spec=None,
-                   default_addr_pool=None, subnet_size=None):
+                   default_addr_pool=None, subnet_size=None,
+                   data_path_addr=None, data_path_port=None):
         """
         Initialize a new Swarm using the current connected engine as the first
         node.
@@ -115,9 +116,14 @@ class SwarmApiMixin(object):
                 Default: None
             subnet_size (int): SubnetSize specifies the subnet size of the
                 networks created from the default subnet pool. Default: None
+            data_path_addr (string): Address or interface to use for data path
+                traffic. For example, 192.168.1.1, or an interface, like eth0.
+            data_path_port (int): Port number to use for data path traffic.
+                Acceptable port range is 1024 to 49151. If set to ``None`` or
+                0, the default port 4789 will be used. Default: None
 
         Returns:
-            ``True`` if successful.
+            (str): The ID of the created node.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -154,9 +160,25 @@ class SwarmApiMixin(object):
             'ForceNewCluster': force_new_cluster,
             'Spec': swarm_spec,
         }
+
+        if data_path_addr is not None:
+            if utils.version_lt(self._version, '1.30'):
+                raise errors.InvalidVersion(
+                    'Data address path is only available for '
+                    'API version >= 1.30'
+                )
+            data['DataPathAddr'] = data_path_addr
+
+        if data_path_port is not None:
+            if utils.version_lt(self._version, '1.40'):
+                raise errors.InvalidVersion(
+                    'Data path port is only available for '
+                    'API version >= 1.40'
+                )
+            data['DataPathPort'] = data_path_port
+
         response = self._post_json(url, data=data)
-        self._raise_for_status(response)
-        return True
+        return self._result(response, json=True)
 
     @utils.minimum_version('1.24')
     def inspect_swarm(self):
@@ -194,7 +216,7 @@ class SwarmApiMixin(object):
 
     @utils.minimum_version('1.24')
     def join_swarm(self, remote_addrs, join_token, listen_addr='0.0.0.0:2377',
-                   advertise_addr=None):
+                   advertise_addr=None, data_path_addr=None):
         """
         Make this Engine join a swarm that has already been created.
 
@@ -213,6 +235,8 @@ class SwarmApiMixin(object):
                 the port number from the listen address is used. If
                 AdvertiseAddr is not specified, it will be automatically
                 detected when possible. Default: ``None``
+            data_path_addr (string): Address or interface to use for data path
+                traffic. For example, 192.168.1.1, or an interface, like eth0.
 
         Returns:
             ``True`` if the request went through.
@@ -222,11 +246,20 @@ class SwarmApiMixin(object):
                 If the server returns an error.
         """
         data = {
-            "RemoteAddrs": remote_addrs,
-            "ListenAddr": listen_addr,
-            "JoinToken": join_token,
-            "AdvertiseAddr": advertise_addr,
+            'RemoteAddrs': remote_addrs,
+            'ListenAddr': listen_addr,
+            'JoinToken': join_token,
+            'AdvertiseAddr': advertise_addr,
         }
+
+        if data_path_addr is not None:
+            if utils.version_lt(self._version, '1.30'):
+                raise errors.InvalidVersion(
+                    'Data address path is only available for '
+                    'API version >= 1.30'
+                )
+            data['DataPathAddr'] = data_path_addr
+
         url = self._url('/swarm/join')
         response = self._post_json(url, data=data)
         self._raise_for_status(response)
@@ -332,8 +365,8 @@ class SwarmApiMixin(object):
 
             Example:
 
-                >>> key = client.get_unlock_key()
-                >>> client.unlock_node(key)
+                >>> key = client.api.get_unlock_key()
+                >>> client.unlock_swarm(key)
 
         """
         if isinstance(key, dict):
@@ -374,7 +407,7 @@ class SwarmApiMixin(object):
                          'Role': 'manager',
                          'Labels': {'foo': 'bar'}
                         }
-            >>> client.update_node(node_id='24ifsmvkjbyhk', version=8,
+            >>> client.api.update_node(node_id='24ifsmvkjbyhk', version=8,
                 node_spec=node_spec)
 
         """
@@ -384,8 +417,10 @@ class SwarmApiMixin(object):
         return True
 
     @utils.minimum_version('1.24')
-    def update_swarm(self, version, swarm_spec=None, rotate_worker_token=False,
-                     rotate_manager_token=False):
+    def update_swarm(self, version, swarm_spec=None,
+                     rotate_worker_token=False,
+                     rotate_manager_token=False,
+                     rotate_manager_unlock_key=False):
         """
         Update the Swarm's configuration
 
@@ -399,6 +434,8 @@ class SwarmApiMixin(object):
                 ``False``.
             rotate_manager_token (bool): Rotate the manager join token.
                 Default: ``False``.
+            rotate_manager_unlock_key (bool): Rotate the manager unlock key.
+                Default: ``False``.
 
         Returns:
             ``True`` if the request went through.
@@ -407,12 +444,20 @@ class SwarmApiMixin(object):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-
         url = self._url('/swarm/update')
-        response = self._post_json(url, data=swarm_spec, params={
+        params = {
             'rotateWorkerToken': rotate_worker_token,
             'rotateManagerToken': rotate_manager_token,
             'version': version
-        })
+        }
+        if rotate_manager_unlock_key:
+            if utils.version_lt(self._version, '1.25'):
+                raise errors.InvalidVersion(
+                    'Rotate manager unlock key '
+                    'is only available for API version >= 1.25'
+                )
+            params['rotateManagerUnlockKey'] = rotate_manager_unlock_key
+
+        response = self._post_json(url, data=swarm_spec, params=params)
         self._raise_for_status(response)
         return True

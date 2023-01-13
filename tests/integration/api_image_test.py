@@ -7,15 +7,14 @@ import tempfile
 import threading
 
 import pytest
-import six
-from six.moves import BaseHTTPServer
-from six.moves import socketserver
+from http.server import SimpleHTTPRequestHandler
+import socketserver
 
 
 import docker
 
 from ..helpers import requires_api_version, requires_experimental
-from .base import BaseAPIIntegrationTest, BUSYBOX
+from .base import BaseAPIIntegrationTest, TEST_IMG
 
 
 class ListImagesTest(BaseAPIIntegrationTest):
@@ -33,7 +32,7 @@ class ListImagesTest(BaseAPIIntegrationTest):
 
     def test_images_quiet(self):
         res1 = self.client.images(quiet=True)
-        assert type(res1[0]) == six.text_type
+        assert type(res1[0]) == str
 
 
 class PullImageTest(BaseAPIIntegrationTest):
@@ -42,9 +41,9 @@ class PullImageTest(BaseAPIIntegrationTest):
             self.client.remove_image('hello-world')
         except docker.errors.APIError:
             pass
-        res = self.client.pull('hello-world', tag='latest')
+        res = self.client.pull('hello-world')
         self.tmp_imgs.append('hello-world')
-        assert type(res) == six.text_type
+        assert type(res) == str
         assert len(self.client.images('hello-world')) >= 1
         img_info = self.client.inspect_image('hello-world')
         assert 'Id' in img_info
@@ -55,7 +54,7 @@ class PullImageTest(BaseAPIIntegrationTest):
         except docker.errors.APIError:
             pass
         stream = self.client.pull(
-            'hello-world', tag='latest', stream=True, decode=True)
+            'hello-world', stream=True, decode=True)
         self.tmp_imgs.append('hello-world')
         for chunk in stream:
             assert isinstance(chunk, dict)
@@ -69,13 +68,15 @@ class PullImageTest(BaseAPIIntegrationTest):
         with pytest.raises(docker.errors.APIError) as excinfo:
             self.client.pull('hello-world', platform='foobar')
 
-        assert excinfo.value.status_code == 500
-        assert 'invalid platform' in excinfo.exconly()
+        # Some API versions incorrectly returns 500 status; assert 4xx or 5xx
+        assert excinfo.value.is_error()
+        assert 'unknown operating system' in excinfo.exconly() \
+               or 'invalid platform' in excinfo.exconly()
 
 
 class CommitTest(BaseAPIIntegrationTest):
     def test_commit(self):
-        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        container = self.client.create_container(TEST_IMG, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -88,13 +89,13 @@ class CommitTest(BaseAPIIntegrationTest):
         assert img['Container'].startswith(id)
         assert 'ContainerConfig' in img
         assert 'Image' in img['ContainerConfig']
-        assert BUSYBOX == img['ContainerConfig']['Image']
-        busybox_id = self.client.inspect_image(BUSYBOX)['Id']
+        assert TEST_IMG == img['ContainerConfig']['Image']
+        busybox_id = self.client.inspect_image(TEST_IMG)['Id']
         assert 'Parent' in img
         assert img['Parent'] == busybox_id
 
     def test_commit_with_changes(self):
-        cid = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        cid = self.client.create_container(TEST_IMG, ['touch', '/test'])
         self.tmp_containers.append(cid)
         self.client.start(cid)
         img_id = self.client.commit(
@@ -110,7 +111,7 @@ class CommitTest(BaseAPIIntegrationTest):
 
 class RemoveImageTest(BaseAPIIntegrationTest):
     def test_remove(self):
-        container = self.client.create_container(BUSYBOX, ['touch', '/test'])
+        container = self.client.create_container(TEST_IMG, ['touch', '/test'])
         id = container['Id']
         self.client.start(id)
         self.tmp_containers.append(id)
@@ -264,14 +265,14 @@ class ImportImageTest(BaseAPIIntegrationTest):
         output = self.client.load_image(data)
         assert any([
             line for line in output
-            if 'Loaded image: {}'.format(test_img) in line.get('stream', '')
+            if f'Loaded image: {test_img}' in line.get('stream', '')
         ])
 
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):
         '''Serve data from an IO stream over HTTP.'''
 
-        class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
+        class Handler(SimpleHTTPRequestHandler):
             def do_GET(self):
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/x-tar')
@@ -280,10 +281,10 @@ class ImportImageTest(BaseAPIIntegrationTest):
 
         server = socketserver.TCPServer(('', 0), Handler)
         thread = threading.Thread(target=server.serve_forever)
-        thread.setDaemon(True)
+        thread.daemon = True
         thread.start()
 
-        yield 'http://%s:%s' % (socket.gethostname(), server.server_address[1])
+        yield f'http://{socket.gethostname()}:{server.server_address[1]}'
 
         server.shutdown()
 
@@ -317,7 +318,7 @@ class PruneImagesTest(BaseAPIIntegrationTest):
             pass
 
         # Ensure busybox does not get pruned
-        ctnr = self.client.create_container(BUSYBOX, ['sleep', '9999'])
+        ctnr = self.client.create_container(TEST_IMG, ['sleep', '9999'])
         self.tmp_containers.append(ctnr)
 
         self.client.pull('hello-world', tag='latest')
@@ -341,7 +342,7 @@ class SaveLoadImagesTest(BaseAPIIntegrationTest):
     @requires_api_version('1.23')
     def test_get_image_load_image(self):
         with tempfile.TemporaryFile() as f:
-            stream = self.client.get_image(BUSYBOX)
+            stream = self.client.get_image(TEST_IMG)
             for chunk in stream:
                 f.write(chunk)
 
@@ -349,7 +350,7 @@ class SaveLoadImagesTest(BaseAPIIntegrationTest):
             result = self.client.load_image(f.read())
 
         success = False
-        result_line = 'Loaded image: {}\n'.format(BUSYBOX)
+        result_line = f'Loaded image: {TEST_IMG}\n'
         for data in result:
             print(data)
             if 'stream' in data:

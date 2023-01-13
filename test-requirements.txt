@@ -1,7 +1,6 @@
-coverage==4.5.2
-flake8==3.6.0; python_version != '3.3'
-flake8==3.4.1; python_version == '3.3'
-mock==1.0.1
-pytest==4.1.0
-pytest-cov==2.6.1
-pytest-timeout==1.3.3
+setuptools==65.5.1
+coverage==6.4.2
+flake8==4.0.1
+pytest==7.1.2
+pytest-cov==3.0.0
+pytest-timeout==2.1.0

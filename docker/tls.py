@@ -5,15 +5,16 @@ from . import errors
 from .transport import SSLHTTPAdapter
 
 
-class TLSConfig(object):
+class TLSConfig:
     """
     TLS configuration.
 
     Args:
         client_cert (tuple of str): Path to client cert, path to client key.
         ca_cert (str): Path to CA cert file.
-        verify (bool or str): This can be ``False`` or a path to a CA cert
-            file.
+        verify (bool or str): This can be a bool or a path to a CA cert
+            file to verify against. If ``True``, verify using ca_cert;
+            if ``False`` or not specified, do not verify.
         ssl_version (int): A valid `SSL version`_.
         assert_hostname (bool): Verify the hostname of the server.
 
@@ -32,37 +33,18 @@ class TLSConfig(object):
         # https://docs.docker.com/engine/articles/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
         # here, but also disable any public/default CA pool verification by
-        # leaving tls_verify=False
+        # leaving verify=False
 
         self.assert_hostname = assert_hostname
         self.assert_fingerprint = assert_fingerprint
-
-        # TODO(dperny): according to the python docs, PROTOCOL_TLSvWhatever is
-        # depcreated, and it's recommended to use OPT_NO_TLSvWhatever instead
-        # to exclude versions. But I think that might require a bigger
-        # architectural change, so I've opted not to pursue it at this time
 
         # If the user provides an SSL version, we should use their preference
         if ssl_version:
             self.ssl_version = ssl_version
         else:
-            # If the user provides no ssl version, we should default to
-            # TLSv1_2.  This option is the most secure, and will work for the
-            # majority of users with reasonably up-to-date software. However,
-            # before doing so, detect openssl version to ensure we can support
-            # it.
-            if ssl.OPENSSL_VERSION_INFO[:3] >= (1, 0, 1) and hasattr(
-                    ssl, 'PROTOCOL_TLSv1_2'):
-                # If the OpenSSL version is high enough to support TLSv1_2,
-                # then we should use it.
-                self.ssl_version = getattr(ssl, 'PROTOCOL_TLSv1_2')
-            else:
-                # Otherwise, TLS v1.0 seems to be the safest default;
-                # SSLv23 fails in mysterious ways:
-                # https://github.com/docker/docker-py/issues/963
-                self.ssl_version = ssl.PROTOCOL_TLSv1
+            self.ssl_version = ssl.PROTOCOL_TLS_CLIENT
 
-        # "tls" and "tls_verify" must have both or neither cert/key files In
+        # "client_cert" must have both or neither cert/key files. In
         # either case, Alert the user when both are expected, but any are
         # missing.
 
@@ -71,7 +53,7 @@ class TLSConfig(object):
                 tls_cert, tls_key = client_cert
             except ValueError:
                 raise errors.TLSParameterError(
-                    'client_config must be a tuple of'
+                    'client_cert must be a tuple of'
                     ' (client certificate, key file)'
                 )
 
@@ -79,7 +61,7 @@ class TLSConfig(object):
                                               not os.path.isfile(tls_key)):
                 raise errors.TLSParameterError(
                     'Path to a certificate and key files must be provided'
-                    ' through the client_config param'
+                    ' through the client_cert param'
                 )
             self.cert = (tls_cert, tls_key)
 
@@ -88,7 +70,7 @@ class TLSConfig(object):
         self.ca_cert = ca_cert
         if self.verify and self.ca_cert and not os.path.isfile(self.ca_cert):
             raise errors.TLSParameterError(
-                'Invalid CA certificate provided for `tls_ca_cert`.'
+                'Invalid CA certificate provided for `ca_cert`.'
             )
 
     def configure_client(self, client):

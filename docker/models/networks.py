@@ -46,6 +46,8 @@ class Network(Model):
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local (IPv4/IPv6)
                 addresses.
+            driver_opt (dict): A dictionary of options to provide to the
+                network driver. Defaults to ``None``.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -182,7 +184,7 @@ class NetworkCollection(Collection):
 
     def list(self, *args, **kwargs):
         """
-        List networks. Similar to the ``docker networks ls`` command.
+        List networks. Similar to the ``docker network ls`` command.
 
         Args:
             names (:py:class:`list`): List of names to filter by.
@@ -190,7 +192,8 @@ class NetworkCollection(Collection):
             filters (dict): Filters to be processed on the network list.
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
-                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - `label` (str|list): format either ``"key"``, ``"key=value"``
+                    or a list of such.
                 - ``type=["custom"|"builtin"]`` Filters networks by type.
             greedy (bool): Fetch more details for each network individually.
                 You might want this to get the containers attached to them.

@@ -3,11 +3,10 @@ import shutil
 import unittest
 
 import docker
+from .. import helpers
 from docker.utils import kwargs_from_env
 
-from .. import helpers
-
-BUSYBOX = 'busybox:buildroot-2014.02'
+TEST_IMG = 'alpine:3.10'
 TEST_API_VERSION = os.environ.get('DOCKER_TEST_API_VERSION')
 
 
@@ -76,11 +75,11 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
     """
 
     def setUp(self):
-        super(BaseAPIIntegrationTest, self).setUp()
+        super().setUp()
         self.client = self.get_client_instance()
 
     def tearDown(self):
-        super(BaseAPIIntegrationTest, self).tearDown()
+        super().tearDown()
         self.client.close()
 
     @staticmethod
@@ -109,7 +108,7 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
 
         return container
 
-    def create_and_start(self, image=BUSYBOX, command='top', **kwargs):
+    def create_and_start(self, image=TEST_IMG, command='top', **kwargs):
         container = self.client.create_container(
             image=image, command=command, **kwargs)
         self.tmp_containers.append(container)

@@ -1,24 +1,18 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import json
 import signal
 
 import docker
+from docker.api import APIClient
+from unittest import mock
 import pytest
-import six
 
 from . import fake_api
 from ..helpers import requires_api_version
 from .api_test import (
     BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
-    fake_inspect_container
+    fake_inspect_container, url_base
 )
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 
 def fake_inspect_container_tty(self, container):
@@ -30,7 +24,8 @@ class StartContainerTest(BaseAPIClientTest):
         self.client.start(fake_api.FAKE_CONTAINER_ID)
 
         args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'containers/3cc2351ab11b/start'
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/start')
         assert 'data' not in args[1]
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
@@ -123,7 +118,8 @@ class StartContainerTest(BaseAPIClientTest):
         self.client.start({'Id': fake_api.FAKE_CONTAINER_ID})
 
         args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'containers/3cc2351ab11b/start'
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/start')
         assert 'data' not in args[1]
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
@@ -351,6 +347,22 @@ class CreateContainerTest(BaseAPIClientTest):
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
         assert args[1]['params'] == {'name': 'marisa-kirisame'}
+
+    def test_create_container_with_platform(self):
+        self.client.create_container('busybox', 'true',
+                                     platform='linux')
+
+        args = fake_request.call_args
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+             "AttachStdin": false,
+             "AttachStderr": true, "AttachStdout": true,
+             "StdinOnce": false,
+             "OpenStdin": false, "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['params'] == {'name': None, 'platform': 'linux'}
 
     def test_create_container_with_mem_limit_as_int(self):
         self.client.create_container(
@@ -767,10 +779,71 @@ class CreateContainerTest(BaseAPIClientTest):
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
+    def test_create_container_with_device_requests(self):
+        client = APIClient(version='1.40')
+        fake_api.fake_responses.setdefault(
+            f'{fake_api.prefix}/v1.40/containers/create',
+            fake_api.post_fake_create_container,
+        )
+        client.create_container(
+            'busybox', 'true', host_config=client.create_host_config(
+                device_requests=[
+                    {
+                        'device_ids': [
+                            '0',
+                            'GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a'
+                        ]
+                    },
+                    {
+                        'driver': 'nvidia',
+                        'Count': -1,
+                        'capabilities': [
+                            ['gpu', 'utility']
+                        ],
+                        'options': {
+                            'key': 'value'
+                        }
+                    }
+                ]
+            )
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == url_base + 'v1.40/' + 'containers/create'
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = client.create_host_config()
+        expected_payload['HostConfig']['DeviceRequests'] = [
+            {
+                'Driver': '',
+                'Count': 0,
+                'DeviceIDs': [
+                    '0',
+                    'GPU-3a23c669-1f69-c64e-cf85-44e9b07e7a2a'
+                ],
+                'Capabilities': [],
+                'Options': {}
+            },
+            {
+                'Driver': 'nvidia',
+                'Count': -1,
+                'DeviceIDs': [],
+                'Capabilities': [
+                    ['gpu', 'utility']
+                ],
+                'Options': {
+                    'key': 'value'
+                }
+            }
+        ]
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers']['Content-Type'] == 'application/json'
+        assert set(args[1]['headers']) <= {'Content-Type', 'User-Agent'}
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
     def test_create_container_with_labels_dict(self):
         labels_dict = {
-            six.text_type('foo'): six.text_type('1'),
-            six.text_type('bar'): six.text_type('2'),
+            'foo': '1',
+            'bar': '2',
         }
 
         self.client.create_container(
@@ -786,12 +859,12 @@ class CreateContainerTest(BaseAPIClientTest):
 
     def test_create_container_with_labels_list(self):
         labels_list = [
-            six.text_type('foo'),
-            six.text_type('bar'),
+            'foo',
+            'bar',
         ]
         labels_dict = {
-            six.text_type('foo'): six.text_type(),
-            six.text_type('bar'): six.text_type(),
+            'foo': '',
+            'bar': '',
         }
 
         self.client.create_container(
@@ -951,11 +1024,11 @@ class CreateContainerTest(BaseAPIClientTest):
 
     def test_create_container_with_unicode_envvars(self):
         envvars_dict = {
-            'foo': u'☃',
+            'foo': '☃',
         }
 
         expected = [
-            u'foo=☃'
+            'foo=☃'
         ]
 
         self.client.create_container(
@@ -996,6 +1069,25 @@ class CreateContainerTest(BaseAPIClientTest):
         ''')
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
 
+    @requires_api_version('1.41')
+    def test_create_container_with_cgroupns(self):
+        self.client.create_container(
+            image='busybox',
+            command='true',
+            host_config=self.client.create_host_config(
+                cgroupns='private',
+            ),
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == url_prefix + 'containers/create'
+
+        expected_payload = self.base_create_payload()
+        expected_payload['HostConfig'] = self.client.create_host_config()
+        expected_payload['HostConfig']['CgroupnsMode'] = 'private'
+        assert json.loads(args[1]['data']) == expected_payload
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+
 
 class ContainerTest(BaseAPIClientTest):
     def test_list_containers(self):
@@ -1024,7 +1116,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/resize',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/resize'),
             params={'h': 15, 'w': 120},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1037,7 +1130,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/rename',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/rename'),
             params={'name': 'foobar'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1047,7 +1141,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/wait',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/wait',
             timeout=None,
             params={}
         )
@@ -1057,7 +1151,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/wait',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/wait',
             timeout=None,
             params={}
         )
@@ -1069,14 +1163,14 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
 
-        assert logs == 'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        assert logs == b'Flowering Nights\n(Sakuya Iyazoi)\n'
 
     def test_logs_with_dict_instead_of_id(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',
@@ -1085,14 +1179,14 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
             stream=False
         )
 
-        assert logs == 'Flowering Nights\n(Sakuya Iyazoi)\n'.encode('ascii')
+        assert logs == b'Flowering Nights\n(Sakuya Iyazoi)\n'
 
     def test_log_streaming(self):
         with mock.patch('docker.api.client.APIClient.inspect_container',
@@ -1102,7 +1196,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1117,7 +1211,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1131,7 +1225,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1146,7 +1240,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1162,7 +1256,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 10},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1178,7 +1272,23 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
+            params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
+                    'tail': 'all', 'since': ts},
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            stream=False
+        )
+
+    def test_log_since_with_float(self):
+        ts = 809222400.000000
+        with mock.patch('docker.api.client.APIClient.inspect_container',
+                        fake_inspect_container):
+            self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
+                             follow=False, since=ts)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all', 'since': ts},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1195,7 +1305,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 0, 'stderr': 1, 'stdout': 1,
                     'tail': 'all', 'since': ts},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1207,7 +1317,7 @@ class ContainerTest(BaseAPIClientTest):
                         fake_inspect_container):
             with pytest.raises(docker.errors.InvalidArgument):
                 self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
-                                 follow=False, since=42.42)
+                                 follow=False, since="42.42")
 
     def test_log_tty(self):
         m = mock.Mock()
@@ -1221,7 +1331,7 @@ class ContainerTest(BaseAPIClientTest):
         assert m.called
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/logs',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/logs',
             params={'timestamps': 0, 'follow': 1, 'stderr': 1, 'stdout': 1,
                     'tail': 'all'},
             timeout=DEFAULT_TIMEOUT_SECONDS,
@@ -1233,7 +1343,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/changes',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/changes'),
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1242,7 +1353,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/changes',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/changes'),
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1251,7 +1363,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/json',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1262,7 +1374,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/stop',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/stop',
             params={'t': timeout},
             timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
         )
@@ -1275,7 +1387,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/stop',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/stop',
             params={'t': timeout},
             timeout=(DEFAULT_TIMEOUT_SECONDS + timeout)
         )
@@ -1285,7 +1397,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/pause',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/pause'),
             timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
@@ -1294,7 +1407,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/unpause',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/unpause'),
             timeout=(DEFAULT_TIMEOUT_SECONDS)
         )
 
@@ -1303,7 +1417,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/kill',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/kill',
             params={},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1313,7 +1427,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/kill',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/kill',
             params={},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1323,7 +1437,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/kill',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/kill',
             params={'signal': signal.SIGTERM},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1333,7 +1447,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/restart',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/restart'),
             params={'t': 2},
             timeout=(DEFAULT_TIMEOUT_SECONDS + 2)
         )
@@ -1343,7 +1458,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'containers/3cc2351ab11b/restart',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/restart'),
             params={'t': 2},
             timeout=(DEFAULT_TIMEOUT_SECONDS + 2)
         )
@@ -1353,7 +1469,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'DELETE',
-            url_prefix + 'containers/3cc2351ab11b',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID,
             params={'v': False, 'link': False, 'force': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1363,7 +1479,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'DELETE',
-            url_prefix + 'containers/3cc2351ab11b',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID,
             params={'v': False, 'link': False, 'force': False},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1373,7 +1489,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/export',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/export'),
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1383,7 +1500,8 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/export',
+            (url_prefix + 'containers/' +
+             fake_api.FAKE_CONTAINER_ID + '/export'),
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1393,7 +1511,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/json',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/json',
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
@@ -1409,7 +1527,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/stats',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/stats',
             timeout=60,
             stream=True
         )
@@ -1419,7 +1537,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/top',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/top',
             params={},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1429,7 +1547,7 @@ class ContainerTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'GET',
-            url_prefix + 'containers/3cc2351ab11b/top',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/top',
             params={'ps_args': 'waux'},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
@@ -1441,7 +1559,8 @@ class ContainerTest(BaseAPIClientTest):
             blkio_weight=345
         )
         args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'containers/3cc2351ab11b/update'
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/update')
         assert json.loads(args[1]['data']) == {
             'Memory': 2 * 1024, 'CpuShares': 124, 'BlkioWeight': 345
         }

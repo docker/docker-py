@@ -8,7 +8,7 @@ from .base import BaseAPIIntegrationTest
 
 class SwarmTest(BaseAPIIntegrationTest):
     def setUp(self):
-        super(SwarmTest, self).setUp()
+        super().setUp()
         force_leave_swarm(self.client)
         self._unlock_key = None
 
@@ -19,7 +19,7 @@ class SwarmTest(BaseAPIIntegrationTest):
         except docker.errors.APIError:
             pass
         force_leave_swarm(self.client)
-        super(SwarmTest, self).tearDown()
+        super().tearDown()
 
     @requires_api_version('1.24')
     def test_init_swarm_simple(self):
@@ -186,12 +186,14 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_inspect_node(self):
-        assert self.init_swarm()
+        node_id = self.init_swarm()
+        assert node_id
         nodes_list = self.client.nodes()
         assert len(nodes_list) == 1
         node = nodes_list[0]
         node_data = self.client.inspect_node(node['ID'])
         assert node['ID'] == node_data['ID']
+        assert node_id == node['ID']
         assert node['Version'] == node_data['Version']
 
     @requires_api_version('1.24')
@@ -233,3 +235,26 @@ class SwarmTest(BaseAPIIntegrationTest):
             self.client.remove_node(node_id, True)
 
         assert e.value.response.status_code >= 400
+
+    @requires_api_version('1.25')
+    def test_rotate_manager_unlock_key(self):
+        spec = self.client.create_swarm_spec(autolock_managers=True)
+        assert self.init_swarm(swarm_spec=spec)
+        swarm_info = self.client.inspect_swarm()
+        key_1 = self.client.get_unlock_key()
+        assert self.client.update_swarm(
+            version=swarm_info['Version']['Index'],
+            rotate_manager_unlock_key=True
+        )
+        key_2 = self.client.get_unlock_key()
+        assert key_1['UnlockKey'] != key_2['UnlockKey']
+
+    @requires_api_version('1.30')
+    @pytest.mark.xfail(reason='Can fail if eth0 has multiple IP addresses')
+    def test_init_swarm_data_path_addr(self):
+        assert self.init_swarm(data_path_addr='eth0')
+
+    @requires_api_version('1.40')
+    def test_init_swarm_data_path_port(self):
+        assert self.init_swarm(data_path_port=4242)
+        assert self.client.inspect_swarm()['DataPathPort'] == 4242

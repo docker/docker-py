@@ -4,10 +4,10 @@ from ..utils import version_lt
 from .. import utils
 
 
-class NetworkApiMixin(object):
+class NetworkApiMixin:
     def networks(self, names=None, ids=None, filters=None):
         """
-        List networks. Similar to the ``docker networks ls`` command.
+        List networks. Similar to the ``docker network ls`` command.
 
         Args:
             names (:py:class:`list`): List of names to filter by
@@ -15,7 +15,8 @@ class NetworkApiMixin(object):
             filters (dict): Filters to be processed on the network list.
                 Available filters:
                 - ``driver=[<driver-name>]`` Matches a network's driver.
-                - ``label=[<key>]`` or ``label=[<key>=<value>]``.
+                - ``label=[<key>]``, ``label=[<key>=<value>]`` or a list of
+                    such.
                 - ``type=["custom"|"builtin"]`` Filters networks by type.
 
         Returns:
@@ -74,7 +75,7 @@ class NetworkApiMixin(object):
         Example:
             A network using the bridge driver:
 
-                >>> client.create_network("network1", driver="bridge")
+                >>> client.api.create_network("network1", driver="bridge")
 
             You can also create more advanced networks with custom IPAM
             configurations. For example, setting the subnet to
@@ -89,7 +90,7 @@ class NetworkApiMixin(object):
                 >>> ipam_config = docker.types.IPAMConfig(
                     pool_configs=[ipam_pool]
                 )
-                >>> docker_client.create_network("network1", driver="bridge",
+                >>> client.api.create_network("network1", driver="bridge",
                                                  ipam=ipam_config)
         """
         if options is not None and not isinstance(options, dict):
@@ -215,7 +216,8 @@ class NetworkApiMixin(object):
     def connect_container_to_network(self, container, net_id,
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
-                                     link_local_ips=None):
+                                     link_local_ips=None, driver_opt=None,
+                                     mac_address=None):
         """
         Connect a container to a network.
 
@@ -234,12 +236,16 @@ class NetworkApiMixin(object):
                 network, using the IPv6 protocol. Defaults to ``None``.
             link_local_ips (:py:class:`list`): A list of link-local
                 (IPv4/IPv6) addresses.
+            mac_address (str): The MAC address of this container on the
+                network. Defaults to ``None``.
         """
         data = {
             "Container": container,
             "EndpointConfig": self.create_endpoint_config(
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
-                ipv6_address=ipv6_address, link_local_ips=link_local_ips
+                ipv6_address=ipv6_address, link_local_ips=link_local_ips,
+                driver_opt=driver_opt,
+                mac_address=mac_address
             ),
         }
 

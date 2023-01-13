@@ -31,3 +31,15 @@ class SwarmTest(unittest.TestCase):
             cm.value.response.status_code == 406 or
             cm.value.response.status_code == 503
         )
+
+    def test_join_on_already_joined_swarm(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.swarm.init()
+        join_token = client.swarm.attrs['JoinTokens']['Manager']
+        with pytest.raises(docker.errors.APIError) as cm:
+            client.swarm.join(
+                remote_addrs=['127.0.0.1'],
+                join_token=join_token,
+            )
+        assert cm.value.response.status_code == 503
+        assert 'This node is already part of a swarm.' in cm.value.explanation

@@ -11,7 +11,7 @@ class Swarm(Model):
     id_attribute = 'ID'
 
     def __init__(self, *args, **kwargs):
-        super(Swarm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.client:
             try:
                 self.reload()
@@ -35,7 +35,8 @@ class Swarm(Model):
 
     def init(self, advertise_addr=None, listen_addr='0.0.0.0:2377',
              force_new_cluster=False, default_addr_pool=None,
-             subnet_size=None, **kwargs):
+             subnet_size=None, data_path_addr=None, data_path_port=None,
+             **kwargs):
         """
         Initialize a new swarm on this Engine.
 
@@ -63,6 +64,11 @@ class Swarm(Model):
                 Default: None
             subnet_size (int): SubnetSize specifies the subnet size of the
                 networks created from the default subnet pool. Default: None
+            data_path_addr (string): Address or interface to use for data path
+                traffic. For example, 192.168.1.1, or an interface, like eth0.
+            data_path_port (int): Port number to use for data path traffic.
+                Acceptable port range is 1024 to 49151. If set to ``None`` or
+                0, the default port 4789 will be used. Default: None
             task_history_retention_limit (int): Maximum number of tasks
                 history stored.
             snapshot_interval (int): Number of logs entries between snapshot.
@@ -96,7 +102,7 @@ class Swarm(Model):
                 created in the orchestrator.
 
         Returns:
-            ``True`` if the request went through.
+            (str): The ID of the created node.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -117,12 +123,14 @@ class Swarm(Model):
             'listen_addr': listen_addr,
             'force_new_cluster': force_new_cluster,
             'default_addr_pool': default_addr_pool,
-            'subnet_size': subnet_size
+            'subnet_size': subnet_size,
+            'data_path_addr': data_path_addr,
+            'data_path_port': data_path_port,
         }
         init_kwargs['swarm_spec'] = self.client.api.create_swarm_spec(**kwargs)
-        self.client.api.init_swarm(**init_kwargs)
+        node_id = self.client.api.init_swarm(**init_kwargs)
         self.reload()
-        return True
+        return node_id
 
     def join(self, *args, **kwargs):
         return self.client.api.join_swarm(*args, **kwargs)
@@ -148,7 +156,7 @@ class Swarm(Model):
     unlock.__doc__ = APIClient.unlock_swarm.__doc__
 
     def update(self, rotate_worker_token=False, rotate_manager_token=False,
-               **kwargs):
+               rotate_manager_unlock_key=False, **kwargs):
         """
         Update the swarm's configuration.
 
@@ -161,7 +169,8 @@ class Swarm(Model):
                 ``False``.
             rotate_manager_token (bool): Rotate the manager join token.
                 Default: ``False``.
-
+            rotate_manager_unlock_key (bool): Rotate the manager unlock key.
+                Default: ``False``.
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
@@ -175,5 +184,6 @@ class Swarm(Model):
             version=self.version,
             swarm_spec=self.client.api.create_swarm_spec(**kwargs),
             rotate_worker_token=rotate_worker_token,
-            rotate_manager_token=rotate_manager_token
+            rotate_manager_token=rotate_manager_token,
+            rotate_manager_unlock_key=rotate_manager_unlock_key
         )

@@ -45,7 +45,7 @@ def _check_api_features(version, task_template, update_config, endpoint_spec,
     if task_template is not None:
         if 'ForceUpdate' in task_template and utils.version_lt(
                 version, '1.25'):
-                raise_version_error('force_update', '1.25')
+            raise_version_error('force_update', '1.25')
 
         if task_template.get('Placement'):
             if utils.version_lt(version, '1.30'):
@@ -113,7 +113,7 @@ def _merge_task_template(current, override):
     return merged
 
 
-class ServiceApiMixin(object):
+class ServiceApiMixin:
     @utils.minimum_version('1.24')
     def create_service(
             self, task_template, name=None, labels=None, mode=None,
@@ -135,8 +135,9 @@ class ServiceApiMixin(object):
                 of the service. Default: ``None``
             rollback_config (RollbackConfig): Specification for the rollback
                 strategy of the service. Default: ``None``
-            networks (:py:class:`list`): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
 
@@ -383,8 +384,9 @@ class ServiceApiMixin(object):
                 of the service. Default: ``None``.
             rollback_config (RollbackConfig): Specification for the rollback
                 strategy of the service. Default: ``None``
-            networks (:py:class:`list`): List of network names or IDs to attach
-                the service to. Default: ``None``.
+            networks (:py:class:`list`): List of network names or IDs or
+                :py:class:`~docker.types.NetworkAttachmentConfig` to attach the
+                service to. Default: ``None``.
             endpoint_spec (EndpointSpec): Properties that can be configured to
                 access and load balance a service. Default: ``None``.
             fetch_current_spec (boolean): Use the undefined settings from the

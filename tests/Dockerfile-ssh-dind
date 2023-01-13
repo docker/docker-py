@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+
+ARG API_VERSION=1.41
+ARG ENGINE_VERSION=20.10
+
+FROM docker:${ENGINE_VERSION}-dind
+
+RUN apk add --no-cache --upgrade \
+    openssh
+
+COPY tests/ssh/config/server /etc/ssh/
+
+# set authorized keys for client paswordless connection
+COPY tests/ssh/config/client/id_rsa.pub /root/.ssh/authorized_keys
+
+# RUN echo "root:root" | chpasswd
+RUN chmod -R 600 /etc/ssh \
+ && chmod -R 600 /root/.ssh \
+ && ln -s /usr/local/bin/docker /usr/bin/docker
+EXPOSE 22

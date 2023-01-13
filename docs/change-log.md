@@ -1,5 +1,309 @@
-Change log
+Changelog
 ==========
+
+6.0.0
+-----
+
+### Upgrade Notes
+- Minimum supported Python version is 3.7+
+- When installing with pip, the `docker[tls]` extra is deprecated and a no-op,
+  use `docker` for same functionality (TLS support is always available now)
+- Native Python SSH client (used by default / `use_ssh_client=False`) will now
+  reject unknown host keys with `paramiko.ssh_exception.SSHException`
+- Short IDs are now 12 characters instead of 10 characters (same as Docker CLI)
+
+### Features
+- Python 3.10 support
+- Automatically negotiate most secure TLS version
+- Add `platform` (e.g. `linux/amd64`, `darwin/arm64`) to container create & run
+- Add support for `GlobalJob` and `ReplicatedJobs` for Swarm
+- Add `remove()` method on `Image`
+- Add `force` param to `disable()` on `Plugin`
+
+### Bugfixes
+- Fix install issues on Windows related to `pywin32`
+- Do not accept unknown SSH host keys in native Python SSH mode
+- Use 12 character short IDs for consistency with Docker CLI
+- Ignore trailing whitespace in `.dockerignore` files
+- Fix IPv6 host parsing when explicit port specified
+- Fix `ProxyCommand` option for SSH connections
+- Do not spawn extra subshell when launching external SSH client
+- Improve exception semantics to preserve context
+- Documentation improvements (formatting, examples, typos, missing params)
+
+### Miscellaneous
+- Upgrade dependencies in `requirements.txt` to latest versions
+- Remove extraneous transitive dependencies
+- Eliminate usages of deprecated functions/methods
+- Test suite reliability improvements
+- GitHub Actions workflows for linting, unit tests, integration tests, and
+  publishing releases
+
+5.0.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/76?closed=1)
+
+### Features
+- Add `cap_add` and `cap_drop` parameters to service create and ContainerSpec
+- Add `templating` parameter to config create
+
+### Bugfixes
+- Fix getting a read timeout for logs/attach with a tty and slow output
+
+### Miscellaneous
+- Fix documentation examples
+
+5.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/75?closed=1)
+
+### Bugfixes
+- Fix `disable_buffering` regression
+
+5.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/74?closed=1)
+
+### Bugfixes
+- Bring back support for ssh identity file
+- Cleanup remaining python-2 dependencies
+- Fix image save example in docs
+
+### Miscellaneous
+- Bump urllib3 to 1.26.5
+- Bump requests to 2.26.0
+
+5.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/70?closed=1)
+
+### Breaking changes
+- Remove support for Python 2.7
+- Make Python 3.6 the minimum version supported
+
+### Features
+- Add `limit` parameter to image search endpoint
+
+### Bugfixes
+- Fix `KeyError` exception on secret create
+- Verify TLS keys loaded from docker contexts
+- Update PORT_SPEC regex to allow square brackets for IPv6 addresses
+- Fix containers and images documentation examples
+
+4.4.4
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/73?closed=1)
+
+### Bugfixes
+- Remove `LD_LIBRARY_PATH` and `SSL_CERT_FILE` environment variables when shelling out to the ssh client
+
+4.4.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/72?closed=1)
+
+### Features
+- Add support for docker.types.Placement.MaxReplicas
+
+### Bugfixes
+- Fix SSH port parsing when shelling out to the ssh client
+
+4.4.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/71?closed=1)
+
+### Bugfixes
+- Fix SSH connection bug where the hostname was incorrectly trimmed and the error was hidden
+- Fix docs example
+
+### Miscellaneous
+- Add Python3.8 and 3.9 in setup.py classifier list
+
+4.4.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/69?closed=1)
+
+### Bugfixes
+- Avoid setting unsuported parameter for subprocess.Popen on Windows
+- Replace use of deprecated "filter" argument on ""docker/api/image"
+
+4.4.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/67?closed=1)
+
+### Features
+- Add an alternative SSH connection to the paramiko one, based on shelling out to the SSh client. Similar to the behaviour of Docker cli
+- Default image tag to `latest` on `pull`
+
+### Bugfixes
+- Fix plugin model upgrade
+- Fix examples URL in ulimits
+
+### Miscellaneous
+- Improve exception messages for server and client errors
+- Bump cryptography from 2.3 to 3.2
+
+4.3.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/68?closed=1)
+
+### Miscellaneous
+- Set default API version to `auto`
+- Fix conversion to bytes for `float`
+- Support OpenSSH `identityfile` option
+
+4.3.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/64?closed=1)
+
+### Features
+- Add `DeviceRequest` type to expose host resources such as GPUs
+- Add support for `DriverOpts` in EndpointConfig
+- Disable compression by default when using container.get_archive method
+
+### Miscellaneous
+- Update default API version to v1.39
+- Update test engine version to 19.03.12
+
+4.2.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/66?closed=1)
+
+### Bugfixes
+
+- Fix context load for non-docker endpoints
+
+4.2.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/65?closed=1)
+
+### Features
+
+- Add option on when to use `tls` on Context constructor
+- Make context orchestrator field optional
+
+4.2.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/63?closed=1)
+
+### Bugfixes
+
+- Fix `win32pipe.WaitNamedPipe` throw exception in Windows containers
+- Use `Hostname`, `Username`, `Port` and `ProxyCommand` settings from `.ssh/config` when on SSH
+- Set host key policy for ssh transport to `paramiko.WarningPolicy()`
+- Set logging level of `paramiko` to warn
+
+### Features
+
+- Add support for docker contexts through `docker.ContextAPI`
+
+4.1.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/61?closed=1)
+
+### Bugfixes
+
+- Correct `INDEX_URL` logic in build.py _set_auth_headers
+- Fix for empty auth keys in config.json
+
+### Features
+
+- Add `NetworkAttachmentConfig` for service create/update
+
+### Miscellaneous
+
+- Bump pytest to 4.3.1
+- Adjust `--platform` tests for changes in docker engine
+- Update credentials-helpers to v0.6.3
+
+4.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/62?closed=1)
+
+### Bugfixes
+
+- Unified the way `HealthCheck` is created/configured
+
+### Miscellaneous
+
+- Bumped version of websocket-client
+
+4.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/60?closed=1)
+
+### Bugfixes
+
+- Fixed an obsolete import in the `credentials` subpackage that caused import errors in
+  Python 3.7
+
+### Miscellaneous
+
+- Docs building has been repaired
+
+4.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/57?closed=1)
+
+### Breaking changes
+
+- Support for Python 3.3 and Python 3.4 has been dropped
+- `APIClient.update_service`, `APIClient.init_swarm`, and
+  `DockerClient.swarm.init` now return a `dict` from the API's response body
+- In `APIClient.build` and `DockerClient.images.build`, the `use_config_proxy`
+  parameter now defaults to True
+- `init_path` is no longer a valid parameter for `HostConfig`
+
+### Features
+
+- It is now possible to provide `SCTP` ports for port mappings
+- `ContainerSpec`s now support the `init` parameter
+- `DockerClient.swarm.init` and `APIClient.init_swarm` now support the
+  `data_path_addr` parameter
+- `APIClient.update_swarm` and `DockerClient.swarm.update` now support the
+  `rotate_manager_unlock_key` parameter
+- `APIClient.update_service` returns the API's response body as a `dict`
+- `APIClient.init_swarm`, and `DockerClient.swarm.init` now return the API's
+  response body as a `dict`
+
+### Bugfixes
+
+- Fixed `PlacementPreference` instances to produce a valid API type
+- Fixed a bug where not setting a value for `buildargs` in `build` could cause
+  the library to attempt accessing attributes of a `None` value
+- Fixed a bug where setting the `volume_driver` parameter in
+  `DockerClient.containers.create` would result in an error
+- `APIClient.inspect_distribution` now correctly sets the authentication
+  headers on the request, allowing it to be used with private repositories
+  This change also applies to `DockerClient.get_registry_data`
+
+3.7.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/59?closed=1)
+
+### Bugfixes
+
+* Fix base_url to keep TCP protocol on utils.py by letting the responsibility of changing the
+protocol to `parse_host` afterwards, letting `base_url` with the original value.
+* XFAIL test_attach_stream_and_cancel on TLS
 
 3.7.1
 -----
@@ -1101,7 +1405,7 @@ like the others
   (`Client.volumes`, `Client.create_volume`, `Client.inspect_volume`,
   `Client.remove_volume`).
 * Added support for the `group_add` parameter in `create_host_config`.
-* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameteres
+* Added support for the CPU CFS (`cpu_quota` and `cpu_period`) parameters
   in `create_host_config`.
 * Added support for the archive API endpoint (`Client.get_archive`,
   `Client.put_archive`).

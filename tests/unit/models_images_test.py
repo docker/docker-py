@@ -44,9 +44,25 @@ class ImageCollectionTest(unittest.TestCase):
 
     def test_pull(self):
         client = make_fake_client()
-        image = client.images.pull('test_image:latest')
+        image = client.images.pull('test_image:test')
         client.api.pull.assert_called_with(
-            'test_image', tag='latest', stream=True
+            'test_image', tag='test', all_tags=False, stream=True
+        )
+        client.api.inspect_image.assert_called_with('test_image:test')
+        assert isinstance(image, Image)
+        assert image.id == FAKE_IMAGE_ID
+
+    def test_pull_tag_precedence(self):
+        client = make_fake_client()
+        image = client.images.pull('test_image:latest', tag='test')
+        client.api.pull.assert_called_with(
+            'test_image', tag='test', all_tags=False, stream=True
+        )
+        client.api.inspect_image.assert_called_with('test_image:test')
+
+        image = client.images.pull('test_image')
+        client.api.pull.assert_called_with(
+            'test_image', tag='latest', all_tags=False, stream=True
         )
         client.api.inspect_image.assert_called_with('test_image:latest')
         assert isinstance(image, Image)
@@ -54,9 +70,9 @@ class ImageCollectionTest(unittest.TestCase):
 
     def test_pull_multiple(self):
         client = make_fake_client()
-        images = client.images.pull('test_image')
+        images = client.images.pull('test_image', all_tags=True)
         client.api.pull.assert_called_with(
-            'test_image', tag=None, stream=True
+            'test_image', tag='latest', all_tags=True, stream=True
         )
         client.api.images.assert_called_with(
             all=False, name='test_image', filters=None
@@ -96,16 +112,21 @@ class ImageCollectionTest(unittest.TestCase):
         client.images.search('test')
         client.api.search.assert_called_with('test')
 
+    def test_search_limit(self):
+        client = make_fake_client()
+        client.images.search('test', limit=5)
+        client.api.search.assert_called_with('test', limit=5)
+
 
 class ImageTest(unittest.TestCase):
     def test_short_id(self):
         image = Image(attrs={'Id': 'sha256:b6846070672ce4e8f1f91564ea6782bd675'
                                    'f69d65a6f73ef6262057ad0a15dcd'})
-        assert image.short_id == 'sha256:b684607067'
+        assert image.short_id == 'sha256:b6846070672c'
 
         image = Image(attrs={'Id': 'b6846070672ce4e8f1f91564ea6782bd675'
                                    'f69d65a6f73ef6262057ad0a15dcd'})
-        assert image.short_id == 'b684607067'
+        assert image.short_id == 'b6846070672c'
 
     def test_tags(self):
         image = Image(attrs={
@@ -128,6 +149,16 @@ class ImageTest(unittest.TestCase):
         image = client.images.get(FAKE_IMAGE_ID)
         image.history()
         client.api.history.assert_called_with(FAKE_IMAGE_ID)
+
+    def test_remove(self):
+        client = make_fake_client()
+        image = client.images.get(FAKE_IMAGE_ID)
+        image.remove()
+        client.api.remove_image.assert_called_with(
+            FAKE_IMAGE_ID,
+            force=False,
+            noprune=False,
+        )
 
     def test_save(self):
         client = make_fake_client()

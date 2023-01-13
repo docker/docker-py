@@ -1,9 +1,7 @@
-import six
-
 from .. import auth, utils
 
 
-class PluginApiMixin(object):
+class PluginApiMixin:
     @utils.minimum_version('1.25')
     @utils.check_resource('name')
     def configure_plugin(self, name, options):
@@ -21,7 +19,7 @@ class PluginApiMixin(object):
         url = self._url('/plugins/{0}/set', name)
         data = options
         if isinstance(data, dict):
-            data = ['{0}={1}'.format(k, v) for k, v in six.iteritems(data)]
+            data = [f'{k}={v}' for k, v in data.items()]
         res = self._post_json(url, data=data)
         self._raise_for_status(res)
         return True
@@ -53,19 +51,20 @@ class PluginApiMixin(object):
         return True
 
     @utils.minimum_version('1.25')
-    def disable_plugin(self, name):
+    def disable_plugin(self, name, force=False):
         """
             Disable an installed plugin.
 
             Args:
                 name (string): The name of the plugin. The ``:latest`` tag is
                     optional, and is the default if omitted.
+                force (bool): To enable the force query parameter.
 
             Returns:
                 ``True`` if successful
         """
         url = self._url('/plugins/{0}/disable', name)
-        res = self._post(url)
+        res = self._post(url, params={'force': force})
         self._raise_for_status(res)
         return True
 

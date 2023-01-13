@@ -12,7 +12,7 @@ from .. import utils
 log = logging.getLogger(__name__)
 
 
-class BuildApiMixin(object):
+class BuildApiMixin:
     def build(self, path=None, tag=None, quiet=False, fileobj=None,
               nocache=False, rm=False, timeout=None,
               custom_context=False, encoding=None, pull=False,
@@ -20,7 +20,7 @@ class BuildApiMixin(object):
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
               squash=None, extra_hosts=None, platform=None, isolation=None,
-              use_config_proxy=False):
+              use_config_proxy=True):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -76,6 +76,7 @@ class BuildApiMixin(object):
             forcerm (bool): Always remove intermediate containers, even after
                 unsuccessful builds
             dockerfile (str): path within the build context to the Dockerfile
+            gzip (bool): If set to ``True``, gzip compression/encoding is used
             buildargs (dict): A dictionary of build arguments
             container_limits (dict): A dictionary of limits applied to each
                 container created by the build process. Valid keys:
@@ -132,7 +133,7 @@ class BuildApiMixin(object):
         for key in container_limits.keys():
             if key not in constants.CONTAINER_LIMITS_KEYS:
                 raise errors.DockerException(
-                    'Invalid container_limits key {0}'.format(key)
+                    f'Invalid container_limits key {key}'
                 )
 
         if custom_context:
@@ -150,10 +151,10 @@ class BuildApiMixin(object):
             dockerignore = os.path.join(path, '.dockerignore')
             exclude = None
             if os.path.exists(dockerignore):
-                with open(dockerignore, 'r') as f:
+                with open(dockerignore) as f:
                     exclude = list(filter(
                         lambda x: x != '' and x[0] != '#',
-                        [l.strip() for l in f.read().splitlines()]
+                        [line.strip() for line in f.read().splitlines()]
                     ))
             dockerfile = process_dockerfile(dockerfile, path)
             context = utils.tar(
@@ -308,11 +309,12 @@ class BuildApiMixin(object):
             auth_data = self._auth_configs.get_all_credentials()
 
             # See https://github.com/docker/docker-py/issues/1683
-            if auth.INDEX_URL not in auth_data and auth.INDEX_URL in auth_data:
+            if (auth.INDEX_URL not in auth_data and
+                    auth.INDEX_NAME in auth_data):
                 auth_data[auth.INDEX_URL] = auth_data.get(auth.INDEX_NAME, {})
 
             log.debug(
-                'Sending auth config ({0})'.format(
+                'Sending auth config ({})'.format(
                     ', '.join(repr(k) for k in auth_data.keys())
                 )
             )
@@ -343,9 +345,9 @@ def process_dockerfile(dockerfile, path):
     if (os.path.splitdrive(path)[0] != os.path.splitdrive(abs_dockerfile)[0] or
             os.path.relpath(abs_dockerfile, path).startswith('..')):
         # Dockerfile not in context - read data to insert into tar later
-        with open(abs_dockerfile, 'r') as df:
+        with open(abs_dockerfile) as df:
             return (
-                '.dockerfile.{0:x}'.format(random.getrandbits(160)),
+                f'.dockerfile.{random.getrandbits(160):x}',
                 df.read()
             )
 
