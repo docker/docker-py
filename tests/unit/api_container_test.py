@@ -1529,7 +1529,7 @@ class ContainerTest(BaseAPIClientTest):
             'GET',
             url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/stats',
             timeout=60,
-            stream=True
+            params={'stream': True, 'one-shot': False}
         )
 
     def test_container_top(self):

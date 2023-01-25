@@ -1126,7 +1126,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def stats(self, container, decode=None, stream=True):
+    def stats(self, container, decode=None, stream=True, one_shot=False):
         """
         Stream statistics for a specific container. Similar to the
         ``docker stats`` command.
@@ -1138,6 +1138,9 @@ class ContainerApiMixin:
                 False by default.
             stream (bool): If set to false, only the current stats will be
                 returned instead of a stream. True by default.
+            one_shot (bool): If set to true, Only get a single stat instead of
+                waiting for 2 cycles. Must be used with stream=false. False by
+                default.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -1146,15 +1149,15 @@ class ContainerApiMixin:
         """
         url = self._url("/containers/{0}/stats", container)
         if stream:
-            return self._stream_helper(self._get(url, stream=True),
-                                       decode=decode)
+            return self._stream_helper(self._get(url, params={'stream': True,
+                                       'one-shot': one_shot}), decode=decode)
         else:
             if decode:
                 raise errors.InvalidArgument(
                     "decode is only available in conjunction with stream=True"
                 )
-            return self._result(self._get(url, params={'stream': False}),
-                                json=True)
+            return self._result(self._get(url, params={'stream': False,
+                                'one-shot': one_shot}), json=True)
 
     @utils.check_resource('container')
     def stop(self, container, timeout=None):
