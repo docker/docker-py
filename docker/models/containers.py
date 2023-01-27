@@ -679,6 +679,10 @@ class ContainerCollection(Collection):
                   This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
+            network_driver_opt (dict): A dictionary of options to provide
+                to the network driver. Defaults to ``None``. Used in
+                conjuction with ``network``. Incompatible
+                with ``network_mode``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -841,6 +845,12 @@ class ContainerCollection(Collection):
             raise RuntimeError(
                 'The options "network" and "network_mode" can not be used '
                 'together.'
+            )
+
+        if kwargs.get('network_driver_opt') and not kwargs.get('network'):
+            raise RuntimeError(
+                'The options "network_driver_opt" can not be used '
+                'without "network".'
             )
 
         try:
@@ -1113,8 +1123,12 @@ def _create_container_args(kwargs):
         host_config_kwargs['binds'] = volumes
 
     network = kwargs.pop('network', None)
+    network_driver_opt = kwargs.pop('network_driver_opt', None)
     if network:
-        create_kwargs['networking_config'] = {network: None}
+        network_configuration = {'driver_opt': network_driver_opt} \
+            if network_driver_opt else None
+
+        create_kwargs['networking_config'] = {network: network_configuration}
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
