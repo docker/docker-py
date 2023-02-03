@@ -29,6 +29,19 @@ class StartContainerTest(BaseAPIClientTest):
         assert 'data' not in args[1]
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
+    def test_start_container_from_checkpoint(self):
+        self.client.start(fake_api.FAKE_CONTAINER_ID,
+                          checkpoint="my-checkpoint",
+                          checkpoint_dir="/path/to/checkpoint/dir")
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/start')
+        assert 'data' not in args[1]
+        assert args[1]["params"]["checkpoint"] == "my-checkpoint"
+        assert args[1]["params"]["checkpoint-dir"] == "/path/to/checkpoint/dir"
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
     def test_start_container_none(self):
         with pytest.raises(ValueError) as excinfo:
             self.client.start(container=None)

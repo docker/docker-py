@@ -1088,7 +1088,8 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def start(self, container, *args, **kwargs):
+    def start(self, container, checkpoint=None, checkpoint_dir=None,
+              *args, **kwargs):
         """
         Start a container. Similar to the ``docker start`` command, but
         doesn't support attach options.
@@ -1101,12 +1102,17 @@ class ContainerApiMixin:
 
         Args:
             container (str): The container to start
+            checkpoint (str): (Experimental) The checkpoint ID from which
+                to start
+            checkpoint_dir (str): (Experimental) Custom directory in which to
+                search for checkpoints
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
             :py:class:`docker.errors.DeprecatedMethod`
-                If any argument besides ``container`` are provided.
+                If any argument besides ``container``, ``checkpoint``
+                or ``checkpoint_dir`` are provided.
 
         Example:
 
@@ -1115,6 +1121,12 @@ class ContainerApiMixin:
             ...     command='/bin/sleep 30')
             >>> client.api.start(container=container.get('Id'))
         """
+        params = {}
+        if checkpoint:
+            params["checkpoint"] = checkpoint
+        if checkpoint_dir:
+            params['checkpoint-dir'] = checkpoint_dir
+
         if args or kwargs:
             raise errors.DeprecatedMethod(
                 'Providing configuration in the start() method is no longer '
@@ -1122,7 +1134,7 @@ class ContainerApiMixin:
                 'instead.'
             )
         url = self._url("/containers/{0}/start", container)
-        res = self._post(url)
+        res = self._post(url, params=params)
         self._raise_for_status(res)
 
     @utils.check_resource('container')
