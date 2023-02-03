@@ -1533,7 +1533,8 @@ class ContainerTest(BaseAPIClientTest):
         )
 
     def test_container_stats_with_one_shot(self):
-        self.client.stats(fake_api.FAKE_CONTAINER_ID, stream=False, one_shot=True)
+        self.client.stats(
+            fake_api.FAKE_CONTAINER_ID, stream=False, one_shot=True)
 
         fake_request.assert_called_with(
             'GET',
