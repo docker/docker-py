@@ -1158,7 +1158,7 @@ class ContainerApiMixin:
                 )
             params['one-shot'] = one_shot
         if stream:
-            if one_shot is not None:
+            if one_shot:
                 raise errors.InvalidArgument(
                     'one_shot is only available in conjunction with '
                     'stream=False'
