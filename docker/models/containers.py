@@ -10,6 +10,7 @@ from ..errors import (
 )
 from ..types import HostConfig
 from ..utils import version_gte
+from .checkpoints import CheckpointCollection
 from .images import Image
 from .resource import Collection, Model
 
@@ -260,6 +261,27 @@ class Container(Model):
         """
         return self.client.api.get_archive(self.id, path,
                                            chunk_size, encode_stream)
+
+    def get_checkpoints(self, checkpoint_dir=None):
+        """
+        Get a collection of all container checkpoints in a given directory.
+        Similar to the ``docker checkpoint ls`` command.
+
+        Args:
+            checkpoint_dir (str): Custom directory in which to search for
+                checkpoints. Default: None (use default checkpoint dir)
+        Returns:
+            :py:class:`CheckpointCollection`
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        return CheckpointCollection(
+            container_id=self.id,
+            checkpoint_dir=checkpoint_dir,
+            client=self.client,
+        )
 
     def kill(self, signal=None):
         """

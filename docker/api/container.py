@@ -3,6 +3,7 @@ from datetime import datetime
 from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
+from ..models.checkpoints import Checkpoint
 from ..types import CancellableStream
 from ..types import ContainerConfig
 from ..types import EndpointConfig
@@ -1189,8 +1190,10 @@ class ContainerApiMixin:
 
         Args:
             container (str): The container to start
-            checkpoint (str): (Experimental) The checkpoint ID from which
-                to start. Default: None (do not start from a checkpoint)
+            checkpoint (:py:class:`docker.models.checkpoints.Checkpoint` or
+                str):
+                (Experimental) The checkpoint ID from which to start.
+                Default: None (do not start from a checkpoint)
             checkpoint_dir (str): (Experimental) Custom directory in which to
                 search for checkpoints. Default: None (use default
                 checkpoint dir)
@@ -1211,6 +1214,8 @@ class ContainerApiMixin:
         """
         params = {}
         if checkpoint:
+            if isinstance(checkpoint, Checkpoint):
+                checkpoint = checkpoint.id
             params["checkpoint"] = checkpoint
         if checkpoint_dir:
             params['checkpoint-dir'] = checkpoint_dir

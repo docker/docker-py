@@ -19,6 +19,8 @@ FAKE_VOLUME_NAME = 'perfectcherryblossom'
 FAKE_NODE_ID = '24ifsmvkjbyhk'
 FAKE_SECRET_ID = 'epdyrw4tsi03xy3deu8g8ly6o'
 FAKE_SECRET_NAME = 'super_secret'
+FAKE_CHECKPOINT_ID = "my-checkpoint"
+FAKE_CHECKPOINT_DIR = "/my-dir"
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
@@ -145,6 +147,24 @@ def post_fake_resize_container():
 def post_fake_create_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
+    return status_code, response
+
+
+def post_fake_container_create_checkpoint():
+    status_code = 201
+    response = ""
+    return status_code, response
+
+
+def get_fake_container_checkpoints():
+    status_code = 200
+    response = [{"Name": FAKE_CHECKPOINT_ID}]
+    return status_code, response
+
+
+def delete_fake_container_remove_checkpoint():
+    status_code = 204
+    response = ""
     return status_code, response
 
 
@@ -568,6 +588,12 @@ fake_responses = {
     post_fake_update_container,
     f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/exec':
     post_fake_exec_create,
+    (f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/checkpoints', "POST"):  # noqa: E501
+    post_fake_container_create_checkpoint,
+    (f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/checkpoints', "GET"):  # noqa: E501
+    get_fake_container_checkpoints,
+    f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/checkpoints/{FAKE_CHECKPOINT_ID}':  # noqa: E501
+    delete_fake_container_remove_checkpoint,
     f'{prefix}/{CURRENT_VERSION}/exec/{FAKE_EXEC_ID}/start':
     post_fake_exec_start,
     f'{prefix}/{CURRENT_VERSION}/exec/{FAKE_EXEC_ID}/json':
