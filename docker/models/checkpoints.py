@@ -33,7 +33,11 @@ class Checkpoint(Model):
             checkpoint=self.id,
             checkpoint_dir=self.collection.checkpoint_dir,
         )
-
+    
+    def __eq__(self, other):
+        if isinstance(other, Checkpoint):
+            return self.id == other.id
+        return self.id == other
 
 class CheckpointCollection(Collection):
     """(Experimental)."""
@@ -94,7 +98,7 @@ class CheckpointCollection(Collection):
         checkpoints = self.list()
 
         for checkpoint in checkpoints:
-            if checkpoint.id == id:
+            if checkpoint == id:
                 return checkpoint
 
         raise CheckpointNotFound(
