@@ -85,6 +85,20 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert len(test_services) == 1
         assert test_services[0]['Spec']['Labels']['test_label'] == 'testing'
 
+    @requires_api_version('1.41')
+    def test_list_services_with_status(self):
+        test_services = self.client.services()
+        assert len(test_services) == 0
+        self.create_simple_service()
+        test_services = self.client.services(
+            filters={'name': 'dockerpytest_'}, status=False
+        )
+        assert 'ServiceStatus' not in test_services[0]
+        test_services = self.client.services(
+            filters={'name': 'dockerpytest_'}, status=True
+        )
+        assert 'ServiceStatus' in test_services[0]
+
     def test_inspect_service_by_id(self):
         svc_name, svc_id = self.create_simple_service()
         svc_info = self.client.inspect_service(svc_id)
