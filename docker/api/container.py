@@ -957,7 +957,7 @@ class ContainerApiMixin:
         return h_ports
 
     @utils.check_resource('container')
-    def put_archive(self, container, path, data):
+    def put_archive(self, container, path, data, copy_uid_gid=False):
         """
         Insert a file or folder in an existing container using a tar archive as
         source.
@@ -967,6 +967,7 @@ class ContainerApiMixin:
             path (str): Path inside the container where the file(s) will be
                 extracted. Must exist.
             data (bytes or stream): tar data to be extracted
+            copy_uid_gid (bool): copy UID/GID maps to the dest file or dir
 
         Returns:
             (bool): True if the call succeeds.
@@ -975,7 +976,7 @@ class ContainerApiMixin:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        params = {'path': path}
+        params = {'path': path, 'copyUIDGID': copy_uid_gid}
         url = self._url('/containers/{0}/archive', container)
         res = self._put(url, params=params, data=data)
         self._raise_for_status(res)
