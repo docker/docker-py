@@ -316,7 +316,7 @@ class Container(Model):
         """
         return self.client.api.pause(self.id)
 
-    def put_archive(self, path, data):
+    def put_archive(self, path, data, **kwargs):
         """
         Insert a file or folder in this container using a tar archive as
         source.
@@ -325,6 +325,7 @@ class Container(Model):
             path (str): Path inside the container where the file(s) will be
                 extracted. Must exist.
             data (bytes or stream): tar data to be extracted
+            copy_uid_gid (bool): copy UID/GID maps to the dest file or dir
 
         Returns:
             (bool): True if the call succeeds.
@@ -332,7 +333,7 @@ class Container(Model):
         Raises:
             :py:class:`~docker.errors.APIError` If an error occurs.
         """
-        return self.client.api.put_archive(self.id, path, data)
+        return self.client.api.put_archive(self.id, path, data, **kwargs)
 
     def remove(self, **kwargs):
         """
