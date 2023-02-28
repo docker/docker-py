@@ -266,6 +266,8 @@ class ServiceCollection(Collection):
             filters (dict): Filters to process on the nodes list. Valid
                 filters: ``id``, ``name`` , ``label`` and ``mode``.
                 Default: ``None``.
+            status (bool): Include the service task count of running and
+                desired tasks. Default: ``None``.
 
         Returns:
             list of :py:class:`Service`: The services.

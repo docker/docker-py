@@ -49,7 +49,7 @@ def read(socket, n=4096):
         if is_pipe_ended:
             # npipes don't support duplex sockets, so we interpret
             # a PIPE_ENDED error as a close operation (0-length read).
-            return 0
+            return ''
         raise
 
 
