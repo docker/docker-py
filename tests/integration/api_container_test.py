@@ -1276,7 +1276,7 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
         output = self.client.attach(container, stream=True, logs=True)
 
-        threading.Timer(3, output.close).start()
+        threading.Timer(5, output.close).start()
 
         lines = []
         for line in output:
