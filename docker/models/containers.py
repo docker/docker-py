@@ -150,7 +150,7 @@ class Container(Model):
         return self.client.api.diff(self.id)
 
     def exec_run(self, cmd, stdout=True, stderr=True, stdin=False, tty=False,
-                 privileged=False, user='', detach=False, stream=False,
+                 privileged=False, user='root', detach=False, stream=False,
                  socket=False, environment=None, workdir=None, demux=False):
         """
         Run a command inside this container. Similar to
