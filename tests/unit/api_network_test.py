@@ -2,11 +2,7 @@ import json
 
 from .api_test import BaseAPIClientTest, url_prefix, response
 from docker.types import IPAMConfig, IPAMPool
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
+from unittest import mock
 
 
 class NetworkTest(BaseAPIClientTest):

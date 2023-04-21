@@ -30,13 +30,18 @@ class ServiceTest(unittest.TestCase):
             # ContainerSpec arguments
             image="alpine",
             command="sleep 300",
-            container_labels={'container': 'label'}
+            container_labels={'container': 'label'},
+            rollback_config={'order': 'start-first'}
         )
         assert service.name == name
         assert service.attrs['Spec']['Labels']['foo'] == 'bar'
         container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
         assert "alpine" in container_spec['Image']
         assert container_spec['Labels'] == {'container': 'label'}
+        spec_rollback = service.attrs['Spec'].get('RollbackConfig', None)
+        assert spec_rollback is not None
+        assert ('Order' in spec_rollback and
+               spec_rollback['Order'] == 'start-first')
 
     def test_create_with_network(self):
         client = docker.from_env(version=TEST_API_VERSION)
@@ -333,3 +338,41 @@ class ServiceTest(unittest.TestCase):
         assert service.force_update()
         service.reload()
         assert service.version > initial_version
+
+    @helpers.requires_api_version('1.41')
+    def test_create_cap_add(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        name = helpers.random_name()
+        service = client.services.create(
+            name=name,
+            labels={'foo': 'bar'},
+            image="alpine",
+            command="sleep 300",
+            container_labels={'container': 'label'},
+            cap_add=["CAP_SYSLOG"]
+        )
+        assert service.name == name
+        assert service.attrs['Spec']['Labels']['foo'] == 'bar'
+        container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert "alpine" in container_spec['Image']
+        assert container_spec['Labels'] == {'container': 'label'}
+        assert "CAP_SYSLOG" in container_spec["CapabilityAdd"]
+
+    @helpers.requires_api_version('1.41')
+    def test_create_cap_drop(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        name = helpers.random_name()
+        service = client.services.create(
+            name=name,
+            labels={'foo': 'bar'},
+            image="alpine",
+            command="sleep 300",
+            container_labels={'container': 'label'},
+            cap_drop=["CAP_SYSLOG"]
+        )
+        assert service.name == name
+        assert service.attrs['Spec']['Labels']['foo'] == 'bar'
+        container_spec = service.attrs['Spec']['TaskTemplate']['ContainerSpec']
+        assert "alpine" in container_spec['Image']
+        assert container_spec['Labels'] == {'container': 'label'}
+        assert "CAP_SYSLOG" in container_spec["CapabilityDrop"]

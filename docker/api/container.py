@@ -223,7 +223,7 @@ class ContainerApiMixin:
                          mac_address=None, labels=None, stop_signal=None,
                          networking_config=None, healthcheck=None,
                          stop_timeout=None, runtime=None,
-                         use_config_proxy=True):
+                         use_config_proxy=True, platform=None):
         """
         Creates a container. Parameters are similar to those for the ``docker
         run`` command except it doesn't support the attach options (``-a``).
@@ -256,7 +256,9 @@ class ContainerApiMixin:
 
         .. code-block:: python
 
-            client.api.create_host_config(port_bindings={1111: ('127.0.0.1', 4567)})
+            client.api.create_host_config(
+                port_bindings={1111: ('127.0.0.1', 4567)}
+            )
 
         Or without host port assignment:
 
@@ -396,6 +398,7 @@ class ContainerApiMixin:
                 configuration file (``~/.docker/config.json`` by default)
                 contains a proxy configuration, the corresponding environment
                 variables will be set in the container being created.
+            platform (str): Platform in the format ``os[/arch[/variant]]``.
 
         Returns:
             A dictionary with an image 'Id' key and a 'Warnings' key.
@@ -425,16 +428,22 @@ class ContainerApiMixin:
             stop_signal, networking_config, healthcheck,
             stop_timeout, runtime
         )
-        return self.create_container_from_config(config, name)
+        return self.create_container_from_config(config, name, platform)
 
     def create_container_config(self, *args, **kwargs):
         return ContainerConfig(self._version, *args, **kwargs)
 
-    def create_container_from_config(self, config, name=None):
+    def create_container_from_config(self, config, name=None, platform=None):
         u = self._url("/containers/create")
         params = {
             'name': name
         }
+        if platform:
+            if utils.version_lt(self._version, '1.41'):
+                raise errors.InvalidVersion(
+                    'platform is not supported for API version < 1.41'
+                )
+            params['platform'] = platform
         res = self._post_json(u, data=config, params=params)
         return self._result(res, True)
 
@@ -579,10 +588,13 @@ class ContainerApiMixin:
 
         Example:
 
-            >>> client.api.create_host_config(privileged=True, cap_drop=['MKNOD'],
-                                       volumes_from=['nostalgic_newton'])
+            >>> client.api.create_host_config(
+            ...     privileged=True,
+            ...     cap_drop=['MKNOD'],
+            ...     volumes_from=['nostalgic_newton'],
+            ... )
             {'CapDrop': ['MKNOD'], 'LxcConf': None, 'Privileged': True,
-             'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
+            'VolumesFrom': ['nostalgic_newton'], 'PublishAllPorts': False}
 
 """
         if not kwargs:
@@ -814,11 +826,12 @@ class ContainerApiMixin:
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in fractional seconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in fractional seconds)
 
         Returns:
             (generator or str)
@@ -843,9 +856,11 @@ class ContainerApiMixin:
                 params['since'] = utils.datetime_to_timestamp(since)
             elif (isinstance(since, int) and since > 0):
                 params['since'] = since
+            elif (isinstance(since, float) and since > 0.0):
+                params['since'] = since
             else:
                 raise errors.InvalidArgument(
-                    'since value should be datetime or positive int, '
+                    'since value should be datetime or positive int/float, '
                     'not {}'.format(type(since))
                 )
 
@@ -858,9 +873,11 @@ class ContainerApiMixin:
                 params['until'] = utils.datetime_to_timestamp(until)
             elif (isinstance(until, int) and until > 0):
                 params['until'] = until
+            elif (isinstance(until, float) and until > 0.0):
+                params['until'] = until
             else:
                 raise errors.InvalidArgument(
-                    'until value should be datetime or positive int, '
+                    'until value should be datetime or positive int/float, '
                     'not {}'.format(type(until))
                 )
 
@@ -949,7 +966,7 @@ class ContainerApiMixin:
             container (str): The container where the file(s) will be extracted
             path (str): Path inside the container where the file(s) will be
                 extracted. Must exist.
-            data (bytes): tar data to be extracted
+            data (bytes or stream): tar data to be extracted
 
         Returns:
             (bool): True if the call succeeds.
@@ -1109,7 +1126,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def stats(self, container, decode=None, stream=True):
+    def stats(self, container, decode=None, stream=True, one_shot=None):
         """
         Stream statistics for a specific container. Similar to the
         ``docker stats`` command.
@@ -1121,6 +1138,9 @@ class ContainerApiMixin:
                 False by default.
             stream (bool): If set to false, only the current stats will be
                 returned instead of a stream. True by default.
+            one_shot (bool): If set to true, Only get a single stat instead of
+                waiting for 2 cycles. Must be used with stream=false. False by
+                default.
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -1128,16 +1148,29 @@ class ContainerApiMixin:
 
         """
         url = self._url("/containers/{0}/stats", container)
+        params = {
+            'stream': stream
+        }
+        if one_shot is not None:
+            if utils.version_lt(self._version, '1.41'):
+                raise errors.InvalidVersion(
+                    'one_shot is not supported for API version < 1.41'
+                )
+            params['one-shot'] = one_shot
         if stream:
-            return self._stream_helper(self._get(url, stream=True),
+            if one_shot:
+                raise errors.InvalidArgument(
+                    'one_shot is only available in conjunction with '
+                    'stream=False'
+                )
+            return self._stream_helper(self._get(url, params=params),
                                        decode=decode)
         else:
             if decode:
                 raise errors.InvalidArgument(
                     "decode is only available in conjunction with stream=True"
                 )
-            return self._result(self._get(url, params={'stream': False}),
-                                json=True)
+            return self._result(self._get(url, params=params), json=True)
 
     @utils.check_resource('container')
     def stop(self, container, timeout=None):

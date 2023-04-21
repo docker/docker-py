@@ -1,9 +1,9 @@
 import os
 import random
+import shutil
 import sys
 
 import pytest
-from distutils.spawn import find_executable
 
 from docker.credentials import (
     CredentialsNotFound, Store, StoreError, DEFAULT_LINUX_STORE,
@@ -22,9 +22,9 @@ class TestStore:
     def setup_method(self):
         self.tmp_keys = []
         if sys.platform.startswith('linux'):
-            if find_executable('docker-credential-' + DEFAULT_LINUX_STORE):
+            if shutil.which('docker-credential-' + DEFAULT_LINUX_STORE):
                 self.store = Store(DEFAULT_LINUX_STORE)
-            elif find_executable('docker-credential-pass'):
+            elif shutil.which('docker-credential-pass'):
                 self.store = Store('pass')
             else:
                 raise Exception('No supported docker-credential store in PATH')
@@ -84,3 +84,10 @@ class TestStore:
         data = self.store._execute('--null', '')
         assert b'\0FOO=bar\0' in data
         assert 'FOO' not in os.environ
+
+    def test_unavailable_store(self):
+        some_unavailable_store = None
+        with pytest.warns(UserWarning):
+            some_unavailable_store = Store('that-does-not-exist')
+        with pytest.raises(StoreError):
+            some_unavailable_store.get('anything-this-does-not-matter')

@@ -4,7 +4,8 @@ from ..utils import normalize_links, version_lt
 
 class EndpointConfig(dict):
     def __init__(self, version, aliases=None, links=None, ipv4_address=None,
-                 ipv6_address=None, link_local_ips=None, driver_opt=None):
+                 ipv6_address=None, link_local_ips=None, driver_opt=None,
+                 mac_address=None):
         if version_lt(version, '1.22'):
             raise errors.InvalidVersion(
                 'Endpoint config is not supported for API version < 1.22'
@@ -22,6 +23,13 @@ class EndpointConfig(dict):
 
         if ipv6_address:
             ipam_config['IPv6Address'] = ipv6_address
+
+        if mac_address:
+            if version_lt(version, '1.25'):
+                raise errors.InvalidVersion(
+                    'mac_address is not supported for API version < 1.25'
+                )
+            self['MacAddress'] = mac_address
 
         if link_local_ips is not None:
             if version_lt(version, '1.24'):

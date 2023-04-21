@@ -267,7 +267,7 @@ class APIClient(
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise create_api_error_from_http_exception(e)
+            raise create_api_error_from_http_exception(e) from e
 
     def _result(self, response, json=False, binary=False):
         assert not (json and binary)
@@ -397,9 +397,19 @@ class APIClient(
     def _stream_raw_result(self, response, chunk_size=1, decode=True):
         ''' Stream result for TTY-enabled container and raw binary data'''
         self._raise_for_status(response)
+
+        # Disable timeout on the underlying socket to prevent
+        # Read timed out(s) for long running processes
+        socket = self._get_raw_response_socket(response)
+        self._disable_socket_timeout(socket)
+
         yield from response.iter_content(chunk_size, decode)
 
     def _read_from_socket(self, response, stream, tty=True, demux=False):
+        """Consume all data from the socket, close the response and return the
+        data. If stream=True, then a generator is returned instead and the
+        caller is responsible for closing the response.
+        """
         socket = self._get_raw_response_socket(response)
 
         gen = frames_iter(socket, tty)
@@ -414,8 +424,11 @@ class APIClient(
         if stream:
             return gen
         else:
-            # Wait for all the frames, concatenate them, and return the result
-            return consume_socket_output(gen, demux=demux)
+            try:
+                # Wait for all frames, concatenate them, and return the result
+                return consume_socket_output(gen, demux=demux)
+            finally:
+                response.close()
 
     def _disable_socket_timeout(self, socket):
         """ Depending on the combination of python version and whether we're

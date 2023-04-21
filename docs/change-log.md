@@ -1,5 +1,98 @@
-Change log
+Changelog
 ==========
+
+6.0.0
+-----
+
+### Upgrade Notes
+- Minimum supported Python version is 3.7+
+- When installing with pip, the `docker[tls]` extra is deprecated and a no-op,
+  use `docker` for same functionality (TLS support is always available now)
+- Native Python SSH client (used by default / `use_ssh_client=False`) will now
+  reject unknown host keys with `paramiko.ssh_exception.SSHException`
+- Short IDs are now 12 characters instead of 10 characters (same as Docker CLI)
+
+### Features
+- Python 3.10 support
+- Automatically negotiate most secure TLS version
+- Add `platform` (e.g. `linux/amd64`, `darwin/arm64`) to container create & run
+- Add support for `GlobalJob` and `ReplicatedJobs` for Swarm
+- Add `remove()` method on `Image`
+- Add `force` param to `disable()` on `Plugin`
+
+### Bugfixes
+- Fix install issues on Windows related to `pywin32`
+- Do not accept unknown SSH host keys in native Python SSH mode
+- Use 12 character short IDs for consistency with Docker CLI
+- Ignore trailing whitespace in `.dockerignore` files
+- Fix IPv6 host parsing when explicit port specified
+- Fix `ProxyCommand` option for SSH connections
+- Do not spawn extra subshell when launching external SSH client
+- Improve exception semantics to preserve context
+- Documentation improvements (formatting, examples, typos, missing params)
+
+### Miscellaneous
+- Upgrade dependencies in `requirements.txt` to latest versions
+- Remove extraneous transitive dependencies
+- Eliminate usages of deprecated functions/methods
+- Test suite reliability improvements
+- GitHub Actions workflows for linting, unit tests, integration tests, and
+  publishing releases
+
+5.0.3
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/76?closed=1)
+
+### Features
+- Add `cap_add` and `cap_drop` parameters to service create and ContainerSpec
+- Add `templating` parameter to config create
+
+### Bugfixes
+- Fix getting a read timeout for logs/attach with a tty and slow output
+
+### Miscellaneous
+- Fix documentation examples
+
+5.0.2
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/75?closed=1)
+
+### Bugfixes
+- Fix `disable_buffering` regression
+
+5.0.1
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/74?closed=1)
+
+### Bugfixes
+- Bring back support for ssh identity file
+- Cleanup remaining python-2 dependencies
+- Fix image save example in docs
+
+### Miscellaneous
+- Bump urllib3 to 1.26.5
+- Bump requests to 2.26.0
+
+5.0.0
+-----
+
+[List of PRs / issues for this release](https://github.com/docker/docker-py/milestone/70?closed=1)
+
+### Breaking changes
+- Remove support for Python 2.7
+- Make Python 3.6 the minimum version supported
+
+### Features
+- Add `limit` parameter to image search endpoint
+
+### Bugfixes
+- Fix `KeyError` exception on secret create
+- Verify TLS keys loaded from docker contexts
+- Update PORT_SPEC regex to allow square brackets for IPv6 addresses
+- Fix containers and images documentation examples
 
 4.4.4
 -----

@@ -290,11 +290,12 @@ class Container(Model):
             tail (str or int): Output specified number of lines at the end of
                 logs. Either an integer of number of lines or the string
                 ``all``. Default ``all``
-            since (datetime or int): Show logs since a given datetime or
-                integer epoch (in seconds)
+            since (datetime, int, or float): Show logs since a given datetime,
+                integer epoch (in seconds) or float (in nanoseconds)
             follow (bool): Follow log output. Default ``False``
-            until (datetime or int): Show logs that occurred before the given
-                datetime or integer epoch (in seconds)
+            until (datetime, int, or float): Show logs that occurred before
+                the given datetime, integer epoch (in seconds), or
+                float (in nanoseconds)
 
         Returns:
             (generator or str): Logs from the container.
@@ -323,7 +324,7 @@ class Container(Model):
         Args:
             path (str): Path inside the container where the file(s) will be
                 extracted. Must exist.
-            data (bytes): tar data to be extracted
+            data (bytes or stream): tar data to be extracted
 
         Returns:
             (bool): True if the call succeeds.
@@ -553,6 +554,11 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cgroup_parent (str): Override the default parent cgroup.
+            cgroupns (str): Override the default cgroup namespace mode for the
+                container. One of:
+                - ``private`` the container runs in its own private cgroup
+                  namespace.
+                - ``host`` use the host system's cgroup namespace.
             cpu_count (int): Number of usable CPUs (Windows only).
             cpu_percent (int): Usable percentage of the available CPUs
                 (Windows only).
@@ -600,7 +606,28 @@ class ContainerCollection(Collection):
             group_add (:py:class:`list`): List of additional group names and/or
                 IDs that the container process will run as.
             healthcheck (dict): Specify a test to perform to check that the
-                container is healthy.
+                container is healthy. The dict takes the following keys:
+
+                - test (:py:class:`list` or str): Test to perform to determine
+                    container health. Possible values:
+
+                    - Empty list: Inherit healthcheck from parent image
+                    - ``["NONE"]``: Disable healthcheck
+                    - ``["CMD", args...]``: exec arguments directly.
+                    - ``["CMD-SHELL", command]``: Run command in the system's
+                      default shell.
+
+                    If a string is provided, it will be used as a ``CMD-SHELL``
+                    command.
+                - interval (int): The time to wait between checks in
+                  nanoseconds. It should be 0 or at least 1000000 (1 ms).
+                - timeout (int): The time to wait before considering the check
+                  to have hung. It should be 0 or at least 1000000 (1 ms).
+                - retries (int): The number of consecutive failures needed to
+                    consider a container as unhealthy.
+                - start_period (int): Start period for the container to
+                    initialize before starting health-retries countdown in
+                    nanoseconds. It should be 0 or at least 1000000 (1 ms).
             hostname (str): Optional hostname for the container.
             init (bool): Run an init inside the container that forwards
                 signals and reaps processes
@@ -644,7 +671,7 @@ class ContainerCollection(Collection):
             network_mode (str): One of:
 
                 - ``bridge`` Create a new network stack for the container on
-                  on the bridge network.
+                  the bridge network.
                 - ``none`` No networking for this container.
                 - ``container:<name|id>`` Reuse another container's network
                   stack.
@@ -652,6 +679,10 @@ class ContainerCollection(Collection):
                   This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
+            network_driver_opt (dict): A dictionary of options to provide
+                to the network driver. Defaults to ``None``. Used in
+                conjuction with ``network``. Incompatible
+                with ``network_mode``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -761,6 +792,15 @@ class ContainerCollection(Collection):
                     {'/home/user1/': {'bind': '/mnt/vol2', 'mode': 'rw'},
                      '/var/www': {'bind': '/mnt/vol1', 'mode': 'ro'}}
 
+                Or a list of strings which each one of its elements specifies a
+                mount volume.
+
+                For example:
+
+                .. code-block:: python
+
+                    ['/home/user1/:/mnt/vol2','/var/www:/mnt/vol1']
+
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
             working_dir (str): Path to the working directory.
@@ -792,7 +832,7 @@ class ContainerCollection(Collection):
             image = image.id
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
-        platform = kwargs.pop('platform', None)
+        platform = kwargs.get('platform', None)
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -805,6 +845,12 @@ class ContainerCollection(Collection):
             raise RuntimeError(
                 'The options "network" and "network_mode" can not be used '
                 'together.'
+            )
+
+        if kwargs.get('network_driver_opt') and not kwargs.get('network'):
+            raise RuntimeError(
+                'The options "network_driver_opt" can not be used '
+                'without "network".'
             )
 
         try:
@@ -976,6 +1022,7 @@ RUN_CREATE_KWARGS = [
     'mac_address',
     'name',
     'network_disabled',
+    'platform',
     'stdin_open',
     'stop_signal',
     'tty',
@@ -992,6 +1039,7 @@ RUN_HOST_CONFIG_KWARGS = [
     'cap_add',
     'cap_drop',
     'cgroup_parent',
+    'cgroupns',
     'cpu_count',
     'cpu_percent',
     'cpu_period',
@@ -1075,8 +1123,12 @@ def _create_container_args(kwargs):
         host_config_kwargs['binds'] = volumes
 
     network = kwargs.pop('network', None)
+    network_driver_opt = kwargs.pop('network_driver_opt', None)
     if network:
-        create_kwargs['networking_config'] = {network: None}
+        network_configuration = {'driver_opt': network_driver_opt} \
+            if network_driver_opt else None
+
+        create_kwargs['networking_config'] = {network: network_configuration}
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
@@ -1109,8 +1161,10 @@ def _host_volume_from_bind(bind):
     bits = rest.split(':', 1)
     if len(bits) == 1 or bits[1] in ('ro', 'rw'):
         return drive + bits[0]
+    elif bits[1].endswith(':ro') or bits[1].endswith(':rw'):
+        return bits[1][:-3]
     else:
-        return bits[1].rstrip(':ro').rstrip(':rw')
+        return bits[1]
 
 
 ExecResult = namedtuple('ExecResult', 'exit_code,output')

@@ -21,7 +21,7 @@ class VolumeApiMixin:
 
         Example:
 
-            >>> cli.volumes()
+            >>> client.api.volumes()
             {u'Volumes': [{u'Driver': u'local',
                u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
                u'Name': u'foobar'},
@@ -56,15 +56,18 @@ class VolumeApiMixin:
 
         Example:
 
-            >>> volume = cli.create_volume(name='foobar', driver='local',
-                    driver_opts={'foo': 'bar', 'baz': 'false'},
-                    labels={"key": "value"})
-            >>> print(volume)
+            >>> volume = client.api.create_volume(
+            ...     name='foobar',
+            ...     driver='local',
+            ...     driver_opts={'foo': 'bar', 'baz': 'false'},
+            ...     labels={"key": "value"},
+            ... )
+            ... print(volume)
             {u'Driver': u'local',
-             u'Labels': {u'key': u'value'},
-             u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
-             u'Name': u'foobar',
-             u'Scope': u'local'}
+            u'Labels': {u'key': u'value'},
+            u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
+            u'Name': u'foobar',
+            u'Scope': u'local'}
 
         """
         url = self._url('/volumes/create')
@@ -104,7 +107,7 @@ class VolumeApiMixin:
 
         Example:
 
-            >>> cli.inspect_volume('foobar')
+            >>> client.api.inspect_volume('foobar')
             {u'Driver': u'local',
              u'Mountpoint': u'/var/lib/docker/volumes/foobar/_data',
              u'Name': u'foobar'}

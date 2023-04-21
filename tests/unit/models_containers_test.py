@@ -39,6 +39,7 @@ class ContainerCollectionTest(unittest.TestCase):
             cap_add=['foo'],
             cap_drop=['bar'],
             cgroup_parent='foobar',
+            cgroupns='host',
             cpu_period=1,
             cpu_quota=2,
             cpu_shares=5,
@@ -73,10 +74,12 @@ class ContainerCollectionTest(unittest.TestCase):
             name='somename',
             network_disabled=False,
             network='foo',
+            network_driver_opt={'key1': 'a'},
             oom_kill_disable=True,
             oom_score_adj=5,
             pid_mode='host',
             pids_limit=500,
+            platform='linux',
             ports={
                 1111: 4567,
                 2222: None
@@ -101,7 +104,7 @@ class ContainerCollectionTest(unittest.TestCase):
             volumes=[
                 '/home/user1/:/mnt/vol2',
                 '/var/www:/mnt/vol1:ro',
-                'volumename:/mnt/vol3',
+                'volumename:/mnt/vol3r',
                 '/volumewithnohostpath',
                 '/anothervolumewithnohostpath:ro',
                 'C:\\windows\\path:D:\\hello\\world:rw'
@@ -121,7 +124,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'Binds': [
                     '/home/user1/:/mnt/vol2',
                     '/var/www:/mnt/vol1:ro',
-                    'volumename:/mnt/vol3',
+                    'volumename:/mnt/vol3r',
                     '/volumewithnohostpath',
                     '/anothervolumewithnohostpath:ro',
                     'C:\\windows\\path:D:\\hello\\world:rw'
@@ -134,6 +137,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'BlkioWeight': 2,
                 'CapAdd': ['foo'],
                 'CapDrop': ['bar'],
+                'CgroupnsMode': 'host',
                 'CgroupParent': 'foobar',
                 'CpuPeriod': 1,
                 'CpuQuota': 2,
@@ -185,7 +189,8 @@ class ContainerCollectionTest(unittest.TestCase):
             mac_address='abc123',
             name='somename',
             network_disabled=False,
-            networking_config={'foo': None},
+            networking_config={'foo': {'driver_opt': {'key1': 'a'}}},
+            platform='linux',
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
             stop_signal=9,
@@ -194,7 +199,7 @@ class ContainerCollectionTest(unittest.TestCase):
             volumes=[
                 '/mnt/vol2',
                 '/mnt/vol1',
-                '/mnt/vol3',
+                '/mnt/vol3r',
                 '/volumewithnohostpath',
                 '/anothervolumewithnohostpath',
                 'D:\\hello\\world'
@@ -314,6 +319,69 @@ class ContainerCollectionTest(unittest.TestCase):
                          'NetworkMode': 'default'}
         )
 
+    def test_run_platform(self):
+        client = make_fake_client()
+
+        # raise exception on first call, then return normal value
+        client.api.create_container.side_effect = [
+            docker.errors.ImageNotFound(""),
+            client.api.create_container.return_value
+        ]
+
+        client.containers.run(image='alpine', platform='linux/arm64')
+
+        client.api.pull.assert_called_with(
+            'alpine',
+            tag='latest',
+            all_tags=False,
+            stream=True,
+            platform='linux/arm64',
+        )
+
+        client.api.create_container.assert_called_with(
+            detach=False,
+            platform='linux/arm64',
+            image='alpine',
+            command=None,
+            host_config={'NetworkMode': 'default'},
+        )
+
+    def test_run_network_driver_opts_without_network(self):
+        client = make_fake_client()
+
+        with pytest.raises(RuntimeError):
+            client.containers.run(
+                image='alpine',
+                network_driver_opt={'key1': 'a'}
+            )
+
+    def test_run_network_driver_opts_with_network_mode(self):
+        client = make_fake_client()
+
+        with pytest.raises(RuntimeError):
+            client.containers.run(
+                image='alpine',
+                network_mode='none',
+                network_driver_opt={'key1': 'a'}
+            )
+
+    def test_run_network_driver_opts(self):
+        client = make_fake_client()
+
+        client.containers.run(
+            image='alpine',
+            network='foo',
+            network_driver_opt={'key1': 'a'}
+        )
+
+        client.api.create_container.assert_called_with(
+            detach=False,
+            image='alpine',
+            command=None,
+            networking_config={'foo': {'driver_opt': {'key1': 'a'}}},
+            host_config={'NetworkMode': 'foo'}
+        )
+
     def test_create(self):
         client = make_fake_client()
         container = client.containers.create(
@@ -339,6 +407,51 @@ class ContainerCollectionTest(unittest.TestCase):
             image=image.id,
             command=None,
             host_config={'NetworkMode': 'default'}
+        )
+
+    def test_create_network_driver_opts_without_network(self):
+        client = make_fake_client()
+
+        client.containers.create(
+            image='alpine',
+            network_driver_opt={'key1': 'a'}
+        )
+
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            host_config={'NetworkMode': 'default'}
+        )
+
+    def test_create_network_driver_opts_with_network_mode(self):
+        client = make_fake_client()
+
+        client.containers.create(
+            image='alpine',
+            network_mode='none',
+            network_driver_opt={'key1': 'a'}
+        )
+
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            host_config={'NetworkMode': 'none'}
+        )
+
+    def test_create_network_driver_opts(self):
+        client = make_fake_client()
+
+        client.containers.create(
+            image='alpine',
+            network='foo',
+            network_driver_opt={'key1': 'a'}
+        )
+
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            networking_config={'foo': {'driver_opt': {'key1': 'a'}}},
+            host_config={'NetworkMode': 'foo'}
         )
 
     def test_get(self):
@@ -377,6 +490,11 @@ class ContainerCollectionTest(unittest.TestCase):
 
 
 class ContainerTest(unittest.TestCase):
+    def test_short_id(self):
+        container = Container(attrs={'Id': '8497fe9244dd45cac543eb3c37d8605077'
+                                           '6800eebef1f3ec2ee111e8ccf12db6'})
+        assert container.short_id == '8497fe9244dd'
+
     def test_name(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)

@@ -76,6 +76,7 @@ class BuildApiMixin:
             forcerm (bool): Always remove intermediate containers, even after
                 unsuccessful builds
             dockerfile (str): path within the build context to the Dockerfile
+            gzip (bool): If set to ``True``, gzip compression/encoding is used
             buildargs (dict): A dictionary of build arguments
             container_limits (dict): A dictionary of limits applied to each
                 container created by the build process. Valid keys:
@@ -153,7 +154,7 @@ class BuildApiMixin:
                 with open(dockerignore) as f:
                     exclude = list(filter(
                         lambda x: x != '' and x[0] != '#',
-                        [l.strip() for l in f.read().splitlines()]
+                        [line.strip() for line in f.read().splitlines()]
                     ))
             dockerfile = process_dockerfile(dockerfile, path)
             context = utils.tar(
