@@ -56,7 +56,7 @@ class NpipeSocket:
                 0,
                 None,
                 win32file.OPEN_EXISTING,
-                cSECURITY_ANONYMOUS | cSECURITY_SQOS_PRESENT,
+                cSECURITY_ANONYMOUS | cSECURITY_SQOS_PRESENT | win32file.FILE_FLAG_OVERLAPPED,
                 0
             )
         except win32pipe.error as e:
