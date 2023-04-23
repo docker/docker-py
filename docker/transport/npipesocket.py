@@ -156,8 +156,15 @@ class NpipeSocket:
 
     @check_closed
     def send(self, string, flags=0):
-        err, nbytes = win32file.WriteFile(self._handle, string)
-        return nbytes
+        event = win32event.CreateEvent(None, True, True, None)
+        overlapped = pywintypes.OVERLAPPED()
+        overlapped.hEvent = event
+        win32file.WriteFile(self._handle, string, overlapped)
+        wait_result = win32event.WaitForSingleObject(event, self._timeout)
+        if wait_result == win32event.WAIT_TIMEOUT:
+            win32file.CancelIo(self._handle)
+            raise TimeoutError
+        return win32file.GetOverlappedResult(self._handle, overlapped, 0)
 
     @check_closed
     def sendall(self, string, flags=0):
