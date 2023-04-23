@@ -188,7 +188,7 @@ class NpipeSocket:
             raise ValueError('Timeout value out of range')
         else:
             # Timeout mode - Value converted to milliseconds
-            self._timeout = value * 1000
+            self._timeout = int(value * 1000)
 
     def gettimeout(self):
         return self._timeout
