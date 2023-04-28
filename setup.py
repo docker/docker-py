@@ -12,7 +12,7 @@ SOURCE_DIR = os.path.join(ROOT_DIR)
 requirements = [
     'packaging >= 14.0',
     'requests >= 2.26.0',
-    'urllib3 >= 1.26.0',
+    'urllib3 >= 1.26.0, < 2',
     'websocket-client >= 0.32.0',
 ]
 
