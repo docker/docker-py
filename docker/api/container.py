@@ -678,7 +678,8 @@ class ContainerApiMixin:
             container (str): The container to diff
 
         Returns:
-            (str)
+            (list) A list of dictionaries containing the attributes `Path`
+                and `Kind`.
 
         Raises:
             :py:class:`docker.errors.APIError`

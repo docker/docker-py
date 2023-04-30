@@ -141,7 +141,8 @@ class Container(Model):
         Inspect changes on a container's filesystem.
 
         Returns:
-            (str)
+            (list) A list of dictionaries containing the attributes `Path`
+                and `Kind`.
 
         Raises:
             :py:class:`docker.errors.APIError`
