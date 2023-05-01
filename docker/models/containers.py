@@ -121,7 +121,8 @@ class Container(Model):
             tag (str): The tag to push
             message (str): A commit message
             author (str): The name of the author
-            changes (str): Dockerfile instructions to apply while committing
+            changes (str or list): Dockerfile instructions to apply while
+                committing
             conf (dict): The configuration for the container. See the
                 `Engine API documentation
                 <https://docs.docker.com/reference/api/docker_remote_api/>`_
