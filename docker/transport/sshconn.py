@@ -11,12 +11,12 @@ import subprocess
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 
-import http.client as httplib
-
 try:
     import requests.packages.urllib3 as urllib3
+    import requests.packages.urllib3.connection as urllib3_connection
 except ImportError:
     import urllib3
+    import urllib3.connection as urllib3_connection
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
@@ -99,7 +99,7 @@ class SSHSocket(socket.socket):
         self.proc.terminate()
 
 
-class SSHConnection(httplib.HTTPConnection):
+class SSHConnection(urllib3_connection.HTTPConnection):
     def __init__(self, ssh_transport=None, timeout=60, host=None):
         super().__init__(
             'localhost', timeout=timeout
