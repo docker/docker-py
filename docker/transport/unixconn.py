@@ -5,18 +5,14 @@ import http.client as httplib
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 
-try:
-    import requests.packages.urllib3 as urllib3
-    import requests.packages.urllib3.connection as urllib3_connection
-except ImportError:
-    import urllib3
-    import urllib3.connection as urllib3_connection
+import urllib3
+import urllib3.connection
 
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
-class UnixHTTPConnection(urllib3_connection.HTTPConnection):
+class UnixHTTPConnection(urllib3.connection.HTTPConnection):
 
     def __init__(self, base_url, unix_socket, timeout=60):
         super().__init__(

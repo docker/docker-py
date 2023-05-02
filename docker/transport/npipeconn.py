@@ -5,17 +5,13 @@ from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 from .npipesocket import NpipeSocket
 
-try:
-    import requests.packages.urllib3 as urllib3
-    import requests.packages.urllib3.connection as urllib3_connection
-except ImportError:
-    import urllib3
-    import urllib3.connection as urllib3_connection
+import urllib3
+import urllib3.connection
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
-class NpipeHTTPConnection(urllib3_connection.HTTPConnection):
+class NpipeHTTPConnection(urllib3.connection.HTTPConnection):
     def __init__(self, npipe_path, timeout=60):
         super().__init__(
             'localhost', timeout=timeout
