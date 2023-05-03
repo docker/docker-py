@@ -1,6 +1,5 @@
 import requests.adapters
 import socket
-import http.client as httplib
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
@@ -27,12 +26,6 @@ class UnixHTTPConnection(urllib3.connection.HTTPConnection):
         sock.settimeout(self.timeout)
         sock.connect(self.unix_socket)
         self.sock = sock
-
-    def putheader(self, header, *values):
-        super().putheader(header, *values)
-
-    def response_class(self, sock, *args, **kwargs):
-        return httplib.HTTPResponse(sock, *args, **kwargs)
 
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
