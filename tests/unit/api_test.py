@@ -16,9 +16,9 @@ import http.server
 import docker
 import pytest
 import requests
+import urllib3
 from docker.api import APIClient
 from docker.constants import DEFAULT_DOCKER_API_VERSION
-from requests.packages import urllib3
 from unittest import mock
 
 from . import fake_api

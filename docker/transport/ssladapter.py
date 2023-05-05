@@ -7,10 +7,7 @@ from requests.adapters import HTTPAdapter
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 
-try:
-    import requests.packages.urllib3 as urllib3
-except ImportError:
-    import urllib3
+import urllib3
 
 
 PoolManager = urllib3.poolmanager.PoolManager
