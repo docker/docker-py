@@ -1,9 +1,6 @@
 import socket
 
-try:
-    import requests.packages.urllib3 as urllib3
-except ImportError:
-    import urllib3
+import urllib3
 
 from ..errors import DockerException
 

@@ -1,20 +1,17 @@
 import requests.adapters
 import socket
-import http.client as httplib
 
 from docker.transport.basehttpadapter import BaseHTTPAdapter
 from .. import constants
 
-try:
-    import requests.packages.urllib3 as urllib3
-except ImportError:
-    import urllib3
+import urllib3
+import urllib3.connection
 
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
-class UnixHTTPConnection(httplib.HTTPConnection):
+class UnixHTTPConnection(urllib3.connection.HTTPConnection):
 
     def __init__(self, base_url, unix_socket, timeout=60):
         super().__init__(
@@ -29,12 +26,6 @@ class UnixHTTPConnection(httplib.HTTPConnection):
         sock.settimeout(self.timeout)
         sock.connect(self.unix_socket)
         self.sock = sock
-
-    def putheader(self, header, *values):
-        super().putheader(header, *values)
-
-    def response_class(self, sock, *args, **kwargs):
-        return httplib.HTTPResponse(sock, *args, **kwargs)
 
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
