@@ -147,13 +147,6 @@ class NpipeSocket:
             raise TimeoutError
         return win32file.GetOverlappedResult(self._handle, overlapped, 0)
 
-    def _recv_into_py2(self, buf, nbytes):
-        raise RuntimeError
-        err, data = win32file.ReadFile(self._handle, nbytes or len(buf))
-        n = len(data)
-        buf[:n] = data
-        return n
-
     @check_closed
     def send(self, string, flags=0):
         event = win32event.CreateEvent(None, True, True, None)
