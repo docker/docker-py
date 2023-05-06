@@ -8,7 +8,7 @@ from ..errors import (
     ContainerError, DockerException, ImageNotFound,
     NotFound, create_unexpected_kwargs_error
 )
-from ..types import HostConfig
+from ..types import EndpointConfig, HostConfig, NetworkingConfig
 from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
@@ -680,10 +680,32 @@ class ContainerCollection(Collection):
                   This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
-            network_driver_opt (dict): A dictionary of options to provide
-                to the network driver. Defaults to ``None``. Used in
-                conjuction with ``network``. Incompatible
-                with ``network_mode``.
+            network_config (dict): A dictionary containing options that are
+                passed to the network driver during the connection.
+                Defaults to ``None``.
+                The dictionary contains the following keys:
+
+                - ``aliases`` (:py:class:`list`): A list of aliases for
+                    the network endpoint.
+                    Names in that list can be used within the network to
+                    reach this container. Defaults to ``None``.
+                - ``links`` (:py:class:`list`): A list of links for
+                    the network endpoint endpoint.
+                    Containers declared in this list will be linked to this
+                    container. Defaults to ``None``.
+                - ``ipv4_address`` (str): The IP address to assign to
+                    this container on the network, using the IPv4 protocol.
+                    Defaults to ``None``.
+                - ``ipv6_address`` (str): The IP address to assign to
+                    this container on the network, using the IPv6 protocol.
+                    Defaults to ``None``.
+                - ``link_local_ips`` (:py:class:`list`): A list of link-local
+                    (IPv4/IPv6) addresses.
+                - ``driver_opt`` (dict): A dictionary of options to provide to
+                    the network driver. Defaults to ``None``.
+
+                Used in conjuction with ``network``.
+                Incompatible with ``network_mode``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -1124,12 +1146,16 @@ def _create_container_args(kwargs):
         host_config_kwargs['binds'] = volumes
 
     network = kwargs.pop('network', None)
-    network_driver_opt = kwargs.pop('network_driver_opt', None)
+    network_config = kwargs.pop('network_config', None)
     if network:
-        network_configuration = {'driver_opt': network_driver_opt} \
-            if network_driver_opt else None
+        network_configuration = EndpointConfig(
+            host_config_kwargs['version'],
+            **network_config
+        ) if network_config else None
 
-        create_kwargs['networking_config'] = {network: network_configuration}
+        create_kwargs['networking_config'] = NetworkingConfig(
+            {network: network_configuration}
+        )
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
