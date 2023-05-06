@@ -6,6 +6,7 @@ import win32file
 import win32pipe
 import pywintypes
 import win32event
+import win32api
 
 cERROR_PIPE_BUSY = 0xe7
 cSECURITY_SQOS_PRESENT = 0x100000
@@ -134,30 +135,36 @@ class NpipeSocket:
             readbuf = memoryview(buf)
 
         event = win32event.CreateEvent(None, True, True, None)
-        overlapped = pywintypes.OVERLAPPED()
-        overlapped.hEvent = event
-        err, data = win32file.ReadFile(
-            self._handle,
-            readbuf[:nbytes] if nbytes else readbuf,
-            overlapped
-        )
-        wait_result = win32event.WaitForSingleObject(event, self._timeout)
-        if wait_result == win32event.WAIT_TIMEOUT:
-            win32file.CancelIo(self._handle)
-            raise TimeoutError
-        return win32file.GetOverlappedResult(self._handle, overlapped, 0)
+        try:
+            overlapped = pywintypes.OVERLAPPED()
+            overlapped.hEvent = event
+            err, data = win32file.ReadFile(
+                self._handle,
+                readbuf[:nbytes] if nbytes else readbuf,
+                overlapped
+            )
+            wait_result = win32event.WaitForSingleObject(event, self._timeout)
+            if wait_result == win32event.WAIT_TIMEOUT:
+                win32file.CancelIo(self._handle)
+                raise TimeoutError
+            return win32file.GetOverlappedResult(self._handle, overlapped, 0)
+        finally:
+            win32api.CloseHandle(event)
 
     @check_closed
     def send(self, string, flags=0):
         event = win32event.CreateEvent(None, True, True, None)
-        overlapped = pywintypes.OVERLAPPED()
-        overlapped.hEvent = event
-        win32file.WriteFile(self._handle, string, overlapped)
-        wait_result = win32event.WaitForSingleObject(event, self._timeout)
-        if wait_result == win32event.WAIT_TIMEOUT:
-            win32file.CancelIo(self._handle)
-            raise TimeoutError
-        return win32file.GetOverlappedResult(self._handle, overlapped, 0)
+        try:
+            overlapped = pywintypes.OVERLAPPED()
+            overlapped.hEvent = event
+            win32file.WriteFile(self._handle, string, overlapped)
+            wait_result = win32event.WaitForSingleObject(event, self._timeout)
+            if wait_result == win32event.WAIT_TIMEOUT:
+                win32file.CancelIo(self._handle)
+                raise TimeoutError
+            return win32file.GetOverlappedResult(self._handle, overlapped, 0)
+        finally:
+            win32api.CloseHandle(event)
 
     @check_closed
     def sendall(self, string, flags=0):
