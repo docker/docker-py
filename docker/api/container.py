@@ -1164,8 +1164,9 @@ class ContainerApiMixin:
                     'one_shot is only available in conjunction with '
                     'stream=False'
                 )
-            return self._stream_helper(self._get(url, params=params),
-                                       decode=decode)
+            return self._stream_helper(
+                self._get(url, stream=True, params=params), decode=decode
+            )
         else:
             if decode:
                 raise errors.InvalidArgument(
