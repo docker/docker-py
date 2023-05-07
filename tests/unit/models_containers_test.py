@@ -1,12 +1,12 @@
-import docker
-from docker.constants import DEFAULT_DATA_CHUNK_SIZE
-from docker.models.containers import Container, _create_container_args
-from docker.models.images import Image
+import pytest
 import unittest
 
+import docker
+from docker.constants import DEFAULT_DATA_CHUNK_SIZE, DEFAULT_DOCKER_API_VERSION
+from docker.models.containers import Container, _create_container_args
+from docker.models.images import Image
 from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID, FAKE_EXEC_ID
 from .fake_api_client import make_fake_client
-import pytest
 
 
 class ContainerCollectionTest(unittest.TestCase):
@@ -74,7 +74,7 @@ class ContainerCollectionTest(unittest.TestCase):
             name='somename',
             network_disabled=False,
             network='foo',
-            network_driver_opt={'key1': 'a'},
+            network_config={'aliases': ['test'], 'driver_opt': {'key1': 'a'}},
             oom_kill_disable=True,
             oom_score_adj=5,
             pid_mode='host',
@@ -99,7 +99,7 @@ class ContainerCollectionTest(unittest.TestCase):
             user='bob',
             userns_mode='host',
             uts_mode='host',
-            version='1.23',
+            version=DEFAULT_DOCKER_API_VERSION,
             volume_driver='some_driver',
             volumes=[
                 '/home/user1/:/mnt/vol2',
@@ -189,7 +189,9 @@ class ContainerCollectionTest(unittest.TestCase):
             mac_address='abc123',
             name='somename',
             network_disabled=False,
-            networking_config={'foo': {'driver_opt': {'key1': 'a'}}},
+            networking_config={'EndpointsConfig': {
+                'foo': {'Aliases': ['test'], 'DriverOpts': {'key1': 'a'}}}
+            },
             platform='linux',
             ports=[('1111', 'tcp'), ('2222', 'tcp')],
             stdin_open=True,
@@ -346,39 +348,44 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'default'},
         )
 
-    def test_run_network_driver_opts_without_network(self):
+    def test_run_network_config_without_network(self):
         client = make_fake_client()
 
         with pytest.raises(RuntimeError):
             client.containers.run(
                 image='alpine',
-                network_driver_opt={'key1': 'a'}
+                network_config={'aliases': ['test'],
+                                'driver_opt': {'key1': 'a'}}
             )
 
-    def test_run_network_driver_opts_with_network_mode(self):
+    def test_run_network_config_with_network_mode(self):
         client = make_fake_client()
 
         with pytest.raises(RuntimeError):
             client.containers.run(
                 image='alpine',
                 network_mode='none',
-                network_driver_opt={'key1': 'a'}
+                network_config={'aliases': ['test'],
+                                'driver_opt': {'key1': 'a'}}
             )
 
-    def test_run_network_driver_opts(self):
+    def test_run_network_config(self):
         client = make_fake_client()
 
         client.containers.run(
             image='alpine',
             network='foo',
-            network_driver_opt={'key1': 'a'}
+            network_config={'aliases': ['test'],
+                            'driver_opt': {'key1': 'a'}}
         )
 
         client.api.create_container.assert_called_with(
             detach=False,
             image='alpine',
             command=None,
-            networking_config={'foo': {'driver_opt': {'key1': 'a'}}},
+            networking_config={'EndpointsConfig': {
+                'foo': {'Aliases': ['test'], 'DriverOpts': {'key1': 'a'}}}
+            },
             host_config={'NetworkMode': 'foo'}
         )
 
@@ -409,12 +416,13 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'default'}
         )
 
-    def test_create_network_driver_opts_without_network(self):
+    def test_create_network_config_without_network(self):
         client = make_fake_client()
 
         client.containers.create(
             image='alpine',
-            network_driver_opt={'key1': 'a'}
+            network_config={'aliases': ['test'],
+                            'driver_opt': {'key1': 'a'}}
         )
 
         client.api.create_container.assert_called_with(
@@ -423,13 +431,14 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'default'}
         )
 
-    def test_create_network_driver_opts_with_network_mode(self):
+    def test_create_network_config_with_network_mode(self):
         client = make_fake_client()
 
         client.containers.create(
             image='alpine',
             network_mode='none',
-            network_driver_opt={'key1': 'a'}
+            network_config={'aliases': ['test'],
+                            'driver_opt': {'key1': 'a'}}
         )
 
         client.api.create_container.assert_called_with(
@@ -438,19 +447,22 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'none'}
         )
 
-    def test_create_network_driver_opts(self):
+    def test_create_network_config(self):
         client = make_fake_client()
 
         client.containers.create(
             image='alpine',
             network='foo',
-            network_driver_opt={'key1': 'a'}
+            network_config={'aliases': ['test'],
+                            'driver_opt': {'key1': 'a'}}
         )
 
         client.api.create_container.assert_called_with(
             image='alpine',
             command=None,
-            networking_config={'foo': {'driver_opt': {'key1': 'a'}}},
+            networking_config={'EndpointsConfig': {
+                'foo': {'Aliases': ['test'], 'DriverOpts': {'key1': 'a'}}}
+            },
             host_config={'NetworkMode': 'foo'}
         )
 
@@ -479,6 +491,7 @@ class ContainerCollectionTest(unittest.TestCase):
     def test_list_ignore_removed(self):
         def side_effect(*args, **kwargs):
             raise docker.errors.NotFound('Container not found')
+
         client = make_fake_client({
             'inspect_container.side_effect': side_effect
         })

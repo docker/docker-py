@@ -870,9 +870,9 @@ class ContainerCollection(Collection):
                 'together.'
             )
 
-        if kwargs.get('network_driver_opt') and not kwargs.get('network'):
+        if kwargs.get('network_config') and not kwargs.get('network'):
             raise RuntimeError(
-                'The options "network_driver_opt" can not be used '
+                'The option "network_config" can not be used '
                 'without "network".'
             )
 
