@@ -703,6 +703,8 @@ class ContainerCollection(Collection):
                     (IPv4/IPv6) addresses.
                 - ``driver_opt`` (dict): A dictionary of options to provide to
                     the network driver. Defaults to ``None``.
+                - ``mac_address`` (str): MAC Address to assign to the network
+                    interface. Defaults to ``None``. Requires API >= 1.25.
 
                 Used in conjuction with ``network``.
                 Incompatible with ``network_mode``.
@@ -1122,6 +1124,17 @@ RUN_HOST_CONFIG_KWARGS = [
 ]
 
 
+NETWORKING_CONFIG_ARGS = [
+    'aliases',
+    'links',
+    'ipv4_address',
+    'ipv6_address',
+    'link_local_ips',
+    'driver_opt',
+    'mac_address'
+]
+
+
 def _create_container_args(kwargs):
     """
     Convert arguments to create() to arguments to create_container().
@@ -1148,10 +1161,18 @@ def _create_container_args(kwargs):
     network = kwargs.pop('network', None)
     network_config = kwargs.pop('network_config', None)
     if network:
-        endpoint_config = EndpointConfig(
-            host_config_kwargs['version'],
-            **network_config
-        ) if network_config else None
+        endpoint_config = None
+
+        if network_config:
+            clean_endpoint_args = {}
+            for arg_name in NETWORKING_CONFIG_ARGS:
+                if arg_name in network_config:
+                    clean_endpoint_args[arg_name] = network_config[arg_name]
+
+            if clean_endpoint_args:
+                endpoint_config = EndpointConfig(
+                    host_config_kwargs['version'], **clean_endpoint_args
+                )
 
         create_kwargs['networking_config'] = NetworkingConfig(
             {network: endpoint_config}

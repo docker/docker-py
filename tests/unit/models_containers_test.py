@@ -390,6 +390,44 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'foo'}
         )
 
+    def test_run_network_config_undeclared_params(self):
+        client = make_fake_client()
+
+        client.containers.run(
+            image='alpine',
+            network='foo',
+            network_config={'aliases': ['test'],
+                            'driver_opt': {'key1': 'a'},
+                            'undeclared_param': 'random_value'}
+        )
+
+        client.api.create_container.assert_called_with(
+            detach=False,
+            image='alpine',
+            command=None,
+            networking_config={'EndpointsConfig': {
+                'foo': {'Aliases': ['test'], 'DriverOpts': {'key1': 'a'}}}
+            },
+            host_config={'NetworkMode': 'foo'}
+        )
+
+    def test_run_network_config_only_undeclared_params(self):
+        client = make_fake_client()
+
+        client.containers.run(
+            image='alpine',
+            network='foo',
+            network_config={'undeclared_param': 'random_value'}
+        )
+
+        client.api.create_container.assert_called_with(
+            detach=False,
+            image='alpine',
+            command=None,
+            networking_config={'foo': None},
+            host_config={'NetworkMode': 'foo'}
+        )
+
     def test_create(self):
         client = make_fake_client()
         container = client.containers.create(
@@ -466,6 +504,43 @@ class ContainerCollectionTest(unittest.TestCase):
             },
             host_config={'NetworkMode': 'foo'}
         )
+
+    def test_create_network_config_undeclared_params(self):
+        client = make_fake_client()
+
+        client.containers.create(
+            image='alpine',
+            network='foo',
+            network_config={'aliases': ['test'],
+                            'driver_opt': {'key1': 'a'},
+                            'undeclared_param': 'random_value'}
+        )
+
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            networking_config={'EndpointsConfig': {
+                'foo': {'Aliases': ['test'], 'DriverOpts': {'key1': 'a'}}}
+            },
+            host_config={'NetworkMode': 'foo'}
+        )
+
+    def test_create_network_config_only_undeclared_params(self):
+        client = make_fake_client()
+
+        client.containers.create(
+            image='alpine',
+            network='foo',
+            network_config={'undeclared_param': 'random_value'}
+        )
+
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            networking_config={'foo': None},
+            host_config={'NetworkMode': 'foo'}
+        )
+
 
     def test_get(self):
         client = make_fake_client()
