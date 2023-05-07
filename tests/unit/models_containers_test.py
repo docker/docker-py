@@ -2,7 +2,8 @@ import pytest
 import unittest
 
 import docker
-from docker.constants import DEFAULT_DATA_CHUNK_SIZE, DEFAULT_DOCKER_API_VERSION
+from docker.constants import DEFAULT_DATA_CHUNK_SIZE, \
+    DEFAULT_DOCKER_API_VERSION
 from docker.models.containers import Container, _create_container_args
 from docker.models.images import Image
 from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID, FAKE_EXEC_ID
