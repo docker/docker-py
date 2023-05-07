@@ -1148,14 +1148,14 @@ def _create_container_args(kwargs):
     network = kwargs.pop('network', None)
     network_config = kwargs.pop('network_config', None)
     if network:
-        network_configuration = EndpointConfig(
+        endpoint_config = EndpointConfig(
             host_config_kwargs['version'],
             **network_config
         ) if network_config else None
 
         create_kwargs['networking_config'] = NetworkingConfig(
-            {network: network_configuration}
-        )
+            {network: endpoint_config}
+        ) if endpoint_config else {network: None}
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
