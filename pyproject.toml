@@ -15,3 +15,8 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "html"
+
+[tool.pytest.ini_options]
+addopts = "--tb=short -rxs"
+junit_family = "xunit2"
+junit_suite_name = "docker-py"
