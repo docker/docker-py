@@ -3,3 +3,15 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 
 [tool.setuptools_scm]
 write_to = 'docker/_version.py'
+
+[tool.coverage.run]
+branch = true
+source = "docker"
+
+[tool.coverage.report]
+exclude_lines = [
+    "if __name__ == .__main__.:"
+]
+
+[tool.coverage.html]
+directory = "html"
