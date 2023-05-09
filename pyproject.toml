@@ -6,7 +6,7 @@ write_to = 'docker/_version.py'
 
 [tool.coverage.run]
 branch = true
-source = "docker"
+source = ["docker"]
 
 [tool.coverage.report]
 exclude_lines = [
