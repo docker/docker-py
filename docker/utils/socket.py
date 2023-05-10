@@ -37,7 +37,7 @@ def read(socket, n=4096):
             select.select([socket], [], [])
         else:
             poll = select.poll()
-            poll.register(socket)
+            poll.register(socket, select.POLLIN | select.POLLPRI)
             poll.poll()
 
     try:
