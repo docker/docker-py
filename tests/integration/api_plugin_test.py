@@ -39,7 +39,7 @@ class PluginTest(BaseAPIIntegrationTest):
             return self.client.inspect_plugin(plugin_name)
         except docker.errors.NotFound:
             prv = self.client.plugin_privileges(plugin_name)
-            for d in self.client.pull_plugin(plugin_name, prv):
+            for _d in self.client.pull_plugin(plugin_name, prv):
                 pass
         return self.client.inspect_plugin(plugin_name)
 
