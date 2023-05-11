@@ -99,7 +99,7 @@ class Context:
             # unknown format
             raise Exception(
                 f"Detected corrupted meta file for context {name} : {e}"
-            )
+            ) from e
 
         # for docker endpoints, set defaults for
         # Host and SkipTLSVerify fields

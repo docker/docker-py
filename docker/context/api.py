@@ -114,7 +114,7 @@ class ContextAPI:
                     except Exception as e:
                         raise errors.ContextException(
                             f"Failed to load metafile {filename}: {e}",
-                        )
+                        ) from e
 
         contexts = [cls.DEFAULT_CONTEXT]
         for name in names:

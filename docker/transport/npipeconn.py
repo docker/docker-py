@@ -46,9 +46,8 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         conn = None
         try:
             conn = self.pool.get(block=self.block, timeout=timeout)
-
-        except AttributeError:  # self.pool is None
-            raise urllib3.exceptions.ClosedPoolError(self, "Pool is closed.")
+        except AttributeError as ae:  # self.pool is None
+            raise urllib3.exceptions.ClosedPoolError(self, "Pool is closed.") from ae
 
         except queue.Empty:
             if self.block:
@@ -56,7 +55,7 @@ class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
                     self,
                     "Pool reached maximum size and no more "
                     "connections are allowed."
-                )
+                ) from None
             # Oh well, we'll create a new connection then
 
         return conn or self._new_conn()
