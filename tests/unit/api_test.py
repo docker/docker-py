@@ -333,8 +333,8 @@ class DockerApiTest(BaseAPIClientTest):
 
         # mock a stream interface
         raw_resp = urllib3.HTTPResponse(body=body)
-        setattr(raw_resp._fp, 'chunked', True)
-        setattr(raw_resp._fp, 'chunk_left', len(body.getvalue()) - 1)
+        raw_resp._fp.chunked = True
+        raw_resp._fp.chunk_left = len(body.getvalue()) - 1
 
         # pass `decode=False` to the helper
         raw_resp._fp.seek(0)
@@ -349,7 +349,7 @@ class DockerApiTest(BaseAPIClientTest):
         assert result == content
 
         # non-chunked response, pass `decode=False` to the helper
-        setattr(raw_resp._fp, 'chunked', False)
+        raw_resp._fp.chunked = False
         raw_resp._fp.seek(0)
         resp = response(status_code=status_code, content=content, raw=raw_resp)
         result = next(self.client._stream_helper(resp))

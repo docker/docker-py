@@ -7,6 +7,7 @@ write_to = 'docker/_version.py'
 [tool.ruff]
 target-version = "py37"
 extend-select = [
+    "B",
     "C",
     "F",
     "W",

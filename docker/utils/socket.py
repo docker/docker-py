@@ -42,7 +42,7 @@ def read(socket, n=4096):
     try:
         if hasattr(socket, 'recv'):
             return socket.recv(n)
-        if isinstance(socket, getattr(pysocket, 'SocketIO')):
+        if isinstance(socket, pysocket.SocketIO):
             return socket.read(n)
         return os.read(socket.fileno(), n)
     except OSError as e:

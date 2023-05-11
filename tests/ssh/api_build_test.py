@@ -124,7 +124,7 @@ class BuildTest(BaseAPIIntegrationTest):
             path=base_dir,
             tag=tag,
         )
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         c = self.client.create_container(tag, ['find', '/test', '-type', 'f'])
@@ -151,7 +151,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag='buildargs', buildargs={'test': 'OK'}
         )
         self.tmp_imgs.append('buildargs')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         info = self.client.inspect_image('buildargs')
@@ -171,7 +171,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag=tag, shmsize=shmsize
         )
         self.tmp_imgs.append(tag)
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         # There is currently no way to get the shmsize
@@ -189,7 +189,7 @@ class BuildTest(BaseAPIIntegrationTest):
             isolation='default'
         )
 
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
     @requires_api_version('1.23')
@@ -204,7 +204,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag='labels', labels=labels
         )
         self.tmp_imgs.append('labels')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         info = self.client.inspect_image('labels')
@@ -221,7 +221,7 @@ class BuildTest(BaseAPIIntegrationTest):
 
         stream = self.client.build(fileobj=script, tag='build1')
         self.tmp_imgs.append('build1')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         stream = self.client.build(
@@ -262,7 +262,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, target='first', tag='build1'
         )
         self.tmp_imgs.append('build1')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         info = self.client.inspect_image('build1')
@@ -291,7 +291,7 @@ class BuildTest(BaseAPIIntegrationTest):
         )
 
         self.tmp_imgs.append('dockerpytest_customnetbuild')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         assert self.client.inspect_image('dockerpytest_customnetbuild')
@@ -356,7 +356,7 @@ class BuildTest(BaseAPIIntegrationTest):
                 fileobj=script, tag=tag, squash=squash
             )
             self.tmp_imgs.append(tag)
-            for chunk in stream:
+            for _chunk in stream:
                 pass
 
             return self.client.inspect_image(tag)
