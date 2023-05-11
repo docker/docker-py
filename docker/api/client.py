@@ -476,7 +476,7 @@ class APIClient(
             return self._multiplexed_response_stream_helper(res)
         else:
             return sep.join(
-                [x for x in self._multiplexed_buffer_helper(res)]
+                list(self._multiplexed_buffer_helper(res))
             )
 
     def _unmount(self, *args):

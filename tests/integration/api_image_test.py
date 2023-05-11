@@ -263,10 +263,8 @@ class ImportImageTest(BaseAPIIntegrationTest):
         data = self.client.get_image(test_img)
         assert data
         output = self.client.load_image(data)
-        assert any([
-            line for line in output
-            if f'Loaded image: {test_img}' in line.get('stream', '')
-        ])
+        assert any(line for line in output
+            if f'Loaded image: {test_img}' in line.get('stream', ''))
 
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):

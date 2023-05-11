@@ -109,7 +109,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
         out = client.containers.run(
             "alpine", "echo hello",
-            log_config=dict(type='none')
+            log_config={"type": 'none'}
         )
         assert out is None
 
@@ -118,7 +118,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
         out = client.containers.run(
             "alpine", "echo hello",
-            log_config=dict(type='json-file')
+            log_config={"type": 'json-file'}
         )
         assert out == b'hello\n'
 
@@ -150,7 +150,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         out = client.containers.run(
             'alpine', 'sh -c "echo hello && echo world"', stream=True
         )
-        logs = [line for line in out]
+        logs = list(out)
         assert logs[0] == b'hello\n'
         assert logs[1] == b'world\n'
 
@@ -165,7 +165,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
         threading.Timer(1, out.close).start()
 
-        logs = [line for line in out]
+        logs = list(out)
 
         assert len(logs) == 2
         assert logs[0] == b'hello\n'

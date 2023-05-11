@@ -217,7 +217,7 @@ def parse_host(addr, is_win32=False, tls=False):
 
     parsed_url = urlparse(addr)
     proto = parsed_url.scheme
-    if not proto or any([x not in f"{string.ascii_letters}+" for x in proto]):
+    if not proto or any(x not in f"{string.ascii_letters}+" for x in proto):
         # https://bugs.python.org/issue754016
         parsed_url = urlparse(f"//{addr}", 'tcp')
         proto = 'tcp'

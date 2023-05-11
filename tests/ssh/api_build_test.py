@@ -134,7 +134,7 @@ class BuildTest(BaseAPIIntegrationTest):
 
         logs = logs.decode('utf-8')
 
-        assert sorted(list(filter(None, logs.split('\n')))) == sorted([
+        assert sorted(filter(None, logs.split('\n'))) == sorted([
             '/test/#file.txt',
             '/test/ignored/subdir/excepted-file',
             '/test/not-ignored'
@@ -303,7 +303,7 @@ class BuildTest(BaseAPIIntegrationTest):
         )
 
         self.tmp_imgs.append('dockerpytest_nonebuild')
-        logs = [chunk for chunk in stream]
+        logs = list(stream)
         assert 'errorDetail' in logs[-1]
         assert logs[-1]['errorDetail']['code'] == 1
 
@@ -383,7 +383,7 @@ class BuildTest(BaseAPIIntegrationTest):
         expected = '{0}{2}\n{1}'.format(
             control_chars[0], control_chars[1], snippet
         )
-        assert any([line == expected for line in lines])
+        assert any(line == expected for line in lines)
 
     def test_build_gzip_encoding(self):
         base_dir = tempfile.mkdtemp()
