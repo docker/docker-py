@@ -581,7 +581,7 @@ class TCPSocketStreamTest(unittest.TestCase):
 
     def test_read_from_socket_no_stream_no_tty(self):
         res = self.request(stream=False, tty=False, demux=False)
-        res == self.stdout_data + self.stderr_data
+        assert res == self.stdout_data + self.stderr_data
 
     def test_read_from_socket_no_stream_no_tty_demux(self):
         res = self.request(stream=False, tty=False, demux=True)

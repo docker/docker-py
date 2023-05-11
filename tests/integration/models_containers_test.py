@@ -221,7 +221,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert container.status == 'running'
         assert container.image == client.images.get('alpine')
         with pytest.raises(docker.errors.DockerException):
-            container.labels
+            _ = container.labels
 
         container.kill()
         container.remove()
