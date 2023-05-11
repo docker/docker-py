@@ -778,8 +778,8 @@ class InMemoryStore(credentials.Store):
     def get(self, server):
         try:
             return self.__store[server]
-        except KeyError:
-            raise credentials.errors.CredentialsNotFound()
+        except KeyError as ke:
+            raise credentials.errors.CredentialsNotFound() from ke
 
     def store(self, server, username, secret):
         self.__store[server] = {

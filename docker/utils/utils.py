@@ -414,11 +414,11 @@ def parse_bytes(s):
     if suffix in units.keys() or suffix.isdigit():
         try:
             digits = float(digits_part)
-        except ValueError:
+        except ValueError as ve:
             raise errors.DockerException(
                 'Failed converting the string value for memory '
                 f'({digits_part}) to an integer.'
-            )
+            ) from ve
 
         # Reconvert to long for the final result
         s = int(digits * units[suffix])

@@ -28,9 +28,9 @@ class CancellableStream:
         try:
             return next(self._stream)
         except urllib3.exceptions.ProtocolError:
-            raise StopIteration
+            raise StopIteration from None
         except OSError:
-            raise StopIteration
+            raise StopIteration from None
 
     next = __next__
 

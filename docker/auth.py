@@ -268,7 +268,7 @@ class AuthConfig(dict):
         except credentials.StoreError as e:
             raise errors.DockerException(
                 f'Credentials store error: {repr(e)}'
-            )
+            ) from e
 
     def _get_store_instance(self, name):
         if name not in self._stores:

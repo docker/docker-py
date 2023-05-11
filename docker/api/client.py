@@ -160,10 +160,10 @@ class APIClient(
                     base_url, timeout, pool_connections=num_pools,
                     max_pool_size=max_pool_size
                 )
-            except NameError:
+            except NameError as err:
                 raise DockerException(
                     'Install pypiwin32 package to enable npipe:// support'
-                )
+                ) from err
             self.mount('http+docker://', self._custom_adapter)
             self.base_url = 'http+docker://localnpipe'
         elif base_url.startswith('ssh://'):
@@ -172,10 +172,10 @@ class APIClient(
                     base_url, timeout, pool_connections=num_pools,
                     max_pool_size=max_pool_size, shell_out=use_ssh_client
                 )
-            except NameError:
+            except NameError as err:
                 raise DockerException(
                     'Install paramiko package to enable ssh:// support'
-                )
+                ) from err
             self.mount('http+docker://ssh', self._custom_adapter)
             self._unmount('http://', 'https://')
             self.base_url = 'http+docker://ssh'
@@ -211,15 +211,15 @@ class APIClient(
     def _retrieve_server_version(self):
         try:
             return self.version(api_version=False)["ApiVersion"]
-        except KeyError:
+        except KeyError as ke:
             raise DockerException(
                 'Invalid response from docker daemon: key "ApiVersion"'
                 ' is missing.'
-            )
+            ) from ke
         except Exception as e:
             raise DockerException(
                 f'Error while fetching server API version: {e}'
-            )
+            ) from e
 
     def _set_request_timeout(self, kwargs):
         """Prepare the kwargs for an HTTP request by inserting the timeout

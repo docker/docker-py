@@ -93,10 +93,10 @@ def create_archive(root, files=None, fileobj=None, gzip=False,
             try:
                 with open(full_path, 'rb') as f:
                     t.addfile(i, f)
-            except OSError:
+            except OSError as oe:
                 raise OSError(
                     f'Can not read file in context: {full_path}'
-                )
+                ) from oe
         else:
             # Directories, FIFOs, symlinks... don't need to be read.
             t.addfile(i, None)
