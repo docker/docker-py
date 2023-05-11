@@ -1,4 +1,3 @@
-# flake8: noqa
 from .unixconn import UnixHTTPAdapter
 from .ssladapter import SSLHTTPAdapter
 try:
