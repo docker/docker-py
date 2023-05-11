@@ -290,9 +290,10 @@ class LoadConfigTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
 
-        dockercfg_path = os.path.join(folder,
-                                      '.{}.dockercfg'.format(
-                                          random.randrange(100000)))
+        dockercfg_path = os.path.join(
+            folder,
+            f'.{random.randrange(100000)}.dockercfg',
+        )
         registry = 'https://your.private.registry.io'
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         config = {

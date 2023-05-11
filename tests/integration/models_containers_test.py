@@ -49,7 +49,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
         container = client.containers.run(
             "alpine", "sh -c 'echo \"hello\" > /insidecontainer/test'",
-            volumes=["%s:/insidecontainer" % path],
+            volumes=[f"{path}:/insidecontainer"],
             detach=True
         )
         self.tmp_containers.append(container.id)
@@ -58,7 +58,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         name = "container_volume_test"
         out = client.containers.run(
             "alpine", "cat /insidecontainer/test",
-            volumes=["%s:/insidecontainer" % path],
+            volumes=[f"{path}:/insidecontainer"],
             name=name
         )
         self.tmp_containers.append(name)

@@ -80,7 +80,7 @@ def wait_on_condition(condition, delay=0.1, timeout=40):
     start_time = time.time()
     while not condition():
         if time.time() - start_time > timeout:
-            raise AssertionError("Timeout: %s" % condition)
+            raise AssertionError(f"Timeout: {condition}")
         time.sleep(delay)
 
 

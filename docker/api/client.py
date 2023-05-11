@@ -199,14 +199,13 @@ class APIClient(
             self._version = version
         if not isinstance(self._version, str):
             raise DockerException(
-                'Version parameter must be a string or None. Found {}'.format(
-                    type(version).__name__
-                )
+                'Version parameter must be a string or None. '
+                f'Found {type(version).__name__}'
             )
         if utils.version_lt(self._version, MINIMUM_DOCKER_API_VERSION):
             raise InvalidVersion(
-                'API versions below {} are no longer supported by this '
-                'library.'.format(MINIMUM_DOCKER_API_VERSION)
+                f'API versions below {MINIMUM_DOCKER_API_VERSION} are '
+                f'no longer supported by this library.'
             )
 
     def _retrieve_server_version(self):
@@ -248,19 +247,17 @@ class APIClient(
         for arg in args:
             if not isinstance(arg, str):
                 raise ValueError(
-                    'Expected a string but found {} ({}) '
-                    'instead'.format(arg, type(arg))
+                    f'Expected a string but found {arg} ({type(arg)}) instead'
                 )
 
         quote_f = partial(urllib.parse.quote, safe="/:")
         args = map(quote_f, args)
 
+        formatted_path = pathfmt.format(*args)
         if kwargs.get('versioned_api', True):
-            return '{}/v{}{}'.format(
-                self.base_url, self._version, pathfmt.format(*args)
-            )
+            return f'{self.base_url}/v{self._version}{formatted_path}'
         else:
-            return f'{self.base_url}{pathfmt.format(*args)}'
+            return f'{self.base_url}{formatted_path}'
 
     def _raise_for_status(self, response):
         """Raises stored :class:`APIError`, if one occurred."""

@@ -617,17 +617,11 @@ fake_responses = {
     get_fake_volume_list,
     (f'{prefix}/{CURRENT_VERSION}/volumes/create', 'POST'):
     get_fake_volume,
-    ('{1}/{0}/volumes/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
-    ), 'GET'):
+    (f'{prefix}/{CURRENT_VERSION}/volumes/{FAKE_VOLUME_NAME}', 'GET'):
     get_fake_volume,
-    ('{1}/{0}/volumes/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
-    ), 'DELETE'):
+    (f'{prefix}/{CURRENT_VERSION}/volumes/{FAKE_VOLUME_NAME}', 'DELETE'):
     fake_remove_volume,
-    ('{1}/{0}/nodes/{2}/update?version=1'.format(
-        CURRENT_VERSION, prefix, FAKE_NODE_ID
-    ), 'POST'):
+    (f'{prefix}/{CURRENT_VERSION}/nodes/{FAKE_NODE_ID}/update?version=1', 'POST'):
     post_fake_update_node,
     (f'{prefix}/{CURRENT_VERSION}/swarm/join', 'POST'):
     post_fake_join_swarm,
@@ -635,21 +629,13 @@ fake_responses = {
     get_fake_network_list,
     (f'{prefix}/{CURRENT_VERSION}/networks/create', 'POST'):
     post_fake_network,
-    ('{1}/{0}/networks/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'GET'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}', 'GET'):
     get_fake_network,
-    ('{1}/{0}/networks/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'DELETE'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}', 'DELETE'):
     delete_fake_network,
-    ('{1}/{0}/networks/{2}/connect'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'POST'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}/connect', 'POST'):
     post_fake_network_connect,
-    ('{1}/{0}/networks/{2}/disconnect'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'POST'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}/disconnect', 'POST'):
     post_fake_network_disconnect,
     f'{prefix}/{CURRENT_VERSION}/secrets/create':
     post_fake_secret,
