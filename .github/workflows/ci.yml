@@ -6,16 +6,16 @@ env:
   DOCKER_BUILDKIT: '1'
 
 jobs:
-    flake8:
+    lint:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-python@v4
               with:
-                  python-version: '3.x'
-            - run: pip install -U flake8
-            - name: Run flake8
-              run: flake8 docker/ tests/
+                  python-version: '3.11'
+            - run: pip install -U ruff==0.0.284
+            - name: Run ruff
+              run: ruff docker tests
 
     unit-tests:
         runs-on: ubuntu-latest
