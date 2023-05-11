@@ -47,7 +47,7 @@ class ConnectionTimeoutTest(unittest.TestCase):
         # This call isn't supposed to complete, and it should fail fast.
         try:
             res = self.client.inspect_container('id')
-        except:  # noqa: E722
+        except Exception:
             pass
         end = time.time()
         assert res is None

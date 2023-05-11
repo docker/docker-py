@@ -48,7 +48,7 @@ setup(
     url='https://github.com/docker/docker-py',
     project_urls={
         'Documentation': 'https://docker-py.readthedocs.io',
-        'Changelog': 'https://docker-py.readthedocs.io/en/stable/change-log.html',  # noqa: E501
+        'Changelog': 'https://docker-py.readthedocs.io/en/stable/change-log.html',
         'Source': 'https://github.com/docker/docker-py',
         'Tracker': 'https://github.com/docker/docker-py/issues',
     },
