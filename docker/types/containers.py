@@ -48,8 +48,11 @@ class LogConfig(DictType):
         >>> container = client.create_container('busybox', 'true',
         ...    host_config=hc)
         >>> client.inspect_container(container)['HostConfig']['LogConfig']
-        {'Type': 'json-file', 'Config': {'labels': 'production_status,geo', 'max-size': '1g'}}
-    """  # noqa: E501
+        {
+            'Type': 'json-file',
+            'Config': {'labels': 'production_status,geo', 'max-size': '1g'}
+        }
+    """
     types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
