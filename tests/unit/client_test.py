@@ -153,7 +153,8 @@ class FromEnvTest(unittest.TestCase):
         self.os_environ = os.environ.copy()
 
     def tearDown(self):
-        os.environ = self.os_environ
+        os.environ.clear()
+        os.environ.update(self.os_environ)
 
     def test_from_env(self):
         """Test that environment variables are passed through to

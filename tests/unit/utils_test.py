@@ -59,7 +59,8 @@ class KwargsFromEnvTest(unittest.TestCase):
         self.os_environ = os.environ.copy()
 
     def tearDown(self):
-        os.environ = self.os_environ
+        os.environ.clear()
+        os.environ.update(self.os_environ)
 
     def test_kwargs_from_env_empty(self):
         os.environ.update(DOCKER_HOST='',
