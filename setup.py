@@ -30,7 +30,7 @@ extras_require = {
 }
 
 with open('./test-requirements.txt') as test_reqs_txt:
-    test_requirements = [line for line in test_reqs_txt]
+    test_requirements = list(test_reqs_txt)
 
 
 long_description = ''

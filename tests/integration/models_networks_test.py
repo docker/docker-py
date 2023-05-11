@@ -59,11 +59,11 @@ class NetworkTest(BaseIntegrationTest):
         network.connect(container)
         container.start()
         assert client.networks.get(network.id).containers == [container]
-        network_containers = list(
+        network_containers = [
             c
             for net in client.networks.list(ids=[network.id], greedy=True)
             for c in net.containers
-        )
+        ]
         assert network_containers == [container]
         network.disconnect(container)
         assert network.containers == []
