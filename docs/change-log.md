@@ -1,6 +1,47 @@
 Changelog
 ==========
 
+6.1.2
+-----
+
+#### Bugfixes
+- Fix for socket timeouts on long `docker exec` calls 
+
+6.1.1
+-----
+
+#### Bugfixes
+- Fix `containers.stats()` hanging with `stream=True`
+- Correct return type in docs for `containers.diff()` method
+
+
+6.1.0
+-----
+
+### Upgrade Notes
+- Errors are no longer returned during client initialization if the credential helper cannot be found. A warning will be emitted instead, and an error is returned if the credential helper is used.
+
+### Features
+- Python 3.11 support
+- Use `poll()` instead of `select()` on non-Windows platforms
+- New API fields
+  - `network_driver_opt` on container run / create
+  - `one-shot` on container stats
+  - `status` on services list
+
+### Bugfixes
+- Support for requests 2.29.0+ and urllib3 2.x
+- Do not strip characters from volume names
+- Fix connection leak on container.exec_* operations
+- Fix errors closing named pipes on Windows
+
+6.0.1
+-----
+
+### Bugfixes
+- Fix for `The pipe has been ended errors` on Windows
+- Support floats for container log filtering by timestamp (`since` / `until`)
+
 6.0.0
 -----
 
