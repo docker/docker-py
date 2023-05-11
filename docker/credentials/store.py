@@ -20,7 +20,8 @@ class Store:
         self.environment = environment
         if self.exe is None:
             warnings.warn(
-                f'{self.program} not installed or not available in PATH'
+                f'{self.program} not installed or not available in PATH',
+                stacklevel=1,
             )
 
     def get(self, server):

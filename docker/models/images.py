@@ -456,7 +456,8 @@ class ImageCollection(Collection):
         if 'stream' in kwargs:
             warnings.warn(
                 '`stream` is not a valid parameter for this method'
-                ' and will be overridden'
+                ' and will be overridden',
+                stacklevel=1,
             )
             del kwargs['stream']
 
