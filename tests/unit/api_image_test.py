@@ -12,7 +12,7 @@ from .api_test import (
 
 class ImageTest(BaseAPIClientTest):
     def test_image_viz(self):
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             self.client.images('busybox', viz=True)
             self.fail('Viz output should not be supported!')
 
