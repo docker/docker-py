@@ -42,7 +42,7 @@ def exclude_paths(root, patterns, dockerfile=None):
     if dockerfile is None:
         dockerfile = 'Dockerfile'
 
-    patterns.append('!' + dockerfile)
+    patterns.append(f"!{dockerfile}")
     pm = PatternMatcher(patterns)
     return set(pm.walk(root))
 
@@ -180,7 +180,7 @@ class PatternMatcher:
                 fpath = os.path.join(
                     os.path.relpath(current_dir, root), f
                 )
-                if fpath.startswith('.' + os.path.sep):
+                if fpath.startswith(f".{os.path.sep}"):
                     fpath = fpath[2:]
                 match = self.matches(fpath)
                 if not match:

@@ -64,9 +64,10 @@ class Collection:
 
     def __call__(self, *args, **kwargs):
         raise TypeError(
-            "'{}' object is not callable. You might be trying to use the old "
-            "(pre-2.0) API - use docker.APIClient if so."
-            .format(self.__class__.__name__))
+            f"'{self.__class__.__name__}' object is not callable. "
+            "You might be trying to use the old (pre-2.0) API - "
+            "use docker.APIClient if so."
+        )
 
     def list(self):
         raise NotImplementedError
@@ -88,5 +89,4 @@ class Collection:
         elif isinstance(attrs, dict):
             return self.model(attrs=attrs, client=self.client, collection=self)
         else:
-            raise Exception("Can't create %s from %s" %
-                            (self.model.__name__, attrs))
+            raise Exception(f"Can't create {self.model.__name__} from {attrs}")

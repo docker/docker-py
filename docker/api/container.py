@@ -863,8 +863,8 @@ class ContainerApiMixin:
                 params['since'] = since
             else:
                 raise errors.InvalidArgument(
-                    'since value should be datetime or positive int/float, '
-                    'not {}'.format(type(since))
+                    'since value should be datetime or positive int/float,'
+                    f' not {type(since)}'
                 )
 
         if until is not None:
@@ -880,8 +880,8 @@ class ContainerApiMixin:
                 params['until'] = until
             else:
                 raise errors.InvalidArgument(
-                    'until value should be datetime or positive int/float, '
-                    'not {}'.format(type(until))
+                    f'until value should be datetime or positive int/float, '
+                    f'not {type(until)}'
                 )
 
         url = self._url("/containers/{0}/logs", container)
@@ -953,7 +953,7 @@ class ContainerApiMixin:
             return port_settings.get(private_port)
 
         for protocol in ['tcp', 'udp', 'sctp']:
-            h_ports = port_settings.get(private_port + '/' + protocol)
+            h_ports = port_settings.get(f"{private_port}/{protocol}")
             if h_ports:
                 break
 

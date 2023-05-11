@@ -69,5 +69,9 @@ class ProxyConfig(dict):
         return proxy_env + environment
 
     def __str__(self):
-        return 'ProxyConfig(http={}, https={}, ftp={}, no_proxy={})'.format(
-            self.http, self.https, self.ftp, self.no_proxy)
+        return (
+            'ProxyConfig('
+            f'http={self.http}, https={self.https}, '
+            f'ftp={self.ftp}, no_proxy={self.no_proxy}'
+            ')'
+        )
