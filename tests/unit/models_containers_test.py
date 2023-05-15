@@ -541,7 +541,6 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'foo'}
         )
 
-
     def test_get(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
