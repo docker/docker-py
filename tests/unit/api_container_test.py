@@ -1528,8 +1528,19 @@ class ContainerTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/stats',
+            stream=True,
             timeout=60,
             params={'stream': True}
+        )
+
+    def test_container_stats_without_streaming(self):
+        self.client.stats(fake_api.FAKE_CONTAINER_ID, stream=False)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/stats',
+            timeout=60,
+            params={'stream': False}
         )
 
     def test_container_stats_with_one_shot(self):
