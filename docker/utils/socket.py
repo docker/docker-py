@@ -3,7 +3,6 @@ import os
 import select
 import socket as pysocket
 import struct
-import sys
 
 try:
     from ..transport import NpipeSocket
@@ -32,7 +31,7 @@ def read(socket, n=4096):
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
     if not isinstance(socket, NpipeSocket):
-        if sys.platform == 'win32':
+        if not hasattr(select, "poll"):
             # Limited to 1024
             select.select([socket], [], [])
         else:
