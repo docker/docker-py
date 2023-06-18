@@ -242,16 +242,20 @@ class Mount(dict):
         tmpfs_mode (int): The permission mode for the tmpfs mount.
     """
 
-    def __init__(self, target, source, type='volume', read_only=False,
+    def __init__(self, target, source=None, type='volume', read_only=False,
                  consistency=None, propagation=None, no_copy=False,
                  labels=None, driver_config=None, tmpfs_size=None,
                  tmpfs_mode=None):
-        self['Target'] = target
-        self['Source'] = source
         if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
             raise errors.InvalidArgument(
                 f'Unsupported mount type: "{type}"'
             )
+        if source is None and type != 'tmpfs':
+            raise errors.InvalidArgument(
+                f'A source must be provided for type: "{type}"'
+            )
+        self['Target'] = target
+        self['Source'] = source
         self['Type'] = type
         self['ReadOnly'] = read_only
 
