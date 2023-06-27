@@ -63,6 +63,13 @@ class Container(Model):
         return self.attrs['State']
 
     @property
+    def health(self):
+        """
+        The healthcheck status of the container. For example, ``healthy`, or ``unhealthy`.
+        """
+        return self.attrs.get('State', {}).get('Health', {}).get('Status', 'unknown')
+
+    @property
     def ports(self):
         """
         The ports that the container exposes as a dictionary.
