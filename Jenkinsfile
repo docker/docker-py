@@ -4,7 +4,7 @@ def imageNameBase = "dockerpinata/docker-py"
 def imageNamePy3
 def imageDindSSH
 def images = [:]
-
+//uses name, buildargs, and pyTag arguments to build docker image. Result image stored in images map using pyTag key.
 def buildImage = { name, buildargs, pyTag ->
   img = docker.image(name)
   try {
@@ -15,7 +15,7 @@ def buildImage = { name, buildargs, pyTag ->
   }
   if (pyTag?.trim()) images[pyTag] = img.id
 }
-
+// buildImages closure wrapped in jenkins pipeline block called wrappedNode - checks out source code, sets imageNamePy3 and imageDindSSH variables based on base image name and git commit ID and builds and pushed docker images using buildImage closure
 def buildImages = { ->
   wrappedNode(label: "amd64 && ubuntu-2004 && overlay2", cleanWorkspace: true) {
     stage("build image") {
@@ -44,7 +44,7 @@ def getDockerVersions = { ->
   }
   return dockerVersions
 }
-
+// based on 1st 5 characters of docker engine version to determine API version. If mapping not found, defaults to 1.40
 def getAPIVersion = { engineVersion ->
   def versionMap = [
     '18.09': '1.39',
@@ -56,7 +56,7 @@ def getAPIVersion = { engineVersion ->
   }
   return result
 }
-
+//closure runs unit tests and integration tests for specific docker and python versions. takes settings map as input and executes tests in different stages using docker containers. test container name is based on jenkins build number and executor number.
 def runTests = { Map settings ->
   def dockerVersion = settings.get("dockerVersion", null)
   def pythonVersion = settings.get("pythonVersion", null)
@@ -137,11 +137,11 @@ buildImages()
 def dockerVersions = getDockerVersions()
 
 def testMatrix = [failFast: false]
-
+//nested loops iterate over images and docker versions. For each session, the runTests closure is called with corresponding parameters. Result is stored in testMatrix map with a unique key.
 for (imgKey in new ArrayList(images.keySet())) {
   for (version in dockerVersions) {
     testMatrix["${imgKey}_${version}"] = runTests([testImage: images[imgKey], dockerVersion: version, pythonVersion: imgKey])
   }
 }
-
+// executes testMatrix in parallel, allowing for multiple combos of python and docker versions to be tested at the same time to speed up process of automating docker images
 parallel(testMatrix)
