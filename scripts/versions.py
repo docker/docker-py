@@ -1,21 +1,15 @@
 import operator
 import re
+import requests
 from collections import namedtuple
 
-import requests
 
-base_url = 'https://download.docker.com/linux/static/{0}/x86_64/'
-categories = [
-    'edge',
-    'stable',
-    'test'
-]
-
+BASE_URL = 'https://download.docker.com/linux/static/{0}/x86_64/'
+CATEGORIES = ['edge', 'stable', 'test']
 STAGES = ['tp', 'beta', 'rc']
 
 
 class Version(namedtuple('_Version', 'major minor patch stage edition')):
-
     @classmethod
     def parse(cls, version):
         edition = None
@@ -36,11 +30,6 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
 
     @property
     def order(self):
-        """Return a representation that allows this object to be sorted
-        correctly with the default comparator.
-        """
-        # non-GA releases should appear before GA releases
-        # Order: tp -> beta -> rc -> GA
         if self.stage:
             for st in STAGES:
                 if st in self.stage:
@@ -48,7 +37,6 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
                     break
         else:
             stage = (len(STAGES),)
-
         return (int(self.major), int(self.minor), int(self.patch)) + stage
 
     def __str__(self):
@@ -56,21 +44,32 @@ class Version(namedtuple('_Version', 'major minor patch stage edition')):
         edition = f'-{self.edition}' if self.edition else ''
         return '.'.join(map(str, self[:3])) + edition + stage
 
+#encapsulation 
+def get_latest_docker_versions():
+    results = set()
+    session = requests.Session()
+    #added exception handling
+    try:
+        for category in CATEGORIES:
+            url = BASE_URL.format(category)
+            res = session.get(url)
+            res.raise_for_status()
+            content = res.text
+            versions = [Version.parse(v) for v in re.findall(r'"docker-([0-9]+\.[0-9]+\.[0-9]+-?.*)\.tgz"', content)]
+            sorted_versions = sorted(versions, reverse=True, key=operator.attrgetter('order'))
+            latest = sorted_versions[0]
+            results.add(str(latest))
+
+    except requests.RequestException as e:
+        print(f"An error occurred during the request: {e}")
+
+    return results
+
 
 def main():
-    results = set()
-    for url in [base_url.format(cat) for cat in categories]:
-        res = requests.get(url)
-        content = res.text
-        versions = [Version.parse(v) for v in re.findall(
-            r'"docker-([0-9]+\.[0-9]+\.[0-9]+-?.*)\.tgz"', content
-        )]
-        sorted_versions = sorted(
-            versions, reverse=True, key=operator.attrgetter('order')
-        )
-        latest = sorted_versions[0]
-        results.add(str(latest))
-    print(' '.join(results))
+    latest_versions = get_latest_docker_versions()
+    print(' '.join(latest_versions))
+
 
 if __name__ == '__main__':
     main()
