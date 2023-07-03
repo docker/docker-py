@@ -6,9 +6,11 @@ import os
 from setuptools import find_packages
 from setuptools import setup
 
+#root directory of project
 ROOT_DIR = os.path.dirname(__file__)
 SOURCE_DIR = os.path.join(ROOT_DIR)
 
+#dependencies for docker image and their minimum version requirements
 requirements = [
     'packaging >= 14.0',
     'requests >= 2.26.0',
@@ -28,18 +30,18 @@ extras_require = {
     # Only required when connecting using the ssh:// protocol
     'ssh': ['paramiko>=2.4.3'],
 }
-
+#reads test reqirements from test_requirements.txt and stores them in a list called test_requirements
 with open('./test-requirements.txt') as test_reqs_txt:
     test_requirements = [line for line in test_reqs_txt]
 
-
+#reads contents of README.md file and stores in long_description variable
 long_description = ''
 with codecs.open('./README.md', encoding='utf-8') as readme_md:
     long_description = readme_md.read()
 
 setup(
-    name="docker",
-    use_scm_version={
+    name="docker",     #name of package
+    use_scm_version={  
         'write_to': 'docker/_version.py'
     },
     description="A Python library for the Docker Engine API.",
@@ -55,10 +57,10 @@ setup(
     packages=find_packages(exclude=["tests.*", "tests"]),
     setup_requires=['setuptools_scm'],
     install_requires=requirements,
-    tests_require=test_requirements,
+    tests_require=test_requirements, #requirements for running package tests obtained from test_requirements list
     extras_require=extras_require,
     python_requires='>=3.7',
-    zip_safe=False,
+    zip_safe=False, #indicates if package can be installed as zip file
     test_suite='tests',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
