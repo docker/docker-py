@@ -19,6 +19,24 @@ class ImageCollectionTest(BaseIntegrationTest):
         self.tmp_imgs.append(image.id)
         assert client.containers.run(image) == b"hello world\n"
 
+    def test_build_with_progress_callback(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+
+        def progress_callback(current_step, max_step, details):
+            assert max_step == 3
+            if current_step == 1:
+                assert details == "FROM alpine"
+            elif current_step == 2:
+                assert details == "RUN echo 1"
+            elif current_step == 3:
+                assert details == "RUN echo 2"
+
+        image, _ = client.images.build(fileobj=io.BytesIO(
+            b"FROM alpine\n"
+            b"RUN echo 1\n"
+            b"RUN echo 2"
+        ), progress_callback=progress_callback)
+
     # @pytest.mark.xfail(reason='Engine 1.13 responds with status 500')
     def test_build_with_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
