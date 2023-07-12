@@ -121,6 +121,7 @@ class Container(Model):
             tag (str): The tag to push
             message (str): A commit message
             author (str): The name of the author
+            pause (bool): Whether to pause the container before committing
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
                 `Engine API documentation
