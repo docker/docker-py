@@ -233,7 +233,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network(
             ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[IPAMPool(subnet="2001:389::1/64")],
+                pool_configs=[IPAMPool(subnet="2001:389::/64")],
             ),
         )
         container = self.client.create_container(
@@ -389,7 +389,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="2001:389::1/64", iprange="2001:389::0/96",
+                        subnet="2001:389::/64", iprange="2001:389::0/96",
                         gateway="2001:389::ffff"
                     )
                 ]
@@ -455,7 +455,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="2001:389::1/64", iprange="2001:389::0/96",
+                        subnet="2001:389::/64", iprange="2001:389::0/96",
                         gateway="2001:389::ffff"
                     )
                 ]
