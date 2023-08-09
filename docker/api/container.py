@@ -317,6 +317,11 @@ class ContainerApiMixin:
                     '/var/www': {
                         'bind': '/mnt/vol1',
                         'mode': 'ro',
+                    },
+                    '/autofs/user1': {
+                        'bind': '/mnt/vol3',
+                        'mode': 'rw',
+                        'propagation': 'shared'
                     }
                 })
             )
@@ -327,10 +332,11 @@ class ContainerApiMixin:
         .. code-block:: python
 
             container_id = client.api.create_container(
-                'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+                'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2', '/mnt/vol3'],
                 host_config=client.api.create_host_config(binds=[
                     '/home/user1/:/mnt/vol2',
                     '/var/www:/mnt/vol1:ro',
+                    '/autofs/user1:/mnt/vol3:rw,shared',
                 ])
             )
 
