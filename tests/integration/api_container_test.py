@@ -542,6 +542,24 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
 
+    def test_create_with_binds_rw_rshared(self):
+        self.run_with_volume_propagation(
+            False,
+            'rshared',
+            TEST_IMG,
+            ['touch', os.path.join(self.mount_dest, self.filename)],
+        )
+        container = self.run_with_volume_propagation(
+            True,
+            'rshared',
+            TEST_IMG,
+            ['ls', self.mount_dest],
+        )
+        logs = self.client.logs(container).decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, True, 'rshared')
+
     @requires_api_version('1.30')
     def test_create_with_mounts(self):
         mount = docker.types.Mount(
@@ -597,7 +615,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount['Source'] == mount_data['Name']
         assert mount_data['RW'] is True
 
-    def check_container_data(self, inspect_data, rw):
+    def check_container_data(self, inspect_data, rw, propagation='rprivate'):
         assert 'Mounts' in inspect_data
         filtered = list(filter(
             lambda x: x['Destination'] == self.mount_dest,
@@ -607,6 +625,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         mount_data = filtered[0]
         assert mount_data['Source'] == self.mount_origin
         assert mount_data['RW'] == rw
+        assert mount_data['Propagation'] == propagation
 
     def run_with_volume(self, ro, *args, **kwargs):
         return self.run_container(
@@ -617,6 +636,23 @@ class VolumeBindTest(BaseAPIIntegrationTest):
                     self.mount_origin: {
                         'bind': self.mount_dest,
                         'ro': ro,
+                    },
+                },
+                network_mode='none'
+            ),
+            **kwargs
+        )
+
+    def run_with_volume_propagation(self, ro, propagation, *args, **kwargs):
+        return self.run_container(
+            *args,
+            volumes={self.mount_dest: {}},
+            host_config=self.client.create_host_config(
+                binds={
+                    self.mount_origin: {
+                        'bind': self.mount_dest,
+                        'ro': ro,
+                        'propagation': propagation
                     },
                 },
                 network_mode='none'
