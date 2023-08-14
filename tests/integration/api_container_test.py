@@ -122,8 +122,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.wait(id)
         with pytest.raises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
-        err = exc.value.explanation
-        assert 'You cannot remove ' in err
+        err = exc.value.explanation.lower()
+        assert 'stop the container before' in err
         self.client.remove_container(id, force=True)
 
     def test_create_container_with_volumes_from(self):
