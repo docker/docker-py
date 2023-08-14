@@ -27,7 +27,7 @@ def create_api_error_from_http_exception(e):
     try:
         explanation = response.json()['message']
     except ValueError:
-        explanation = (response.content or '').strip()
+        explanation = (response.text or '').strip()
     cls = APIError
     if response.status_code == 404:
         explanation_msg = (explanation or '').lower()
