@@ -102,6 +102,7 @@ class ImageTest(BaseAPIClientTest):
                 'tag': None,
                 'container': fake_api.FAKE_CONTAINER_ID,
                 'author': None,
+                'pause': True,
                 'changes': None
             },
             timeout=DEFAULT_TIMEOUT_SECONDS
