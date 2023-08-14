@@ -1392,7 +1392,7 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
         response = self.client.stats(container, stream=0)
         self.client.kill(container)
 
-        assert type(response) == dict
+        assert isinstance(response, dict)
         for key in ['read', 'networks', 'precpu_stats', 'cpu_stats',
                     'memory_stats', 'blkio_stats']:
             assert key in response
@@ -1405,7 +1405,7 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
             self.client.start(container)
             stream = self.client.stats(container)
             for chunk in stream:
-                assert type(chunk) == dict
+                assert isinstance(chunk, dict)
                 for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
                             'memory_stats', 'blkio_stats']:
                     assert key in chunk
