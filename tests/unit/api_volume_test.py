@@ -14,7 +14,7 @@ class VolumeTest(BaseAPIClientTest):
         args = fake_request.call_args
 
         assert args[0][0] == 'GET'
-        assert args[0][1] == url_prefix + 'volumes'
+        assert args[0][1] == f"{url_prefix}volumes"
 
     def test_list_volumes_and_filters(self):
         volumes = self.client.volumes(filters={'dangling': True})
@@ -23,7 +23,7 @@ class VolumeTest(BaseAPIClientTest):
         args = fake_request.call_args
 
         assert args[0][0] == 'GET'
-        assert args[0][1] == url_prefix + 'volumes'
+        assert args[0][1] == f"{url_prefix}volumes"
         assert args[1] == {'params': {'filters': '{"dangling": ["true"]}'},
                            'timeout': 60}
 
@@ -37,7 +37,7 @@ class VolumeTest(BaseAPIClientTest):
         args = fake_request.call_args
 
         assert args[0][0] == 'POST'
-        assert args[0][1] == url_prefix + 'volumes/create'
+        assert args[0][1] == f"{url_prefix}volumes/create"
         assert json.loads(args[1]['data']) == {'Name': name}
 
     @requires_api_version('1.23')
@@ -63,7 +63,7 @@ class VolumeTest(BaseAPIClientTest):
         args = fake_request.call_args
 
         assert args[0][0] == 'POST'
-        assert args[0][1] == url_prefix + 'volumes/create'
+        assert args[0][1] == f"{url_prefix}volumes/create"
         data = json.loads(args[1]['data'])
         assert 'Driver' in data
         assert data['Driver'] == driver_name

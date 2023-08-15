@@ -55,7 +55,7 @@ class TLSConfig:
                 raise errors.TLSParameterError(
                     'client_cert must be a tuple of'
                     ' (client certificate, key file)'
-                )
+                ) from None
 
             if not (tls_cert and tls_key) or (not os.path.isfile(tls_cert) or
                                               not os.path.isfile(tls_key)):

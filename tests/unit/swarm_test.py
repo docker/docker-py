@@ -20,7 +20,7 @@ class SwarmTest(BaseAPIClientTest):
         )
         args = fake_request.call_args
         assert args[0][1] == (
-            url_prefix + 'nodes/24ifsmvkjbyhk/update?version=1'
+            f"{url_prefix}nodes/24ifsmvkjbyhk/update?version=1"
         )
         assert json.loads(args[1]['data']) == node_spec
         assert args[1]['headers']['Content-Type'] == 'application/json'
@@ -45,7 +45,7 @@ class SwarmTest(BaseAPIClientTest):
 
         args = fake_request.call_args
 
-        assert (args[0][1] == url_prefix + 'swarm/join')
+        assert (args[0][1] == f"{url_prefix}swarm/join")
         assert (json.loads(args[1]['data']) == data)
         assert (args[1]['headers']['Content-Type'] == 'application/json')
 
@@ -64,6 +64,6 @@ class SwarmTest(BaseAPIClientTest):
 
         args = fake_request.call_args
 
-        assert (args[0][1] == url_prefix + 'swarm/join')
+        assert (args[0][1] == f"{url_prefix}swarm/join")
         assert (json.loads(args[1]['data']) == data)
         assert (args[1]['headers']['Content-Type'] == 'application/json')

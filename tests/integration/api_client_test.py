@@ -47,7 +47,7 @@ class ConnectionTimeoutTest(unittest.TestCase):
         # This call isn't supposed to complete, and it should fail fast.
         try:
             res = self.client.inspect_container('id')
-        except:  # noqa: E722
+        except Exception:
             pass
         end = time.time()
         assert res is None
@@ -72,6 +72,4 @@ class UnixconnTest(unittest.TestCase):
             client.close()
             del client
 
-            assert len(w) == 0, "No warnings produced: {}".format(
-                w[0].message
-            )
+            assert len(w) == 0, f"No warnings produced: {w[0].message}"

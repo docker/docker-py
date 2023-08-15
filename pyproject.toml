@@ -3,3 +3,18 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 
 [tool.setuptools_scm]
 write_to = 'docker/_version.py'
+
+[tool.ruff]
+target-version = "py37"
+extend-select = [
+    "B",
+    "C",
+    "F",
+    "W",
+]
+ignore = [
+    "C901",  # too complex (there's a whole bunch of these)
+]
+
+[tool.ruff.per-file-ignores]
+"**/__init__.py" = ["F401"]

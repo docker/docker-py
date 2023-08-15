@@ -48,8 +48,11 @@ class LogConfig(DictType):
         >>> container = client.create_container('busybox', 'true',
         ...    host_config=hc)
         >>> client.inspect_container(container)['HostConfig']['LogConfig']
-        {'Type': 'json-file', 'Config': {'labels': 'production_status,geo', 'max-size': '1g'}}
-    """  # noqa: E501
+        {
+            'Type': 'json-file',
+            'Config': {'labels': 'production_status,geo', 'max-size': '1g'}
+        }
+    """
     types = LogConfigTypesEnum
 
     def __init__(self, **kwargs):
@@ -652,25 +655,25 @@ class HostConfig(dict):
 
 
 def host_config_type_error(param, param_value, expected):
-    error_msg = 'Invalid type for {0} param: expected {1} but found {2}'
-    return TypeError(error_msg.format(param, expected, type(param_value)))
+    return TypeError(
+        f'Invalid type for {param} param: expected {expected} '
+        f'but found {type(param_value)}'
+    )
 
 
 def host_config_version_error(param, version, less_than=True):
     operator = '<' if less_than else '>'
-    error_msg = '{0} param is not supported in API versions {1} {2}'
-    return errors.InvalidVersion(error_msg.format(param, operator, version))
-
+    return errors.InvalidVersion(
+        f'{param} param is not supported in API versions {operator} {version}',
+    )
 
 def host_config_value_error(param, param_value):
-    error_msg = 'Invalid value for {0} param: {1}'
-    return ValueError(error_msg.format(param, param_value))
+    return ValueError(f'Invalid value for {param} param: {param_value}')
 
 
 def host_config_incompatible_error(param, param_value, incompatible_param):
-    error_msg = '\"{1}\" {0} is incompatible with {2}'
     return errors.InvalidArgument(
-        error_msg.format(param, param_value, incompatible_param)
+        f'\"{param_value}\" {param} is incompatible with {incompatible_param}'
     )
 
 

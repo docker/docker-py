@@ -113,8 +113,8 @@ class ContextAPI:
                         names.append(data["Name"])
                     except Exception as e:
                         raise errors.ContextException(
-                            "Failed to load metafile {}: {}".format(
-                                filename, e))
+                            f"Failed to load metafile {filename}: {e}",
+                        ) from e
 
         contexts = [cls.DEFAULT_CONTEXT]
         for name in names:

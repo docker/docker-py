@@ -47,11 +47,11 @@ class Container(Model):
         try:
             result = self.attrs['Config'].get('Labels')
             return result or {}
-        except KeyError:
+        except KeyError as ke:
             raise DockerException(
                 'Label data is not available for sparse objects. Call reload()'
                 ' to retrieve all information'
-            )
+            ) from ke
 
     @property
     def status(self):
