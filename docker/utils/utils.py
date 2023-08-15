@@ -17,7 +17,6 @@ from ..tls import TLSConfig
 
 from urllib.parse import urlparse, urlunparse
 
-
 URLComponents = collections.namedtuple(
     'URLComponents',
     'scheme netloc url params query fragment',
@@ -140,6 +139,22 @@ def convert_volume_binds(binds):
                 mode = v['mode']
             else:
                 mode = 'rw'
+
+            # NOTE: this is only relevant for Linux hosts
+            # (doesn't apply in Docker Desktop)
+            propagation_modes = [
+                'rshared',
+                'shared',
+                'rslave',
+                'slave',
+                'rprivate',
+                'private',
+            ]
+            if 'propagation' in v and v['propagation'] in propagation_modes:
+                if mode:
+                    mode = ','.join([mode, v['propagation']])
+                else:
+                    mode = v['propagation']
 
             result.append(
                 f'{k}:{bind}:{mode}'
