@@ -112,7 +112,7 @@ class ContainerApiMixin:
 
     @utils.check_resource('container')
     def commit(self, container, repository=None, tag=None, message=None,
-               author=None, changes=None, conf=None):
+               author=None, pause=True, changes=None, conf=None):
         """
         Commit a container to an image. Similar to the ``docker commit``
         command.
@@ -123,6 +123,7 @@ class ContainerApiMixin:
             tag (str): The tag to push
             message (str): A commit message
             author (str): The name of the author
+            pause (bool): Whether to pause the container before committing
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
                 `Engine API documentation
@@ -139,6 +140,7 @@ class ContainerApiMixin:
             'tag': tag,
             'comment': message,
             'author': author,
+            'pause': pause,
             'changes': changes
         }
         u = self._url("/commit")

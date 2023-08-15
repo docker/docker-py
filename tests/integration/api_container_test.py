@@ -122,8 +122,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.wait(id)
         with pytest.raises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
-        err = exc.value.explanation
-        assert 'You cannot remove ' in err
+        err = exc.value.explanation.lower()
+        assert 'stop the container before' in err
         self.client.remove_container(id, force=True)
 
     def test_create_container_with_volumes_from(self):
@@ -1428,7 +1428,7 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
         response = self.client.stats(container, stream=0)
         self.client.kill(container)
 
-        assert type(response) == dict
+        assert isinstance(response, dict)
         for key in ['read', 'networks', 'precpu_stats', 'cpu_stats',
                     'memory_stats', 'blkio_stats']:
             assert key in response
@@ -1441,7 +1441,7 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
             self.client.start(container)
             stream = self.client.stats(container)
             for chunk in stream:
-                assert type(chunk) == dict
+                assert isinstance(chunk, dict)
                 for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
                             'memory_stats', 'blkio_stats']:
                     assert key in chunk
