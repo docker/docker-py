@@ -13,7 +13,7 @@ class BaseContextTest(unittest.TestCase):
     )
     def test_url_compatibility_on_linux(self):
         c = Context("test")
-        assert c.Host == DEFAULT_UNIX_SOCKET.strip("http+")
+        assert c.Host == DEFAULT_UNIX_SOCKET[5:]
 
     @pytest.mark.skipif(
         not IS_WINDOWS_PLATFORM, reason='Windows specific path check'
@@ -45,5 +45,7 @@ class BaseContextTest(unittest.TestCase):
         ctx = ContextAPI.inspect_context()
         assert ctx["Name"] == "default"
         assert ctx["Metadata"]["StackOrchestrator"] == "swarm"
-        assert ctx["Endpoints"]["docker"]["Host"] in [
-            DEFAULT_NPIPE, DEFAULT_UNIX_SOCKET.strip("http+")]
+        assert ctx["Endpoints"]["docker"]["Host"] in (
+            DEFAULT_NPIPE,
+            DEFAULT_UNIX_SOCKET[5:],
+        )

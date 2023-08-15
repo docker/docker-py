@@ -17,7 +17,6 @@ from ..tls import TLSConfig
 
 from urllib.parse import urlparse, urlunparse
 
-
 URLComponents = collections.namedtuple(
     'URLComponents',
     'scheme netloc url params query fragment',
@@ -127,8 +126,7 @@ def convert_volume_binds(binds):
         if isinstance(v, dict):
             if 'ro' in v and 'mode' in v:
                 raise ValueError(
-                    'Binding cannot contain both "ro" and "mode": {}'
-                    .format(repr(v))
+                    f'Binding cannot contain both "ro" and "mode": {v!r}'
                 )
 
             bind = v['bind']
@@ -141,6 +139,22 @@ def convert_volume_binds(binds):
                 mode = v['mode']
             else:
                 mode = 'rw'
+
+            # NOTE: this is only relevant for Linux hosts
+            # (doesn't apply in Docker Desktop)
+            propagation_modes = [
+                'rshared',
+                'shared',
+                'rslave',
+                'slave',
+                'rprivate',
+                'private',
+            ]
+            if 'propagation' in v and v['propagation'] in propagation_modes:
+                if mode:
+                    mode = ','.join([mode, v['propagation']])
+                else:
+                    mode = v['propagation']
 
             result.append(
                 f'{k}:{bind}:{mode}'
@@ -160,8 +174,8 @@ def convert_tmpfs_mounts(tmpfs):
 
     if not isinstance(tmpfs, list):
         raise ValueError(
-            'Expected tmpfs value to be either a list or a dict, found: {}'
-            .format(type(tmpfs).__name__)
+            'Expected tmpfs value to be either a list or a dict, '
+            f'found: {type(tmpfs).__name__}'
         )
 
     result = {}
@@ -175,8 +189,8 @@ def convert_tmpfs_mounts(tmpfs):
 
         else:
             raise ValueError(
-                "Expected item in tmpfs list to be a string, found: {}"
-                .format(type(mount).__name__)
+                "Expected item in tmpfs list to be a string, "
+                f"found: {type(mount).__name__}"
             )
 
         result[name] = options
@@ -218,9 +232,9 @@ def parse_host(addr, is_win32=False, tls=False):
 
     parsed_url = urlparse(addr)
     proto = parsed_url.scheme
-    if not proto or any([x not in string.ascii_letters + '+' for x in proto]):
+    if not proto or any(x not in f"{string.ascii_letters}+" for x in proto):
         # https://bugs.python.org/issue754016
-        parsed_url = urlparse('//' + addr, 'tcp')
+        parsed_url = urlparse(f"//{addr}", 'tcp')
         proto = 'tcp'
 
     if proto == 'fd':
@@ -256,15 +270,14 @@ def parse_host(addr, is_win32=False, tls=False):
 
     if parsed_url.path and proto == 'ssh':
         raise errors.DockerException(
-            'Invalid bind address format: no path allowed for this protocol:'
-            ' {}'.format(addr)
+            f'Invalid bind address format: no path allowed for this protocol: {addr}'
         )
     else:
         path = parsed_url.path
         if proto == 'unix' and parsed_url.hostname is not None:
             # For legacy reasons, we consider unix://path
             # to be valid and equivalent to unix:///path
-            path = '/'.join((parsed_url.hostname, path))
+            path = f"{parsed_url.hostname}/{path}"
 
     netloc = parsed_url.netloc
     if proto in ('tcp', 'ssh'):
@@ -272,8 +285,7 @@ def parse_host(addr, is_win32=False, tls=False):
         if port <= 0:
             if proto != 'ssh':
                 raise errors.DockerException(
-                    'Invalid bind address format: port is required:'
-                    ' {}'.format(addr)
+                    f'Invalid bind address format: port is required: {addr}'
                 )
             port = 22
             netloc = f'{parsed_url.netloc}:{port}'
@@ -283,7 +295,7 @@ def parse_host(addr, is_win32=False, tls=False):
 
     # Rewrite schemes to fit library internals (requests adapters)
     if proto == 'tcp':
-        proto = 'http{}'.format('s' if tls else '')
+        proto = f"http{'s' if tls else ''}"
     elif proto == 'unix':
         proto = 'http+unix'
 
@@ -417,19 +429,18 @@ def parse_bytes(s):
     if suffix in units.keys() or suffix.isdigit():
         try:
             digits = float(digits_part)
-        except ValueError:
+        except ValueError as ve:
             raise errors.DockerException(
-                'Failed converting the string value for memory ({}) to'
-                ' an integer.'.format(digits_part)
-            )
+                'Failed converting the string value for memory '
+                f'({digits_part}) to an integer.'
+            ) from ve
 
         # Reconvert to long for the final result
         s = int(digits * units[suffix])
     else:
         raise errors.DockerException(
-            'The specified value for memory ({}) should specify the'
-            ' units. The postfix should be one of the `b` `k` `m` `g`'
-            ' characters'.format(s)
+            f'The specified value for memory ({s}) should specify the units. '
+            'The postfix should be one of the `b` `k` `m` `g` characters'
         )
 
     return s
@@ -465,8 +476,7 @@ def parse_env_file(env_file):
                 environment[k] = v
             else:
                 raise errors.DockerException(
-                    'Invalid line in environment file {}:\n{}'.format(
-                        env_file, line))
+                    f'Invalid line in environment file {env_file}:\n{line}')
 
     return environment
 

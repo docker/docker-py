@@ -85,10 +85,7 @@ class ClientTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
+        base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
 
         mock_obj.assert_called_once_with(base_url,
                                          "/var/run/docker.sock",
@@ -124,10 +121,7 @@ class ClientTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
+        base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
 
         mock_obj.assert_called_once_with(base_url,
                                          "/var/run/docker.sock",
@@ -159,7 +153,8 @@ class FromEnvTest(unittest.TestCase):
         self.os_environ = os.environ.copy()
 
     def tearDown(self):
-        os.environ = self.os_environ
+        os.environ.clear()
+        os.environ.update(self.os_environ)
 
     def test_from_env(self):
         """Test that environment variables are passed through to
@@ -198,10 +193,7 @@ class FromEnvTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
+        base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
 
         mock_obj.assert_called_once_with(base_url,
                                          "/var/run/docker.sock",
@@ -235,10 +227,7 @@ class FromEnvTest(unittest.TestCase):
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
-        base_url = "{base_url}/v{version}/_ping".format(
-            base_url=client.api.base_url,
-            version=client.api._version
-        )
+        base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
 
         mock_obj.assert_called_once_with(base_url,
                                          "/var/run/docker.sock",

@@ -124,7 +124,7 @@ class BuildTest(BaseAPIIntegrationTest):
             path=base_dir,
             tag=tag,
         )
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         c = self.client.create_container(tag, ['find', '/test', '-type', 'f'])
@@ -134,7 +134,7 @@ class BuildTest(BaseAPIIntegrationTest):
 
         logs = logs.decode('utf-8')
 
-        assert sorted(list(filter(None, logs.split('\n')))) == sorted([
+        assert sorted(filter(None, logs.split('\n'))) == sorted([
             '/test/#file.txt',
             '/test/ignored/subdir/excepted-file',
             '/test/not-ignored'
@@ -151,7 +151,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag='buildargs', buildargs={'test': 'OK'}
         )
         self.tmp_imgs.append('buildargs')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         info = self.client.inspect_image('buildargs')
@@ -171,7 +171,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag=tag, shmsize=shmsize
         )
         self.tmp_imgs.append(tag)
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         # There is currently no way to get the shmsize
@@ -189,7 +189,7 @@ class BuildTest(BaseAPIIntegrationTest):
             isolation='default'
         )
 
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
     @requires_api_version('1.23')
@@ -204,7 +204,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, tag='labels', labels=labels
         )
         self.tmp_imgs.append('labels')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         info = self.client.inspect_image('labels')
@@ -221,7 +221,7 @@ class BuildTest(BaseAPIIntegrationTest):
 
         stream = self.client.build(fileobj=script, tag='build1')
         self.tmp_imgs.append('build1')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         stream = self.client.build(
@@ -262,7 +262,7 @@ class BuildTest(BaseAPIIntegrationTest):
             fileobj=script, target='first', tag='build1'
         )
         self.tmp_imgs.append('build1')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         info = self.client.inspect_image('build1')
@@ -291,7 +291,7 @@ class BuildTest(BaseAPIIntegrationTest):
         )
 
         self.tmp_imgs.append('dockerpytest_customnetbuild')
-        for chunk in stream:
+        for _chunk in stream:
             pass
 
         assert self.client.inspect_image('dockerpytest_customnetbuild')
@@ -303,7 +303,7 @@ class BuildTest(BaseAPIIntegrationTest):
         )
 
         self.tmp_imgs.append('dockerpytest_nonebuild')
-        logs = [chunk for chunk in stream]
+        logs = list(stream)
         assert 'errorDetail' in logs[-1]
         assert logs[-1]['errorDetail']['code'] == 1
 
@@ -356,7 +356,7 @@ class BuildTest(BaseAPIIntegrationTest):
                 fileobj=script, tag=tag, squash=squash
             )
             self.tmp_imgs.append(tag)
-            for chunk in stream:
+            for _chunk in stream:
                 pass
 
             return self.client.inspect_image(tag)
@@ -383,7 +383,7 @@ class BuildTest(BaseAPIIntegrationTest):
         expected = '{0}{2}\n{1}'.format(
             control_chars[0], control_chars[1], snippet
         )
-        assert any([line == expected for line in lines])
+        assert any(line == expected for line in lines)
 
     def test_build_gzip_encoding(self):
         base_dir = tempfile.mkdtemp()

@@ -47,11 +47,11 @@ class Container(Model):
         try:
             result = self.attrs['Config'].get('Labels')
             return result or {}
-        except KeyError:
+        except KeyError as ke:
             raise DockerException(
                 'Label data is not available for sparse objects. Call reload()'
                 ' to retrieve all information'
-            )
+            ) from ke
 
     @property
     def status(self):
@@ -121,6 +121,7 @@ class Container(Model):
             tag (str): The tag to push
             message (str): A commit message
             author (str): The name of the author
+            pause (bool): Whether to pause the container before committing
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
                 `Engine API documentation

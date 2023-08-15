@@ -46,6 +46,19 @@ def untar_file(tardata, filename):
     return result
 
 
+def skip_if_desktop():
+    def fn(f):
+        @functools.wraps(f)
+        def wrapped(self, *args, **kwargs):
+            info = self.client.info()
+            if info['Name'] == 'docker-desktop':
+                pytest.skip('Test does not support Docker Desktop')
+            return f(self, *args, **kwargs)
+
+        return wrapped
+
+    return fn
+
 def requires_api_version(version):
     test_version = os.environ.get(
         'DOCKER_TEST_API_VERSION', docker.constants.DEFAULT_DOCKER_API_VERSION
@@ -80,7 +93,7 @@ def wait_on_condition(condition, delay=0.1, timeout=40):
     start_time = time.time()
     while not condition():
         if time.time() - start_time > timeout:
-            raise AssertionError("Timeout: %s" % condition)
+            raise AssertionError(f"Timeout: {condition}")
         time.sleep(delay)
 
 

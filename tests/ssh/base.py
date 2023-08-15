@@ -110,8 +110,7 @@ class BaseAPIIntegrationTest(BaseIntegrationTest):
         if exitcode != 0:
             output = self.client.logs(container)
             raise Exception(
-                "Container exited with code {}:\n{}"
-                .format(exitcode, output))
+                f"Container exited with code {exitcode}:\n{output}")
 
         return container
 

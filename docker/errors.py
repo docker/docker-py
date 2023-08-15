@@ -27,7 +27,7 @@ def create_api_error_from_http_exception(e):
     try:
         explanation = response.json()['message']
     except ValueError:
-        explanation = (response.content or '').strip()
+        explanation = (response.text or '').strip()
     cls = APIError
     if response.status_code == 404:
         explanation_msg = (explanation or '').lower()
@@ -54,14 +54,16 @@ class APIError(requests.exceptions.HTTPError, DockerException):
         message = super().__str__()
 
         if self.is_client_error():
-            message = '{} Client Error for {}: {}'.format(
-                self.response.status_code, self.response.url,
-                self.response.reason)
+            message = (
+                f'{self.response.status_code} Client Error for '
+                f'{self.response.url}: {self.response.reason}'
+            )
 
         elif self.is_server_error():
-            message = '{} Server Error for {}: {}'.format(
-                self.response.status_code, self.response.url,
-                self.response.reason)
+            message = (
+                f'{self.response.status_code} Server Error for '
+                f'{self.response.url}: {self.response.reason}'
+            )
 
         if self.explanation:
             message = f'{message} ("{self.explanation}")'
@@ -142,10 +144,10 @@ class ContainerError(DockerException):
         self.stderr = stderr
 
         err = f": {stderr}" if stderr is not None else ""
-        msg = ("Command '{}' in image '{}' returned non-zero exit "
-               "status {}{}").format(command, image, exit_status, err)
-
-        super().__init__(msg)
+        super().__init__(
+            f"Command '{command}' in image '{image}' "
+            f"returned non-zero exit status {exit_status}{err}"
+        )
 
 
 class StreamParseError(RuntimeError):

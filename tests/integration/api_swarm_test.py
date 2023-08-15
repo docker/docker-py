@@ -127,11 +127,11 @@ class SwarmTest(BaseAPIIntegrationTest):
         assert self.init_swarm()
         with pytest.raises(docker.errors.APIError) as exc_info:
             self.client.leave_swarm()
-        exc_info.value.response.status_code == 500
+        assert exc_info.value.response.status_code == 503
         assert self.client.leave_swarm(force=True)
         with pytest.raises(docker.errors.APIError) as exc_info:
             self.client.inspect_swarm()
-        exc_info.value.response.status_code == 406
+        assert exc_info.value.response.status_code == 503
         assert self.client.leave_swarm(force=True)
 
     @requires_api_version('1.24')

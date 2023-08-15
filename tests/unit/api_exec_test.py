@@ -32,9 +32,7 @@ class ExecTest(BaseAPIClientTest):
         self.client.exec_start(fake_api.FAKE_EXEC_ID)
 
         args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'exec/{}/start'.format(
-            fake_api.FAKE_EXEC_ID
-        )
+        assert args[0][1] == f"{url_prefix}exec/{fake_api.FAKE_EXEC_ID}/start"
 
         assert json.loads(args[1]['data']) == {
             'Tty': False,
@@ -51,9 +49,7 @@ class ExecTest(BaseAPIClientTest):
         self.client.exec_start(fake_api.FAKE_EXEC_ID, detach=True)
 
         args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'exec/{}/start'.format(
-            fake_api.FAKE_EXEC_ID
-        )
+        assert args[0][1] == f"{url_prefix}exec/{fake_api.FAKE_EXEC_ID}/start"
 
         assert json.loads(args[1]['data']) == {
             'Tty': False,
@@ -68,16 +64,14 @@ class ExecTest(BaseAPIClientTest):
         self.client.exec_inspect(fake_api.FAKE_EXEC_ID)
 
         args = fake_request.call_args
-        assert args[0][1] == url_prefix + 'exec/{}/json'.format(
-            fake_api.FAKE_EXEC_ID
-        )
+        assert args[0][1] == f"{url_prefix}exec/{fake_api.FAKE_EXEC_ID}/json"
 
     def test_exec_resize(self):
         self.client.exec_resize(fake_api.FAKE_EXEC_ID, height=20, width=60)
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + f'exec/{fake_api.FAKE_EXEC_ID}/resize',
+            f"{url_prefix}exec/{fake_api.FAKE_EXEC_ID}/resize",
             params={'h': 20, 'w': 60},
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

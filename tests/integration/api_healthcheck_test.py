@@ -16,7 +16,7 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.24')
     def test_healthcheck_shell_command(self):
         container = self.client.create_container(
-            TEST_IMG, 'top', healthcheck=dict(test='echo "hello world"'))
+            TEST_IMG, 'top', healthcheck={'test': 'echo "hello world"'})
         self.tmp_containers.append(container)
 
         res = self.client.inspect_container(container)
@@ -27,12 +27,12 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.24')
     def test_healthcheck_passes(self):
         container = self.client.create_container(
-            TEST_IMG, 'top', healthcheck=dict(
-                test="true",
-                interval=1 * SECOND,
-                timeout=1 * SECOND,
-                retries=1,
-            ))
+            TEST_IMG, 'top', healthcheck={
+                'test': "true",
+                'interval': 1 * SECOND,
+                'timeout': 1 * SECOND,
+                'retries': 1,
+            })
         self.tmp_containers.append(container)
         self.client.start(container)
         wait_on_health_status(self.client, container, "healthy")
@@ -40,12 +40,12 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.24')
     def test_healthcheck_fails(self):
         container = self.client.create_container(
-            TEST_IMG, 'top', healthcheck=dict(
-                test="false",
-                interval=1 * SECOND,
-                timeout=1 * SECOND,
-                retries=1,
-            ))
+            TEST_IMG, 'top', healthcheck={
+                'test': "false",
+                'interval': 1 * SECOND,
+                'timeout': 1 * SECOND,
+                'retries': 1,
+            })
         self.tmp_containers.append(container)
         self.client.start(container)
         wait_on_health_status(self.client, container, "unhealthy")
@@ -53,14 +53,14 @@ class HealthcheckTest(BaseAPIIntegrationTest):
     @helpers.requires_api_version('1.29')
     def test_healthcheck_start_period(self):
         container = self.client.create_container(
-            TEST_IMG, 'top', healthcheck=dict(
-                test="echo 'x' >> /counter.txt && "
+            TEST_IMG, 'top', healthcheck={
+                'test': "echo 'x' >> /counter.txt && "
                      "test `cat /counter.txt | wc -l` -ge 3",
-                interval=1 * SECOND,
-                timeout=1 * SECOND,
-                retries=1,
-                start_period=3 * SECOND
-            )
+                'interval': 1 * SECOND,
+                'timeout': 1 * SECOND,
+                'retries': 1,
+                'start_period': 3 * SECOND
+            }
         )
 
         self.tmp_containers.append(container)

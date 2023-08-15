@@ -112,7 +112,7 @@ class ContainerApiMixin:
 
     @utils.check_resource('container')
     def commit(self, container, repository=None, tag=None, message=None,
-               author=None, changes=None, conf=None):
+               author=None, pause=True, changes=None, conf=None):
         """
         Commit a container to an image. Similar to the ``docker commit``
         command.
@@ -123,6 +123,7 @@ class ContainerApiMixin:
             tag (str): The tag to push
             message (str): A commit message
             author (str): The name of the author
+            pause (bool): Whether to pause the container before committing
             changes (str): Dockerfile instructions to apply while committing
             conf (dict): The configuration for the container. See the
                 `Engine API documentation
@@ -139,6 +140,7 @@ class ContainerApiMixin:
             'tag': tag,
             'comment': message,
             'author': author,
+            'pause': pause,
             'changes': changes
         }
         u = self._url("/commit")
@@ -317,6 +319,11 @@ class ContainerApiMixin:
                     '/var/www': {
                         'bind': '/mnt/vol1',
                         'mode': 'ro',
+                    },
+                    '/autofs/user1': {
+                        'bind': '/mnt/vol3',
+                        'mode': 'rw',
+                        'propagation': 'shared'
                     }
                 })
             )
@@ -327,10 +334,11 @@ class ContainerApiMixin:
         .. code-block:: python
 
             container_id = client.api.create_container(
-                'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2'],
+                'busybox', 'ls', volumes=['/mnt/vol1', '/mnt/vol2', '/mnt/vol3'],
                 host_config=client.api.create_host_config(binds=[
                     '/home/user1/:/mnt/vol2',
                     '/var/www:/mnt/vol1:ro',
+                    '/autofs/user1:/mnt/vol3:rw,shared',
                 ])
             )
 
@@ -861,8 +869,8 @@ class ContainerApiMixin:
                 params['since'] = since
             else:
                 raise errors.InvalidArgument(
-                    'since value should be datetime or positive int/float, '
-                    'not {}'.format(type(since))
+                    'since value should be datetime or positive int/float,'
+                    f' not {type(since)}'
                 )
 
         if until is not None:
@@ -878,8 +886,8 @@ class ContainerApiMixin:
                 params['until'] = until
             else:
                 raise errors.InvalidArgument(
-                    'until value should be datetime or positive int/float, '
-                    'not {}'.format(type(until))
+                    f'until value should be datetime or positive int/float, '
+                    f'not {type(until)}'
                 )
 
         url = self._url("/containers/{0}/logs", container)
@@ -951,7 +959,7 @@ class ContainerApiMixin:
             return port_settings.get(private_port)
 
         for protocol in ['tcp', 'udp', 'sctp']:
-            h_ports = port_settings.get(private_port + '/' + protocol)
+            h_ports = port_settings.get(f"{private_port}/{protocol}")
             if h_ports:
                 break
 
