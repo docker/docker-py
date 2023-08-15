@@ -79,18 +79,18 @@ def translate(pat):
                     i = i + 1
                 if i >= n:
                     # is "**EOF" - to align with .gitignore just accept all
-                    res = res + '.*'
+                    res = f"{res}.*"
                 else:
                     # is "**"
                     # Note that this allows for any # of /'s (even 0) because
                     # the .* will eat everything, even /'s
-                    res = res + '(.*/)?'
+                    res = f"{res}(.*/)?"
             else:
                 # is "*" so map it to anything but "/"
-                res = res + '[^/]*'
+                res = f"{res}[^/]*"
         elif c == '?':
             # "?" is any char except "/"
-            res = res + '[^/]'
+            res = f"{res}[^/]"
         elif c == '[':
             j = i
             if j < n and pat[j] == '!':
@@ -100,16 +100,16 @@ def translate(pat):
             while j < n and pat[j] != ']':
                 j = j + 1
             if j >= n:
-                res = res + '\\['
+                res = f"{res}\\["
             else:
                 stuff = pat[i:j].replace('\\', '\\\\')
                 i = j + 1
                 if stuff[0] == '!':
-                    stuff = '^' + stuff[1:]
+                    stuff = f"^{stuff[1:]}"
                 elif stuff[0] == '^':
-                    stuff = '\\' + stuff
+                    stuff = f"\\{stuff}"
                 res = f'{res}[{stuff}]'
         else:
             res = res + re.escape(c)
 
-    return res + '$'
+    return f"{res}$"

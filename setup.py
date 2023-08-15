@@ -30,7 +30,7 @@ extras_require = {
 }
 
 with open('./test-requirements.txt') as test_reqs_txt:
-    test_requirements = [line for line in test_reqs_txt]
+    test_requirements = list(test_reqs_txt)
 
 
 long_description = ''
@@ -48,7 +48,7 @@ setup(
     url='https://github.com/docker/docker-py',
     project_urls={
         'Documentation': 'https://docker-py.readthedocs.io',
-        'Changelog': 'https://docker-py.readthedocs.io/en/stable/change-log.html',  # noqa: E501
+        'Changelog': 'https://docker-py.readthedocs.io/en/stable/change-log.html',
         'Source': 'https://github.com/docker/docker-py',
         'Tracker': 'https://github.com/docker/docker-py/issues',
     },

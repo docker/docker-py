@@ -702,9 +702,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
             test_file.seek(0)
             ctnr = self.client.create_container(
                 TEST_IMG,
-                'cat {}'.format(
-                    os.path.join('/vol1/', os.path.basename(test_file.name))
-                ),
+                f"cat {os.path.join('/vol1/', os.path.basename(test_file.name))}",
                 volumes=['/vol1']
             )
             self.tmp_containers.append(ctnr)
@@ -862,7 +860,7 @@ class LogsTest(BaseAPIIntegrationTest):
         exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(id)
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     def test_logs_tail_option(self):
         snippet = '''Line1
@@ -893,7 +891,7 @@ Line2'''
         exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
 
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     @pytest.mark.timeout(5)
     @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
@@ -914,7 +912,7 @@ Line2'''
         for chunk in generator:
             logs += chunk
 
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     def test_logs_with_dict_instead_of_id(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -927,7 +925,7 @@ Line2'''
         exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(container)
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     def test_logs_with_tail_0(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -956,7 +954,7 @@ Line2'''
         logs_until_1 = self.client.logs(container, until=1)
         assert logs_until_1 == b''
         logs_until_now = self.client.logs(container, datetime.now())
-        assert logs_until_now == (snippet + '\n').encode(encoding='ascii')
+        assert logs_until_now == f"{snippet}\n".encode(encoding='ascii')
 
 
 class DiffTest(BaseAPIIntegrationTest):
@@ -1122,7 +1120,7 @@ class PortTest(BaseAPIIntegrationTest):
 
             ip, host_port = port_binding['HostIp'], port_binding['HostPort']
 
-            port_binding = port if not protocol else port + "/" + protocol
+            port_binding = port if not protocol else f"{port}/{protocol}"
             assert ip == port_bindings[port_binding][0]
             assert host_port == port_bindings[port_binding][1]
 

@@ -22,7 +22,7 @@ class TestStore:
     def setup_method(self):
         self.tmp_keys = []
         if sys.platform.startswith('linux'):
-            if shutil.which('docker-credential-' + DEFAULT_LINUX_STORE):
+            if shutil.which(f"docker-credential-{DEFAULT_LINUX_STORE}"):
                 self.store = Store(DEFAULT_LINUX_STORE)
             elif shutil.which('docker-credential-pass'):
                 self.store = Store('pass')

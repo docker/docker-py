@@ -42,8 +42,9 @@ class Context:
         for k, v in endpoints.items():
             if not isinstance(v, dict):
                 # unknown format
-                raise ContextException("""Unknown endpoint format for
-                    context {}: {}""".format(name, v))
+                raise ContextException(
+                    f"Unknown endpoint format for context {name}: {v}",
+                )
 
             self.endpoints[k] = v
             if k != "docker":
@@ -96,8 +97,9 @@ class Context:
                 metadata = json.load(f)
         except (OSError, KeyError, ValueError) as e:
             # unknown format
-            raise Exception("""Detected corrupted meta file for
-                context {} : {}""".format(name, e))
+            raise Exception(
+                f"Detected corrupted meta file for context {name} : {e}"
+            ) from e
 
         # for docker endpoints, set defaults for
         # Host and SkipTLSVerify fields

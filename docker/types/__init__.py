@@ -1,4 +1,3 @@
-# flake8: noqa
 from .containers import (
     ContainerConfig, HostConfig, LogConfig, Ulimit, DeviceRequest
 )
