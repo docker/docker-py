@@ -7,7 +7,7 @@ from unittest import mock
 @mock.patch.dict(os.environ)
 def test_create_environment_dict():
     base = {'FOO': 'bar', 'BAZ': 'foobar'}
-    os.environ = base
+    os.environ = base  # noqa: B003
     assert create_environment_dict({'FOO': 'baz'}) == {
         'FOO': 'baz', 'BAZ': 'foobar',
     }

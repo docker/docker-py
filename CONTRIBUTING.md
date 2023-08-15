@@ -44,7 +44,7 @@ paragraph in the Docker contribution guidelines.
 Before we can review your pull request, please ensure that nothing has been
 broken by your changes by running the test suite. You can do so simply by
 running `make test` in the project root. This also includes coding style using
-`flake8`
+`ruff`
 
 ### 3. Write clear, self-contained commits
 

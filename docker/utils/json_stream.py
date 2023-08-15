@@ -72,4 +72,4 @@ def split_buffer(stream, splitter=None, decoder=lambda a: a):
         try:
             yield decoder(buffered)
         except Exception as e:
-            raise StreamParseError(e)
+            raise StreamParseError(e) from e

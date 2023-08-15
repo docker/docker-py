@@ -77,5 +77,6 @@ def get_context_host(path=None, tls=False):
     host = utils.parse_host(path, IS_WINDOWS_PLATFORM, tls)
     if host == DEFAULT_UNIX_SOCKET:
         # remove http+ from default docker socket url
-        return host.strip("http+")
+        if host.startswith("http+"):
+            host = host[5:]
     return host

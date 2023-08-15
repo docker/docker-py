@@ -29,7 +29,7 @@ class ContextLifecycleTest(BaseAPIIntegrationTest):
             "test", tls_cfg=docker_tls)
 
         # check for a context 'test' in the context store
-        assert any([ctx.Name == "test" for ctx in ContextAPI.contexts()])
+        assert any(ctx.Name == "test" for ctx in ContextAPI.contexts())
         # retrieve a context object for 'test'
         assert ContextAPI.get_context("test")
         # remove context

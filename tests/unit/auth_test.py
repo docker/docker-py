@@ -290,9 +290,10 @@ class LoadConfigTest(unittest.TestCase):
         folder = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, folder)
 
-        dockercfg_path = os.path.join(folder,
-                                      '.{}.dockercfg'.format(
-                                          random.randrange(100000)))
+        dockercfg_path = os.path.join(
+            folder,
+            f'.{random.randrange(100000)}.dockercfg',
+        )
         registry = 'https://your.private.registry.io'
         auth_ = base64.b64encode(b'sakuya:izayoi').decode('ascii')
         config = {
@@ -777,8 +778,8 @@ class InMemoryStore(credentials.Store):
     def get(self, server):
         try:
             return self.__store[server]
-        except KeyError:
-            raise credentials.errors.CredentialsNotFound()
+        except KeyError as ke:
+            raise credentials.errors.CredentialsNotFound() from ke
 
     def store(self, server, username, secret):
         self.__store[server] = {

@@ -39,7 +39,7 @@ class PluginTest(BaseAPIIntegrationTest):
             return self.client.inspect_plugin(plugin_name)
         except docker.errors.NotFound:
             prv = self.client.plugin_privileges(plugin_name)
-            for d in self.client.pull_plugin(plugin_name, prv):
+            for _d in self.client.pull_plugin(plugin_name, prv):
                 pass
         return self.client.inspect_plugin(plugin_name)
 
@@ -118,7 +118,7 @@ class PluginTest(BaseAPIIntegrationTest):
             pass
 
         prv = self.client.plugin_privileges(SSHFS)
-        logs = [d for d in self.client.pull_plugin(SSHFS, prv)]
+        logs = list(self.client.pull_plugin(SSHFS, prv))
         assert filter(lambda x: x['status'] == 'Download complete', logs)
         assert self.client.inspect_plugin(SSHFS)
         assert self.client.enable_plugin(SSHFS)
@@ -128,7 +128,7 @@ class PluginTest(BaseAPIIntegrationTest):
         pl_data = self.ensure_plugin_installed(SSHFS)
         assert pl_data['Enabled'] is False
         prv = self.client.plugin_privileges(SSHFS)
-        logs = [d for d in self.client.upgrade_plugin(SSHFS, SSHFS, prv)]
+        logs = list(self.client.upgrade_plugin(SSHFS, SSHFS, prv))
         assert filter(lambda x: x['status'] == 'Download complete', logs)
         assert self.client.inspect_plugin(SSHFS)
         assert self.client.enable_plugin(SSHFS)
