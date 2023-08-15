@@ -111,13 +111,6 @@ def get_fake_image_history():
     return status_code, response
 
 
-def post_fake_import_image():
-    status_code = 200
-    response = 'Import messages...'
-
-    return status_code, response
-
-
 def get_fake_containers():
     status_code = 200
     response = [{
@@ -542,8 +535,6 @@ fake_responses = {
     get_fake_images,
     f'{prefix}/{CURRENT_VERSION}/images/test_image/history':
     get_fake_image_history,
-    f'{prefix}/{CURRENT_VERSION}/images/create':
-    post_fake_import_image,
     f'{prefix}/{CURRENT_VERSION}/containers/json':
     get_fake_containers,
     f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/start':
