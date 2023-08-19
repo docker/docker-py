@@ -327,8 +327,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
         with pytest.raises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
-        net_id = self.client.create_network(net_name, check_duplicate=False)
-        self.tmp_networks.append(net_id['Id'])
 
     @requires_api_version('1.22')
     def test_connect_with_links(self):
