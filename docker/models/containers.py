@@ -9,6 +9,7 @@ from ..errors import (
     NotFound, create_unexpected_kwargs_error
 )
 from ..types import HostConfig
+from ..types import HostResources
 from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
@@ -469,18 +470,66 @@ class Container(Model):
         Update resource configuration of the containers.
 
         Args:
-            blkio_weight (int): Block IO (relative weight), between 10 and 1000
-            cpu_period (int): Limit CPU CFS (Completely Fair Scheduler) period
-            cpu_quota (int): Limit CPU CFS (Completely Fair Scheduler) quota
-            cpu_shares (int): CPU shares (relative weight)
-            cpuset_cpus (str): CPUs in which to allow execution
-            cpuset_mems (str): MEMs in which to allow execution
-            mem_limit (int or str): Memory limit
-            mem_reservation (int or str): Memory soft limit
-            memswap_limit (int or str): Total memory (memory + swap), -1 to
-                disable swap
+
+            blkio_weight_device: Block IO weight (relative device weight) in
+                the form of: ``[{"Path": "device_path", "Weight": weight}]``.
+            blkio_weight: Block IO weight (relative weight), accepts a weight
+                value between 10 and 1000.
+            cgroup_parent (string): Path to `cgroups` under which the
+                container's `cgroup` is created. If the path is not absolute,
+                the path is considered to be relative to the `cgroups` path of
+                the init process. Cgroups are created if they do not already
+                exist.
+            cpu_period (int): The length of a CPU period in microseconds.
+            cpu_quota (int): Microseconds of CPU time that the container can
+                get in a CPU period.
+            cpu_rt_period (int): The length of a CPU real-time period in
+                microseconds. Set to 0 to allocate no time allocated to
+                real-time tasks.
+            cpu_rt_runtime (int): The length of a CPU real-time runtime in
+                microseconds. Set to 0 to allocate no time allocated to
+                real-time tasks.
+            cpu_shares (int): CPU shares (relative weight).
+            cpuset_cpus (str): CPUs in which to allow execution (``0-3``,
+                ``0,1``).
+            cpuset_mems (str): Memory nodes (MEMs) in which to allow execution
+                (``0-3``, ``0,1``). Only effective on NUMA systems.
+            device_cgroup_rules (:py:class:`list`): A list of cgroup rules to
+                apply to the container.
+            device_read_bps: Limit read rate (bytes per second) from a device
+                in the form of: `[{"Path": "device_path", "Rate": rate}]`
+            device_read_iops: Limit read rate (IO per second) from a device.
+            device_write_bps: Limit write rate (bytes per second) from a
+                device.
+            device_write_iops: Limit write rate (IO per second) from a device.
+            devices (:py:class:`list`): Expose host devices to the container,
+                as a list of strings in the form
+                ``<path_on_host>:<path_in_container>:<cgroup_permissions>``.
+
+                For example, ``/dev/sda:/dev/xvda:rwm`` allows the container
+                to have read-write access to the host's ``/dev/sda`` via a
+                node named ``/dev/xvda`` inside the container.
+            device_requests (:py:class:`list`): Expose host resources such as
+                GPUs to the container, as a list of
+                :py:class:`docker.types.DeviceRequest` instances.
             kernel_memory (int or str): Kernel memory limit
+            mem_limit (float or str): Memory limit. Accepts float values
+                (which represent the memory limit of the created container in
+                bytes) or a string with a units identification char
+                (``100000b``, ``1000k``, ``128m``, ``1g``). If a string is
+                specified without a units character, bytes are assumed as an
+            mem_reservation (float or str): Memory soft limit.
+            mem_swappiness (int): Tune a container's memory swappiness
+                behavior. Accepts number between 0 and 100.
+            memswap_limit (str or int): Maximum amount of memory + swap a
+                container is allowed to consume.
+            nano_cpus (int): CPU quota in units of 10<sup>-9</sup> CPUs.
+            oom_kill_disable (bool): Whether to disable OOM killer.
+            pids_limit (int): Tune a container's pids limit. Set ``-1`` for
+                unlimited.
             restart_policy (dict): Restart policy dictionary
+            ulimits (:py:class:`list`): Ulimits to set inside the container,
+                as a list of :py:class:`docker.types.Ulimit` instances.
 
         Returns:
             (dict): Dictionary containing a ``Warnings`` key.
@@ -489,7 +538,14 @@ class Container(Model):
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self.client.api.update_container(self.id, **kwargs)
+        resources_kwargs = copy.copy(kwargs)
+        resources_kwargs.pop("restart_policy", None)
+        resources_kwargs['version'] = self.client.api._version
+
+        return self.client.api.update_container_from_resources(
+            self.id, resources=HostResources(**resources_kwargs),
+            restart_policy=kwargs.get("restart_policy", None)
+        )
 
     def wait(self, **kwargs):
         """

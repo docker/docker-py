@@ -253,27 +253,17 @@ class DeviceRequest(DictType):
         self['Options'] = value
 
 
-class HostConfig(dict):
-    def __init__(self, version, binds=None, port_bindings=None,
-                 lxc_conf=None, publish_all_ports=False, links=None,
-                 privileged=False, dns=None, dns_search=None,
-                 volumes_from=None, network_mode=None, restart_policy=None,
-                 cap_add=None, cap_drop=None, devices=None, extra_hosts=None,
-                 read_only=None, pid_mode=None, ipc_mode=None,
-                 security_opt=None, ulimits=None, log_config=None,
+class HostResources(dict):
+    def __init__(self, version, devices=None, ulimits=None,
                  mem_limit=None, memswap_limit=None, mem_reservation=None,
                  kernel_memory=None, mem_swappiness=None, cgroup_parent=None,
-                 group_add=None, cpu_quota=None, cpu_period=None,
+                 cpu_quota=None, cpu_period=None,
                  blkio_weight=None, blkio_weight_device=None,
                  device_read_bps=None, device_write_bps=None,
                  device_read_iops=None, device_write_iops=None,
-                 oom_kill_disable=False, shm_size=None, sysctls=None,
-                 tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
-                 cpuset_cpus=None, userns_mode=None, uts_mode=None,
-                 pids_limit=None, isolation=None, auto_remove=False,
-                 storage_opt=None, init=None, init_path=None,
-                 volume_driver=None, cpu_count=None, cpu_percent=None,
-                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
+                 oom_kill_disable=False, cpu_shares=None,
+                 cpuset_cpus=None, pids_limit=None, cpu_count=None,
+                 cpu_percent=None, nano_cpus=None, cpuset_mems=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None, device_requests=None,
                  cgroupns=None):
@@ -298,120 +288,11 @@ class HostConfig(dict):
 
             self['MemorySwappiness'] = mem_swappiness
 
-        if shm_size is not None:
-            if isinstance(shm_size, str):
-                shm_size = parse_bytes(shm_size)
-
-            self['ShmSize'] = shm_size
-
-        if pid_mode:
-            if version_lt(version, '1.24') and pid_mode != 'host':
-                raise host_config_value_error('pid_mode', pid_mode)
-            self['PidMode'] = pid_mode
-
-        if ipc_mode:
-            self['IpcMode'] = ipc_mode
-
-        if privileged:
-            self['Privileged'] = privileged
-
         if oom_kill_disable:
             self['OomKillDisable'] = oom_kill_disable
 
-        if oom_score_adj:
-            if version_lt(version, '1.22'):
-                raise host_config_version_error('oom_score_adj', '1.22')
-            if not isinstance(oom_score_adj, int):
-                raise host_config_type_error(
-                    'oom_score_adj', oom_score_adj, 'int'
-                )
-            self['OomScoreAdj'] = oom_score_adj
-
-        if publish_all_ports:
-            self['PublishAllPorts'] = publish_all_ports
-
-        if read_only is not None:
-            self['ReadonlyRootfs'] = read_only
-
-        if dns_search:
-            self['DnsSearch'] = dns_search
-
-        if network_mode == 'host' and port_bindings:
-            raise host_config_incompatible_error(
-                'network_mode', 'host', 'port_bindings'
-            )
-        self['NetworkMode'] = network_mode or 'default'
-
-        if restart_policy:
-            if not isinstance(restart_policy, dict):
-                raise host_config_type_error(
-                    'restart_policy', restart_policy, 'dict'
-                )
-
-            self['RestartPolicy'] = restart_policy
-
-        if cap_add:
-            self['CapAdd'] = cap_add
-
-        if cap_drop:
-            self['CapDrop'] = cap_drop
-
         if devices:
             self['Devices'] = parse_devices(devices)
-
-        if group_add:
-            self['GroupAdd'] = [str(grp) for grp in group_add]
-
-        if dns is not None:
-            self['Dns'] = dns
-
-        if dns_opt is not None:
-            self['DnsOptions'] = dns_opt
-
-        if security_opt is not None:
-            if not isinstance(security_opt, list):
-                raise host_config_type_error(
-                    'security_opt', security_opt, 'list'
-                )
-
-            self['SecurityOpt'] = security_opt
-
-        if sysctls:
-            if not isinstance(sysctls, dict):
-                raise host_config_type_error('sysctls', sysctls, 'dict')
-            self['Sysctls'] = {}
-            for k, v in sysctls.items():
-                self['Sysctls'][k] = str(v)
-
-        if volumes_from is not None:
-            if isinstance(volumes_from, str):
-                volumes_from = volumes_from.split(',')
-
-            self['VolumesFrom'] = volumes_from
-
-        if binds is not None:
-            self['Binds'] = convert_volume_binds(binds)
-
-        if port_bindings is not None:
-            self['PortBindings'] = convert_port_bindings(port_bindings)
-
-        if extra_hosts is not None:
-            if isinstance(extra_hosts, dict):
-                extra_hosts = format_extra_hosts(extra_hosts)
-
-            self['ExtraHosts'] = extra_hosts
-
-        if links is not None:
-            self['Links'] = normalize_links(links)
-
-        if isinstance(lxc_conf, dict):
-            formatted = []
-            for k, v in lxc_conf.items():
-                formatted.append({'Key': k, 'Value': str(v)})
-            lxc_conf = formatted
-
-        if lxc_conf is not None:
-            self['LxcConf'] = lxc_conf
 
         if cgroup_parent is not None:
             self['CgroupParent'] = cgroup_parent
@@ -424,16 +305,6 @@ class HostConfig(dict):
                 if not isinstance(lmt, Ulimit):
                     lmt = Ulimit(**lmt)
                 self['Ulimits'].append(lmt)
-
-        if log_config is not None:
-            if not isinstance(log_config, LogConfig):
-                if not isinstance(log_config, dict):
-                    raise host_config_type_error(
-                        'log_config', log_config, 'LogConfig'
-                    )
-                log_config = LogConfig(**log_config)
-
-            self['LogConfig'] = log_config
 
         if cpu_quota:
             if not isinstance(cpu_quota, int):
@@ -535,6 +406,224 @@ class HostConfig(dict):
                 raise host_config_version_error('device_write_iops', '1.22')
             self["BlkioDeviceWriteIOps"] = device_write_iops
 
+        if pids_limit:
+            if not isinstance(pids_limit, int):
+                raise host_config_type_error('pids_limit', pids_limit, 'int')
+            if version_lt(version, '1.23'):
+                raise host_config_version_error('pids_limit', '1.23')
+            self["PidsLimit"] = pids_limit
+
+        if cpu_count:
+            if not isinstance(cpu_count, int):
+                raise host_config_type_error('cpu_count', cpu_count, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_count', '1.25')
+
+            self['CpuCount'] = cpu_count
+
+        if cpu_percent:
+            if not isinstance(cpu_percent, int):
+                raise host_config_type_error('cpu_percent', cpu_percent, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('cpu_percent', '1.25')
+
+            self['CpuPercent'] = cpu_percent
+
+        if nano_cpus:
+            if not isinstance(nano_cpus, int):
+                raise host_config_type_error('nano_cpus', nano_cpus, 'int')
+            if version_lt(version, '1.25'):
+                raise host_config_version_error('nano_cpus', '1.25')
+
+            self['NanoCpus'] = nano_cpus
+
+        if device_cgroup_rules is not None:
+            if version_lt(version, '1.28'):
+                raise host_config_version_error('device_cgroup_rules', '1.28')
+            if not isinstance(device_cgroup_rules, list):
+                raise host_config_type_error(
+                    'device_cgroup_rules', device_cgroup_rules, 'list'
+                )
+            self['DeviceCgroupRules'] = device_cgroup_rules
+
+        if device_requests is not None:
+            if version_lt(version, '1.40'):
+                raise host_config_version_error('device_requests', '1.40')
+            if not isinstance(device_requests, list):
+                raise host_config_type_error(
+                    'device_requests', device_requests, 'list'
+                )
+            self['DeviceRequests'] = []
+            for req in device_requests:
+                if not isinstance(req, DeviceRequest):
+                    req = DeviceRequest(**req)
+                self['DeviceRequests'].append(req)
+
+        if cgroupns:
+            self['CgroupnsMode'] = cgroupns
+
+
+class HostConfig(HostResources):
+    def __init__(self, version, binds=None, port_bindings=None,
+                 lxc_conf=None, publish_all_ports=False, links=None,
+                 privileged=False, dns=None, dns_search=None,
+                 volumes_from=None, network_mode=None, restart_policy=None,
+                 cap_add=None, cap_drop=None, devices=None, extra_hosts=None,
+                 read_only=None, pid_mode=None, ipc_mode=None,
+                 security_opt=None, ulimits=None, log_config=None,
+                 mem_limit=None, memswap_limit=None, mem_reservation=None,
+                 kernel_memory=None, mem_swappiness=None, cgroup_parent=None,
+                 group_add=None, cpu_quota=None, cpu_period=None,
+                 blkio_weight=None, blkio_weight_device=None,
+                 device_read_bps=None, device_write_bps=None,
+                 device_read_iops=None, device_write_iops=None,
+                 oom_kill_disable=False, shm_size=None, sysctls=None,
+                 tmpfs=None, oom_score_adj=None, dns_opt=None, cpu_shares=None,
+                 cpuset_cpus=None, userns_mode=None, uts_mode=None,
+                 pids_limit=None, isolation=None, auto_remove=False,
+                 storage_opt=None, init=None, init_path=None,
+                 volume_driver=None, cpu_count=None, cpu_percent=None,
+                 nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
+                 cpu_rt_period=None, cpu_rt_runtime=None,
+                 device_cgroup_rules=None, device_requests=None,
+                 cgroupns=None):
+        super(HostConfig, self).__init__(
+            version, devices=devices, ulimits=ulimits,
+            mem_limit=mem_limit, memswap_limit=memswap_limit,
+            mem_reservation=mem_reservation, kernel_memory=kernel_memory,
+            mem_swappiness=mem_swappiness, cgroup_parent=cgroup_parent,
+            cpu_quota=cpu_quota, cpu_period=cpu_period,
+            blkio_weight=blkio_weight, blkio_weight_device=blkio_weight_device,
+            device_read_bps=device_read_bps, device_write_bps=device_write_bps,
+            device_read_iops=device_read_iops,
+            device_write_iops=device_write_iops,
+            oom_kill_disable=oom_kill_disable, cpu_shares=cpu_shares,
+            cpuset_cpus=cpuset_cpus, pids_limit=pids_limit,
+            cpu_count=cpu_count, cpu_percent=cpu_percent,
+            nano_cpus=nano_cpus, cpuset_mems=cpuset_mems,
+            cpu_rt_period=cpu_rt_period, cpu_rt_runtime=cpu_rt_runtime,
+            device_cgroup_rules=device_cgroup_rules,
+            device_requests=device_requests, cgroupns=cgroupns)
+
+        if shm_size is not None:
+            if isinstance(shm_size, str):
+                shm_size = parse_bytes(shm_size)
+
+            self['ShmSize'] = shm_size
+
+        if pid_mode:
+            if version_lt(version, '1.24') and pid_mode != 'host':
+                raise host_config_value_error('pid_mode', pid_mode)
+            self['PidMode'] = pid_mode
+
+        if ipc_mode:
+            self['IpcMode'] = ipc_mode
+
+        if privileged:
+            self['Privileged'] = privileged
+
+        if oom_score_adj:
+            if version_lt(version, '1.22'):
+                raise host_config_version_error('oom_score_adj', '1.22')
+            if not isinstance(oom_score_adj, int):
+                raise host_config_type_error(
+                    'oom_score_adj', oom_score_adj, 'int'
+                )
+            self['OomScoreAdj'] = oom_score_adj
+
+        if publish_all_ports:
+            self['PublishAllPorts'] = publish_all_ports
+
+        if read_only is not None:
+            self['ReadonlyRootfs'] = read_only
+
+        if dns_search:
+            self['DnsSearch'] = dns_search
+
+        if network_mode == 'host' and port_bindings:
+            raise host_config_incompatible_error(
+                'network_mode', 'host', 'port_bindings'
+            )
+        self['NetworkMode'] = network_mode or 'default'
+
+        if restart_policy:
+            if not isinstance(restart_policy, dict):
+                raise host_config_type_error(
+                    'restart_policy', restart_policy, 'dict'
+                )
+
+            self['RestartPolicy'] = restart_policy
+
+        if cap_add:
+            self['CapAdd'] = cap_add
+
+        if cap_drop:
+            self['CapDrop'] = cap_drop
+
+        if group_add:
+            self['GroupAdd'] = [str(grp) for grp in group_add]
+
+        if dns is not None:
+            self['Dns'] = dns
+
+        if dns_opt is not None:
+            self['DnsOptions'] = dns_opt
+
+        if security_opt is not None:
+            if not isinstance(security_opt, list):
+                raise host_config_type_error(
+                    'security_opt', security_opt, 'list'
+                )
+
+            self['SecurityOpt'] = security_opt
+
+        if sysctls:
+            if not isinstance(sysctls, dict):
+                raise host_config_type_error('sysctls', sysctls, 'dict')
+            self['Sysctls'] = {}
+            for k, v in sysctls.items():
+                self['Sysctls'][k] = str(v)
+
+        if volumes_from is not None:
+            if isinstance(volumes_from, str):
+                volumes_from = volumes_from.split(',')
+
+            self['VolumesFrom'] = volumes_from
+
+        if binds is not None:
+            self['Binds'] = convert_volume_binds(binds)
+
+        if port_bindings is not None:
+            self['PortBindings'] = convert_port_bindings(port_bindings)
+
+        if extra_hosts is not None:
+            if isinstance(extra_hosts, dict):
+                extra_hosts = format_extra_hosts(extra_hosts)
+
+            self['ExtraHosts'] = extra_hosts
+
+        if links is not None:
+            self['Links'] = normalize_links(links)
+
+        if isinstance(lxc_conf, dict):
+            formatted = []
+            for k, v in lxc_conf.items():
+                formatted.append({'Key': k, 'Value': str(v)})
+            lxc_conf = formatted
+
+        if lxc_conf is not None:
+            self['LxcConf'] = lxc_conf
+
+        if log_config is not None:
+            if not isinstance(log_config, LogConfig):
+                if not isinstance(log_config, dict):
+                    raise host_config_type_error(
+                        'log_config', log_config, 'LogConfig'
+                    )
+                log_config = LogConfig(**log_config)
+
+            self['LogConfig'] = log_config
+
         if tmpfs:
             if version_lt(version, '1.22'):
                 raise host_config_version_error('tmpfs', '1.22')
@@ -552,13 +641,6 @@ class HostConfig(dict):
             if uts_mode != "host":
                 raise host_config_value_error("uts_mode", uts_mode)
             self['UTSMode'] = uts_mode
-
-        if pids_limit:
-            if not isinstance(pids_limit, int):
-                raise host_config_type_error('pids_limit', pids_limit, 'int')
-            if version_lt(version, '1.23'):
-                raise host_config_version_error('pids_limit', '1.23')
-            self["PidsLimit"] = pids_limit
 
         if isolation:
             if not isinstance(isolation, str):
@@ -594,30 +676,6 @@ class HostConfig(dict):
         if volume_driver is not None:
             self['VolumeDriver'] = volume_driver
 
-        if cpu_count:
-            if not isinstance(cpu_count, int):
-                raise host_config_type_error('cpu_count', cpu_count, 'int')
-            if version_lt(version, '1.25'):
-                raise host_config_version_error('cpu_count', '1.25')
-
-            self['CpuCount'] = cpu_count
-
-        if cpu_percent:
-            if not isinstance(cpu_percent, int):
-                raise host_config_type_error('cpu_percent', cpu_percent, 'int')
-            if version_lt(version, '1.25'):
-                raise host_config_version_error('cpu_percent', '1.25')
-
-            self['CpuPercent'] = cpu_percent
-
-        if nano_cpus:
-            if not isinstance(nano_cpus, int):
-                raise host_config_type_error('nano_cpus', nano_cpus, 'int')
-            if version_lt(version, '1.25'):
-                raise host_config_version_error('nano_cpus', '1.25')
-
-            self['NanoCpus'] = nano_cpus
-
         if runtime:
             if version_lt(version, '1.25'):
                 raise host_config_version_error('runtime', '1.25')
@@ -627,31 +685,6 @@ class HostConfig(dict):
             if version_lt(version, '1.30'):
                 raise host_config_version_error('mounts', '1.30')
             self['Mounts'] = mounts
-
-        if device_cgroup_rules is not None:
-            if version_lt(version, '1.28'):
-                raise host_config_version_error('device_cgroup_rules', '1.28')
-            if not isinstance(device_cgroup_rules, list):
-                raise host_config_type_error(
-                    'device_cgroup_rules', device_cgroup_rules, 'list'
-                )
-            self['DeviceCgroupRules'] = device_cgroup_rules
-
-        if device_requests is not None:
-            if version_lt(version, '1.40'):
-                raise host_config_version_error('device_requests', '1.40')
-            if not isinstance(device_requests, list):
-                raise host_config_type_error(
-                    'device_requests', device_requests, 'list'
-                )
-            self['DeviceRequests'] = []
-            for req in device_requests:
-                if not isinstance(req, DeviceRequest):
-                    req = DeviceRequest(**req)
-                self['DeviceRequests'].append(req)
-
-        if cgroupns:
-            self['CgroupnsMode'] = cgroupns
 
 
 def host_config_type_error(param, param_value, expected):
