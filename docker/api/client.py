@@ -2,10 +2,14 @@ import json
 import struct
 import urllib
 import ssl
+import sys
 from functools import partial
 from typing import Any, AnyStr, Optional, Union, Dict, overload, NoReturn, Iterator
 
-from typing_extensions import Literal
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 import requests
 import requests.exceptions
@@ -497,6 +501,14 @@ class APIClient(
     def _check_is_tty(self, container: str) -> bool:
         cont = self.inspect_container(container)
         return cont['Config']['Tty']
+
+    @overload
+    def _get_result(self, container: str, stream: Literal[True], res: requests.Response) -> Iterator[bytes]:
+        ...
+
+    @overload
+    def _get_result(self, container: str, stream: Literal[False], res: requests.Response) -> bytes:
+        ...
 
     def _get_result(self, container: str, stream: bool, res: requests.Response):
         return self._get_result_tty(stream, res, self._check_is_tty(container))
