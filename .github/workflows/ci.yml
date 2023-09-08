@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 env:
   DOCKER_BUILDKIT: '1'
+  FORCE_COLOR: 1
 
 jobs:
     lint:

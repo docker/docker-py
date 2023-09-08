@@ -12,6 +12,10 @@ on:
         type: boolean
         default: true
 
+env:
+  DOCKER_BUILDKIT: '1'
+  FORCE_COLOR: 1
+
 jobs:
   publish:
     runs-on: ubuntu-22.04
