@@ -79,7 +79,7 @@ class TLSConfig:
         """
         Configure a client with these TLS options.
         """
-        client.ssl_version = self.ssl_version
+        client.ssl_version = self.ssl_version  # type: ignore[attr-defined]
 
         if self.verify and self.ca_cert:
             client.verify = self.ca_cert

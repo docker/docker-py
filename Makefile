@@ -46,7 +46,7 @@ build-dind-certs:
 	docker build -t dpy-dind-certs -f tests/Dockerfile-dind-certs .
 
 .PHONY: test
-test: ruff unit-test-py3 integration-dind integration-dind-ssl
+test: ruff mypy unit-test-py3 integration-dind integration-dind-ssl
 
 .PHONY: unit-test-py3
 unit-test-py3: build-py3
@@ -166,6 +166,10 @@ integration-dind-ssl: build-dind-certs build-py3 setup-network
 .PHONY: ruff
 ruff: build-py3
 	docker run -t --rm docker-sdk-python3 ruff docker tests
+
+.PHONY: mypy
+mypy: build-py3
+	docker run -t --rm docker-sdk-python3 mypy docker
 
 .PHONY: docs
 docs: build-docs

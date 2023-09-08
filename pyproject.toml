@@ -18,3 +18,22 @@ ignore = [
 
 [tool.ruff.per-file-ignores]
 "**/__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.8"
+
+[[tool.mypy.overrides]]
+module = [
+    "docker.api.*",
+    "docker.context.*",
+    "docker.credentials.*",
+    "docker.models.*",
+    "docker.transport.*",
+    "docker.types.*",
+    "docker.utils.*",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "docker.api.client"
+ignore_errors = false

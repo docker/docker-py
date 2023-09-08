@@ -4,7 +4,7 @@ import urllib
 import ssl
 import sys
 from functools import partial
-from typing import Any, AnyStr, Optional, Union, Dict, overload, NoReturn, Iterator
+from typing import Any, AnyStr, Optional, Union, Dict, cast, overload, NoReturn, Iterator
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -25,11 +25,12 @@ from ..errors import (DockerException, InvalidVersion, TLSParameterError,
                       create_api_error_from_http_exception)
 from ..tls import TLSConfig
 from ..transport import SSLHTTPAdapter, UnixHTTPAdapter
+from ..transport.basehttpadapter import BaseHTTPAdapter
 from ..utils import check_resource, config, update_headers, utils
 from ..utils.json_stream import json_stream
 from ..utils.proxy import ProxyConfig
 from ..utils.socket import consume_socket_output, demux_adaptor, frames_iter
-from ..utils.typing import BytesOrDict
+from ..utils.typing import StrOrDict
 from .build import BuildApiMixin
 from .config import ConfigApiMixin
 from .container import ContainerApiMixin
@@ -112,6 +113,8 @@ class APIClient(
                                               'base_url',
                                               'timeout']
 
+    _custom_adapter: BaseHTTPAdapter
+
     def __init__(self, base_url: Optional[str] = None, version: Optional[str] = None,
                  timeout: int = DEFAULT_TIMEOUT_SECONDS, tls: Optional[Union[bool, TLSConfig]] = False,
                  user_agent: str = DEFAULT_USER_AGENT, num_pools: Optional[int] = None,
@@ -124,7 +127,6 @@ class APIClient(
                 'If using TLS, the base_url argument must be provided.'
             )
 
-        self.base_url = base_url
         self.timeout = timeout
         self.headers['User-Agent'] = user_agent
 
@@ -143,9 +145,7 @@ class APIClient(
         )
         self.credstore_env = credstore_env
 
-        base_url = utils.parse_host(
-            base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)
-        )
+        base_url = cast(str, utils.parse_host(base_url, IS_WINDOWS_PLATFORM, tls=bool(tls)))
         # SSH has a different default for num_pools to all other adapters
         num_pools = num_pools or DEFAULT_NUM_POOLS_SSH if \
             base_url.startswith('ssh://') else DEFAULT_NUM_POOLS
@@ -261,9 +261,9 @@ class APIClient(
                 )
 
         quote_f = partial(urllib.parse.quote, safe="/:")
-        args = map(quote_f, args)
+        args_quoted = map(quote_f, args)
 
-        formatted_path = pathfmt.format(*args)
+        formatted_path = pathfmt.format(*args_quoted)
         if kwargs.get('versioned_api', True):
             return f'{self.base_url}/v{self._version}{formatted_path}'
         else:
@@ -281,7 +281,7 @@ class APIClient(
         ...
 
     @overload
-    def _result(self, response: requests.Response, json: Literal[False] = ..., binary: Literal[False] = ...) -> str:
+    def _result(self, response: requests.Response, json: Literal[False] = ..., binary: Literal[False] = ...) -> str:  # type: ignore[misc]
         ...
 
     @overload
@@ -329,7 +329,7 @@ class APIClient(
     def _attach_websocket(self, container: str, params: Optional[Dict[str, Any]] = None) -> websocket.WebSocket:
         url = self._url("/containers/{0}/attach/ws", container)
         req = requests.Request("POST", url, params=self._attach_params(params))
-        full_url = req.prepare().url
+        full_url = cast(str, req.prepare().url)
         full_url = full_url.replace("http://", "ws://", 1)
         full_url = full_url.replace("https://", "wss://", 1)
         return self._create_websocket_connection(full_url)
@@ -364,10 +364,10 @@ class APIClient(
         ...
 
     @overload
-    def _stream_helper(self, response: requests.Response, decode: Literal[False] = ...) -> Iterator[bytes]:
+    def _stream_helper(self, response: requests.Response, decode: Literal[False] = ...) -> Iterator[str]:
         ...
 
-    def _stream_helper(self, response: requests.Response, decode: bool = False) -> Iterator[BytesOrDict]:
+    def _stream_helper(self, response: requests.Response, decode: bool = False) -> Iterator[StrOrDict]:
         """Generator for data coming from a chunked-encoded HTTP response."""
 
         if response.raw._fp.chunked:
@@ -386,7 +386,7 @@ class APIClient(
         else:
             # Response isn't chunked, meaning we probably
             # encountered an error immediately
-            yield self._result(response, json=decode)
+            yield self._result(response, json=decode)  # type: ignore[misc]
 
     def _multiplexed_buffer_helper(self, response: requests.Response) -> Iterator[bytes]:
         """A generator of multiplexed data blocks read from a buffered
@@ -426,14 +426,18 @@ class APIClient(
             yield data
 
     @overload
-    def _stream_raw_result(self, response: requests.Response, chunk_size: int = ..., decode: Literal[False] = ...) -> Iterator[bytes]:
+    def _stream_raw_result(self, response: requests.Response, chunk_size: int, decode: Literal[False]) -> Iterator[bytes]:
+        ...
+
+    @overload
+    def _stream_raw_result(self, response: requests.Response, decode: Literal[False]) -> Iterator[bytes]:
         ...
 
     @overload
     def _stream_raw_result(self, response: requests.Response, chunk_size: int = ..., decode: Literal[True] = ...) -> Iterator[str]:
         ...
 
-    def _stream_raw_result(self, response: requests.Response, chunk_size: int = 1, decode: bool = True) -> Iterator[AnyStr]:
+    def _stream_raw_result(self, response: requests.Response, chunk_size: int = 1, decode: bool = True) -> Iterator[AnyStr]:  # type: ignore[misc]
         ''' Stream result for TTY-enabled container and raw binary data'''
         self._raise_for_status(response)
 
@@ -489,13 +493,13 @@ class APIClient(
             timeout = -1
 
             if hasattr(s, 'gettimeout'):
-                timeout = s.gettimeout()
+                timeout = cast(int, s.gettimeout())  # type: ignore[union-attr]
 
             # Don't change the timeout if it is already disabled.
             if timeout is None or timeout == 0.0:
                 continue
 
-            s.settimeout(None)
+            s.settimeout(None)  # type: ignore[union-attr]
 
     @check_resource('container')
     def _check_is_tty(self, container: str) -> bool:
@@ -510,7 +514,7 @@ class APIClient(
     def _get_result(self, container: str, stream: Literal[False], res: requests.Response) -> bytes:
         ...
 
-    def _get_result(self, container: str, stream: bool, res: requests.Response):
+    def _get_result(self, container, stream, res):
         return self._get_result_tty(stream, res, self._check_is_tty(container))
 
     @overload

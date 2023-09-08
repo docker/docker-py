@@ -1,5 +1,5 @@
 try:
-    from ._version import __version__
+    from ._version import __version__  # type: ignore[import]
 except ImportError:
     try:
         # importlib.metadata available in Python 3.8+, the fallback (0.0.0)

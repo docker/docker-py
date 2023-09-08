@@ -47,7 +47,7 @@ class APIError(requests.exceptions.HTTPError, DockerException):
     """
     An HTTP error from the API.
     """
-    def __init__(self, message: str, response: Optional[requests.Response] = None, explanation: Optional[str] = None) -> None:
+    def __init__(self, message: Any, response: Optional[requests.Response] = None, explanation: Optional[str] = None) -> None:
         # requests 1.2 supports response as a keyword argument, but
         # requests 1.1 doesn't
         super().__init__(message)
@@ -78,6 +78,7 @@ class APIError(requests.exceptions.HTTPError, DockerException):
     def status_code(self) -> Optional[int]:
         if self.response is not None:
             return self.response.status_code
+        return None
 
     def is_error(self) -> bool:
         return self.is_client_error() or self.is_server_error()

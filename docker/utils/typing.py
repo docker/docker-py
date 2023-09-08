@@ -1,3 +1,3 @@
 from typing import Any, Dict, TypeVar
 
-BytesOrDict = TypeVar("BytesOrDict", bytes, Dict[str, Any])
+StrOrDict = TypeVar("StrOrDict", str, Dict[str, Any])

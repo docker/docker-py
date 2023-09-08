@@ -14,7 +14,7 @@ requirements = [
     'requests >= 2.26.0',
     'urllib3 >= 1.26.0',
     'websocket-client >= 0.32.0',
-    'typing_extensions>=3.10.0.0; python_version < "3.8"',
+    'typing_extensions>=3.10.0.0; python_version < "3.11"',
 ]
 
 extras_require = {
