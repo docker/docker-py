@@ -20,6 +20,7 @@ ignore = [
 "**/__init__.py" = ["F401"]
 
 [tool.mypy]
+files = ["docker"]
 python_version = "3.8"
 
 [[tool.mypy.overrides]]

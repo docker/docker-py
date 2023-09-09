@@ -169,7 +169,7 @@ ruff: build-py3
 
 .PHONY: mypy
 mypy: build-py3
-	docker run -t --rm docker-sdk-python3 mypy docker
+	docker run -t --rm docker-sdk-python3 mypy
 
 .PHONY: docs
 docs: build-docs

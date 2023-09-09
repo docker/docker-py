@@ -17,7 +17,7 @@ jobs:
             - name: Run ruff
               run: ruff docker tests
             - name: Run mypy
-              run: mypy docker
+              run: mypy
 
     unit-tests:
         runs-on: ubuntu-latest
