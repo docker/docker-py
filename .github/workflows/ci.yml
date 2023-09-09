@@ -13,9 +13,11 @@ jobs:
             - uses: actions/setup-python@v4
               with:
                   python-version: '3.11'
-            - run: pip install -U ruff==0.0.284
+            - run: pip install -U ruff==0.0.284 mypy==1.5.1
             - name: Run ruff
               run: ruff docker tests
+            - name: Run mypy
+              run: mypy
 
     unit-tests:
         runs-on: ubuntu-latest

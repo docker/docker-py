@@ -1,9 +1,12 @@
+from __future__ import annotations
 import base64
 import json
 import logging
+from typing import Any, AnyStr, Tuple, Dict, Optional, Union, cast
 
 from . import credentials
 from . import errors
+from .api.client import APIClient
 from .utils import config
 
 INDEX_NAME = 'docker.io'
@@ -13,7 +16,7 @@ TOKEN_USERNAME = '<token>'
 log = logging.getLogger(__name__)
 
 
-def resolve_repository_name(repo_name):
+def resolve_repository_name(repo_name: str) -> Tuple[str, str]:
     if '://' in repo_name:
         raise errors.InvalidRepository(
             f'Repository name cannot contain a scheme ({repo_name})'
@@ -28,14 +31,14 @@ def resolve_repository_name(repo_name):
     return resolve_index_name(index_name), remote_name
 
 
-def resolve_index_name(index_name):
+def resolve_index_name(index_name: str) -> str:
     index_name = convert_to_hostname(index_name)
     if index_name == f"index.{INDEX_NAME}":
         index_name = INDEX_NAME
     return index_name
 
 
-def get_config_header(client, registry):
+def get_config_header(client: APIClient, registry: str) -> Optional[bytes]:
     log.debug('Looking for auth config')
     if not client._auth_configs or client._auth_configs.is_empty:
         log.debug(
@@ -57,14 +60,14 @@ def get_config_header(client, registry):
     return None
 
 
-def split_repo_name(repo_name):
+def split_repo_name(repo_name: str) -> Tuple[str, str]:
     parts = repo_name.split('/', 1)
     if len(parts) == 1 or (
         '.' not in parts[0] and ':' not in parts[0] and parts[0] != 'localhost'
     ):
         # This is a docker index repo (ex: username/foobar or ubuntu)
         return INDEX_NAME, repo_name
-    return tuple(parts)
+    return tuple(parts)  # type: ignore[return-value]
 
 
 def get_credential_store(authconfig, registry):
@@ -74,15 +77,15 @@ def get_credential_store(authconfig, registry):
 
 
 class AuthConfig(dict):
-    def __init__(self, dct, credstore_env=None):
+    def __init__(self, dct: Dict[str, Any], credstore_env: Optional[Dict[str, Any]] = None) -> None:
         if 'auths' not in dct:
             dct['auths'] = {}
         self.update(dct)
         self._credstore_env = credstore_env
-        self._stores = {}
+        self._stores: Dict[str, credentials.Store] = {}
 
     @classmethod
-    def parse_auth(cls, entries, raise_on_error=False):
+    def parse_auth(cls, entries: Dict[str, Any], raise_on_error: bool = False) -> Dict[str, Any]:
         """
         Parses authentication entries
 
@@ -142,7 +145,7 @@ class AuthConfig(dict):
         return conf
 
     @classmethod
-    def load_config(cls, config_path, config_dict, credstore_env=None):
+    def load_config(cls, config_path: Optional[str], config_dict: Optional[Dict[str, Any]], credstore_env: Optional[Dict[str, Any]] = None) -> AuthConfig:
         """
         Loads authentication data from a Docker configuration file in the given
         root directory or if config_path is passed use given path.
@@ -158,7 +161,7 @@ class AuthConfig(dict):
                 return cls({}, credstore_env)
             try:
                 with open(config_file) as f:
-                    config_dict = json.load(f)
+                    config_dict = cast(Dict[str, Any], json.load(f))
             except (OSError, KeyError, ValueError) as e:
                 # Likely missing new Docker config file or it's in an
                 # unknown format, continue to attempt to read old location
@@ -190,24 +193,24 @@ class AuthConfig(dict):
         return cls({'auths': cls.parse_auth(config_dict)}, credstore_env)
 
     @property
-    def auths(self):
+    def auths(self) -> Dict[str, Any]:
         return self.get('auths', {})
 
     @property
-    def creds_store(self):
+    def creds_store(self) -> Optional[str]:
         return self.get('credsStore', None)
 
     @property
-    def cred_helpers(self):
+    def cred_helpers(self) -> Dict[str, Any]:
         return self.get('credHelpers', {})
 
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return (
             not self.auths and not self.creds_store and not self.cred_helpers
         )
 
-    def resolve_authconfig(self, registry=None):
+    def resolve_authconfig(self, registry: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Returns the authentication data from the given auth configuration for a
         specific registry. As with the Docker client, legacy entries in the
@@ -242,7 +245,7 @@ class AuthConfig(dict):
         log.debug("No entry found")
         return None
 
-    def _resolve_authconfig_credstore(self, registry, credstore_name):
+    def _resolve_authconfig_credstore(self, registry: Optional[str], credstore_name: str) -> Optional[Dict[str, Any]]:
         if not registry or registry == INDEX_NAME:
             # The ecosystem is a little schizophrenic with index.docker.io VS
             # docker.io - in that case, it seems the full URL is necessary.
@@ -270,20 +273,20 @@ class AuthConfig(dict):
                 f'Credentials store error: {repr(e)}'
             ) from e
 
-    def _get_store_instance(self, name):
+    def _get_store_instance(self, name: str) -> credentials.Store:
         if name not in self._stores:
             self._stores[name] = credentials.Store(
                 name, environment=self._credstore_env
             )
         return self._stores[name]
 
-    def get_credential_store(self, registry):
+    def get_credential_store(self, registry: Optional[str]) -> Optional[str]:
         if not registry or registry == INDEX_NAME:
             registry = INDEX_URL
 
         return self.cred_helpers.get(registry) or self.creds_store
 
-    def get_all_credentials(self):
+    def get_all_credentials(self) -> Dict[str, Any]:
         auth_data = self.auths.copy()
         if self.creds_store:
             # Retrieve all credentials from the default store
@@ -303,34 +306,36 @@ class AuthConfig(dict):
 
         return auth_data
 
-    def add_auth(self, reg, data):
+    def add_auth(self, reg: str, data: Any) -> None:
         self['auths'][reg] = data
 
 
-def resolve_authconfig(authconfig, registry=None, credstore_env=None):
+def resolve_authconfig(authconfig: Union[AuthConfig, Dict[str, Any]], registry: Optional[str] = None, credstore_env: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
     if not isinstance(authconfig, AuthConfig):
         authconfig = AuthConfig(authconfig, credstore_env)
     return authconfig.resolve_authconfig(registry)
 
 
-def convert_to_hostname(url):
+def convert_to_hostname(url: str) -> str:
     return url.replace('http://', '').replace('https://', '').split('/', 1)[0]
 
 
-def decode_auth(auth):
+def decode_auth(auth: AnyStr) -> Tuple[str, str]:
     if isinstance(auth, str):
-        auth = auth.encode('ascii')
-    s = base64.b64decode(auth)
+        auth_bytes = auth.encode('ascii')
+    else:
+        auth_bytes = auth
+    s = base64.b64decode(auth_bytes)
     login, pwd = s.split(b':', 1)
     return login.decode('utf8'), pwd.decode('utf8')
 
 
-def encode_header(auth):
+def encode_header(auth: Dict[str, Any]) -> bytes:
     auth_json = json.dumps(auth).encode('ascii')
     return base64.urlsafe_b64encode(auth_json)
 
 
-def parse_auth(entries, raise_on_error=False):
+def parse_auth(entries: Dict[str, Any], raise_on_error: bool = False) -> Dict[str, Any]:
     """
     Parses authentication entries
 
@@ -346,11 +351,11 @@ def parse_auth(entries, raise_on_error=False):
     return AuthConfig.parse_auth(entries, raise_on_error)
 
 
-def load_config(config_path=None, config_dict=None, credstore_env=None):
+def load_config(config_path: Optional[str] = None, config_dict: Optional[Dict[str, Any]] = None, credstore_env: Optional[Dict[str, Any]] = None) -> AuthConfig:
     return AuthConfig.load_config(config_path, config_dict, credstore_env)
 
 
-def _load_legacy_config(config_file):
+def _load_legacy_config(config_file: str) -> Dict[str, Any]:
     log.debug("Attempting to parse legacy auth file format")
     try:
         data = []
