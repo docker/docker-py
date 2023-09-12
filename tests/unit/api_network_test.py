@@ -28,7 +28,7 @@ class NetworkTest(BaseAPIClientTest):
         with mock.patch('docker.api.client.APIClient.get', get):
             assert self.client.networks() == networks
 
-            assert get.call_args[0][0] == url_prefix + 'networks'
+            assert get.call_args[0][0] == f"{url_prefix}networks"
 
             filters = json.loads(get.call_args[1]['params']['filters'])
             assert not filters
@@ -54,7 +54,7 @@ class NetworkTest(BaseAPIClientTest):
             result = self.client.create_network('foo')
             assert result == network_data
 
-            assert post.call_args[0][0] == url_prefix + 'networks/create'
+            assert post.call_args[0][0] == f"{url_prefix}networks/create"
 
             assert json.loads(post.call_args[1]['data']) == {"Name": "foo"}
 
@@ -97,7 +97,7 @@ class NetworkTest(BaseAPIClientTest):
             self.client.remove_network(network_id)
 
         args = delete.call_args
-        assert args[0][0] == url_prefix + f'networks/{network_id}'
+        assert args[0][0] == f"{url_prefix}networks/{network_id}"
 
     def test_inspect_network(self):
         network_id = 'abc12345'
@@ -117,7 +117,7 @@ class NetworkTest(BaseAPIClientTest):
             assert result == network_data
 
         args = get.call_args
-        assert args[0][0] == url_prefix + f'networks/{network_id}'
+        assert args[0][0] == f"{url_prefix}networks/{network_id}"
 
     def test_connect_container_to_network(self):
         network_id = 'abc12345'
@@ -135,7 +135,7 @@ class NetworkTest(BaseAPIClientTest):
             )
 
         assert post.call_args[0][0] == (
-            url_prefix + f'networks/{network_id}/connect'
+            f"{url_prefix}networks/{network_id}/connect"
         )
 
         assert json.loads(post.call_args[1]['data']) == {
@@ -158,7 +158,7 @@ class NetworkTest(BaseAPIClientTest):
                 container={'Id': container_id}, net_id=network_id)
 
         assert post.call_args[0][0] == (
-            url_prefix + f'networks/{network_id}/disconnect'
+            f"{url_prefix}networks/{network_id}/disconnect"
         )
         assert json.loads(post.call_args[1]['data']) == {
             'Container': container_id

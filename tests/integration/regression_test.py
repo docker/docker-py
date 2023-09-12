@@ -12,7 +12,7 @@ class TestRegressions(BaseAPIIntegrationTest):
     def test_443_handle_nonchunked_response_in_stream(self):
         dfile = io.BytesIO()
         with pytest.raises(docker.errors.APIError) as exc:
-            for line in self.client.build(fileobj=dfile, tag="a/b/c"):
+            for _line in self.client.build(fileobj=dfile, tag="a/b/c"):
                 pass
         assert exc.value.is_error()
         dfile.close()

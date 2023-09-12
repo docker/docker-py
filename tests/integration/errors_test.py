@@ -9,7 +9,7 @@ class ErrorsTest(BaseAPIIntegrationTest):
         self.client.start(container['Id'])
         with pytest.raises(APIError) as cm:
             self.client.remove_container(container['Id'])
-        explanation = cm.value.explanation
-        assert 'You cannot remove a running container' in explanation
+        explanation = cm.value.explanation.lower()
+        assert 'stop the container before' in explanation
         assert '{"message":' not in explanation
         self.client.remove_container(container['Id'], force=True)

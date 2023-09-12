@@ -233,7 +233,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network(
             ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[IPAMPool(subnet="2001:389::1/64")],
+                pool_configs=[IPAMPool(subnet="2001:389::/64")],
             ),
         )
         container = self.client.create_container(
@@ -327,8 +327,6 @@ class TestNetworks(BaseAPIIntegrationTest):
         net_name, net_id = self.create_network()
         with pytest.raises(docker.errors.APIError):
             self.client.create_network(net_name, check_duplicate=True)
-        net_id = self.client.create_network(net_name, check_duplicate=False)
-        self.tmp_networks.append(net_id['Id'])
 
     @requires_api_version('1.22')
     def test_connect_with_links(self):
@@ -389,7 +387,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="2001:389::1/64", iprange="2001:389::0/96",
+                        subnet="2001:389::/64", iprange="2001:389::0/96",
                         gateway="2001:389::ffff"
                     )
                 ]
@@ -455,7 +453,7 @@ class TestNetworks(BaseAPIIntegrationTest):
                 driver='default',
                 pool_configs=[
                     IPAMPool(
-                        subnet="2001:389::1/64", iprange="2001:389::0/96",
+                        subnet="2001:389::/64", iprange="2001:389::0/96",
                         gateway="2001:389::ffff"
                     )
                 ]

@@ -15,10 +15,8 @@ class Image(Model):
     An image on the server.
     """
     def __repr__(self):
-        return "<{}: '{}'>".format(
-            self.__class__.__name__,
-            "', '".join(self.tags),
-        )
+        tag_str = "', '".join(self.tags)
+        return f"<{self.__class__.__name__}: '{tag_str}'>"
 
     @property
     def labels(self):
@@ -458,7 +456,8 @@ class ImageCollection(Collection):
         if 'stream' in kwargs:
             warnings.warn(
                 '`stream` is not a valid parameter for this method'
-                ' and will be overridden'
+                ' and will be overridden',
+                stacklevel=1,
             )
             del kwargs['stream']
 
@@ -471,9 +470,8 @@ class ImageCollection(Collection):
             # to be pulled.
             pass
         if not all_tags:
-            return self.get('{0}{2}{1}'.format(
-                repository, tag, '@' if tag.startswith('sha256:') else ':'
-            ))
+            sep = '@' if tag.startswith('sha256:') else ':'
+            return self.get(f'{repository}{sep}{tag}')
         return self.list(repository)
 
     def push(self, repository, tag=None, **kwargs):

@@ -7,9 +7,7 @@ def _check_api_features(version, task_template, update_config, endpoint_spec,
 
     def raise_version_error(param, min_version):
         raise errors.InvalidVersion(
-            '{} is not supported in API version < {}'.format(
-                param, min_version
-            )
+            f'{param} is not supported in API version < {min_version}'
         )
 
     if update_config is not None:

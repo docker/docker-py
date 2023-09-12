@@ -22,15 +22,15 @@ def resolve_repository_name(repo_name):
     index_name, remote_name = split_repo_name(repo_name)
     if index_name[0] == '-' or index_name[-1] == '-':
         raise errors.InvalidRepository(
-            'Invalid index name ({}). Cannot begin or end with a'
-            ' hyphen.'.format(index_name)
+            f'Invalid index name ({index_name}). '
+            'Cannot begin or end with a hyphen.'
         )
     return resolve_index_name(index_name), remote_name
 
 
 def resolve_index_name(index_name):
     index_name = convert_to_hostname(index_name)
-    if index_name == 'index.' + INDEX_NAME:
+    if index_name == f"index.{INDEX_NAME}":
         index_name = INDEX_NAME
     return index_name
 
@@ -99,9 +99,7 @@ class AuthConfig(dict):
         for registry, entry in entries.items():
             if not isinstance(entry, dict):
                 log.debug(
-                    'Config entry for key {} is not auth config'.format(
-                        registry
-                    )
+                    f'Config entry for key {registry} is not auth config'
                 )
                 # We sometimes fall back to parsing the whole config as if it
                 # was the auth config by itself, for legacy purposes. In that
@@ -109,17 +107,11 @@ class AuthConfig(dict):
                 # keys is not formatted properly.
                 if raise_on_error:
                     raise errors.InvalidConfigFile(
-                        'Invalid configuration for registry {}'.format(
-                            registry
-                        )
+                        f'Invalid configuration for registry {registry}'
                     )
                 return {}
             if 'identitytoken' in entry:
-                log.debug(
-                    'Found an IdentityToken entry for registry {}'.format(
-                        registry
-                    )
-                )
+                log.debug(f'Found an IdentityToken entry for registry {registry}')
                 conf[registry] = {
                     'IdentityToken': entry['identitytoken']
                 }
@@ -130,16 +122,15 @@ class AuthConfig(dict):
                 # a valid value in the auths config.
                 # https://github.com/docker/compose/issues/3265
                 log.debug(
-                    'Auth data for {} is absent. Client might be using a '
-                    'credentials store instead.'.format(registry)
+                    f'Auth data for {registry} is absent. '
+                    f'Client might be using a credentials store instead.'
                 )
                 conf[registry] = {}
                 continue
 
             username, password = decode_auth(entry['auth'])
             log.debug(
-                'Found entry (registry={}, username={})'
-                .format(repr(registry), repr(username))
+                f'Found entry (registry={registry!r}, username={username!r})'
             )
 
             conf[registry] = {
@@ -277,7 +268,7 @@ class AuthConfig(dict):
         except credentials.StoreError as e:
             raise errors.DockerException(
                 f'Credentials store error: {repr(e)}'
-            )
+            ) from e
 
     def _get_store_instance(self, name):
         if name not in self._stores:

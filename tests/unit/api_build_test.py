@@ -89,7 +89,7 @@ class BuildTest(BaseAPIClientTest):
 
         fake_request.assert_called_with(
             'POST',
-            url_prefix + 'build',
+            f"{url_prefix}build",
             stream=True,
             data=None,
             headers=expected_headers,
@@ -193,10 +193,10 @@ class BuildTest(BaseAPIClientTest):
             'foo/Dockerfile.foo', None
         )
         assert process_dockerfile(
-            '../Dockerfile', pre(base + '\\foo')
+            '../Dockerfile', pre(f"{base}\\foo")
         )[1] is not None
         assert process_dockerfile(
-            '../baz/Dockerfile.baz', pre(base + '/baz')
+            '../baz/Dockerfile.baz', pre(f"{base}/baz")
         ) == ('../baz/Dockerfile.baz', None)
 
     def test_process_dockerfile(self):
@@ -218,8 +218,8 @@ class BuildTest(BaseAPIClientTest):
             'foo/Dockerfile.foo', None
         )
         assert process_dockerfile(
-            '../Dockerfile', base + '/foo'
+            '../Dockerfile', f"{base}/foo"
         )[1] is not None
-        assert process_dockerfile('../baz/Dockerfile.baz', base + '/baz') == (
+        assert process_dockerfile('../baz/Dockerfile.baz', f"{base}/baz") == (
             '../baz/Dockerfile.baz', None
         )
