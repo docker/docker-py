@@ -9,10 +9,12 @@ import pytest
 
 from . import fake_api
 from ..helpers import requires_api_version
-from .api_test import (
-    BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
-    fake_inspect_container, url_base
-)
+from .api_test import BaseAPIClientTest
+from .api_test import url_prefix
+from .api_test import fake_request
+from .api_test import DEFAULT_TIMEOUT_SECONDS
+from .api_test import fake_inspect_container
+from .api_test import url_base
 
 
 def fake_inspect_container_tty(self, container):
@@ -27,6 +29,19 @@ class StartContainerTest(BaseAPIClientTest):
         assert args[0][1] == (url_prefix + 'containers/' +
                               fake_api.FAKE_CONTAINER_ID + '/start')
         assert 'data' not in args[1]
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+    def test_start_container_from_checkpoint(self):
+        self.client.start(fake_api.FAKE_CONTAINER_ID,
+                          checkpoint=fake_api.FAKE_CHECKPOINT_ID,
+                          checkpoint_dir="/path/to/checkpoint/dir")
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/start')
+        assert 'data' not in args[1]
+        assert args[1]["params"]["checkpoint"] == fake_api.FAKE_CHECKPOINT_ID
+        assert args[1]["params"]["checkpoint-dir"] == "/path/to/checkpoint/dir"
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
     def test_start_container_none(self):
@@ -121,6 +136,110 @@ class StartContainerTest(BaseAPIClientTest):
         assert args[0][1] == (url_prefix + 'containers/' +
                               fake_api.FAKE_CONTAINER_ID + '/start')
         assert 'data' not in args[1]
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+
+class CheckpointContainerTest(BaseAPIClientTest):
+    def test_create_container_checkpoint(self):
+        self.client.container_create_checkpoint(
+            fake_api.FAKE_CONTAINER_ID,
+            fake_api.FAKE_CHECKPOINT_ID,
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/checkpoints')
+
+        data = json.loads(args[1]["data"])
+        assert data["CheckpointID"] == fake_api.FAKE_CHECKPOINT_ID
+        assert data["Exit"] is True
+        assert "CheckpointDir" not in data
+
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+    def test_create_container_checkpoint_custom_opts(self):
+        self.client.container_create_checkpoint(
+            fake_api.FAKE_CONTAINER_ID,
+            fake_api.FAKE_CHECKPOINT_ID,
+            fake_api.FAKE_CHECKPOINT_DIR,
+            leave_running=True
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID + '/checkpoints')
+
+        data = json.loads(args[1]["data"])
+        assert data["CheckpointID"] == fake_api.FAKE_CHECKPOINT_ID
+        assert data["Exit"] is False
+        assert data["CheckpointDir"] == fake_api.FAKE_CHECKPOINT_DIR
+
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+    def test_remove_container_checkpoint(self):
+        self.client.container_remove_checkpoint(
+            fake_api.FAKE_CONTAINER_ID,
+            fake_api.FAKE_CHECKPOINT_ID,
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID +
+                              '/checkpoints/' +
+                              fake_api.FAKE_CHECKPOINT_ID)
+
+        assert "data" not in args[1]
+        assert "dir" not in args[1]["params"]
+
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+    def test_remove_container_checkpoint_custom_opts(self):
+        self.client.container_remove_checkpoint(
+            fake_api.FAKE_CONTAINER_ID,
+            fake_api.FAKE_CHECKPOINT_ID,
+            fake_api.FAKE_CHECKPOINT_DIR,
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID +
+                              '/checkpoints/' +
+                              fake_api.FAKE_CHECKPOINT_ID)
+
+        assert "data" not in args[1]
+        assert args[1]["params"]["dir"] == fake_api.FAKE_CHECKPOINT_DIR
+
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+    def test_container_checkpoints(self):
+        self.client.container_checkpoints(
+            fake_api.FAKE_CONTAINER_ID,
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID +
+                              '/checkpoints')
+
+        assert "data" not in args[1]
+        assert "dir" not in args[1]["params"]
+
+        assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
+
+    def test_container_checkpoints_custom_opts(self):
+        self.client.container_checkpoints(
+            fake_api.FAKE_CONTAINER_ID,
+            fake_api.FAKE_CHECKPOINT_DIR,
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == (url_prefix + 'containers/' +
+                              fake_api.FAKE_CONTAINER_ID +
+                              '/checkpoints')
+
+        assert "data" not in args[1]
+        assert args[1]["params"]["dir"] == fake_api.FAKE_CHECKPOINT_DIR
+
         assert args[1]['timeout'] == DEFAULT_TIMEOUT_SECONDS
 
 

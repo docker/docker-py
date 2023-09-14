@@ -97,6 +97,10 @@ class ImageNotFound(NotFound):
     pass
 
 
+class CheckpointNotFound(NotFound):
+    pass
+
+
 class InvalidVersion(DockerException):
     pass
 

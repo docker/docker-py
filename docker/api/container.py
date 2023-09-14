@@ -3,6 +3,7 @@ from datetime import datetime
 from .. import errors
 from .. import utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
+from ..models.checkpoints import Checkpoint
 from ..types import CancellableStream
 from ..types import ContainerConfig
 from ..types import EndpointConfig
@@ -678,6 +679,93 @@ class ContainerApiMixin:
         return EndpointConfig(self._version, *args, **kwargs)
 
     @utils.check_resource('container')
+    def container_checkpoints(self, container, checkpoint_dir=None):
+        """
+        (Experimental) List all container checkpoints.
+
+        Args:
+            container (str): The container to find checkpoints for
+            checkpoint_dir (str): Custom directory in which to search for
+                checkpoints. Default: None (use default checkpoint dir)
+        Returns:
+            List of dicts, one for each checkpoint. In the form of:
+            [{"Name": "<checkpoint_name>"}]
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        params = {}
+        if checkpoint_dir:
+            params["dir"] = checkpoint_dir
+
+        return self._result(
+            self._get(self._url("/containers/{0}/checkpoints", container),
+                      params=params),
+            True
+        )
+
+    @utils.check_resource('container')
+    def container_remove_checkpoint(self, container, checkpoint,
+                                    checkpoint_dir=None):
+        """
+        (Experimental) Remove container checkpoint.
+
+        Args:
+            container (str): The container the checkpoint belongs to
+            checkpoint (str): The checkpoint ID to remove
+            checkpoint_dir (str): Custom directory in which to search for
+                checkpoints. Default: None (use default checkpoint dir)
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        params = {}
+        if checkpoint_dir:
+            params["dir"] = checkpoint_dir
+
+        res = self._delete(
+                self._url("/containers/{0}/checkpoints/{1}",
+                          container,
+                          checkpoint),
+                params=params
+        )
+        self._raise_for_status(res)
+
+    @utils.check_resource('container')
+    def container_create_checkpoint(self, container, checkpoint,
+                                    checkpoint_dir=None,
+                                    leave_running=False):
+        """
+        (Experimental) Create new container checkpoint.
+
+        Args:
+            container (str): The container to checkpoint
+            checkpoint (str): The checkpoint ID
+            checkpoint_dir (str): Custom directory in which to place the
+                checkpoint. Default: None (use default checkpoint dir)
+            leave_running (bool): Determines if the container should be left
+                running after the checkpoint is created
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the server returns an error.
+        """
+        data = {
+            "CheckpointID": checkpoint,
+            "Exit": not leave_running,
+        }
+        if checkpoint_dir:
+            data["CheckpointDir"] = checkpoint_dir
+
+        res = self._post_json(
+            self._url("/containers/{0}/checkpoints", container),
+            data=data
+        )
+        self._raise_for_status(res)
+
+    @utils.check_resource('container')
     def diff(self, container):
         """
         Inspect changes on a container's filesystem.
@@ -1097,7 +1185,8 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def start(self, container, *args, **kwargs):
+    def start(self, container, checkpoint=None, checkpoint_dir=None,
+              *args, **kwargs):
         """
         Start a container. Similar to the ``docker start`` command, but
         doesn't support attach options.
@@ -1110,12 +1199,20 @@ class ContainerApiMixin:
 
         Args:
             container (str): The container to start
+            checkpoint (:py:class:`docker.models.checkpoints.Checkpoint` or
+                str):
+                (Experimental) The checkpoint ID from which to start.
+                Default: None (do not start from a checkpoint)
+            checkpoint_dir (str): (Experimental) Custom directory in which to
+                search for checkpoints. Default: None (use default
+                checkpoint dir)
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
             :py:class:`docker.errors.DeprecatedMethod`
-                If any argument besides ``container`` are provided.
+                If any argument besides ``container``, ``checkpoint``
+                or ``checkpoint_dir`` are provided.
 
         Example:
 
@@ -1124,6 +1221,14 @@ class ContainerApiMixin:
             ...     command='/bin/sleep 30')
             >>> client.api.start(container=container.get('Id'))
         """
+        params = {}
+        if checkpoint:
+            if isinstance(checkpoint, Checkpoint):
+                checkpoint = checkpoint.id
+            params["checkpoint"] = checkpoint
+        if checkpoint_dir:
+            params['checkpoint-dir'] = checkpoint_dir
+
         if args or kwargs:
             raise errors.DeprecatedMethod(
                 'Providing configuration in the start() method is no longer '
@@ -1131,7 +1236,7 @@ class ContainerApiMixin:
                 'instead.'
             )
         url = self._url("/containers/{0}/start", container)
-        res = self._post(url)
+        res = self._post(url, params=params)
         self._raise_for_status(res)
 
     @utils.check_resource('container')
