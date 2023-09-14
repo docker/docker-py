@@ -30,7 +30,8 @@ class ConfigCollection(Collection):
 
     def create(self, **kwargs):
         obj = self.client.api.create_config(**kwargs)
-        return self.prepare_model(obj)
+        config = self.client.configs.get(obj.get('ID'))
+        return self.prepare_model(config)
     create.__doc__ = APIClient.create_config.__doc__
 
     def get(self, config_id):
