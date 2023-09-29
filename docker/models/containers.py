@@ -2,16 +2,16 @@ import copy
 import ntpath
 from collections import namedtuple
 
+from .images import Image
+from .resource import Collection, Model
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (
     ContainerError, DockerException, ImageNotFound,
     NotFound, create_unexpected_kwargs_error
 )
-from ..types import EndpointConfig, HostConfig, NetworkingConfig
+from ..types import HostConfig, NetworkingConfig
 from ..utils import version_gte
-from .images import Image
-from .resource import Collection, Model
 
 
 class Container(Model):
@@ -21,6 +21,7 @@ class Container(Model):
         query the Docker daemon for the current properties, causing
         :py:attr:`attrs` to be refreshed.
     """
+
     @property
     def name(self):
         """
@@ -680,33 +681,13 @@ class ContainerCollection(Collection):
                   This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
-            network_config (dict): A dictionary containing options that are
-                passed to the network driver during the connection.
+            networking_config (Dict[str, EndpointConfig]):
+                Dictionary of EndpointConfig objects for each container network.
+                The key is the name of the network.
                 Defaults to ``None``.
-                The dictionary contains the following keys:
-
-                - ``aliases`` (:py:class:`list`): A list of aliases for
-                    the network endpoint.
-                    Names in that list can be used within the network to
-                    reach this container. Defaults to ``None``.
-                - ``links`` (:py:class:`list`): A list of links for
-                    the network endpoint endpoint.
-                    Containers declared in this list will be linked to this
-                    container. Defaults to ``None``.
-                - ``ipv4_address`` (str): The IP address to assign to
-                    this container on the network, using the IPv4 protocol.
-                    Defaults to ``None``.
-                - ``ipv6_address`` (str): The IP address to assign to
-                    this container on the network, using the IPv6 protocol.
-                    Defaults to ``None``.
-                - ``link_local_ips`` (:py:class:`list`): A list of link-local
-                    (IPv4/IPv6) addresses.
-                - ``driver_opt`` (dict): A dictionary of options to provide to
-                    the network driver. Defaults to ``None``.
-                - ``mac_address`` (str): MAC Address to assign to the network
-                    interface. Defaults to ``None``. Requires API >= 1.25.
 
                 Used in conjuction with ``network``.
+
                 Incompatible with ``network_mode``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
@@ -872,9 +853,9 @@ class ContainerCollection(Collection):
                 'together.'
             )
 
-        if kwargs.get('network_config') and not kwargs.get('network'):
+        if kwargs.get('networking_config') and not kwargs.get('network'):
             raise RuntimeError(
-                'The option "network_config" can not be used '
+                'The option "networking_config" can not be used '
                 'without "network".'
             )
 
@@ -1030,6 +1011,7 @@ class ContainerCollection(Collection):
 
     def prune(self, filters=None):
         return self.client.api.prune_containers(filters=filters)
+
     prune.__doc__ = APIClient.prune_containers.__doc__
 
 
@@ -1124,17 +1106,6 @@ RUN_HOST_CONFIG_KWARGS = [
 ]
 
 
-NETWORKING_CONFIG_ARGS = [
-    'aliases',
-    'links',
-    'ipv4_address',
-    'ipv6_address',
-    'link_local_ips',
-    'driver_opt',
-    'mac_address'
-]
-
-
 def _create_container_args(kwargs):
     """
     Convert arguments to create() to arguments to create_container().
@@ -1159,24 +1130,17 @@ def _create_container_args(kwargs):
         host_config_kwargs['binds'] = volumes
 
     network = kwargs.pop('network', None)
-    network_config = kwargs.pop('network_config', None)
+    networking_config = kwargs.pop('networking_config', None)
     if network:
-        endpoint_config = None
-
-        if network_config:
-            clean_endpoint_args = {}
-            for arg_name in NETWORKING_CONFIG_ARGS:
-                if arg_name in network_config:
-                    clean_endpoint_args[arg_name] = network_config[arg_name]
-
-            if clean_endpoint_args:
-                endpoint_config = EndpointConfig(
-                    host_config_kwargs['version'], **clean_endpoint_args
-                )
+        if networking_config:
+            # Sanity check: check if the network is defined in the
+            # networking config dict, otherwise switch to None
+            if network not in networking_config:
+                networking_config = None
 
         create_kwargs['networking_config'] = NetworkingConfig(
-            {network: endpoint_config}
-        ) if endpoint_config else {network: None}
+            networking_config
+        ) if networking_config else {network: None}
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
