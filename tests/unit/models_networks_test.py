@@ -10,8 +10,8 @@ class NetworkCollectionTest(unittest.TestCase):
         client = make_fake_client()
         network = client.networks.create("foobar", labels={'foo': 'bar'})
         assert network.id == FAKE_NETWORK_ID
-        assert client.api.inspect_network.called_once_with(FAKE_NETWORK_ID)
-        assert client.api.create_network.called_once_with(
+        client.api.inspect_network.assert_called_once_with(FAKE_NETWORK_ID)
+        client.api.create_network.assert_called_once_with(
             "foobar",
             labels={'foo': 'bar'}
         )
@@ -20,21 +20,21 @@ class NetworkCollectionTest(unittest.TestCase):
         client = make_fake_client()
         network = client.networks.get(FAKE_NETWORK_ID)
         assert network.id == FAKE_NETWORK_ID
-        assert client.api.inspect_network.called_once_with(FAKE_NETWORK_ID)
+        client.api.inspect_network.assert_called_once_with(FAKE_NETWORK_ID)
 
     def test_list(self):
         client = make_fake_client()
         networks = client.networks.list()
         assert networks[0].id == FAKE_NETWORK_ID
-        assert client.api.networks.called_once_with()
+        client.api.networks.assert_called_once_with()
 
         client = make_fake_client()
         client.networks.list(ids=["abc"])
-        assert client.api.networks.called_once_with(ids=["abc"])
+        client.api.networks.assert_called_once_with(ids=["abc"])
 
         client = make_fake_client()
         client.networks.list(names=["foobar"])
-        assert client.api.networks.called_once_with(names=["foobar"])
+        client.api.networks.assert_called_once_with(names=["foobar"])
 
 
 class NetworkTest(unittest.TestCase):
@@ -43,7 +43,7 @@ class NetworkTest(unittest.TestCase):
         client = make_fake_client()
         network = client.networks.get(FAKE_NETWORK_ID)
         network.connect(FAKE_CONTAINER_ID)
-        assert client.api.connect_container_to_network.called_once_with(
+        client.api.connect_container_to_network.assert_called_once_with(
             FAKE_CONTAINER_ID,
             FAKE_NETWORK_ID
         )
@@ -52,7 +52,7 @@ class NetworkTest(unittest.TestCase):
         client = make_fake_client()
         network = client.networks.get(FAKE_NETWORK_ID)
         network.disconnect(FAKE_CONTAINER_ID)
-        assert client.api.disconnect_container_from_network.called_once_with(
+        client.api.disconnect_container_from_network.assert_called_once_with(
             FAKE_CONTAINER_ID,
             FAKE_NETWORK_ID
         )
@@ -61,4 +61,4 @@ class NetworkTest(unittest.TestCase):
         client = make_fake_client()
         network = client.networks.get(FAKE_NETWORK_ID)
         network.remove()
-        assert client.api.remove_network.called_once_with(FAKE_NETWORK_ID)
+        client.api.remove_network.assert_called_once_with(FAKE_NETWORK_ID)
