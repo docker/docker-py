@@ -12,7 +12,7 @@ import docker
 from .. import helpers
 from ..helpers import assert_cat_socket_detached_with_keys
 from ..helpers import ctrl_with
-from ..helpers import requires_api_version
+from ..helpers import requires_api_version, skip_if_desktop
 from .base import BaseAPIIntegrationTest
 from .base import TEST_IMG
 from docker.constants import IS_WINDOWS_PLATFORM
@@ -122,8 +122,8 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         self.client.wait(id)
         with pytest.raises(docker.errors.APIError) as exc:
             self.client.remove_container(id)
-        err = exc.value.explanation
-        assert 'You cannot remove ' in err
+        err = exc.value.explanation.lower()
+        assert 'stop the container before' in err
         self.client.remove_container(id, force=True)
 
     def test_create_container_with_volumes_from(self):
@@ -542,6 +542,27 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
 
+    @skip_if_desktop()
+    def test_create_with_binds_rw_rshared(self):
+        container = self.run_with_volume_propagation(
+            False,
+            'rshared',
+            TEST_IMG,
+            ['touch', os.path.join(self.mount_dest, self.filename)],
+        )
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, True, 'rshared')
+        container = self.run_with_volume_propagation(
+            True,
+            'rshared',
+            TEST_IMG,
+            ['ls', self.mount_dest],
+        )
+        logs = self.client.logs(container).decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False, 'rshared')
+
     @requires_api_version('1.30')
     def test_create_with_mounts(self):
         mount = docker.types.Mount(
@@ -597,7 +618,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount['Source'] == mount_data['Name']
         assert mount_data['RW'] is True
 
-    def check_container_data(self, inspect_data, rw):
+    def check_container_data(self, inspect_data, rw, propagation='rprivate'):
         assert 'Mounts' in inspect_data
         filtered = list(filter(
             lambda x: x['Destination'] == self.mount_dest,
@@ -607,6 +628,7 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         mount_data = filtered[0]
         assert mount_data['Source'] == self.mount_origin
         assert mount_data['RW'] == rw
+        assert mount_data['Propagation'] == propagation
 
     def run_with_volume(self, ro, *args, **kwargs):
         return self.run_container(
@@ -617,6 +639,23 @@ class VolumeBindTest(BaseAPIIntegrationTest):
                     self.mount_origin: {
                         'bind': self.mount_dest,
                         'ro': ro,
+                    },
+                },
+                network_mode='none'
+            ),
+            **kwargs
+        )
+
+    def run_with_volume_propagation(self, ro, propagation, *args, **kwargs):
+        return self.run_container(
+            *args,
+            volumes={self.mount_dest: {}},
+            host_config=self.client.create_host_config(
+                binds={
+                    self.mount_origin: {
+                        'bind': self.mount_dest,
+                        'ro': ro,
+                        'propagation': propagation
                     },
                 },
                 network_mode='none'
@@ -666,9 +705,7 @@ class ArchiveTest(BaseAPIIntegrationTest):
             test_file.seek(0)
             ctnr = self.client.create_container(
                 TEST_IMG,
-                'cat {}'.format(
-                    os.path.join('/vol1/', os.path.basename(test_file.name))
-                ),
+                f"cat {os.path.join('/vol1/', os.path.basename(test_file.name))}",
                 volumes=['/vol1']
             )
             self.tmp_containers.append(ctnr)
@@ -826,7 +863,7 @@ class LogsTest(BaseAPIIntegrationTest):
         exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(id)
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     def test_logs_tail_option(self):
         snippet = '''Line1
@@ -857,7 +894,7 @@ Line2'''
         exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
 
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     @pytest.mark.timeout(5)
     @pytest.mark.skipif(os.environ.get('DOCKER_HOST', '').startswith('ssh://'),
@@ -878,7 +915,7 @@ Line2'''
         for chunk in generator:
             logs += chunk
 
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     def test_logs_with_dict_instead_of_id(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -891,7 +928,7 @@ Line2'''
         exitcode = self.client.wait(id)['StatusCode']
         assert exitcode == 0
         logs = self.client.logs(container)
-        assert logs == (snippet + '\n').encode(encoding='ascii')
+        assert logs == f"{snippet}\n".encode(encoding='ascii')
 
     def test_logs_with_tail_0(self):
         snippet = 'Flowering Nights (Sakuya Iyazoi)'
@@ -920,7 +957,7 @@ Line2'''
         logs_until_1 = self.client.logs(container, until=1)
         assert logs_until_1 == b''
         logs_until_now = self.client.logs(container, datetime.now())
-        assert logs_until_now == (snippet + '\n').encode(encoding='ascii')
+        assert logs_until_now == f"{snippet}\n".encode(encoding='ascii')
 
 
 class DiffTest(BaseAPIIntegrationTest):
@@ -1086,7 +1123,7 @@ class PortTest(BaseAPIIntegrationTest):
 
             ip, host_port = port_binding['HostIp'], port_binding['HostPort']
 
-            port_binding = port if not protocol else port + "/" + protocol
+            port_binding = port if not protocol else f"{port}/{protocol}"
             assert ip == port_bindings[port_binding][0]
             assert host_port == port_bindings[port_binding][1]
 
@@ -1392,7 +1429,7 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
         response = self.client.stats(container, stream=0)
         self.client.kill(container)
 
-        assert type(response) == dict
+        assert isinstance(response, dict)
         for key in ['read', 'networks', 'precpu_stats', 'cpu_stats',
                     'memory_stats', 'blkio_stats']:
             assert key in response
@@ -1405,7 +1442,7 @@ class GetContainerStatsTest(BaseAPIIntegrationTest):
             self.client.start(container)
             stream = self.client.stats(container)
             for chunk in stream:
-                assert type(chunk) == dict
+                assert isinstance(chunk, dict)
                 for key in ['read', 'network', 'precpu_stats', 'cpu_stats',
                             'memory_stats', 'blkio_stats']:
                     assert key in chunk

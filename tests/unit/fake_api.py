@@ -4,10 +4,10 @@ from . import fake_stat
 
 CURRENT_VERSION = f'v{constants.DEFAULT_DOCKER_API_VERSION}'
 
-FAKE_CONTAINER_ID = '81cf499cc928ce3fedc250a080d2b9b978df20e4517304c45211e8a68b33e254'  # noqa: E501
+FAKE_CONTAINER_ID = '81cf499cc928ce3fedc250a080d2b9b978df20e4517304c45211e8a68b33e254'
 FAKE_IMAGE_ID = 'sha256:fe7a8fc91d3f17835cbb3b86a1c60287500ab01a53bc79c4497d09f07a3f0688'  # noqa: E501
-FAKE_EXEC_ID = 'b098ec855f10434b5c7c973c78484208223a83f663ddaefb0f02a242840cb1c7'  # noqa: E501
-FAKE_NETWORK_ID = '1999cfb42e414483841a125ade3c276c3cb80cb3269b14e339354ac63a31b02c'  # noqa: E501
+FAKE_EXEC_ID = 'b098ec855f10434b5c7c973c78484208223a83f663ddaefb0f02a242840cb1c7'
+FAKE_NETWORK_ID = '1999cfb42e414483841a125ade3c276c3cb80cb3269b14e339354ac63a31b02c'
 FAKE_IMAGE_NAME = 'test_image'
 FAKE_TARBALL_PATH = '/path/to/tarball'
 FAKE_REPO_NAME = 'repo'
@@ -107,13 +107,6 @@ def get_fake_image_history():
             "CreatedBy": ""
         }
     ]
-
-    return status_code, response
-
-
-def post_fake_import_image():
-    status_code = 200
-    response = 'Import messages...'
 
     return status_code, response
 
@@ -542,8 +535,6 @@ fake_responses = {
     get_fake_images,
     f'{prefix}/{CURRENT_VERSION}/images/test_image/history':
     get_fake_image_history,
-    f'{prefix}/{CURRENT_VERSION}/images/create':
-    post_fake_import_image,
     f'{prefix}/{CURRENT_VERSION}/containers/json':
     get_fake_containers,
     f'{prefix}/{CURRENT_VERSION}/containers/{FAKE_CONTAINER_ID}/start':
@@ -617,17 +608,11 @@ fake_responses = {
     get_fake_volume_list,
     (f'{prefix}/{CURRENT_VERSION}/volumes/create', 'POST'):
     get_fake_volume,
-    ('{1}/{0}/volumes/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
-    ), 'GET'):
+    (f'{prefix}/{CURRENT_VERSION}/volumes/{FAKE_VOLUME_NAME}', 'GET'):
     get_fake_volume,
-    ('{1}/{0}/volumes/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_VOLUME_NAME
-    ), 'DELETE'):
+    (f'{prefix}/{CURRENT_VERSION}/volumes/{FAKE_VOLUME_NAME}', 'DELETE'):
     fake_remove_volume,
-    ('{1}/{0}/nodes/{2}/update?version=1'.format(
-        CURRENT_VERSION, prefix, FAKE_NODE_ID
-    ), 'POST'):
+    (f'{prefix}/{CURRENT_VERSION}/nodes/{FAKE_NODE_ID}/update?version=1', 'POST'):
     post_fake_update_node,
     (f'{prefix}/{CURRENT_VERSION}/swarm/join', 'POST'):
     post_fake_join_swarm,
@@ -635,21 +620,13 @@ fake_responses = {
     get_fake_network_list,
     (f'{prefix}/{CURRENT_VERSION}/networks/create', 'POST'):
     post_fake_network,
-    ('{1}/{0}/networks/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'GET'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}', 'GET'):
     get_fake_network,
-    ('{1}/{0}/networks/{2}'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'DELETE'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}', 'DELETE'):
     delete_fake_network,
-    ('{1}/{0}/networks/{2}/connect'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'POST'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}/connect', 'POST'):
     post_fake_network_connect,
-    ('{1}/{0}/networks/{2}/disconnect'.format(
-        CURRENT_VERSION, prefix, FAKE_NETWORK_ID
-    ), 'POST'):
+    (f'{prefix}/{CURRENT_VERSION}/networks/{FAKE_NETWORK_ID}/disconnect', 'POST'):
     post_fake_network_disconnect,
     f'{prefix}/{CURRENT_VERSION}/secrets/create':
     post_fake_secret,

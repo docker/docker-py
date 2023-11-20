@@ -314,9 +314,8 @@ class BuildApiMixin:
                 auth_data[auth.INDEX_URL] = auth_data.get(auth.INDEX_NAME, {})
 
             log.debug(
-                'Sending auth config ({})'.format(
-                    ', '.join(repr(k) for k in auth_data.keys())
-                )
+                "Sending auth config (%s)",
+                ', '.join(repr(k) for k in auth_data),
             )
 
             if auth_data:
@@ -336,12 +335,9 @@ def process_dockerfile(dockerfile, path):
         abs_dockerfile = os.path.join(path, dockerfile)
         if constants.IS_WINDOWS_PLATFORM and path.startswith(
                 constants.WINDOWS_LONGPATH_PREFIX):
-            abs_dockerfile = '{}{}'.format(
-                constants.WINDOWS_LONGPATH_PREFIX,
-                os.path.normpath(
-                    abs_dockerfile[len(constants.WINDOWS_LONGPATH_PREFIX):]
-                )
-            )
+            normpath = os.path.normpath(
+                abs_dockerfile[len(constants.WINDOWS_LONGPATH_PREFIX):])
+            abs_dockerfile = f'{constants.WINDOWS_LONGPATH_PREFIX}{normpath}'
     if (os.path.splitdrive(path)[0] != os.path.splitdrive(abs_dockerfile)[0] or
             os.path.relpath(abs_dockerfile, path).startswith('..')):
         # Dockerfile not in context - read data to insert into tar later

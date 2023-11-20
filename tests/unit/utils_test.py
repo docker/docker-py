@@ -59,7 +59,8 @@ class KwargsFromEnvTest(unittest.TestCase):
         self.os_environ = os.environ.copy()
 
     def tearDown(self):
-        os.environ = self.os_environ
+        os.environ.clear()
+        os.environ.update(self.os_environ)
 
     def test_kwargs_from_env_empty(self):
         os.environ.update(DOCKER_HOST='',
@@ -486,9 +487,9 @@ class PortsTest(unittest.TestCase):
     def test_split_port_with_protocol(self):
         for protocol in ['tcp', 'udp', 'sctp']:
             internal_port, external_port = split_port(
-                "127.0.0.1:1000:2000/" + protocol
+                f"127.0.0.1:1000:2000/{protocol}"
             )
-            assert internal_port == ["2000/" + protocol]
+            assert internal_port == [f"2000/{protocol}"]
             assert external_port == [("127.0.0.1", "1000")]
 
     def test_split_port_with_host_ip_no_port(self):

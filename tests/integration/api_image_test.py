@@ -32,7 +32,7 @@ class ListImagesTest(BaseAPIIntegrationTest):
 
     def test_images_quiet(self):
         res1 = self.client.images(quiet=True)
-        assert type(res1[0]) == str
+        assert isinstance(res1[0], str)
 
 
 class PullImageTest(BaseAPIIntegrationTest):
@@ -43,7 +43,7 @@ class PullImageTest(BaseAPIIntegrationTest):
             pass
         res = self.client.pull('hello-world')
         self.tmp_imgs.append('hello-world')
-        assert type(res) == str
+        assert isinstance(res, str)
         assert len(self.client.images('hello-world')) >= 1
         img_info = self.client.inspect_image('hello-world')
         assert 'Id' in img_info
@@ -263,10 +263,8 @@ class ImportImageTest(BaseAPIIntegrationTest):
         data = self.client.get_image(test_img)
         assert data
         output = self.client.load_image(data)
-        assert any([
-            line for line in output
-            if f'Loaded image: {test_img}' in line.get('stream', '')
-        ])
+        assert any(line for line in output
+            if f'Loaded image: {test_img}' in line.get('stream', ''))
 
     @contextlib.contextmanager
     def temporary_http_file_server(self, stream):

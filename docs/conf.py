@@ -18,6 +18,7 @@
 import datetime
 import os
 import sys
+from importlib.metadata import version
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -56,7 +57,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'Docker SDK for Python'
 year = datetime.datetime.now().year
-copyright = '%d Docker Inc' % year
+copyright = f'{year} Docker Inc'
 author = 'Docker Inc'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -64,7 +65,6 @@ author = 'Docker Inc'
 # built documents.
 #
 # see https://github.com/pypa/setuptools_scm#usage-from-sphinx
-from importlib.metadata import version
 release = version('docker')
 # for example take major/minor
 version = '.'.join(release.split('.')[:2])
