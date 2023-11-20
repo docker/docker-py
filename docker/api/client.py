@@ -5,7 +5,6 @@ from functools import partial
 
 import requests
 import requests.exceptions
-import websocket
 
 from .. import auth
 from ..constants import (DEFAULT_NUM_POOLS, DEFAULT_NUM_POOLS_SSH,
@@ -309,7 +308,16 @@ class APIClient(
         return self._create_websocket_connection(full_url)
 
     def _create_websocket_connection(self, url):
-        return websocket.create_connection(url)
+        try:
+            import websocket
+            return websocket.create_connection(url)
+        except ImportError as ie:
+            raise DockerException(
+                'The `websocket-client` library is required '
+                'for using websocket connections. '
+                'You can install the `docker` library '
+                'with the [websocket] extra to install it.'
+            ) from ie
 
     def _get_raw_response_socket(self, response):
         self._raise_for_status(response)
