@@ -66,7 +66,9 @@ class Container(Model):
     @property
     def health(self):
         """
-        The healthcheck status of the container. For example, ``healthy`, or ``unhealthy`.
+        The healthcheck status of the container.
+
+        For example, ``healthy`, or ``unhealthy`.
         """
         return self.attrs.get('State', {}).get('Health', {}).get('Status', 'unknown')
 
