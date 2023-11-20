@@ -5,10 +5,10 @@ import threading
 import pytest
 
 import docker
-from ..helpers import random_name
-from ..helpers import requires_api_version
 from .base import BaseIntegrationTest
 from .base import TEST_API_VERSION
+from ..helpers import random_name
+from ..helpers import requires_api_version
 
 
 class ContainerCollectionTest(BaseIntegrationTest):
@@ -104,6 +104,96 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
 
+    def test_run_with_networking_config(self):
+        net_name = random_name()
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.networks.create(net_name)
+        self.tmp_networks.append(net_name)
+
+        test_aliases = ['hello']
+        test_driver_opt = {'key1': 'a'}
+
+        networking_config = {
+            net_name: client.api.create_endpoint_config(
+                aliases=test_aliases,
+                driver_opt=test_driver_opt
+            )
+        }
+
+        container = client.containers.run(
+            'alpine', 'echo hello world', network=net_name,
+            networking_config=networking_config,
+            detach=True
+        )
+        self.tmp_containers.append(container.id)
+
+        attrs = container.attrs
+
+        assert 'NetworkSettings' in attrs
+        assert 'Networks' in attrs['NetworkSettings']
+        assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
+        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] == \
+               test_aliases
+        assert attrs['NetworkSettings']['Networks'][net_name]['DriverOpts'] \
+               == test_driver_opt
+
+    def test_run_with_networking_config_with_undeclared_network(self):
+        net_name = random_name()
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.networks.create(net_name)
+        self.tmp_networks.append(net_name)
+
+        test_aliases = ['hello']
+        test_driver_opt = {'key1': 'a'}
+
+        networking_config = {
+            net_name: client.api.create_endpoint_config(
+                aliases=test_aliases,
+                driver_opt=test_driver_opt
+            ),
+            'bar': client.api.create_endpoint_config(
+                aliases=['test'],
+                driver_opt={'key2': 'b'}
+            ),
+        }
+
+        with pytest.raises(docker.errors.APIError) as e:
+            container = client.containers.run(
+                'alpine', 'echo hello world', network=net_name,
+                networking_config=networking_config,
+                detach=True
+            )
+            self.tmp_containers.append(container.id)
+
+    def test_run_with_networking_config_only_undeclared_network(self):
+        net_name = random_name()
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.networks.create(net_name)
+        self.tmp_networks.append(net_name)
+
+        networking_config = {
+            'bar': client.api.create_endpoint_config(
+                aliases=['hello'],
+                driver_opt={'key1': 'a'}
+            ),
+        }
+
+        container = client.containers.run(
+            'alpine', 'echo hello world', network=net_name,
+            networking_config=networking_config,
+            detach=True
+        )
+        self.tmp_containers.append(container.id)
+
+        attrs = container.attrs
+
+        assert 'NetworkSettings' in attrs
+        assert 'Networks' in attrs['NetworkSettings']
+        assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
+        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] is None
+        assert (attrs['NetworkSettings']['Networks'][net_name]['DriverOpts']
+                is None)
+
     def test_run_with_none_driver(self):
         client = docker.from_env(version=TEST_API_VERSION)
 
@@ -187,7 +277,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         container = client.containers.run("alpine", "sleep 300", detach=True)
         self.tmp_containers.append(container.id)
         assert client.containers.get(container.id).attrs[
-            'Config']['Image'] == "alpine"
+                   'Config']['Image'] == "alpine"
 
     def test_list(self):
         client = docker.from_env(version=TEST_API_VERSION)
