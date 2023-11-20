@@ -157,7 +157,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
             ),
         }
 
-        with pytest.raises(docker.errors.APIError) as e:
+        with pytest.raises(docker.errors.APIError):
             container = client.containers.run(
                 'alpine', 'echo hello world', network=net_name,
                 networking_config=networking_config,
