@@ -2,16 +2,16 @@ import copy
 import ntpath
 from collections import namedtuple
 
+from .images import Image
+from .resource import Collection, Model
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (
     ContainerError, DockerException, ImageNotFound,
     NotFound, create_unexpected_kwargs_error
 )
-from ..types import HostConfig
+from ..types import HostConfig, NetworkingConfig
 from ..utils import version_gte
-from .images import Image
-from .resource import Collection, Model
 
 
 class Container(Model):
@@ -21,6 +21,7 @@ class Container(Model):
         query the Docker daemon for the current properties, causing
         :py:attr:`attrs` to be refreshed.
     """
+
     @property
     def name(self):
         """
@@ -681,10 +682,14 @@ class ContainerCollection(Collection):
                   This mode is incompatible with ``ports``.
 
                 Incompatible with ``network``.
-            network_driver_opt (dict): A dictionary of options to provide
-                to the network driver. Defaults to ``None``. Used in
-                conjuction with ``network``. Incompatible
-                with ``network_mode``.
+            networking_config (Dict[str, EndpointConfig]):
+                Dictionary of EndpointConfig objects for each container network.
+                The key is the name of the network.
+                Defaults to ``None``.
+
+                Used in conjuction with ``network``.
+
+                Incompatible with ``network_mode``.
             oom_kill_disable (bool): Whether to disable OOM killer.
             oom_score_adj (int): An integer value containing the score given
                 to the container in order to tune OOM killer preferences.
@@ -849,9 +854,9 @@ class ContainerCollection(Collection):
                 'together.'
             )
 
-        if kwargs.get('network_driver_opt') and not kwargs.get('network'):
+        if kwargs.get('networking_config') and not kwargs.get('network'):
             raise RuntimeError(
-                'The options "network_driver_opt" can not be used '
+                'The option "networking_config" can not be used '
                 'without "network".'
             )
 
@@ -1007,6 +1012,7 @@ class ContainerCollection(Collection):
 
     def prune(self, filters=None):
         return self.client.api.prune_containers(filters=filters)
+
     prune.__doc__ = APIClient.prune_containers.__doc__
 
 
@@ -1125,12 +1131,17 @@ def _create_container_args(kwargs):
         host_config_kwargs['binds'] = volumes
 
     network = kwargs.pop('network', None)
-    network_driver_opt = kwargs.pop('network_driver_opt', None)
+    networking_config = kwargs.pop('networking_config', None)
     if network:
-        network_configuration = {'driver_opt': network_driver_opt} \
-            if network_driver_opt else None
+        if networking_config:
+            # Sanity check: check if the network is defined in the
+            # networking config dict, otherwise switch to None
+            if network not in networking_config:
+                networking_config = None
 
-        create_kwargs['networking_config'] = {network: network_configuration}
+        create_kwargs['networking_config'] = NetworkingConfig(
+            networking_config
+        ) if networking_config else {network: None}
         host_config_kwargs['network_mode'] = network
 
     # All kwargs should have been consumed by this point, so raise
