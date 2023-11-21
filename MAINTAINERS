@@ -11,17 +11,19 @@
 [Org]
 	[Org."Core maintainers"]
 		people = [
-			"aiordache",
-			"ulyssessouza",
+		    "glours",
+		    "milas",
 		]
 	[Org.Alumni]
 		people = [
+		    "aiordache",
 			"aanand",
 			"bfirsh",
 			"dnephin",
 			"mnowster",
 			"mpetazzoni",
 			"shin-",
+			"ulyssessouza",
 		]
 
 [people]
@@ -51,6 +53,16 @@
 	Name = "Daniel Nephin"
 	Email = "dnephin@gmail.com"
 	GitHub = "dnephin"
+
+	[people.glours]
+	Name = "Guillaume Lours"
+	Email = "705411+glours@users.noreply.github.com"
+	GitHub = "glours"
+
+	[people.milas]
+	Name = "Milas Bowman"
+	Email = "devnull@milas.dev"
+	GitHub = "milas"
 
 	[people.mnowster]
 	Name = "Mazz Mosley"
