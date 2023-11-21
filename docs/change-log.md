@@ -1,6 +1,40 @@
 Changelog
 ==========
 
+7.0.0
+-----
+### Upgrade Notes
+- Removed SSL version (`ssl_version`) and explicit hostname check (`assert_hostname`) options
+  - `assert_hostname` has not been used since Python 3.6 and was removed in 3.12
+  - Python 3.7+ supports TLSv1.3 by default
+- Websocket support is no longer included by default
+  - Use `pip install docker[websockets]` to include `websocket-client` dependency
+  - By default, `docker-py` hijacks the TCP connection and does not use Websockets
+  - Websocket client is only required to use `attach_socket(container, ws=True)`
+- Python 3.7 no longer officially supported (reached end-of-life June 2023)
+
+### Features
+- Python 3.12 support
+- Full `networking_config` support for `containers.create()`
+    - Replaces `network_driver_opt` (added in 6.1.0)
+- Add `health()` property to container that returns status (e.g. `unhealthy`)
+- Add `pause` option to `container.commit()`
+- Add support for bind mount propagation (e.g. `rshared`, `private`)
+
+### Bugfixes
+- Consistently return `docker.errors.NotFound` on 404 responses
+
+### Miscellaneous
+- Upgraded urllib3 version in `requirements.txt` (used for development/tests)
+- Documentation typo fixes & formatting improvements
+- Fixed integration test compatibility for newer Moby engine versions
+- Switch to [ruff](https://github.com/astral-sh/ruff) for linting
+
+6.1.3
+-----
+#### Bugfixes
+- Fix compatibility with [`eventlet/eventlet`](https://github.com/eventlet/eventlet)
+
 6.1.2
 -----
 
