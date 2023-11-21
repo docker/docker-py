@@ -75,13 +75,12 @@ class KwargsFromEnvTest(unittest.TestCase):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='1')
-        kwargs = kwargs_from_env(assert_hostname=False)
+        kwargs = kwargs_from_env()
         assert 'tcp://192.168.59.103:2376' == kwargs['base_url']
         assert 'ca.pem' in kwargs['tls'].ca_cert
         assert 'cert.pem' in kwargs['tls'].cert[0]
         assert 'key.pem' in kwargs['tls'].cert[1]
-        assert kwargs['tls'].assert_hostname is False
-        assert kwargs['tls'].verify
+        assert kwargs['tls'].verify is True
 
         parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
         kwargs['version'] = DEFAULT_DOCKER_API_VERSION
@@ -97,12 +96,11 @@ class KwargsFromEnvTest(unittest.TestCase):
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           DOCKER_CERT_PATH=TEST_CERT_DIR,
                           DOCKER_TLS_VERIFY='')
-        kwargs = kwargs_from_env(assert_hostname=True)
+        kwargs = kwargs_from_env()
         assert 'tcp://192.168.59.103:2376' == kwargs['base_url']
         assert 'ca.pem' in kwargs['tls'].ca_cert
         assert 'cert.pem' in kwargs['tls'].cert[0]
         assert 'key.pem' in kwargs['tls'].cert[1]
-        assert kwargs['tls'].assert_hostname is True
         assert kwargs['tls'].verify is False
         parsed_host = parse_host(kwargs['base_url'], IS_WINDOWS_PLATFORM, True)
         kwargs['version'] = DEFAULT_DOCKER_API_VERSION
@@ -123,12 +121,12 @@ class KwargsFromEnvTest(unittest.TestCase):
                           HOME=temp_dir,
                           DOCKER_TLS_VERIFY='')
         os.environ.pop('DOCKER_CERT_PATH', None)
-        kwargs = kwargs_from_env(assert_hostname=True)
+        kwargs = kwargs_from_env()
         assert 'tcp://192.168.59.103:2376' == kwargs['base_url']
 
     def test_kwargs_from_env_no_cert_path(self):
+        temp_dir = tempfile.mkdtemp()
         try:
-            temp_dir = tempfile.mkdtemp()
             cert_dir = os.path.join(temp_dir, '.docker')
             shutil.copytree(TEST_CERT_DIR, cert_dir)
 
@@ -142,8 +140,7 @@ class KwargsFromEnvTest(unittest.TestCase):
             assert cert_dir in kwargs['tls'].cert[0]
             assert cert_dir in kwargs['tls'].cert[1]
         finally:
-            if temp_dir:
-                shutil.rmtree(temp_dir)
+            shutil.rmtree(temp_dir)
 
     def test_kwargs_from_env_alternate_env(self):
         # Values in os.environ are entirely ignored if an alternate is

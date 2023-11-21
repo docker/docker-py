@@ -4,15 +4,16 @@ on: [push, pull_request]
 
 env:
   DOCKER_BUILDKIT: '1'
+  FORCE_COLOR: 1
 
 jobs:
     lint:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - uses: actions/setup-python@v4
               with:
-                  python-version: '3.11'
+                  python-version: '3.x'
             - run: pip install -U ruff==0.0.284
             - name: Run ruff
               run: ruff docker tests
@@ -21,14 +22,15 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+                python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Set up Python ${{ matrix.python-version }}
               uses: actions/setup-python@v4
               with:
                 python-version: ${{ matrix.python-version }}
+                allow-prereleases: true
             - name: Install dependencies
               run: |
                   python3 -m pip install --upgrade pip
@@ -46,7 +48,7 @@ jobs:
                 variant: [ "integration-dind", "integration-dind-ssl", "integration-dind-ssh" ]
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: make ${{ matrix.variant }}
               run: |
                   docker logout

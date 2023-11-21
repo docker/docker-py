@@ -71,8 +71,6 @@ class DockerClient:
             timeout (int): Default timeout for API calls, in seconds.
             max_pool_size (int): The maximum number of connections
                 to save in the pool.
-            ssl_version (int): A valid `SSL version`_.
-            assert_hostname (bool): Verify the hostname of the server.
             environment (dict): The environment to read environment variables
                 from. Default: the value of ``os.environ``
             credstore_env (dict): Override environment variables when calling

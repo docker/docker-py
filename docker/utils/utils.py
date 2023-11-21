@@ -341,7 +341,7 @@ def parse_devices(devices):
     return device_list
 
 
-def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
+def kwargs_from_env(environment=None):
     if not environment:
         environment = os.environ
     host = environment.get('DOCKER_HOST')
@@ -369,18 +369,11 @@ def kwargs_from_env(ssl_version=None, assert_hostname=None, environment=None):
     if not cert_path:
         cert_path = os.path.join(os.path.expanduser('~'), '.docker')
 
-    if not tls_verify and assert_hostname is None:
-        # assert_hostname is a subset of TLS verification,
-        # so if it's not set already then set it to false.
-        assert_hostname = False
-
     params['tls'] = TLSConfig(
         client_cert=(os.path.join(cert_path, 'cert.pem'),
                      os.path.join(cert_path, 'key.pem')),
         ca_cert=os.path.join(cert_path, 'ca.pem'),
         verify=tls_verify,
-        ssl_version=ssl_version,
-        assert_hostname=assert_hostname,
     )
 
     return params
