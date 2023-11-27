@@ -28,7 +28,7 @@ jobs:
 
       - name: Generate Pacakge
         run: |
-          pip3 install wheel
+          pip3 install setuptools wheel
           python setup.py sdist bdist_wheel
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DOCKER: ${{ inputs.tag }}
