@@ -103,7 +103,7 @@ class BuildTest(BaseAPIClientTest):
     def test_build_with_invalid_tag(self):
         with pytest.raises(TypeError):
             self.client.build(
-                ".", dockerfile="nameddockerfile", tag="https://example.com"
+                ".", tag="https://example.com"
             )
 
     def test_build_container_with_container_limits(self):
