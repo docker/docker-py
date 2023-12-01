@@ -100,6 +100,12 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container_with_named_dockerfile(self):
         self.client.build('.', dockerfile='nameddockerfile')
 
+    def test_build_with_invalid_tag(self):
+        with pytest.raises(TypeError):
+            self.client.build(
+                ".", dockerfile="nameddockerfile", tag="https://example.com"
+            )
+
     def test_build_container_with_container_limits(self):
         self.client.build('.', container_limits={
             'memory': 1024 * 1024,

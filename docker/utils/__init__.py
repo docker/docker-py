@@ -1,5 +1,5 @@
 
-from .build import create_archive, exclude_paths, mkbuildcontext, tar
+from .build import match_tag, create_archive, exclude_paths, mkbuildcontext, tar
 from .decorators import check_resource, minimum_version, update_headers
 from .utils import (
     compare_version, convert_port_bindings, convert_volume_binds,
