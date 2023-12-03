@@ -276,9 +276,19 @@ class BuildApiMixin:
         return self._stream_helper(response, decode=decode)
 
     @utils.minimum_version('1.31')
-    def prune_builds(self):
+    def prune_builds(self, filters=None, keep_storage=None):
         """
         Delete the builder cache
+
+        Args:
+            filters (dict): Filters to process on the prune list.
+                Available filters:
+                - dangling (bool):  When set to true (or 1), prune only
+                unused and untagged images.
+                - until (str): Can be Unix timestamps, date formatted
+                timestamps, or Go duration strings (e.g. 10m, 1h30m) computed
+                relative to the daemon's local time.
+            keep_storage (int): Amount of disk space in bytes to keep for cache.
 
         Returns:
             (dict): A dictionary containing information about the operation's
@@ -290,7 +300,12 @@ class BuildApiMixin:
                 If the server returns an error.
         """
         url = self._url("/build/prune")
-        return self._result(self._post(url), True)
+        params = {}
+        if filters is not None:
+            params['filters'] = utils.convert_filters(filters)
+        if keep_storage is not None:
+            params['keep-storage'] = keep_storage
+        return self._result(self._post(url, params=params), True)
 
     def _set_auth_headers(self, headers):
         log.debug('Looking for auth config')
