@@ -129,13 +129,16 @@ class BuildApiMixin:
             raise errors.DockerException(
                 'Can not use custom encoding if gzip is enabled'
             )
-
+        if tag is not None:
+            if not utils.match_tag(tag):
+                raise errors.DockerException(
+                    f"invalid tag '{tag}': invalid reference format"
+            )
         for key in container_limits.keys():
             if key not in constants.CONTAINER_LIMITS_KEYS:
                 raise errors.DockerException(
-                    f'Invalid container_limits key {key}'
+                    f"invalid tag '{tag}': invalid reference format"
                 )
-
         if custom_context:
             if not fileobj:
                 raise TypeError("You must specify fileobj with custom_context")
