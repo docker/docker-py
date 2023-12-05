@@ -315,8 +315,8 @@ class BuildApiMixin:
             params['filters'] = utils.convert_filters(filters)
         if keep_storage is not None:
             params['keep-storage'] = keep_storage
-        if keep_storage is not None:
-            params['keep-storage'] = keep_storage
+        if all is not None:
+            params['all'] = all
         return self._result(self._post(url, params=params), True)
 
     def _set_auth_headers(self, headers):
