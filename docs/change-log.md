@@ -20,9 +20,11 @@ Changelog
 - Add `health()` property to container that returns status (e.g. `unhealthy`)
 - Add `pause` option to `container.commit()`
 - Add support for bind mount propagation (e.g. `rshared`, `private`)
+- Add `filters`, `keep_storage`, and `all` parameters to `prune_builds()` (requires API v1.39+)
 
 ### Bugfixes
 - Consistently return `docker.errors.NotFound` on 404 responses
+- Validate tag format before image push
 
 ### Miscellaneous
 - Upgraded urllib3 version in `requirements.txt` (used for development/tests)
