@@ -78,6 +78,6 @@ setup(
         'Topic :: Utilities',
         'License :: OSI Approved :: Apache Software License',
     ],
-    maintainer='Ulysses Souza',
-    maintainer_email='ulysses.souza@docker.com',
+    maintainer='Docker, Inc.',
+    maintainer_email='no-reply@docker.com',
 )
