@@ -37,6 +37,7 @@ def make_fake_api_client(overrides=None):
         'create_host_config.side_effect': api_client.create_host_config,
         'create_network.return_value': fake_api.post_fake_network()[1],
         'create_secret.return_value': fake_api.post_fake_secret()[1],
+        'create_config.return_value': fake_api.post_fake_config()[1],
         'exec_create.return_value': fake_api.post_fake_exec_create()[1],
         'exec_start.return_value': fake_api.post_fake_exec_start()[1],
         'images.return_value': fake_api.get_fake_images()[1],
