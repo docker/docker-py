@@ -51,7 +51,7 @@ class Image(Model):
         Show the history of an image.
 
         Returns:
-            (str): The history of the image.
+            (list): The history of the image.
 
         Raises:
             :py:class:`docker.errors.APIError`
