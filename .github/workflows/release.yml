@@ -26,10 +26,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Generate Pacakge
+      - name: Generate Package
         run: |
-          pip3 install setuptools wheel
-          python setup.py sdist bdist_wheel
+          pip3 install build
+          python -m build .
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DOCKER: ${{ inputs.tag }}
 
