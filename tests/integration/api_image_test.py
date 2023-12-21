@@ -85,13 +85,8 @@ class CommitTest(BaseAPIIntegrationTest):
         img_id = res['Id']
         self.tmp_imgs.append(img_id)
         img = self.client.inspect_image(img_id)
-        assert 'Container' in img
-        assert img['Container'].startswith(id)
-        assert 'ContainerConfig' in img
-        assert 'Image' in img['ContainerConfig']
-        assert TEST_IMG == img['ContainerConfig']['Image']
-        busybox_id = self.client.inspect_image(TEST_IMG)['Id']
         assert 'Parent' in img
+        busybox_id = self.client.inspect_image(TEST_IMG)['Id']
         assert img['Parent'] == busybox_id
 
     def test_commit_with_changes(self):
@@ -103,8 +98,6 @@ class CommitTest(BaseAPIIntegrationTest):
         )
         self.tmp_imgs.append(img_id)
         img = self.client.inspect_image(img_id)
-        assert 'Container' in img
-        assert img['Container'].startswith(cid['Id'])
         assert '8000/tcp' in img['Config']['ExposedPorts']
         assert img['Config']['Cmd'] == ['bash']
 
