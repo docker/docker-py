@@ -1,6 +1,6 @@
 setuptools==65.5.1
 coverage==7.2.7
-ruff==0.0.284
+ruff==0.1.8
 pytest==7.4.2
 pytest-cov==4.1.0
 pytest-timeout==2.1.0

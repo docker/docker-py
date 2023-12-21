@@ -903,9 +903,9 @@ class ContainerCollection(Collection):
                 container, exit_status, command, image, out
             )
 
-        return out if stream or out is None else b''.join(
-            [line for line in out]
-        )
+        if stream or out is None:
+            return out
+        return b''.join(out)
 
     def create(self, image, command=None, **kwargs):
         """
