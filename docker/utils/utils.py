@@ -152,7 +152,7 @@ def convert_volume_binds(binds):
             ]
             if 'propagation' in v and v['propagation'] in propagation_modes:
                 if mode:
-                    mode = ','.join([mode, v['propagation']])
+                    mode = f"{mode},{v['propagation']}"
                 else:
                     mode = v['propagation']
 
