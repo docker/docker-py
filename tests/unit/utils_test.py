@@ -10,12 +10,13 @@ import pytest
 from docker.api.client import APIClient
 from docker.constants import IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION
 from docker.errors import DockerException
-from docker.utils import (convert_filters, convert_volume_binds,
-                          decode_json_header, kwargs_from_env, parse_bytes,
-                          parse_devices, parse_env_file, parse_host,
-                          parse_repository_tag, split_command, update_headers)
+from docker.utils import (
+    compare_version, convert_filters, convert_volume_binds, decode_json_header,
+    format_environment, kwargs_from_env, parse_bytes, parse_devices,
+    parse_env_file, parse_host, parse_repository_tag, split_command,
+    update_headers, version_gte, version_lt
+)
 from docker.utils.ports import build_port_bindings, split_port
-from docker.utils.utils import format_environment
 
 TEST_CERT_DIR = os.path.join(
     os.path.dirname(__file__),
@@ -629,3 +630,19 @@ class FormatEnvironmentTest(unittest.TestCase):
             'BAR': '',
         }
         assert sorted(format_environment(env_dict)) == ['BAR=', 'FOO']
+
+
+def test_compare_versions():
+    assert compare_version('1.0', '1.1') == 1
+    assert compare_version('1.10', '1.1') == -1
+    assert compare_version('1.10', '1.10') == 0
+    assert compare_version('1.10.0', '1.10.1') == 1
+    assert compare_version('1.9', '1.10') == 1
+    assert compare_version('1.9.1', '1.10') == 1
+    # Test comparison helpers
+    assert version_lt('1.0', '1.27')
+    assert version_gte('1.27', '1.20')
+    # Test zero-padding
+    assert compare_version('1', '1.0') == 0
+    assert compare_version('1.10', '1.10.1') == 1
+    assert compare_version('1.10.0', '1.10') == 0
