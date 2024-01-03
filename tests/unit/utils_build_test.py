@@ -6,11 +6,10 @@ import tarfile
 import tempfile
 import unittest
 
+import pytest
 
 from docker.constants import IS_WINDOWS_PLATFORM
-from docker.utils import exclude_paths, tar
-
-import pytest
+from docker.utils import exclude_paths, tar, match_tag
 
 from ..helpers import make_tree
 
@@ -489,3 +488,51 @@ class TarTest(unittest.TestCase):
                 assert member in names
             assert 'a/c/b' in names
             assert 'a/c/b/utils.py' not in names
+
+
+# selected test cases from https://github.com/distribution/reference/blob/8507c7fcf0da9f570540c958ea7b972c30eeaeca/reference_test.go#L13-L328
+@pytest.mark.parametrize("tag,expected", [
+    ("test_com", True),
+    ("test.com:tag", True),
+    # N.B. this implicitly means "docker.io/library/test.com:5000"
+    # i.e. the `5000` is a tag, not a port here!
+    ("test.com:5000", True),
+    ("test.com/repo:tag", True),
+    ("test:5000/repo", True),
+    ("test:5000/repo:tag", True),
+    ("test:5000/repo", True),
+    ("", False),
+    (":justtag", False),
+    ("Uppercase:tag", False),
+    ("test:5000/Uppercase/lowercase:tag", False),
+    ("lowercase:Uppercase", True),
+    # length limits not enforced
+    pytest.param("a/"*128 + "a:tag", False, marks=pytest.mark.xfail),
+    ("a/"*127 + "a:tag-puts-this-over-max", True),
+    ("aa/asdf$$^/aa", False),
+    ("sub-dom1.foo.com/bar/baz/quux", True),
+    ("sub-dom1.foo.com/bar/baz/quux:some-long-tag", True),
+    ("b.gcr.io/test.example.com/my-app:test.example.com", True),
+    ("xn--n3h.com/myimage:xn--n3h.com", True),
+    ("foo_bar.com:8080", True),
+    ("foo/foo_bar.com:8080", True),
+    ("192.168.1.1", True),
+    ("192.168.1.1:tag", True),
+    ("192.168.1.1:5000", True),
+    ("192.168.1.1/repo", True),
+    ("192.168.1.1:5000/repo", True),
+    ("192.168.1.1:5000/repo:5050", True),
+    # regex does not properly handle ipv6
+    pytest.param("[2001:db8::1]", False, marks=pytest.mark.xfail),
+    ("[2001:db8::1]:5000", False),
+    pytest.param("[2001:db8::1]/repo", True, marks=pytest.mark.xfail),
+    pytest.param("[2001:db8:1:2:3:4:5:6]/repo:tag", True, marks=pytest.mark.xfail),
+    pytest.param("[2001:db8::1]:5000/repo", True, marks=pytest.mark.xfail),
+    pytest.param("[2001:db8::1]:5000/repo:tag", True, marks=pytest.mark.xfail),
+    pytest.param("[2001:db8::]:5000/repo", True, marks=pytest.mark.xfail),
+    pytest.param("[::1]:5000/repo", True, marks=pytest.mark.xfail),
+    ("[fe80::1%eth0]:5000/repo", False),
+    ("[fe80::1%@invalidzone]:5000/repo", False),
+])
+def test_match_tag(tag: str, expected: bool):
+    assert match_tag(tag) == expected

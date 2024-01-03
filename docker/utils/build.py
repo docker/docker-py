@@ -10,8 +10,9 @@ from ..constants import IS_WINDOWS_PLATFORM
 
 _SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
 _TAG = re.compile(
-    r"^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(\/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*" \
-        + "(:[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127})?$"
+    r"^[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*"
+    r"(?::[0-9]+)?(/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*"
+    r"(:[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127})?$"
 )
 
 
