@@ -2,14 +2,15 @@ import json
 import os
 from shutil import copyfile, rmtree
 
-from docker.context.config import (
+from docker.errors import ContextException
+from docker.tls import TLSConfig
+
+from .config import (
     get_context_host,
     get_meta_dir,
     get_meta_file,
     get_tls_dir,
 )
-from docker.errors import ContextException
-from docker.tls import TLSConfig
 
 
 class Context:
