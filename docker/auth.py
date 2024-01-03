@@ -2,8 +2,7 @@ import base64
 import json
 import logging
 
-from . import credentials
-from . import errors
+from . import credentials, errors
 from .utils import config
 
 INDEX_NAME = 'docker.io'

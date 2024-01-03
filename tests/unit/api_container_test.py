@@ -1,17 +1,22 @@
 import datetime
 import json
 import signal
+from unittest import mock
+
+import pytest
 
 import docker
 from docker.api import APIClient
-from unittest import mock
-import pytest
 
-from . import fake_api
 from ..helpers import requires_api_version
+from . import fake_api
 from .api_test import (
-    BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
-    fake_inspect_container, url_base
+    DEFAULT_TIMEOUT_SECONDS,
+    BaseAPIClientTest,
+    fake_inspect_container,
+    fake_request,
+    url_base,
+    url_prefix,
 )
 
 

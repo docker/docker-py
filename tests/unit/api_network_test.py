@@ -1,8 +1,9 @@
 import json
-
-from .api_test import BaseAPIClientTest, url_prefix, response
-from docker.types import IPAMConfig, IPAMPool
 from unittest import mock
+
+from docker.types import IPAMConfig, IPAMPool
+
+from .api_test import BaseAPIClientTest, response, url_prefix
 
 
 class NetworkTest(BaseAPIClientTest):

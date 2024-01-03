@@ -1,7 +1,7 @@
 import unittest
 
-from .fake_api_client import make_fake_client
 from .fake_api import FAKE_SECRET_NAME
+from .fake_api_client import make_fake_client
 
 
 class CreateServiceTest(unittest.TestCase):

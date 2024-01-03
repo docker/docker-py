@@ -1,4 +1,4 @@
-from .resource import Model, Collection
+from .resource import Collection, Model
 
 
 class Node(Model):

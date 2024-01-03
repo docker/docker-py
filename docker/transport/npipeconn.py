@@ -1,12 +1,13 @@
 import queue
+
 import requests.adapters
-
-from docker.transport.basehttpadapter import BaseHTTPAdapter
-from .. import constants
-from .npipesocket import NpipeSocket
-
 import urllib3
 import urllib3.connection
+
+from docker.transport.basehttpadapter import BaseHTTPAdapter
+
+from .. import constants
+from .npipesocket import NpipeSocket
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 

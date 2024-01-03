@@ -9,7 +9,7 @@ import unittest
 import pytest
 
 from docker.constants import IS_WINDOWS_PLATFORM
-from docker.utils import exclude_paths, tar, match_tag
+from docker.utils import exclude_paths, match_tag, tar
 
 from ..helpers import make_tree
 

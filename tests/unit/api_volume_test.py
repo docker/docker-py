@@ -3,7 +3,7 @@ import json
 import pytest
 
 from ..helpers import requires_api_version
-from .api_test import BaseAPIClientTest, url_prefix, fake_request
+from .api_test import BaseAPIClientTest, fake_request, url_prefix
 
 
 class VolumeTest(BaseAPIClientTest):
