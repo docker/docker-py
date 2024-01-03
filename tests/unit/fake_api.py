@@ -19,6 +19,8 @@ FAKE_VOLUME_NAME = 'perfectcherryblossom'
 FAKE_NODE_ID = '24ifsmvkjbyhk'
 FAKE_SECRET_ID = 'epdyrw4tsi03xy3deu8g8ly6o'
 FAKE_SECRET_NAME = 'super_secret'
+FAKE_CONFIG_ID = 'sekvs771242jfdjnvfuds8232'
+FAKE_CONFIG_NAME = 'super_config'
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
@@ -512,6 +514,11 @@ def post_fake_secret():
     response = {'ID': FAKE_SECRET_ID}
     return status_code, response
 
+def post_fake_config():
+    status_code = 200
+    response = {'ID': FAKE_CONFIG_ID}
+    return status_code, response
+
 
 # Maps real api url to fake response callback
 prefix = 'http+docker://localhost'
@@ -630,4 +637,6 @@ fake_responses = {
     post_fake_network_disconnect,
     f'{prefix}/{CURRENT_VERSION}/secrets/create':
     post_fake_secret,
+    f'{prefix}/{CURRENT_VERSION}/configs/create':
+    post_fake_config,
 }
