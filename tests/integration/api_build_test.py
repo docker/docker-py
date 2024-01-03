@@ -389,9 +389,7 @@ class BuildTest(BaseAPIIntegrationTest):
         lines = []
         for chunk in stream:
             lines.append(chunk.get('stream'))
-        expected = '{0}{2}\n{1}'.format(
-            control_chars[0], control_chars[1], snippet
-        )
+        expected = f'{control_chars[0]}{snippet}\n{control_chars[1]}'
         assert any(line == expected for line in lines)
 
     def test_build_gzip_encoding(self):

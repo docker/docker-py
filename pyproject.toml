@@ -5,14 +5,16 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 write_to = 'docker/_version.py'
 
 [tool.ruff]
-target-version = "py37"
+target-version = "py38"
 extend-select = [
     "B",
     "C",
     "F",
+    "UP",
     "W",
 ]
 ignore = [
+    "UP012",  # unnecessary `UTF-8` argument (we want to be explicit)
     "C901",  # too complex (there's a whole bunch of these)
 ]
 

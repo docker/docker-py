@@ -82,7 +82,7 @@ def fake_delete(self, url, *args, **kwargs):
 
 
 def fake_read_from_socket(self, response, stream, tty=False, demux=False):
-    return bytes()
+    return b''
 
 
 url_base = f'{fake_api.prefix}/'
