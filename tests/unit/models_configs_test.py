@@ -7,4 +7,4 @@ class CreateConfigsTest(unittest.TestCase):
     def test_create_config(self):
         client = make_fake_client()
         config = client.configs.create(name="super_config", data="config")
-        assert config.__repr__() == "<Config: '{}'>".format(FAKE_CONFIG_NAME)
+        assert config.__repr__() == f"<Config: '{FAKE_CONFIG_NAME}'>"
