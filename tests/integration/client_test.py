@@ -1,9 +1,8 @@
 import threading
 import unittest
+from datetime import datetime, timedelta
 
 import docker
-
-from datetime import datetime, timedelta
 
 from ..helpers import requires_api_version
 from .base import TEST_API_VERSION

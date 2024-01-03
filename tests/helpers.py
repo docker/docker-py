@@ -8,9 +8,10 @@ import tarfile
 import tempfile
 import time
 
-import docker
 import paramiko
 import pytest
+
+import docker
 
 
 def make_tree(dirs, files):

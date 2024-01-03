@@ -1,7 +1,7 @@
 from ..api import APIClient
 from ..utils import version_gte
 from .containers import Container
-from .resource import Model, Collection
+from .resource import Collection, Model
 
 
 class Network(Model):

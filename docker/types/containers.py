@@ -1,8 +1,16 @@
 from .. import errors
 from ..utils.utils import (
-    convert_port_bindings, convert_tmpfs_mounts, convert_volume_binds,
-    format_environment, format_extra_hosts, normalize_links, parse_bytes,
-    parse_devices, split_command, version_gte, version_lt,
+    convert_port_bindings,
+    convert_tmpfs_mounts,
+    convert_volume_binds,
+    format_environment,
+    format_extra_hosts,
+    normalize_links,
+    parse_bytes,
+    parse_devices,
+    split_command,
+    version_gte,
+    version_lt,
 )
 from .base import DictType
 from .healthcheck import Healthcheck

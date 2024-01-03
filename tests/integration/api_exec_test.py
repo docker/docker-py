@@ -1,11 +1,12 @@
-from ..helpers import assert_cat_socket_detached_with_keys
-from ..helpers import ctrl_with
-from ..helpers import requires_api_version
-from .base import BaseAPIIntegrationTest
-from .base import TEST_IMG
 from docker.utils.proxy import ProxyConfig
-from docker.utils.socket import next_frame_header
-from docker.utils.socket import read_exactly
+from docker.utils.socket import next_frame_header, read_exactly
+
+from ..helpers import (
+    assert_cat_socket_detached_with_keys,
+    ctrl_with,
+    requires_api_version,
+)
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class ExecTest(BaseAPIIntegrationTest):

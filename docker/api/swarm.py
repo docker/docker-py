@@ -1,9 +1,8 @@
-import logging
 import http.client as http_client
+import logging
+
+from .. import errors, types, utils
 from ..constants import DEFAULT_SWARM_ADDR_POOL, DEFAULT_SWARM_SUBNET_SIZE
-from .. import errors
-from .. import types
-from .. import utils
 
 log = logging.getLogger(__name__)
 

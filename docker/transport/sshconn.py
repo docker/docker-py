@@ -1,18 +1,18 @@
-import paramiko
-import queue
-import urllib.parse
-import requests.adapters
 import logging
 import os
+import queue
 import signal
 import socket
 import subprocess
+import urllib.parse
 
-from docker.transport.basehttpadapter import BaseHTTPAdapter
-from .. import constants
-
+import paramiko
+import requests.adapters
 import urllib3
 import urllib3.connection
+
+from .. import constants
+from .basehttpadapter import BaseHTTPAdapter
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 

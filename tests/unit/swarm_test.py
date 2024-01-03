@@ -1,8 +1,8 @@
 import json
 
-from . import fake_api
 from ..helpers import requires_api_version
-from .api_test import BaseAPIClientTest, url_prefix, fake_request
+from . import fake_api
+from .api_test import BaseAPIClientTest, fake_request, url_prefix
 
 
 class SwarmTest(BaseAPIClientTest):

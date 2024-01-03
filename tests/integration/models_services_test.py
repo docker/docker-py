@@ -1,12 +1,13 @@
 import unittest
 
-import docker
 import pytest
+
+import docker
+from docker.errors import InvalidArgument
+from docker.types.services import ServiceMode
 
 from .. import helpers
 from .base import TEST_API_VERSION
-from docker.errors import InvalidArgument
-from docker.types.services import ServiceMode
 
 
 class ServiceTest(unittest.TestCase):

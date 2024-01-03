@@ -4,9 +4,8 @@ import re
 import tarfile
 import tempfile
 
-from .fnmatch import fnmatch
 from ..constants import IS_WINDOWS_PLATFORM
-
+from .fnmatch import fnmatch
 
 _SEP = re.compile('/|\\\\') if IS_WINDOWS_PLATFORM else re.compile('/')
 _TAG = re.compile(

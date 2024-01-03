@@ -1,12 +1,11 @@
-import requests.adapters
 import socket
 
-from docker.transport.basehttpadapter import BaseHTTPAdapter
-from .. import constants
-
+import requests.adapters
 import urllib3
 import urllib3.connection
 
+from .. import constants
+from .basehttpadapter import BaseHTTPAdapter
 
 RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 

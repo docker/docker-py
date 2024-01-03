@@ -1,5 +1,5 @@
 from ..api import APIClient
-from .resource import Model, Collection
+from .resource import Collection, Model
 
 
 class Secret(Model):

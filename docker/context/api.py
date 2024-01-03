@@ -2,11 +2,14 @@ import json
 import os
 
 from docker import errors
-from docker.context.config import get_meta_dir
-from docker.context.config import METAFILE
-from docker.context.config import get_current_context_name
-from docker.context.config import write_context_name_to_docker_config
-from docker.context import Context
+
+from .config import (
+    METAFILE,
+    get_current_context_name,
+    get_meta_dir,
+    write_context_name_to_docker_config,
+)
+from .context import Context
 
 
 class ContextAPI:

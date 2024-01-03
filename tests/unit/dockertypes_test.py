@@ -1,15 +1,22 @@
 import unittest
+from unittest import mock
 
 import pytest
 
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
-    ContainerSpec, EndpointConfig, HostConfig, IPAMConfig,
-    IPAMPool, LogConfig, Mount, ServiceMode, Ulimit,
+    ContainerSpec,
+    EndpointConfig,
+    HostConfig,
+    IPAMConfig,
+    IPAMPool,
+    LogConfig,
+    Mount,
+    ServiceMode,
+    Ulimit,
 )
 from docker.types.services import convert_service_ports
-from unittest import mock
 
 
 def create_host_config(*args, **kwargs):

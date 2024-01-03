@@ -1,5 +1,6 @@
-import docker
 import pytest
+
+import docker
 
 from ..helpers import force_leave_swarm, requires_api_version
 from .base import BaseAPIIntegrationTest

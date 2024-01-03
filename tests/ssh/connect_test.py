@@ -1,9 +1,11 @@
 import os
 import unittest
 
-import docker
 import paramiko.ssh_exception
 import pytest
+
+import docker
+
 from .base import TEST_API_VERSION
 
 

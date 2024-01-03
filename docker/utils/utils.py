@@ -8,15 +8,16 @@ import string
 from datetime import datetime, timezone
 from functools import lru_cache
 from itertools import zip_longest
+from urllib.parse import urlparse, urlunparse
 
 from .. import errors
-from ..constants import DEFAULT_HTTP_HOST
-from ..constants import DEFAULT_UNIX_SOCKET
-from ..constants import DEFAULT_NPIPE
-from ..constants import BYTE_UNITS
+from ..constants import (
+    BYTE_UNITS,
+    DEFAULT_HTTP_HOST,
+    DEFAULT_NPIPE,
+    DEFAULT_UNIX_SOCKET,
+)
 from ..tls import TLSConfig
-
-from urllib.parse import urlparse, urlunparse
 
 URLComponents = collections.namedtuple(
     'URLComponents',

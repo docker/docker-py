@@ -3,13 +3,13 @@ import os
 import shutil
 import tempfile
 
+import pytest
+
 from docker import errors
 from docker.utils.proxy import ProxyConfig
 
-import pytest
-
-from .base import BaseAPIIntegrationTest, TEST_IMG
 from ..helpers import random_name, requires_api_version, requires_experimental
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class BuildTest(BaseAPIIntegrationTest):

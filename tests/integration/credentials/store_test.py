@@ -6,8 +6,11 @@ import sys
 import pytest
 
 from docker.credentials import (
-    CredentialsNotFound, Store, StoreError, DEFAULT_LINUX_STORE,
-    DEFAULT_OSX_STORE
+    DEFAULT_LINUX_STORE,
+    DEFAULT_OSX_STORE,
+    CredentialsNotFound,
+    Store,
+    StoreError,
 )
 
 

@@ -1,4 +1,4 @@
-from docker.utils.json_stream import json_splitter, stream_as_text, json_stream
+from docker.utils.json_stream import json_splitter, json_stream, stream_as_text
 
 
 class TestJsonSplitter:

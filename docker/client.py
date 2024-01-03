@@ -1,5 +1,5 @@
 from .api.client import APIClient
-from .constants import (DEFAULT_TIMEOUT_SECONDS, DEFAULT_MAX_POOL_SIZE)
+from .constants import DEFAULT_MAX_POOL_SIZE, DEFAULT_TIMEOUT_SECONDS
 from .models.configs import ConfigCollection
 from .models.containers import ContainerCollection
 from .models.images import ImageCollection

@@ -1,9 +1,10 @@
 import sys
 import warnings
 
+import pytest
+
 import docker.errors
 from docker.utils import kwargs_from_env
-import pytest
 
 from .base import TEST_IMG
 

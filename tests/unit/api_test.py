@@ -1,28 +1,28 @@
 import datetime
+import http.server
 import io
 import json
 import os
 import re
 import shutil
 import socket
+import socketserver
 import struct
 import tempfile
 import threading
 import time
 import unittest
-import socketserver
-import http.server
+from unittest import mock
 
-import docker
 import pytest
 import requests
 import urllib3
+
+import docker
 from docker.api import APIClient
 from docker.constants import DEFAULT_DOCKER_API_VERSION
-from unittest import mock
 
 from . import fake_api
-
 
 DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS
 

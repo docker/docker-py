@@ -8,12 +8,22 @@ import requests.adapters
 import requests.exceptions
 
 from .. import auth
-from ..constants import (DEFAULT_NUM_POOLS, DEFAULT_NUM_POOLS_SSH,
-                         DEFAULT_MAX_POOL_SIZE, DEFAULT_TIMEOUT_SECONDS,
-                         DEFAULT_USER_AGENT, IS_WINDOWS_PLATFORM,
-                         MINIMUM_DOCKER_API_VERSION, STREAM_HEADER_SIZE_BYTES)
-from ..errors import (DockerException, InvalidVersion, TLSParameterError,
-                      create_api_error_from_http_exception)
+from ..constants import (
+    DEFAULT_MAX_POOL_SIZE,
+    DEFAULT_NUM_POOLS,
+    DEFAULT_NUM_POOLS_SSH,
+    DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_USER_AGENT,
+    IS_WINDOWS_PLATFORM,
+    MINIMUM_DOCKER_API_VERSION,
+    STREAM_HEADER_SIZE_BYTES,
+)
+from ..errors import (
+    DockerException,
+    InvalidVersion,
+    TLSParameterError,
+    create_api_error_from_http_exception,
+)
 from ..tls import TLSConfig
 from ..transport import UnixHTTPAdapter
 from ..utils import check_resource, config, update_headers, utils

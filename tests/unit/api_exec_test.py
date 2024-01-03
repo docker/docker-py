@@ -2,7 +2,10 @@ import json
 
 from . import fake_api
 from .api_test import (
-    BaseAPIClientTest, url_prefix, fake_request, DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_TIMEOUT_SECONDS,
+    BaseAPIClientTest,
+    fake_request,
+    url_prefix,
 )
 
 

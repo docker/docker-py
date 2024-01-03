@@ -1,4 +1,5 @@
 from .unixconn import UnixHTTPAdapter
+
 try:
     from .npipeconn import NpipeHTTPAdapter
     from .npipesocket import NpipeSocket

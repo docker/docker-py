@@ -2,16 +2,19 @@ import copy
 import ntpath
 from collections import namedtuple
 
-from .images import Image
-from .resource import Collection, Model
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (
-    ContainerError, DockerException, ImageNotFound,
-    NotFound, create_unexpected_kwargs_error
+    ContainerError,
+    DockerException,
+    ImageNotFound,
+    NotFound,
+    create_unexpected_kwargs_error,
 )
 from ..types import HostConfig, NetworkingConfig
 from ..utils import version_gte
+from .images import Image
+from .resource import Collection, Model
 
 
 class Container(Model):

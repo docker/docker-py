@@ -6,10 +6,11 @@ import random
 import shutil
 import tempfile
 import unittest
+from unittest import mock
+
+import pytest
 
 from docker import auth, credentials, errors
-from unittest import mock
-import pytest
 
 
 class RegressionTest(unittest.TestCase):

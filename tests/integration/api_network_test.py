@@ -1,9 +1,10 @@
-import docker
-from docker.types import IPAMConfig, IPAMPool
 import pytest
 
+import docker
+from docker.types import IPAMConfig, IPAMPool
+
 from ..helpers import random_name, requires_api_version
-from .base import BaseAPIIntegrationTest, TEST_IMG
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class TestNetworks(BaseAPIIntegrationTest):

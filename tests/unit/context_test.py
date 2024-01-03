@@ -1,10 +1,10 @@
 import unittest
-import docker
+
 import pytest
-from docker.constants import DEFAULT_UNIX_SOCKET
-from docker.constants import DEFAULT_NPIPE
-from docker.constants import IS_WINDOWS_PLATFORM
-from docker.context import ContextAPI, Context
+
+import docker
+from docker.constants import DEFAULT_NPIPE, DEFAULT_UNIX_SOCKET, IS_WINDOWS_PLATFORM
+from docker.context import Context, ContextAPI
 
 
 class BaseContextTest(unittest.TestCase):

@@ -3,7 +3,6 @@ import json.decoder
 
 from ..errors import StreamParseError
 
-
 json_decoder = json.JSONDecoder()
 
 

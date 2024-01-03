@@ -1,6 +1,8 @@
-from docker.errors import APIError
-from .base import BaseAPIIntegrationTest, TEST_IMG
 import pytest
+
+from docker.errors import APIError
+
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class ErrorsTest(BaseAPIIntegrationTest):

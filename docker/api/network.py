@@ -1,7 +1,6 @@
-from ..errors import InvalidVersion
-from ..utils import check_resource, minimum_version
-from ..utils import version_lt
 from .. import utils
+from ..errors import InvalidVersion
+from ..utils import check_resource, minimum_version, version_lt
 
 
 class NetworkApiMixin:

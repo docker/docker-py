@@ -1,12 +1,12 @@
 import functools
-import time
 import io
+import time
 
+import pywintypes
+import win32api
+import win32event
 import win32file
 import win32pipe
-import pywintypes
-import win32event
-import win32api
 
 cERROR_PIPE_BUSY = 0xe7
 cSECURITY_SQOS_PRESENT = 0x100000

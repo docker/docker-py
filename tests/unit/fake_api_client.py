@@ -1,8 +1,9 @@
 import copy
+from unittest import mock
 
 import docker
 from docker.constants import DEFAULT_DOCKER_API_VERSION
-from unittest import mock
+
 from . import fake_api
 
 
