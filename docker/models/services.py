@@ -22,6 +22,13 @@ class Service(Model):
         """
         return self.attrs.get('Version').get('Index')
 
+    @property
+    def image(self):
+        """
+        The name of the image used by the service.
+        """
+        return self.attrs['Spec']['TaskTemplate']['ContainerSpec']['Image']
+
     def remove(self):
         """
         Stop and remove the service.
