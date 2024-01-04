@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Generate Pacakge
+      - name: Generate Package
         run: |
           pip3 install setuptools wheel
           python setup.py sdist bdist_wheel
