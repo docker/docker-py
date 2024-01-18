@@ -533,17 +533,17 @@ class TCPSocketStreamTest(unittest.TestCase):
 
     def request(self, stream=None, tty=None, demux=None):
         assert stream is not None and tty is not None and demux is not None
-        with APIClient(
+        client = APIClient(
                 base_url=self.address,
                 version=DEFAULT_DOCKER_API_VERSION
-                ) as client:
-            if tty:
-                url = client._url('/tty')
-            else:
-                url = client._url('/no-tty')
-            resp = client._post(url, stream=True)
-            return client._read_from_socket(
-                resp, stream=stream, tty=tty, demux=demux)
+                )
+        if tty:
+            url = client._url('/tty')
+        else:
+            url = client._url('/no-tty')
+        resp = client._post(url, stream=True)
+        return client._read_from_socket(
+            resp, stream=stream, tty=tty, demux=demux)
 
     def test_read_from_socket_tty(self):
         res = self.request(stream=True, tty=True, demux=False)

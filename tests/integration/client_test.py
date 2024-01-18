@@ -1,5 +1,7 @@
+import os
 import threading
 import unittest
+from pathlib import Path
 
 import docker
 
@@ -47,3 +49,39 @@ class CancellableEventsTest(unittest.TestCase):
             pass
 
         self.assertLess(datetime.now() - start, timedelta(seconds=3))
+
+
+class FDLeakingTest(unittest.TestCase):
+    cmd = "sh -c 'for i in 1 2 3 4 5 6; do echo $i && sleep 1; done'"
+
+    def test_fd_leaking_close(self):
+        fd_before = len(list(Path(f"/proc/{os.getpid()}/fd").iterdir()))
+        client = docker.from_env(version=TEST_API_VERSION)
+        container = client.containers.run("alpine", FDLeakingTest.cmd, detach=True)
+        asock = client.api.attach_socket(container.id)
+        next(asock)
+        container.logs()
+
+        fd_now = len(list(Path(f"/proc/{os.getpid()}/fd").iterdir()))
+        self.assertGreater(fd_now, fd_before)
+
+        client.close()
+        client.close()  # Make sure the client is closed
+
+        fd_now = len(list(Path(f"/proc/{os.getpid()}/fd").iterdir()))
+        self.assertEqual(fd_now, fd_before)
+
+    def test_fd_leaking_with_context_manager(self):
+        client = None
+        fd_before = len(list(Path(f"/proc/{os.getpid()}/fd").iterdir()))
+
+        with docker.from_env(version=TEST_API_VERSION) as client:
+            container = client.containers.run("alpine", FDLeakingTest.cmd, detach=True)
+            asock = client.api.attach_socket(container.id)
+            next(asock)
+            container.logs()
+            fd_now = len(list(Path(f"/proc/{os.getpid()}/fd").iterdir()))
+            self.assertGreater(fd_now, fd_before)
+
+        fd_now = len(list(Path(f"/proc/{os.getpid()}/fd").iterdir()))
+        self.assertEqual(fd_now, fd_before)

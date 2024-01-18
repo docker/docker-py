@@ -76,6 +76,14 @@ class APIClient(
          u'Os': u'linux',
          u'Version': u'17.10.0-ce'}
 
+    It's possible to use `DockerClient` as a context manager and make sure every
+    socket will be closed:
+
+        >>> import docker
+        >>> docker.DockerClient(base_url='unix://var/run/docker/sock') as cli:
+        ...     cli.info()
+        ...
+
     Args:
         base_url (str): URL to the Docker server. For example,
             ``unix:///var/run/docker.sock`` or ``tcp://127.0.0.1:1234``.
@@ -118,6 +126,7 @@ class APIClient(
         self.timeout = timeout
         self.headers['User-Agent'] = user_agent
 
+        self._sockets_ref = set()
         self._general_configs = config.load_general_config()
 
         proxy_config = self._general_configs.get('proxies', {})
@@ -207,6 +216,20 @@ class APIClient(
                 f'API versions below {MINIMUM_DOCKER_API_VERSION} are '
                 f'no longer supported by this library.'
             )
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        super().__exit__(exc_type, exc_value, traceback)
+        self._close_sockets()
+
+    def _close_sockets(self, close_self=True):
+        for _socket in self._sockets_ref:
+            try:
+                _socket.close()
+            except ValueError:
+                pass
+
+        if close_self:
+            self.close()
 
     def _retrieve_server_version(self):
         try:
@@ -340,6 +363,8 @@ class APIClient(
             # fine because we won't be doing TLS over them
             pass
 
+        self._sockets_ref.add(sock)
+        self._sockets_ref.add(response)
         return sock
 
     def _stream_helper(self, response, decode=False):
@@ -520,3 +545,8 @@ class APIClient(
         self._auth_configs = auth.load_config(
             dockercfg_path, credstore_env=self.credstore_env
         )
+
+    def close(self):
+        super().close()
+        self._close_sockets(False)
+

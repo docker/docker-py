@@ -22,6 +22,14 @@ class DockerClient:
         >>> import docker
         >>> client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 
+    It's possible to use `DockerClient` as a context manager and make sure every
+    socket will be closed:
+
+        >>> import docker
+        >>> docker.DockerClient(base_url='unix://var/run/docker/sock') as cli:
+        ...     cli.info()
+        ...
+
     Args:
         base_url (str): URL to the Docker server. For example,
             ``unix:///var/run/docker.sock`` or ``tcp://127.0.0.1:1234``.
@@ -43,6 +51,12 @@ class DockerClient:
     """
     def __init__(self, *args, **kwargs):
         self.api = APIClient(*args, **kwargs)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.api.__exit__(exc_type, exc_value, traceback)
 
     @classmethod
     def from_env(cls, **kwargs):
