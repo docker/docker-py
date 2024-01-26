@@ -13,7 +13,7 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 class UnixHTTPConnection(urllib3.connection.HTTPConnection):
 
-    def __init__(self, base_url, unix_socket, timeout=60):
+    def __init__(self, base_url, unix_socket, timeout=60) -> None:
         super().__init__(
             'localhost', timeout=timeout
         )
@@ -21,7 +21,7 @@ class UnixHTTPConnection(urllib3.connection.HTTPConnection):
         self.unix_socket = unix_socket
         self.timeout = timeout
 
-    def connect(self):
+    def connect(self) -> None:
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.settimeout(self.timeout)
         sock.connect(self.unix_socket)
@@ -29,7 +29,7 @@ class UnixHTTPConnection(urllib3.connection.HTTPConnection):
 
 
 class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, base_url, socket_path, timeout=60, maxsize=10):
+    def __init__(self, base_url, socket_path, timeout=60, maxsize=10) -> None:
         super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
@@ -52,7 +52,7 @@ class UnixHTTPAdapter(BaseHTTPAdapter):
 
     def __init__(self, socket_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
-                 max_pool_size=constants.DEFAULT_MAX_POOL_SIZE):
+                 max_pool_size=constants.DEFAULT_MAX_POOL_SIZE) -> None:
         socket_path = socket_url.replace('http+unix://', '')
         if not socket_path.startswith('/'):
             socket_path = f"/{socket_path}"

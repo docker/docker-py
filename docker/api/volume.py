@@ -138,7 +138,7 @@ class VolumeApiMixin:
         url = self._url('/volumes/prune')
         return self._result(self._post(url, params=params), True)
 
-    def remove_volume(self, name, force=False):
+    def remove_volume(self, name, force=False) -> None:
         """
         Remove a volume. Similar to the ``docker volume rm`` command.
 

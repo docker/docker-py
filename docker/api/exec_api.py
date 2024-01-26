@@ -97,7 +97,7 @@ class ExecApiMixin:
         res = self._get(self._url("/exec/{0}/json", exec_id))
         return self._result(res, True)
 
-    def exec_resize(self, exec_id, height=None, width=None):
+    def exec_resize(self, exec_id, height=None, width=None) -> None:
         """
         Resize the tty session used by the specified exec command.
 

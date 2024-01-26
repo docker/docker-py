@@ -4,7 +4,7 @@ from .. import auth, utils
 class PluginApiMixin:
     @utils.minimum_version('1.25')
     @utils.check_resource('name')
-    def configure_plugin(self, name, options):
+    def configure_plugin(self, name, options) -> bool:
         """
             Configure a plugin.
 
@@ -25,7 +25,7 @@ class PluginApiMixin:
         return True
 
     @utils.minimum_version('1.25')
-    def create_plugin(self, name, plugin_data_dir, gzip=False):
+    def create_plugin(self, name, plugin_data_dir, gzip=False) -> bool:
         """
             Create a new plugin.
 
@@ -51,7 +51,7 @@ class PluginApiMixin:
         return True
 
     @utils.minimum_version('1.25')
-    def disable_plugin(self, name, force=False):
+    def disable_plugin(self, name, force=False) -> bool:
         """
             Disable an installed plugin.
 
@@ -69,7 +69,7 @@ class PluginApiMixin:
         return True
 
     @utils.minimum_version('1.25')
-    def enable_plugin(self, name, timeout=0):
+    def enable_plugin(self, name, timeout=0) -> bool:
         """
             Enable an installed plugin.
 
@@ -206,7 +206,7 @@ class PluginApiMixin:
 
     @utils.minimum_version('1.25')
     @utils.check_resource('name')
-    def remove_plugin(self, name, force=False):
+    def remove_plugin(self, name, force=False) -> bool:
         """
             Remove an installed plugin.
 

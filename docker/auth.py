@@ -74,7 +74,7 @@ def get_credential_store(authconfig, registry):
 
 
 class AuthConfig(dict):
-    def __init__(self, dct, credstore_env=None):
+    def __init__(self, dct, credstore_env=None) -> None:
         if 'auths' not in dct:
             dct['auths'] = {}
         self.update(dct)
@@ -202,7 +202,7 @@ class AuthConfig(dict):
         return self.get('credHelpers', {})
 
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return (
             not self.auths and not self.creds_store and not self.cred_helpers
         )
@@ -303,7 +303,7 @@ class AuthConfig(dict):
 
         return auth_data
 
-    def add_auth(self, reg, data):
+    def add_auth(self, reg, data) -> None:
         self['auths'][reg] = data
 
 

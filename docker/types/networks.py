@@ -5,7 +5,7 @@ from ..utils import normalize_links, version_lt
 class EndpointConfig(dict):
     def __init__(self, version, aliases=None, links=None, ipv4_address=None,
                  ipv6_address=None, link_local_ips=None, driver_opt=None,
-                 mac_address=None):
+                 mac_address=None) -> None:
         if version_lt(version, '1.22'):
             raise errors.InvalidVersion(
                 'Endpoint config is not supported for API version < 1.22'
@@ -52,7 +52,7 @@ class EndpointConfig(dict):
 
 
 class NetworkingConfig(dict):
-    def __init__(self, endpoints_config=None):
+    def __init__(self, endpoints_config=None) -> None:
         if endpoints_config:
             self["EndpointsConfig"] = endpoints_config
 
@@ -76,7 +76,7 @@ class IPAMConfig(dict):
         >>> network = client.create_network('network1', ipam=ipam_config)
 
     """
-    def __init__(self, driver='default', pool_configs=None, options=None):
+    def __init__(self, driver='default', pool_configs=None, options=None) -> None:
         self.update({
             'Driver': driver,
             'Config': pool_configs or []
@@ -119,7 +119,7 @@ class IPAMPool(dict):
                 pool_configs=[ipam_pool])
     """
     def __init__(self, subnet=None, iprange=None, gateway=None,
-                 aux_addresses=None):
+                 aux_addresses=None) -> None:
         self.update({
             'Subnet': subnet,
             'IPRange': iprange,

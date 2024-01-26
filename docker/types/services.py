@@ -32,7 +32,7 @@ class TaskTemplate(dict):
 
     def __init__(self, container_spec, resources=None, restart_policy=None,
                  placement=None, log_driver=None, networks=None,
-                 force_update=None):
+                 force_update=None) -> None:
         self['ContainerSpec'] = container_spec
         if resources:
             self['Resources'] = resources
@@ -125,7 +125,7 @@ class ContainerSpec(dict):
                  open_stdin=None, read_only=None, stop_signal=None,
                  healthcheck=None, hosts=None, dns_config=None, configs=None,
                  privileges=None, isolation=None, init=None, cap_add=None,
-                 cap_drop=None, sysctls=None):
+                 cap_drop=None, sysctls=None) -> None:
         self['Image'] = image
 
         if isinstance(command, str):
@@ -245,7 +245,7 @@ class Mount(dict):
     def __init__(self, target, source, type='volume', read_only=False,
                  consistency=None, propagation=None, no_copy=False,
                  labels=None, driver_config=None, tmpfs_size=None,
-                 tmpfs_mode=None):
+                 tmpfs_mode=None) -> None:
         self['Target'] = target
         self['Source'] = source
         if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
@@ -344,7 +344,7 @@ class Resources(dict):
     """
 
     def __init__(self, cpu_limit=None, mem_limit=None, cpu_reservation=None,
-                 mem_reservation=None, generic_resources=None):
+                 mem_reservation=None, generic_resources=None) -> None:
         limits = {}
         reservation = {}
         if cpu_limit is not None:
@@ -415,7 +415,7 @@ class UpdateConfig(dict):
     """
 
     def __init__(self, parallelism=0, delay=None, failure_action='continue',
-                 monitor=None, max_failure_ratio=None, order=None):
+                 monitor=None, max_failure_ratio=None, order=None) -> None:
         self['Parallelism'] = parallelism
         if delay is not None:
             self['Delay'] = delay
@@ -500,7 +500,7 @@ class RestartPolicy(dict):
     condition_types = RestartConditionTypesEnum
 
     def __init__(self, condition=RestartConditionTypesEnum.NONE, delay=0,
-                 max_attempts=0, window=0):
+                 max_attempts=0, window=0) -> None:
         if condition not in self.condition_types._values:
             raise TypeError(
                 f'Invalid RestartPolicy condition {condition}'
@@ -526,7 +526,7 @@ class DriverConfig(dict):
         options (dict): Driver-specific options. Default: ``None``.
     """
 
-    def __init__(self, name, options=None):
+    def __init__(self, name, options=None) -> None:
         self['Name'] = name
         if options:
             self['Options'] = options
@@ -548,7 +548,7 @@ class EndpointSpec(dict):
           Ports can only be provided if the ``vip`` resolution mode is used.
     """
 
-    def __init__(self, mode=None, ports=None):
+    def __init__(self, mode=None, ports=None) -> None:
         if ports:
             self['Ports'] = convert_service_ports(ports)
         if mode:
@@ -601,7 +601,7 @@ class ServiceMode(dict):
               services only.
     """
 
-    def __init__(self, mode, replicas=None, concurrency=None):
+    def __init__(self, mode, replicas=None, concurrency=None) -> None:
         replicated_modes = ('replicated', 'replicated-job')
         supported_modes = replicated_modes + ('global', 'global-job')
 
@@ -673,7 +673,7 @@ class SecretReference(dict):
     """
     @check_resource('secret_id')
     def __init__(self, secret_id, secret_name, filename=None, uid=None,
-                 gid=None, mode=0o444):
+                 gid=None, mode=0o444) -> None:
         self['SecretName'] = secret_name
         self['SecretID'] = secret_id
         self['File'] = {
@@ -701,7 +701,7 @@ class ConfigReference(dict):
     """
     @check_resource('config_id')
     def __init__(self, config_id, config_name, filename=None, uid=None,
-                 gid=None, mode=0o444):
+                 gid=None, mode=0o444) -> None:
         self['ConfigName'] = config_name
         self['ConfigID'] = config_id
         self['File'] = {
@@ -729,7 +729,7 @@ class Placement(dict):
     """
 
     def __init__(self, constraints=None, preferences=None, platforms=None,
-                 maxreplicas=None):
+                 maxreplicas=None) -> None:
         if constraints is not None:
             self['Constraints'] = constraints
         if preferences is not None:
@@ -761,7 +761,7 @@ class PlacementPreference(dict):
                 nodes identified by this label.
     """
 
-    def __init__(self, strategy, descriptor):
+    def __init__(self, strategy, descriptor) -> None:
         if strategy != 'spread':
             raise errors.InvalidArgument(
                 f'PlacementPreference strategy value is invalid ({strategy}): '
@@ -783,7 +783,7 @@ class DNSConfig(dict):
                 to be modified (e.g., ``debug``, ``ndots:3``, etc.).
     """
 
-    def __init__(self, nameservers=None, search=None, options=None):
+    def __init__(self, nameservers=None, search=None, options=None) -> None:
         self['Nameservers'] = nameservers
         self['Search'] = search
         self['Options'] = options
@@ -816,7 +816,7 @@ class Privileges(dict):
 
     def __init__(self, credentialspec_file=None, credentialspec_registry=None,
                  selinux_disable=None, selinux_user=None, selinux_role=None,
-                 selinux_type=None, selinux_level=None):
+                 selinux_type=None, selinux_level=None) -> None:
         credential_spec = {}
         if credentialspec_registry is not None:
             credential_spec['Registry'] = credentialspec_registry
@@ -857,7 +857,7 @@ class NetworkAttachmentConfig(dict):
                 network target.
     """
 
-    def __init__(self, target, aliases=None, options=None):
+    def __init__(self, target, aliases=None, options=None) -> None:
         self['Target'] = target
         self['Aliases'] = aliases
         self['DriverOpts'] = options

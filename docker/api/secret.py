@@ -63,7 +63,7 @@ class SecretApiMixin:
 
     @utils.minimum_version('1.25')
     @utils.check_resource('id')
-    def remove_secret(self, id):
+    def remove_secret(self, id) -> bool:
         """
             Remove a secret
 
