@@ -175,7 +175,7 @@ class Context:
     def __repr__(self):
         return f"<{self.__class__.__name__}: '{self.name}'>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return json.dumps(self.__call__(), indent=2)
 
     def __call__(self):

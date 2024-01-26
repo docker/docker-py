@@ -50,7 +50,7 @@ class APIError(requests.exceptions.HTTPError, DockerException):
         self.response = response
         self.explanation = explanation
 
-    def __str__(self):
+    def __str__(self) -> str:
         message = super().__str__()
 
         if self.is_client_error():
@@ -121,7 +121,7 @@ class TLSParameterError(DockerException):
     def __init__(self, msg):
         self.msg = msg
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.msg + (". TLS configurations should map the Docker CLI "
                            "client configurations. See "
                            "https://docs.docker.com/engine/articles/https/ "
@@ -181,7 +181,7 @@ class MissingContextParameter(DockerException):
     def __init__(self, param):
         self.param = param
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"missing parameter: {self.param}")
 
 
@@ -189,7 +189,7 @@ class ContextAlreadyExists(DockerException):
     def __init__(self, name):
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"context {self.name} already exists")
 
 
@@ -197,7 +197,7 @@ class ContextException(DockerException):
     def __init__(self, msg):
         self.msg = msg
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (self.msg)
 
 
@@ -205,5 +205,5 @@ class ContextNotFound(DockerException):
     def __init__(self, name):
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"context '{self.name}' not found")
