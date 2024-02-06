@@ -7,7 +7,7 @@ from .resource import Collection, Model
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (
-    ContainerError, DockerException, ImageNotFound,
+    APIError, ContainerError, DockerException, ImageNotFound,
     NotFound, create_unexpected_kwargs_error
 )
 from ..types import HostConfig, NetworkingConfig
@@ -877,10 +877,18 @@ class ContainerCollection(Collection):
             container = self.create(image=image, command=command,
                                     detach=detach, **kwargs)
 
-        container.start()
-
-        if detach:
-            return container
+        try:
+            container.start()
+        except APIError:
+            if remove and not detach:
+                # Remove the created container that failed to start.
+                # Akin to removing the container when `docker run -it --rm`
+                container.remove()
+        finally:
+            if detach:
+                # Return the created container that failed to start.
+                # Akin to getting the container ID when `docker run -d`
+                return container
 
         logging_driver = container.attrs['HostConfig']['LogConfig']['Type']
 
