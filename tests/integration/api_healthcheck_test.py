@@ -66,3 +66,20 @@ class HealthcheckTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
         wait_on_health_status(self.client, container, "healthy")
+
+    @helpers.requires_api_version('1.44')
+    def test_healthcheck_start_interval(self):
+        container = self.client.create_container(
+            TEST_IMG, 'top', healthcheck={
+                'test': "echo 'hello docker'",
+                'interval': 1 * SECOND,
+                'timeout': 1 * SECOND,
+                'retries': 1,
+                'start_interval': 1 * SECOND
+            }
+        )
+
+        self.tmp_containers.append(container)
+        self.client.start(container)
+        wait_on_health_status(self.client, container, "healthy")
+        

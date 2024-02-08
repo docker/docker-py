@@ -26,6 +26,8 @@ class Healthcheck(DictType):
             start_period (int): Start period for the container to
                 initialize before starting health-retries countdown in
                 nanoseconds. It should be 0 or at least 1000000 (1 ms).
+            start_interval (int): It is interval to be used by healthchecks during the start period in 
+            nanoseconds. It should be 0 or at least 1000000 (1 ms).
     """
     def __init__(self, **kwargs):
         test = kwargs.get('test', kwargs.get('Test'))
@@ -36,13 +38,15 @@ class Healthcheck(DictType):
         timeout = kwargs.get('timeout', kwargs.get('Timeout'))
         retries = kwargs.get('retries', kwargs.get('Retries'))
         start_period = kwargs.get('start_period', kwargs.get('StartPeriod'))
+        start_interval = kwargs.get('start_interval', kwargs.get('StartInterval'))
 
         super().__init__({
             'Test': test,
             'Interval': interval,
             'Timeout': timeout,
             'Retries': retries,
-            'StartPeriod': start_period
+            'StartPeriod': start_period,
+            'StartInterval': start_interval
         })
 
     @property
@@ -86,3 +90,11 @@ class Healthcheck(DictType):
     @start_period.setter
     def start_period(self, value):
         self['StartPeriod'] = value
+
+    @property
+    def start_interval(self):
+        return self['StartInterval']
+    
+    @start_interval.setter
+    def start_interval(self, value):
+        self['StartInterval'] = value
