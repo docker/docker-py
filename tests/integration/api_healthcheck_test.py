@@ -82,4 +82,3 @@ class HealthcheckTest(BaseAPIIntegrationTest):
         self.tmp_containers.append(container)
         self.client.start(container)
         wait_on_health_status(self.client, container, "healthy")
-        
