@@ -15,3 +15,5 @@ python:
       path: .
       extra_requirements:
         - ssh
+        
+formats: all
