@@ -333,7 +333,7 @@ class HostConfig(dict):
         if read_only is not None:
             self['ReadonlyRootfs'] = read_only
 
-        if dns_search:
+        if dns_search is not None:
             self['DnsSearch'] = dns_search
 
         if network_mode == 'host' and port_bindings:
