@@ -14,7 +14,7 @@ from ..helpers import assert_cat_socket_detached_with_keys
 from ..helpers import ctrl_with
 from ..helpers import requires_api_version, skip_if_desktop
 from .base import BaseAPIIntegrationTest
-from .base import TEST_IMG
+from .base import TEST_IMG, TEST_API_VERSION
 from docker.constants import IS_WINDOWS_PLATFORM
 from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
@@ -1285,7 +1285,11 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         self.client.start(container)
 
         data = pty_stdout.recv()
-        assert data.decode('utf-8') == line
+
+        if TEST_API_VERSION < "1.25":
+            assert data == line
+        else:
+            assert data.decode('utf-8') == line
 
     @pytest.mark.timeout(10)
     def test_attach_no_stream(self):
@@ -1294,7 +1298,10 @@ class AttachContainerTest(BaseAPIIntegrationTest):
         )
         self.tmp_containers.append(container)
         self.client.start(container)
-        self.client.wait(container, condition='not-running')
+        wait_kwargs = {}
+        if TEST_API_VERSION >= "1.30":
+            wait_kwargs['condition'] = 'not-running'
+        self.client.wait(container, **wait_kwargs)
         output = self.client.attach(container, stream=False, logs=True)
         assert output == 'hello\n'.encode(encoding='ascii')
 
