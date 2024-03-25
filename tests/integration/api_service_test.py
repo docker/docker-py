@@ -382,6 +382,7 @@ class ServiceTest(BaseAPIIntegrationTest):
             {'Target': net1['Id']}, {'Target': net2['Id']}
         ]
 
+    @requires_api_version('1.25')
     def test_create_service_with_network_attachment_config(self):
         network = self.client.create_network(
             'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}
@@ -1108,6 +1109,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert update_config['Delay'] == uc['Delay']
         assert update_config['FailureAction'] == uc['FailureAction']
 
+    @requires_api_version('1.25')
     def test_update_service_with_defaults_networks(self):
         net1 = self.client.create_network(
             'dockerpytest_1', driver='overlay', ipam={'Driver': 'default'}

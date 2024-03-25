@@ -46,11 +46,26 @@ jobs:
         strategy:
             matrix:
                 variant: [ "integration-dind", "integration-dind-ssl", "integration-dind-ssh" ]
+                api-version: [1.44, 1.43, 1.42, 1.24] # 1.24 is the oldest supported version
+                engine-version: [25.0] # latest
+                include: # ugly repetition because GHA doesn't support lists in these objects so we need a separate entry for each variant
+                    - engine-version: 23.0 # mirantis lts
+                      api-version: 1.42
+                      variant: "integration-dind"
+                    - engine-version: 23.0 # mirantis lts
+                      api-version: 1.42
+                      variant: "integration-dind-ssl"
+                    - engine-version: 23.0 # mirantis lts
+                      api-version: 1.42
+                      variant: "integration-dind-ssh"
 
         steps:
             - uses: actions/checkout@v4
-            - name: make ${{ matrix.variant }}
+            - name: ${{ matrix.variant }} - v${{ matrix.engine-version }}/v${{ matrix.api-version }}
               run: |
                   docker logout
                   rm -rf ~/.docker
                   make ${{ matrix.variant }}
+              env:
+                TEST_ENGINE_VERSION: ${{ matrix.engine-version }}
+                TEST_API_VERSION: ${{ matrix.api-version }}

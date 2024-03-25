@@ -27,8 +27,6 @@ class SwarmTest(BaseAPIIntegrationTest):
 
     @requires_api_version('1.24')
     def test_init_swarm_force_new_cluster(self):
-        pytest.skip('Test stalls the engine on 1.12.0')
-
         assert self.init_swarm()
         version_1 = self.client.inspect_swarm()['Version']['Index']
         assert self.client.init_swarm(force_new_cluster=True)

@@ -2,7 +2,7 @@ from ..helpers import assert_cat_socket_detached_with_keys
 from ..helpers import ctrl_with
 from ..helpers import requires_api_version
 from .base import BaseAPIIntegrationTest
-from .base import TEST_IMG
+from .base import TEST_IMG, TEST_API_VERSION
 from docker.utils.proxy import ProxyConfig
 from docker.utils.socket import next_frame_header
 from docker.utils.socket import read_exactly
@@ -35,17 +35,19 @@ class ExecTest(BaseAPIIntegrationTest):
         for item in expected:
             assert item in output
 
-        # Overwrite some variables with a custom environment
-        env = {'https_proxy': 'xxx', 'HTTPS_PROXY': 'XXX'}
+        # Setting environment for exec is not supported in API < 1.25
+        if TEST_API_VERSION > "1.24":
+            # Overwrite some variables with a custom environment
+            env = {'https_proxy': 'xxx', 'HTTPS_PROXY': 'XXX'}
 
-        res = self.client.exec_create(container, cmd=cmd, environment=env)
-        output = self.client.exec_start(res).decode('utf-8').split('\n')
-        expected = [
-            'ftp_proxy=a', 'https_proxy=xxx', 'http_proxy=c', 'no_proxy=d',
-            'FTP_PROXY=a', 'HTTPS_PROXY=XXX', 'HTTP_PROXY=c', 'NO_PROXY=d'
-        ]
-        for item in expected:
-            assert item in output
+            res = self.client.exec_create(container, cmd=cmd, environment=env)
+            output = self.client.exec_start(res).decode('utf-8').split('\n')
+            expected = [
+                'ftp_proxy=a', 'https_proxy=xxx', 'http_proxy=c', 'no_proxy=d',
+                'FTP_PROXY=a', 'HTTPS_PROXY=XXX', 'HTTP_PROXY=c', 'NO_PROXY=d'
+            ]
+            for item in expected:
+                assert item in output
 
     def test_execute_command(self):
         container = self.client.create_container(TEST_IMG, 'cat',
