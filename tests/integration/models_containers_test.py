@@ -110,12 +110,12 @@ class ContainerCollectionTest(BaseIntegrationTest):
         client.networks.create(net_name)
         self.tmp_networks.append(net_name)
 
-        test_aliases = ['hello']
+        test_alias = 'hello'
         test_driver_opt = {'key1': 'a'}
 
         networking_config = {
             net_name: client.api.create_endpoint_config(
-                aliases=test_aliases,
+                aliases=[test_alias],
                 driver_opt=test_driver_opt
             )
         }
@@ -132,8 +132,10 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'NetworkSettings' in attrs
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
-        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] == \
-               test_aliases
+        # Expect Aliases to list 'test_alias' and the container's short-id.
+        # In API version 1.45, the short-id will be removed.
+        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] \
+               == [test_alias, attrs['Id'][:12]]
         assert attrs['NetworkSettings']['Networks'][net_name]['DriverOpts'] \
                == test_driver_opt
 
@@ -190,7 +192,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'NetworkSettings' in attrs
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
-        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] is None
+        # Aliases should include the container's short-id (but it will be removed
+        # in API v1.45).
+        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] == [attrs["Id"][:12]]
         assert (attrs['NetworkSettings']['Networks'][net_name]['DriverOpts']
                 is None)
 
