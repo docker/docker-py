@@ -18,7 +18,7 @@ class TLSConfig:
     ca_cert = None
     verify = None
 
-    def __init__(self, client_cert=None, ca_cert=None, verify=None):
+    def __init__(self, client_cert=None, ca_cert=None, verify=None) -> None:
         # Argument compatibility/mapping with
         # https://docs.docker.com/engine/articles/https/
         # This diverges from the Docker CLI in that users can specify 'tls'
@@ -54,7 +54,7 @@ class TLSConfig:
                 'Invalid CA certificate provided for `ca_cert`.'
             )
 
-    def configure_client(self, client):
+    def configure_client(self, client) -> None:
         """
         Configure a client with these TLS options.
         """

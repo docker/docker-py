@@ -4,7 +4,7 @@ class Model:
     """
     id_attribute = 'Id'
 
-    def __init__(self, attrs=None, client=None, collection=None):
+    def __init__(self, attrs=None, client=None, collection=None) -> None:
         #: A client pointing at the server that this object is on.
         self.client = client
 
@@ -16,7 +16,7 @@ class Model:
         if self.attrs is None:
             self.attrs = {}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__}: {self.short_id}>"
 
     def __eq__(self, other):
@@ -39,7 +39,7 @@ class Model:
         """
         return self.id[:12]
 
-    def reload(self):
+    def reload(self) -> None:
         """
         Load this object from the server again and update ``attrs`` with the
         new data.
@@ -57,7 +57,7 @@ class Collection:
     #: The type of object this collection represents, set by subclasses
     model = None
 
-    def __init__(self, client=None):
+    def __init__(self, client=None) -> None:
         #: The client pointing at the server that this collection of objects
         #: is on.
         self.client = client
@@ -69,13 +69,13 @@ class Collection:
             "use docker.APIClient if so."
         )
 
-    def list(self):
+    def list(self) -> None:
         raise NotImplementedError
 
-    def get(self, key):
+    def get(self, key) -> None:
         raise NotImplementedError
 
-    def create(self, attrs=None):
+    def create(self, attrs=None) -> None:
         raise NotImplementedError
 
     def prepare_model(self, attrs):

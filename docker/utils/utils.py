@@ -24,14 +24,14 @@ URLComponents = collections.namedtuple(
 )
 
 
-def create_ipam_pool(*args, **kwargs):
+def create_ipam_pool(*args, **kwargs) -> None:
     raise errors.DeprecatedMethod(
         'utils.create_ipam_pool has been removed. Please use a '
         'docker.types.IPAMPool object instead.'
     )
 
 
-def create_ipam_config(*args, **kwargs):
+def create_ipam_config(*args, **kwargs) -> None:
     raise errors.DeprecatedMethod(
         'utils.create_ipam_config has been removed. Please use a '
         'docker.types.IPAMConfig object instead.'
@@ -45,7 +45,7 @@ def decode_json_header(header):
 
 
 @lru_cache(maxsize=None)
-def compare_version(v1, v2):
+def compare_version(v1, v2) -> int:
     """Compare docker versions
 
     >>> v1 = '1.9'
@@ -77,7 +77,7 @@ def version_lt(v1, v2):
     return compare_version(v1, v2) > 0
 
 
-def version_gte(v1, v2):
+def version_gte(v1, v2) -> bool:
     return not version_lt(v1, v2)
 
 
@@ -509,7 +509,7 @@ def format_extra_hosts(extra_hosts, task=False):
     ]
 
 
-def create_host_config(self, *args, **kwargs):
+def create_host_config(self, *args, **kwargs) -> None:
     raise errors.DeprecatedMethod(
         'utils.create_host_config has been removed. Please use a '
         'docker.types.HostConfig object instead.'
