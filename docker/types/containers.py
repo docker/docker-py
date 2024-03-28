@@ -544,8 +544,13 @@ class HostConfig(dict):
             if version_lt(version, '1.23'):
                 raise host_config_version_error('userns_mode', '1.23')
 
-            if userns_mode != "host":
-                raise host_config_value_error("userns_mode", userns_mode)
+            # Do not check that userns_mode has a specific value, i.e. 'host'
+            # since more complex values might be supported by the daemon exposing
+            # the docker api, e.g. podman also supports 'keep-id'
+
+            if not isinstance(userns_mode, str):
+                raise host_config_type_error('userns_mode', userns_mode, 'string')
+
             self['UsernsMode'] = userns_mode
 
         if uts_mode:
