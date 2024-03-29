@@ -1,13 +1,12 @@
 import random
 import time
 
-import docker
 import pytest
 
-from ..helpers import (
-    force_leave_swarm, requires_api_version, requires_experimental
-)
-from .base import BaseAPIIntegrationTest, TEST_IMG
+import docker
+
+from ..helpers import force_leave_swarm, requires_api_version, requires_experimental
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class ServiceTest(BaseAPIIntegrationTest):

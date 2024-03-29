@@ -1,7 +1,6 @@
 import base64
 
-from .. import errors
-from .. import utils
+from .. import errors, utils
 
 
 class SecretApiMixin:

@@ -1,4 +1,5 @@
 import sys
+
 from .version import __version__
 
 DEFAULT_DOCKER_API_VERSION = '1.44'

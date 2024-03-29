@@ -4,8 +4,7 @@ import shutil
 import subprocess
 import warnings
 
-from . import constants
-from . import errors
+from . import constants, errors
 from .utils import create_environment_dict
 
 

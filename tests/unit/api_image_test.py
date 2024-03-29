@@ -1,12 +1,17 @@
-import docker
+from unittest import mock
+
 import pytest
 
-from . import fake_api
+import docker
 from docker import auth
-from unittest import mock
+
+from . import fake_api
 from .api_test import (
-    BaseAPIClientTest, fake_request, DEFAULT_TIMEOUT_SECONDS, url_prefix,
-    fake_resolve_authconfig
+    DEFAULT_TIMEOUT_SECONDS,
+    BaseAPIClientTest,
+    fake_request,
+    fake_resolve_authconfig,
+    url_prefix,
 )
 
 

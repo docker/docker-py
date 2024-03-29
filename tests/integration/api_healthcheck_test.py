@@ -1,5 +1,5 @@
-from .base import BaseAPIIntegrationTest, TEST_IMG
 from .. import helpers
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 SECOND = 1000000000
 
