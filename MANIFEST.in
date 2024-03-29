@@ -1,9 +1,0 @@
-include test-requirements.txt
-include requirements.txt
-include README.md
-include README.rst
-include LICENSE
-recursive-include tests *.py
-recursive-include tests/unit/testdata *
-recursive-include tests/integration/testdata *
-recursive-include tests/gpg-keys *

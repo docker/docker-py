@@ -1,17 +1,13 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.12
-
 FROM python:${PYTHON_VERSION}
 
 WORKDIR /src
-
-COPY requirements.txt /src/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY test-requirements.txt /src/test-requirements.txt
-RUN pip install --no-cache-dir -r test-requirements.txt
-
 COPY . .
-ARG SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER
-RUN pip install --no-cache-dir .
+
+ARG VERSION
+RUN --mount=type=cache,target=/cache/pip \
+    PIP_CACHE_DIR=/cache/pip \
+    SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION} \
+    pip install .[ssh]

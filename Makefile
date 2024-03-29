@@ -11,12 +11,17 @@ ifeq ($(PLATFORM),Linux)
 	uid_args := "--build-arg uid=$(shell id -u) --build-arg gid=$(shell id -g)"
 endif
 
+SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER ?= $(shell git describe --match '[0-9]*' --dirty='.m' --always --tags 2>/dev/null | sed -r 's/-([0-9]+)/.dev\1/' | sed 's/-/+/')
+ifeq ($(SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER),)
+	SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER = "dev"
+endif
+
 .PHONY: all
 all: test
 
 .PHONY: clean
 clean:
-	-docker rm -f dpy-dind-py3 dpy-dind-certs dpy-dind-ssl
+	-docker rm -f dpy-dind dpy-dind-certs dpy-dind-ssl
 	find -name "__pycache__" | xargs rm -rf
 
 .PHONY: build-dind-ssh
@@ -25,35 +30,46 @@ build-dind-ssh:
 		--pull \
 		-t docker-dind-ssh \
 		-f tests/Dockerfile-ssh-dind \
+		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
 		--build-arg ENGINE_VERSION=${TEST_ENGINE_VERSION} \
 		--build-arg API_VERSION=${TEST_API_VERSION} \
 		--build-arg APT_MIRROR .
 
-.PHONY: build-py3
-build-py3:
+.PHONY: build
+build:
 	docker build \
 		--pull \
 		-t docker-sdk-python3 \
 		-f tests/Dockerfile \
+		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
 		--build-arg APT_MIRROR .
 
 .PHONY: build-docs
 build-docs:
-	docker build -t docker-sdk-python-docs -f Dockerfile-docs $(uid_args) .
+	docker build \
+		-t docker-sdk-python-docs \
+		-f Dockerfile-docs \
+		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
+		$(uid_args) \
+		.
 
 .PHONY: build-dind-certs
 build-dind-certs:
-	docker build -t dpy-dind-certs -f tests/Dockerfile-dind-certs .
+	docker build \
+		-t dpy-dind-certs \
+		-f tests/Dockerfile-dind-certs \
+		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
+		.
 
 .PHONY: test
-test: ruff unit-test-py3 integration-dind integration-dind-ssl
+test: ruff unit-test integration-dind integration-dind-ssl
 
-.PHONY: unit-test-py3
-unit-test-py3: build-py3
+.PHONY: unit-test
+unit-test: build
 	docker run -t --rm docker-sdk-python3 py.test tests/unit
 
-.PHONY: integration-test-py3
-integration-test-py3: build-py3
+.PHONY: integration-test
+integration-test: build
 	docker run -t --rm -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 py.test -v tests/integration/${file}
 
 .PHONY: setup-network
@@ -61,15 +77,15 @@ setup-network:
 	docker network inspect dpy-tests || docker network create dpy-tests
 
 .PHONY: integration-dind
-integration-dind: integration-dind-py3
+integration-dind: integration-dind
 
-.PHONY: integration-dind-py3
-integration-dind-py3: build-py3 setup-network
-	docker rm -vf dpy-dind-py3 || :
+.PHONY: integration-dind
+integration-dind: build setup-network
+	docker rm -vf dpy-dind || :
 
 	docker run \
 		--detach \
-		--name dpy-dind-py3 \
+		--name dpy-dind \
 		--network dpy-tests \
 		--pull=always \
 		--privileged \
@@ -82,10 +98,10 @@ integration-dind-py3: build-py3 setup-network
 		--rm \
 		--tty \
 		busybox \
-		sh -c 'while ! nc -z dpy-dind-py3 2375; do sleep 1; done'
+		sh -c 'while ! nc -z dpy-dind 2375; do sleep 1; done'
 
 	docker run \
-		--env="DOCKER_HOST=tcp://dpy-dind-py3:2375" \
+		--env="DOCKER_HOST=tcp://dpy-dind:2375" \
 		--env="DOCKER_TEST_API_VERSION=${TEST_API_VERSION}" \
 		--network dpy-tests \
 		--rm \
@@ -93,11 +109,11 @@ integration-dind-py3: build-py3 setup-network
 		docker-sdk-python3 \
 		py.test tests/integration/${file}
 
-	docker rm -vf dpy-dind-py3
+	docker rm -vf dpy-dind
 
 
 .PHONY: integration-dind-ssh
-integration-dind-ssh: build-dind-ssh build-py3 setup-network
+integration-dind-ssh: build-dind-ssh build setup-network
 	docker rm -vf dpy-dind-ssh || :
 	docker run -d --network dpy-tests --name dpy-dind-ssh --privileged \
 		docker-dind-ssh dockerd --experimental
@@ -116,7 +132,7 @@ integration-dind-ssh: build-dind-ssh build-py3 setup-network
 
 
 .PHONY: integration-dind-ssl
-integration-dind-ssl: build-dind-certs build-py3 setup-network
+integration-dind-ssl: build-dind-certs build setup-network
 	docker rm -vf dpy-dind-certs dpy-dind-ssl || :
 	docker run -d --name dpy-dind-certs dpy-dind-certs
 
@@ -164,7 +180,7 @@ integration-dind-ssl: build-dind-certs build-py3 setup-network
 	docker rm -vf dpy-dind-ssl dpy-dind-certs
 
 .PHONY: ruff
-ruff: build-py3
+ruff: build
 	docker run -t --rm docker-sdk-python3 ruff docker tests
 
 .PHONY: docs
@@ -172,5 +188,5 @@ docs: build-docs
 	docker run --rm -t -v `pwd`:/src docker-sdk-python-docs sphinx-build docs docs/_build
 
 .PHONY: shell
-shell: build-py3
+shell: build
 	docker run -it -v /var/run/docker.sock:/var/run/docker.sock docker-sdk-python3 python

@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1
 
 ARG PYTHON_VERSION=3.12
-
 FROM python:${PYTHON_VERSION}
 
 RUN apt-get update && apt-get -y install --no-install-recommends \
@@ -27,16 +26,10 @@ RUN curl -sSL -o /opt/docker-credential-pass.tar.gz \
     chmod +x /usr/local/bin/docker-credential-pass
 
 WORKDIR /src
+COPY . .
 
-COPY requirements.txt /src/requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
-
-COPY test-requirements.txt /src/test-requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r test-requirements.txt
-
-COPY . /src
-ARG SETUPTOOLS_SCM_PRETEND_VERSION=99.0.0+docker
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -e .
+ARG VERSION
+RUN --mount=type=cache,target=/cache/pip \
+    PIP_CACHE_DIR=/cache/pip \
+    SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION} \
+    pip install .[dev,ssh,websockets]

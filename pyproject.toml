@@ -36,12 +36,33 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# ssh feature allows DOCKER_HOST=ssh://... style connections
 ssh = [
     "paramiko>=2.4.3",
 ]
-tls = []  # kept for backwards compatibility
+# tls is always supported, the feature is a no-op for backwards compatibility
+tls = []
+# websockets can be used as an alternate container attach mechanism but
+# by default docker-py hijacks the TCP connection and does not use Websockets
+# unless attach_socket(container, ws=True) is called
 websockets = [
     "websocket-client >= 1.3.0",
+]
+# docs are dependencies required to build the ReadTheDocs site
+# this is only needed for CI / working on the docs!
+docs = [
+    "myst-parser==0.18.0",
+    "Sphinx==5.1.1",
+
+]
+# dev are dependencies required to test & lint this project
+# this is only needed if you are making code changes to docker-py!
+dev = [
+    "coverage==7.2.7",
+    "pytest==7.4.2",
+    "pytest-cov==4.1.0",
+    "pytest-timeout==2.1.0",
+    "ruff==0.1.8",
 ]
 
 [project.urls]
