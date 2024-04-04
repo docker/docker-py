@@ -235,6 +235,9 @@ class Mount(dict):
         ``default```, ``consistent``, ``cached``, ``delegated``.
         propagation (string): A propagation mode with the value ``[r]private``,
           ``[r]shared``, or ``[r]slave``. Only valid for the ``bind`` type.
+        recursive (string): Bind mount recursive mode, one of ``enabled``,
+          ``disabled``, ``writable``, or ``readonly``. Only valid for the
+          ``bind`` type.
         no_copy (bool): False if the volume should be populated with the data
           from the target. Default: ``False``. Only valid for the ``volume``
           type.
@@ -247,9 +250,9 @@ class Mount(dict):
     """
 
     def __init__(self, target, source, type='volume', read_only=False,
-                 consistency=None, propagation=None, no_copy=False,
-                 labels=None, driver_config=None, tmpfs_size=None,
-                 tmpfs_mode=None):
+                 consistency=None, propagation=None, recursive=None,
+                 no_copy=False, labels=None, driver_config=None,
+                 tmpfs_size=None, tmpfs_mode=None):
         self['Target'] = target
         self['Source'] = source
         if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
@@ -267,6 +270,21 @@ class Mount(dict):
                 self['BindOptions'] = {
                     'Propagation': propagation
                 }
+            if recursive is not None:
+                bind_options = self.setdefault('BindOptions', {})
+                if recursive == "enabled":
+                    pass  # noop - default
+                elif recursive == "disabled":
+                    bind_options['NonRecursive'] = True
+                elif recursive == "writable":
+                    bind_options['ReadOnlyNonRecursive'] = True
+                elif recursive == "readonly":
+                    bind_options['ReadOnlyForceRecursive'] = True
+                else:
+                    raise errors.InvalidArgument(
+                        'Invalid recursive bind option, must be one of '
+                        '"enabled", "disabled", "writable", or "readonly".'
+                    )
             if any([labels, driver_config, no_copy, tmpfs_size, tmpfs_mode]):
                 raise errors.InvalidArgument(
                     'Incompatible options have been provided for the bind '
@@ -282,7 +300,7 @@ class Mount(dict):
                 volume_opts['DriverConfig'] = driver_config
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
-            if any([propagation, tmpfs_size, tmpfs_mode]):
+            if any([propagation, recursive, tmpfs_size, tmpfs_mode]):
                 raise errors.InvalidArgument(
                     'Incompatible options have been provided for the volume '
                     'type mount.'
@@ -299,7 +317,7 @@ class Mount(dict):
                 tmpfs_opts['SizeBytes'] = parse_bytes(tmpfs_size)
             if tmpfs_opts:
                 self['TmpfsOptions'] = tmpfs_opts
-            if any([propagation, labels, driver_config, no_copy]):
+            if any([propagation, recursive, labels, driver_config, no_copy]):
                 raise errors.InvalidArgument(
                     'Incompatible options have been provided for the tmpfs '
                     'type mount.'
