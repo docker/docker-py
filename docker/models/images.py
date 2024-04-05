@@ -317,7 +317,7 @@ class ImageCollection(Collection):
             if 'stream' in chunk:
                 if stream:
                     for line in chunk["stream"].splitlines():
-                        if len(line.strip()) > 0:
+                        if len(line.strip()) > 0 and not bool(re.match(r'^(\s*\x1b\[[0-9;]*m)*\s*(\x1b\[0m)?\s*$', line.strip())):
                             if timestamp:
                                 print(timestamp_str, "- ", end='')
                             print(line.strip(), flush=True)
