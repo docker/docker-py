@@ -310,7 +310,7 @@ class ImageCollection(Collection):
                 if stream:
                     if timestamp:
                         print(timestamp_str, "- ", end='', file=sys.stderr)
-                    print("Error:", chunk['error'].strip(), flush=True, file=sys.stderr))
+                    print("Error:", chunk['error'].strip(), flush=True, file=sys.stderr)
                 raise BuildError(chunk['error'], result_stream)
             if 'stream' in chunk:
                 if stream:
