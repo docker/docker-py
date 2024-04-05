@@ -246,9 +246,9 @@ class ImageCollection(Collection):
             custom_context (bool): Optional if using ``fileobj``
             encoding (str): The encoding for a stream. Set to ``gzip`` for
                 compressing
-            stream (bool): Print the build output to stdout and stderr while 
+            stream (bool): Print the build output to stdout and stderr while
                 the build runs
-            timestamp (bool): Prefix build output stream with a timestamp 
+            timestamp (bool): Prefix build output stream with a timestamp
                 "%Y-%m-%d %H:%M:%S"
             pull (bool): Downloads any updates to the FROM image in Dockerfiles
             forcerm (bool): Always remove intermediate containers, even after
@@ -309,16 +309,18 @@ class ImageCollection(Collection):
                 timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             if 'error' in chunk:
                 if stream:
-                    if timestamp:
-                        print(timestamp_str, "- ", end='', file=sys.stderr)
-                    print("Error:", chunk['error'].strip(), flush=True, file=sys.stderr)
+                    if len(chunk['error'].strip()) > 0:
+                        if timestamp:
+                            print(timestamp_str, "- ", end='', file=sys.stderr)
+                        print("Error:", chunk['error'].strip(), flush=True, file=sys.stderr)
                 raise BuildError(chunk['error'], result_stream)
             if 'stream' in chunk:
                 if stream:
                     for line in chunk["stream"].splitlines():
-                        if timestamp:
-                            print(timestamp_str, "- ", end='')
-                        print(line.strip(), flush=True)
+                        if len(line.strip()) > 0:
+                            if timestamp:
+                                print(timestamp_str, "- ", end='')
+                            print(line.strip(), flush=True)
                 match = re.search(
                     r'(^Successfully built |sha256:)([0-9a-f]+)$',
                     chunk['stream']
