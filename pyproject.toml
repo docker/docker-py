@@ -1,8 +1,87 @@
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
-[tool.setuptools_scm]
-write_to = 'docker/_version.py'
+[project]
+name = "docker"
+dynamic = ["version"]
+description = "A Python library for the Docker Engine API."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.8"
+maintainers = [
+    { name = "Docker Inc.", email = "no-reply@docker.com" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Other Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "requests >= 2.26.0",
+    "urllib3 >= 1.26.0",
+    "pywin32>=304; sys_platform == \"win32\"",
+]
+
+[project.optional-dependencies]
+# ssh feature allows DOCKER_HOST=ssh://... style connections
+ssh = [
+    "paramiko>=2.4.3",
+]
+# tls is always supported, the feature is a no-op for backwards compatibility
+tls = []
+# websockets can be used as an alternate container attach mechanism but
+# by default docker-py hijacks the TCP connection and does not use Websockets
+# unless attach_socket(container, ws=True) is called
+websockets = [
+    "websocket-client >= 1.3.0",
+]
+# docs are dependencies required to build the ReadTheDocs site
+# this is only needed for CI / working on the docs!
+docs = [
+    "myst-parser==0.18.0",
+    "Sphinx==5.1.1",
+
+]
+# dev are dependencies required to test & lint this project
+# this is only needed if you are making code changes to docker-py!
+dev = [
+    "coverage==7.2.7",
+    "pytest==7.4.2",
+    "pytest-cov==4.1.0",
+    "pytest-timeout==2.1.0",
+    "ruff==0.1.8",
+]
+
+[project.urls]
+Changelog = "https://docker-py.readthedocs.io/en/stable/change-log.html"
+Documentation = "https://docker-py.readthedocs.io"
+Homepage = "https://github.com/docker/docker-py"
+Source = "https://github.com/docker/docker-py"
+Tracker = "https://github.com/docker/docker-py/issues"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "docker/_version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/docker",
+]
 
 [tool.ruff]
 target-version = "py38"
@@ -10,6 +89,7 @@ extend-select = [
     "B",
     "C",
     "F",
+    "I",
     "UP",
     "W",
 ]

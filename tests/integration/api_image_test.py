@@ -2,19 +2,18 @@ import contextlib
 import json
 import shutil
 import socket
+import socketserver
 import tarfile
 import tempfile
 import threading
+from http.server import SimpleHTTPRequestHandler
 
 import pytest
-from http.server import SimpleHTTPRequestHandler
-import socketserver
-
 
 import docker
 
 from ..helpers import requires_api_version, requires_experimental
-from .base import BaseAPIIntegrationTest, TEST_IMG
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class ListImagesTest(BaseAPIIntegrationTest):

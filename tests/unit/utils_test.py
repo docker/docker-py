@@ -7,14 +7,26 @@ import tempfile
 import unittest
 
 import pytest
+
 from docker.api.client import APIClient
-from docker.constants import IS_WINDOWS_PLATFORM, DEFAULT_DOCKER_API_VERSION
+from docker.constants import DEFAULT_DOCKER_API_VERSION, IS_WINDOWS_PLATFORM
 from docker.errors import DockerException
 from docker.utils import (
-    compare_version, convert_filters, convert_volume_binds, decode_json_header,
-    format_environment, kwargs_from_env, parse_bytes, parse_devices,
-    parse_env_file, parse_host, parse_repository_tag, split_command,
-    update_headers, version_gte, version_lt
+    compare_version,
+    convert_filters,
+    convert_volume_binds,
+    decode_json_header,
+    format_environment,
+    kwargs_from_env,
+    parse_bytes,
+    parse_devices,
+    parse_env_file,
+    parse_host,
+    parse_repository_tag,
+    split_command,
+    update_headers,
+    version_gte,
+    version_lt,
 )
 from docker.utils.ports import build_port_bindings, split_port
 

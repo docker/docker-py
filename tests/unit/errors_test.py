@@ -2,9 +2,14 @@ import unittest
 
 import requests
 
-from docker.errors import (APIError, ContainerError, DockerException,
-                           create_unexpected_kwargs_error,
-                           create_api_error_from_http_exception)
+from docker.errors import (
+    APIError,
+    ContainerError,
+    DockerException,
+    create_api_error_from_http_exception,
+    create_unexpected_kwargs_error,
+)
+
 from .fake_api import FAKE_CONTAINER_ID, FAKE_IMAGE_ID
 from .fake_api_client import make_fake_client
 

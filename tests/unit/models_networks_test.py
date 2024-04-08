@@ -1,6 +1,6 @@
 import unittest
 
-from .fake_api import FAKE_NETWORK_ID, FAKE_CONTAINER_ID
+from .fake_api import FAKE_CONTAINER_ID, FAKE_NETWORK_ID
 from .fake_api_client import make_fake_client
 
 

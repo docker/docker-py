@@ -11,7 +11,12 @@ RUN addgroup --gid $gid sphinx \
  && useradd --uid $uid --gid $gid -M sphinx
 
 WORKDIR /src
-COPY requirements.txt docs-requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt -r docs-requirements.txt
+COPY . .
+
+ARG VERSION
+RUN --mount=type=cache,target=/cache/pip \
+    PIP_CACHE_DIR=/cache/pip \
+    SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION} \
+    pip install .[ssh,docs]
 
 USER sphinx

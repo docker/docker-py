@@ -3,11 +3,7 @@ import logging
 import os
 import random
 
-from .. import auth
-from .. import constants
-from .. import errors
-from .. import utils
-
+from .. import auth, constants, errors, utils
 
 log = logging.getLogger(__name__)
 

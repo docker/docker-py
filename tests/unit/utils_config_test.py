@@ -1,11 +1,11 @@
+import json
 import os
-import unittest
 import shutil
 import tempfile
-import json
-
-from pytest import mark, fixture
+import unittest
 from unittest import mock
+
+from pytest import fixture, mark
 
 from docker.utils import config
 

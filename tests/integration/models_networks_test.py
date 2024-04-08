@@ -1,6 +1,7 @@
 import docker
+
 from .. import helpers
-from .base import BaseIntegrationTest, TEST_API_VERSION
+from .base import TEST_API_VERSION, BaseIntegrationTest
 
 
 class NetworkCollectionTest(BaseIntegrationTest):

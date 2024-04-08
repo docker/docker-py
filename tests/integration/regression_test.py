@@ -1,10 +1,11 @@
 import io
 import random
 
+import pytest
+
 import docker
 
-from .base import BaseAPIIntegrationTest, TEST_IMG
-import pytest
+from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
 class TestRegressions(BaseAPIIntegrationTest):

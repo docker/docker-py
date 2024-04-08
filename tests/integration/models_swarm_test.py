@@ -1,10 +1,11 @@
 import unittest
 
+import pytest
+
 import docker
 
 from .. import helpers
 from .base import TEST_API_VERSION
-import pytest
 
 
 class SwarmTest(unittest.TestCase):
