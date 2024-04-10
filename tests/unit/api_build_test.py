@@ -8,7 +8,7 @@ import docker
 from docker import auth, errors
 from docker.api.build import process_dockerfile
 
-from ..helpers import make_tree
+from ..helpers import make_tree, requires_api_version
 from .api_test import BaseAPIClientTest, fake_request, url_prefix
 
 
@@ -130,6 +130,16 @@ class BuildTest(BaseAPIClientTest):
                 "cpusetcpus": 1,
                 "cpushares": 1000,
                 "memswap": 1024 * 1024 * 8,
+            },
+        )
+
+    @requires_api_version('1.19')
+    def test_build_container_with_container_limits_cpu(self):
+        self.client.build(
+            ".",
+            container_limits={
+                "cpuquota": 50000,
+                "cpuperiod": 100000,
             },
         )
 

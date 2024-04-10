@@ -259,6 +259,10 @@ class ImageCollection(Collection):
                 - cpushares (int): CPU shares (relative weight)
                 - cpusetcpus (str): CPUs in which to allow execution, e.g.,
                     ``"0-3"``, ``"0,1"``
+                - cpuperiod (int): (Docker API v1.19+) The length of a CPU
+                    period in microseconds
+                - cpuquota (int): (Docker API v1.19+) Microseconds of CPU
+                    time that the container can get in a CPU period
             shmsize (int): Size of `/dev/shm` in bytes. The size must be
                 greater than 0. If omitted the system uses 64MB
             labels (dict): A dictionary of labels to set on the image

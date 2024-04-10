@@ -6,9 +6,14 @@ DEFAULT_DOCKER_API_VERSION = '1.44'
 MINIMUM_DOCKER_API_VERSION = '1.24'
 DEFAULT_TIMEOUT_SECONDS = 60
 STREAM_HEADER_SIZE_BYTES = 8
-CONTAINER_LIMITS_KEYS = [
-    'memory', 'memswap', 'cpushares', 'cpusetcpus'
-]
+CONTAINER_LIMITS_KEYS = {
+    'memory': None,
+    'memswap': None,
+    'cpushares': None,
+    'cpusetcpus': None,
+    'cpuperiod': "1.19",
+    'cpuquota': "1.19",
+}
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
 DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
