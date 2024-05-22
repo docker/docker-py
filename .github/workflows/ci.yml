@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: actions/setup-python@v4
+            - uses: actions/setup-python@v5
               with:
                   python-version: '3.x'
             - run: pip install -U ruff==0.1.8
@@ -22,7 +22,7 @@ jobs:
       runs-on: ubuntu-22.04
       steps:
         - uses: actions/checkout@v4
-        - uses: actions/setup-python@v4
+        - uses: actions/setup-python@v5
           with:
             python-version: '3.x'
         - run: pip3 install build && python -m build .
@@ -40,7 +40,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                 python-version: ${{ matrix.python-version }}
                 allow-prereleases: true
@@ -62,6 +62,9 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
+                fetch-tags: true
             - name: make ${{ matrix.variant }}
               run: |
                   docker logout
