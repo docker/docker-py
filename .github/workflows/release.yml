@@ -33,7 +33,7 @@ jobs:
         env:
           # This is also supported by Hatch; see
           # https://github.com/ofek/hatch-vcs#version-source-environment-variables
-          SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER: ${{ inputs.tag }}
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.tag }}
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
