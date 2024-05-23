@@ -131,10 +131,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'NetworkSettings' in attrs
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
-        # Expect Aliases to list 'test_alias' and the container's short-id.
-        # In API version 1.45, the short-id will be removed.
+        # Aliases no longer include the container's short-id in API v1.45.
         assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] \
-               == [test_alias, attrs['Id'][:12]]
+               == [test_alias]
         assert attrs['NetworkSettings']['Networks'][net_name]['DriverOpts'] \
                == test_driver_opt
 
@@ -191,9 +190,9 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert 'NetworkSettings' in attrs
         assert 'Networks' in attrs['NetworkSettings']
         assert list(attrs['NetworkSettings']['Networks'].keys()) == [net_name]
-        # Aliases should include the container's short-id (but it will be removed
-        # in API v1.45).
-        assert attrs['NetworkSettings']['Networks'][net_name]['Aliases'] == [attrs["Id"][:12]]
+        # Aliases no longer include the container's short-id in API v1.45.
+        assert (attrs['NetworkSettings']['Networks'][net_name]['Aliases']
+                is None)
         assert (attrs['NetworkSettings']['Networks'][net_name]['DriverOpts']
                 is None)
 
