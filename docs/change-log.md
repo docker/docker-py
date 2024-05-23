@@ -1,6 +1,27 @@
 Changelog
 ==========
 
+7.1.0
+-----
+### Upgrade Notes
+- Bumped minimum engine API version to 1.24
+- Bumped default engine API version to 1.44 (Moby 25.0)
+
+### Bugfixes
+- Fixed issue with tag parsing when the registry address includes ports that resulted in `invalid tag format` errors
+- Fixed issue preventing creating new configs (`ConfigCollection`), which failed with a `KeyError` due to the `name` field
+- Fixed an issue due to an update in the [requests](https://github.com/psf/requests) package breaking `docker-py` by applying the [suggested fix](https://github.com/psf/requests/pull/6710)
+
+### Miscellaneous
+- Documentation improvements
+- Updated Ruff (linter) and fixed minor linting issues
+- Packaging/CI updates
+  - Started using hatch for packaging (https://github.com/pypa/hatch)
+  - Updated `setup-python` github action
+- Updated tests
+  - Stopped checking for deprecated container and image related fields (`Container` and `ContainerConfig`)
+  - Updated tests that check `NetworkSettings.Networks.<network>.Aliases` due to engine changes
+
 7.0.0
 -----
 ### Upgrade Notes
