@@ -17,7 +17,7 @@ class CancellableStream:
         >>> events.close()
     """
 
-    def __init__(self, stream, response):
+    def __init__(self, stream, response) -> None:
         self._stream = stream
         self._response = response
 
@@ -34,7 +34,7 @@ class CancellableStream:
 
     next = __next__
 
-    def close(self):
+    def close(self) -> None:
         """
         Closes the event streaming.
         """

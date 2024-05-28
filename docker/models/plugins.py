@@ -6,7 +6,7 @@ class Plugin(Model):
     """
     A plugin on the server.
     """
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.__class__.__name__}: '{self.name}'>"
 
     @property
@@ -30,7 +30,7 @@ class Plugin(Model):
         """
         return self.attrs.get('Settings')
 
-    def configure(self, options):
+    def configure(self, options) -> None:
         """
             Update the plugin's settings.
 
@@ -44,7 +44,7 @@ class Plugin(Model):
         self.client.api.configure_plugin(self.name, options)
         self.reload()
 
-    def disable(self, force=False):
+    def disable(self, force=False) -> None:
         """
             Disable the plugin.
 
@@ -59,7 +59,7 @@ class Plugin(Model):
         self.client.api.disable_plugin(self.name, force)
         self.reload()
 
-    def enable(self, timeout=0):
+    def enable(self, timeout=0) -> None:
         """
             Enable the plugin.
 
