@@ -33,7 +33,7 @@ build-dind-ssh:
 		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
 		--build-arg ENGINE_VERSION=${TEST_ENGINE_VERSION} \
 		--build-arg API_VERSION=${TEST_API_VERSION} \
-		--build-arg APT_MIRROR .
+		.
 
 .PHONY: build
 build:
@@ -42,7 +42,7 @@ build:
 		-t docker-sdk-python3 \
 		-f tests/Dockerfile \
 		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
-		--build-arg APT_MIRROR .
+		.
 
 .PHONY: build-docs
 build-docs:
