@@ -620,6 +620,29 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount['Source'] == mount_data['Name']
         assert mount_data['RW'] is True
 
+    @requires_api_version('1.45')
+    def test_create_with_subpath_volume_mount(self):
+        mount = docker.types.Mount(
+            type="volume", source=helpers.random_name(),
+            target=self.mount_dest, read_only=True,
+            subpath='subdir'
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.client.create_container(
+            TEST_IMG, ['true'], host_config=host_config,
+        )
+        assert container
+        inspect_data = self.client.inspect_container(container)
+        assert 'Mounts' in inspect_data
+        filtered = list(filter(
+            lambda x: x['Destination'] == self.mount_dest,
+            inspect_data['Mounts']
+        ))
+        assert len(filtered) == 1
+        mount_data = filtered[0]
+        assert mount['Source'] == mount_data['Name']
+        assert mount_data['RW'] is False
+
     def check_container_data(self, inspect_data, rw, propagation='rprivate'):
         assert 'Mounts' in inspect_data
         filtered = list(filter(
