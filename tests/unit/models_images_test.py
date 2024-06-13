@@ -1,8 +1,11 @@
 import unittest
 import warnings
+import pytest
+import docker
 
 from docker.constants import DEFAULT_DATA_CHUNK_SIZE
 from docker.models.images import Image
+
 
 from .fake_api import FAKE_IMAGE_ID
 from .fake_api_client import make_fake_client
@@ -36,6 +39,18 @@ class ImageCollectionTest(unittest.TestCase):
         assert len(images) == 1
         assert isinstance(images[0], Image)
         assert images[0].id == FAKE_IMAGE_ID
+
+    def test_list_ignore_removed(self):
+        def side_effect(*args, **kwargs):
+            raise docker.errors.NotFound('Image not found')
+        client = make_fake_client({
+            'inspect_image.side_effect': side_effect
+        })
+
+        with pytest.raises(docker.errors.NotFound):
+            client.images.list(all=True, ignore_removed=False)
+
+        assert client.images.list(all=True, ignore_removed=True) == []
 
     def test_load(self):
         client = make_fake_client()
