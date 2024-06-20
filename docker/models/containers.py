@@ -32,6 +32,12 @@ class Container(Model):
         """
         if self.attrs.get('Name') is not None:
             return self.attrs['Name'].lstrip('/')
+        if self.attrs.get('Names') is not None:
+            stripped_names = [name.lstrip('/') for name in self.attrs['Names']]
+            for name in stripped_names:
+                if '/' not in name:
+                    return name
+            return ','.join(stripped_names)
 
     @property
     def image(self):
