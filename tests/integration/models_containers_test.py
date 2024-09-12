@@ -158,13 +158,13 @@ class ContainerCollectionTest(BaseIntegrationTest):
             ),
         }
 
-        with pytest.raises(docker.errors.APIError):
-            container = client.containers.run(
+        with pytest.raises(docker.errors.ContainerStartError) as err:
+            client.containers.run(
                 'alpine', 'echo hello world', network=net_name,
                 networking_config=networking_config,
                 detach=True
             )
-            self.tmp_containers.append(container.id)
+            self.tmp_containers.append(err.container.id)
 
     def test_run_with_networking_config_only_undeclared_network(self):
         net_name = random_name()

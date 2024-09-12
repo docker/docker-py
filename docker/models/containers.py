@@ -5,7 +5,9 @@ from collections import namedtuple
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
 from ..errors import (
+    APIError,
     ContainerError,
+    ContainerStartError,
     DockerException,
     ImageNotFound,
     NotFound,
@@ -842,6 +844,8 @@ class ContainerCollection(Collection):
             :py:class:`docker.errors.ContainerError`
                 If the container exits with a non-zero exit code and
                 ``detach`` is ``False``.
+            :py:class:`docker.errors.ContainerStartError`
+                If the container fails to start.
             :py:class:`docker.errors.ImageNotFound`
                 If the specified image does not exist.
             :py:class:`docker.errors.APIError`
@@ -880,7 +884,17 @@ class ContainerCollection(Collection):
             container = self.create(image=image, command=command,
                                     detach=detach, **kwargs)
 
-        container.start()
+        try:
+            container.start()
+        except APIError as e:
+            if remove:
+                container.remove()
+
+            if e.explanation:
+                error = e.explanation
+            else:
+                error = e
+            raise ContainerStartError(container, error) from e
 
         if detach:
             return container
