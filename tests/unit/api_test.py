@@ -31,6 +31,8 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
              request=None, raw=None):
     res = requests.Response()
     res.status_code = status_code
+    if isinstance(content, str):
+        content = content.encode('ascii')
     if not isinstance(content, bytes):
         content = json.dumps(content).encode('ascii')
     res._content = content
