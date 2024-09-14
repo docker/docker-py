@@ -42,6 +42,30 @@ def response(status_code=200, content='', headers=None, reason=None, elapsed=0,
     return res
 
 
+def stream_response(status_code=200, content='', **kwargs):
+    if isinstance(content, str):
+        content_bytes = content.encode('ascii')
+    elif isinstance(content, bytes):
+        content_bytes = content
+    else:
+        content_bytes = json.dumps(content).encode('ascii')
+
+    body = io.BytesIO(content_bytes)
+
+    # mock a stream interface
+    raw_resp = urllib3.HTTPResponse(body=body)
+    raw_resp._fp.chunked = True
+    raw_resp._fp.chunk_left = len(body.getvalue()) - 1
+    raw_resp._fp.seek(0)
+
+    return response(
+        status_code=status_code,
+        content=content_bytes,
+        raw=raw_resp,
+        **kwargs,
+    )
+
+
 def fake_resolve_authconfig(authconfig, registry=None, *args, **kwargs):
     return None
 
@@ -59,6 +83,8 @@ def fake_resp(method, url, *args, **kwargs):
     if not key:
         raise Exception(f'{method} {url}')
     status_code, content = fake_api.fake_responses[key]()
+    if kwargs.get("stream", False):
+        return stream_response(status_code=status_code, content=content)
     return response(status_code=status_code, content=content)
 
 
