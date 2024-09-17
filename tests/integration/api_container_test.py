@@ -638,10 +638,13 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             lambda x: x['Destination'] == self.mount_dest,
             inspect_data['Mounts']
         ))
+
+        print(mount)
         assert len(filtered) == 1
         mount_data = filtered[0]
         assert mount['Source'] == mount_data['Name']
         assert mount_data['RW'] is False
+        assert mount["VolumeOptions"]["Subpath"] == "subdir"
 
     def check_container_data(self, inspect_data, rw, propagation='rprivate'):
         assert 'Mounts' in inspect_data

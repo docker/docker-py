@@ -283,7 +283,7 @@ class Mount(dict):
             if driver_config:
                 volume_opts['DriverConfig'] = driver_config
             if subpath:
-                volume_opts['SubPath'] = subpath
+                volume_opts['Subpath'] = subpath
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
             if any([propagation, tmpfs_size, tmpfs_mode]):
