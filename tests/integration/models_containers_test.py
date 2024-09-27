@@ -359,8 +359,11 @@ class ContainerTest(BaseIntegrationTest):
             "alpine", "sh -c 'sleep 60'", detach=True
         )
         self.tmp_containers.append(container.id)
-        exec_output = container.exec_run("docker ps")
-        assert exec_output[0] == 126
+        exec_output = container.exec_run("non-existent")
+        # older versions of docker return `126` in the case that an exec cannot
+        # be started due to a missing executable. We're fixing this for the
+        # future, so accept both for now.
+        assert exec_output[0] == 127 or exec_output == 126
 
     def test_kill(self):
         client = docker.from_env(version=TEST_API_VERSION)
