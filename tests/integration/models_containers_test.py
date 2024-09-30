@@ -353,14 +353,26 @@ class ContainerTest(BaseIntegrationTest):
         assert exec_output[0] == 0
         assert exec_output[1] == b"hello\n"
 
+    def test_exec_run_error_code_from_exec(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        container = client.containers.run(
+            "alpine", "sh -c 'sleep 20'", detach=True
+        )
+        self.tmp_containers.append(container.id)
+        exec_output = container.exec_run("sh -c 'exit 42'")
+        assert exec_output[0] == 42
+
     def test_exec_run_failed(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container = client.containers.run(
             "alpine", "sh -c 'sleep 60'", detach=True
         )
         self.tmp_containers.append(container.id)
-        exec_output = container.exec_run("docker ps")
-        assert exec_output[0] == 126
+        exec_output = container.exec_run("non-existent")
+        # older versions of docker return `126` in the case that an exec cannot
+        # be started due to a missing executable. We're fixing this for the
+        # future, so accept both for now.
+        assert exec_output[0] == 127 or exec_output[0] == 126
 
     def test_kill(self):
         client = docker.from_env(version=TEST_API_VERSION)
