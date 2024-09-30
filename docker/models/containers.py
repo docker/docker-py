@@ -181,7 +181,8 @@ class Container(Model):
             user (str): User to execute command as. Default: root
             detach (bool): If true, detach from the exec command.
                 Default: False
-            stream (bool): Stream response data. Default: False
+            stream (bool): Stream response data. Ignored if ``detach`` is true.
+                Default: False
             socket (bool): Return the connection socket to allow custom
                 read/write operations. Default: False
             environment (dict or list): A dictionary or a list of strings in
