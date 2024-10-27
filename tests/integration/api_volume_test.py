@@ -17,10 +17,16 @@ class TestVolumes(BaseAPIIntegrationTest):
         assert result['Driver'] == 'local'
 
     def test_create_volume_invalid_driver(self):
-        driver_name = 'invalid.driver'
+        # special name to avoid exponential timeout loop
+        # https://github.com/moby/moby/blob/9e00a63d65434cdedc444e79a2b33a7c202b10d8/pkg/plugins/client.go#L253-L254
+        driver_name = 'this-plugin-does-not-exist'
 
-        with pytest.raises(docker.errors.NotFound):
+        with pytest.raises(docker.errors.APIError) as cm:
             self.client.create_volume('perfectcherryblossom', driver_name)
+            assert (
+                cm.value.response.status_code == 404 or
+                cm.value.response.status_code == 400
+            )
 
     def test_list_volumes(self):
         name = 'imperishablenight'
