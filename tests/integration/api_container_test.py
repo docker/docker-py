@@ -1572,3 +1572,19 @@ class LinkTest(BaseAPIIntegrationTest):
             x['Id'].startswith(container2_id)
         ]
         assert len(retrieved) == 2
+
+class CoontainerInfoObejectTest(BaseAPIIntegrationTest):
+    def test_container_info_object(self):
+        container = self.client.create_container(
+            TEST_IMG, 'true', host_config=self.client.create_host_config())
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        inspect_data = self.client.inspect_container(container)
+        assert isinstance(inspect_data, docker.api.container.ContainerInfo)
+        assert inspect_data['Config']['Image'] == TEST_IMG
+        assert inspect_data['HostConfig']['NetworkMode'] == 'bridge'
+
+        # attribute style access
+        assert inspect_data.Id == container['Id']
+        assert inspect_data["Id"] == container["Id"]
