@@ -400,13 +400,14 @@ class ImageCollection(Collection):
         images = []
         for chunk in resp:
             if 'stream' in chunk:
-                match = re.search(
-                    r'(^Loaded image ID: |^Loaded image: )(.+)$',
-                    chunk['stream']
+                images.extend(
+                    match.group(2)
+                    for match in re.finditer(
+                        r'(^Loaded image ID: |^Loaded image: )(.+)$',
+                        chunk['stream'],
+                        re.M
+                    )
                 )
-                if match:
-                    image_id = match.group(2)
-                    images.append(image_id)
             if 'error' in chunk:
                 raise ImageLoadError(chunk['error'])
 
