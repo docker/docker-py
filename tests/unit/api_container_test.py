@@ -1583,12 +1583,13 @@ class ContainerTest(BaseAPIClientTest):
     def test_container_update(self):
         self.client.update_container(
             fake_api.FAKE_CONTAINER_ID, mem_limit='2k', cpu_shares=124,
-            blkio_weight=345
+            blkio_weight=345, nano_cpus=2
         )
         args = fake_request.call_args
         assert args[0][1] == (url_prefix + 'containers/' +
                               fake_api.FAKE_CONTAINER_ID + '/update')
         assert json.loads(args[1]['data']) == {
-            'Memory': 2 * 1024, 'CpuShares': 124, 'BlkioWeight': 345
+            'Memory': 2 * 1024, 'CpuShares': 124, 'BlkioWeight': 345,
+            'NanoCPUs': 2
         }
         assert args[1]['headers']['Content-Type'] == 'application/json'
