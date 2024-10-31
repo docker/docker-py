@@ -65,6 +65,11 @@ class DockerClient:
             A path to a directory containing TLS certificates to use when
             connecting to the Docker host.
 
+        .. envvar:: DOCKER_API_VERSION
+
+            A path to a directory containing TLS certificates to use when
+            connecting to the Docker host.
+
         Args:
             version (str): The version of the API to use. Set to ``auto`` to
                 automatically detect the server's version. Default: ``auto``
