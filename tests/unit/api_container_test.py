@@ -596,7 +596,7 @@ class CreateContainerTest(BaseAPIClientTest):
         assert '4444/tcp' in port_bindings
         assert '5555/tcp' in port_bindings
         assert '6666/tcp' in port_bindings
-        assert [{"HostPort": "", "HostIp": ""}] == port_bindings['1111/tcp']
+        assert [{"HostPort": "0", "HostIp": ""}] == port_bindings['1111/tcp']
         assert [
             {"HostPort": "2222", "HostIp": ""}
         ] == port_bindings['2222/tcp']
