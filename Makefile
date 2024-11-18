@@ -77,9 +77,6 @@ setup-network:
 	docker network inspect dpy-tests || docker network create dpy-tests
 
 .PHONY: integration-dind
-integration-dind: integration-dind
-
-.PHONY: integration-dind
 integration-dind: build setup-network
 	docker rm -vf dpy-dind || :
 
