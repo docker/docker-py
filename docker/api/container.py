@@ -1249,9 +1249,9 @@ class ContainerApiMixin:
     @utils.check_resource('container')
     def update_container(
         self, container, blkio_weight=None, cpu_period=None, cpu_quota=None,
-        cpu_shares=None, cpuset_cpus=None, cpuset_mems=None, mem_limit=None,
-        mem_reservation=None, memswap_limit=None, kernel_memory=None,
-        restart_policy=None
+        cpu_shares=None, nano_cpus=None, cpuset_cpus=None, cpuset_mems=None,
+        mem_limit=None, mem_reservation=None, memswap_limit=None,
+        kernel_memory=None, restart_policy=None
     ):
         """
         Update resource configs of one or more containers.
@@ -1262,6 +1262,7 @@ class ContainerApiMixin:
             cpu_period (int): Limit CPU CFS (Completely Fair Scheduler) period
             cpu_quota (int): Limit CPU CFS (Completely Fair Scheduler) quota
             cpu_shares (int): CPU shares (relative weight)
+            nano_cpus (int): Number of CPUs
             cpuset_cpus (str): CPUs in which to allow execution
             cpuset_mems (str): MEMs in which to allow execution
             mem_limit (float or str): Memory limit
@@ -1292,6 +1293,13 @@ class ContainerApiMixin:
             data['CpusetCpus'] = cpuset_cpus
         if cpuset_mems:
             data['CpusetMems'] = cpuset_mems
+        if nano_cpus:
+            if utils.version_lt(self._version, '1.29'):
+                raise errors.InvalidVersion(
+                    'Setting NanoCPUs is not supported '
+                    'for API version < 1.29'
+                )
+            data['NanoCPUs'] = nano_cpus
         if mem_limit:
             data['Memory'] = utils.parse_bytes(mem_limit)
         if mem_reservation:
