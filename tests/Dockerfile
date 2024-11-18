@@ -28,7 +28,7 @@ RUN curl -sSL -o /opt/docker-credential-pass.tar.gz \
 WORKDIR /src
 COPY . .
 
-ARG VERSION
+ARG VERSION=0.0.0.dev0
 RUN --mount=type=cache,target=/cache/pip \
     PIP_CACHE_DIR=/cache/pip \
     SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION} \
