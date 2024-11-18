@@ -5,7 +5,7 @@ import pytest
 
 import docker
 
-from ..helpers import force_leave_swarm, requires_api_version, requires_experimental
+from ..helpers import force_leave_swarm, requires_api_version
 from .base import TEST_IMG, BaseAPIIntegrationTest
 
 
@@ -140,8 +140,7 @@ class ServiceTest(BaseAPIIntegrationTest):
         assert len(services) == 1
         assert services[0]['ID'] == svc_id['ID']
 
-    @requires_api_version('1.25')
-    @requires_experimental(until='1.29')
+    @requires_api_version('1.29')
     def test_service_logs(self):
         name, svc_id = self.create_simple_service()
         assert self.get_service_container(name, include_stopped=True)
