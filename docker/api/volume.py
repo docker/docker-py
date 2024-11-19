@@ -35,7 +35,7 @@ class VolumeApiMixin:
         url = self._url('/volumes')
         return self._result(self._get(url, params=params), True)
 
-    def create_volume(self, name=None, driver=None, driver_opts=None,
+    def create_volume(self, name=None, driver=None, driver_opts=None, subpath=None,
                       labels=None):
         """
         Create and register a named volume
@@ -45,6 +45,9 @@ class VolumeApiMixin:
             driver (str): Name of the driver used to create the volume
             driver_opts (dict): Driver options as a key-value dictionary
             labels (dict): Labels to set on the volume
+            subpath (str): Subpath within the volume to use as the volume's
+                root.
+
 
         Returns:
             (dict): The created volume reference object
@@ -77,6 +80,7 @@ class VolumeApiMixin:
             'Name': name,
             'Driver': driver,
             'DriverOpts': driver_opts,
+            'Subpath': subpath
         }
 
         if labels is not None:
