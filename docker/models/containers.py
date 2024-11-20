@@ -215,6 +215,12 @@ class Container(Model):
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket,
             demux=demux
         )
+        if detach:
+            return ExecDetachResult(
+                resp["Id"],
+                self.client.api.exec_inspect(resp["Id"])["ExitCode"],
+                self.client.api.exec_inspect(resp["Id"])["Running"],
+            )
         if socket or stream:
             return ExecResult(None, exec_output)
 
@@ -1196,3 +1202,6 @@ def _host_volume_from_bind(bind):
 ExecResult = namedtuple('ExecResult', 'exit_code,output')
 """ A result of Container.exec_run with the properties ``exit_code`` and
     ``output``. """
+ExecDetachResult = namedtuple('ExecDetachResult', 'id,exit_code,status')
+""" A result of Container.exec_run in detached mode
+    with the properties ``id``, ``exit_code`` and ``status``. """
