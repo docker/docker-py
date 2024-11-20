@@ -1,5 +1,5 @@
-TEST_API_VERSION ?= 1.44
-TEST_ENGINE_VERSION ?= 25.0
+TEST_API_VERSION ?= 1.45
+TEST_ENGINE_VERSION ?= 26.1
 
 ifeq ($(OS),Windows_NT)
     PLATFORM := Windows
@@ -13,7 +13,7 @@ endif
 
 SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER ?= $(shell git describe --match '[0-9]*' --dirty='.m' --always --tags 2>/dev/null | sed -r 's/-([0-9]+)/.dev\1/' | sed 's/-/+/')
 ifeq ($(SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER),)
-	SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER = "dev"
+	SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER = "0.0.0.dev0"
 endif
 
 .PHONY: all
@@ -33,7 +33,7 @@ build-dind-ssh:
 		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
 		--build-arg ENGINE_VERSION=${TEST_ENGINE_VERSION} \
 		--build-arg API_VERSION=${TEST_API_VERSION} \
-		--build-arg APT_MIRROR .
+		.
 
 .PHONY: build
 build:
@@ -42,7 +42,7 @@ build:
 		-t docker-sdk-python3 \
 		-f tests/Dockerfile \
 		--build-arg VERSION=${SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER} \
-		--build-arg APT_MIRROR .
+		.
 
 .PHONY: build-docs
 build-docs:
@@ -75,9 +75,6 @@ integration-test: build
 .PHONY: setup-network
 setup-network:
 	docker network inspect dpy-tests || docker network create dpy-tests
-
-.PHONY: integration-dind
-integration-dind: integration-dind
 
 .PHONY: integration-dind
 integration-dind: build setup-network
