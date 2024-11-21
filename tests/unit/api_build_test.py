@@ -28,6 +28,21 @@ class BuildTest(BaseAPIClientTest):
 
         self.client.build(fileobj=script)
 
+    def test_build_container_with_stream_with_timestamp(self):
+        script = io.BytesIO(
+            "\n".join(
+                [
+                    "FROM busybox",
+                    "RUN mkdir -p /tmp/test",
+                    "EXPOSE 8080",
+                    "ADD https://dl.dropboxusercontent.com/u/20637798/silence.tar.gz"
+                    " /tmp/silence.tar.gz",
+                ]
+            ).encode("ascii")
+        )
+
+        self.client.build(fileobj=script, stream=True, timestamp=True)
+
     def test_build_container_pull(self):
         script = io.BytesIO(
             "\n".join(
