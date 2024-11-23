@@ -16,7 +16,7 @@ _TAG = re.compile(
 
 
 def match_tag(tag: str) -> bool:
-    return bool(_TAG.match(tag))
+    return tag == '' or bool(_TAG.match(tag))
 
 
 def tar(path, exclude=None, dockerfile=None, fileobj=None, gzip=False):
