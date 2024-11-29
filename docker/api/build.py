@@ -318,7 +318,7 @@ class BuildApiMixin:
             params['all'] = all
         return self._result(self._post(url, params=params), True)
 
-    def _set_auth_headers(self, headers):
+    def _set_auth_headers(self, headers) -> None:
         log.debug('Looking for auth config')
 
         # If we don't have any auth data so far, try reloading the config

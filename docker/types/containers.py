@@ -63,7 +63,7 @@ class LogConfig(DictType):
     """
     types = LogConfigTypesEnum
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         log_driver_type = kwargs.get('type', kwargs.get('Type'))
         config = kwargs.get('config', kwargs.get('Config')) or {}
 
@@ -80,20 +80,20 @@ class LogConfig(DictType):
         return self['Type']
 
     @type.setter
-    def type(self, value):
+    def type(self, value) -> None:
         self['Type'] = value
 
     @property
     def config(self):
         return self['Config']
 
-    def set_config_value(self, key, value):
+    def set_config_value(self, key, value) -> None:
         """ Set a the value for ``key`` to ``value`` inside the ``config``
             dict.
         """
         self.config[key] = value
 
-    def unset_config(self, key):
+    def unset_config(self, key) -> None:
         """ Remove the ``key`` property from the ``config`` dict. """
         if key in self.config:
             del self.config[key]
@@ -122,7 +122,7 @@ class Ulimit(DictType):
         [{'Name': 'nproc', 'Hard': 0, 'Soft': 1024}]
 
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         name = kwargs.get('name', kwargs.get('Name'))
         soft = kwargs.get('soft', kwargs.get('Soft'))
         hard = kwargs.get('hard', kwargs.get('Hard'))
@@ -143,7 +143,7 @@ class Ulimit(DictType):
         return self['Name']
 
     @name.setter
-    def name(self, value):
+    def name(self, value) -> None:
         self['Name'] = value
 
     @property
@@ -151,7 +151,7 @@ class Ulimit(DictType):
         return self.get('Soft')
 
     @soft.setter
-    def soft(self, value):
+    def soft(self, value) -> None:
         self['Soft'] = value
 
     @property
@@ -159,7 +159,7 @@ class Ulimit(DictType):
         return self.get('Hard')
 
     @hard.setter
-    def hard(self, value):
+    def hard(self, value) -> None:
         self['Hard'] = value
 
 
@@ -184,7 +184,7 @@ class DeviceRequest(DictType):
         options (dict): Driver-specific options. Optional.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         driver = kwargs.get('driver', kwargs.get('Driver'))
         count = kwargs.get('count', kwargs.get('Count'))
         device_ids = kwargs.get('device_ids', kwargs.get('DeviceIDs'))
@@ -225,7 +225,7 @@ class DeviceRequest(DictType):
         return self['Driver']
 
     @driver.setter
-    def driver(self, value):
+    def driver(self, value) -> None:
         self['Driver'] = value
 
     @property
@@ -233,7 +233,7 @@ class DeviceRequest(DictType):
         return self['Count']
 
     @count.setter
-    def count(self, value):
+    def count(self, value) -> None:
         self['Count'] = value
 
     @property
@@ -241,7 +241,7 @@ class DeviceRequest(DictType):
         return self['DeviceIDs']
 
     @device_ids.setter
-    def device_ids(self, value):
+    def device_ids(self, value) -> None:
         self['DeviceIDs'] = value
 
     @property
@@ -249,7 +249,7 @@ class DeviceRequest(DictType):
         return self['Capabilities']
 
     @capabilities.setter
-    def capabilities(self, value):
+    def capabilities(self, value) -> None:
         self['Capabilities'] = value
 
     @property
@@ -257,7 +257,7 @@ class DeviceRequest(DictType):
         return self['Options']
 
     @options.setter
-    def options(self, value):
+    def options(self, value) -> None:
         self['Options'] = value
 
 
@@ -284,7 +284,7 @@ class HostConfig(dict):
                  nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None, device_requests=None,
-                 cgroupns=None):
+                 cgroupns=None) -> None:
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -693,7 +693,7 @@ class ContainerConfig(dict):
         working_dir=None, domainname=None, host_config=None, mac_address=None,
         labels=None, stop_signal=None, networking_config=None,
         healthcheck=None, stop_timeout=None, runtime=None
-    ):
+    ) -> None:
 
         if stop_timeout is not None and version_lt(version, '1.25'):
             raise errors.InvalidVersion(

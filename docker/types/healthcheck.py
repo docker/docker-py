@@ -27,7 +27,7 @@ class Healthcheck(DictType):
                 initialize before starting health-retries countdown in
                 nanoseconds. It should be 0 or at least 1000000 (1 ms).
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         test = kwargs.get('test', kwargs.get('Test'))
         if isinstance(test, str):
             test = ["CMD-SHELL", test]
@@ -50,7 +50,7 @@ class Healthcheck(DictType):
         return self['Test']
 
     @test.setter
-    def test(self, value):
+    def test(self, value) -> None:
         if isinstance(value, str):
             value = ["CMD-SHELL", value]
         self['Test'] = value
@@ -60,7 +60,7 @@ class Healthcheck(DictType):
         return self['Interval']
 
     @interval.setter
-    def interval(self, value):
+    def interval(self, value) -> None:
         self['Interval'] = value
 
     @property
@@ -68,7 +68,7 @@ class Healthcheck(DictType):
         return self['Timeout']
 
     @timeout.setter
-    def timeout(self, value):
+    def timeout(self, value) -> None:
         self['Timeout'] = value
 
     @property
@@ -76,7 +76,7 @@ class Healthcheck(DictType):
         return self['Retries']
 
     @retries.setter
-    def retries(self, value):
+    def retries(self, value) -> None:
         self['Retries'] = value
 
     @property
@@ -84,5 +84,5 @@ class Healthcheck(DictType):
         return self['StartPeriod']
 
     @start_period.setter
-    def start_period(self, value):
+    def start_period(self, value) -> None:
         self['StartPeriod'] = value

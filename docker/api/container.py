@@ -795,7 +795,7 @@ class ContainerApiMixin:
         )
 
     @utils.check_resource('container')
-    def kill(self, container, signal=None):
+    def kill(self, container, signal=None) -> None:
         """
         Kill a container or send a signal to a container.
 
@@ -901,7 +901,7 @@ class ContainerApiMixin:
             return output
 
     @utils.check_resource('container')
-    def pause(self, container):
+    def pause(self, container) -> None:
         """
         Pauses all processes within a container.
 
@@ -1014,7 +1014,7 @@ class ContainerApiMixin:
         return self._result(self._post(url, params=params), True)
 
     @utils.check_resource('container')
-    def remove_container(self, container, v=False, link=False, force=False):
+    def remove_container(self, container, v=False, link=False, force=False) -> None:
         """
         Remove a container. Similar to the ``docker rm`` command.
 
@@ -1037,7 +1037,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def rename(self, container, name):
+    def rename(self, container, name) -> None:
         """
         Rename a container. Similar to the ``docker rename`` command.
 
@@ -1055,7 +1055,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def resize(self, container, height, width):
+    def resize(self, container, height, width) -> None:
         """
         Resize the tty session.
 
@@ -1074,7 +1074,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def restart(self, container, timeout=10):
+    def restart(self, container, timeout=10) -> None:
         """
         Restart a container. Similar to the ``docker restart`` command.
 
@@ -1098,7 +1098,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def start(self, container, *args, **kwargs):
+    def start(self, container, *args, **kwargs) -> None:
         """
         Start a container. Similar to the ``docker start`` command, but
         doesn't support attach options.
@@ -1184,7 +1184,7 @@ class ContainerApiMixin:
             return self._result(self._get(url, params=params), json=True)
 
     @utils.check_resource('container')
-    def stop(self, container, timeout=None):
+    def stop(self, container, timeout=None) -> None:
         """
         Stops a container. Similar to the ``docker stop`` command.
 
@@ -1234,7 +1234,7 @@ class ContainerApiMixin:
         return self._result(self._get(u, params=params), True)
 
     @utils.check_resource('container')
-    def unpause(self, container):
+    def unpause(self, container) -> None:
         """
         Unpause all processes within a container.
 

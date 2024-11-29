@@ -116,7 +116,7 @@ class APIClient(
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
                  credstore_env=None, use_ssh_client=False,
-                 max_pool_size=DEFAULT_MAX_POOL_SIZE):
+                 max_pool_size=DEFAULT_MAX_POOL_SIZE) -> None:
         super().__init__()
 
         if tls and not base_url:
@@ -253,7 +253,7 @@ class APIClient(
     def _delete(self, url, **kwargs):
         return self.delete(url, **self._set_request_timeout(kwargs))
 
-    def _url(self, pathfmt, *args, **kwargs):
+    def _url(self, pathfmt, *args, **kwargs) -> str:
         for arg in args:
             if not isinstance(arg, str):
                 raise ValueError(
@@ -269,7 +269,7 @@ class APIClient(
         else:
             return f'{self.base_url}{formatted_path}'
 
-    def _raise_for_status(self, response):
+    def _raise_for_status(self, response) -> None:
         """Raises stored :class:`APIError`, if one occurred."""
         try:
             response.raise_for_status()
@@ -446,7 +446,7 @@ class APIClient(
             finally:
                 response.close()
 
-    def _disable_socket_timeout(self, socket):
+    def _disable_socket_timeout(self, socket) -> None:
         """ Depending on the combination of python version and whether we're
         connecting over http or https, we might need to access _sock, which
         may or may not exist; or we may need to just settimeout on socket
@@ -498,7 +498,7 @@ class APIClient(
                 list(self._multiplexed_buffer_helper(res))
             )
 
-    def _unmount(self, *args):
+    def _unmount(self, *args) -> None:
         for proto in args:
             self.adapters.pop(proto)
 
@@ -515,7 +515,7 @@ class APIClient(
     def api_version(self):
         return self._version
 
-    def reload_config(self, dockercfg_path=None):
+    def reload_config(self, dockercfg_path=None) -> None:
         """
         Force a reload of the auth configuration
 

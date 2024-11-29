@@ -11,7 +11,7 @@ class Swarm(Model):
     """
     id_attribute = 'ID'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.client:
             try:
@@ -141,7 +141,7 @@ class Swarm(Model):
         return self.client.api.leave_swarm(*args, **kwargs)
     leave.__doc__ = APIClient.leave_swarm.__doc__
 
-    def reload(self):
+    def reload(self) -> None:
         """
         Inspect the swarm on the server and store the response in
         :py:attr:`attrs`.
