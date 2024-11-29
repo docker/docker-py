@@ -150,6 +150,19 @@ class ContainerError(DockerException):
         )
 
 
+class ContainerStartError(DockerException):
+    """
+    Represents a container that has failed to start.
+    """
+    def __init__(self, container, reason):
+        self.container = container
+        self.msg = reason
+
+        super().__init__(
+            f"Container '{container.short_id}' failed to start: {reason}"
+        )
+
+
 class StreamParseError(RuntimeError):
     def __init__(self, reason):
         self.msg = reason
