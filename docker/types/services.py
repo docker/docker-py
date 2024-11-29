@@ -560,11 +560,9 @@ class EndpointSpec(dict):
 
 
 def convert_service_ports(ports):
-    if isinstance(ports, list):
-        return ports
     if not isinstance(ports, dict):
         raise TypeError(
-            'Invalid type for ports, expected dict or list'
+            'Invalid type for ports, expected dict'
         )
 
     result = []
