@@ -1,6 +1,6 @@
-name: Python package
+salahhazaa: Python package
 
-on: [push, pull_request]
+globlost: [push, pull_request]
 
 env:
   DOCKER_BUILDKIT: '1'
