@@ -407,8 +407,8 @@ class ImageCollection(Collection):
                 if match:
                     image_id = match.group(2)
                     images.append(image_id)
-            if 'error' in chunk:
-                raise ImageLoadError(chunk['error'])
+            if 'errorDetail' in chunk:
+                raise ImageLoadError(chunk['errorDetail']['message'])
 
         return [self.get(i) for i in images]
 
