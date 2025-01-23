@@ -718,6 +718,54 @@ class ArchiveTest(BaseAPIIntegrationTest):
         logs = self.client.logs(ctnr)
         assert logs.strip() == data
 
+    def test_copy_small_file_to_non_existent_path_raises_exception(self):
+        data = b'Deaf To All But The Song'
+        with tempfile.NamedTemporaryFile(delete=False) as test_file:
+            test_file.write(data)
+            test_file.seek(0)
+            ctnr = self.client.create_container(
+                BUSYBOX,
+                'cat {0}'.format(
+                    os.path.join('/vol1/', os.path.basename(test_file.name))
+                ),
+                volumes=['/vol1']
+            )
+            self.tmp_containers.append(ctnr)
+
+            path = '/no-such-path'
+            expected_msg = ('Could not find the file {0} in container {1}'
+                            .format(path, ctnr['Id']))
+
+            with helpers.simple_tar(test_file.name) as test_tar:
+                with pytest.raises(docker.errors.NotFound) as excinfo:
+                    self.client.put_archive(ctnr, path, test_tar)
+
+            assert excinfo.value.explanation == expected_msg
+
+    def test_copy_large_file_to_non_existent_path_raises_exception(self):
+        data = b'Deaf To All But The Song' * 10 ** 5
+        with tempfile.NamedTemporaryFile(delete=False) as test_file:
+            test_file.write(data)
+            test_file.seek(0)
+            ctnr = self.client.create_container(
+                BUSYBOX,
+                'cat {0}'.format(
+                    os.path.join('/vol1/', os.path.basename(test_file.name))
+                ),
+                volumes=['/vol1']
+            )
+            self.tmp_containers.append(ctnr)
+
+            path = '/no-such-path'
+            expected_msg = ('Could not find the file {0} in container {1}'
+                            .format(path, ctnr['Id']))
+
+            with helpers.simple_tar(test_file.name) as test_tar:
+                with pytest.raises(docker.errors.NotFound) as excinfo:
+                    self.client.put_archive(ctnr, path, test_tar)
+
+            assert excinfo.value.explanation == expected_msg
+
     def test_copy_directory_to_container(self):
         files = ['a.py', 'b.py', 'foo/b.py']
         dirs = ['foo', 'bar']
