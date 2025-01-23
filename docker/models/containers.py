@@ -156,7 +156,10 @@ class Container(Model):
 
         Returns:
             (list) A list of dictionaries containing the attributes `Path`
-                and `Kind`.
+                and `Kind`:
+                    ``0``: Modified ("C")
+                    ``1``: Added ("A")
+                    ``2``: Deleted ("D")
 
         Raises:
             :py:class:`docker.errors.APIError`
