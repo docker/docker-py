@@ -270,6 +270,16 @@ class ContainerCollectionTest(unittest.TestCase):
         assert cm.value.exit_status == 1
         assert "some error" in cm.exconly()
 
+    def test_run_with_error_and_tty(self):
+        client = make_fake_client()
+        client.api.logs.return_value = "some error"
+        client.api.wait.return_value = {'StatusCode': 1}
+
+        with pytest.raises(docker.errors.ContainerError) as cm:
+            client.containers.run('alpine', 'echo hello world', tty=True)
+        assert cm.value.exit_status == 1
+        assert "some error" in cm.exconly()
+
     def test_run_with_image_object(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
