@@ -41,7 +41,7 @@ class DockerClient:
         max_pool_size (int): The maximum number of connections
             to save in the pool.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.api = APIClient(*args, **kwargs)
 
     @classmethod

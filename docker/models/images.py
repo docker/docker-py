@@ -14,7 +14,7 @@ class Image(Model):
     """
     An image on the server.
     """
-    def __repr__(self):
+    def __repr__(self) -> str:
         tag_str = "', '".join(self.tags)
         return f"<{self.__class__.__name__}: '{tag_str}'>"
 
@@ -143,7 +143,7 @@ class RegistryData(Model):
     """
     Image metadata stored on the registry, including available platforms.
     """
-    def __init__(self, image_name, *args, **kwargs):
+    def __init__(self, image_name, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.image_name = image_name
 
@@ -208,7 +208,7 @@ class RegistryData(Model):
             platform, self.client.version()
         ) in self.attrs['Platforms']
 
-    def reload(self):
+    def reload(self) -> None:
         self.attrs = self.client.api.inspect_distribution(self.image_name)
 
     reload.__doc__ = Model.reload.__doc__
@@ -478,7 +478,7 @@ class ImageCollection(Collection):
         return self.client.api.push(repository, tag=tag, **kwargs)
     push.__doc__ = APIClient.push.__doc__
 
-    def remove(self, *args, **kwargs):
+    def remove(self, *args, **kwargs) -> None:
         self.client.api.remove_image(*args, **kwargs)
     remove.__doc__ = APIClient.remove_image.__doc__
 

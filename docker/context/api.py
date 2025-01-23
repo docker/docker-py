@@ -133,7 +133,7 @@ class ContextAPI:
         return cls.get_context()
 
     @classmethod
-    def set_current_context(cls, name="default"):
+    def set_current_context(cls, name="default") -> None:
         ctx = cls.get_context(name)
         if not ctx:
             raise errors.ContextNotFound(name)
@@ -144,7 +144,7 @@ class ContextAPI:
                 f'Failed to set current context: {err}')
 
     @classmethod
-    def remove_context(cls, name):
+    def remove_context(cls, name) -> None:
         """Remove a context. Similar to the ``docker context rm`` command.
 
         Args:

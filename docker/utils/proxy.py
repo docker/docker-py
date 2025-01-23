@@ -68,7 +68,7 @@ class ProxyConfig(dict):
         # variables defined in "environment" to take precedence.
         return proxy_env + environment
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             'ProxyConfig('
             f'http={self.http}, https={self.https}, '
