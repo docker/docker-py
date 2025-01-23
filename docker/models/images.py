@@ -1,4 +1,5 @@
 import itertools
+import datetime
 import re
 import warnings
 
@@ -217,7 +218,7 @@ class RegistryData(Model):
 class ImageCollection(Collection):
     model = Image
 
-    def build(self, **kwargs):
+    def build(self, stream=False, timestamp=False, **kwargs):
         """
         Build an image and return it. Similar to the ``docker build``
         command. Either ``path`` or ``fileobj`` must be set.
@@ -245,6 +246,10 @@ class ImageCollection(Collection):
             custom_context (bool): Optional if using ``fileobj``
             encoding (str): The encoding for a stream. Set to ``gzip`` for
                 compressing
+            stream (bool): Print the build output to stdout and stderr while
+                the build runs
+            timestamp (bool): Prefix build output stream with a timestamp
+                "%Y-%m-%d %H:%M:%S"
             pull (bool): Downloads any updates to the FROM image in Dockerfiles
             forcerm (bool): Always remove intermediate containers, even after
                 unsuccessful builds
@@ -300,9 +305,22 @@ class ImageCollection(Collection):
         image_id = None
         result_stream, internal_stream = itertools.tee(json_stream(resp))
         for chunk in internal_stream:
+            if timestamp:
+                timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             if 'error' in chunk:
+                if stream:
+                    if len(chunk['error'].strip()) > 0:
+                        if timestamp:
+                            print(timestamp_str, "- ", end='', file=sys.stderr)
+                        print("Error:", chunk['error'].strip(), flush=True, file=sys.stderr)
                 raise BuildError(chunk['error'], result_stream)
             if 'stream' in chunk:
+                if stream:
+                    for line in chunk["stream"].splitlines():
+                        if len(line.strip()) > 0 and not bool(re.match(r'^(\s*\x1b\[[0-9;]*m)*\s*(\x1b\[0m)?\s*$', line.strip())):
+                            if timestamp:
+                                print(timestamp_str, "- ", end='')
+                            print(line.strip(), flush=True)
                 match = re.search(
                     r'(^Successfully built |sha256:)([0-9a-f]+)$',
                     chunk['stream']
