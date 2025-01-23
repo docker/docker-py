@@ -1,8 +1,11 @@
+import itertools
+import json
 import logging
 import os
 
 from .. import auth, errors, utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
+from ..utils.json_stream import json_stream
 
 log = logging.getLogger(__name__)
 
@@ -433,6 +436,29 @@ class ImageApiMixin:
 
         return self._result(response)
 
+    @staticmethod
+    def _raise_if_error(chunk, response):
+        """
+        Raise an exception if the given chunk of the JSON server response is a
+        dictionary and contains an "error" field. Otherwise, return the chunk
+        as-is.
+
+        Args:
+            chunk (object): A chunk of the server response.
+            response (Response): The full server response. This will be attached
+                to the exception in the event that chunk indicates an error.
+
+        Returns:
+            (object): The input chunk.
+
+        Raises:
+            :py:class:`docker.errors.APIError`
+                If the chunk of the server response contains an error message.
+        """
+        if isinstance(chunk, dict) and 'error' in chunk:
+            raise errors.APIError(chunk['error'], response=response)
+        return chunk
+
     def push(self, repository, tag=None, stream=False, auth_config=None,
              decode=False):
         """
@@ -494,8 +520,25 @@ class ImageApiMixin:
 
         self._raise_for_status(response)
 
+        # The server response might have status code 200 (OK) even though the
+        # push operation has failed. To detect errors, inspect each JSON chunk
+        # of the server response and check if an "error" entry is present.
+        # See: https://github.com/docker/docker-py/issues/3277
         if stream:
-            return self._stream_helper(response, decode=decode)
+            if decode:
+                return (self._raise_if_error(chunk, response) for chunk in
+                        self._stream_helper(response, decode=True))
+            else:
+                result_stream, internal_stream = itertools.tee(
+                    self._stream_helper(response, decode=False))
+                for chunk_json in json_stream(internal_stream):
+                    self._raise_if_error(chunk_json, response)
+                return result_stream
+
+        for chunk_str in response.text.splitlines():
+            chunk_json = json.loads(chunk_str)
+            if 'error' in chunk_json:
+                raise errors.APIError(chunk_json['error'], response=response)
 
         return self._result(response)
 
