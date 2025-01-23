@@ -72,5 +72,6 @@ def main():
         results.add(str(latest))
     print(' '.join(results))
 
+
 if __name__ == '__main__':
     main()
