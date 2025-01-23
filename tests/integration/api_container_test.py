@@ -598,6 +598,60 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         inspect_data = self.client.inspect_container(container)
         self.check_container_data(inspect_data, False)
 
+    @requires_api_version('1.41')
+    def test_create_with_mounts_recursive_disabled(self):
+        mount = docker.types.Mount(
+            type="bind", source=self.mount_origin, target=self.mount_dest,
+            read_only=True, recursive="disabled"
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.run_container(
+            TEST_IMG, ['ls', self.mount_dest],
+            host_config=host_config
+        )
+        assert container
+        logs = self.client.logs(container).decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False,
+                                  bind_options_field="NonRecursive")
+
+    @requires_api_version('1.44')
+    def test_create_with_mounts_recursive_writable(self):
+        mount = docker.types.Mount(
+            type="bind", source=self.mount_origin, target=self.mount_dest,
+            read_only=True, recursive="writable"
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.run_container(
+            TEST_IMG, ['ls', self.mount_dest],
+            host_config=host_config
+        )
+        assert container
+        logs = self.client.logs(container).decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False,
+                                  bind_options_field="ReadOnlyNonRecursive")
+
+    @requires_api_version('1.44')
+    def test_create_with_mounts_recursive_ro(self):
+        mount = docker.types.Mount(
+            type="bind", source=self.mount_origin, target=self.mount_dest,
+            read_only=True, recursive="readonly"
+        )
+        host_config = self.client.create_host_config(mounts=[mount])
+        container = self.run_container(
+            TEST_IMG, ['ls', self.mount_dest],
+            host_config=host_config
+        )
+        assert container
+        logs = self.client.logs(container).decode('utf-8')
+        assert self.filename in logs
+        inspect_data = self.client.inspect_container(container)
+        self.check_container_data(inspect_data, False,
+                                  bind_options_field="ReadOnlyForceRecursive")
+
     @requires_api_version('1.30')
     def test_create_with_volume_mount(self):
         mount = docker.types.Mount(
@@ -620,7 +674,8 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount['Source'] == mount_data['Name']
         assert mount_data['RW'] is True
 
-    def check_container_data(self, inspect_data, rw, propagation='rprivate'):
+    def check_container_data(self, inspect_data, rw, propagation='rprivate',
+                             bind_options_field=None):
         assert 'Mounts' in inspect_data
         filtered = list(filter(
             lambda x: x['Destination'] == self.mount_dest,
@@ -631,6 +686,18 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount_data['Source'] == self.mount_origin
         assert mount_data['RW'] == rw
         assert mount_data['Propagation'] == propagation
+        if bind_options_field:
+            assert 'Mounts' in inspect_data['HostConfig']
+            mounts = [
+                x for x in inspect_data['HostConfig']['Mounts']
+                if x['Target'] == self.mount_dest
+            ]
+            assert len(mounts) == 1
+            mount = mounts[0]
+            assert 'BindOptions' in mount
+            bind_options = mount['BindOptions']
+            assert bind_options_field in bind_options
+            assert bind_options[bind_options_field] is True
 
     def run_with_volume(self, ro, *args, **kwargs):
         return self.run_container(
