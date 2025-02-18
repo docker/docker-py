@@ -894,7 +894,11 @@ class ContainerCollection(Collection):
                 stdout=stdout, stderr=stderr, stream=True, follow=True
             )
 
-        exit_status = container.wait()['StatusCode']
+        if kwargs.get('auto_remove'):
+            wait_condition = 'removed'
+        else:
+            wait_condition = 'next-exit'
+        exit_status = container.wait(condition=wait_condition)['StatusCode']
         if exit_status != 0:
             out = None
             if not kwargs.get('auto_remove'):
