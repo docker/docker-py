@@ -570,6 +570,7 @@ class ContainerCollection(Collection):
                 ``["SYS_ADMIN", "MKNOD"]``.
             cap_drop (list of str): Drop kernel capabilities.
             cgroup_parent (str): Override the default parent cgroup.
+            cgroup (str): Cgroup to use for the container.
             cgroupns (str): Override the default cgroup namespace mode for the
                 container. One of:
                 - ``private`` the container runs in its own private cgroup
