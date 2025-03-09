@@ -11,6 +11,37 @@ from ..types import (
 )
 
 
+class ContainerInfo:
+    def __init__(self, info: dict):
+        self._info = info
+
+    def __repr__(self):
+        return (
+            f"<ContainerInfo id={self._info.get('Id')}, name={self._info.get('Name')}>"
+        )
+
+    def __getattr__(self, item):
+        """
+        Dynamically fetch any attribute from the underlying dictionary.
+        This allows direct access to all fields without manually defining them.
+        """
+        try:
+            return self._info[item]
+        except KeyError as err:
+            raise AttributeError(
+                f"'ContainerInfo' object has no attribute '{item}'"
+            ) from err
+
+    def __getitem__(self, item):
+        """
+        Optional: If you'd like to access attributes using bracket notation.
+        """
+        return self._info.get(item)
+
+    def get_info(self):
+        """Returns the entire dictionary for reference if needed"""
+        return self._info
+
 class ContainerApiMixin:
     @utils.check_resource('container')
     def attach(self, container, stdout=True, stderr=True,
@@ -783,16 +814,18 @@ class ContainerApiMixin:
             container (str): The container to inspect
 
         Returns:
-            (dict): Similar to the output of `docker inspect`, but as a
-            single dict
+            (ContainerInfo): Similar to the output of `docker inspect`, but as a
+            docker.api.container.ContainerInfo object
 
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
-        return self._result(
+        container_info = self._result(
             self._get(self._url("/containers/{0}/json", container)), True
         )
+        return ContainerInfo(container_info)
+
 
     @utils.check_resource('container')
     def kill(self, container, signal=None):
