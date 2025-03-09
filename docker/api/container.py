@@ -26,7 +26,10 @@ class ContainerInfo:
         This allows direct access to all fields without manually defining them.
         """
         try:
-            return self._info[item]
+            value = self._info[item]
+            if isinstance(value, dict):
+                return ContainerInfo(value)
+            return value
         except KeyError as err:
             raise AttributeError(
                 f"'ContainerInfo' object has no attribute '{item}'"

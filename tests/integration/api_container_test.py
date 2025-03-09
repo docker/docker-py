@@ -1587,4 +1587,5 @@ class ContainerInfoObjectTest(BaseAPIIntegrationTest):
 
         # attribute style access
         assert inspect_data.Id == container['Id']
-        assert inspect_data["Id"] == container["Id"]
+        assert inspect_data.Config.Image == TEST_IMG
+        assert inspect_data.HostConfig.NetworkMode == 'bridge'
