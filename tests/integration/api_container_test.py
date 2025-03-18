@@ -620,6 +620,56 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         assert mount['Source'] == mount_data['Name']
         assert mount_data['RW'] is True
 
+    @requires_api_version('1.45')
+    def test_create_with_subpath_volume_mount(self):
+        source_volume = helpers.random_name()
+        self.client.create_volume(name=source_volume)
+
+        setup_container = None
+        test_container = None
+
+
+        # Create a file structure in the volume to test with
+        setup_container = self.client.create_container(
+            TEST_IMG,
+            [
+                "sh",
+                "-c",
+                'mkdir -p /vol/subdir && echo "test content" > /vol/subdir/testfile.txt',
+            ],
+            host_config=self.client.create_host_config(
+                binds=[f"{source_volume}:/vol"]
+            ),
+        )
+        self.client.start(setup_container)
+        self.client.wait(setup_container)
+
+        # Now test with subpath
+        mount = docker.types.Mount(
+            type="volume",
+            source=source_volume,
+            target=self.mount_dest,
+            read_only=True,
+            subpath="subdir",
+        )
+
+
+        host_config = self.client.create_host_config(mounts=[mount])
+        test_container = self.client.create_container(
+            TEST_IMG,
+            ["cat", os.path.join(self.mount_dest, "testfile.txt")],
+            host_config=host_config,
+        )
+
+        self.client.start(test_container)
+        self.client.wait(test_container)  # Wait for container to finish
+        output = self.client.logs(test_container).decode("utf-8").strip()
+
+        # If the subpath feature is working, we should be able to see the content
+        # of the file in the subdir
+        assert output == "test content"
+
+
     def check_container_data(self, inspect_data, rw, propagation='rprivate'):
         assert 'Mounts' in inspect_data
         filtered = list(filter(
