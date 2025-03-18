@@ -242,6 +242,7 @@ class Mount(dict):
           for the ``volume`` type.
         driver_config (DriverConfig): Volume driver configuration. Only valid
           for the ``volume`` type.
+        subpath (str): Path inside a volume to mount instead of the volume root.
         tmpfs_size (int or string): The size for the tmpfs mount in bytes.
         tmpfs_mode (int): The permission mode for the tmpfs mount.
     """
@@ -249,7 +250,7 @@ class Mount(dict):
     def __init__(self, target, source, type='volume', read_only=False,
                  consistency=None, propagation=None, no_copy=False,
                  labels=None, driver_config=None, tmpfs_size=None,
-                 tmpfs_mode=None):
+                 tmpfs_mode=None, subpath=None):
         self['Target'] = target
         self['Source'] = source
         if type not in ('bind', 'volume', 'tmpfs', 'npipe'):
@@ -267,7 +268,7 @@ class Mount(dict):
                 self['BindOptions'] = {
                     'Propagation': propagation
                 }
-            if any([labels, driver_config, no_copy, tmpfs_size, tmpfs_mode]):
+            if any([labels, driver_config, no_copy, tmpfs_size, tmpfs_mode, subpath]):
                 raise errors.InvalidArgument(
                     'Incompatible options have been provided for the bind '
                     'type mount.'
@@ -280,6 +281,8 @@ class Mount(dict):
                 volume_opts['Labels'] = labels
             if driver_config:
                 volume_opts['DriverConfig'] = driver_config
+            if subpath:
+                volume_opts['Subpath'] = subpath
             if volume_opts:
                 self['VolumeOptions'] = volume_opts
             if any([propagation, tmpfs_size, tmpfs_mode]):
