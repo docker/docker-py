@@ -1,5 +1,6 @@
 import logging
 import os
+from json import JSONDecodeError
 
 from .. import auth, errors, utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
@@ -495,11 +496,14 @@ class ImageApiMixin:
         self._raise_for_status(response)
 
         if stream:
-            for line in self._stream_helper(response, decode=decode):
-                if isinstance(line, dict) and "errorDetail" in line:
-                    raise errors.APIError(line["errorDetail"]["message"])
-                yield line
-
+            try:
+                for line in self._stream_helper(response, decode=decode):
+                    if isinstance(line, dict) and "errorDetail" in line:
+                        message = line["errorDetail"]["message"]
+                        raise errors.APIError(message=message)
+                    yield line
+            except JSONDecodeError as e:
+                raise JSONDecodeError("Error decoding response stream") from e
 
         return self._result(response)
 
