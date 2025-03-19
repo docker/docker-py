@@ -495,7 +495,11 @@ class ImageApiMixin:
         self._raise_for_status(response)
 
         if stream:
-            return self._stream_helper(response, decode=decode)
+            for line in self._stream_helper(response, decode=decode):
+                if isinstance(line, dict) and "errorDetail" in line:
+                    raise errors.APIError(line["errorDetail"]["message"])
+                yield line
+
 
         return self._result(response)
 
