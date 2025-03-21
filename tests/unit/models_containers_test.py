@@ -726,6 +726,34 @@ class ContainerTest(unittest.TestCase):
         container = client.containers.get(FAKE_CONTAINER_ID)
         assert container.image.id == FAKE_IMAGE_ID
 
+    def test_restart_with_signal(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.restart(timeout=2, signal='SIGTERM')
+        client.api.restart.assert_called_with(FAKE_CONTAINER_ID, timeout=2,
+                                              signal='SIGTERM')
+
+    def test_stop_with_signal(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.stop(timeout=2, signal='SIGTERM')
+        client.api.stop.assert_called_with(FAKE_CONTAINER_ID, timeout=2,
+                                           signal='SIGTERM')
+
+    def test_restart_with_sigint(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.restart(timeout=2, signal=2)
+        client.api.restart.assert_called_with(FAKE_CONTAINER_ID, timeout=2,
+                                              signal=2)
+
+    def test_stop_with_sigint(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.stop(timeout=2, signal=2)
+        client.api.stop.assert_called_with(FAKE_CONTAINER_ID, timeout=2,
+                                           signal=2)
+
     def test_kill(self):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
