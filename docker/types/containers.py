@@ -712,6 +712,11 @@ class ContainerConfig(dict):
                     'version 1.29'
                 )
 
+            if version_lt(version, '1.44') and 'StartInterval' in healthcheck:
+                raise errors.InvalidVersion(
+                    'healthcheck start interval was introduced in API version 1.44'
+                )
+
         if isinstance(command, str):
             command = split_command(command)
 
