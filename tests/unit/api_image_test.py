@@ -5,6 +5,7 @@ import pytest
 import docker
 from docker import auth
 
+from ..helpers import requires_api_version
 from . import fake_api
 from .api_test import (
     DEFAULT_TIMEOUT_SECONDS,
@@ -267,6 +268,28 @@ class ImageTest(BaseAPIClientTest):
             data='{}',
             headers={'Content-Type': 'application/json',
                      'X-Registry-Auth': encoded_auth},
+            stream=False,
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+    @requires_api_version('1.46')
+    def test_push_image_with_platform(self):
+        with mock.patch('docker.auth.resolve_authconfig',
+                        fake_resolve_authconfig):
+            self.client.push(
+                fake_api.FAKE_IMAGE_NAME,
+                platform=fake_api.FAKE_PLATFORM
+            )
+
+        fake_request.assert_called_with(
+            'POST',
+            f"{url_prefix}images/test_image/push",
+            params={
+                'tag': None,
+                'platform': fake_api.FAKE_PLATFORM
+            },
+            data='{}',
+            headers={'Content-Type': 'application/json'},
             stream=False,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

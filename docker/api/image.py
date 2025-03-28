@@ -434,7 +434,7 @@ class ImageApiMixin:
         return self._result(response)
 
     def push(self, repository, tag=None, stream=False, auth_config=None,
-             decode=False):
+             decode=False, platform=None):
         """
         Push an image or a repository to the registry. Similar to the ``docker
         push`` command.
@@ -448,6 +448,7 @@ class ImageApiMixin:
                 ``username`` and ``password`` keys to be valid.
             decode (bool): Decode the JSON data from the server into dicts.
                 Only applies with ``stream=True``
+            platform (str): JSON-encoded OCI platform to select the platform-variant to push. If not provided, all available variants will attempt to be pushed.
 
         Returns:
             (generator or str): The output from the server.
@@ -487,6 +488,13 @@ class ImageApiMixin:
         else:
             log.debug('Sending supplied auth config')
             headers['X-Registry-Auth'] = auth.encode_header(auth_config)
+
+        if platform is not None:
+            if utils.version_lt(self._version, '1.46'):
+                raise errors.InvalidVersion(
+                    'platform was only introduced in API version 1.46'
+                )
+            params['platform'] = platform
 
         response = self._post_json(
             u, None, headers=headers, stream=stream, params=params
