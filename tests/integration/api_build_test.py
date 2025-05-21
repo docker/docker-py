@@ -275,7 +275,7 @@ class BuildTest(BaseAPIIntegrationTest):
             pass
 
         info = self.client.inspect_image('build1')
-        assert not info['Config']['OnBuild']
+        assert 'OnBuild' not in info['Config'] or not info['Config']['OnBuild']
 
     @requires_api_version('1.25')
     def test_build_with_network_mode(self):
