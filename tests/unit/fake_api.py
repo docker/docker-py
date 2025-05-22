@@ -21,6 +21,7 @@ FAKE_SECRET_ID = 'epdyrw4tsi03xy3deu8g8ly6o'
 FAKE_SECRET_NAME = 'super_secret'
 FAKE_CONFIG_ID = 'sekvs771242jfdjnvfuds8232'
 FAKE_CONFIG_NAME = 'super_config'
+FAKE_PLATFORM = "{'os': 'linux','architecture': 'arm','variant': 'v5'}"
 
 # Each method is prefixed with HTTP method (get, post...)
 # for clarity and readability
