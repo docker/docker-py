@@ -83,6 +83,10 @@ class BuildApiMixin:
                 - cpushares (int): CPU shares (relative weight)
                 - cpusetcpus (str): CPUs in which to allow execution, e.g.,
                     ``"0-3"``, ``"0,1"``
+                - cpuperiod (int): (Docker API v1.19+) The length of a CPU
+                    period in microseconds
+                - cpuquota (int): (Docker API v1.19+) Microseconds of CPU
+                    time that the container can get in a CPU period
             decode (bool): If set to ``True``, the returned stream will be
                 decoded into dicts on the fly. Default ``False``
             shmsize (int): Size of `/dev/shm` in bytes. The size must be
@@ -135,6 +139,13 @@ class BuildApiMixin:
                 raise errors.DockerException(
                     f"invalid tag '{tag}': invalid reference format"
                 )
+            introduced_in = constants.CONTAINER_LIMITS_KEYS[key]
+            if introduced_in is not None:
+                if utils.version_lt(self._version, introduced_in):
+                    raise errors.InvalidVersion(
+                        f"container limit '{key}' was only introduced"
+                        f" in API version {introduced_in}"
+                    )
         if custom_context:
             if not fileobj:
                 raise TypeError("You must specify fileobj with custom_context")
