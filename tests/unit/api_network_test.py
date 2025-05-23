@@ -148,6 +148,35 @@ class NetworkTest(BaseAPIClientTest):
             },
         }
 
+    def test_connect_container_to_network_with_gw_priority(self):
+        network_id = 'abc12345'
+        container_id = 'def45678'
+
+        post = mock.Mock(return_value=response(status_code=201))
+
+        # Mock the API version to be >= 1.48 for this test
+        with mock.patch.object(self.client, '_version', '1.48'):
+            with mock.patch('docker.api.client.APIClient.post', post):
+                self.client.connect_container_to_network(
+                    container={'Id': container_id},
+                    net_id=network_id,
+                    gw_priority=100,
+                )
+
+        # The version in the URL will be based on the client's _version at the time of _url() call
+        # which happens inside connect_container_to_network.
+        # Since we patched _version to '1.48', the URL should reflect that.
+        assert post.call_args[0][0] == (
+            f"http+docker://localhost/v1.48/networks/{network_id}/connect"
+        )
+
+        assert json.loads(post.call_args[1]['data']) == {
+            'Container': container_id,
+            'EndpointConfig': {
+                'GwPriority': 100,
+            },
+        }
+
     def test_disconnect_container_from_network(self):
         network_id = 'abc12345'
         container_id = 'def45678'

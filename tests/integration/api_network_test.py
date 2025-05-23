@@ -503,6 +503,37 @@ class TestNetworks(BaseAPIIntegrationTest):
         with pytest.raises(docker.errors.NotFound):
             self.client.inspect_network(net_name_swarm, scope='local')
 
+    @requires_api_version('1.48')
+    def test_connect_with_gw_priority(self):
+        net_name, net_id = self.create_network()
+
+        container = self.client.create_container(TEST_IMG, 'top')
+        self.tmp_containers.append(container)
+        self.client.start(container)
+
+        # Connect with gateway priority
+        gw_priority_value = 100
+        self.client.connect_container_to_network(
+            container, net_name, gw_priority=gw_priority_value
+        )
+
+        container_data = self.client.inspect_container(container)
+        net_data = container_data['NetworkSettings']['Networks'][net_name]
+
+        assert net_data is not None
+        assert 'GwPriority' in net_data
+        assert net_data['GwPriority'] == gw_priority_value
+
+        # Test with a different priority to ensure update
+        # gw_priority_value_updated = -50 # Removed unused variable
+        # Disconnect first - a container can only be connected to a network once
+        # with a specific configuration. To change gw_priority, we'd typically
+        # disconnect and reconnect, or update the connection if the API supports it.
+        # For this test, we are verifying the initial connection and inspection.
+        # A separate test would be needed for "update" scenarios if supported.
+
+        # Clean up: disconnect and remove container and network
+
     def test_create_remove_network_with_space_in_name(self):
         net_id = self.client.create_network('test 01')
         self.tmp_networks.append(net_id)
