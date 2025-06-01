@@ -157,7 +157,7 @@ def walk(root, patterns, default=True):
 # Heavily based on
 # https://github.com/moby/moby/blob/master/pkg/fileutils/fileutils.go
 class PatternMatcher:
-    def __init__(self, patterns):
+    def __init__(self, patterns) -> None:
         self.patterns = list(filter(
             lambda p: p.dirs, [Pattern(p) for p in patterns]
         ))
@@ -220,7 +220,7 @@ class PatternMatcher:
 
 
 class Pattern:
-    def __init__(self, pattern_str):
+    def __init__(self, pattern_str) -> None:
         self.exclusion = False
         if pattern_str.startswith('!'):
             self.exclusion = True

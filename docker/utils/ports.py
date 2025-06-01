@@ -12,14 +12,14 @@ PORT_SPEC = re.compile(
 )
 
 
-def add_port_mapping(port_bindings, internal_port, external):
+def add_port_mapping(port_bindings, internal_port, external) -> None:
     if internal_port in port_bindings:
         port_bindings[internal_port].append(external)
     else:
         port_bindings[internal_port] = [external]
 
 
-def add_port(port_bindings, internal_port_range, external_range):
+def add_port(port_bindings, internal_port_range, external_range) -> None:
     if external_range is None:
         for internal_port in internal_port_range:
             add_port_mapping(port_bindings, internal_port, None)
@@ -37,7 +37,7 @@ def build_port_bindings(ports):
     return port_bindings
 
 
-def _raise_invalid_port(port):
+def _raise_invalid_port(port) -> None:
     raise ValueError('Invalid port "%s", should be '
                      '[[remote_ip:]remote_port[-remote_port]:]'
                      'port[/protocol]' % port)

@@ -12,14 +12,14 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
 class NpipeHTTPConnection(urllib3.connection.HTTPConnection):
-    def __init__(self, npipe_path, timeout=60):
+    def __init__(self, npipe_path, timeout=60) -> None:
         super().__init__(
             'localhost', timeout=timeout
         )
         self.npipe_path = npipe_path
         self.timeout = timeout
 
-    def connect(self):
+    def connect(self) -> None:
         sock = NpipeSocket()
         sock.settimeout(self.timeout)
         sock.connect(self.npipe_path)
@@ -27,7 +27,7 @@ class NpipeHTTPConnection(urllib3.connection.HTTPConnection):
 
 
 class NpipeHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
-    def __init__(self, npipe_path, timeout=60, maxsize=10):
+    def __init__(self, npipe_path, timeout=60, maxsize=10) -> None:
         super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
@@ -70,7 +70,7 @@ class NpipeHTTPAdapter(BaseHTTPAdapter):
 
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
-                 max_pool_size=constants.DEFAULT_MAX_POOL_SIZE):
+                 max_pool_size=constants.DEFAULT_MAX_POOL_SIZE) -> None:
         self.npipe_path = base_url.replace('npipe://', '')
         self.timeout = timeout
         self.max_pool_size = max_pool_size

@@ -3,9 +3,9 @@ from ..types import ServiceMode
 
 
 def _check_api_features(version, task_template, update_config, endpoint_spec,
-                        rollback_config):
+                        rollback_config) -> None:
 
-    def raise_version_error(param, min_version):
+    def raise_version_error(param, min_version) -> None:
         raise errors.InvalidVersion(
             f'{param} is not supported in API version < {min_version}'
         )
@@ -239,7 +239,7 @@ class ServiceApiMixin:
 
     @utils.minimum_version('1.24')
     @utils.check_resource('service')
-    def remove_service(self, service):
+    def remove_service(self, service) -> bool:
         """
         Stop and remove a service.
 

@@ -18,7 +18,7 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
 class SSHSocket(socket.socket):
-    def __init__(self, host):
+    def __init__(self, host) -> None:
         super().__init__(
             socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
@@ -31,7 +31,7 @@ class SSHSocket(socket.socket):
 
         self.proc = None
 
-    def connect(self, **kwargs):
+    def connect(self, **kwargs) -> None:
         args = ['ssh']
         if self.user:
             args = args + ['-l', self.user]
@@ -43,7 +43,7 @@ class SSHSocket(socket.socket):
 
         preexec_func = None
         if not constants.IS_WINDOWS_PLATFORM:
-            def f():
+            def f() -> None:
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
             preexec_func = f
 
@@ -68,7 +68,7 @@ class SSHSocket(socket.socket):
         self.proc.stdin.flush()
         return written
 
-    def sendall(self, data):
+    def sendall(self, data) -> None:
         self._write(data)
 
     def send(self, data):
@@ -87,7 +87,7 @@ class SSHSocket(socket.socket):
 
         return self.proc.stdout
 
-    def close(self):
+    def close(self) -> None:
         if not self.proc or self.proc.stdin.closed:
             return
         self.proc.stdin.write(b'\n\n')
@@ -96,7 +96,7 @@ class SSHSocket(socket.socket):
 
 
 class SSHConnection(urllib3.connection.HTTPConnection):
-    def __init__(self, ssh_transport=None, timeout=60, host=None):
+    def __init__(self, ssh_transport=None, timeout=60, host=None) -> None:
         super().__init__(
             'localhost', timeout=timeout
         )
@@ -104,7 +104,7 @@ class SSHConnection(urllib3.connection.HTTPConnection):
         self.timeout = timeout
         self.ssh_host = host
 
-    def connect(self):
+    def connect(self) -> None:
         if self.ssh_transport:
             sock = self.ssh_transport.open_session()
             sock.settimeout(self.timeout)
@@ -120,7 +120,7 @@ class SSHConnection(urllib3.connection.HTTPConnection):
 class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     scheme = 'ssh'
 
-    def __init__(self, ssh_client=None, timeout=60, maxsize=10, host=None):
+    def __init__(self, ssh_client=None, timeout=60, maxsize=10, host=None) -> None:
         super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
@@ -165,7 +165,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
                  max_pool_size=constants.DEFAULT_MAX_POOL_SIZE,
-                 shell_out=False):
+                 shell_out=False) -> None:
         self.ssh_client = None
         if not shell_out:
             self._create_paramiko_client(base_url)
@@ -182,7 +182,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         )
         super().__init__()
 
-    def _create_paramiko_client(self, base_url):
+    def _create_paramiko_client(self, base_url) -> None:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
         self.ssh_client = paramiko.SSHClient()
         base_url = urllib.parse.urlparse(base_url)
@@ -213,7 +213,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         self.ssh_client.load_system_host_keys()
         self.ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
-    def _connect(self):
+    def _connect(self) -> None:
         if self.ssh_client:
             self.ssh_client.connect(**self.ssh_params)
 
@@ -244,7 +244,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
 
         return pool
 
-    def close(self):
+    def close(self) -> None:
         super().close()
         if self.ssh_client:
             self.ssh_client.close()

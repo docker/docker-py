@@ -33,18 +33,18 @@ class NpipeSocket:
         implemented.
     """
 
-    def __init__(self, handle=None):
+    def __init__(self, handle=None) -> None:
         self._timeout = win32pipe.NMPWAIT_USE_DEFAULT_WAIT
         self._handle = handle
         self._closed = False
 
-    def accept(self):
+    def accept(self) -> None:
         raise NotImplementedError()
 
-    def bind(self, address):
+    def bind(self, address) -> None:
         raise NotImplementedError()
 
-    def close(self):
+    def close(self) -> None:
         self._handle.Close()
         self._closed = True
 
@@ -99,13 +99,13 @@ class NpipeSocket:
     def getsockname(self):
         return self._address
 
-    def getsockopt(self, level, optname, buflen=None):
+    def getsockopt(self, level, optname, buflen=None) -> None:
         raise NotImplementedError()
 
-    def ioctl(self, control, option):
+    def ioctl(self, control, option) -> None:
         raise NotImplementedError()
 
-    def listen(self, backlog):
+    def listen(self, backlog) -> None:
         raise NotImplementedError()
 
     def makefile(self, mode=None, bufsize=None):
@@ -182,7 +182,7 @@ class NpipeSocket:
             return self.settimeout(None)
         return self.settimeout(0)
 
-    def settimeout(self, value):
+    def settimeout(self, value) -> None:
         if value is None:
             # Blocking mode
             self._timeout = win32event.INFINITE
@@ -195,7 +195,7 @@ class NpipeSocket:
     def gettimeout(self):
         return self._timeout
 
-    def setsockopt(self, level, optname, value):
+    def setsockopt(self, level, optname, value) -> None:
         raise NotImplementedError()
 
     @check_closed
@@ -204,27 +204,27 @@ class NpipeSocket:
 
 
 class NpipeFileIOBase(io.RawIOBase):
-    def __init__(self, npipe_socket):
+    def __init__(self, npipe_socket) -> None:
         self.sock = npipe_socket
 
-    def close(self):
+    def close(self) -> None:
         super().close()
         self.sock = None
 
     def fileno(self):
         return self.sock.fileno()
 
-    def isatty(self):
+    def isatty(self) -> bool:
         return False
 
-    def readable(self):
+    def readable(self) -> bool:
         return True
 
     def readinto(self, buf):
         return self.sock.recv_into(buf)
 
-    def seekable(self):
+    def seekable(self) -> bool:
         return False
 
-    def writable(self):
+    def writable(self) -> bool:
         return False

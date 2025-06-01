@@ -215,7 +215,7 @@ class SwarmApiMixin:
 
     @utils.minimum_version('1.24')
     def join_swarm(self, remote_addrs, join_token, listen_addr='0.0.0.0:2377',
-                   advertise_addr=None, data_path_addr=None):
+                   advertise_addr=None, data_path_addr=None) -> bool:
         """
         Make this Engine join a swarm that has already been created.
 
@@ -265,7 +265,7 @@ class SwarmApiMixin:
         return True
 
     @utils.minimum_version('1.24')
-    def leave_swarm(self, force=False):
+    def leave_swarm(self, force=False) -> bool:
         """
         Leave a swarm.
 
@@ -318,7 +318,7 @@ class SwarmApiMixin:
 
     @utils.check_resource('node_id')
     @utils.minimum_version('1.24')
-    def remove_node(self, node_id, force=False):
+    def remove_node(self, node_id, force=False) -> bool:
         """
         Remove a node from the swarm.
 
@@ -344,7 +344,7 @@ class SwarmApiMixin:
         return True
 
     @utils.minimum_version('1.24')
-    def unlock_swarm(self, key):
+    def unlock_swarm(self, key) -> bool:
         """
             Unlock a locked swarm.
 
@@ -380,7 +380,7 @@ class SwarmApiMixin:
         return True
 
     @utils.minimum_version('1.24')
-    def update_node(self, node_id, version, node_spec=None):
+    def update_node(self, node_id, version, node_spec=None) -> bool:
         """
         Update the node's configuration
 
@@ -419,7 +419,7 @@ class SwarmApiMixin:
     def update_swarm(self, version, swarm_spec=None,
                      rotate_worker_token=False,
                      rotate_manager_token=False,
-                     rotate_manager_unlock_key=False):
+                     rotate_manager_unlock_key=False) -> bool:
         """
         Update the Swarm's configuration
 
