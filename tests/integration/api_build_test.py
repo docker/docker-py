@@ -201,6 +201,27 @@ class BuildTest(BaseAPIIntegrationTest):
         for _chunk in stream:
             pass
 
+    @requires_api_version('1.38')
+    def test_build_with_buildkit(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+            'COPY <<EOF greeting.txt',
+            'hello world',
+            'EOF'
+        ]).encode('ascii'))
+
+        self.tmp_imgs.append('buildkit')
+
+        stream = self.client.build(
+            fileobj=script, tag='buildkit',
+            version='2'
+        )
+
+        for _chunk in stream:
+            pass
+
+        assert self.client.inspect_image('buildkit')
+
     @requires_api_version('1.23')
     def test_build_labels(self):
         script = io.BytesIO('\n'.join([
