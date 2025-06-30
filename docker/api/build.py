@@ -103,7 +103,7 @@ class BuildApiMixin:
                 Default: `None`.
             version (str): Version of the builder backend to use.
                 - `1` is the first generation classic (deprecated) builder in the Docker daemon (default)
-                - `2` is [BuildKit](https://github.com/moby/buildkit)
+                - `2` is [BuildKit](https://github.com/moby/buildkit) over the REST API endpoint provided by the Docker daemon. This mode doesn't use the BuildKit gRPC API, and lacks support for advanced features such as secret mounts.
                 Default: `None`.
             use_config_proxy (bool): If ``True``, and if the docker client
                 configuration file (``~/.docker/config.json`` by default)
