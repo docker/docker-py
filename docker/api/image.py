@@ -3,6 +3,7 @@ import os
 
 from .. import auth, errors, utils
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
+from ..types.image import Platform
 
 log = logging.getLogger(__name__)
 
@@ -494,7 +495,7 @@ class ImageApiMixin:
                 raise errors.InvalidVersion(
                     'platform was only introduced in API version 1.46'
                 )
-            params['platform'] = platform
+            params['platform'] = Platform
 
         response = self._post_json(
             u, None, headers=headers, stream=stream, params=params
