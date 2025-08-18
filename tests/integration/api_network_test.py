@@ -450,10 +450,8 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.48')
     def test_create_network_ipv4_disabled(self):
         _, net_id = self.create_network(
-            enable_ipv4=False, ipam=IPAMConfig(
-                driver='default',
-                pool_configs=[]
-            )
+            driver='macvlan',
+            enable_ipv4=False
         )
         net = self.client.inspect_network(net_id)
         assert net['EnableIPv4'] is False
