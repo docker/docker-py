@@ -452,12 +452,7 @@ class TestNetworks(BaseAPIIntegrationTest):
         _, net_id = self.create_network(
             enable_ipv4=False, ipam=IPAMConfig(
                 driver='default',
-                pool_configs=[
-                    IPAMPool(
-                        subnet="2001:389::/64", iprange="2001:389::0/96",
-                        gateway="2001:389::ffff"
-                    )
-                ]
+                pool_configs=[]
             )
         )
         net = self.client.inspect_network(net_id)
