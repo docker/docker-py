@@ -1302,7 +1302,7 @@ class ContainerTest(BaseAPIClientTest):
 
     def test_log_since_with_datetime(self):
         ts = 809222400
-        time = datetime.datetime.utcfromtimestamp(ts)
+        time = datetime.datetime.fromtimestamp(ts, datetime.UTC)
         with mock.patch('docker.api.client.APIClient.inspect_container',
                         fake_inspect_container):
             self.client.logs(fake_api.FAKE_CONTAINER_ID, stream=False,
