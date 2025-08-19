@@ -8,8 +8,7 @@ VOLUME /certs
 
 WORKDIR /tmp/certs
 RUN openssl genrsa -aes256 -passout pass:foobar -out ca-key.pem 4096
-RUN echo "[req]\nprompt=no\ndistinguished_name = req_distinguished_name\n[req_distinguished_name]\ncountryName=AU" > /tmp/config
-RUN openssl req -new -x509 -passin pass:foobar -config /tmp/config -days 365 -key ca-key.pem -sha256 -out ca.pem
+RUN openssl req -new -x509 -passin pass:foobar -extensions v3_ca -subj '/CN=DockerTest Root CA/C=AU' -days 365 -key ca-key.pem -sha256 -out ca.pem
 RUN openssl genrsa -out server-key.pem -passout pass:foobar 4096
 RUN openssl req -subj "/CN=docker" -sha256 -new -key server-key.pem -out server.csr
 RUN echo subjectAltName = DNS:docker,DNS:localhost > extfile.cnf
