@@ -185,3 +185,36 @@ def demux_adaptor(stream_id, data):
         return (None, data)
     else:
         raise ValueError(f'{stream_id} is not a valid stream')
+
+def consume_socket_output(frames, demux=False):
+    """
+    Iterate through frames read from the socket and return the result.
+
+    Args:
+        demux (bool):
+            If False, stdout and stderr are multiplexed, and the result is the
+            concatenation of all the frames. If True, the streams are
+            demultiplexed, and the result is a 2-tuple where each item is the
+            concatenation of frames belonging to the same stream.
+    """
+
+    if not demux:
+        # When not demuxed, frames is a generator yielding byte chunks.
+        # Using join ensures O(n) complexity instead of O(n²)
+        return b"".join(frames)
+
+    # When demux=True, frames yields tuples like (stdout_bytes, stderr_bytes)
+    stdout_chunks = []
+    stderr_chunks = []
+
+    for stdout_part, stderr_part in frames:
+        # Exactly one of them is not None
+        if stdout_part is not None:
+            stdout_chunks.append(stdout_part)
+        elif stderr_part is not None:
+            stderr_chunks.append(stderr_part)
+
+    stdout = b"".join(stdout_chunks) if stdout_chunks else None
+    stderr = b"".join(stderr_chunks) if stderr_chunks else None
+    return (stdout, stderr)
+
