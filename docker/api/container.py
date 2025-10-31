@@ -775,7 +775,7 @@ class ContainerApiMixin:
         )
 
     @utils.check_resource('container')
-    def inspect_container(self, container):
+    def inspect_container(self, container, size=False):
         """
         Identical to the `docker inspect` command, but only for containers.
 
@@ -790,8 +790,9 @@ class ContainerApiMixin:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
         """
+        params = {"size": "true" if size else "false"}
         return self._result(
-            self._get(self._url("/containers/{0}/json", container)), True
+            self._get(self._url("/containers/{0}/json", container), params=params), True
         )
 
     @utils.check_resource('container')
