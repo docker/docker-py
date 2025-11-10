@@ -6,9 +6,8 @@ class Platform(DictType):
         architecture = kwargs.get('architecture')
         os = kwargs.get('os')
 
-        if architecture is None and os is None:
-            raise ValueError("At least one of 'architecture' or 'os' must be provided")
-
+        if architecture is None or os is None:
+            raise ValueError("Both 'architecture' and 'os' must be provided")
 
         super().__init__({
             'architecture': architecture,
