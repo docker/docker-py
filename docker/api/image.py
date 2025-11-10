@@ -495,7 +495,10 @@ class ImageApiMixin:
                 raise errors.InvalidVersion(
                     'platform was only introduced in API version 1.46'
                 )
-            params['platform'] = Platform
+            # Handle both Platform instances and dict inputs
+            if isinstance(platform, dict):
+                platform = Platform(**platform)
+            params['platform'] = platform
 
         response = self._post_json(
             u, None, headers=headers, stream=stream, params=params
