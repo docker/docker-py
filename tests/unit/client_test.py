@@ -188,7 +188,8 @@ class FromEnvTest(unittest.TestCase):
         assert client.api.timeout == DEFAULT_TIMEOUT_SECONDS
 
     @pytest.mark.skipif(
-        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+        os.environ.get('DOCKER_HOST', '').startswith('tcp://') or IS_WINDOWS_PLATFORM,
+        reason='Requires a Unix socket'
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_from_env_unix(self, mock_obj):
@@ -219,7 +220,8 @@ class FromEnvTest(unittest.TestCase):
                                          )
 
     @pytest.mark.skipif(
-        IS_WINDOWS_PLATFORM, reason='Unix Connection Pool only on Linux'
+        os.environ.get('DOCKER_HOST', '').startswith('tcp://') or IS_WINDOWS_PLATFORM,
+        reason='Requires a Unix socket'
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_pool_size_from_env_unix(self, mock_obj):
