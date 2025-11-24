@@ -113,7 +113,7 @@ class Plugin(Model):
                 A generator streaming the decoded API logs
         """
         if self.enabled:
-            raise errors.DockerError(
+            raise errors.DockerException(
                 'Plugin must be disabled before upgrading.'
             )
 
