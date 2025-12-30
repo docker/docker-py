@@ -232,6 +232,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.22')
     def test_create_with_ipv6_address(self):
         net_name, net_id = self.create_network(
+            enable_ipv6=True,
             ipam=IPAMConfig(
                 driver='default',
                 pool_configs=[IPAMPool(subnet="2001:389::/64")],
@@ -384,6 +385,7 @@ class TestNetworks(BaseAPIIntegrationTest):
     @requires_api_version('1.22')
     def test_connect_with_ipv6_address(self):
         net_name, net_id = self.create_network(
+            enable_ipv6=True,
             ipam=IPAMConfig(
                 driver='default',
                 pool_configs=[
