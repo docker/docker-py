@@ -1,3 +1,4 @@
+import os
 import sys
 
 from .version import __version__
@@ -11,7 +12,26 @@ CONTAINER_LIMITS_KEYS = [
 ]
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
-DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
+
+# Potential Unix socket locations in order of preference
+UNIX_SOCKET_PATHS = [
+    '/var/run/docker.sock',  # Traditional Linux/macOS location
+    os.path.expanduser('~/.docker/run/docker.sock'),  # Docker Desktop v4.x+ on macOS
+    os.path.expanduser('~/.docker/desktop/docker.sock'),  # Older Docker Desktop location
+]
+
+
+def _find_available_unix_socket():
+    """Find the first available Docker socket from known locations."""
+    for path in UNIX_SOCKET_PATHS:
+        if os.path.exists(path):
+            return f"http+unix://{path}"
+    # Fallback to traditional location even if it doesn't exist
+    return f"http+unix://{UNIX_SOCKET_PATHS[0]}"
+
+
+# Dynamic default socket - checks multiple locations
+DEFAULT_UNIX_SOCKET = _find_available_unix_socket()
 DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
 
 BYTE_UNITS = {
