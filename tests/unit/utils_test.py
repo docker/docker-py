@@ -634,3 +634,89 @@ def test_compare_versions():
     assert compare_version("1", "1.0") == 0
     assert compare_version("1.10", "1.10.1") == 1
     assert compare_version("1.10.0", "1.10") == 0
+
+
+class UnixSocketDiscoveryTest(unittest.TestCase):
+    """Tests for the Unix socket discovery logic in constants.py."""
+
+    def test_find_socket_prefers_traditional_location(self):
+        """When /var/run/docker.sock exists, it should be preferred."""
+        from unittest import mock
+        from docker.constants import UNIX_SOCKET_PATHS, _find_available_unix_socket
+
+        def mock_exists(path):
+            # All sockets exist - should prefer the first one
+            return path in UNIX_SOCKET_PATHS
+
+        with mock.patch('docker.constants.os.path.exists', side_effect=mock_exists):
+            result = _find_available_unix_socket()
+            assert result == "http+unix:///var/run/docker.sock"
+
+    def test_find_socket_falls_back_to_docker_desktop(self):
+        """When only ~/.docker/run/docker.sock exists, it should be used."""
+        from unittest import mock
+        from docker.constants import UNIX_SOCKET_PATHS, _find_available_unix_socket
+
+        docker_desktop_socket = os.path.expanduser('~/.docker/run/docker.sock')
+
+        def mock_exists(path):
+            # Only Docker Desktop v4.x+ socket exists
+            return path == docker_desktop_socket
+
+        with mock.patch('docker.constants.os.path.exists', side_effect=mock_exists):
+            result = _find_available_unix_socket()
+            assert result == f"http+unix://{docker_desktop_socket}"
+
+    def test_find_socket_falls_back_to_older_docker_desktop(self):
+        """When only ~/.docker/desktop/docker.sock exists, it should be used."""
+        from unittest import mock
+        from docker.constants import UNIX_SOCKET_PATHS, _find_available_unix_socket
+
+        older_desktop_socket = os.path.expanduser('~/.docker/desktop/docker.sock')
+
+        def mock_exists(path):
+            # Only older Docker Desktop socket exists
+            return path == older_desktop_socket
+
+        with mock.patch('docker.constants.os.path.exists', side_effect=mock_exists):
+            result = _find_available_unix_socket()
+            assert result == f"http+unix://{older_desktop_socket}"
+
+    def test_find_socket_fallback_when_none_exist(self):
+        """When no socket exists, should fall back to traditional location."""
+        from unittest import mock
+        from docker.constants import _find_available_unix_socket
+
+        def mock_exists(path):
+            # No sockets exist
+            return False
+
+        with mock.patch('docker.constants.os.path.exists', side_effect=mock_exists):
+            result = _find_available_unix_socket()
+            # Should fall back to traditional location for consistent error messages
+            assert result == "http+unix:///var/run/docker.sock"
+
+    def test_find_socket_preference_order(self):
+        """Verify the preference order: traditional > docker desktop v4 > older desktop."""
+        from unittest import mock
+        from docker.constants import UNIX_SOCKET_PATHS, _find_available_unix_socket
+
+        docker_desktop_socket = os.path.expanduser('~/.docker/run/docker.sock')
+        older_desktop_socket = os.path.expanduser('~/.docker/desktop/docker.sock')
+
+        # Test: when docker desktop v4 and older both exist, v4 should win
+        def mock_exists_v4_and_older(path):
+            return path in [docker_desktop_socket, older_desktop_socket]
+
+        with mock.patch('docker.constants.os.path.exists', side_effect=mock_exists_v4_and_older):
+            result = _find_available_unix_socket()
+            assert result == f"http+unix://{docker_desktop_socket}"
+
+    def test_unix_socket_paths_order(self):
+        """Verify UNIX_SOCKET_PATHS contains expected paths in correct order."""
+        from docker.constants import UNIX_SOCKET_PATHS
+
+        assert len(UNIX_SOCKET_PATHS) == 3
+        assert UNIX_SOCKET_PATHS[0] == '/var/run/docker.sock'
+        assert UNIX_SOCKET_PATHS[1] == os.path.expanduser('~/.docker/run/docker.sock')
+        assert UNIX_SOCKET_PATHS[2] == os.path.expanduser('~/.docker/desktop/docker.sock')
