@@ -36,7 +36,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
 
     def test_run_with_image_that_does_not_exist(self):
         client = docker.from_env(version=TEST_API_VERSION)
-        with pytest.raises(docker.errors.ImageNotFound):
+        with pytest.raises((docker.errors.ImageNotFound, docker.errors.NotFound)):
             client.containers.run("dockerpytest_does_not_exist")
 
     @pytest.mark.skipif(
