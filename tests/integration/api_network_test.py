@@ -415,6 +415,7 @@ class TestNetworks(BaseAPIIntegrationTest):
 
         container = self.client.create_container(TEST_IMG, 'top')
         self.tmp_containers.append(container)
+        self.client.start(container)
 
         self.client.connect_container_to_network(
             container, net_name, mac_address='02:42:ac:11:00:02'
