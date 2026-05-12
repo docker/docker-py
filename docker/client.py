@@ -1,5 +1,8 @@
+import os
+
 from .api.client import APIClient
 from .constants import DEFAULT_MAX_POOL_SIZE, DEFAULT_TIMEOUT_SECONDS
+from .context import ContextAPI
 from .models.configs import ConfigCollection
 from .models.containers import ContainerCollection
 from .models.images import ImageCollection
@@ -78,6 +81,10 @@ class DockerClient:
             use_ssh_client (bool): If set to `True`, an ssh connection is
                 made via shelling out to the ssh client. Ensure the ssh
                 client is installed and configured on the host.
+            use_context (bool): If ``True`` (the default), fall back to the
+                current Docker CLI context (``~/.docker/config.json`` /
+                ``DOCKER_CONTEXT``) when ``DOCKER_HOST`` is not set. This
+                allows the client to talk to Docker Desktop out of the box.
 
         Example:
 
@@ -91,12 +98,66 @@ class DockerClient:
         max_pool_size = kwargs.pop('max_pool_size', DEFAULT_MAX_POOL_SIZE)
         version = kwargs.pop('version', None)
         use_ssh_client = kwargs.pop('use_ssh_client', False)
+        use_context = kwargs.pop('use_context', True)
+        environment = kwargs.get('environment') or os.environ
+
+        params = kwargs_from_env(**kwargs)
+        if use_context and 'base_url' not in params:
+            for k, v in ContextAPI.kwargs_from_context(
+                    environment=environment).items():
+                params.setdefault(k, v)
+
         return cls(
             timeout=timeout,
             max_pool_size=max_pool_size,
             version=version,
             use_ssh_client=use_ssh_client,
-            **kwargs_from_env(**kwargs)
+            **params,
+        )
+
+    @classmethod
+    def from_context(cls, name=None, **kwargs):
+        """
+        Return a client configured from a Docker CLI context.
+
+        With no ``name``, resolves the current context the same way the
+        Docker CLI does: ``DOCKER_CONTEXT`` env var, then the
+        ``currentContext`` field in ``~/.docker/config.json``, falling back
+        to the built-in ``default`` context. On a machine with Docker
+        Desktop installed this typically resolves to ``desktop-linux``.
+
+        Args:
+            name (str): Name of the context to load. ``None`` (the default)
+                means "use the current context".
+            version (str): The version of the API to use. Set to ``auto`` to
+                automatically detect the server's version.
+            timeout (int): Default timeout for API calls, in seconds.
+            max_pool_size (int): The maximum number of connections to save in
+                the pool.
+            use_ssh_client (bool): If ``True``, shell out to the ssh client
+                for ssh:// contexts.
+
+        Example:
+
+            >>> import docker
+            >>> client = docker.DockerClient.from_context()
+            >>> # or, pick a specific context:
+            >>> client = docker.DockerClient.from_context('desktop-linux')
+        """
+        timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
+        max_pool_size = kwargs.pop('max_pool_size', DEFAULT_MAX_POOL_SIZE)
+        version = kwargs.pop('version', None)
+        use_ssh_client = kwargs.pop('use_ssh_client', False)
+
+        params = ContextAPI.kwargs_from_context(name=name)
+        params.update(kwargs)
+
+        return cls(
+            timeout=timeout,
+            max_pool_size=max_pool_size,
+            version=version,
+            use_ssh_client=use_ssh_client,
+            **params,
         )
 
     # Resources
@@ -220,3 +281,4 @@ class DockerClient:
 
 
 from_env = DockerClient.from_env
+from_context = DockerClient.from_context
