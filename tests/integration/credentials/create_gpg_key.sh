@@ -1,12 +1,4 @@
 #!/usr/bin/sh
-haveged
-gpg --batch --gen-key <<-EOF
-%echo Generating a standard key
-Key-Type: DSA
-Key-Length: 1024
-Subkey-Type: ELG-E
-Subkey-Length: 1024
-Name-Real: Sakuya Izayoi
-Name-Email: sakuya@gensokyo.jp
-Expire-Date: 0
-EOF
+gpg --batch --passphrase '' --quick-gen-key 'Example User <user@example.com>' ed25519 cert 0
+FINGERPRINT=$(gpg --no-auto-check-trustdb --list-secret-keys --with-colons | awk -F: '/^fpr/{print $10; exit}')
+gpg --batch --passphrase '' --quick-add-key "$FINGERPRINT" cv25519 encr 0
