@@ -1,10 +1,15 @@
+import json
+import os
+import tempfile
 import unittest
+from unittest import mock
 
 import pytest
 
 import docker
 from docker.constants import DEFAULT_NPIPE, DEFAULT_UNIX_SOCKET, IS_WINDOWS_PLATFORM
 from docker.context import Context, ContextAPI
+from docker.context.config import get_context_dir, get_meta_dir, get_tls_dir
 
 
 class BaseContextTest(unittest.TestCase):
@@ -49,3 +54,37 @@ class BaseContextTest(unittest.TestCase):
             DEFAULT_NPIPE,
             DEFAULT_UNIX_SOCKET[5:],
         )
+
+
+@pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='POSIX-specific HOME handling')
+def test_context_paths_use_default_docker_config_dir_when_config_missing():
+    with tempfile.TemporaryDirectory() as home:
+        with mock.patch.dict(os.environ, {'HOME': home}, clear=False):
+            assert get_context_dir() == os.path.join(home, '.docker', 'contexts')
+            assert get_meta_dir('demo').startswith(
+                os.path.join(home, '.docker', 'contexts', 'meta')
+            )
+            assert get_tls_dir('demo').startswith(
+                os.path.join(home, '.docker', 'contexts', 'tls')
+            )
+
+
+@pytest.mark.skipif(IS_WINDOWS_PLATFORM, reason='POSIX-specific HOME handling')
+def test_set_current_context_creates_config_in_default_docker_dir():
+    with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as cwd:
+        with mock.patch.dict(os.environ, {'HOME': home}, clear=False):
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(cwd)
+                ctx = ContextAPI.create_context('demo')
+                ContextAPI.set_current_context('demo')
+            finally:
+                os.chdir(old_cwd)
+
+        config_path = os.path.join(home, '.docker', 'config.json')
+        with open(config_path) as f:
+            config = json.load(f)
+
+        assert config["currentContext"] == 'demo'
+        assert ctx.meta_path.startswith(os.path.join(home, '.docker', 'contexts'))
+        assert not os.path.exists(os.path.join(cwd, 'contexts'))
