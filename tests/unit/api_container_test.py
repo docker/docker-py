@@ -369,6 +369,22 @@ class CreateContainerTest(BaseAPIClientTest):
         assert args[1]['headers'] == {'Content-Type': 'application/json'}
         assert args[1]['params'] == {'name': None, 'platform': 'linux'}
 
+    def test_create_container_with_pull(self):
+        self.client.create_container('busybox', 'true',
+                                     pull='always')
+
+        args = fake_request.call_args
+        assert args[0][1] == url_prefix + 'containers/create'
+        assert json.loads(args[1]['data']) == json.loads('''
+            {"Tty": false, "Image": "busybox", "Cmd": ["true"],
+             "AttachStdin": false,
+             "AttachStderr": true, "AttachStdout": true,
+             "StdinOnce": false,
+             "OpenStdin": false, "NetworkDisabled": false}
+        ''')
+        assert args[1]['headers'] == {'Content-Type': 'application/json'}
+        assert args[1]['params'] == {'name': None, 'pull': 'always'}
+
     def test_create_container_with_mem_limit_as_int(self):
         self.client.create_container(
             'busybox', 'true', host_config=self.client.create_host_config(
