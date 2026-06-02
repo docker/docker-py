@@ -10,8 +10,8 @@ jobs:
     lint:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
+            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+            - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
               with:
                   python-version: '3.x'
             - run: pip install -U ruff==0.1.8
@@ -21,12 +21,12 @@ jobs:
     build:
       runs-on: ubuntu-22.04
       steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-python@v5
+        - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
           with:
             python-version: '3.x'
         - run: pip3 install build && python -m build .
-        - uses: actions/upload-artifact@v4
+        - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
           with:
             name: dist
             path: dist
@@ -38,9 +38,9 @@ jobs:
                 python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
             - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v5
+              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
               with:
                 python-version: ${{ matrix.python-version }}
                 allow-prereleases: true
@@ -61,7 +61,7 @@ jobs:
                 variant: [ "integration-dind", "integration-dind-ssl", "integration-dind-ssh" ]
 
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
               with:
                 fetch-depth: 0
                 fetch-tags: true
