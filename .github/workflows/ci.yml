@@ -70,3 +70,16 @@ jobs:
                   docker logout
                   rm -rf ~/.docker
                   make ${{ matrix.variant }}
+
+    arm64-integration-tests:
+        runs-on: ubuntu-24.04-arm
+        steps:
+            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+              with:
+                fetch-depth: 0
+                fetch-tags: true
+            - name: make integration-dind
+              run: |
+                  docker logout
+                  rm -rf ~/.docker
+                  make integration-dind
