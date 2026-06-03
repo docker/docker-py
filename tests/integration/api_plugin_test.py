@@ -1,4 +1,5 @@
 import os
+import platform
 
 import pytest
 
@@ -11,6 +12,10 @@ SSHFS = 'vieux/sshfs:latest'
 
 
 @requires_api_version('1.25')
+@pytest.mark.skipif(
+    platform.machine().lower() not in ('amd64', 'x86_64'),
+    reason='vieux/sshfs plugin is only supported on amd64',
+)
 class PluginTest(BaseAPIIntegrationTest):
     @classmethod
     def teardown_class(cls):

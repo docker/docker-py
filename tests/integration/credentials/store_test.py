@@ -1,4 +1,5 @@
 import os
+import platform
 import random
 import shutil
 import sys
@@ -14,6 +15,10 @@ from docker.credentials import (
 )
 
 
+@pytest.mark.skipif(
+    platform.machine().lower() not in ('amd64', 'x86_64'),
+    reason='docker-credential-pass test helper is only supported on amd64',
+)
 class TestStore:
     def teardown_method(self):
         for server in self.tmp_keys:
