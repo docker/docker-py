@@ -249,6 +249,7 @@ class SwarmTest(BaseAPIIntegrationTest):
             rotate_manager_unlock_key=True
         )
         key_2 = self.client.get_unlock_key()
+        self._unlock_key = key_2
         assert key_1['UnlockKey'] != key_2['UnlockKey']
 
     @requires_api_version('1.30')
