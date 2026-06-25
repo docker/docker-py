@@ -398,17 +398,22 @@ class APIClient(
         socket = self._get_raw_response_socket(response)
         self._disable_socket_timeout(socket)
 
-        while True:
-            header = response.raw.read(STREAM_HEADER_SIZE_BYTES)
-            if not header:
-                break
-            _, length = struct.unpack('>BxxxL', header)
-            if not length:
-                continue
-            data = response.raw.read(length)
-            if not data:
-                break
-            yield data
+        # Close the response (and its socket/fd) even if the consumer stops
+        # iterating early, raises, or drops the generator. See #2766.
+        try:
+            while True:
+                header = response.raw.read(STREAM_HEADER_SIZE_BYTES)
+                if not header:
+                    break
+                _, length = struct.unpack('>BxxxL', header)
+                if not length:
+                    continue
+                data = response.raw.read(length)
+                if not data:
+                    break
+                yield data
+        finally:
+            response.close()
 
     def _stream_raw_result(self, response, chunk_size=1, decode=True):
         ''' Stream result for TTY-enabled container and raw binary data'''
@@ -419,12 +424,18 @@ class APIClient(
         socket = self._get_raw_response_socket(response)
         self._disable_socket_timeout(socket)
 
-        yield from response.iter_content(chunk_size, decode)
+        # Close the response (and its socket/fd) even if the consumer stops
+        # iterating early, raises, or drops the generator. See #2766.
+        try:
+            yield from response.iter_content(chunk_size, decode)
+        finally:
+            response.close()
 
     def _read_from_socket(self, response, stream, tty=True, demux=False):
         """Consume all data from the socket, close the response and return the
-        data. If stream=True, then a generator is returned instead and the
-        caller is responsible for closing the response.
+        data. If stream=True, then a generator is returned instead; the
+        response is closed when the generator is exhausted, closed, or garbage
+        collected.
         """
         socket = self._get_raw_response_socket(response)
 
@@ -438,7 +449,15 @@ class APIClient(
             gen = (data for (_, data) in gen)
 
         if stream:
-            return gen
+            # Wrap the generator so the response (and its socket/fd) is closed
+            # even if the consumer stops iterating early, raises, or drops the
+            # generator. See #2766.
+            def _closing_stream():
+                try:
+                    yield from gen
+                finally:
+                    response.close()
+            return _closing_stream()
         else:
             try:
                 # Wait for all frames, concatenate them, and return the result
