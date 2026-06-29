@@ -133,6 +133,33 @@ class ContextAPI:
         return cls.get_context()
 
     @classmethod
+    def kwargs_from_context(cls, name=None, environment=None):
+        """Build ``base_url`` / ``tls`` kwargs from a Docker CLI context.
+
+        Mirrors the Docker CLI: if ``name`` is not given, honours the
+        ``DOCKER_CONTEXT`` env var, then the ``currentContext`` field in
+        ``~/.docker/config.json``, defaulting to the built-in ``default``
+        context (local socket / named pipe). On a host with Docker Desktop
+        this resolves to the ``desktop-linux`` (or equivalent) context, so
+        client construction targets Docker Desktop out of the box.
+        """
+        if environment is None:
+            environment = os.environ
+        if name is None:
+            name = environment.get("DOCKER_CONTEXT")
+        ctx = cls.get_context(name)
+        if ctx is None:
+            return {}
+        host = ctx.Host
+        if not host:
+            return {}
+        params = {"base_url": host}
+        tls_cfg = ctx.TLSConfig
+        if tls_cfg is not None:
+            params["tls"] = tls_cfg
+        return params
+
+    @classmethod
     def set_current_context(cls, name="default"):
         ctx = cls.get_context(name)
         if not ctx:

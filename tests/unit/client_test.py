@@ -9,7 +9,9 @@ import docker
 from docker.constants import (
     DEFAULT_DOCKER_API_VERSION,
     DEFAULT_MAX_POOL_SIZE,
+    DEFAULT_NPIPE,
     DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_UNIX_SOCKET,
     IS_WINDOWS_PLATFORM,
 )
 from docker.utils import kwargs_from_env
@@ -193,7 +195,9 @@ class FromEnvTest(unittest.TestCase):
     )
     @mock.patch("docker.transport.unixconn.UnixHTTPConnectionPool")
     def test_default_pool_size_from_env_unix(self, mock_obj):
-        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
+        client = docker.from_env(
+            version=DEFAULT_DOCKER_API_VERSION, use_context=False,
+        )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
 
@@ -227,7 +231,8 @@ class FromEnvTest(unittest.TestCase):
     def test_pool_size_from_env_unix(self, mock_obj):
         client = docker.from_env(
             version=DEFAULT_DOCKER_API_VERSION,
-            max_pool_size=POOL_SIZE
+            max_pool_size=POOL_SIZE,
+            use_context=False,
         )
         mock_obj.return_value.urlopen.return_value.status = 200
         client.ping()
@@ -256,3 +261,87 @@ class FromEnvTest(unittest.TestCase):
                                          60,
                                          maxsize=POOL_SIZE
                                          )
+
+
+class FromContextTest(unittest.TestCase):
+    """from_env / from_context honour Docker CLI contexts so the SDK
+    talks to Docker Desktop (or any other current context) by default."""
+
+    def setUp(self):
+        self.os_environ = os.environ.copy()
+        # Make sure DOCKER_HOST does not short-circuit the context path
+        os.environ.pop('DOCKER_HOST', None)
+        os.environ.pop('DOCKER_CONTEXT', None)
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self.os_environ)
+
+    @mock.patch('docker.client.ContextAPI.kwargs_from_context')
+    def test_from_env_uses_current_context_when_no_docker_host(
+            self, mock_ctx):
+        mock_ctx.return_value = {
+            'base_url': 'unix:///Users/me/.docker/run/docker.sock',
+        }
+        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
+        assert mock_ctx.called
+        # Unix socket base_urls are rewritten internally; confirm the
+        # underlying APIClient picked up the context-supplied socket.
+        assert (
+            client.api._custom_adapter.socket_path
+            == '/Users/me/.docker/run/docker.sock'
+        )
+
+    @mock.patch('docker.client.ContextAPI.kwargs_from_context')
+    def test_from_env_docker_host_overrides_context(self, mock_ctx):
+        mock_ctx.return_value = {
+            'base_url': 'unix:///Users/me/.docker/run/docker.sock',
+        }
+        os.environ['DOCKER_HOST'] = 'tcp://192.168.59.103:2375'
+        client = docker.from_env(version=DEFAULT_DOCKER_API_VERSION)
+        assert client.api.base_url == 'http://192.168.59.103:2375'
+        # When DOCKER_HOST is set we don't need the context fallback.
+        assert not mock_ctx.called
+
+    @mock.patch('docker.client.ContextAPI.kwargs_from_context')
+    def test_from_env_use_context_false_skips_context(self, mock_ctx):
+        client = docker.from_env(
+            version=DEFAULT_DOCKER_API_VERSION, use_context=False,
+        )
+        assert not mock_ctx.called
+        # Falls back to APIClient's own platform default.
+        assert client.api.base_url in (
+            'http+docker://localhost', 'http+docker://localnpipe',
+        )
+
+    @mock.patch('docker.client.ContextAPI.kwargs_from_context')
+    def test_from_context_uses_named_context(self, mock_ctx):
+        mock_ctx.return_value = {
+            'base_url': 'unix:///Users/me/.docker/run/docker.sock',
+        }
+        client = docker.from_context(
+            'desktop-linux', version=DEFAULT_DOCKER_API_VERSION,
+        )
+        mock_ctx.assert_called_once_with(name='desktop-linux')
+        assert (
+            client.api._custom_adapter.socket_path
+            == '/Users/me/.docker/run/docker.sock'
+        )
+
+    def test_kwargs_from_context_honours_docker_context_env(self):
+        from docker.context import ContextAPI
+        # No context with this name exists; helper should return {} rather
+        # than raise, leaving APIClient to use its own default.
+        params = ContextAPI.kwargs_from_context(
+            environment={'DOCKER_CONTEXT': 'does-not-exist'},
+        )
+        assert params == {}
+
+    def test_kwargs_from_context_default(self):
+        from docker.context import ContextAPI
+        params = ContextAPI.kwargs_from_context(name='default')
+        # The default context always resolves to the local socket / pipe.
+        assert 'base_url' in params
+        assert params['base_url'] in (
+            DEFAULT_UNIX_SOCKET[len('http+'):], DEFAULT_NPIPE,
+        )
