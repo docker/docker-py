@@ -91,6 +91,7 @@ That's just a taste of what you can do with the Docker SDK for Python. For more,
   swarm
   volumes
   api
+  streams
   tls
   user_guides/index
   change-log

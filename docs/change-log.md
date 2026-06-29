@@ -1,6 +1,16 @@
 Changelog
 ==========
 
+Unreleased
+----------
+### Bugfixes
+- Fixed a socket/file-descriptor leak in streaming endpoints (`logs(stream=True)`,
+  `events`, `attach`, `stats`, raw exec streams) when the consumer stopped
+  iterating early, raised, or dropped the iterator without closing it
+  ([#2766](https://github.com/docker/docker-py/issues/2766)). The underlying
+  response is now closed on early break, exception, `.close()`, or garbage
+  collection.
+
 7.1.0
 -----
 ### Upgrade Notes
