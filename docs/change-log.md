@@ -1,6 +1,29 @@
 Changelog
 ==========
 
+7.2.0
+-----
+### Upgrade Notes
+- `docker.from_env()` now honors the active Docker CLI context when `DOCKER_HOST` is not set.
+  - This means the client may connect to the daemon selected by `DOCKER_CONTEXT` or the current context in `~/.docker/config.json`, matching Docker CLI behavior more closely.
+  - If your application relied on the previous default connection behavior, set `DOCKER_HOST` explicitly, set `DOCKER_CONTEXT=default`, or pass `use_context=False` to `DockerClient.from_env()`.
+- Added `docker.from_context()` / `DockerClient.from_context()` for explicitly creating a client from a Docker CLI context.
+
+### Features
+- Added support for Docker contexts when creating the default client
+- Added subpath support for volumes
+
+### Bugfixes
+- Fixed `exec_run` documentation for the `stream` parameter
+- Fixed image loading to avoid depending on the deprecated `JSONMessage.error` field
+- Preserved the rotated unlock key in swarm integration tests
+- Fixed SSL certificate generation in tests
+- Fixed IPv6 integration tests by explicitly enabling IPv6 where required
+
+## Miscellaneous
+- Updated tests for newer Docker Engine behavior
+- CI and build updates
+
 7.1.0
 -----
 ### Upgrade Notes
