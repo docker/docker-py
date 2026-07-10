@@ -1,5 +1,5 @@
-TEST_API_VERSION ?= 1.45
-TEST_ENGINE_VERSION ?= 26.1
+TEST_API_VERSION ?= 1.48
+TEST_ENGINE_VERSION ?= 28.3
 
 ifeq ($(OS),Windows_NT)
     PLATFORM := Windows
@@ -11,7 +11,7 @@ ifeq ($(PLATFORM),Linux)
 	uid_args := "--build-arg uid=$(shell id -u) --build-arg gid=$(shell id -g)"
 endif
 
-SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER ?= $(shell git describe --match '[0-9]*' --dirty='.m' --always --tags 2>/dev/null | sed -r 's/-([0-9]+)/.dev\1/' | sed 's/-/+/')
+SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER ?= $(shell git describe --match '[0-9]*' --dirty='.m' --tags 2>/dev/null | sed -r 's/-([0-9]+)/.dev\1/' | sed 's/-/+/')
 ifeq ($(SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER),)
 	SETUPTOOLS_SCM_PRETEND_VERSION_DOCKER = "0.0.0.dev0"
 endif
