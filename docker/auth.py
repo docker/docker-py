@@ -288,17 +288,35 @@ class AuthConfig(dict):
             # Retrieve all credentials from the default store
             store = self._get_store_instance(self.creds_store)
             for k in store.list().keys():
-                auth_data[k] = self._resolve_authconfig_credstore(
-                    k, self.creds_store
-                )
-                auth_data[convert_to_hostname(k)] = auth_data[k]
+                try:
+                    cred = self._resolve_authconfig_credstore(
+                        k, self.creds_store
+                    )
+                except errors.DockerException as e:
+                    log.warning(
+                        'Failed to retrieve credentials from store '
+                        '"%s" for %s: %s — skipping this entry',
+                        self.creds_store, k, e,
+                    )
+                    continue
+                auth_data[k] = cred
+                auth_data[convert_to_hostname(k)] = cred
 
         # credHelpers entries take priority over all others
         for reg, store_name in self.cred_helpers.items():
-            auth_data[reg] = self._resolve_authconfig_credstore(
-                reg, store_name
-            )
-            auth_data[convert_to_hostname(reg)] = auth_data[reg]
+            try:
+                cred = self._resolve_authconfig_credstore(
+                    reg, store_name
+                )
+            except errors.DockerException as e:
+                log.warning(
+                    'Failed to retrieve credentials from store '
+                    '"%s" for %s: %s — skipping this entry',
+                    store_name, reg, e,
+                )
+                continue
+            auth_data[reg] = cred
+            auth_data[convert_to_hostname(reg)] = cred
 
         return auth_data
 
