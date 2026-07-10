@@ -1,3 +1,4 @@
+import os
 import sys
 
 from .version import __version__
@@ -11,7 +12,14 @@ CONTAINER_LIMITS_KEYS = [
 ]
 
 DEFAULT_HTTP_HOST = "127.0.0.1"
-DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
+
+# Check for OrbStack socket first, fall back to standard Docker socket
+ORBSTACK_SOCKET = os.path.expanduser("~/.orbstack/run/docker.sock")
+if os.path.exists(ORBSTACK_SOCKET):
+    DEFAULT_UNIX_SOCKET = f"http+unix://{ORBSTACK_SOCKET}"
+else:
+    DEFAULT_UNIX_SOCKET = "http+unix:///var/run/docker.sock"
+
 DEFAULT_NPIPE = 'npipe:////./pipe/docker_engine'
 
 BYTE_UNITS = {

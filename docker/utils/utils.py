@@ -16,6 +16,7 @@ from ..constants import (
     DEFAULT_HTTP_HOST,
     DEFAULT_NPIPE,
     DEFAULT_UNIX_SOCKET,
+    ORBSTACK_SOCKET,
 )
 from ..tls import TLSConfig
 
@@ -235,6 +236,9 @@ def parse_host(addr, is_win32=False, tls=False):
     if not addr and is_win32:
         return DEFAULT_NPIPE
     if not addr or addr.strip() == 'unix://':
+        # If OrbStack socket exists, use it
+        if os.path.exists(ORBSTACK_SOCKET):
+            return f"http+unix://{ORBSTACK_SOCKET}"
         return DEFAULT_UNIX_SOCKET
 
     addr = addr.strip()
