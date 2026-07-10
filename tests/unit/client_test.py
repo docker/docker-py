@@ -91,9 +91,11 @@ class ClientTest(unittest.TestCase):
         client.ping()
 
         base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
+        # Extract socket path from DEFAULT_UNIX_SOCKET (remove http+unix:// prefix)
+        socket_path = DEFAULT_UNIX_SOCKET.replace('http+unix://', '')
 
         mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+                                         socket_path,
                                          60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
@@ -127,9 +129,11 @@ class ClientTest(unittest.TestCase):
         client.ping()
 
         base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
+        # Extract socket path from DEFAULT_UNIX_SOCKET (remove http+unix:// prefix)
+        socket_path = DEFAULT_UNIX_SOCKET.replace('http+unix://', '')
 
         mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+                                         socket_path,
                                          60,
                                          maxsize=POOL_SIZE
                                          )
@@ -202,9 +206,11 @@ class FromEnvTest(unittest.TestCase):
         client.ping()
 
         base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
+        # Extract socket path from DEFAULT_UNIX_SOCKET (remove http+unix:// prefix)
+        socket_path = DEFAULT_UNIX_SOCKET.replace('http+unix://', '')
 
         mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+                                         socket_path,
                                          60,
                                          maxsize=DEFAULT_MAX_POOL_SIZE
                                          )
@@ -238,9 +244,11 @@ class FromEnvTest(unittest.TestCase):
         client.ping()
 
         base_url = f"{client.api.base_url}/v{client.api._version}/_ping"
+        # Extract socket path from DEFAULT_UNIX_SOCKET (remove http+unix:// prefix)
+        socket_path = DEFAULT_UNIX_SOCKET.replace('http+unix://', '')
 
         mock_obj.assert_called_once_with(base_url,
-                                         "/var/run/docker.sock",
+                                         socket_path,
                                          60,
                                          maxsize=POOL_SIZE
                                          )
