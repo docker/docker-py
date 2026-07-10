@@ -1,85 +1,130 @@
-name: Python package
+name: ci
 
-on: [push, pull_request]
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+  pull_request:
 
 env:
-  DOCKER_BUILDKIT: '1'
+  DOCKER_BUILDKIT: 1
   FORCE_COLOR: 1
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-            - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-              with:
-                  python-version: '3.x'
-            - run: pip install -U ruff==0.1.8
-            - name: Run ruff
-              run: ruff docker tests
-
-    build:
-      runs-on: ubuntu-22.04
-      steps:
-        - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-          with:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      -
+        name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
             python-version: '3.x'
-        - run: pip3 install build && python -m build .
-        - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-          with:
-            name: dist
-            path: dist
+      -
+        name: Install ruff
+        run: pip install -U ruff==0.1.8
+      -
+        name: Run ruff
+        run: ruff docker tests
 
-    unit-tests:
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      -
+        name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.x'
+      -
+        name: Build
+        run: pip3 install build && python -m build .
+      -
+        name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dist
+          path: dist
 
-        steps:
-            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-            - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-              with:
-                python-version: ${{ matrix.python-version }}
-                allow-prereleases: true
-            - name: Install dependencies
-              run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install '.[ssh,dev]'
-            - name: Run unit tests
-              run: |
-                  docker logout
-                  rm -rf ~/.docker
-                  py.test -v --cov=docker tests/unit
+  unit-tests:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version:
+          - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      -
+        name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      -
+        name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install '.[ssh,dev]'
+      -
+        name: Run unit tests
+        run: |
+          docker logout
+          rm -rf ~/.docker
+          py.test -v --cov=docker tests/unit
 
-    integration-tests:
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                variant: [ "integration-dind", "integration-dind-ssl", "integration-dind-ssh" ]
+  integration-tests:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        variant:
+          - integration-dind
+          - integration-dind-ssl
+          - integration-dind-ssh
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      -
+        name: Run ${{ matrix.variant }}
+        run: |
+          docker logout
+          rm -rf ~/.docker
+          make ${{ matrix.variant }}
 
-        steps:
-            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-              with:
-                fetch-depth: 0
-                fetch-tags: true
-            - name: make ${{ matrix.variant }}
-              run: |
-                  docker logout
-                  rm -rf ~/.docker
-                  make ${{ matrix.variant }}
-
-    arm64-integration-tests:
-        runs-on: ubuntu-24.04-arm
-        steps:
-            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-              with:
-                fetch-depth: 0
-                fetch-tags: true
-            - name: make integration-dind
-              run: |
-                  docker logout
-                  rm -rf ~/.docker
-                  make integration-dind
+  arm64-integration-tests:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      -
+        name: Run integration-dind
+        run: |
+          docker logout
+          rm -rf ~/.docker
+          make integration-dind
