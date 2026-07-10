@@ -359,6 +359,7 @@ class APIClient(
             if decode:
                 yield from json_stream(self._stream_helper(response, False))
             else:
+                self._raise_for_status(response)
                 reader = response.raw
                 while not reader.closed:
                     # this read call will block until we get a chunk
