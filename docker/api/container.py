@@ -1074,26 +1074,27 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def restart(self, container, timeout=10):
+    def restart(self, container, timeout=10, signal=None):
         """
         Restart a container. Similar to the ``docker restart`` command.
 
         Args:
-            container (str or dict): The container to restart. If a dict, the
-                ``Id`` key is used.
-            timeout (int): Number of seconds to try to stop for before killing
-                the container. Once killed it will then be restarted. Default
-                is 10 seconds.
+          container (str or dict): The container to restart. If a dict, the ``Id`` key is used.
+          timeout (int): Number of seconds to try to stop for before killing the container. Once killed it will then be restarted. Default is 10 seconds.
+          signal (str, optional): The signal to send when stopping the container. Defaults to None, which uses the server's default behavior.
 
         Raises:
-            :py:class:`docker.errors.APIError`
-                If the server returns an error.
+           :py:class:`docker.errors.APIError`
+              If the server returns an error.
         """
         params = {'t': timeout}
+        if signal is not None:
+           params['signal'] = signal
+
         url = self._url("/containers/{0}/restart", container)
         conn_timeout = self.timeout
         if conn_timeout is not None:
-            conn_timeout += timeout
+           conn_timeout += timeout
         res = self._post(url, params=params, timeout=conn_timeout)
         self._raise_for_status(res)
 
@@ -1184,30 +1185,33 @@ class ContainerApiMixin:
             return self._result(self._get(url, params=params), json=True)
 
     @utils.check_resource('container')
-    def stop(self, container, timeout=None):
+    def stop(self, container, timeout=None, signal=None):
         """
         Stops a container. Similar to the ``docker stop`` command.
 
         Args:
-            container (str): The container to stop
-            timeout (int): Timeout in seconds to wait for the container to
-                stop before sending a ``SIGKILL``. If None, then the
-                StopTimeout value of the container will be used.
-                Default: None
+          container (str): The container to stop.
+          timeout (int): Timeout in seconds to wait for the container to stop before sending a ``SIGKILL``. If None, then the StopTimeout value of the container will be used. Default: None. 
+          signal (str, optional): The signal to send when stopping the container. If not specified, the server's default behavior is used.
 
         Raises:
-            :py:class:`docker.errors.APIError`
-                If the server returns an error.
+          :py:class:`docker.errors.APIError`
+             If the server returns an error.
         """
         if timeout is None:
-            params = {}
-            timeout = 10
+          params = {}
+          timeout_val = 10
         else:
-            params = {'t': timeout}
+          params = {'t': timeout}
+          timeout_val = timeout
+
+        if signal is not None:
+          params['signal'] = signal
+
         url = self._url("/containers/{0}/stop", container)
         conn_timeout = self.timeout
         if conn_timeout is not None:
-            conn_timeout += timeout
+          conn_timeout += timeout_val
         res = self._post(url, params=params, timeout=conn_timeout)
         self._raise_for_status(res)
 

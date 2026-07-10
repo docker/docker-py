@@ -37,8 +37,9 @@ class UnixHTTPConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         self.timeout = timeout
 
     def _new_conn(self):
+        self.num_connections += 1
         return UnixHTTPConnection(
-            self.base_url, self.socket_path, self.timeout
+        self.base_url, self.socket_path, self.timeout
         )
 
 
