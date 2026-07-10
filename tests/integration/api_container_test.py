@@ -495,6 +495,71 @@ class CreateContainerTest(BaseAPIIntegrationTest):
         assert config['HostConfig']['UTSMode'] == 'host'
 
 
+@requires_api_version('1.48')
+class CreateContainerWithGwPriorityTest(BaseAPIIntegrationTest):
+    def test_create_container_with_gw_priority(self):
+        net_name = helpers.random_name()
+        self.client.create_network(net_name)
+        self.tmp_networks.append(net_name)
+
+        gw_priority_val = 10
+        container_name = helpers.random_name()
+
+        networking_config = self.client.create_networking_config({
+            net_name: self.client.create_endpoint_config(
+                gw_priority=gw_priority_val
+            )
+        })
+
+        container = self.client.create_container(
+            TEST_IMG,
+            ['sleep', '60'],
+            name=container_name,
+            networking_config=networking_config,
+            host_config=self.client.create_host_config(network_mode=net_name)
+        )
+        self.tmp_containers.append(container['Id'])
+        self.client.start(container['Id'])
+
+        inspect_data = self.client.inspect_container(container['Id'])
+        assert 'NetworkSettings' in inspect_data
+        assert 'Networks' in inspect_data['NetworkSettings']
+        assert net_name in inspect_data['NetworkSettings']['Networks']
+        network_data = inspect_data['NetworkSettings']['Networks'][net_name]
+        assert 'GwPriority' in network_data
+        assert network_data['GwPriority'] == gw_priority_val
+
+    def test_create_container_with_gw_priority_default(self):
+        net_name = helpers.random_name()
+        self.client.create_network(net_name)
+        self.tmp_networks.append(net_name)
+
+        container_name = helpers.random_name()
+
+        # GwPriority is not specified, daemon should default to 0
+        networking_config = self.client.create_networking_config({
+            net_name: self.client.create_endpoint_config()
+        })
+
+        container = self.client.create_container(
+            TEST_IMG,
+            ['sleep', '60'],
+            name=container_name,
+            networking_config=networking_config,
+            host_config=self.client.create_host_config(network_mode=net_name)
+        )
+        self.tmp_containers.append(container['Id'])
+        self.client.start(container['Id'])
+
+        inspect_data = self.client.inspect_container(container['Id'])
+        assert 'NetworkSettings' in inspect_data
+        assert 'Networks' in inspect_data['NetworkSettings']
+        assert net_name in inspect_data['NetworkSettings']['Networks']
+        network_data = inspect_data['NetworkSettings']['Networks'][net_name]
+        assert 'GwPriority' in network_data
+        assert network_data['GwPriority'] == 0
+
+
 @pytest.mark.xfail(
     IS_WINDOWS_PLATFORM, reason='Test not designed for Windows platform'
 )
