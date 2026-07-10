@@ -260,6 +260,16 @@ class ContainerCollectionTest(unittest.TestCase):
             'alpine', platform=None, tag='latest', all_tags=False, stream=True
         )
 
+    def test_run_with_timeout(self):
+        client = make_fake_client()
+        client.api.logs.return_value = b"a\n"
+        client.api.wait.return_value = {'StatusCode': 127}
+
+        with pytest.raises(docker.errors.ContainerError) as cm:
+            client.containers.run('alpine', "sh -c 'echo a && sleep 10 && echo b'", wait_condition={'timeout': 3})
+        assert cm.value.exit_status == 127
+        assert 'a\\n' in cm.exconly()
+
     def test_run_with_error(self):
         client = make_fake_client()
         client.api.logs.return_value = "some error"
