@@ -177,7 +177,7 @@ class ContainerCollectionTest(unittest.TestCase):
                 'PidsLimit': 500,
                 'PortBindings': {
                     '1111/tcp': [{'HostIp': '', 'HostPort': '4567'}],
-                    '2222/tcp': [{'HostIp': '', 'HostPort': ''}]
+                    '2222/tcp': [{'HostIp': '', 'HostPort': '0'}]
                 },
                 'Privileged': True,
                 'PublishAllPorts': True,
