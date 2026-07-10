@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime, timezone
 import json
 import os
 import os.path
@@ -15,6 +16,7 @@ from docker.utils import (
     compare_version,
     convert_filters,
     convert_volume_binds,
+    datetime_to_timestamp,
     decode_json_header,
     format_environment,
     kwargs_from_env,
@@ -658,3 +660,30 @@ def test_compare_versions():
     assert compare_version('1', '1.0') == 0
     assert compare_version('1.10', '1.10.1') == 1
     assert compare_version('1.10.0', '1.10') == 0
+
+
+class DatetimeToTimestampTest(unittest.TestCase):
+    def test_preserves_microsecond_precision(self):
+        dt = datetime(2025, 6, 1, 12, 0, 0, 500_000, tzinfo=timezone.utc)
+        ts = datetime_to_timestamp(dt)
+        assert isinstance(ts, float)
+        assert ts == 1748779200.5
+
+    def test_whole_second_datetime(self):
+        dt = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+        ts = datetime_to_timestamp(dt)
+        assert ts == 1748779200.0
+
+    def test_epoch(self):
+        dt = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        ts = datetime_to_timestamp(dt)
+        assert ts == 0.0
+
+    def test_naive_datetime(self):
+        # Naive datetimes are treated as local time via astimezone()
+        dt = datetime(2025, 6, 1, 12, 0, 0, 500_000)
+        ts = datetime_to_timestamp(dt)
+        # Just verify it's a float with sub-second precision preserved
+        assert isinstance(ts, float)
+        frac = ts % 1
+        assert abs(frac - 0.5) < 1e-6
