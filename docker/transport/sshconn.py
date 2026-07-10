@@ -165,7 +165,7 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
     def __init__(self, base_url, timeout=60,
                  pool_connections=constants.DEFAULT_NUM_POOLS,
                  max_pool_size=constants.DEFAULT_MAX_POOL_SIZE,
-                 shell_out=False):
+                 shell_out=False, ssh_key_filename=None, ssh_key_phrase=None, ):
         self.ssh_client = None
         if not shell_out:
             self._create_paramiko_client(base_url)
@@ -180,6 +180,8 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
         self.pools = RecentlyUsedContainer(
             pool_connections, dispose_func=lambda p: p.close()
         )
+        self.ssh_key_filename = ssh_key_filename
+        self.ssh_key_phrase = ssh_key_phrase
         super().__init__()
 
     def _create_paramiko_client(self, base_url):
@@ -209,6 +211,10 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                 self.ssh_params['username'] = host_config['user']
             if 'identityfile' in host_config:
                 self.ssh_params['key_filename'] = host_config['identityfile']
+        if self.ssh_key_filename:
+            self.ssh_params['key_filename'] = self.ssh_key_filename
+        if self.ssh_key_phrase:
+            self.ssh_params['passphrase'] = self.ssh_key_phrase
 
         self.ssh_client.load_system_host_keys()
         self.ssh_client.set_missing_host_key_policy(paramiko.RejectPolicy())

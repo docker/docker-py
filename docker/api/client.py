@@ -116,6 +116,7 @@ class APIClient(
                  timeout=DEFAULT_TIMEOUT_SECONDS, tls=False,
                  user_agent=DEFAULT_USER_AGENT, num_pools=None,
                  credstore_env=None, use_ssh_client=False,
+                 ssh_key_phrase=None, ssh_key_filename=None,
                  max_pool_size=DEFAULT_MAX_POOL_SIZE):
         super().__init__()
 
@@ -180,7 +181,8 @@ class APIClient(
             try:
                 self._custom_adapter = SSHHTTPAdapter(
                     base_url, timeout, pool_connections=num_pools,
-                    max_pool_size=max_pool_size, shell_out=use_ssh_client
+                    max_pool_size=max_pool_size, shell_out=use_ssh_client,
+                    ssh_key_phrase=ssh_key_phrase, ssh_key_filename=ssh_key_filename
                 )
             except NameError as err:
                 raise DockerException(
