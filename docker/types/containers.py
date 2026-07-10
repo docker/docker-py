@@ -284,7 +284,7 @@ class HostConfig(dict):
                  nano_cpus=None, cpuset_mems=None, runtime=None, mounts=None,
                  cpu_rt_period=None, cpu_rt_runtime=None,
                  device_cgroup_rules=None, device_requests=None,
-                 cgroupns=None):
+                 cgroupns=None, cgroup=None):
 
         if mem_limit is not None:
             self['Memory'] = parse_bytes(mem_limit)
@@ -423,6 +423,10 @@ class HostConfig(dict):
 
         if cgroup_parent is not None:
             self['CgroupParent'] = cgroup_parent
+
+        if cgroup is not None:
+            if isinstance(cgroup, str):
+                self['Cgroup'] = cgroup
 
         if ulimits is not None:
             if not isinstance(ulimits, list):
