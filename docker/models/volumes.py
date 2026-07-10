@@ -11,6 +11,20 @@ class Volume(Model):
         """The name of the volume."""
         return self.attrs['Name']
 
+    @property
+    def labels(self):
+        """
+        The labels of a volume as dictionary.
+        """
+        try:
+            result = self.attrs['Config'].get('Labels')
+            return result or {}
+        except KeyError as ke:
+            raise DockerException(
+                'Label data is not available for sparse objects. Call reload()'
+                ' to retrieve all information'
+            ) from ke
+
     def remove(self, force=False):
         """
         Remove this volume.
