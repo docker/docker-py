@@ -7,7 +7,7 @@ import requests
 import requests.adapters
 import requests.exceptions
 
-from .. import auth
+from .. import auth, context
 from ..constants import (
     DEFAULT_MAX_POOL_SIZE,
     DEFAULT_NUM_POOLS,
@@ -123,6 +123,12 @@ class APIClient(
             raise TLSParameterError(
                 'If using TLS, the base_url argument must be provided.'
             )
+
+        if base_url is None:
+            current_ctx = context.ContextAPI.get_current_context()
+            if current_ctx is not None:
+                base_url = current_ctx.Host
+                tls = current_ctx.TLSConfig
 
         self.base_url = base_url
         self.timeout = timeout
