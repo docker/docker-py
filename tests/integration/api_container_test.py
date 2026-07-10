@@ -570,7 +570,10 @@ class VolumeBindTest(BaseAPIIntegrationTest):
         mount = docker.types.Mount(
             type="bind", source=self.mount_origin, target=self.mount_dest
         )
-        host_config = self.client.create_host_config(mounts=[mount])
+        host_config = self.client.create_host_config(
+            mounts=[mount],
+            security_opt=["label=disable"],
+        )
         container = self.run_container(
             TEST_IMG, ['ls', self.mount_dest],
             host_config=host_config
@@ -587,7 +590,10 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             type="bind", source=self.mount_origin, target=self.mount_dest,
             read_only=True
         )
-        host_config = self.client.create_host_config(mounts=[mount])
+        host_config = self.client.create_host_config(
+            mounts=[mount],
+            security_opt=["label=disable"],
+        )
         container = self.run_container(
             TEST_IMG, ['ls', self.mount_dest],
             host_config=host_config
@@ -604,7 +610,10 @@ class VolumeBindTest(BaseAPIIntegrationTest):
             type="volume", source=helpers.random_name(),
             target=self.mount_dest, labels={'com.dockerpy.test': 'true'}
         )
-        host_config = self.client.create_host_config(mounts=[mount])
+        host_config = self.client.create_host_config(
+            mounts=[mount],
+            security_opt=["label=disable"],
+        )
         container = self.client.create_container(
             TEST_IMG, ['true'], host_config=host_config,
         )
@@ -693,7 +702,8 @@ class VolumeBindTest(BaseAPIIntegrationTest):
                         'ro': ro,
                     },
                 },
-                network_mode='none'
+                network_mode='none',
+                security_opt=["label=disable"],
             ),
             **kwargs
         )
@@ -710,7 +720,8 @@ class VolumeBindTest(BaseAPIIntegrationTest):
                         'propagation': propagation
                     },
                 },
-                network_mode='none'
+                network_mode='none',
+                security_opt=["label=disable"],
             ),
             **kwargs
         )
