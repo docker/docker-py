@@ -28,6 +28,30 @@ def read(socket, n=4096):
     Reads at most n bytes from socket
     """
 
+    # This socket may have been extracted from an HTTPResponse. That would have
+    # wrapped the socked with an io.BufferedReader, which may still have some
+    # "unread" bytes in its internal buffer. If that were the case, those would
+    # be preserved inside _buffer attribute of the socket (see
+    # ..api.client.APIClient._get_raw_response_socket() implementation). These
+    # must be returned firsts, before attemting any further reads from the
+    # socket.
+    if not hasattr(socket, '_buffer') or not socket._buffer:
+        return read_from_socket(socket, n)
+
+    ret, socket._buffer = socket._buffer[:n], socket._buffer[n:]
+
+    still_to_read = n - len(ret)
+    if still_to_read:
+        return ret.tobytes() + read_from_socket(socket, still_to_read)
+    else:
+        return ret.tobytes()
+
+
+def read_from_socket(socket, n=4096):
+    """
+    Reads at most n bytes from socket
+    """
+
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
     if not isinstance(socket, NpipeSocket):
