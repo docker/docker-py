@@ -894,7 +894,24 @@ class ContainerCollection(Collection):
                 stdout=stdout, stderr=stderr, stream=True, follow=True
             )
 
-        exit_status = container.wait()['StatusCode']
+        if kwargs.get('auto_remove'):
+            wait_condition = 'removed'
+        else:
+            # the wait condition should theoretically be 'next-exit' (as is
+            # used by the cli), but it may have exited already if its run time
+            # was very short, which would cause the wait to hang.
+            # 'not-running' works in both cases.
+            wait_condition = 'not-running'
+        try:
+            exit_status = container.wait(condition=wait_condition)['StatusCode']
+        except NotFound:
+            if wait_condition == 'removed':
+                # it has been already removed, which is why it was not found,
+                # so everything fine here. unfortunately, there is no way to
+                # have its real exit status, so assume success.
+                exit_status = 0
+            else:
+                raise
         if exit_status != 0:
             out = None
             if not kwargs.get('auto_remove'):
