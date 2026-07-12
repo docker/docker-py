@@ -1,4 +1,7 @@
-name: Release
+name: release
+
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -19,14 +22,19 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write # to create GitHub release
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      -
+        name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      -
+        name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.x'
-
-      - name: Generate Package
+      -
+        name: Generate Package
         run: |
           pip3 install build
           python -m build .
@@ -34,20 +42,20 @@ jobs:
           # This is also supported by Hatch; see
           # https://github.com/ofek/hatch-vcs#version-source-environment-variables
           SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.tag }}
-
-      - name: Publish to PyPI
+      -
+        name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         if: '! inputs.dry-run'
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-
-      - name: Create GitHub release
-        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
+      -
+        name: Create GitHub release
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         if: '! inputs.dry-run'
         with:
-          artifacts: "dist/*"
-          generateReleaseNotes: true
+          files: dist/*
+          generate_release_notes: true
           draft: true
-          commit: ${{ github.sha }}
+          target_commitish: ${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ inputs.tag }}
+          tag_name: ${{ inputs.tag }}
