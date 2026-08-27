@@ -19,6 +19,51 @@ class Image(Model):
         return f"<{self.__class__.__name__}: '{tag_str}'>"
 
     @property
+    def digest(self):
+        """
+        The digest of the image in the registry it was pulled from or pushed
+        to, including the ``sha256:`` prefix.
+
+        Unlike :py:attr:`id`, this identifies the image's manifest in a
+        registry, so it is the value to use to refer to this exact image
+        elsewhere.
+
+        Images that only exist on this host - one that was built locally and
+        never pushed, for instance - have no registry digest, and ``None`` is
+        returned for them.
+
+        Raises:
+            :py:class:`docker.errors.InvalidArgument`
+                If the image is known under several digests, in which case
+                there is no single answer; use :py:attr:`repo_digests`
+                instead.
+        """
+        digests = {
+            repo_digest.split('@', 1)[1]
+            for repo_digest in self.repo_digests
+            if '@' in repo_digest
+        }
+        if not digests:
+            return None
+        if len(digests) > 1:
+            raise InvalidArgument(
+                "This image has more than one digest: "
+                f"{', '.join(sorted(self.repo_digests))}. Use "
+                "Image.repo_digests to pick the relevant one."
+            )
+        return digests.pop()
+
+    @property
+    def id(self):
+        """
+        The ID of the image, as reported by the daemon. This is the digest of
+        the image's config blob - the value ``docker images`` shows - and it
+        identifies the image on this host only: it does not match the digest
+        the same image has in a registry. See :py:attr:`digest` for that.
+        """
+        return self.attrs.get(self.id_attribute)
+
+    @property
     def labels(self):
         """
         The labels of an image as dictionary.
@@ -27,10 +72,22 @@ class Image(Model):
         return result or {}
 
     @property
+    def repo_digests(self):
+        """
+        The image's digests, as ``repository@sha256:...`` references - one for
+        each repository the image is known under in a registry.
+        """
+        digests = self.attrs.get('RepoDigests')
+        if digests is None:
+            digests = []
+        return [digest for digest in digests if digest != '<none>@<none>']
+
+    @property
     def short_id(self):
         """
         The ID of the image truncated to 12 characters, plus the ``sha256:``
-        prefix.
+        prefix. Like :py:attr:`id`, this is a local identifier rather than the
+        image's digest in a registry.
         """
         if self.id.startswith('sha256:'):
             return self.id[:19]
@@ -150,15 +207,17 @@ class RegistryData(Model):
     @property
     def id(self):
         """
-        The ID of the object.
+        The digest of the image's manifest in the registry, including the
+        ``sha256:`` prefix. This is the registry digest, matching
+        :py:attr:`Image.digest` rather than :py:attr:`Image.id`.
         """
         return self.attrs['Descriptor']['digest']
 
     @property
     def short_id(self):
         """
-        The ID of the image truncated to 12 characters, plus the ``sha256:``
-        prefix.
+        The digest of the image truncated to 12 characters, plus the
+        ``sha256:`` prefix.
         """
         return self.id[:19]
 
@@ -317,6 +376,10 @@ class ImageCollection(Collection):
     def get(self, name):
         """
         Gets an image.
+
+        The returned image's :py:attr:`~Image.id` is the local image ID
+        reported by the daemon, which differs from the digest the image has
+        in a registry; use :py:attr:`~Image.digest` for the latter.
 
         Args:
             name (str): The name of the image.

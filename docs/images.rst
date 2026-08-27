@@ -31,8 +31,10 @@ Image objects
 
     The raw representation of this object from the server.
 
+  .. autoattribute:: digest
   .. autoattribute:: id
   .. autoattribute:: labels
+  .. autoattribute:: repo_digests
   .. autoattribute:: short_id
   .. autoattribute:: tags
 

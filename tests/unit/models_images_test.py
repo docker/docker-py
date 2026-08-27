@@ -1,11 +1,17 @@
 import unittest
 import warnings
 
+import pytest
+
 from docker.constants import DEFAULT_DATA_CHUNK_SIZE
+from docker.errors import InvalidArgument
 from docker.models.images import Image
 
 from .fake_api import FAKE_IMAGE_ID
 from .fake_api_client import make_fake_client
+
+DIGEST = f'sha256:{"b" * 64}'
+OTHER_DIGEST = f'sha256:{"c" * 64}'
 
 
 class ImageCollectionTest(unittest.TestCase):
@@ -127,6 +133,59 @@ class ImageTest(unittest.TestCase):
         image = Image(attrs={'Id': 'b6846070672ce4e8f1f91564ea6782bd675'
                                    'f69d65a6f73ef6262057ad0a15dcd'})
         assert image.short_id == 'b6846070672c'
+
+    def test_repo_digests(self):
+        image = Image(attrs={
+            'RepoDigests': [f'test_image@{DIGEST}']
+        })
+        assert image.repo_digests == [f'test_image@{DIGEST}']
+
+        image = Image(attrs={
+            'RepoDigests': ['<none>@<none>']
+        })
+        assert image.repo_digests == []
+
+        image = Image(attrs={
+            'RepoDigests': None
+        })
+        assert image.repo_digests == []
+
+    def test_digest(self):
+        image = Image(attrs={
+            'RepoDigests': [f'test_image@{DIGEST}']
+        })
+        assert image.digest == DIGEST
+
+        # The same image pushed to several repositories keeps its digest.
+        image = Image(attrs={
+            'RepoDigests': [
+                f'test_image@{DIGEST}',
+                f'registry.example.com/test_image@{DIGEST}',
+            ]
+        })
+        assert image.digest == DIGEST
+
+    def test_digest_without_repo_digests(self):
+        # An image that was built locally and never pushed has no digest in
+        # any registry.
+        image = Image(attrs={'RepoDigests': []})
+        assert image.digest is None
+
+        image = Image(attrs={'RepoDigests': ['<none>@<none>']})
+        assert image.digest is None
+
+        image = Image(attrs={'Id': f'sha256:{"a" * 64}'})
+        assert image.digest is None
+
+    def test_digest_with_ambiguous_repo_digests(self):
+        image = Image(attrs={
+            'RepoDigests': [
+                f'test_image@{DIGEST}',
+                f'registry.example.com/test_image@{OTHER_DIGEST}',
+            ]
+        })
+        with pytest.raises(InvalidArgument):
+            _ = image.digest
 
     def test_tags(self):
         image = Image(attrs={
