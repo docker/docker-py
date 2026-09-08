@@ -1,3 +1,4 @@
+import io
 import json
 import struct
 import urllib
@@ -427,6 +428,22 @@ class APIClient(
         caller is responsible for closing the response.
         """
         socket = self._get_raw_response_socket(response)
+
+        # The daemon answers an upgraded request with the response headers and
+        # then writes the stream on the same connection. http.client parses
+        # those headers through a buffered reader, which reads up to a whole
+        # buffer at a time, so the first frames of the stream can already be
+        # sitting in that buffer by the time we get here. Reading from the
+        # socket would skip them, and they would be lost.
+        # See https://github.com/docker/docker-py/issues/3332 and
+        # https://github.com/docker/docker-py/issues/2042.
+        reader = getattr(response.raw._fp, 'fp', None)
+        if isinstance(reader, io.BufferedReader):
+            # docker.utils.socket.read() cannot wait on a buffered reader the
+            # way it waits on a socket, so a quiet stream would now end on the
+            # socket timeout. Disable it, as the other streaming helpers do.
+            self._disable_socket_timeout(socket)
+            socket = reader
 
         gen = frames_iter(socket, tty)
 
