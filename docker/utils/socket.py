@@ -1,4 +1,5 @@
 import errno
+import io
 import os
 import select
 import socket as pysocket
@@ -23,6 +24,20 @@ class SocketError(Exception):
 NPIPE_ENDED = 109
 
 
+def _is_pipe_ended(socket, exception):
+    """
+    Whether exception is the npipe equivalent of a closed connection.
+    """
+    if isinstance(socket, io.BufferedReader):
+        # NpipeSocket.makefile() wraps the socket in a raw stream, which the
+        # buffered reader then wraps in turn.
+        socket = getattr(getattr(socket, 'raw', None), 'sock', None)
+
+    return (isinstance(socket, NpipeSocket) and
+            len(exception.args) > 0 and
+            exception.args[0] == NPIPE_ENDED)
+
+
 def read(socket, n=4096):
     """
     Reads at most n bytes from socket
@@ -30,7 +45,7 @@ def read(socket, n=4096):
 
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
-    if not isinstance(socket, NpipeSocket):
+    if not isinstance(socket, (NpipeSocket, io.BufferedReader)):
         if not hasattr(select, "poll"):
             # Limited to 1024
             select.select([socket], [], [])
@@ -40,6 +55,15 @@ def read(socket, n=4096):
             poll.poll()
 
     try:
+        if isinstance(socket, io.BufferedReader):
+            # A buffered reader is not waited on above: data that it has
+            # already buffered would not show up in a poll of the file
+            # descriptor, and the wait would block until more data arrived.
+            # read1() returns what is buffered and only reads the descriptor
+            # once the buffer is empty, which is the contract read() expects
+            # here. Plain read() would instead block until it had n bytes,
+            # holding back a frame that is complete but shorter than that.
+            return socket.read1(n)
         if hasattr(socket, 'recv'):
             return socket.recv(n)
         if isinstance(socket, pysocket.SocketIO):
@@ -49,10 +73,7 @@ def read(socket, n=4096):
         if e.errno not in recoverable_errors:
             raise
     except Exception as e:
-        is_pipe_ended = (isinstance(socket, NpipeSocket) and
-                         len(e.args) > 0 and
-                         e.args[0] == NPIPE_ENDED)
-        if is_pipe_ended:
+        if _is_pipe_ended(socket, e):
             # npipes don't support duplex sockets, so we interpret
             # a PIPE_ENDED error as a close operation (0-length read).
             return ''
