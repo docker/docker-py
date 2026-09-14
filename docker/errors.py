@@ -6,6 +6,7 @@ _image_not_found_explanation_fragments = frozenset(
         'not found: does not exist or no pull access',
         'repository does not exist',
         'was found but does not match the specified platform',
+        'failed to resolve reference',
     ]
 )
 

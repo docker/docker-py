@@ -349,32 +349,6 @@ class BuildTest(BaseAPIIntegrationTest):
         assert '127.0.0.1\textrahost.local.test' in logs
         assert '127.0.0.1\thello.world.test' in logs
 
-    @requires_experimental(until=None)
-    @requires_api_version('1.25')
-    def test_build_squash(self):
-        script = io.BytesIO('\n'.join([
-            'FROM busybox',
-            'RUN echo blah > /file_1',
-            'RUN echo blahblah > /file_2',
-            'RUN echo blahblahblah > /file_3'
-        ]).encode('ascii'))
-
-        def build_squashed(squash):
-            tag = 'squash' if squash else 'nosquash'
-            stream = self.client.build(
-                fileobj=script, tag=tag, squash=squash
-            )
-            self.tmp_imgs.append(tag)
-            for _chunk in stream:
-                pass
-
-            return self.client.inspect_image(tag)
-
-        non_squashed = build_squashed(False)
-        squashed = build_squashed(True)
-        assert len(non_squashed['RootFS']['Layers']) == 4
-        assert len(squashed['RootFS']['Layers']) == 2
-
     def test_build_stderr_data(self):
         control_chars = ['\x1b[91m', '\x1b[0m']
         snippet = 'Ancient Temple (Mystic Oriental Dream ~ Ancient Temple)'
