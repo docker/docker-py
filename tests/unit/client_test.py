@@ -269,9 +269,13 @@ class FromContextTest(unittest.TestCase):
 
     def setUp(self):
         self.os_environ = os.environ.copy()
-        # Make sure DOCKER_HOST does not short-circuit the context path
+        # Make sure DOCKER_HOST does not short-circuit the context path,
+        # and that ambient DOCKER_TLS_VERIFY/DOCKER_CERT_PATH from the host
+        # running the tests don't leak into kwargs_from_env.
         os.environ.pop('DOCKER_HOST', None)
         os.environ.pop('DOCKER_CONTEXT', None)
+        os.environ.pop('DOCKER_CERT_PATH', None)
+        os.environ.pop('DOCKER_TLS_VERIFY', None)
 
     def tearDown(self):
         os.environ.clear()
