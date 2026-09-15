@@ -38,10 +38,15 @@ class Container(Model):
         """
         The image of the container.
         """
-        image_id = self.attrs.get('ImageID', self.attrs['Image'])
+        image_id = self.attrs.get('ImageID') or self.attrs.get('Image')
         if image_id is None:
             return None
-        return self.client.images.get(image_id.split(':')[1])
+        # ``ImageID`` is a digest; strip the algorithm prefix from it. Daemons
+        # that omit ``ImageID`` report a name such as ``busybox:latest`` in
+        # ``Image`` instead, which must not be split on its tag separator.
+        if image_id.startswith('sha256:'):
+            image_id = image_id[len('sha256:'):]
+        return self.client.images.get(image_id)
 
     @property
     def labels(self):
