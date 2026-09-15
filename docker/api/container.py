@@ -1074,7 +1074,7 @@ class ContainerApiMixin:
         self._raise_for_status(res)
 
     @utils.check_resource('container')
-    def restart(self, container, timeout=10):
+    def restart(self, container, timeout=10, signal=None):
         """
         Restart a container. Similar to the ``docker restart`` command.
 
@@ -1084,6 +1084,7 @@ class ContainerApiMixin:
             timeout (int): Number of seconds to try to stop for before killing
                 the container. Once killed it will then be restarted. Default
                 is 10 seconds.
+            signal (str or int): The signal to send. Defaults to ``SIGTERM``
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -1092,6 +1093,10 @@ class ContainerApiMixin:
         params = {'t': timeout}
         url = self._url("/containers/{0}/restart", container)
         conn_timeout = self.timeout
+        if signal is not None:
+            if not isinstance(signal, str):
+                signal = int(signal)
+            params["signal"] = signal
         if conn_timeout is not None:
             conn_timeout += timeout
         res = self._post(url, params=params, timeout=conn_timeout)
@@ -1184,7 +1189,7 @@ class ContainerApiMixin:
             return self._result(self._get(url, params=params), json=True)
 
     @utils.check_resource('container')
-    def stop(self, container, timeout=None):
+    def stop(self, container, timeout=None, signal=None):
         """
         Stops a container. Similar to the ``docker stop`` command.
 
@@ -1194,6 +1199,7 @@ class ContainerApiMixin:
                 stop before sending a ``SIGKILL``. If None, then the
                 StopTimeout value of the container will be used.
                 Default: None
+            signal (str or int): The signal to send. Defaults to ``SIGTERM``
 
         Raises:
             :py:class:`docker.errors.APIError`
@@ -1206,6 +1212,10 @@ class ContainerApiMixin:
             params = {'t': timeout}
         url = self._url("/containers/{0}/stop", container)
         conn_timeout = self.timeout
+        if signal is not None:
+            if not isinstance(signal, str):
+                signal = int(signal)
+            params["signal"] = signal
         if conn_timeout is not None:
             conn_timeout += timeout
         res = self._post(url, params=params, timeout=conn_timeout)
