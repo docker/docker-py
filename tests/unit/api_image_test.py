@@ -4,6 +4,7 @@ import pytest
 
 import docker
 from docker import auth
+import docker.errors
 
 from . import fake_api
 from .api_test import (
@@ -287,6 +288,12 @@ class ImageTest(BaseAPIClientTest):
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
+
+    def test_push_image_with_exception(self):
+        with pytest.raises(Exception):
+            self.client.push("docker", stream=True, tag='tag', decode=True)
+            self.fail('An exception should have been raised')
+
 
     def test_tag_image(self):
         self.client.tag(fake_api.FAKE_IMAGE_ID, fake_api.FAKE_REPO_NAME)
