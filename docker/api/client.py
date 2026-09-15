@@ -350,6 +350,12 @@ class APIClient(
             # fine because we won't be doing TLS over them
             pass
 
+        if six.PY3:
+            # Preserve the io.BufferedReader buffer as part of the socket so
+            # that it may be read ahead of attempting futher reads from the
+            # socket -- see ..utils.socket.read() implementation.
+            setattr(sock, '_buffer', memoryview(response.raw._fp.fp.peek()))
+
         return sock
 
     def _stream_helper(self, response, decode=False):
