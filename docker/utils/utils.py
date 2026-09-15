@@ -10,6 +10,7 @@ from functools import lru_cache
 from itertools import zip_longest
 from urllib.parse import urlparse, urlunparse
 
+from .config import find_config_file, home_dir
 from .. import errors
 from ..constants import (
     BYTE_UNITS,
@@ -230,10 +231,76 @@ def parse_repository_tag(repo_name):
     return repo_name, None
 
 
+def _get_all_available_contexts():
+    context_path = os.path.join(home_dir(), ".docker", "contexts")
+
+    # the list of contexts can be found in .docker/contexts/meta/{id}/meta.json
+    if not os.path.exists(context_path) or not os.path.isdir(context_path):
+        return {}
+
+    contexts = {}
+    meta_path = os.path.join(context_path, "meta")
+    for dirpath, _, filenames in os.walk(meta_path):
+        if "meta.json" not in filenames:
+            continue
+        json_path = os.path.join(dirpath, "meta.json")
+        with open(json_path, "r") as f:
+            """
+            Example config:
+            {
+                "Name": "test",
+                "Metadata": {
+                    "StackOrchestrator": "swarm"
+                },
+                "Endpoints": {
+                    "docker": {
+                        "Host": "unix:///var/run/docker.sock",
+                        "SkipTLSVerify": false
+                    }
+                }
+            }
+            """
+            config = json.load(f)
+        assert "Name" in config
+        contexts[config["Name"]] = config
+
+    return contexts
+
+
+def _get_active_context_name():
+    with open(find_config_file(), "r") as f:
+        config = json.load(f)
+    if config and "currentContext" in config and config["currentContext"]:
+        return config["currentContext"]
+    return "default"
+
+
+def _get_active_context():
+    context_name = _get_active_context_name()
+    all_contexts = _get_all_available_contexts()
+    return all_contexts[context_name] if context_name in all_contexts else None
+
+
+def _get_active_context_host():
+    context = _get_active_context()
+    if context is None:
+        return None
+
+    return context["Endpoints"]["docker"]["Host"]
+
+
+def _get_windows_active_host():
+    host = _get_active_context_host()
+    if not host:
+        return DEFAULT_NPIPE
+    else:
+        return host
+
+
 def parse_host(addr, is_win32=False, tls=False):
     # Sensible defaults
     if not addr and is_win32:
-        return DEFAULT_NPIPE
+        return _get_windows_active_host()
     if not addr or addr.strip() == 'unix://':
         return DEFAULT_UNIX_SOCKET
 
