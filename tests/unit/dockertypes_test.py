@@ -6,6 +6,10 @@ import pytest
 from docker.constants import DEFAULT_DOCKER_API_VERSION
 from docker.errors import InvalidArgument, InvalidVersion
 from docker.types import (
+    AccessibilityRequirement,
+    AccessMode,
+    CapacityRange,
+    ClusterVolumeSpec,
     ContainerSpec,
     EndpointConfig,
     HostConfig,
@@ -13,6 +17,7 @@ from docker.types import (
     IPAMPool,
     LogConfig,
     Mount,
+    Secret,
     ServiceMode,
     Ulimit,
 )
@@ -491,3 +496,177 @@ class ServicePortsTest(unittest.TestCase):
         } in converted_ports
 
         assert len(converted_ports) == 3
+
+class ClusterVolumeSpecTest(unittest.TestCase):
+    def test_cluster_volume_spec_with_fully_populated_access_mode(self):
+        secrets = [
+            Secret(key="api_key1", secret="secret1"),
+            Secret(key="api_key2", secret="secret2"),
+        ]
+
+        capacity_range = CapacityRange(limit_bytes=10240, required_bytes=1024)
+
+        accessibility_requirements = AccessibilityRequirement(
+            requisite=["zone1", "zone2"], preferred=["zone1"]
+        )
+
+        access_mode = AccessMode(
+            scope="global",
+            sharing="readonly",
+            mount_volume="nfs",
+            availabilty="high",
+            secrets=secrets,
+            capacity_range=capacity_range,
+            accessibility_requirements=accessibility_requirements,
+        )
+
+        cluster_spec = ClusterVolumeSpec(group="production", access_mode=access_mode)
+
+        self.assertEqual(cluster_spec["Group"], "production")
+        self.assertIs(cluster_spec["AccessMode"], access_mode)
+
+        self.assertEqual(cluster_spec["AccessMode"]["Scope"], "global")
+        self.assertEqual(cluster_spec["AccessMode"]["Sharing"], "readonly")
+        self.assertEqual(cluster_spec["AccessMode"]["MountVolume"]['Target'], "nfs")
+        self.assertEqual(cluster_spec["AccessMode"]["Availabilty"], "high")
+
+        self.assertEqual(len(cluster_spec["AccessMode"]["Secrets"]), 2)
+        self.assertEqual(cluster_spec["AccessMode"]["Secrets"][0]["Key"], "api_key1")
+        self.assertEqual(cluster_spec["AccessMode"]["Secrets"][0]["Secret"], "secret1")
+        self.assertEqual(cluster_spec["AccessMode"]["Secrets"][1]["Key"], "api_key2")
+        self.assertEqual(cluster_spec["AccessMode"]["Secrets"][1]["Secret"], "secret2")
+
+        self.assertEqual(
+            cluster_spec["AccessMode"]["CapacityRange"]["LimitBytes"], 10240
+        )
+        self.assertEqual(
+            cluster_spec["AccessMode"]["CapacityRange"]["RequiredBytes"], 1024
+        )
+
+        self.assertEqual(
+            cluster_spec["AccessMode"]["AccessibilityRequirements"]["Requisite"],
+            ["zone1", "zone2"],
+        )
+        self.assertEqual(
+            cluster_spec["AccessMode"]["AccessibilityRequirements"]["Preferred"],
+            ["zone1"],
+        )
+
+    def test_cluster_volume_spec_with_dict_based_access_mode(self):
+        access_mode = AccessMode(
+            scope="team",
+            sharing="readwrite",
+            secrets=[
+                {"key": "db_user", "secret": "password123"},
+                {"key": "api_token", "secret": "abc123xyz"},
+            ],
+            capacity_range={"limit_bytes": 20480, "required_bytes": 2048},
+            accessibility_requirements={
+                "requisite": ["datacenter1"],
+                "preferred": ["rack1", "rack2"],
+            },
+        )
+
+        cluster_spec = ClusterVolumeSpec(group="development", access_mode=access_mode)
+
+        self.assertEqual(cluster_spec["Group"], "development")
+
+        self.assertIsInstance(cluster_spec["AccessMode"]["Secrets"][0], Secret)
+        self.assertIsInstance(cluster_spec["AccessMode"]["Secrets"][1], Secret)
+        self.assertIsInstance(
+            cluster_spec["AccessMode"]["CapacityRange"], CapacityRange
+        )
+        self.assertIsInstance(
+            cluster_spec["AccessMode"]["AccessibilityRequirements"],
+            AccessibilityRequirement,
+        )
+
+        self.assertEqual(cluster_spec["AccessMode"]["Secrets"][0].key, "db_user")
+        self.assertEqual(
+            cluster_spec["AccessMode"]["Secrets"][0].secret, "password123"
+        )
+        self.assertEqual(
+            cluster_spec["AccessMode"]["CapacityRange"].limit_bytes, 20480
+        )
+        self.assertEqual(
+            cluster_spec["AccessMode"]["AccessibilityRequirements"].requisite,
+            ["datacenter1"],
+        )
+
+    def test_cluster_volume_spec_with_minimal_access_mode(self):
+        access_mode = AccessMode(scope="local", sharing="exclusive")
+
+        cluster_spec = ClusterVolumeSpec(group="testing", access_mode=access_mode)
+
+        self.assertEqual(cluster_spec["Group"], "testing")
+        self.assertEqual(cluster_spec["AccessMode"]["Scope"], "local")
+        self.assertEqual(cluster_spec["AccessMode"]["Sharing"], "exclusive")
+
+        self.assertNotIn("Secrets", cluster_spec["AccessMode"])
+        self.assertNotIn("CapacityRange", cluster_spec["AccessMode"])
+        self.assertNotIn("AccessibilityRequirements", cluster_spec["AccessMode"])
+
+    def test_cluster_volume_spec_with_mixed_nested_objects(self):
+        access_mode = AccessMode(
+            scope="container",
+            secrets=[Secret(key="api_key", secret="secret_value")],
+            capacity_range=CapacityRange(limit_bytes=5120),
+        )
+
+        cluster_spec = ClusterVolumeSpec(group="staging", access_mode=access_mode)
+
+        self.assertEqual(cluster_spec["Group"], "staging")
+        self.assertEqual(cluster_spec["AccessMode"]["Scope"], "container")
+
+        self.assertIn("Secrets", cluster_spec["AccessMode"])
+        self.assertEqual(len(cluster_spec["AccessMode"]["Secrets"]), 1)
+        self.assertEqual(cluster_spec["AccessMode"]["Secrets"][0].key, "api_key")
+
+        self.assertIn("CapacityRange", cluster_spec["AccessMode"])
+        self.assertEqual(cluster_spec["AccessMode"]["CapacityRange"].limit_bytes, 5120)
+        self.assertIsNone(cluster_spec["AccessMode"]["CapacityRange"].required_bytes)
+
+        self.assertNotIn("AccessibilityRequirements", cluster_spec["AccessMode"])
+
+    def test_cluster_volume_spec_with_pascal_case_input(self):
+        access_mode = AccessMode(
+            scope="namespace",
+            capacity_range={"LimitBytes": 8192, "RequiredBytes": 4096},
+            accessibility_requirements={"Requisite": ["zone3"], "Preferred": ["zone3"]},
+        )
+
+        cluster_spec = ClusterVolumeSpec(group="utility", access_mode=access_mode)
+
+        self.assertEqual(cluster_spec["Group"], "utility")
+
+        self.assertEqual(cluster_spec["AccessMode"]["CapacityRange"].limit_bytes, 8192)
+        self.assertEqual(
+            cluster_spec["AccessMode"]["CapacityRange"].required_bytes, 4096
+        )
+        self.assertEqual(
+            cluster_spec["AccessMode"]["AccessibilityRequirements"].requisite,
+            ["zone3"],
+        )
+        self.assertEqual(
+            cluster_spec["AccessMode"]["AccessibilityRequirements"].preferred,
+            ["zone3"],
+        )
+
+    def test_cluster_volume_spec_only_group(self):
+        cluster_spec = ClusterVolumeSpec(group="backup")
+
+        self.assertEqual(cluster_spec["Group"], "backup")
+        self.assertNotIn("access_mode", cluster_spec)
+
+    def test_cluster_volume_spec_only_access_mode(self):
+        access_mode = AccessMode(scope="volume")
+        cluster_spec = ClusterVolumeSpec(access_mode=access_mode)
+
+        self.assertNotIn("Group", cluster_spec)
+        self.assertEqual(cluster_spec["AccessMode"]["Scope"], "volume")
+
+    def test_access_mode_direct_creation_in_cluster_volume_spec(self):
+        with self.assertRaises(TypeError):
+            ClusterVolumeSpec(
+                group="direct", access_mode={"Scope": "direct", "Sharing": "shared"}
+            )

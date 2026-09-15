@@ -22,3 +22,10 @@ from .services import (
     UpdateConfig,
 )
 from .swarm import SwarmExternalCA, SwarmSpec
+from .volumes import (
+    AccessibilityRequirement,
+    AccessMode,
+    CapacityRange,
+    ClusterVolumeSpec,
+    Secret,
+)
