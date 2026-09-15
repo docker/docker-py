@@ -143,7 +143,7 @@ def post_fake_create_container():
     return status_code, response
 
 
-def get_fake_inspect_container(tty=False):
+def get_fake_inspect_container(tty=False, size=False):
     status_code = 200
     response = {
         'Id': FAKE_CONTAINER_ID,
@@ -167,6 +167,11 @@ def get_fake_inspect_container(tty=False):
         },
         "MacAddress": "02:42:ac:11:00:0a"
     }
+    if size:
+        response.update({
+            "SizeRw": 50178,
+            "SizeRootFs": 152129365
+        })
     return status_code, response
 
 
