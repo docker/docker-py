@@ -85,6 +85,20 @@ class ResolveRepositoryNameTest(unittest.TestCase):
             'localhost', 'username/image'
         )
 
+    def test_resolve_repository_name_uppercase_registry(self):
+        # A first component containing an uppercase letter is a registry host,
+        # not a Hub path: image path components are always lowercase, so the
+        # daemon's reference grammar treats it as a domain. Keep auth registry
+        # selection in sync with that.
+        assert auth.resolve_repository_name('MyRegistry/image') == (
+            'MyRegistry', 'image'
+        )
+
+    def test_resolve_repository_name_uppercase_registry_with_username(self):
+        assert auth.resolve_repository_name('MyRegistry/username/image') == (
+            'MyRegistry', 'username/image'
+        )
+
     def test_invalid_index_name(self):
         with pytest.raises(errors.InvalidRepository):
             auth.resolve_repository_name('-gecko.com/image')

@@ -59,9 +59,16 @@ def get_config_header(client, registry):
 def split_repo_name(repo_name):
     parts = repo_name.split('/', 1)
     if len(parts) == 1 or (
-        '.' not in parts[0] and ':' not in parts[0] and parts[0] != 'localhost'
+        '.' not in parts[0] and ':' not in parts[0]
+        and parts[0] != 'localhost' and parts[0] == parts[0].lower()
     ):
-        # This is a docker index repo (ex: username/foobar or ubuntu)
+        # This is a docker index repo (ex: username/foobar or ubuntu).
+        # The first component is only a registry when it looks like a host:
+        # it contains a '.' or ':', is 'localhost', or contains an uppercase
+        # letter (image path components are always lowercase). This mirrors
+        # the daemon's reference grammar (distribution/reference
+        # splitDockerDomain), so the auth registry matches what the daemon
+        # routes on.
         return INDEX_NAME, repo_name
     return tuple(parts)
 
