@@ -853,6 +853,7 @@ class ContainerCollection(Collection):
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
         platform = kwargs.get('platform', None)
+        pull = kwargs.get('pull', None)
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -877,6 +878,8 @@ class ContainerCollection(Collection):
             container = self.create(image=image, command=command,
                                     detach=detach, **kwargs)
         except ImageNotFound:
+            if pull == 'never':
+                raise
             self.client.images.pull(image, platform=platform)
             container = self.create(image=image, command=command,
                                     detach=detach, **kwargs)
@@ -1044,6 +1047,7 @@ RUN_CREATE_KWARGS = [
     'name',
     'network_disabled',
     'platform',
+    'pull',
     'stdin_open',
     'stop_signal',
     'tty',
