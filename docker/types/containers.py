@@ -382,8 +382,17 @@ class HostConfig(dict):
                     'security_opt', security_opt, 'list'
                 )
 
-            self['SecurityOpt'] = security_opt
+            filtered = []
 
+            for opt in security_opt:
+                if opt == "systempaths=unconfined":
+                    self['MaskedPaths'] = []
+                    self['ReadonlyPaths'] = []
+                else:
+                    filtered.append(opt)
+
+            self['SecurityOpt'] = filtered
+            
         if sysctls:
             if not isinstance(sysctls, dict):
                 raise host_config_type_error('sysctls', sysctls, 'dict')
