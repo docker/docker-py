@@ -449,6 +449,15 @@ class TestNetworks(BaseAPIIntegrationTest):
         with pytest.raises(TypeError):
             self.create_network(labels=['com.docker.py.test=label', ])
 
+    @requires_api_version('1.48')
+    def test_create_network_ipv4_disabled(self):
+        _, net_id = self.create_network(
+            driver='macvlan',
+            enable_ipv4=False
+        )
+        net = self.client.inspect_network(net_id)
+        assert net['EnableIPv4'] is False
+
     @requires_api_version('1.23')
     def test_create_network_ipv6_enabled(self):
         _, net_id = self.create_network(
