@@ -27,7 +27,9 @@ class ContainerCollectionTest(unittest.TestCase):
         )
         client.api.inspect_container.assert_called_with(FAKE_CONTAINER_ID)
         client.api.start.assert_called_with(FAKE_CONTAINER_ID)
-        client.api.wait.assert_called_with(FAKE_CONTAINER_ID)
+        client.api.wait.assert_called_with(
+            FAKE_CONTAINER_ID, condition='not-running'
+        )
         client.api.logs.assert_called_with(
             FAKE_CONTAINER_ID, stderr=False, stdout=True, stream=True,
             follow=True
