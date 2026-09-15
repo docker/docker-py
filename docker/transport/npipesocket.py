@@ -211,9 +211,6 @@ class NpipeFileIOBase(io.RawIOBase):
         super().close()
         self.sock = None
 
-    def fileno(self):
-        return self.sock.fileno()
-
     def isatty(self):
         return False
 
