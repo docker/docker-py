@@ -30,8 +30,7 @@ class Container(Model):
         """
         The name of the container.
         """
-        if self.attrs.get('Name') is not None:
-            return self.attrs['Name'].lstrip('/')
+        return self.attrs['Name'].lstrip('/')
 
     @property
     def image(self):
