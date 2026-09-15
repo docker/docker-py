@@ -898,7 +898,10 @@ class ContainerCollection(Collection):
         if exit_status != 0:
             out = None
             if not kwargs.get('auto_remove'):
-                out = container.logs(stdout=False, stderr=True)
+                if not kwargs.get('tty'):
+                    out = container.logs(stdout=False, stderr=True)
+                else:
+                    out = container.logs(stdout=True, stderr=True)
 
         if remove:
             container.remove()
