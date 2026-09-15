@@ -277,12 +277,16 @@ def parse_host(addr, is_win32=False, tls=False):
             f'Invalid bind address format: {addr}'
         )
 
-    if parsed_url.path and proto == 'ssh':
-        raise errors.DockerException(
-            f'Invalid bind address format: no path allowed for this protocol: {addr}'
-        )
+    path = parsed_url.path
+    if proto == 'ssh':
+        # Support "ssh://user@host/<path>" where <path> is an absolute path to
+        # the docker daemon unix socket.
+        if path != '':
+            if not path.startswith('/'):
+                raise errors.DockerException(
+                    f'Invalid bind address format: invalid ssh socket path: {addr}'
+                )
     else:
-        path = parsed_url.path
         if proto == 'unix' and parsed_url.hostname is not None:
             # For legacy reasons, we consider unix://path
             # to be valid and equivalent to unix:///path

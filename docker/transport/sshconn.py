@@ -18,12 +18,13 @@ RecentlyUsedContainer = urllib3._collections.RecentlyUsedContainer
 
 
 class SSHSocket(socket.socket):
-    def __init__(self, host):
+    def __init__(self, host, socket_path=None):
         super().__init__(
             socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = None
         self.user = None
+        self.socket_path = socket_path
         if ':' in self.host:
             self.host, self.port = self.host.split(':')
         if '@' in self.host:
@@ -39,7 +40,12 @@ class SSHSocket(socket.socket):
         if self.port:
             args = args + ['-p', self.port]
 
-        args = args + ['--', self.host, 'docker system dial-stdio']
+        if self.socket_path and self.socket_path != '':
+            docker_cmd = f"docker --host unix://{self.socket_path} system dial-stdio"
+        else:
+            docker_cmd = "docker system dial-stdio"
+
+        args = args + ['--', self.host, docker_cmd]
 
         preexec_func = None
         if not constants.IS_WINDOWS_PLATFORM:
@@ -96,21 +102,27 @@ class SSHSocket(socket.socket):
 
 
 class SSHConnection(urllib3.connection.HTTPConnection):
-    def __init__(self, ssh_transport=None, timeout=60, host=None):
+    def __init__(self, ssh_transport=None, timeout=60, host=None, socket_path=None):
         super().__init__(
             'localhost', timeout=timeout
         )
         self.ssh_transport = ssh_transport
         self.timeout = timeout
         self.ssh_host = host
+        self.ssh_socket_path = socket_path
 
     def connect(self):
+        if self.ssh_socket_path and self.ssh_socket_path != '':
+            remote_cmd = f"docker --host unix://{self.ssh_socket_path} system dial-stdio"
+        else:
+            remote_cmd = "docker system dial-stdio"
+
         if self.ssh_transport:
             sock = self.ssh_transport.open_session()
             sock.settimeout(self.timeout)
-            sock.exec_command('docker system dial-stdio')
+            sock.exec_command(remote_cmd)
         else:
-            sock = SSHSocket(self.ssh_host)
+            sock = SSHSocket(self.ssh_host, socket_path=self.ssh_socket_path)
             sock.settimeout(self.timeout)
             sock.connect()
 
@@ -120,7 +132,7 @@ class SSHConnection(urllib3.connection.HTTPConnection):
 class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
     scheme = 'ssh'
 
-    def __init__(self, ssh_client=None, timeout=60, maxsize=10, host=None):
+    def __init__(self, ssh_client=None, timeout=60, maxsize=10, host=None, socket_path=None):
         super().__init__(
             'localhost', timeout=timeout, maxsize=maxsize
         )
@@ -129,9 +141,15 @@ class SSHConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
         if ssh_client:
             self.ssh_transport = ssh_client.get_transport()
         self.ssh_host = host
+        self.ssh_socket_path = socket_path
 
     def _new_conn(self):
-        return SSHConnection(self.ssh_transport, self.timeout, self.ssh_host)
+        return SSHConnection(
+            self.ssh_transport,
+            self.timeout,
+            self.ssh_host,
+            self.ssh_socket_path
+        )
 
     # When re-using connections, urllib3 calls fileno() on our
     # SSH channel instance, quickly overloading our fd limit. To avoid this,
@@ -171,9 +189,9 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
             self._create_paramiko_client(base_url)
             self._connect()
 
-        self.ssh_host = base_url
-        if base_url.startswith('ssh://'):
-            self.ssh_host = base_url[len('ssh://'):]
+        parsed = urllib.parse.urlparse(base_url)
+        self.ssh_socket_path = parsed.path
+        self.ssh_host = parsed.netloc
 
         self.timeout = timeout
         self.max_pool_size = max_pool_size
@@ -223,7 +241,8 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                 ssh_client=self.ssh_client,
                 timeout=self.timeout,
                 maxsize=self.max_pool_size,
-                host=self.ssh_host
+                host=self.ssh_host,
+                socket_path=self.ssh_socket_path
             )
         with self.pools.lock:
             pool = self.pools.get(url)
@@ -238,7 +257,8 @@ class SSHHTTPAdapter(BaseHTTPAdapter):
                 ssh_client=self.ssh_client,
                 timeout=self.timeout,
                 maxsize=self.max_pool_size,
-                host=self.ssh_host
+                host=self.ssh_host,
+                socket_path=self.ssh_socket_path
             )
             self.pools[url] = pool
 
