@@ -956,9 +956,77 @@ class CreateContainerTest(BaseAPIClientTest):
             }}
         ''')
 
+    @requires_api_version('1.48')  # Updated API version
+    def test_create_container_with_gw_priority(self):
+        """Test creating a container with gateway priority."""
+        network_name = 'test-network'
+        gw_priority_value = 50
+
+        # Mock the API version to be >= 1.48 for this test
+        # self.client.api_version would be the ideal way if it was easily settable for a test
+        # or if BaseAPIClientTest allowed easy version overriding.
+        # For now, we assume the client used in tests will respect the @requires_api_version
+        # or the EndpointConfig internal checks will handle it.
+
+        networking_config = self.client.create_networking_config({
+            network_name: self.client.create_endpoint_config(
+                gw_priority=gw_priority_value
+            )
+        })
+
+        self.client.create_container(
+            'busybox', 'ls',
+            host_config=self.client.create_host_config(
+                network_mode=network_name,
+            ),
+            networking_config=networking_config,
+        )
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+
+        assert 'NetworkingConfig' in data
+        assert 'EndpointsConfig' in data['NetworkingConfig']
+        assert network_name in data['NetworkingConfig']['EndpointsConfig']
+        endpoint_cfg = data['NetworkingConfig']['EndpointsConfig'][network_name]
+        assert 'GwPriority' in endpoint_cfg
+        assert endpoint_cfg['GwPriority'] == gw_priority_value
+
+    @requires_api_version('1.48')  # Updated API version
+    def test_create_container_with_gw_priority_default_value(self):
+        """Test creating a container where gw_priority defaults to 0 if not specified."""
+        network_name = 'test-network-default-gw'
+
+        # EndpointConfig should default gw_priority to None if not provided.
+        # The Docker daemon defaults to 0 if the field is not present in the API call.
+        # Our EndpointConfig will not include GwPriority if gw_priority is None.
+        # This test ensures that if we *don't* set it, it's not in the payload.
+        networking_config = self.client.create_networking_config({
+            network_name: self.client.create_endpoint_config(
+                # No gw_priority specified
+            )
+        })
+
+        self.client.create_container(
+            'busybox', 'ls',
+            host_config=self.client.create_host_config(
+                network_mode=network_name,
+            ),
+            networking_config=networking_config,
+        )
+
+        args = fake_request.call_args
+        data = json.loads(args[1]['data'])
+
+        assert 'NetworkingConfig' in data
+        assert 'EndpointsConfig' in data['NetworkingConfig']
+        assert network_name in data['NetworkingConfig']['EndpointsConfig']
+        endpoint_cfg = data['NetworkingConfig']['EndpointsConfig'][network_name]
+        # If not specified, EndpointConfig should not add GwPriority to the dict
+        assert 'GwPriority' not in endpoint_cfg
+
     @requires_api_version('1.22')
     def test_create_container_with_tmpfs_list(self):
-
         self.client.create_container(
             'busybox', 'true', host_config=self.client.create_host_config(
                 tmpfs=[
@@ -982,7 +1050,6 @@ class CreateContainerTest(BaseAPIClientTest):
 
     @requires_api_version('1.22')
     def test_create_container_with_tmpfs_dict(self):
-
         self.client.create_container(
             'busybox', 'true', host_config=self.client.create_host_config(
                 tmpfs={
