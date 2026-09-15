@@ -487,6 +487,7 @@ class Container(Model):
             cpu_period (int): Limit CPU CFS (Completely Fair Scheduler) period
             cpu_quota (int): Limit CPU CFS (Completely Fair Scheduler) quota
             cpu_shares (int): CPU shares (relative weight)
+            nano_cpus (int): Number of CPUs
             cpuset_cpus (str): CPUs in which to allow execution
             cpuset_mems (str): MEMs in which to allow execution
             mem_limit (int or str): Memory limit
