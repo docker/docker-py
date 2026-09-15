@@ -85,6 +85,30 @@ class ImageCollectionTest(BaseIntegrationTest):
         image = client.images.pull(image_ref)
         assert image_ref in image.attrs['RepoDigests']
 
+    def test_digest(self):
+        repository, digest = (
+            'hello-world',
+            'sha256:083de497cff944f969d8499ab94f07134c50bcf5e6b9559b27182d3fa'
+            '80ce3f7',
+        )
+        client = docker.from_env(version=TEST_API_VERSION)
+        client.images.pull(f'{repository}@{digest}')
+        image = client.images.get(f'{repository}@{digest}')
+        assert image.digest == digest
+        assert f'{repository}@{digest}' in image.repo_digests
+        # The local ID is the config digest, not the registry one.
+        assert image.id != digest
+
+    def test_digest_of_local_image(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        image, _ = client.images.build(fileobj=io.BytesIO(
+            b"FROM alpine\n"
+            b"CMD echo hello world"
+        ))
+        self.tmp_imgs.append(image.id)
+        assert image.repo_digests == []
+        assert image.digest is None
+
     def test_pull_multiple(self):
         client = docker.from_env(version=TEST_API_VERSION)
         images = client.images.pull('hello-world', all_tags=True)
