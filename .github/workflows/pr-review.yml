@@ -15,7 +15,7 @@ on: # zizmor: ignore[dangerous-triggers]
 
 jobs:
   review:
-    uses: docker/docker-agent-action/.github/workflows/review-pr.yml@4dcb32aa716addc5ce33f8b4d33cb635ae174d7e # v2.0.6
+    uses: docker/docker-agent-action/.github/workflows/review-pr.yml@bd672e0d95c61bb79e899f1ea71d44e19b12f91f # v2.0.7
     permissions:
       contents: read # Read repository files and PR diffs
       pull-requests: write # Post review comments
