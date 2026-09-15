@@ -97,6 +97,11 @@ def create_archive(root, files=None, fileobj=None, gzip=False,
             # and directories executable by default.
             i.mode = i.mode & 0o755 | 0o111
 
+        # reset uid and gid to 0 to avoid build cache invalidations due to
+        # changed ownership. (docker-cli does the same)
+        i.uid = 0
+        i.gid = 0
+
         if i.isfile():
             try:
                 with open(full_path, 'rb') as f:
