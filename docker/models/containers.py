@@ -823,6 +823,8 @@ class ContainerCollection(Collection):
 
             volumes_from (:py:class:`list`): List of container names or IDs to
                 get volumes from.
+            wait_condition (dict): A dictionary to configure the wait mechanism.
+                Passed directly to the :py:meth:`Container.wait` method.
             working_dir (str): Path to the working directory.
 
         Returns:
@@ -853,6 +855,7 @@ class ContainerCollection(Collection):
         stream = kwargs.pop('stream', False)
         detach = kwargs.pop('detach', False)
         platform = kwargs.get('platform', None)
+        waitcond = kwargs.pop('wait_condition', {})
 
         if detach and remove:
             if version_gte(self.client.api._version, '1.25'):
@@ -894,7 +897,7 @@ class ContainerCollection(Collection):
                 stdout=stdout, stderr=stderr, stream=True, follow=True
             )
 
-        exit_status = container.wait()['StatusCode']
+        exit_status = container.wait(**waitcond)['StatusCode']
         if exit_status != 0:
             out = None
             if not kwargs.get('auto_remove'):
