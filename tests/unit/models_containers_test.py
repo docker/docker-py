@@ -484,6 +484,36 @@ class ContainerCollectionTest(unittest.TestCase):
         )
         client.api.inspect_container.assert_called_with(FAKE_CONTAINER_ID)
 
+    def test_create_volumes_with_bind_options(self):
+        # Mode options other than a bare "ro"/"rw" (SELinux labels,
+        # propagation, macOS consistency, ...) must not leak into the
+        # container's anonymous volume list.
+        binds = [
+            '/tmp:/mnt/z:z',
+            '/tmp:/mnt/ro-z:ro,Z',
+            '/tmp:/mnt/rprivate:rw,rprivate',
+            'src:/mnt/cached:cached',
+            'volumename:/mnt/nocopy:nocopy',
+            '/tmp:/mnt/ro:ro',
+            'C:\\windows\\path:D:\\hello\\world:ro,Z',
+        ]
+        client = make_fake_client()
+        client.containers.create('alpine', volumes=binds)
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            volumes=[
+                '/mnt/z',
+                '/mnt/ro-z',
+                '/mnt/rprivate',
+                '/mnt/cached',
+                '/mnt/nocopy',
+                '/mnt/ro',
+                'D:\\hello\\world',
+            ],
+            host_config={'Binds': binds, 'NetworkMode': 'default'},
+        )
+
     def test_create_with_image_object(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
