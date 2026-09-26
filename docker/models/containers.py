@@ -1187,10 +1187,10 @@ def _host_volume_from_bind(bind):
     bits = rest.split(':', 1)
     if len(bits) == 1 or bits[1] in ('ro', 'rw'):
         return drive + bits[0]
-    elif bits[1].endswith(':ro') or bits[1].endswith(':rw'):
-        return bits[1][:-3]
-    else:
-        return bits[1]
+    # bits[1] is "dest" or "dest:mode", where mode can be any bind option
+    # ("ro", "z", "ro,Z", "rw,rprivate", "cached", ...)
+    dest_drive, dest = ntpath.splitdrive(bits[1])
+    return dest_drive + dest.split(':', 1)[0]
 
 
 ExecResult = namedtuple('ExecResult', 'exit_code,output')
