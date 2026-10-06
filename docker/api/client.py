@@ -237,6 +237,15 @@ class APIClient(
         kwargs.setdefault('timeout', self.timeout)
         return kwargs
 
+    def merge_environment_settings(self, url, proxies, stream, verify, cert):
+        """Keep the TLS verification configured on the client instead of
+        letting ``REQUESTS_CA_BUNDLE`` or ``CURL_CA_BUNDLE`` replace it."""
+        if verify is None:
+            verify = self.verify
+        return super().merge_environment_settings(
+            url, proxies, stream, verify, cert
+        )
+
     @update_headers
     def _post(self, url, **kwargs):
         return self.post(url, **self._set_request_timeout(kwargs))
