@@ -10,6 +10,7 @@ The function translate(PATTERN) returns a regular expression
 corresponding to PATTERN.  (It does not compile it.)
 """
 
+import os
 import re
 
 __all__ = ["fnmatch", "fnmatchcase", "translate"]
@@ -39,8 +40,8 @@ def fnmatch(name, pat):
     If you don't want this, use fnmatchcase(FILENAME, PATTERN).
     """
 
-    name = name.lower()
-    pat = pat.lower()
+    name = os.path.normcase(name)
+    pat = os.path.normcase(pat)
     return fnmatchcase(name, pat)
 
 
