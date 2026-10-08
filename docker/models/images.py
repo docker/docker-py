@@ -13,6 +13,9 @@ from .resource import Collection, Model
 class Image(Model):
     """
     An image on the server.
+    Note that :py:attr:`id` and :py:attr:`short_id` refer to the local image
+    ID (the digest of the image config), which is not the same as the digest
+    of the image in a registry. Use :py:attr:`repo_digests` to get the latter.
     """
     def __repr__(self):
         tag_str = "', '".join(self.tags)
@@ -45,6 +48,16 @@ class Image(Model):
         if tags is None:
             tags = []
         return [tag for tag in tags if tag != '<none>:<none>']
+
+    @property
+    def repo_digests(self):
+        """
+        The image's repository digests, as a list of strings in the form
+        ``repository@sha256:...``. These are the digests the image is known
+        by in a registry. The list is empty for images that have never been
+        pushed to or pulled from a registry.
+        """
+        return list(self.attrs.get('RepoDigests') or [])
 
     def history(self):
         """
