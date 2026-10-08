@@ -4,7 +4,12 @@ import warnings
 
 from ..api import APIClient
 from ..constants import DEFAULT_DATA_CHUNK_SIZE
-from ..errors import BuildError, ImageLoadError, InvalidArgument
+from ..errors import (
+    BuildError,
+    ImageLoadError,
+    ImagePullError,
+    InvalidArgument,
+)
 from ..utils import parse_repository_tag
 from ..utils.json_stream import json_stream
 from .resource import Collection, Model
@@ -441,6 +446,9 @@ class ImageCollection(Collection):
         Raises:
             :py:class:`docker.errors.APIError`
                 If the server returns an error.
+            :py:class:`docker.errors.ImagePullError`
+                If the pull fails after the server accepted the request,
+                for example because the registry refused it.
 
         Example:
 
@@ -462,13 +470,19 @@ class ImageCollection(Collection):
             del kwargs['stream']
 
         pull_log = self.client.api.pull(
-            repository, tag=tag, stream=True, all_tags=all_tags, **kwargs
+            repository, tag=tag, stream=True, decode=True,
+            all_tags=all_tags, **kwargs
         )
-        for _ in pull_log:
-            # We don't do anything with the logs, but we need
-            # to keep the connection alive and wait for the image
-            # to be pulled.
-            pass
+        for chunk in pull_log:
+            # The daemon answers a failed pull with HTTP 200 and reports the
+            # failure in the stream, so this is the only place it shows up.
+            # Without this check the image is simply missing afterwards and
+            # the caller gets an ImageNotFound that hides the real cause.
+            if 'errorDetail' in chunk or 'error' in chunk:
+                detail = chunk.get('errorDetail') or {}
+                raise ImagePullError(
+                    detail.get('message') or chunk.get('error')
+                )
         if not all_tags:
             sep = '@' if tag.startswith('sha256:') else ':'
             return self.get(f'{repository}{sep}{tag}')

@@ -167,6 +167,10 @@ class ImageLoadError(DockerException):
     pass
 
 
+class ImagePullError(DockerException):
+    pass
+
+
 def create_unexpected_kwargs_error(name, kwargs):
     quoted_kwargs = [f"'{k}'" for k in sorted(kwargs)]
     text = [f"{name}() "]
