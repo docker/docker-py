@@ -172,10 +172,13 @@ class PatternMatcher:
             negative = pattern.exclusion
             match = pattern.match(filepath)
             if not match and parent_path != '':
-                if len(pattern.dirs) <= len(parent_path_dirs):
-                    match = pattern.match(
-                        os.path.sep.join(parent_path_dirs[:len(pattern.dirs)])
-                    )
+                # Check to see if the pattern matches one of our parent dirs.
+                for i in range(len(parent_path_dirs)):
+                    if pattern.match(
+                        os.path.sep.join(parent_path_dirs[:i + 1])
+                    ):
+                        match = True
+                        break
 
             if match:
                 matched = not negative

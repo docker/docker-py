@@ -301,6 +301,17 @@ class ExcludePathsTest(unittest.TestCase):
             }
         )
 
+    def test_double_wildcard_dir_with_file_exception(self):
+        base = make_tree(
+            ['cache', 'cache/sub', 'src', 'src/cache'],
+            ['cache/drop.txt', 'cache/keep.txt', 'cache/sub/drop.txt',
+             'src/cache/drop.txt']
+        )
+        assert exclude_paths(
+            base,
+            ['**/cache', '!cache/keep.txt']
+        ) == convert_paths({'cache/keep.txt', 'src'})
+
     def test_include_wildcard(self):
         # This may be surprising but it matches the CLI's behavior
         # (tested with 18.05.0-ce on linux)
