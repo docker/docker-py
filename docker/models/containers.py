@@ -829,9 +829,10 @@ class ContainerCollection(Collection):
             The container logs, either ``STDOUT``, ``STDERR``, or both,
             depending on the value of the ``stdout`` and ``stderr`` arguments.
 
-            ``STDOUT`` and ``STDERR`` may be read only if either ``json-file``
-            or ``journald`` logging driver used. Thus, if you are using none of
-            these drivers, a ``None`` object is returned instead. See the
+            ``STDOUT`` and ``STDERR`` may be read only if a ``json-file``,
+            ``journald``, or ``local`` logging driver is used. Thus, if you
+            are using none of these drivers, a ``None`` object is returned
+            instead. See the
             `Engine API documentation
             <https://docs.docker.com/engine/api/v1.30/#operation/ContainerLogs/>`_
             for full details.
@@ -889,7 +890,7 @@ class ContainerCollection(Collection):
         logging_driver = container.attrs['HostConfig']['LogConfig']['Type']
 
         out = None
-        if logging_driver == 'json-file' or logging_driver == 'journald':
+        if logging_driver in ('json-file', 'journald', 'local'):
             out = container.logs(
                 stdout=stdout, stderr=stderr, stream=True, follow=True
             )

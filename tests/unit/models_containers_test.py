@@ -33,6 +33,19 @@ class ContainerCollectionTest(unittest.TestCase):
             follow=True
         )
 
+    def test_run_local_logging_driver(self):
+        client = make_fake_client()
+        inspected = client.api.inspect_container.return_value
+        inspected['HostConfig']['LogConfig']['Type'] = 'local'
+
+        out = client.containers.run("alpine", "echo hello world")
+
+        assert out == b'hello world\n'
+        client.api.logs.assert_called_with(
+            FAKE_CONTAINER_ID, stderr=False, stdout=True, stream=True,
+            follow=True
+        )
+
     def test_create_container_args(self):
         networking_config = {
             'foo': EndpointConfig(
