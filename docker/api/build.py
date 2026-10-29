@@ -16,7 +16,7 @@ class BuildApiMixin:
               decode=False, buildargs=None, gzip=False, shmsize=None,
               labels=None, cache_from=None, target=None, network_mode=None,
               squash=None, extra_hosts=None, platform=None, isolation=None,
-              use_config_proxy=True):
+              version=None, use_config_proxy=True):
         """
         Similar to the ``docker build`` command. Either ``path`` or ``fileobj``
         needs to be set. ``path`` can be a local path (to a directory
@@ -100,6 +100,10 @@ class BuildApiMixin:
                 containers, as a mapping of hostname to IP address.
             platform (str): Platform in the format ``os[/arch[/variant]]``
             isolation (str): Isolation technology used during build.
+                Default: `None`.
+            version (str): Version of the builder backend to use.
+                - `1` is the first generation classic (deprecated) builder in the Docker daemon (default)
+                - `2` is [BuildKit](https://github.com/moby/buildkit) over the REST API endpoint provided by the Docker daemon. This mode doesn't use the BuildKit gRPC API, and lacks support for advanced features such as secret mounts.
                 Default: `None`.
             use_config_proxy (bool): If ``True``, and if the docker client
                 configuration file (``~/.docker/config.json`` by default)
@@ -252,6 +256,13 @@ class BuildApiMixin:
                     'isolation was only introduced in API version 1.24'
                 )
             params['isolation'] = isolation
+
+        if version is not None:
+            if utils.version_lt(self._version, '1.38'):
+                raise errors.InvalidVersion(
+                    'version was only introduced in API version 1.38'
+                )
+            params['version'] = version
 
         if context is not None:
             headers = {'Content-Type': 'application/tar'}
