@@ -198,7 +198,6 @@ class ContainerCollectionTest(unittest.TestCase):
             'healthcheck': {'test': 'true'},
             'hostname': 'somehost',
             'labels': {'key': 'value'},
-            'mac_address': 'abc123',
             'name': 'somename',
             'network_disabled': False,
             'networking_config': {
@@ -206,6 +205,7 @@ class ContainerCollectionTest(unittest.TestCase):
                     'foo': {
                         'Aliases': ['test'],
                         'DriverOpts': {'key1': 'a'},
+                        'MacAddress': 'abc123',
                     },
                 }
             },
@@ -227,6 +227,38 @@ class ContainerCollectionTest(unittest.TestCase):
         }
 
         assert create_kwargs == expected
+
+    def test_create_container_args_mac_address_old_api(self):
+        """On API < 1.44, mac_address stays on the container config."""
+        create_kwargs = _create_container_args({
+            'image': 'alpine',
+            'command': '/bin/sh',
+            'mac_address': 'abc123',
+            'network': 'foo',
+            'version': '1.43',
+        })
+
+        assert 'mac_address' in create_kwargs
+        assert create_kwargs['mac_address'] == 'abc123'
+        # mac_address should NOT be in networking_config
+        net_config = create_kwargs.get('networking_config', {})
+        endpoints = net_config.get('EndpointsConfig', {})
+        foo_endpoint = endpoints.get('foo') or {}
+        assert 'MacAddress' not in foo_endpoint
+
+    def test_create_container_args_mac_address_new_api(self):
+        """On API >= 1.44, mac_address moves into EndpointConfig."""
+        create_kwargs = _create_container_args({
+            'image': 'alpine',
+            'command': '/bin/sh',
+            'mac_address': 'abc123',
+            'network': 'foo',
+            'version': '1.44',
+        })
+
+        assert 'mac_address' not in create_kwargs
+        net_config = create_kwargs['networking_config']
+        assert net_config['EndpointsConfig']['foo']['MacAddress'] == 'abc123'
 
     def test_run_detach(self):
         client = make_fake_client()

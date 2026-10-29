@@ -11,7 +11,7 @@ from ..errors import (
     NotFound,
     create_unexpected_kwargs_error,
 )
-from ..types import HostConfig, NetworkingConfig
+from ..types import EndpointConfig, HostConfig, NetworkingConfig
 from ..utils import version_gte
 from .images import Image
 from .resource import Collection, Model
@@ -1151,6 +1151,29 @@ def _create_container_args(kwargs):
             # networking config dict, otherwise switch to None
             if network not in networking_config:
                 networking_config = None
+
+        # Docker Engine API v1.44+ (Docker Engine 25.0+) deprecated
+        # mac_address on the container config.  It must now be set via
+        # EndpointConfig in the networking_config for the target network.
+        # On older API versions we leave mac_address on the container
+        # config where it has always worked.
+        version = host_config_kwargs.get('version', '1.25')
+        if version_gte(version, '1.44'):
+            mac_address = create_kwargs.pop('mac_address', None)
+            if networking_config is None:
+                if mac_address:
+                    endpoint = EndpointConfig(
+                        version=version,
+                        mac_address=mac_address,
+                    )
+                    networking_config = {network: endpoint}
+            elif mac_address:
+                # User provided networking_config; inject mac_address
+                # into the endpoint for the target network if not
+                # already set.
+                endpoint = networking_config.get(network)
+                if endpoint is not None and 'MacAddress' not in endpoint:
+                    endpoint['MacAddress'] = mac_address
 
         create_kwargs['networking_config'] = NetworkingConfig(
             networking_config
