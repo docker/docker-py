@@ -588,6 +588,182 @@ class TCPSocketStreamTest(unittest.TestCase):
         assert res == (self.stdout_data, self.stderr_data)
 
 
+class TCPSocketStreamUpgradeTest(unittest.TestCase):
+    """The daemon may write the first frames of an upgraded stream in the same
+    packet as the response headers. http.client then reads them into the
+    buffered reader it parses the headers with, and they never reach the
+    socket. See https://github.com/docker/docker-py/issues/3332.
+    """
+
+    stdout_data = b'hello\n'
+    stderr_data = b'oh no\n'
+
+    # Long enough for the delayed writes below to be observable, short enough
+    # not to slow the suite down.
+    delay = 0.5
+
+    # Silence longer than the client timeout used in test_stream_quiet.
+    quiet_delay = 2
+
+    @classmethod
+    def setup_class(cls):
+        cls.clients = []
+        cls.server = socketserver.ThreadingTCPServer(
+            ('', 0), cls.get_handler_class())
+        cls.thread = threading.Thread(target=cls.server.serve_forever)
+        cls.thread.daemon = True
+        cls.thread.start()
+        cls.address = f'http://{socket.gethostname()}:{cls.server.server_address[1]}'
+
+    @classmethod
+    def teardown_class(cls):
+        for client in cls.clients:
+            client.close()
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.thread.join()
+
+    @classmethod
+    def get_handler_class(cls):
+        stdout_data = cls.stdout_data
+        stderr_data = cls.stderr_data
+        delay = cls.delay
+        quiet_delay = cls.quiet_delay
+
+        headers = (
+            b'HTTP/1.1 101 UPGRADED\r\n'
+            b'Content-Type: application/vnd.docker.multiplexed-stream\r\n'
+            b'Connection: Upgrade\r\n'
+            b'Upgrade: tcp\r\n'
+            b'\r\n'
+        )
+
+        def frame(stream, data):
+            return struct.pack('>BxxxL', stream, len(data)) + data
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                path = self.path.split('/')[-1]
+                if path == 'tty':
+                    # One write, so the headers and the payload reach the
+                    # client in a single packet.
+                    self.wfile.write(headers + stdout_data + stderr_data)
+                elif path == 'no-tty':
+                    self.wfile.write(
+                        headers
+                        + frame(1, stdout_data)
+                        + frame(2, stderr_data)
+                    )
+                elif path == 'no-tty-delayed':
+                    # The first frame shares a packet with the headers, the
+                    # second one only shows up later: a caller that streams
+                    # must get the first frame without waiting for it.
+                    self.wfile.write(headers + frame(1, stdout_data))
+                    time.sleep(delay)
+                    self.wfile.write(frame(2, stderr_data))
+                elif path == 'tty-delayed':
+                    self.wfile.write(headers + stdout_data)
+                    time.sleep(delay)
+                    self.wfile.write(stderr_data)
+                elif path == 'no-tty-quiet':
+                    # Nothing is buffered here, and the stream stays quiet
+                    # for longer than the client timeout.
+                    self.wfile.write(headers)
+                    time.sleep(quiet_delay)
+                    self.wfile.write(frame(1, stdout_data))
+                else:
+                    raise Exception(f'Unknown path {path}')
+
+            def log_message(self, fmt, *args):
+                pass
+
+        return Handler
+
+    def request(self, path, stream, tty, demux=False, timeout=None):
+        client = APIClient(
+            base_url=self.address, version=DEFAULT_DOCKER_API_VERSION,
+            timeout=timeout or DEFAULT_TIMEOUT_SECONDS)
+        # The streaming tests read from the connection after this returns, so
+        # the client is closed in teardown rather than here.
+        self.clients.append(client)
+        resp = client._post(client._url(path), stream=True)
+        return client._read_from_socket(
+            resp, stream=stream, tty=tty, demux=demux)
+
+    @staticmethod
+    def with_timeout(fn, timeout=10):
+        """Run fn in a thread and fail if it does not return in time.
+
+        Without the fix this blocks in select/poll on a socket that will never
+        have anything to report, so a plain call would hang the suite.
+        """
+        result = []
+        error = []
+
+        def target():
+            try:
+                result.append(fn())
+            except BaseException as e:
+                error.append(e)
+
+        thread = threading.Thread(target=target, daemon=True)
+        thread.start()
+        thread.join(timeout)
+        if thread.is_alive():
+            raise AssertionError(
+                f'timed out after {timeout}s waiting for the stream')
+        if error:
+            raise error[0]
+        return result[0]
+
+    def test_no_stream_tty(self):
+        res = self.with_timeout(
+            lambda: self.request('/tty', stream=False, tty=True))
+        assert res == self.stdout_data + self.stderr_data
+
+    def test_no_stream_no_tty(self):
+        res = self.with_timeout(
+            lambda: self.request('/no-tty', stream=False, tty=False))
+        assert res == self.stdout_data + self.stderr_data
+
+    def test_no_stream_no_tty_demux(self):
+        res = self.with_timeout(
+            lambda: self.request(
+                '/no-tty', stream=False, tty=False, demux=True))
+        assert res == (self.stdout_data, self.stderr_data)
+
+    def test_stream_no_tty(self):
+        def read_first_frame():
+            gen = self.request('/no-tty-delayed', stream=True, tty=False)
+            return next(gen)
+
+        start = time.monotonic()
+        assert self.with_timeout(read_first_frame) == self.stdout_data
+        # The buffered frame is handed over as soon as it is read, not held
+        # back until the rest of the stream arrives.
+        assert time.monotonic() - start < self.delay
+
+    def test_stream_tty(self):
+        def read_first_chunk():
+            gen = self.request('/tty-delayed', stream=True, tty=True)
+            return next(gen)
+
+        start = time.monotonic()
+        assert self.with_timeout(read_first_chunk) == self.stdout_data
+        assert time.monotonic() - start < self.delay
+
+    def test_stream_quiet(self):
+        # An exec or attach that produces nothing for a while is not cut short
+        # by the client timeout.
+        def read_first_frame():
+            gen = self.request(
+                '/no-tty-quiet', stream=True, tty=False, timeout=1)
+            return next(gen)
+
+        res = self.with_timeout(read_first_frame, self.quiet_delay + 10)
+        assert res == self.stdout_data
+
+
 class UserAgentTest(unittest.TestCase):
     def setUp(self):
         self.patcher = mock.patch.object(
