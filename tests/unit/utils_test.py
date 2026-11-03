@@ -132,6 +132,7 @@ class KwargsFromEnvTest(unittest.TestCase):
 
         os.environ.update(DOCKER_HOST='tcp://192.168.59.103:2376',
                           HOME=temp_dir,
+                          USERPROFILE=temp_dir,
                           DOCKER_TLS_VERIFY='')
         os.environ.pop('DOCKER_CERT_PATH', None)
         kwargs = kwargs_from_env()
@@ -144,6 +145,7 @@ class KwargsFromEnvTest(unittest.TestCase):
             shutil.copytree(TEST_CERT_DIR, cert_dir)
 
             os.environ.update(HOME=temp_dir,
+                              USERPROFILE=temp_dir,
                               DOCKER_CERT_PATH='',
                               DOCKER_TLS_VERIFY='1')
 
