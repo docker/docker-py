@@ -460,6 +460,7 @@ def get_fake_network_list():
         "Id": FAKE_NETWORK_ID,
         "Scope": "local",
         "Driver": "bridge",
+        "EnableIPv4": True,
         "EnableIPv6": False,
         "Internal": False,
         "IPAM": {

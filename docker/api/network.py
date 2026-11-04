@@ -39,8 +39,8 @@ class NetworkApiMixin:
 
     def create_network(self, name, driver=None, options=None, ipam=None,
                        check_duplicate=None, internal=False, labels=None,
-                       enable_ipv6=False, attachable=None, scope=None,
-                       ingress=None):
+                       enable_ipv4=True, enable_ipv6=False, attachable=None,
+                       scope=None, ingress=None):
         """
         Create a network. Similar to the ``docker network create``.
 
@@ -55,6 +55,7 @@ class NetworkApiMixin:
                 ``False``.
             labels (dict): Map of labels to set on the network. Default
                 ``None``.
+            enable_ipv4 (bool): Enable IPv4 on the network. Default ``True``.
             enable_ipv6 (bool): Enable IPv6 on the network. Default ``False``.
             attachable (bool): If enabled, and the network is in the global
                 scope,  non-service containers on worker nodes will be able to
@@ -111,6 +112,13 @@ class NetworkApiMixin:
             if not isinstance(labels, dict):
                 raise TypeError('labels must be a dictionary')
             data["Labels"] = labels
+
+        if not enable_ipv4:
+            if version_lt(self._version, '1.48'):
+                raise InvalidVersion(
+                    'enable_ipv4 was introduced in API 1.48'
+                )
+            data['EnableIPv4'] = False
 
         if enable_ipv6:
             if version_lt(self._version, '1.23'):
