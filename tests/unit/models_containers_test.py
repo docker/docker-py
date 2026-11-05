@@ -257,7 +257,8 @@ class ContainerCollectionTest(unittest.TestCase):
 
         assert container.id == FAKE_CONTAINER_ID
         client.api.pull.assert_called_with(
-            'alpine', platform=None, tag='latest', all_tags=False, stream=True
+            'alpine', platform=None, tag='latest', all_tags=False,
+            stream=True, decode=True,
         )
 
     def test_run_with_error(self):
@@ -354,6 +355,7 @@ class ContainerCollectionTest(unittest.TestCase):
             tag='latest',
             all_tags=False,
             stream=True,
+            decode=True,
             platform='linux/arm64',
         )
 
