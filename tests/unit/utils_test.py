@@ -285,6 +285,10 @@ class ParseHostTest(unittest.TestCase):
             'unix:///sock/path#fragment',
             'https://netloc:3333/path;params',
             'ssh://:clearpassword@host:22',
+            'tcp://host:0',
+            'ssh://host:0',
+            'tcp://host:99999',
+            'tcp://host:notaport',
         ]
 
         valid_hosts = {
