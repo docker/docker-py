@@ -620,6 +620,44 @@ class UserAgentTest(unittest.TestCase):
         assert headers['User-Agent'] == 'foo/bar'
 
 
+class TLSVerifyTest(unittest.TestCase):
+    cert_dir = os.path.join(os.path.dirname(__file__), 'testdata/certs')
+
+    def setUp(self):
+        self.patcher = mock.patch.object(
+            APIClient, 'send', return_value=response()
+        )
+        self.mock_send = self.patcher.start()
+        self.env_patcher = mock.patch.dict(
+            os.environ,
+            {'REQUESTS_CA_BUNDLE': os.path.join(self.cert_dir, 'cert.pem')},
+        )
+        self.env_patcher.start()
+
+    def tearDown(self):
+        self.env_patcher.stop()
+        self.patcher.stop()
+
+    def _sent_verify(self, tls_config):
+        client = APIClient(
+            base_url='https://127.0.0.1:2376',
+            tls=tls_config,
+            version=DEFAULT_DOCKER_API_VERSION,
+        )
+        client.version()
+        assert self.mock_send.call_count == 1
+        return self.mock_send.call_args[1]['verify']
+
+    def test_ca_cert_overrides_requests_ca_bundle(self):
+        ca_cert = os.path.join(self.cert_dir, 'ca.pem')
+        tls_config = docker.tls.TLSConfig(ca_cert=ca_cert, verify=True)
+        assert self._sent_verify(tls_config) == ca_cert
+
+    def test_verify_false_overrides_requests_ca_bundle(self):
+        tls_config = docker.tls.TLSConfig(verify=False)
+        assert self._sent_verify(tls_config) is False
+
+
 class DisableSocketTest(unittest.TestCase):
     class DummySocket:
         def __init__(self, timeout=60):
