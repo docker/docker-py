@@ -69,3 +69,5 @@ class CancellableStream:
 
             sock.shutdown(socket.SHUT_RDWR)
             sock.close()
+
+        self._response.close()
