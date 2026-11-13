@@ -40,7 +40,7 @@ def read(socket, n=4096):
             poll.poll()
 
     try:
-        if hasattr(socket, 'recv'):
+        if hasattr(socket, "recv"):
             return socket.recv(n)
         if isinstance(socket, pysocket.SocketIO):
             return socket.read(n)
@@ -49,13 +49,15 @@ def read(socket, n=4096):
         if e.errno not in recoverable_errors:
             raise
     except Exception as e:
-        is_pipe_ended = (isinstance(socket, NpipeSocket) and
-                         len(e.args) > 0 and
-                         e.args[0] == NPIPE_ENDED)
+        is_pipe_ended = (
+            isinstance(socket, NpipeSocket)
+            and len(e.args) > 0
+            and e.args[0] == NPIPE_ENDED
+        )
         if is_pipe_ended:
             # npipes don't support duplex sockets, so we interpret
             # a PIPE_ENDED error as a close operation (0-length read).
-            return ''
+            return ""
         raise
 
 
@@ -85,7 +87,7 @@ def next_frame_header(socket):
     except SocketError:
         return (-1, -1)
 
-    stream, actual = struct.unpack('>BxxxL', data)
+    stream, actual = struct.unpack(">BxxxL", data)
     return (stream, actual)
 
 
@@ -156,22 +158,18 @@ def consume_socket_output(frames, demux=False):
 
     # If the streams are demultiplexed, the generator yields tuples
     # (stdout, stderr)
-    out = [None, None]
-    for frame in frames:
+    stdout = []
+    stderr = []
+    for stdout_frame, stderr_frame in frames:
         # It is guaranteed that for each frame, one and only one stream
         # is not None.
-        assert frame != (None, None)
-        if frame[0] is not None:
-            if out[0] is None:
-                out[0] = frame[0]
-            else:
-                out[0] += frame[0]
+        if stdout_frame:
+            stdout.append(stdout_frame)
         else:
-            if out[1] is None:
-                out[1] = frame[1]
-            else:
-                out[1] += frame[1]
-    return tuple(out)
+            stderr.append(stderr_frame)
+    stdout = b"".join(stdout) if len(stdout) > 0 else None
+    stderr = b"".join(stderr) if len(stderr) > 0 else None
+    return stdout, stderr
 
 
 def demux_adaptor(stream_id, data):
