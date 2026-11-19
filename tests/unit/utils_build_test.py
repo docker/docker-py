@@ -119,6 +119,15 @@ class ExcludePathsTest(unittest.TestCase):
             self.all_paths - {'a.py'}
         )
 
+    @pytest.mark.skipif(
+        IS_WINDOWS_PLATFORM, reason='Windows pattern matching folds case'
+    )
+    def test_filename_pattern_is_case_sensitive(self):
+        from docker.utils.build import Pattern
+
+        assert Pattern('README.md').match('README.md')
+        assert not Pattern('README.md').match('readme.md')
+
     def test_single_filename_leading_dot_slash(self):
         assert self.exclude(['./a.py']) == convert_paths(
             self.all_paths - {'a.py'}
