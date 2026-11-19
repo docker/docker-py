@@ -324,6 +324,15 @@ class DockerApiTest(BaseAPIClientTest):
         assert result['SecurityOpt'] == security_opt
         with pytest.raises(TypeError):
             self.client.create_host_config(security_opt='wrong')
+            
+    def test_create_host_config_systempaths_unconfined(self):
+        result = self.client.create_host_config(
+            security_opt=["systempaths=unconfined"]
+        )
+        
+        assert result['MaskedPaths'] == []
+        assert result['ReadonlyPaths'] == []
+        assert result['SecurityOpt'] == []
 
     def test_stream_helper_decoding(self):
         status_code, content = fake_api.fake_responses[f"{url_prefix}events"]()
