@@ -118,6 +118,29 @@ class BuildTest(BaseAPIClientTest):
     def test_build_container_with_named_dockerfile(self):
         self.client.build(".", dockerfile="nameddockerfile")
 
+    def test_build_in_context_dockerfile_param(self):
+        base = make_tree([], ["custom.dockerfile"])
+        self.addCleanup(shutil.rmtree, base)
+
+        self.client.build(base, dockerfile="custom.dockerfile")
+
+        params = fake_request.call_args[1]["params"]
+        assert params["dockerfile"] == "custom.dockerfile"
+
+    def test_build_out_of_context_dockerfile_param(self):
+        base = make_tree(["context"], ["Dockerfile"])
+        self.addCleanup(shutil.rmtree, base)
+        with open(f"{base}/Dockerfile", "w") as df:
+            df.write("FROM busybox\nCOPY . /src\n")
+
+        self.client.build(f"{base}/context", dockerfile=f"{base}/Dockerfile")
+
+        # The Dockerfile is sent in the archive under a generated name. Its
+        # contents must not end up in the query string.
+        params = fake_request.call_args[1]["params"]
+        assert isinstance(params["dockerfile"], str)
+        assert params["dockerfile"].startswith(".dockerfile.")
+
     def test_build_with_invalid_tag(self):
         with pytest.raises(errors.DockerException):
             self.client.build(".", tag="https://example.com")

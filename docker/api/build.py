@@ -160,6 +160,9 @@ class BuildApiMixin:
                 path, exclude=exclude, dockerfile=dockerfile, gzip=gzip
             )
             encoding = 'gzip' if gzip else encoding
+            # Only the name goes in the query string. The contents of an
+            # out-of-context Dockerfile are already in the archive.
+            dockerfile = dockerfile[0]
 
         u = self._url('/build')
         params = {
