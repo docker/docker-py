@@ -201,6 +201,27 @@ class BuildTest(BaseAPIIntegrationTest):
         for _chunk in stream:
             pass
 
+    @requires_api_version('1.38')
+    def test_build_buildkit_heredoc(self):
+        script = io.BytesIO('\n'.join([
+            'FROM scratch',
+            'COPY <<EOF greeting.txt',
+            'hello world',
+            'EOF'
+        ]).encode('ascii'))
+
+        self.tmp_imgs.append('buildkit-heredoc')
+
+        stream = self.client.build(
+            fileobj=script, tag='buildkit-heredoc',
+            version='2'
+        )
+
+        for _chunk in stream:
+            pass
+
+        assert self.client.inspect_image('buildkit-heredoc')
+
     @requires_api_version('1.23')
     def test_build_labels(self):
         script = io.BytesIO('\n'.join([
