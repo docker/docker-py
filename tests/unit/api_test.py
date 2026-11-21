@@ -480,11 +480,12 @@ class TCPSocketStreamTest(unittest.TestCase):
     @classmethod
     def setup_class(cls):
         cls.server = socketserver.ThreadingTCPServer(
-            ('', 0), cls.get_handler_class())
+            ('127.0.0.1', 0), cls.get_handler_class())
         cls.thread = threading.Thread(target=cls.server.serve_forever)
         cls.thread.daemon = True
         cls.thread.start()
-        cls.address = f'http://{socket.gethostname()}:{cls.server.server_address[1]}'
+        host, port = cls.server.server_address
+        cls.address = f'http://{host}:{port}'
 
     @classmethod
     def teardown_class(cls):

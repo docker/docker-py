@@ -19,7 +19,9 @@ class FindConfigFileTest(unittest.TestCase):
     def test_find_config_fallback(self):
         tmpdir = self.mkdir('test_find_config_fallback')
 
-        with mock.patch.dict(os.environ, {'HOME': str(tmpdir)}):
+        with mock.patch.dict(os.environ, {
+            'HOME': str(tmpdir), 'USERPROFILE': str(tmpdir)
+        }):
             assert config.find_config_file() is None
 
     def test_find_config_from_explicit_path(self):
@@ -43,12 +45,13 @@ class FindConfigFileTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {'HOME': str(tmpdir)}):
             assert config.find_config_file() == str(config_path)
 
-    @mark.skipif("sys.platform == 'win32'")
     def test_find_config_from_home_legacy_name(self):
         tmpdir = self.mkdir('test_find_config_from_home_legacy_name')
         config_path = tmpdir.ensure('.dockercfg')
 
-        with mock.patch.dict(os.environ, {'HOME': str(tmpdir)}):
+        with mock.patch.dict(os.environ, {
+            'HOME': str(tmpdir), 'USERPROFILE': str(tmpdir)
+        }):
             assert config.find_config_file() == str(config_path)
 
     @mark.skipif("sys.platform != 'win32'")
