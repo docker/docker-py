@@ -351,6 +351,25 @@ def parse_devices(devices):
 
 
 def kwargs_from_env(environment=None):
+    """
+    Configure client arguments based on the environment variables.
+
+    Reads environment variables like ``DOCKER_HOST``, ``DOCKER_CERT_PATH``, and
+    ``DOCKER_TLS_VERIFY`` to configure communication with the Docker daemon.
+
+    Args:
+        environment (dict, optional): A dictionary representing the environment
+            variables to use. Defaults to ``os.environ``.
+
+    Returns:
+        dict: A dictionary of configuration options (e.g., ``base_url``,
+        ``tls``) that can be passed as keyword arguments to instantiate
+        a :py:class:`~docker.client.DockerClient` or :py:class:`~docker.api.client.APIClient`.
+
+    Example:
+        >>> kwargs = docker.utils.kwargs_from_env()
+        >>> client = docker.DockerClient(**kwargs)
+    """
     if not environment:
         environment = os.environ
     host = environment.get('DOCKER_HOST')
@@ -457,8 +476,25 @@ def normalize_links(links):
 
 def parse_env_file(env_file):
     """
-    Reads a line-separated environment file.
-    The format of each line should be "key=value".
+    Parse a line-separated environment file.
+
+    Reads a file containing ``KEY=VALUE`` environment variable pairs, ignoring
+    comments (lines starting with ``#``) and empty lines, and returns them as a
+    dictionary.
+
+    Args:
+        env_file (str): Path to the environment file.
+
+    Returns:
+        dict: A dictionary mapping environment variable names to their values.
+
+    Raises:
+        docker.errors.DockerException: If a line in the environment file
+            is malformed (does not contain a ``=`` character).
+
+    Example:
+        >>> env_vars = docker.utils.parse_env_file('path/to/.env')
+        >>> client.containers.run('ubuntu', environment=env_vars)
     """
     environment = {}
 
