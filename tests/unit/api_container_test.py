@@ -306,6 +306,20 @@ class CreateContainerTest(BaseAPIClientTest):
         assert 'CgroupParent' in data['HostConfig']
         assert data['HostConfig']['CgroupParent'] == 'test'
 
+    def test_create_container_with_cgroup(self):
+        self.client.create_container(
+            'busybox', 'ls', host_config=self.client.create_host_config(
+                cgroup='host'
+            )
+        )
+
+        args = fake_request.call_args
+        assert args[0][1] == url_prefix + 'containers/create'
+        data = json.loads(args[1]['data'])
+        assert 'HostConfig' in data
+        assert 'Cgroup' in data['HostConfig']
+        assert data['HostConfig']['Cgroup'] == 'host'
+
     def test_create_container_with_working_dir(self):
         self.client.create_container('busybox', 'ls',
                                      working_dir='/root')
