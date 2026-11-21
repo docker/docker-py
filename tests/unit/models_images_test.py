@@ -144,6 +144,27 @@ class ImageTest(unittest.TestCase):
         })
         assert image.tags == []
 
+    def test_repo_digests(self):
+        image = Image(attrs={
+            'RepoDigests': [
+                'busybox@sha256:abc123',
+                'example.com/busybox@sha256:def456',
+            ],
+        })
+        assert image.repo_digests == [
+            'busybox@sha256:abc123',
+            'example.com/busybox@sha256:def456',
+        ]
+
+    def test_repo_digests_empty(self):
+        assert Image(attrs={'RepoDigests': []}).repo_digests == []
+
+    def test_repo_digests_none(self):
+        assert Image(attrs={'RepoDigests': None}).repo_digests == []
+
+    def test_repo_digests_missing(self):
+        assert Image(attrs={}).repo_digests == []
+
     def test_history(self):
         client = make_fake_client()
         image = client.images.get(FAKE_IMAGE_ID)
