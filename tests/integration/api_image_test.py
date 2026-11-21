@@ -1,5 +1,6 @@
 import contextlib
 import json
+import os
 import shutil
 import socket
 import socketserver
@@ -278,7 +279,11 @@ class ImportImageTest(BaseAPIIntegrationTest):
 
         server.shutdown()
 
-    @pytest.mark.skipif(True, reason="Doesn't work inside a container - FIXME")
+    @pytest.mark.skipif(
+    os.environ.get('DOCKER_HOST', '').startswith('unix:///') and
+    os.path.exists('/.dockerenv'),
+    reason="Doesn't work inside a container - HTTP server unreachable from within Docker"
+)
     def test_import_from_url(self):
         # The crappy test HTTP server doesn't handle large files well, so use
         # a small file.
