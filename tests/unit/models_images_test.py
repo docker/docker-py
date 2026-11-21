@@ -1,7 +1,10 @@
 import unittest
 import warnings
 
+import pytest
+
 from docker.constants import DEFAULT_DATA_CHUNK_SIZE
+from docker.errors import ImagePullError
 from docker.models.images import Image
 
 from .fake_api import FAKE_IMAGE_ID
@@ -46,7 +49,7 @@ class ImageCollectionTest(unittest.TestCase):
         client = make_fake_client()
         image = client.images.pull('test_image:test')
         client.api.pull.assert_called_with(
-            'test_image', tag='test', all_tags=False, stream=True
+            'test_image', tag='test', all_tags=False, stream=True, decode=True
         )
         client.api.inspect_image.assert_called_with('test_image:test')
         assert isinstance(image, Image)
@@ -56,13 +59,13 @@ class ImageCollectionTest(unittest.TestCase):
         client = make_fake_client()
         image = client.images.pull('test_image:latest', tag='test')
         client.api.pull.assert_called_with(
-            'test_image', tag='test', all_tags=False, stream=True
+            'test_image', tag='test', all_tags=False, stream=True, decode=True
         )
         client.api.inspect_image.assert_called_with('test_image:test')
 
         image = client.images.pull('test_image')
         client.api.pull.assert_called_with(
-            'test_image', tag='latest', all_tags=False, stream=True
+            'test_image', tag='latest', all_tags=False, stream=True, decode=True
         )
         client.api.inspect_image.assert_called_with('test_image:latest')
         assert isinstance(image, Image)
@@ -72,7 +75,7 @@ class ImageCollectionTest(unittest.TestCase):
         client = make_fake_client()
         images = client.images.pull('test_image', all_tags=True)
         client.api.pull.assert_called_with(
-            'test_image', tag='latest', all_tags=True, stream=True
+            'test_image', tag='latest', all_tags=True, stream=True, decode=True
         )
         client.api.images.assert_called_with(
             all=False, name='test_image', filters=None
@@ -82,6 +85,27 @@ class ImageCollectionTest(unittest.TestCase):
         image = images[0]
         assert isinstance(image, Image)
         assert image.id == FAKE_IMAGE_ID
+
+    def test_pull_raises_the_error_reported_in_the_stream(self):
+        client = make_fake_client({
+            'pull.return_value': [
+                {'status': 'Pulling from library/test_image'},
+                {
+                    'errorDetail': {'message': 'denied: access forbidden'},
+                    'error': 'denied: access forbidden',
+                },
+            ],
+        })
+        with pytest.raises(ImagePullError, match='denied: access forbidden'):
+            client.images.pull('test_image:test')
+        client.api.inspect_image.assert_not_called()
+
+    def test_pull_raises_a_bare_error_message(self):
+        client = make_fake_client({
+            'pull.return_value': [{'error': 'lease does not exist'}],
+        })
+        with pytest.raises(ImagePullError, match='lease does not exist'):
+            client.images.pull('test_image:test')
 
     def test_pull_with_stream_param(self):
         client = make_fake_client()
