@@ -81,6 +81,10 @@ version-file = "docker/_version.py"
 [tool.hatch.build.targets.sdist]
 include = [
     "/docker",
+    "/tests/**/*.py",
+    "/tests/unit/testdata/*",
+    "/tests/integration/testdata/*",
+    "/tests/gpg-keys/*",
 ]
 
 [tool.ruff]
