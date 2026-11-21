@@ -772,6 +772,51 @@ class CredstoreTest(unittest.TestCase):
         }
 
 
+    def test_get_all_credentials_credstore_error_skipped(self):
+        """StoreError in get_all_credentials should be logged and skipped,
+        not raised, so that a single broken credential store does not
+        prevent building images that do not need those credentials.
+
+        See https://github.com/docker/docker-py/issues/3379
+        """
+        failing_store = FailingStore('badstore')
+        self.authconfig['credHelpers'] = {
+            'broken-registry.io': 'badstore',
+        }
+        self.authconfig._stores['badstore'] = failing_store
+
+        # Should not raise; the broken entry should simply be omitted.
+        result = self.authconfig.get_all_credentials()
+        assert 'broken-registry.io' not in result
+
+        # Valid entries from the default store should still be present.
+        assert 'gensokyo.jp' in result
+        assert result['gensokyo.jp'] == {
+            'Username': 'sakuya',
+            'Password': 'izayoi',
+            'ServerAddress': 'https://gensokyo.jp/v2',
+        }
+
+    def test_get_all_credentials_default_store_error_skipped(self):
+        """StoreError from the default credsStore should be caught per-entry
+        so that other valid entries are still returned."""
+        mixed_store = PartiallyFailingStore('default')
+        mixed_store.store(
+            'https://good.io/v2', 'user', 'pass',
+        )
+        mixed_store.mark_failing('https://bad.io/v2')
+        self.authconfig._stores['default'] = mixed_store
+
+        result = self.authconfig.get_all_credentials()
+        assert 'good.io' in result
+        assert result['good.io'] == {
+            'Username': 'user',
+            'Password': 'pass',
+            'ServerAddress': 'https://good.io/v2',
+        }
+        assert 'bad.io' not in result
+
+
 class InMemoryStore(credentials.Store):
     def __init__(self, *args, **kwargs):
         self.__store = {}
@@ -796,3 +841,44 @@ class InMemoryStore(credentials.Store):
 
     def erase(self, server):
         del self.__store[server]
+
+
+class FailingStore(credentials.Store):
+    """A credential store that always raises StoreError on get()."""
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get(self, server):
+        raise credentials.errors.StoreError(
+            f'Simulated store failure for {server}'
+        )
+
+    def store(self, server, username, secret):
+        pass
+
+    def list(self):
+        return {}
+
+    def erase(self, server):
+        pass
+
+
+class PartiallyFailingStore(InMemoryStore):
+    """A credential store that fails for specific servers."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._failing = set()
+
+    def mark_failing(self, server):
+        # Also register it so it appears in list()
+        self.store(server, 'dummy', 'dummy')
+        self._failing.add(server)
+
+    def get(self, server):
+        if server in self._failing:
+            raise credentials.errors.StoreError(
+                f'Simulated store failure for {server}'
+            )
+        return super().get(server)
