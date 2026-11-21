@@ -215,6 +215,8 @@ class Container(Model):
             resp['Id'], detach=detach, tty=tty, stream=stream, socket=socket,
             demux=demux
         )
+
+        exec_output = tuple(b'' if x is None else x for x in exec_output)
         if socket or stream:
             return ExecResult(None, exec_output)
 
