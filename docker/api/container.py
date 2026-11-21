@@ -437,6 +437,29 @@ class ContainerApiMixin:
             stop_signal, networking_config, healthcheck,
             stop_timeout, runtime
         )
+        # The gw_priority is not directly part of ContainerConfig,
+        # it's part of NetworkingConfig's EndpointsConfig.
+        # We need to ensure networking_config passed to create_container_from_config
+        # can have gw_priority.
+        # create_container_config doesn't handle networking_config directly in its
+        # parameters but it's passed through to ContainerConfig which stores it.
+        # The actual handling of gw_priority is within create_endpoint_config.
+        # We need to make sure that when create_container is called, if gw_priority
+        # is intended for an endpoint, it's correctly passed into the
+        # relevant create_endpoint_config call within create_networking_config.
+
+        # The current structure expects networking_config to be pre-constructed.
+        # If we want to add a simple top-level gw_priority to create_container,
+        # it would imply it's for the *primary* network interface if only one
+        # is being configured, or require more complex logic if multiple networks
+        # are part of networking_config.
+
+        # For now, users should construct NetworkingConfig with GwPriority using
+        # create_networking_config and create_endpoint_config as shown in examples.
+        # We will modify create_endpoint_config to correctly handle gw_priority.
+        # No direct change to create_container signature for a top-level gw_priority.
+        # The user is responsible for building the networking_config correctly.
+
         return self.create_container_from_config(config, name, platform)
 
     def create_container_config(self, *args, **kwargs):
@@ -652,9 +675,10 @@ class ContainerApiMixin:
                 Names in that list can be used within the network to reach the
                 container. Defaults to ``None``.
             links (dict): Mapping of links for this endpoint using the
-                ``{'container': 'alias'}`` format. The alias is optional.
+                ``{\'container\': \'alias\'}`` format. The alias is optional.
                 Containers declared in this dict will be linked to this
                 container using the provided alias. Defaults to ``None``.
+
             ipv4_address (str): The IP address of this container on the
                 network, using the IPv4 protocol. Defaults to ``None``.
             ipv6_address (str): The IP address of this container on the
@@ -663,6 +687,8 @@ class ContainerApiMixin:
                 addresses.
             driver_opt (dict): A dictionary of options to provide to the
                 network driver. Defaults to ``None``.
+            gw_priority (int): The priority of the gateway for this endpoint.
+                Requires API version 1.48 or higher. Defaults to ``None``.
 
         Returns:
             (dict) An endpoint config.
@@ -670,12 +696,15 @@ class ContainerApiMixin:
         Example:
 
             >>> endpoint_config = client.api.create_endpoint_config(
-                aliases=['web', 'app'],
-                links={'app_db': 'db', 'another': None},
-                ipv4_address='132.65.0.123'
-            )
+            ...     aliases=[\'web\', \'app\'],
+            ...     links={\'app_db\': \'db\', \'another\': None},
+            ...     ipv4_address=\'132.65.0.123\',
+            ...     gw_priority=100
+            ... )
 
         """
+        # Ensure gw_priority is extracted before passing to EndpointConfig
+        # The actual EndpointConfig class handles the version check and storage.
         return EndpointConfig(self._version, *args, **kwargs)
 
     @utils.check_resource('container')

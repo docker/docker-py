@@ -216,7 +216,7 @@ class NetworkApiMixin:
                                      ipv4_address=None, ipv6_address=None,
                                      aliases=None, links=None,
                                      link_local_ips=None, driver_opt=None,
-                                     mac_address=None):
+                                     mac_address=None, gw_priority=None):
         """
         Connect a container to a network.
 
@@ -237,6 +237,8 @@ class NetworkApiMixin:
                 (IPv4/IPv6) addresses.
             mac_address (str): The MAC address of this container on the
                 network. Defaults to ``None``.
+            gw_priority (int): The priority of the gateway for this endpoint.
+                Requires API version 1.48 or higher. Defaults to ``None``.
         """
         data = {
             "Container": container,
@@ -244,7 +246,7 @@ class NetworkApiMixin:
                 aliases=aliases, links=links, ipv4_address=ipv4_address,
                 ipv6_address=ipv6_address, link_local_ips=link_local_ips,
                 driver_opt=driver_opt,
-                mac_address=mac_address
+                mac_address=mac_address, gw_priority=gw_priority
             ),
         }
 

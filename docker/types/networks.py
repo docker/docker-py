@@ -5,7 +5,41 @@ from ..utils import normalize_links, version_lt
 class EndpointConfig(dict):
     def __init__(self, version, aliases=None, links=None, ipv4_address=None,
                  ipv6_address=None, link_local_ips=None, driver_opt=None,
-                 mac_address=None):
+                 mac_address=None, gw_priority=None):
+        """
+        Initialize an EndpointConfig object.
+
+        Args:
+            version (str): The API version.
+            aliases (:py:class:`list`, optional): A list of aliases for this
+                endpoint. Defaults to ``None``.
+            links (dict, optional): Mapping of links for this endpoint.
+                Defaults to ``None``.
+            ipv4_address (str, optional): The IPv4 address for this endpoint.
+                Defaults to ``None``.
+            ipv6_address (str, optional): The IPv6 address for this endpoint.
+                Defaults to ``None``.
+            link_local_ips (:py:class:`list`, optional): A list of link-local
+                (IPv4/IPv6) addresses. Defaults to ``None``.
+            driver_opt (dict, optional): A dictionary of options to provide to
+                the network driver. Defaults to ``None``.
+            mac_address (str, optional): The MAC address for this endpoint.
+                Requires API version 1.25 or higher. Defaults to ``None``.
+            gw_priority (int, optional): The priority of the gateway for this
+                endpoint. Used to determine which network endpoint provides
+                the default gateway for the container. The endpoint with the
+                highest priority is selected. If multiple endpoints have the
+                same priority, endpoints are sorted lexicographically by their
+                network name, and the one that sorts first is picked.
+                Allowed values are positive and negative integers.
+                The default value is 0 if not specified.
+                Requires API version 1.48 or higher. Defaults to ``None``.
+
+        Raises:
+            errors.InvalidVersion: If a parameter is not supported for the
+                given API version.
+            TypeError: If a parameter has an invalid type.
+        """
         if version_lt(version, '1.22'):
             raise errors.InvalidVersion(
                 'Endpoint config is not supported for API version < 1.22'
@@ -49,6 +83,15 @@ class EndpointConfig(dict):
             if not isinstance(driver_opt, dict):
                 raise TypeError('driver_opt must be a dictionary')
             self['DriverOpts'] = driver_opt
+
+        if gw_priority is not None:
+            if version_lt(version, '1.48'):
+                raise errors.InvalidVersion(
+                    'gw_priority is not supported for API version < 1.48'
+                )
+            if not isinstance(gw_priority, int):
+                raise TypeError('gw_priority must be an integer')
+            self['GwPriority'] = gw_priority
 
 
 class NetworkingConfig(dict):
