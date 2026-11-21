@@ -97,6 +97,7 @@ class DockerClient:
         timeout = kwargs.pop('timeout', DEFAULT_TIMEOUT_SECONDS)
         max_pool_size = kwargs.pop('max_pool_size', DEFAULT_MAX_POOL_SIZE)
         version = kwargs.pop('version', None)
+        credstore_env = kwargs.pop('credstore_env', None)
         use_ssh_client = kwargs.pop('use_ssh_client', False)
         use_context = kwargs.pop('use_context', True)
         environment = kwargs.get('environment') or os.environ
@@ -111,6 +112,7 @@ class DockerClient:
             timeout=timeout,
             max_pool_size=max_pool_size,
             version=version,
+            credstore_env=credstore_env,
             use_ssh_client=use_ssh_client,
             **params,
         )
