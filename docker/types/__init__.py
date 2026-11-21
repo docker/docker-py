@@ -1,6 +1,7 @@
 from .containers import ContainerConfig, DeviceRequest, HostConfig, LogConfig, Ulimit
 from .daemon import CancellableStream
 from .healthcheck import Healthcheck
+from .image import Platform
 from .networks import EndpointConfig, IPAMConfig, IPAMPool, NetworkingConfig
 from .services import (
     ConfigReference,
