@@ -1221,7 +1221,7 @@ class ContainerApiMixin:
             ps_args (str): An optional arguments passed to ps (e.g. ``aux``)
 
         Returns:
-            (str): The output of the top
+            (dict): The output of the top
 
         Raises:
             :py:class:`docker.errors.APIError`
