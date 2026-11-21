@@ -1,4 +1,5 @@
 import errno
+import io
 import os
 import select
 import socket as pysocket
@@ -30,7 +31,7 @@ def read(socket, n=4096):
 
     recoverable_errors = (errno.EINTR, errno.EDEADLK, errno.EWOULDBLOCK)
 
-    if not isinstance(socket, NpipeSocket):
+    if not isinstance(socket, NpipeSocket) and not isinstance(socket, io.BufferedReader):
         if not hasattr(select, "poll"):
             # Limited to 1024
             select.select([socket], [], [])
@@ -42,7 +43,7 @@ def read(socket, n=4096):
     try:
         if hasattr(socket, 'recv'):
             return socket.recv(n)
-        if isinstance(socket, pysocket.SocketIO):
+        if isinstance(socket, pysocket.SocketIO) or isinstance(socket, io.BufferedReader):
             return socket.read(n)
         return os.read(socket.fileno(), n)
     except OSError as e:

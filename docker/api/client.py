@@ -1,3 +1,4 @@
+import io
 import json
 import struct
 import urllib
@@ -427,6 +428,9 @@ class APIClient(
         caller is responsible for closing the response.
         """
         socket = self._get_raw_response_socket(response)
+
+        if isinstance(response.raw._fp.fp, io.BufferedReader):
+            socket = response.raw._fp.fp
 
         gen = frames_iter(socket, tty)
 
