@@ -173,4 +173,5 @@ class ExecApiMixin:
         if stream:
             return CancellableStream(output, res)
         else:
+            res.close()
             return output
