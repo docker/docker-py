@@ -405,7 +405,7 @@ def convert_filters(filters):
 def datetime_to_timestamp(dt):
     """Convert a datetime to a Unix timestamp"""
     delta = dt.astimezone(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)
-    return delta.seconds + delta.days * 24 * 3600
+    return delta.total_seconds()
 
 
 def parse_bytes(s):
