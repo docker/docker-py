@@ -120,14 +120,21 @@ $ make docs
 $ open _build/index.html
 ```
 
-## Release Checklist
+## Deployment
 
-Before a new release, please go through the following checklist:
+To deploy a new release, please go through the following steps:
 
-* Bump version in docker/version.py
-* Add a release note in docs/change_log.md
-* Git tag the version
-* Upload to pypi
+* Make sure a release note for the changes included since the last published version is present in [docs/change-log.md](./docs/change-log.md);
+* Go to the [`Release`](https://github.com/docker/docker-py/actions/workflows/release.yml) GitHub action page and click on `Run workflow`. Here:
+  * Insert the version number you want to give to the new package, **without** the `v.` prefix (eg. `7.1.0`). This version should correspond with the one written in [docs/change-log.md](./docs/change-log.md);
+  * Make sure `Dry run` is checked;
+  * Click `Run workflow`;
+  * Click on the newly executed workflow, click on the `publish` job, and under `Generate Package` check to see if the package has been built successfully and with the correct version number.
+* Once the `Dry run` of the workflow has run successfully, repeat the workflow steps again, this time making sure `Dry run` is deselected;
+* Once the workflow has successfully completed, there should now be a draft release present in [the releases page](https://github.com/docker/docker-py/releases);
+* Edit this draft release to include the same details as added in [docs/change-log.md](./docs/change-log.md);
+* Make sure the `Mark as latest` checkbox is selected;
+* Publish the draft release.
 
 ## Vulnerability Reporting
 For any security issues, please do NOT file an issue or pull request on github!
