@@ -50,7 +50,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
       -
         name: Create GitHub release
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         if: '! inputs.dry-run'
         with:
           files: dist/*
