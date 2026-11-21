@@ -725,6 +725,24 @@ class ContainerTest(unittest.TestCase):
         client = make_fake_client()
         container = client.containers.get(FAKE_CONTAINER_ID)
         assert container.image.id == FAKE_IMAGE_ID
+        # The container reports no 'ImageID', so the name in 'Image' is looked
+        # up as-is rather than being split on its tag separator.
+        client.api.inspect_image.assert_called_with('busybox:latest')
+
+    def test_image_from_image_id(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        container.attrs['ImageID'] = FAKE_IMAGE_ID
+        assert container.image.id == FAKE_IMAGE_ID
+        client.api.inspect_image.assert_called_with(
+            FAKE_IMAGE_ID[len('sha256:'):]
+        )
+
+    def test_image_without_image_id_or_image(self):
+        client = make_fake_client()
+        container = client.containers.get(FAKE_CONTAINER_ID)
+        del container.attrs['Image']
+        assert container.image is None
 
     def test_kill(self):
         client = make_fake_client()
