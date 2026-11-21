@@ -302,7 +302,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
     def test_list_sparse(self):
         client = docker.from_env(version=TEST_API_VERSION)
         container_id = client.containers.run(
-            "alpine", "sleep 300", detach=True).id
+            "alpine", "sleep 300", detach=True, name='a_container').id
         self.tmp_containers.append(container_id)
         containers = [c for c in client.containers.list(sparse=True) if c.id ==
                       container_id]
@@ -312,6 +312,7 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert container.attrs['Image'] == 'alpine'
         assert container.status == 'running'
         assert container.image == client.images.get('alpine')
+        assert container.name == 'a_container'
         with pytest.raises(docker.errors.DockerException):
             _ = container.labels
 
