@@ -100,7 +100,7 @@ project or Python, here are the steps to get you started.
   [sync changes you make](https://help.github.com/articles/syncing-a-fork/)
   with the original repository.
 4. Enter the local directory `cd docker-py`.
-5. Run `python setup.py develop` to install the dev version of the project
+5. Run `pip install ".[dev]"` to install the dev version of the project
   and required dependencies. We recommend you do so inside a
   [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs)
 
