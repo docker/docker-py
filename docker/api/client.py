@@ -89,8 +89,9 @@ class APIClient(
     Args:
         base_url (str): URL to the Docker server. For example,
             ``unix:///var/run/docker.sock`` or ``tcp://127.0.0.1:1234``.
-        version (str): The version of the API to use. Set to ``auto`` to
-            automatically detect the server's version. Default: ``1.35``
+        version (str or None): The version of the API to use. If ``None``
+            (default) or ``'auto'``, automatically detect the server's
+            version. Otherwise, use the specified version string.
         timeout (int): Default timeout for API calls, in seconds.
         tls (bool or :py:class:`~docker.tls.TLSConfig`): Enable TLS. Pass
             ``True`` to enable it with default options, or pass a
