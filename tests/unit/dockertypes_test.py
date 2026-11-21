@@ -491,3 +491,9 @@ class ServicePortsTest(unittest.TestCase):
         } in converted_ports
 
         assert len(converted_ports) == 3
+
+    def test_convert_service_ports_wrong_ports_type(self):
+        ports = 'ports_as_string'
+
+        with pytest.raises(TypeError):
+            convert_service_ports(ports)
