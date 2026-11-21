@@ -113,7 +113,7 @@ class Context:
             metadata["Endpoints"][k]["Host"] = v.get(
                 "Host", get_context_host(None, False))
             metadata["Endpoints"][k]["SkipTLSVerify"] = bool(
-                v.get("SkipTLSVerify", True))
+                v.get("SkipTLSVerify", False))
 
         return metadata
 
@@ -121,25 +121,35 @@ class Context:
         certs = {}
         tls_dir = get_tls_dir(self.name)
         for endpoint in self.endpoints.keys():
-            if not os.path.isdir(os.path.join(tls_dir, endpoint)):
-                continue
             ca_cert = None
             cert = None
             key = None
-            for filename in os.listdir(os.path.join(tls_dir, endpoint)):
-                if filename.startswith("ca"):
-                    ca_cert = os.path.join(tls_dir, endpoint, filename)
-                elif filename.startswith("cert"):
-                    cert = os.path.join(tls_dir, endpoint, filename)
-                elif filename.startswith("key"):
-                    key = os.path.join(tls_dir, endpoint, filename)
-            if all([ca_cert, cert, key]):
-                verify = None
-                if endpoint == "docker" and not self.endpoints["docker"].get(
-                        "SkipTLSVerify", False):
-                    verify = True
-                certs[endpoint] = TLSConfig(
-                    client_cert=(cert, key), ca_cert=ca_cert, verify=verify)
+            endpoint_dir = os.path.join(tls_dir, endpoint)
+            if os.path.isdir(endpoint_dir):
+                for filename in os.listdir(endpoint_dir):
+                    if filename.startswith("ca"):
+                        ca_cert = os.path.join(endpoint_dir, filename)
+                    elif filename.startswith("cert"):
+                        cert = os.path.join(endpoint_dir, filename)
+                    elif filename.startswith("key"):
+                        key = os.path.join(endpoint_dir, filename)
+            skip_verify = False
+            if endpoint == "docker":
+                # Like the Docker CLI, the docker endpoint uses TLS when it
+                # has any TLS material or skip-tls-verify is set; a client
+                # certificate is optional.
+                skip_verify = self.endpoints["docker"].get(
+                    "SkipTLSVerify", False)
+                if not (ca_cert or cert or key or skip_verify):
+                    continue
+            elif not all([ca_cert, cert, key]):
+                continue
+            verify = None
+            if endpoint == "docker" and not skip_verify:
+                verify = True
+            client_cert = (cert, key) if cert and key else None
+            certs[endpoint] = TLSConfig(
+                client_cert=client_cert, ca_cert=ca_cert, verify=verify)
         self.tls_cfg = certs
         self.tls_path = tls_dir
 
@@ -233,9 +243,8 @@ class Context:
     def TLSMaterial(self):
         certs = {}
         for endpoint, tls in self.tls_cfg.items():
-            cert, key = tls.cert
-            certs[endpoint] = list(
-                map(os.path.basename, [tls.ca_cert, cert, key]))
+            files = [tls.ca_cert, *(tls.cert or ())]
+            certs[endpoint] = [os.path.basename(f) for f in files if f]
         return {
             "TLSMaterial": certs
         }
