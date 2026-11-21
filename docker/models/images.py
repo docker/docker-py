@@ -232,7 +232,11 @@ class ImageCollection(Collection):
         low-level API.
 
         Args:
-            path (str): Path to the directory containing the Dockerfile
+            path (str): Path to the directory containing the Dockerfile.
+                Typically, the Dockerfile is a direct child of `path`,
+                but it can also be in a nested directory.
+                A copy of the `path` directory, excluding files specified
+                in `.dockerignore`, will be used as the build context.
             fileobj: A file object to use as the Dockerfile. (Or a file-like
                 object)
             tag (str): A tag to add to the final image
