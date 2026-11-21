@@ -280,7 +280,6 @@ class ParseHostTest(unittest.TestCase):
             'tcp://',
             'udp://127.0.0.1',
             'udp://127.0.0.1:2375',
-            'ssh://:22/path',
             'tcp://netloc:3333/path?q=1',
             'unix:///sock/path#fragment',
             'https://netloc:3333/path;params',
@@ -312,6 +311,9 @@ class ParseHostTest(unittest.TestCase):
             'ssh://': 'ssh://127.0.0.1:22',
             'ssh://user@localhost:22': 'ssh://user@localhost:22',
             'ssh://user@remote': 'ssh://user@remote:22',
+            'ssh://user@remote/var/run/docker.sock': (
+                'ssh://user@remote:22/var/run/docker.sock'
+            ),
         }
 
         for host in invalid_hosts:

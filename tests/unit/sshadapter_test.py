@@ -12,6 +12,15 @@ class SSHAdapterTest(unittest.TestCase):
         assert conn.ssh_host == "user@hostname:1234"
 
     @staticmethod
+    def test_ssh_hostname_trim_with_socket_path():
+        conn = docker.transport.SSHHTTPAdapter(
+            base_url="ssh://user@hostname:1234/var/run/docker-1.sock",
+            shell_out=True
+        )
+        assert conn.ssh_host == "user@hostname:1234"
+        assert conn.ssh_socket_path == "/var/run/docker-1.sock"
+
+    @staticmethod
     def test_ssh_parse_url():
         c = SSHSocket(host="user@hostname:1234")
         assert c.host == "hostname"
