@@ -1517,7 +1517,18 @@ class ContainerTest(BaseAPIClientTest):
         fake_request.assert_called_with(
             'GET',
             url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/json',
-            timeout=DEFAULT_TIMEOUT_SECONDS
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            params={'size': 'false'}
+        )
+
+    def test_inspect_container_with_size(self):
+        self.client.inspect_container(fake_api.FAKE_CONTAINER_ID, size=True)
+
+        fake_request.assert_called_with(
+            'GET',
+            url_prefix + 'containers/' + fake_api.FAKE_CONTAINER_ID + '/json',
+            timeout=DEFAULT_TIMEOUT_SECONDS,
+            params={'size': 'true'}
         )
 
     def test_inspect_container_undefined_id(self):
