@@ -25,6 +25,12 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert container.attrs['Config']['Image'] == "alpine"
         assert container.attrs['Config']['Cmd'] == ['sleep', '300']
 
+    def test_run_with_timeout(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        with pytest.raises(docker.errors.requests.exceptions.ConnectionError) as cm:
+            client.containers.run("alpine", "sh -c 'echo a && sleep 10 && echo b'", wait_condition={'timeout': 3})
+        assert "Error" in cm.exconly()
+
     def test_run_with_error(self):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.ContainerError) as cm:
