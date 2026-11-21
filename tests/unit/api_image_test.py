@@ -271,6 +271,33 @@ class ImageTest(BaseAPIClientTest):
             timeout=DEFAULT_TIMEOUT_SECONDS
         )
 
+
+    def test_push_image_with_auth_error(self):
+        auth_config = {
+            'username': "test_user",
+            'password': "test_password",
+            'serveraddress': "test_server",
+        }
+        encoded_auth = auth.encode_header(auth_config)
+        with pytest.raises(docker.errors.APIError, match='bad auth'):
+            self.client.push(
+                fake_api.FAKE_IMAGE_NAME_ERROR, tag=fake_api.FAKE_TAG_NAME,
+                auth_config=auth_config
+            )
+
+        fake_request.assert_called_with(
+            'POST',
+            f"{url_prefix}images/test_image_error/push",
+            params={
+                'tag': fake_api.FAKE_TAG_NAME,
+            },
+            data='{}',
+            headers={'Content-Type': 'application/json',
+                     'X-Registry-Auth': encoded_auth},
+            stream=False,
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
     def test_push_image_stream(self):
         with mock.patch('docker.auth.resolve_authconfig',
                         fake_resolve_authconfig):
@@ -284,6 +311,59 @@ class ImageTest(BaseAPIClientTest):
             },
             data='{}',
             headers={'Content-Type': 'application/json'},
+            stream=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+
+    def test_push_image_stream_with_auth(self):
+        auth_config = {
+            'username': "test_user",
+            'password': "test_password",
+            'serveraddress': "test_server",
+        }
+        encoded_auth = auth.encode_header(auth_config)
+        self.client.push(
+            fake_api.FAKE_IMAGE_NAME, tag=fake_api.FAKE_TAG_NAME,
+            auth_config=auth_config, stream=True
+        )
+
+        fake_request.assert_called_with(
+            'POST',
+            f"{url_prefix}images/test_image/push",
+            params={
+                'tag': fake_api.FAKE_TAG_NAME,
+            },
+            data='{}',
+            headers={'Content-Type': 'application/json',
+                     'X-Registry-Auth': encoded_auth},
+            stream=True,
+            timeout=DEFAULT_TIMEOUT_SECONDS
+        )
+
+
+    def test_push_image_stream_with_auth_error(self):
+        auth_config = {
+            'username': "test_user",
+            'password': "test_password",
+            'serveraddress': "test_server",
+        }
+        encoded_auth = auth.encode_header(auth_config)
+        with pytest.raises(docker.errors.APIError, match='bad auth'):
+            self.client.push(
+                fake_api.FAKE_IMAGE_NAME_ERROR, tag=fake_api.FAKE_TAG_NAME,
+                auth_config=auth_config, stream=True
+            )
+
+        fake_request.assert_called_with(
+            'POST',
+            f"{url_prefix}images/test_image_error/push",
+            params={
+                'tag': fake_api.FAKE_TAG_NAME,
+            },
+            data='{}',
+            headers={'Content-Type': 'application/json',
+                     'X-Registry-Auth': encoded_auth},
             stream=True,
             timeout=DEFAULT_TIMEOUT_SECONDS
         )

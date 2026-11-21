@@ -1,3 +1,5 @@
+import json
+
 from docker import constants
 
 from . import fake_stat
@@ -9,6 +11,7 @@ FAKE_IMAGE_ID = 'sha256:fe7a8fc91d3f17835cbb3b86a1c60287500ab01a53bc79c4497d09f0
 FAKE_EXEC_ID = 'b098ec855f10434b5c7c973c78484208223a83f663ddaefb0f02a242840cb1c7'
 FAKE_NETWORK_ID = '1999cfb42e414483841a125ade3c276c3cb80cb3269b14e339354ac63a31b02c'
 FAKE_IMAGE_NAME = 'test_image'
+FAKE_IMAGE_NAME_ERROR = 'test_image_error'
 FAKE_TARBALL_PATH = '/path/to/tarball'
 FAKE_REPO_NAME = 'repo'
 FAKE_TAG_NAME = 'tag'
@@ -359,6 +362,12 @@ def post_fake_push():
     return status_code, response
 
 
+def post_fake_push_error():
+    status_code = 200
+    response = '{"status": "intermediate update"}\r\n{"error": "bad auth"}\r\n'
+    return status_code, response
+
+
 def post_fake_build_container():
     status_code = 200
     response = {'Id': FAKE_CONTAINER_ID}
@@ -603,6 +612,8 @@ fake_responses = {
     get_fake_insert_image,
     f'{prefix}/{CURRENT_VERSION}/images/test_image/push':
     post_fake_push,
+    f'{prefix}/{CURRENT_VERSION}/images/test_image_error/push':
+    post_fake_push_error,
     f'{prefix}/{CURRENT_VERSION}/commit':
     post_fake_commit,
     f'{prefix}/{CURRENT_VERSION}/containers/create':
