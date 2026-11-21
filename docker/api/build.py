@@ -275,7 +275,7 @@ class BuildApiMixin:
         return self._stream_helper(response, decode=decode)
 
     @utils.minimum_version('1.31')
-    def prune_builds(self, filters=None, keep_storage=None, all=None):
+    def prune_builds(self, filters=None, keep_storage=None, all=None, max_used_space=None, reserved_space=None, min_free_space=None):
         """
         Delete the builder cache
 
@@ -292,6 +292,12 @@ class BuildApiMixin:
                 Needs Docker API v1.39+
             all (bool): Remove all types of build cache.
                 Needs Docker API v1.39+
+            reserved-space (int): The minimum amount of disk space that Docker is allowed to keep for build cache.
+                Cache below this threshold won't be removed during garbage collection.
+            max-used-space (int): The maximum amount of disk space that Docker is allowed to use for build cache.
+                Any usage above this threshold will be reclaimed during garbage collection. Needs Docker API v1.48+
+            min-free-space (int): The target amount of free disk space that the garbage collector will attempt to maintain on your system.
+                Needs Docker API v1.48+
 
         Returns:
             (dict): A dictionary containing information about the operation's
@@ -316,6 +322,12 @@ class BuildApiMixin:
             params['keep-storage'] = keep_storage
         if all is not None:
             params['all'] = all
+        if max_used_space is not None:
+            params['max-used-space'] = max_used_space
+        if reserved_space is not None:
+            params['reserved-space'] = reserved_space
+        if min_free_space is not None:
+            params['min-free-space'] = min_free_space
         return self._result(self._post(url, params=params), True)
 
     def _set_auth_headers(self, headers):
