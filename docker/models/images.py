@@ -217,7 +217,7 @@ class RegistryData(Model):
 class ImageCollection(Collection):
     model = Image
 
-    def build(self, **kwargs):
+    def build(self, progress_callback=None, **kwargs):
         """
         Build an image and return it. Similar to the ``docker build``
         command. Either ``path`` or ``fileobj`` must be set.
@@ -279,6 +279,9 @@ class ImageCollection(Collection):
                 configuration file (``~/.docker/config.json`` by default)
                 contains a proxy configuration, the corresponding environment
                 variables will be set in the container being built.
+            progress_callback Callable[[int, int, str], None]: Will get called
+                with the following arguments: current_step, max_step, details
+                Default: `None`.
 
         Returns:
             (tuple): The first item is the :py:class:`Image` object for the
@@ -303,12 +306,24 @@ class ImageCollection(Collection):
             if 'error' in chunk:
                 raise BuildError(chunk['error'], result_stream)
             if 'stream' in chunk:
+
                 match = re.search(
                     r'(^Successfully built |sha256:)([0-9a-f]+)$',
                     chunk['stream']
                 )
                 if match:
                     image_id = match.group(2)
+                else:
+                    match = re.match(
+                        r'Step (\d+)/(\d+) : (.+)',
+                        chunk['stream']
+                    )
+                    if match and callable(progress_callback):
+                        progress_callback(
+                            int(match.group(1)),
+                            int(match.group(2)),
+                            match.group(3)
+                        )
             last_event = chunk
         if image_id:
             return (self.get(image_id), result_stream)
