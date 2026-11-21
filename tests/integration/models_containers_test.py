@@ -34,6 +34,15 @@ class ContainerCollectionTest(BaseIntegrationTest):
         assert "alpine" in cm.exconly()
         assert "No such file or directory" in cm.exconly()
 
+    def test_run_with_error_with_tty(self):
+        client = docker.from_env(version=TEST_API_VERSION)
+        with pytest.raises(docker.errors.ContainerError) as cm:
+            client.containers.run("alpine", "cat /test", remove=True, tty=True)
+        assert cm.value.exit_status == 1
+        assert "cat /test" in cm.exconly()
+        assert "alpine" in cm.exconly()
+        assert "No such file or directory" in cm.exconly()
+
     def test_run_with_image_that_does_not_exist(self):
         client = docker.from_env(version=TEST_API_VERSION)
         with pytest.raises(docker.errors.ImageNotFound):
