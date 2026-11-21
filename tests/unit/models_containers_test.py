@@ -92,6 +92,7 @@ class ContainerCollectionTest(unittest.TestCase):
             'platform': 'linux',
             'ports': {1111: 4567, 2222: None},
             'privileged': True,
+            'pull': 'always',
             'publish_all_ports': True,
             'read_only': True,
             'restart_policy': {'Name': 'always'},
@@ -211,6 +212,7 @@ class ContainerCollectionTest(unittest.TestCase):
             },
             'platform': 'linux',
             'ports': [('1111', 'tcp'), ('2222', 'tcp')],
+            'pull': 'always',
             'stdin_open': True,
             'stop_signal': 9,
             'tty': True,
@@ -244,6 +246,19 @@ class ContainerCollectionTest(unittest.TestCase):
         client.api.inspect_container.assert_called_with(FAKE_CONTAINER_ID)
         client.api.start.assert_called_with(FAKE_CONTAINER_ID)
 
+    def test_run_with_pull(self):
+        client = make_fake_client()
+        client.containers.run('alpine', pull='always')
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            detach=False,
+            pull='always',
+            host_config={
+                'NetworkMode': 'default',
+            }
+        )
+
     def test_run_pull(self):
         client = make_fake_client()
 
@@ -258,6 +273,24 @@ class ContainerCollectionTest(unittest.TestCase):
         assert container.id == FAKE_CONTAINER_ID
         client.api.pull.assert_called_with(
             'alpine', platform=None, tag='latest', all_tags=False, stream=True
+        )
+
+    def test_run_pull_never_does_not_fallback(self):
+        client = make_fake_client()
+        client.api.create_container.side_effect = docker.errors.ImageNotFound("")
+
+        with pytest.raises(docker.errors.ImageNotFound):
+            client.containers.run('alpine', pull='never')
+
+        client.api.pull.assert_not_called()
+        client.api.create_container.assert_called_once_with(
+            image='alpine',
+            command=None,
+            detach=False,
+            pull='never',
+            host_config={
+                'NetworkMode': 'default',
+            }
         )
 
     def test_run_with_error(self):
@@ -483,6 +516,18 @@ class ContainerCollectionTest(unittest.TestCase):
             host_config={'NetworkMode': 'default'}
         )
         client.api.inspect_container.assert_called_with(FAKE_CONTAINER_ID)
+
+    def test_create_with_pull(self):
+        client = make_fake_client()
+        container = client.containers.create('alpine', pull='always')
+        assert isinstance(container, Container)
+        assert container.id == FAKE_CONTAINER_ID
+        client.api.create_container.assert_called_with(
+            image='alpine',
+            command=None,
+            pull='always',
+            host_config={'NetworkMode': 'default'}
+        )
 
     def test_create_with_image_object(self):
         client = make_fake_client()
