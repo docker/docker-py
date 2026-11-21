@@ -2,11 +2,27 @@ import pytest
 
 import docker
 
-from ..helpers import requires_api_version
+from ..helpers import force_leave_swarm, requires_api_version
 from .base import BaseAPIIntegrationTest
 
 
 class TestVolumes(BaseAPIIntegrationTest):
+
+    def setUp(self):
+        super().setUp()
+        force_leave_swarm(self.client)
+        self._unlock_key = None
+
+    def tearDown(self):
+        try:
+            if self._unlock_key:
+                self.client.unlock_swarm(self._unlock_key)
+        except docker.errors.APIError:
+            pass
+        force_leave_swarm(self.client)
+        super().tearDown()
+
+
     def test_create_volume(self):
         name = 'perfectcherryblossom'
         self.tmp_volumes.append(name)
@@ -73,3 +89,31 @@ class TestVolumes(BaseAPIIntegrationTest):
         name = 'shootthebullet'
         with pytest.raises(docker.errors.NotFound):
             self.client.remove_volume(name)
+
+    def test_create_volume_with_cluster_volume(self):
+        name = "perfectcherryblossom"
+        self.init_swarm()
+
+        spec = docker.types.ClusterVolumeSpec(
+            group="group_test",
+            access_mode=docker.types.AccessMode(
+                scope="multi",
+                sharing="readonly",
+                mount_volume="mount_volume",
+                availabilty="active",
+                secrets=[],
+                accessibility_requirements={},
+                capacity_range={},
+            ),
+        )
+
+        result = self.client.create_volume(
+            name, driver="local", cluster_volume_spec=spec
+        )
+        assert "Name" in result
+        assert result["Name"] == name
+        assert "Driver" in result
+        assert result["Driver"] == "local"
+        assert "ClusterVolume" in result
+        assert result["ClusterVolume"]["Spec"]["Group"] == "group_test"
+        assert "AccessMode" in result["ClusterVolume"]["Spec"]

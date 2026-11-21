@@ -31,12 +31,11 @@ class VolumeApiMixin:
 
         params = {
             'filters': utils.convert_filters(filters) if filters else None
-        }
+            }
         url = self._url('/volumes')
         return self._result(self._get(url, params=params), True)
 
-    def create_volume(self, name=None, driver=None, driver_opts=None,
-                      labels=None):
+    def create_volume(self, name=None, driver=None, driver_opts=None, labels=None, cluster_volume_spec=None):
         """
         Create and register a named volume
 
@@ -83,10 +82,17 @@ class VolumeApiMixin:
             if utils.compare_version('1.23', self._version) < 0:
                 raise errors.InvalidVersion(
                     'volume labels were introduced in API 1.23'
-                )
+                    )
             if not isinstance(labels, dict):
                 raise TypeError('labels must be a dictionary')
             data["Labels"] = labels
+
+        if cluster_volume_spec is not None:
+            if utils.compare_version("1.42", self._version) < 0:
+                raise errors.InvalidVersion(
+                    "cluster volume spec was introduced in API 1.45"
+                )
+            data["ClusterVolumeSpec"] = cluster_volume_spec
 
         return self._result(self._post_json(url, data=data), True)
 
